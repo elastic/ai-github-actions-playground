@@ -1,0 +1,9 @@
+services:
+  dashboard:
+    image: ghcr.io/elastic/ai-github-actions-playground:latest
+    ports:
+      - "8080:80"
+    environment:
+      # Set ES_URL to your Elasticsearch instance.
+      # host.docker.internal resolves to the host machine on Docker Desktop (Mac/Windows/Linux).
+      - ES_URL=${ES_URL:-http://host.docker.internal:9200}
