@@ -5,7 +5,7 @@ export async function executeEsql(
   query: string,
   signal?: AbortSignal,
   timeRange?: TimeRange,
-): Promise<EsqlResponse> {
+): Promise<EsqlResponse & { executionTimeMs: number }> {
   const baseUrl = connection.url.replace(/\/+$/, "");
   const url = `${baseUrl}/_query?format=json`;
 
@@ -34,6 +34,7 @@ export async function executeEsql(
     };
   }
 
+  const start = Date.now();
   const response = await fetch(url, {
     method: "POST",
     headers,
@@ -55,7 +56,8 @@ export async function executeEsql(
     throw esqlError;
   }
 
-  return response.json();
+  const data = (await response.json()) as EsqlResponse;
+  return { ...data, executionTimeMs: Date.now() - start };
 }
 
 /**
