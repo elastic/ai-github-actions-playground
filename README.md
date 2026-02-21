@@ -1,12 +1,36 @@
-# Elastic Peek
+<p align="center">
+  <img src="peek/public/logo.png" alt="Elastic Peek" width="200">
+</p>
 
-A lightweight, static dashboarding tool powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
+# AI Software Engineering Factory — Proof of Concept
 
-## Live Demo
+This repository is a proof-of-concept **AI Software Engineering Factory** built on [elastic/ai-github-actions](https://github.com/elastic/ai-github-actions). It demonstrates how a suite of AI-powered GitHub Actions workflows can autonomously triage issues, review pull requests, propose fixes, and iterate on a real codebase with minimal human intervention.
+
+> **This is a research project, not an official Elastic product.**
+
+## How it works
+
+AI workflows in `.github/workflows/` handle the software engineering lifecycle:
+
+- **Issue triage & duplicate detection** — new issues are classified, labeled, and checked for duplicates
+- **Automated PR review** — pull requests receive AI-generated code reviews with actionable feedback
+- **Fix proposals** — the factory can draft code changes in response to issues
+- **Docs & text auditing** — scheduled patrols check documentation quality and prose clarity
+- **Stale issue management** — aging issues are flagged and closed automatically
+
+The workflows are powered by [elastic/ai-github-actions](https://github.com/elastic/ai-github-actions) and run in standard GitHub Actions CI — no custom infrastructure required.
+
+---
+
+## The Product: Elastic Peek
+
+The codebase that the factory operates on is **Elastic Peek**, a lightweight, static dashboarding tool powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
+
+### Live Demo
 
 https://elastic.github.io/ai-github-actions-playground/
 
-## Overview
+### Overview
 
 Elastic Peek is a browser-based dashboard builder that connects directly to your Elasticsearch cluster. The static site queries Elasticsearch using ES|QL via the `_query` REST API — or optionally via a local proxy to avoid CORS.
 
@@ -18,37 +42,22 @@ Elastic Peek is a browser-based dashboard builder that connects directly to your
 - **Import/export** — share dashboards as JSON files
 - **Dark and light themes**
 
-## Quick Start
+### Quick Start
 
 ```bash
 make setup   # install dependencies
 make serve   # start dev server at http://localhost:3000
 ```
 
-Or use the built-in proxy to avoid CORS (see [Running with a Proxy](#running-with-a-proxy)):
+Or use the built-in proxy to avoid CORS (see [DEVELOPING.md](DEVELOPING.md#running-with-a-proxy)):
 
 ```bash
 ES_URL=http://localhost:9200 make serve-proxy
 ```
 
-Or manually:
+### In-Product Docs
 
-```bash
-cd dashboard
-npm install
-npm run dev
-```
-
-## In-Product Docs
-
-Use the **Docs** tab in the app for embedded documentation and search.
-
-The docs include:
-- Getting started and prerequisites
-- Connecting to Elasticsearch
-- Running with proxy mode
-- Dashboard and Discover workflows
-- Testing and quality checks
+Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting to Elasticsearch, proxy mode, and dashboard workflows.
 
 ## Further Reading
 

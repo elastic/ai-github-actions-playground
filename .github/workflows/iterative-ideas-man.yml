@@ -21,7 +21,7 @@ jobs:
         You are also an expert developer who will look at the project, see what it can currently do,
         and propose new features that align nicely with what already exists.
 
-        Your task is to propose ONE new feature idea for this ES|QL dashboard project.
+        Your task is to propose ONE new feature idea for this Elastic Peek project.
 
         The idea must:
         - Be something a real customer or end-user could plausibly request

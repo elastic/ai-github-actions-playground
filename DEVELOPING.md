@@ -4,12 +4,12 @@
 
 | Directory | What |
 | --- | --- |
-| `dashboard/` | Vite + React 18 + TypeScript frontend application |
-| `dashboard/src/components/` | React UI components (panels, editors, dialogs) |
-| `dashboard/src/components/visualizations/` | Chart and table visualization components |
-| `dashboard/src/services/` | Elasticsearch ES|QL client |
-| `dashboard/src/store/` | Zustand state management |
-| `dashboard/tests/integration/` | Integration tests (Testcontainers + Elasticsearch) |
+| `peek/` | Vite + React 18 + TypeScript frontend application |
+| `peek/src/components/` | React UI components (panels, editors, dialogs) |
+| `peek/src/components/visualizations/` | Chart and table visualization components |
+| `peek/src/services/` | Elasticsearch ES|QL client |
+| `peek/src/store/` | Zustand state management |
+| `peek/tests/integration/` | Integration tests (Testcontainers + Elasticsearch) |
 | `docker/` | nginx config template for the Docker proxy image |
 | `.github/workflows/` | GitHub Actions workflows (CI, GitHub Pages deployment) |
 
@@ -19,7 +19,7 @@
 make setup        # install Node.js dependencies
 make serve        # start Vite dev server with hot reload
 make serve-proxy  # start dev server with Elasticsearch proxy (set ES_URL)
-make build        # production build to dashboard/dist/
+make build        # production build to peek/dist/
 make lint         # Prettier + ESLint + TypeScript type checking
 make format       # auto-format code with Prettier
 make check        # run all checks then build (equivalent to CI)
@@ -29,7 +29,7 @@ make docker-run   # run the Docker container (set ES_URL)
 
 ## Running with a Proxy
 
-Use `make serve-proxy` (or `ES_URL=... npm run dev` in the `dashboard/` directory) to start the Vite dev server with a built-in proxy. The proxy forwards `/_query` requests to your Elasticsearch cluster, so no CORS configuration is needed on Elasticsearch.
+Use `make serve-proxy` (or `ES_URL=... npm run dev` in the `peek/` directory) to start the Vite dev server with a built-in proxy. The proxy forwards `/_query` requests to your Elasticsearch cluster, so no CORS configuration is needed on Elasticsearch.
 
 ```bash
 ES_URL=http://localhost:9200 make serve-proxy
@@ -80,10 +80,10 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 ## Adding a Visualization Type
 
-1. Create a new component in `dashboard/src/components/visualizations/`
-2. Add the type to the `VisualizationType` union in `dashboard/src/types.ts`
-3. Register it in `dashboard/src/components/visualizations/Visualization.tsx`
-4. Add the toggle option in `dashboard/src/components/PanelEditor.tsx`
+1. Create a new component in `peek/src/components/visualizations/`
+2. Add the type to the `VisualizationType` union in `peek/src/types.ts`
+3. Register it in `peek/src/components/visualizations/Visualization.tsx`
+4. Add the toggle option in `peek/src/components/PanelEditor.tsx`
 
 ## Docker
 
@@ -143,7 +143,7 @@ This starts an Elasticsearch 8.17 container, seeds two indices (`web_logs` and `
 
 ### CI
 
-The `ci.yml` workflow runs lint, build, and integration tests on every push to `main` and on every PR that touches `dashboard/**`. The integration test job pulls the Elasticsearch Docker image and runs the same `make test` target.
+The `ci.yml` workflow runs lint, build, and integration tests on every push to `main` and on every PR that touches `peek/**`. The integration test job pulls the Elasticsearch Docker image and runs the same `make test` target.
 
 ## Code Quality
 
@@ -151,9 +151,9 @@ The project enforces formatting, linting, and type safety. All three are checked
 
 | Tool | Purpose | Config |
 | --- | --- | --- |
-| **Prettier** | Code formatting | `dashboard/.prettierrc` |
-| **ESLint** | Static analysis (TypeScript + React rules) | `dashboard/eslint.config.js` |
-| **TypeScript** | Type checking (`strict`, `noUnusedLocals`, `noUnusedParameters`) | `dashboard/tsconfig.json` |
+| **Prettier** | Code formatting | `peek/.prettierrc` |
+| **ESLint** | Static analysis (TypeScript + React rules) | `peek/eslint.config.js` |
+| **TypeScript** | Type checking (`strict`, `noUnusedLocals`, `noUnusedParameters`) | `peek/tsconfig.json` |
 
 ```bash
 make lint     # run all checks (Prettier, ESLint, TypeScript)
@@ -166,4 +166,4 @@ make format   # auto-fix formatting
 make build
 ```
 
-Output goes to `dashboard/dist/`. This directory is deployed to GitHub Pages by the `deploy-pages.yml` workflow on every push to `main`.
+Output goes to `peek/dist/`. This directory is deployed to GitHub Pages by the `deploy-pages.yml` workflow on every push to `main`.

@@ -1,9 +1,9 @@
-# Stage 1: Build the dashboard
+# Stage 1: Build the app
 FROM node:18-alpine AS builder
 WORKDIR /app
-COPY dashboard/package*.json ./
+COPY peek/package*.json ./
 RUN npm ci --ignore-scripts
-COPY dashboard/ ./
+COPY peek/ ./
 # Serve from / when running in Docker (not GitHub Pages sub-path)
 ENV VITE_BASE_PATH=/
 RUN npm run build

@@ -2,8 +2,9 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
-import StorageIcon from "@mui/icons-material/Storage";
 import { useDashboardStore } from "../store/useDashboardStore";
+
+const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function WelcomeScreen() {
   const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
@@ -14,7 +15,7 @@ export default function WelcomeScreen() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "calc(100vh - 64px)",
+        flex: 1,
       }}
     >
       <Paper
@@ -26,7 +27,12 @@ export default function WelcomeScreen() {
         }}
         elevation={2}
       >
-        <StorageIcon sx={{ fontSize: 64, color: "primary.main", mb: 2 }} />
+        <Box
+          component="img"
+          src={logoUrl}
+          alt="Elastic Peek"
+          sx={{ width: 160, height: 160, mb: 2, objectFit: "contain" }}
+        />
         <Typography variant="h4" gutterBottom>
           Elastic Peek
         </Typography>

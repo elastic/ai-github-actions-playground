@@ -44,9 +44,7 @@ export default function DiscoverPage() {
   const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
 
-  const [query, setQuery] = useState(
-    "FROM logs-* | STATS count = COUNT(*) BY @timestamp | SORT @timestamp | LIMIT 50",
-  );
+  const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

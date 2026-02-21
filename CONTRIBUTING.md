@@ -38,13 +38,13 @@ from ES|QL aggregations like STATS ... BY bucket1, bucket2.
 
 ### Implementation Plan
 
-1. **Create HeatmapChart component** (`dashboard/src/components/visualizations/HeatmapChart.tsx`):
+1. **Create HeatmapChart component** (`peek/src/components/visualizations/HeatmapChart.tsx`):
    - Accept EsqlResponse data
    - Map two categorical columns to x/y axes and a numeric column to color intensity
    - Use ECharts heatmap series type
 
 2. **Register the visualization**:
-   - Add "heatmap" to VisualizationType in `dashboard/src/types.ts`
+   - Add "heatmap" to VisualizationType in `peek/src/types.ts`
    - Add case in `Visualization.tsx`
    - Add toggle in `PanelEditor.tsx`
 

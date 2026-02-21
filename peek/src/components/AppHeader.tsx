@@ -145,67 +145,71 @@ export default function AppHeader() {
           Elastic Peek
         </Typography>
 
-        {titleEditing ? (
-          <TextField
-            size="small"
-            value={titleValue}
-            onChange={(e) => setTitleValue(e.target.value)}
-            onBlur={() => {
-              setDashboardTitle(titleValue);
-              setTitleEditing(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setDashboardTitle(titleValue);
-                setTitleEditing(false);
-              }
-            }}
-            autoFocus
-            sx={{ width: 240 }}
-          />
-        ) : (
-          <Typography
-            variant="subtitle1"
-            sx={{ cursor: "pointer", "&:hover": { opacity: 0.8 } }}
-            onClick={() => {
-              setTitleValue(dashboard.title);
-              setTitleEditing(true);
-            }}
-          >
-            {dashboard.title}
-          </Typography>
+        {connected && (
+          <>
+            {titleEditing ? (
+              <TextField
+                size="small"
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={() => {
+                  setDashboardTitle(titleValue);
+                  setTitleEditing(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setDashboardTitle(titleValue);
+                    setTitleEditing(false);
+                  }
+                }}
+                autoFocus
+                sx={{ width: 240 }}
+              />
+            ) : (
+              <Typography
+                variant="subtitle1"
+                sx={{ cursor: "pointer", "&:hover": { opacity: 0.8 } }}
+                onClick={() => {
+                  setTitleValue(dashboard.title);
+                  setTitleEditing(true);
+                }}
+              >
+                {dashboard.title}
+              </Typography>
+            )}
+          </>
         )}
 
-        <Tabs
-          value={currentPage}
-          onChange={(_, v: "dashboard" | "discover" | "docs") => setCurrentPage(v)}
-          sx={{ ml: 2, minHeight: 48 }}
-          TabIndicatorProps={{ style: { height: 3 } }}
-        >
-          <Tab
-            value="dashboard"
-            label="Dashboard"
-            icon={<DashboardIcon fontSize="small" />}
-            iconPosition="start"
-            disabled={!connected}
-            sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-          />
-          <Tab
-            value="discover"
-            label="Discover"
-            icon={<SearchIcon fontSize="small" />}
-            iconPosition="start"
-            disabled={!connected}
-            sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-          />
-          <Tab
-            value="docs"
-            label="Docs"
-            icon={<MenuBookIcon fontSize="small" />}
-            iconPosition="start"
-            sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-          />
-        </Tabs>
+        {connected && (
+          <Tabs
+            value={currentPage}
+            onChange={(_, v: "dashboard" | "discover" | "docs") => setCurrentPage(v)}
+            sx={{ ml: 2, minHeight: 48 }}
+            TabIndicatorProps={{ style: { height: 3 } }}
+          >
+            <Tab
+              value="dashboard"
+              label="Dashboard"
+              icon={<DashboardIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="discover"
+              label="Discover"
+              icon={<SearchIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="docs"
+              label="Docs"
+              icon={<MenuBookIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+          </Tabs>
+        )}
 
         <Box sx={{ flex: 1 }} />
 

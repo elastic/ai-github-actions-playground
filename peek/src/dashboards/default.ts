@@ -9,31 +9,31 @@ export function createDefaultDashboard(): DashboardDefinition {
     panels: [
       {
         id: crypto.randomUUID(),
-        title: "Logs Over Time",
+        title: "Log Volume",
         query:
-          "FROM logs-* | STATS count = COUNT(*) BY bucket = DATE_TRUNC(5 minutes, @timestamp) | SORT bucket | LIMIT 100",
+          "FROM logs-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 0, y: 0, w: 12, h: 5 },
       },
       {
         id: crypto.randomUUID(),
-        title: "Metrics Over Time",
+        title: "Metric Volume",
         query:
-          "FROM metrics-* | STATS count = COUNT(*) BY bucket = DATE_TRUNC(5 minutes, @timestamp) | SORT bucket | LIMIT 100",
+          "FROM metrics-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 0, y: 5, w: 6, h: 5 },
       },
       {
         id: crypto.randomUUID(),
-        title: "Traces Over Time",
+        title: "Trace Volume",
         query:
-          "FROM traces-* | STATS count = COUNT(*) BY bucket = DATE_TRUNC(5 minutes, @timestamp) | SORT bucket | LIMIT 100",
+          "FROM traces-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 6, y: 5, w: 6, h: 5 },
       },
       {
         id: crypto.randomUUID(),
-        title: "Documents by Data Stream",
+        title: "Documents by Dataset",
         query:
           "FROM logs-*,metrics-*,traces-* | STATS doc_count = COUNT(*) BY `data_stream.dataset` | SORT doc_count DESC | LIMIT 20",
         visualization: "bar",
