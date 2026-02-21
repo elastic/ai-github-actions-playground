@@ -22,6 +22,7 @@ interface DashboardState {
   setConnected: (connected: boolean) => void;
   setThemeMode: (mode: "light" | "dark") => void;
   setTimeRange: (range: TimeRange) => void;
+  setRefreshInterval: (interval: number) => void;
   setDashboardTitle: (title: string) => void;
 
   addPanel: (panel: PanelDefinition) => void;
@@ -103,6 +104,14 @@ export const useDashboardStore = create<DashboardState>()(
       setTimeRange: (range) =>
         set((s) => ({
           dashboard: { ...s.dashboard, timeRange: range, updatedAt: new Date().toISOString() },
+        })),
+      setRefreshInterval: (interval) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            refreshInterval: interval,
+            updatedAt: new Date().toISOString(),
+          },
         })),
       setDashboardTitle: (title) =>
         set((s) => ({

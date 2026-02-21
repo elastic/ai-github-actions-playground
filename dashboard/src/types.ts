@@ -27,6 +27,8 @@ export interface DashboardDefinition {
   description?: string;
   panels: PanelDefinition[];
   timeRange: TimeRange;
+  /** Auto-refresh interval in seconds, 0 = disabled */
+  refreshInterval?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +37,9 @@ export interface TimeRange {
   from: string;
   to: string;
 }
+
+/** Default auto-refresh interval in seconds */
+export const DEFAULT_REFRESH_INTERVAL = 15;
 
 export interface EsqlColumn {
   name: string;

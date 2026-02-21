@@ -89,6 +89,10 @@ export default function ConnectionDialog() {
             your browser — no data passes through any intermediary server. Ensure CORS is configured
             on your cluster.
           </Typography>
+          <Alert severity="warning" sx={{ py: 0 }}>
+            Elasticsearch Serverless is not supported — it does not allow the CORS configuration
+            required for direct browser connections.
+          </Alert>
           <TextField
             label="Elasticsearch URL"
             placeholder="https://my-cluster.es.us-east-1.aws.elastic.cloud:443"
