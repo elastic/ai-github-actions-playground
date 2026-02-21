@@ -204,7 +204,7 @@ export default function DiscoverPage() {
                     <Checkbox
                       size="small"
                       checked={selectedFields.has(col.name)}
-                      onChange={() => {}}
+                      onChange={() => toggleField(col.name)}
                       onClick={(e) => e.stopPropagation()}
                       sx={{ p: 0.5 }}
                     />
