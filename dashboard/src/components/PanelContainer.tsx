@@ -20,6 +20,7 @@ interface Props {
 
 export default function PanelContainer({ panel }: Props) {
   const connection = useDashboardStore((s) => s.connection);
+  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
 
   const [data, setData] = useState<EsqlResponse | null>(null);
@@ -38,7 +39,7 @@ export default function PanelContainer({ panel }: Props) {
     setError(null);
 
     try {
-      const result = await executeEsql(connection, panel.query.trim(), ctrl.signal);
+      const result = await executeEsql(connection, panel.query.trim(), ctrl.signal, timeRange);
       if (!ctrl.signal.aborted) {
         setData(result);
       }
@@ -51,7 +52,7 @@ export default function PanelContainer({ panel }: Props) {
         setLoading(false);
       }
     }
-  }, [connection, panel.query]);
+  }, [connection, panel.query, timeRange]);
 
   useEffect(() => {
     fetchData();

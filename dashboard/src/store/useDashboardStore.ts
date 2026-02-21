@@ -1,11 +1,14 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, type StorageValue } from "zustand/middleware";
 import type {
   DashboardDefinition,
   ElasticsearchConnection,
   PanelDefinition,
   TimeRange,
 } from "../types";
+import { createDefaultDashboard } from "../dashboards/default";
+
+export { createDefaultDashboard };
 
 interface DashboardState {
   connection: ElasticsearchConnection | null;
@@ -33,18 +36,51 @@ interface DashboardState {
 
   exportDashboard: () => string;
   importDashboard: (json: string) => void;
+  loadDefaultDashboard: () => void;
 }
 
-function createDefaultDashboard(): DashboardDefinition {
-  return {
-    id: crypto.randomUUID(),
-    title: "New Dashboard",
-    panels: [],
-    timeRange: { from: "now-1h", to: "now" },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-}
+/**
+ * Custom storage that keeps the Elasticsearch URL in localStorage (persistent)
+ * while storing the API key only in sessionStorage (cleared when the browser
+ * session ends, reducing the exposure window of the credential).
+ */
+type PersistedState = { connection?: ElasticsearchConnection | null };
+const API_KEY_SESSION_SUFFIX = ":apiKey";
+
+const splitStorage = {
+  getItem: (name: string): StorageValue<PersistedState> | null => {
+    const localRaw = localStorage.getItem(name);
+    if (!localRaw) return null;
+    try {
+      const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
+      const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
+      if (stored.state.connection) {
+        stored.state.connection = { ...stored.state.connection, apiKey };
+      }
+      return stored;
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: StorageValue<PersistedState>): void => {
+    const apiKey = value.state.connection?.apiKey ?? "";
+    const toStore: StorageValue<PersistedState> = {
+      ...value,
+      state: {
+        ...value.state,
+        connection: value.state.connection
+          ? { ...value.state.connection, apiKey: "" }
+          : value.state.connection,
+      },
+    };
+    localStorage.setItem(name, JSON.stringify(toStore));
+    sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, apiKey);
+  },
+  removeItem: (name: string): void => {
+    localStorage.removeItem(name);
+    sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
+  },
+};
 
 export const useDashboardStore = create<DashboardState>()(
   persist(
@@ -119,9 +155,14 @@ export const useDashboardStore = create<DashboardState>()(
         const parsed = JSON.parse(json) as DashboardDefinition;
         set({ dashboard: parsed });
       },
+
+      loadDefaultDashboard: () => {
+        set({ dashboard: createDefaultDashboard() });
+      },
     }),
     {
       name: "esql-dashboard",
+      storage: splitStorage,
       partialize: (state) => ({
         connection: state.connection,
         dashboard: state.dashboard,
