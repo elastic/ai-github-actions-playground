@@ -42,7 +42,7 @@ export async function seedWebLogs(client: Client): Promise<void> {
     { "@timestamp": new Date(now).toISOString(),               method: "POST", path: "/api/checkout", status: 500, bytes: 32,    host: "web-3" },
   ];
 
-  await client.indices.delete({ index: "web_logs" }).catch(() => {});
+  await client.indices.delete({ index: "web_logs" }, { ignore: [404] });
 
   await client.indices.create({
     index: "web_logs",
@@ -81,7 +81,7 @@ export async function seedOrders(client: Client): Promise<void> {
     { order_id: "ORD-008", category: "clothing",    amount: 39.99,  quantity: 4, region: "us-west" },
   ];
 
-  await client.indices.delete({ index: "orders" }).catch(() => {});
+  await client.indices.delete({ index: "orders" }, { ignore: [404] });
 
   await client.indices.create({
     index: "orders",

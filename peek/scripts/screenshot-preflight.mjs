@@ -2,6 +2,7 @@ import { chromium } from "playwright";
 import fs from "node:fs/promises";
 
 function parseFiniteNumber(value, fallback) {
+  if (value == null || String(value).trim() === "") return fallback;
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
 }
@@ -47,7 +48,6 @@ async function run() {
     try {
       try {
         await page.goto(options.url, { waitUntil: "networkidle", timeout: options.timeoutMs });
-        await page.waitForLoadState("domcontentloaded");
 
         diagnostics.uiErrors = await page.evaluate(() => {
           const seen = new Set();

@@ -63,23 +63,23 @@ export default function DataTable({ data }: Props) {
                   const col = data.columns[cellIdx];
                   const numeric = col ? isNumericType(col.type) : false;
                   return (
-                  <TableCell
-                    key={cellIdx}
-                    sx={{
-                      whiteSpace: "nowrap",
-                      fontSize: "0.75rem",
-                      fontFamily: numeric ? "monospace" : "inherit",
-                      textAlign: numeric ? "right" : "left",
-                    }}
-                  >
-                    {cell === null ? (
-                      <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
-                        null
-                      </Typography>
-                    ) : (
-                      String(cell)
-                    )}
-                  </TableCell>
+                    <TableCell
+                      key={cellIdx}
+                      sx={{
+                        whiteSpace: "nowrap",
+                        fontSize: "0.75rem",
+                        fontFamily: numeric ? "monospace" : "inherit",
+                        textAlign: numeric ? "right" : "left",
+                      }}
+                    >
+                      {cell === null ? (
+                        <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
+                          null
+                        </Typography>
+                      ) : (
+                        String(cell)
+                      )}
+                    </TableCell>
                   );
                 })}
               </TableRow>

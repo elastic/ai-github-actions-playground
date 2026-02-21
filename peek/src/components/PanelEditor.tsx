@@ -23,7 +23,12 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { executeEsql, isEsqlError } from "../services/elasticsearch";
-import type { VisualizationType, EsqlResponse, VisualizationOptions, FormatOptions } from "../types";
+import type {
+  VisualizationType,
+  EsqlResponse,
+  VisualizationOptions,
+  FormatOptions,
+} from "../types";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
 
@@ -70,7 +75,7 @@ export default function PanelEditor() {
     (newViz: VisualizationType) => {
       setViz(newViz);
       const next = defaultOptions(newViz);
-      const supportsFormat = newViz !== "table";
+      const supportsFormat = newViz !== "table" && newViz !== "pie";
       const currentFormat = (options as { format?: FormatOptions }).format;
       setOptions(supportsFormat && currentFormat ? { ...next, format: currentFormat } : next);
     },

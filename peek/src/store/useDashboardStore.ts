@@ -6,6 +6,7 @@ import type {
   PanelDefinition,
   TimeRange,
 } from "../types";
+import { dashboardDefinitionSchema } from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
 
 export { createDefaultDashboard };
@@ -172,23 +173,15 @@ export const useDashboardStore = create<DashboardState>()(
 
       importDashboard: (json) => {
         try {
-          const parsed = JSON.parse(json);
-          if (
-            !parsed ||
-            typeof parsed !== "object" ||
-            typeof parsed.id !== "string" ||
-            typeof parsed.title !== "string" ||
-            !Array.isArray(parsed.panels) ||
-            !parsed.timeRange ||
-            typeof parsed.timeRange.from !== "string" ||
-            typeof parsed.timeRange.to !== "string" ||
-            typeof parsed.createdAt !== "string" ||
-            typeof parsed.updatedAt !== "string"
-          ) {
-            console.error("Import failed: invalid dashboard format");
+          const result = dashboardDefinitionSchema.safeParse(JSON.parse(json));
+          if (!result.success) {
+            console.error(
+              "Import failed:",
+              result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+            );
             return;
           }
-          set({ dashboard: parsed as DashboardDefinition });
+          set({ dashboard: result.data as DashboardDefinition });
         } catch (e) {
           console.error("Import failed: invalid JSON", e);
         }
