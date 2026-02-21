@@ -171,8 +171,27 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       importDashboard: (json) => {
-        const parsed = JSON.parse(json) as DashboardDefinition;
-        set({ dashboard: parsed });
+        try {
+          const parsed = JSON.parse(json);
+          if (
+            !parsed ||
+            typeof parsed !== "object" ||
+            typeof parsed.id !== "string" ||
+            typeof parsed.title !== "string" ||
+            !Array.isArray(parsed.panels) ||
+            !parsed.timeRange ||
+            typeof parsed.timeRange.from !== "string" ||
+            typeof parsed.timeRange.to !== "string" ||
+            typeof parsed.createdAt !== "string" ||
+            typeof parsed.updatedAt !== "string"
+          ) {
+            console.error("Import failed: invalid dashboard format");
+            return;
+          }
+          set({ dashboard: parsed as DashboardDefinition });
+        } catch (e) {
+          console.error("Import failed: invalid JSON", e);
+        }
       },
 
       loadDefaultDashboard: () => {

@@ -70,7 +70,7 @@ function FormatEditor({
           labelId="format-unit-label"
           label="Unit"
           value={unit}
-          onChange={(e) => onChange({ unit: e.target.value } as FormatOptions)}
+          onChange={(e) => onChange({ ...value, unit: e.target.value } as FormatOptions)}
         >
           {groups.flatMap(({ group, units }) =>
             units.length === 0

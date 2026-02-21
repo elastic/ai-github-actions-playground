@@ -14,6 +14,8 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import DocsPage from "./components/DocsPage";
 
+const currentYear = new Date().getFullYear();
+
 export default function App() {
   const themeMode = useDashboardStore((s) => s.themeMode);
   const connected = useDashboardStore((s) => s.connected);
@@ -82,7 +84,7 @@ export default function App() {
             Research Project
           </Link>
           <Typography variant="caption" color="text.secondary">
-            Not an official product &mdash; &copy; {new Date().getFullYear()}{" "}
+            Not an official product &mdash; &copy; {currentYear}{" "}
             <Link
               href="https://www.elastic.co"
               target="_blank"

@@ -39,6 +39,16 @@ export default function ConnectionDialog() {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
+  const [prevSavedConn, setPrevSavedConn] = useState(savedConn);
+  if (savedConn !== prevSavedConn) {
+    setPrevSavedConn(savedConn);
+    setUrl(savedConn?.url ?? "");
+    setAuthType(savedConn?.username ? "userpass" : "apiKey");
+    setApiKey(savedConn?.apiKey ?? "");
+    setUsername(savedConn?.username ?? "");
+    setPassword(savedConn?.password ?? "");
+  }
+
   const buildConnection = useCallback((): ElasticsearchConnection => {
     if (authType === "userpass") {
       return { url: url.trim(), username: username.trim(), password: password.trim() };
@@ -61,12 +71,12 @@ export default function ConnectionDialog() {
 
   const handleConnect = useCallback(async () => {
     const conn = buildConnection();
-    setConnection(conn);
     setTesting(true);
     setResult(null);
     const res = await testConnection(conn);
     setTesting(false);
     if (res.ok) {
+      setConnection(conn);
       setConnected(true);
       setOpen(false);
     } else {

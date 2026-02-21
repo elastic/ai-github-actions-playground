@@ -38,7 +38,7 @@ export default function BarChart({ data, options }: Props) {
       data: getColumnValues(data, colIdx) as number[],
       stack: stacked ? "total" : undefined,
       itemStyle: {
-        color: theme.color[i % theme.color.length],
+        color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC",
         borderRadius: stacked ? undefined : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
       },
     }));

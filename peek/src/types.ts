@@ -35,11 +35,16 @@ export interface GaugePanelOptions {
   max?: number;
 }
 
+export interface PieChartOptions {
+  format?: FormatOptions;
+}
+
 export type VisualizationOptions =
   | TimeSeriesOptions
   | BarChartOptions
   | StatPanelOptions
-  | GaugePanelOptions;
+  | GaugePanelOptions
+  | PieChartOptions;
 
 export interface PanelDefinition {
   id: string;

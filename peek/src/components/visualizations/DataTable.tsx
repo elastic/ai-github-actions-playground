@@ -59,16 +59,17 @@ export default function DataTable({ data }: Props) {
           <TableBody>
             {visibleRows.map((row, rowIdx) => (
               <TableRow key={page * rowsPerPage + rowIdx} hover>
-                {row.map((cell, cellIdx) => (
+                {row.map((cell, cellIdx) => {
+                  const col = data.columns[cellIdx];
+                  const numeric = col ? isNumericType(col.type) : false;
+                  return (
                   <TableCell
                     key={cellIdx}
                     sx={{
                       whiteSpace: "nowrap",
                       fontSize: "0.75rem",
-                      fontFamily: isNumericType(data.columns[cellIdx]!.type)
-                        ? "monospace"
-                        : "inherit",
-                      textAlign: isNumericType(data.columns[cellIdx]!.type) ? "right" : "left",
+                      fontFamily: numeric ? "monospace" : "inherit",
+                      textAlign: numeric ? "right" : "left",
                     }}
                   >
                     {cell === null ? (
@@ -79,7 +80,8 @@ export default function DataTable({ data }: Props) {
                       String(cell)
                     )}
                   </TableCell>
-                ))}
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>

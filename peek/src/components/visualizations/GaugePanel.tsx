@@ -40,7 +40,7 @@ export default function GaugePanel({ data, options }: Props) {
           max: maxVal,
           pointer: { show: true, length: "60%" },
           progress: { show: true, width: 14, roundCap: true },
-          axisLine: { lineStyle: { width: 14, color: [[1, theme.color[0]!]] } },
+          axisLine: { lineStyle: { width: 14, color: [[1, theme.color[0] ?? "#0077CC"]] } },
           axisTick: { show: false },
           splitLine: { show: false },
           axisLabel: { show: false },

@@ -44,6 +44,10 @@ export const darkTheme = createTheme({
   },
 });
 
+/** Tooltip background colors for chart themes */
+export const CHART_TOOLTIP_BG_DARK = "#2D2E36";
+export const CHART_TOOLTIP_BG_LIGHT = "#FFFFFF";
+
 /** Color palette for chart series, inspired by Elastic's visualization palette */
 export const CHART_COLORS = [
   "#0077CC",

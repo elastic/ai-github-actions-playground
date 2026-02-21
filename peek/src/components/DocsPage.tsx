@@ -81,8 +81,8 @@ export default function DocsPage() {
             <Typography variant="h6" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
-            {section.body.map((paragraph) => (
-              <Typography key={paragraph} variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {section.body.map((paragraph, index) => (
+              <Typography key={index} variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 {paragraph}
               </Typography>
             ))}

@@ -2,6 +2,7 @@ import type { DashboardDefinition } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
 export function createDefaultDashboard(): DashboardDefinition {
+  const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
     title: "Default",
@@ -49,7 +50,7 @@ export function createDefaultDashboard(): DashboardDefinition {
     ],
     timeRange: { from: "now-1h", to: "now" },
     refreshInterval: DEFAULT_REFRESH_INTERVAL,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
 }

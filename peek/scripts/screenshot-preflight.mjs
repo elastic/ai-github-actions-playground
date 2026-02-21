@@ -1,11 +1,17 @@
 import { chromium } from "playwright";
+import fs from "node:fs/promises";
+
+function parseFiniteNumber(value, fallback) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
 
 function parseArgs(argv) {
   const options = {
     url: process.env.SCREENSHOT_PRECHECK_URL ?? "http://127.0.0.1:3000",
     output: process.env.SCREENSHOT_PRECHECK_OUTPUT ?? "screenshot-preflight.json",
     screenshot: process.env.SCREENSHOT_PRECHECK_IMAGE,
-    timeoutMs: Number(process.env.SCREENSHOT_PRECHECK_TIMEOUT_MS ?? 30000),
+    timeoutMs: parseFiniteNumber(process.env.SCREENSHOT_PRECHECK_TIMEOUT_MS, 30000),
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -13,7 +19,7 @@ function parseArgs(argv) {
     if (arg === "--url" && argv[i + 1]) options.url = argv[++i];
     else if (arg === "--output" && argv[i + 1]) options.output = argv[++i];
     else if (arg === "--screenshot" && argv[i + 1]) options.screenshot = argv[++i];
-    else if (arg === "--timeout-ms" && argv[i + 1]) options.timeoutMs = Number(argv[++i]);
+    else if (arg === "--timeout-ms" && argv[i + 1]) options.timeoutMs = parseFiniteNumber(argv[++i], 30000);
   }
 
   return options;
@@ -41,7 +47,7 @@ async function run() {
     try {
       try {
         await page.goto(options.url, { waitUntil: "networkidle", timeout: options.timeoutMs });
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState("domcontentloaded");
 
         diagnostics.uiErrors = await page.evaluate(() => {
           const seen = new Set();
@@ -80,7 +86,6 @@ async function run() {
     diagnostics.pageErrors.push(String(error));
   }
 
-  const fs = await import("node:fs/promises");
   await fs.writeFile(options.output, JSON.stringify(diagnostics, null, 2));
 
   const hasErrors =

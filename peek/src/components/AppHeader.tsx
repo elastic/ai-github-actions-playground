@@ -27,6 +27,7 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
@@ -50,22 +51,43 @@ const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
 ];
 
 export default function AppHeader() {
-  const themeMode = useDashboardStore((s) => s.themeMode);
-  const setThemeMode = useDashboardStore((s) => s.setThemeMode);
-  const connected = useDashboardStore((s) => s.connected);
-  const dashboard = useDashboardStore((s) => s.dashboard);
-  const setTimeRange = useDashboardStore((s) => s.setTimeRange);
-  const setRefreshInterval = useDashboardStore((s) => s.setRefreshInterval);
-  const setDashboardTitle = useDashboardStore((s) => s.setDashboardTitle);
-  const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
-  const addPanel = useDashboardStore((s) => s.addPanel);
-  const exportDashboard = useDashboardStore((s) => s.exportDashboard);
-  const importDashboard = useDashboardStore((s) => s.importDashboard);
-  const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
-  const resetState = useDashboardStore((s) => s.resetState);
-  const currentPage = useDashboardStore((s) => s.currentPage);
-  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
+  const {
+    themeMode,
+    setThemeMode,
+    connected,
+    dashboard,
+    setTimeRange,
+    setRefreshInterval,
+    setDashboardTitle,
+    setConnectionDialogOpen,
+    setEditingPanelId,
+    addPanel,
+    exportDashboard,
+    importDashboard,
+    loadDefaultDashboard,
+    resetState,
+    currentPage,
+    setCurrentPage,
+  } = useDashboardStore(
+    useShallow((s) => ({
+      themeMode: s.themeMode,
+      setThemeMode: s.setThemeMode,
+      connected: s.connected,
+      dashboard: s.dashboard,
+      setTimeRange: s.setTimeRange,
+      setRefreshInterval: s.setRefreshInterval,
+      setDashboardTitle: s.setDashboardTitle,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+      setEditingPanelId: s.setEditingPanelId,
+      addPanel: s.addPanel,
+      exportDashboard: s.exportDashboard,
+      importDashboard: s.importDashboard,
+      loadDefaultDashboard: s.loadDefaultDashboard,
+      resetState: s.resetState,
+      currentPage: s.currentPage,
+      setCurrentPage: s.setCurrentPage,
+    })),
+  );
 
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(dashboard.title);

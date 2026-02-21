@@ -21,7 +21,7 @@ export default function TimeSeriesChart({ data, options }: Props) {
     const dateIdx = findDateColumnIndex(data);
     const numericIdxs = findNumericColumnIndices(data);
 
-    if (dateIdx < 0 && numericIdxs.length === 0) {
+    if (numericIdxs.length === 0) {
       return { title: { text: "No numeric data to display", left: "center", top: "center" } };
     }
 
@@ -39,7 +39,7 @@ export default function TimeSeriesChart({ data, options }: Props) {
       lineStyle: { width: 2 },
       areaStyle: showArea && (numericIdxs.length === 1 || stacked) ? { opacity: 0.1 } : undefined,
       stack: stacked ? "total" : undefined,
-      itemStyle: { color: theme.color[i % theme.color.length] },
+      itemStyle: { color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC" },
     }));
 
     return {

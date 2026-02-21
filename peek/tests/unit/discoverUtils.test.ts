@@ -59,4 +59,9 @@ describe("paginateRows", () => {
     expect(paginateRows(rows, 0, 2)).toEqual([["r0"], ["r1"]]);
     expect(paginateRows(rows, 2, 2)).toEqual([["r4"]]);
   });
+
+  it("returns an empty array when page is beyond available data", () => {
+    const rows = [["r0"], ["r1"], ["r2"], ["r3"], ["r4"]];
+    expect(paginateRows(rows, 10, 2)).toEqual([]);
+  });
 });

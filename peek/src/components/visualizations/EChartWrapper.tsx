@@ -44,17 +44,17 @@ export default function EChartWrapper({ option, style }: Props) {
       chartRef.current = echarts.init(containerRef.current);
     }
     chartRef.current.setOption(option, { notMerge: true });
-
-    const ro = new ResizeObserver(() => chartRef.current?.resize());
-    ro.observe(containerRef.current);
-
-    return () => {
-      ro.disconnect();
-    };
   }, [option]);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(() => chartRef.current?.resize());
+    ro.observe(el);
+
     return () => {
+      ro.disconnect();
       chartRef.current?.dispose();
       chartRef.current = null;
     };

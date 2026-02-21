@@ -1,5 +1,5 @@
 import { useTheme } from "@mui/material/styles";
-import { CHART_COLORS } from "../../theme";
+import { CHART_COLORS, CHART_TOOLTIP_BG_DARK, CHART_TOOLTIP_BG_LIGHT } from "../../theme";
 
 /**
  * Returns ECharts-compatible theme options that match the current MUI theme.
@@ -24,7 +24,7 @@ export function useEChartTheme() {
       textStyle: { color: theme.palette.text.secondary },
     },
     tooltip: {
-      backgroundColor: isDark ? "#2D2E36" : "#FFFFFF",
+      backgroundColor: isDark ? CHART_TOOLTIP_BG_DARK : CHART_TOOLTIP_BG_LIGHT,
       borderColor: theme.palette.divider,
       textStyle: {
         color: theme.palette.text.primary,

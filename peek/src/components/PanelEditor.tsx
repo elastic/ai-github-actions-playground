@@ -23,7 +23,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { executeEsql, isEsqlError } from "../services/elasticsearch";
-import type { VisualizationType, EsqlResponse, VisualizationOptions } from "../types";
+import type { VisualizationType, EsqlResponse, VisualizationOptions, FormatOptions } from "../types";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
 
@@ -69,10 +69,10 @@ export default function PanelEditor() {
   const handleVizChange = useCallback(
     (newViz: VisualizationType) => {
       setViz(newViz);
-      // Reset options to defaults for the new viz type, preserving format if set
-      const currentFormat = (options as { format?: unknown }).format;
       const next = defaultOptions(newViz);
-      setOptions(currentFormat ? { ...next, format: currentFormat } : next);
+      const supportsFormat = newViz !== "table";
+      const currentFormat = (options as { format?: FormatOptions }).format;
+      setOptions(supportsFormat && currentFormat ? { ...next, format: currentFormat } : next);
     },
     [options],
   );
