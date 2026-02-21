@@ -1,6 +1,6 @@
 DASHBOARD_DIR := dashboard
 
-.PHONY: help setup serve build lint format check clean preview
+.PHONY: help setup serve build lint format check clean preview test test\:unit test\:integration test\:e2e
 
 help:
 	@echo "ES|QL Dashboard — a static dashboarding tool powered by Perses + ES|QL"
@@ -13,6 +13,10 @@ help:
 	@echo "  lint     - Run ESLint, TypeScript type checking, and Prettier format check"
 	@echo "  format   - Auto-format code with Prettier"
 	@echo "  check    - Run all checks (equivalent to CI)"
+	@echo "  test     - Run all tests (unit, integration, e2e)"
+	@echo "  test:unit        - Run unit tests"
+	@echo "  test:integration - Run integration tests"
+	@echo "  test:e2e         - Run end-to-end tests"
 	@echo "  clean    - Remove build artifacts and node_modules"
 
 setup:
@@ -51,7 +55,18 @@ format:
 	@echo ""
 	@echo "✓ Formatting complete."
 
-check: lint build
+check: lint test\:unit build
+
+test: test\:unit test\:integration test\:e2e
+
+test\:unit: setup
+	@cd $(DASHBOARD_DIR) && npm run test:unit
+
+test\:integration: setup
+	@cd $(DASHBOARD_DIR) && npm run test:integration
+
+test\:e2e: build
+	@cd $(DASHBOARD_DIR) && npm run test:e2e
 
 clean:
 	@echo "Cleaning build artifacts..."
