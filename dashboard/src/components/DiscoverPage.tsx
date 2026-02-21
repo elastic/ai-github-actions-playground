@@ -131,9 +131,24 @@ export default function DiscoverPage() {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
       {/* Query bar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-          ES|QL Query
-        </Typography>
+        <Box
+          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
+        >
+          <Typography variant="subtitle2" color="text.secondary">
+            ES|QL Query
+          </Typography>
+          <Typography
+            component="a"
+            href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
+            target="_blank"
+            rel="noreferrer"
+            variant="caption"
+            color="primary.main"
+            sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+          >
+            ES|QL documentation
+          </Typography>
+        </Box>
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
           <CodeMirror
             value={query}
