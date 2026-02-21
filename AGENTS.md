@@ -1,4 +1,4 @@
-# ES|QL Dashboard
+# Elastic Peek
 
 @README.md
 @DEVELOPING.md
@@ -9,9 +9,9 @@
 Runs are executed in non-interactive CI and state is ephemeral between runs.
 Persist outcomes through safe outputs (comments/issues/PRs), because uncaptured local state is lost after the run.
 
-## Dashboard Application
+## Application
 
-See ./dashboard
+See ./peek
 
 ## Common Commands
 

@@ -1,4 +1,4 @@
-# Contributing to ES|QL Dashboard
+# Contributing to Elastic Peek
 
 Thank you for your interest in contributing! We welcome contributions from the community.
 
@@ -38,13 +38,13 @@ from ES|QL aggregations like STATS ... BY bucket1, bucket2.
 
 ### Implementation Plan
 
-1. **Create HeatmapChart component** (`dashboard/src/components/visualizations/HeatmapChart.tsx`):
+1. **Create HeatmapChart component** (`peek/src/components/visualizations/HeatmapChart.tsx`):
    - Accept EsqlResponse data
    - Map two categorical columns to x/y axes and a numeric column to color intensity
    - Use ECharts heatmap series type
 
 2. **Register the visualization**:
-   - Add "heatmap" to VisualizationType in `dashboard/src/types.ts`
+   - Add "heatmap" to VisualizationType in `peek/src/types.ts`
    - Add case in `Visualization.tsx`
    - Add toggle in `PanelEditor.tsx`
 
@@ -57,11 +57,6 @@ from ES|QL aggregations like STATS ... BY bucket1, bucket2.
 ### 3. Maintainer Assigns an Agent
 
 Once approved, a maintainer assigns the issue to an AI agent. The agent creates a PR, implements your plan, runs validation, and responds to review feedback until the PR is merged.
-
-## UI Changes
-
-**All UI changes must include screenshots in the PR.** When your issue results in any visual change to the dashboard, the implementing PR must contain before/after screenshots demonstrating the change. Issues that describe UI changes should explicitly ask the agent to capture and attach screenshots.
-Before posting screenshots, run `cd dashboard && npm run screenshot:preflight -- --url http://127.0.0.1:3000 --output screenshot-preflight.json` and attach diagnostics instead of screenshots when errors are detected.
 
 ## Issue Guidelines
 

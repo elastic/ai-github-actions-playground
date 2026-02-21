@@ -1,90 +1,101 @@
-DASHBOARD_DIR := dashboard
+PEEK_DIR := peek
 
-.PHONY: help setup serve serve-proxy build lint format check clean preview test test\:unit test\:integration test\:e2e docker-build docker-run
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-integration test-e2e docker-build docker-run
 
 help:
-	@echo "ES|QL Dashboard — a static dashboarding tool powered by Perses + ES|QL"
+	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  setup        - Install Node.js dependencies"
-	@echo "  serve        - Start Vite dev server with hot reload (http://localhost:3000)"
-	@echo "  serve-proxy  - Start dev server with Elasticsearch proxy (set ES_URL)"
-	@echo "  build        - Production build to dashboard/dist/"
-	@echo "  preview      - Preview the production build locally"
-	@echo "  lint         - Run ESLint, TypeScript type checking, and Prettier format check"
-	@echo "  format       - Auto-format code with Prettier"
-	@echo "  check        - Run all checks (equivalent to CI)"
-	@echo "  test         - Run all tests (unit, integration, e2e)"
-	@echo "  test:unit        - Run unit tests"
-	@echo "  test:integration - Run integration tests"
-	@echo "  test:e2e         - Run end-to-end tests"
-	@echo "  clean        - Remove build artifacts and node_modules"
-	@echo "  docker-build - Build the Docker image"
-	@echo "  docker-run   - Run the Docker container (set ES_URL)"
+	@echo "  setup            - Install Node.js dependencies"
+	@echo "  serve            - Install deps + start Vite dev server (http://localhost:3000)"
+	@echo "  serve-proxy      - Install deps + start dev server with Elasticsearch proxy (set ES_URL)"
+	@echo "  build            - Production build to peek/dist/"
+	@echo "  preview          - Build then preview locally"
+	@echo "  lint             - Prettier format check + ESLint + TypeScript type check"
+	@echo "  format           - Auto-format code with Prettier"
+	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
+	@echo "  check            - Alias for ci"
+	@echo "  test             - Run all tests (unit, integration, e2e)"
+	@echo "  test-unit        - Run unit tests"
+	@echo "  test-integration - Run integration tests"
+	@echo "  test-e2e         - Run end-to-end tests"
+	@echo "  clean            - Remove build artifacts and node_modules"
+	@echo "  docker-build     - Build the Docker image"
+	@echo "  docker-run       - Run the Docker container (set ES_URL)"
 
 setup:
 	@echo "Installing dependencies..."
-	@cd $(DASHBOARD_DIR) && npm install
+	@cd $(PEEK_DIR) && npm install
 	@echo ""
 	@echo "✓ Setup complete! Run 'make serve' to start developing."
 
 serve: setup
-	@cd $(DASHBOARD_DIR) && npm run dev
+	@cd $(PEEK_DIR) && npm run dev
 
 serve-proxy: setup
 	@echo "Starting dev server with Elasticsearch proxy..."
 	@echo "  Proxying /_query → $${ES_URL:-http://localhost:9200}"
 	@echo "  Connect the dashboard to: http://localhost:3000"
-	@cd $(DASHBOARD_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
+	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
 
-build: setup
+build:
 	@echo "Building for production..."
-	@cd $(DASHBOARD_DIR) && npm run build
+	@cd $(PEEK_DIR) && npm run build
 	@echo ""
-	@echo "✓ Build complete: $(DASHBOARD_DIR)/dist/"
+	@echo "✓ Build complete: $(PEEK_DIR)/dist/"
 
-preview: build
-	@cd $(DASHBOARD_DIR) && npm run preview
+preview: setup build
+	@cd $(PEEK_DIR) && npm run preview
 
 lint:
 	@echo "Running Prettier format check..."
-	@cd $(DASHBOARD_DIR) && npx prettier --check src
+	@cd $(PEEK_DIR) && npx prettier --check src
 	@echo ""
 	@echo "Running ESLint..."
-	@cd $(DASHBOARD_DIR) && npx eslint src
+	@cd $(PEEK_DIR) && npx eslint src
 	@echo ""
 	@echo "Running TypeScript type check..."
-	@cd $(DASHBOARD_DIR) && npx tsc --noEmit
+	@cd $(PEEK_DIR) && npx tsc --noEmit
 	@echo ""
 	@echo "✓ All checks passed."
 
 format:
 	@echo "Formatting code with Prettier..."
-	@cd $(DASHBOARD_DIR) && npx prettier --write src
+	@cd $(PEEK_DIR) && npx prettier --write src
 	@echo ""
 	@echo "✓ Formatting complete."
 
-check: lint test\:unit build
+ci:
+	@echo "Installing dependencies (strict lockfile)..."
+	@cd $(PEEK_DIR) && npm ci
+	@$(MAKE) lint test-unit build
+	@echo ""
+	@echo "✓ CI passed: lint + unit tests + build all green."
 
-test: test\:unit test\:integration test\:e2e
+check: ci
 
-test\:unit: setup
-	@cd $(DASHBOARD_DIR) && npm run test:unit
+test: test-unit test-integration test-e2e
 
-test\:integration: setup
-	@cd $(DASHBOARD_DIR) && npm run test:integration
+test-unit:
+	@echo "Running unit tests..."
+	@cd $(PEEK_DIR) && npm run test:unit
 
-test\:e2e: setup
-	@cd $(DASHBOARD_DIR) && npm run test:e2e
+test-integration:
+	@echo "Running integration tests..."
+	@cd $(PEEK_DIR) && npm run test:integration
+
+test-e2e:
+	@echo "Running e2e tests..."
+	@cd $(PEEK_DIR) && npm run test:e2e
 
 clean:
 	@echo "Cleaning build artifacts..."
-	@rm -rf $(DASHBOARD_DIR)/dist $(DASHBOARD_DIR)/node_modules
+	@rm -rf $(PEEK_DIR)/dist $(PEEK_DIR)/node_modules
 	@echo "✓ Clean complete."
 
 docker-build:
 	@echo "Building Docker image..."
-	@docker build -t esql-dashboard .
+	@docker build -t elastic-peek .
 	@echo "✓ Docker image built. Run 'make docker-run' to start the container."
 
 docker-run:
@@ -92,4 +103,4 @@ docker-run:
 	@echo "  Dashboard: http://localhost:8080"
 	@echo "  Proxying /_query → $${ES_URL:-http://host.docker.internal:9200}"
 	@echo "  Connect the dashboard to: http://localhost:8080"
-	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} esql-dashboard
+	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} elastic-peek

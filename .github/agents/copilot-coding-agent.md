@@ -5,7 +5,7 @@
 # For format details, see: https://gh.io/customagents/config
 
 name: coding-assistant
-description: AI coding assistant for the ES|QL Dashboard repository
+description: AI coding assistant for the Elastic Peek repository
 ---
 
 ## Repository Context
@@ -49,6 +49,16 @@ Before finishing:
 - Double-check changed files and command output for correctness before reporting completion.
 - Prefer a complete, verified solution over a partial fix; if blocked, clearly explain the blocker and what was already verified.
 - When opening a pull request, read `.github/PULL_REQUEST_TEMPLATE.md` and use it as the PR description template, filling in each section.
+
+### Screenshots for UI Changes
+
+When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request. Run the screenshot preflight first to check for errors:
+
+```bash
+cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000 --output screenshot-preflight.json --screenshot screenshot.png
+```
+
+If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
 
 For this repository:
 
