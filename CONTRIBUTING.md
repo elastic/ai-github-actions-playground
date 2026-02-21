@@ -58,11 +58,16 @@ from ES|QL aggregations like STATS ... BY bucket1, bucket2.
 
 Once approved, a maintainer assigns the issue to an AI agent. The agent creates a PR, implements your plan, runs validation, and responds to review feedback until the PR is merged.
 
+## UI Changes
+
+**All UI changes must include screenshots in the PR.** When your issue results in any visual change to the dashboard, the implementing PR must contain before/after screenshots demonstrating the change. Issues that describe UI changes should explicitly ask the agent to capture and attach screenshots.
+
 ## Issue Guidelines
 
 - **Bugs**: Include reproduction steps, expected vs actual behavior, and proposed fix
 - **Features**: Explain the use case, provide examples, and include step-by-step instructions
 - **Be specific**: Name the files, components, and test cases the agent should touch
+- **UI changes**: Remind the agent to include before/after screenshots in the PR
 
 ## Security
 
