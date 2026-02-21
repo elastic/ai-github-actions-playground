@@ -108,9 +108,21 @@ export default function PanelEditor() {
             onChange={(e) => setTitle(e.target.value)}
           />
 
-          <Typography variant="subtitle2" color="text.secondary">
-            ES|QL Query
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              ES|QL Query
+            </Typography>
+            <Typography
+              variant="caption"
+              component="a"
+              href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
+              target="_blank"
+              rel="noreferrer"
+              sx={{ color: "primary.main", textDecoration: "none" }}
+            >
+              ES|QL documentation
+            </Typography>
+          </Box>
           <Box
             sx={{
               border: 1,
