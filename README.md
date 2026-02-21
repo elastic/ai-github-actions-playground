@@ -46,6 +46,8 @@ npm run dev
   - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests (see below)
   - An [API key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html) with read permissions
 
+**⚠️ Serverless not supported:** Elasticsearch Serverless does not support CORS configuration, so it cannot be used with this dashboard. Use a self-managed or Elastic Cloud (hosted) cluster instead.
+
 ### Generating an API Key
 
 #### Via Kibana
