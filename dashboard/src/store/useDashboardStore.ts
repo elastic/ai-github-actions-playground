@@ -6,6 +6,9 @@ import type {
   PanelDefinition,
   TimeRange,
 } from "../types";
+import { createDefaultDashboard } from "../dashboards/default";
+
+export { createDefaultDashboard };
 
 interface DashboardState {
   connection: ElasticsearchConnection | null;
@@ -33,17 +36,7 @@ interface DashboardState {
 
   exportDashboard: () => string;
   importDashboard: (json: string) => void;
-}
-
-function createDefaultDashboard(): DashboardDefinition {
-  return {
-    id: crypto.randomUUID(),
-    title: "New Dashboard",
-    panels: [],
-    timeRange: { from: "now-1h", to: "now" },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  loadDefaultDashboard: () => void;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -118,6 +111,10 @@ export const useDashboardStore = create<DashboardState>()(
       importDashboard: (json) => {
         const parsed = JSON.parse(json) as DashboardDefinition;
         set({ dashboard: parsed });
+      },
+
+      loadDefaultDashboard: () => {
+        set({ dashboard: createDefaultDashboard() });
       },
     }),
     {

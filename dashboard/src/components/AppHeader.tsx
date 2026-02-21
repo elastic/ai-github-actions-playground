@@ -41,6 +41,7 @@ export default function AppHeader() {
   const addPanel = useDashboardStore((s) => s.addPanel);
   const exportDashboard = useDashboardStore((s) => s.exportDashboard);
   const importDashboard = useDashboardStore((s) => s.importDashboard);
+  const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
 
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(dashboard.title);
@@ -212,6 +213,14 @@ export default function AppHeader() {
         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
           <MenuItem onClick={handleExport}>Export Dashboard</MenuItem>
           <MenuItem onClick={handleImport}>Import Dashboard</MenuItem>
+          <MenuItem
+            onClick={() => {
+              loadDefaultDashboard();
+              setMenuAnchor(null);
+            }}
+          >
+            Load Default Dashboard
+          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
