@@ -17,6 +17,7 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
+  currentPage: "dashboard" | "discover";
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -34,6 +35,7 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
+  setCurrentPage: (page: "dashboard" | "discover") => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => void;
@@ -97,6 +99,7 @@ export const useDashboardStore = create<DashboardState>()(
       themeMode: "dark",
       editingPanelId: null,
       connectionDialogOpen: false,
+      currentPage: "dashboard",
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -159,6 +162,7 @@ export const useDashboardStore = create<DashboardState>()(
 
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
+      setCurrentPage: (page) => set({ currentPage: page }),
 
       exportDashboard: () => {
         const { dashboard } = get();
