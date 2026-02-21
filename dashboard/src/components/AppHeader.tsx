@@ -10,6 +10,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Chip from "@mui/material/Chip";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import AddIcon from "@mui/icons-material/Add";
@@ -17,6 +19,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import SearchIcon from "@mui/icons-material/Search";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
 
@@ -42,6 +46,8 @@ export default function AppHeader() {
   const exportDashboard = useDashboardStore((s) => s.exportDashboard);
   const importDashboard = useDashboardStore((s) => s.importDashboard);
   const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
+  const currentPage = useDashboardStore((s) => s.currentPage);
+  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
 
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(dashboard.title);
@@ -133,6 +139,30 @@ export default function AppHeader() {
           >
             {dashboard.title}
           </Typography>
+        )}
+
+        {connected && (
+          <Tabs
+            value={currentPage}
+            onChange={(_, v: "dashboard" | "discover") => setCurrentPage(v)}
+            sx={{ ml: 2, minHeight: 48 }}
+            TabIndicatorProps={{ style: { height: 3 } }}
+          >
+            <Tab
+              value="dashboard"
+              label="Dashboard"
+              icon={<DashboardIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="discover"
+              label="Discover"
+              icon={<SearchIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+          </Tabs>
         )}
 
         <Box sx={{ flex: 1 }} />
