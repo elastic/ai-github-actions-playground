@@ -1,9 +1,10 @@
-import type { ElasticsearchConnection, EsqlResponse, EsqlError } from "../types";
+import type { ElasticsearchConnection, EsqlResponse, EsqlError, TimeRange } from "../types";
 
 export async function executeEsql(
   connection: ElasticsearchConnection,
   query: string,
   signal?: AbortSignal,
+  timeRange?: TimeRange,
 ): Promise<EsqlResponse> {
   const baseUrl = connection.url.replace(/\/+$/, "");
   const url = `${baseUrl}/_query?format=json`;
@@ -17,10 +18,22 @@ export async function executeEsql(
     headers["Authorization"] = `ApiKey ${connection.apiKey}`;
   }
 
+  const body: Record<string, unknown> = { query };
+  if (timeRange) {
+    body.filter = {
+      range: {
+        "@timestamp": {
+          gte: timeRange.from,
+          lte: timeRange.to,
+        },
+      },
+    };
+  }
+
   const response = await fetch(url, {
     method: "POST",
     headers,
-    body: JSON.stringify({ query }),
+    body: JSON.stringify(body),
     signal,
   });
 

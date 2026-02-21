@@ -37,8 +37,25 @@ npm run dev
 
 - **Node.js** ≥ 18
 - An **Elasticsearch** cluster with:
-  - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests
+  - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests (see below)
   - An [API key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html) with read permissions
+
+### Elasticsearch CORS Configuration
+
+Since the dashboard queries Elasticsearch directly from your browser, your cluster must have CORS enabled. Add the following to your `elasticsearch.yml`:
+
+```yaml
+http.cors.enabled: true
+http.cors.allow-origin: "https://<your-dashboard-domain>"
+http.cors.allow-headers: "Authorization,Content-Type"
+```
+
+> **⚠️ Security warning:** Do **not** use `http.cors.allow-origin: "*"` in production — it allows any website to send requests to your cluster using a visitor's credentials. Only use the wildcard value for local development:
+>
+> ```yaml
+> # Local development only — do not use in production
+> http.cors.allow-origin: "*"
+> ```
 
 ## Connecting
 
@@ -48,6 +65,28 @@ npm run dev
 4. Click **Connect**
 
 The connection is made directly from your browser. No credentials are sent to any intermediary server.
+
+## Using a Local Elasticsearch
+
+You can connect the dashboard to a local Elasticsearch instance (e.g. `http://localhost:9200`).
+
+### CORS Configuration
+
+Elasticsearch must have CORS enabled to accept requests from the dashboard's origin. Add the following to your `elasticsearch.yml`:
+
+```yaml
+http.cors.enabled: true
+http.cors.allow-origin: "https://elastic.github.io"
+http.cors.allow-headers: "Authorization, Content-Type, X-Elastic-Client-Meta"
+```
+
+If running the dev server locally, also allow `http://localhost:3000`.
+
+### Browser Private Network Access Prompt
+
+When the dashboard is served over HTTPS (e.g. the live demo at `https://elastic.github.io`) and you connect to a local Elasticsearch at `http://localhost`, your browser may display a **Private Network Access** permission prompt. This is a security feature in Chromium-based browsers that restricts public websites from making requests to your local network.
+
+If you see this prompt, click **Allow** to permit the connection. If no prompt appears and the connection is blocked, check `chrome://flags/#private-network-access-respect-preflight-results` or try using the dashboard from the local dev server (`http://localhost:3000`) instead, which avoids the HTTPS-to-HTTP restriction.
 
 ## Technology
 
