@@ -10,6 +10,7 @@ import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
+import DocsPage from "./components/DocsPage";
 
 export default function App() {
   const themeMode = useDashboardStore((s) => s.themeMode);
@@ -26,7 +27,9 @@ export default function App() {
           component="main"
           sx={{ flex: 1, p: 2, overflow: "auto", display: "flex", flexDirection: "column" }}
         >
-          {!connected ? (
+          {currentPage === "docs" ? (
+            <DocsPage />
+          ) : !connected ? (
             <WelcomeScreen />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
