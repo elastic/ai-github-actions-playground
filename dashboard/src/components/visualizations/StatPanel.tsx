@@ -1,15 +1,23 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import type { EsqlResponse } from "../../types";
-import { findNumericColumnIndices, formatNumber } from "./chartUtils";
+import { formatValue } from "@perses-dev/core";
+import type { EsqlResponse, FormatOptions, StatPanelOptions } from "../../types";
+import { findNumericColumnIndices } from "./chartUtils";
 import { CHART_COLORS } from "../../theme";
+
+function formatStatValue(value: unknown, format?: FormatOptions): string {
+  if (value == null) return "—";
+  return formatValue(Number(value), format ?? { unit: "decimal" });
+}
 
 interface Props {
   data: EsqlResponse;
+  options?: StatPanelOptions;
 }
 
-export default function StatPanel({ data }: Props) {
+export default function StatPanel({ data, options }: Props) {
   const numericIdxs = findNumericColumnIndices(data);
+  const format = options?.format;
 
   if (numericIdxs.length === 0 || data.values.length === 0) {
     return (
@@ -53,7 +61,7 @@ export default function StatPanel({ data }: Props) {
               lineHeight: 1.2,
             }}
           >
-            {formatNumber(stat.value)}
+            {formatStatValue(stat.value, format)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {stat.name}

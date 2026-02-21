@@ -1,15 +1,20 @@
 import { useMemo } from "react";
-import type { EsqlResponse } from "../../types";
+import { formatValue } from "@perses-dev/core";
+import type { EsqlResponse, BarChartOptions } from "../../types";
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
+  options?: BarChartOptions;
 }
 
-export default function BarChart({ data }: Props) {
+export default function BarChart({ data, options }: Props) {
   const theme = useEChartTheme();
+  const stacked = options?.stacked === true;
+  const horizontal = options?.horizontal === true;
+  const format = options?.format;
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -25,15 +30,37 @@ export default function BarChart({ data }: Props) {
         ? getColumnValues(data, categoryIdx).map(String)
         : data.values.map((_, i) => String(i));
 
+    const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};
+
     const series = numericIdxs.map((colIdx, i) => ({
       name: data.columns[colIdx]!.name,
       type: "bar" as const,
       data: getColumnValues(data, colIdx) as number[],
+      stack: stacked ? "total" : undefined,
       itemStyle: {
         color: theme.color[i % theme.color.length],
-        borderRadius: [4, 4, 0, 0],
+        borderRadius: stacked ? undefined : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
       },
     }));
+
+    const categoryAxis = {
+      type: "category" as const,
+      data: categories,
+      axisLabel: {
+        rotate: !horizontal && categories.length > 10 ? 45 : 0,
+        overflow: "truncate" as const,
+        width: 80,
+      },
+    };
+
+    const valueAxis = {
+      ...theme.yAxis,
+      type: "value" as const,
+      axisLabel: {
+        ...theme.yAxis.axisLabel,
+        ...axisLabelFormatter,
+      },
+    };
 
     return {
       ...theme,
@@ -48,21 +75,11 @@ export default function BarChart({ data }: Props) {
         bottom: 0,
         type: "scroll" as const,
       },
-      xAxis: {
-        ...theme.xAxis,
-        type: "category" as const,
-        data: categories,
-        axisLabel: {
-          ...theme.xAxis.axisLabel,
-          rotate: categories.length > 10 ? 45 : 0,
-          overflow: "truncate" as const,
-          width: 80,
-        },
-      },
-      yAxis: { ...theme.yAxis, type: "value" as const },
+      xAxis: horizontal ? { ...valueAxis } : { ...theme.xAxis, ...categoryAxis },
+      yAxis: horizontal ? { ...theme.yAxis, ...categoryAxis } : valueAxis,
       series,
     };
-  }, [data, theme]);
+  }, [data, theme, stacked, horizontal, format]);
 
   return <EChartWrapper option={option} />;
 }
