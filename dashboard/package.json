@@ -11,7 +11,7 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "test:unit": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --config vitest.config.ts --passWithNoTests",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test"
   },
