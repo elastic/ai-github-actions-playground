@@ -161,7 +161,24 @@ Then, when connecting the dashboard, enter `http://localhost:3000` as the Elasti
 
 ### Docker (proxy + dashboard in one container)
 
-The Docker image bundles the dashboard and an nginx proxy together. Run it against any Elasticsearch instance without changing your Elasticsearch CORS configuration:
+The Docker image bundles the dashboard and an nginx proxy together. Run it against any Elasticsearch instance without changing your Elasticsearch CORS configuration.
+
+A pre-built image is published to GitHub Container Registry on every push to `main`:
+
+```bash
+# Pull and run the latest image
+docker run --rm -p 8080:80 \
+  -e ES_URL=http://host.docker.internal:9200 \
+  ghcr.io/elastic/ai-github-actions-playground:latest
+```
+
+Or with Docker Compose (uses the pre-built image by default):
+
+```bash
+ES_URL=http://my-elasticsearch:9200 docker compose up
+```
+
+To build the image locally instead:
 
 ```bash
 # Build the image
@@ -172,12 +189,6 @@ make docker-run
 
 # Run against a remote cluster
 ES_URL=https://my-cluster.es.io:9200 make docker-run
-```
-
-Or with Docker Compose:
-
-```bash
-ES_URL=http://my-elasticsearch:9200 docker compose up
 ```
 
 Then open `http://localhost:8080` in your browser. Enter `http://localhost:8080` as the Elasticsearch URL when connecting — the proxy will forward all `/_query` requests to `ES_URL`.

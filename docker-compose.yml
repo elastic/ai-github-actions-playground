@@ -1,6 +1,6 @@
 services:
   dashboard:
-    build: .
+    image: ghcr.io/elastic/ai-github-actions-playground:latest
     ports:
       - "8080:80"
     environment:
