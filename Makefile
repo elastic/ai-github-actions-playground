@@ -1,23 +1,26 @@
 DASHBOARD_DIR := dashboard
 
-.PHONY: help setup serve build lint format check clean preview test test\:unit test\:integration test\:e2e
+.PHONY: help setup serve serve-proxy build lint format check clean preview test test\:unit test\:integration test\:e2e docker-build docker-run
 
 help:
 	@echo "ES|QL Dashboard — a static dashboarding tool powered by Perses + ES|QL"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  setup    - Install Node.js dependencies"
-	@echo "  serve    - Start Vite dev server with hot reload (http://localhost:3000)"
-	@echo "  build    - Production build to dashboard/dist/"
-	@echo "  preview  - Preview the production build locally"
-	@echo "  lint     - Run ESLint, TypeScript type checking, and Prettier format check"
-	@echo "  format   - Auto-format code with Prettier"
-	@echo "  check    - Run all checks (equivalent to CI)"
-	@echo "  test     - Run all tests (unit, integration, e2e)"
+	@echo "  setup        - Install Node.js dependencies"
+	@echo "  serve        - Start Vite dev server with hot reload (http://localhost:3000)"
+	@echo "  serve-proxy  - Start dev server with Elasticsearch proxy (set ES_URL)"
+	@echo "  build        - Production build to dashboard/dist/"
+	@echo "  preview      - Preview the production build locally"
+	@echo "  lint         - Run ESLint, TypeScript type checking, and Prettier format check"
+	@echo "  format       - Auto-format code with Prettier"
+	@echo "  check        - Run all checks (equivalent to CI)"
+	@echo "  test         - Run all tests (unit, integration, e2e)"
 	@echo "  test:unit        - Run unit tests"
 	@echo "  test:integration - Run integration tests"
 	@echo "  test:e2e         - Run end-to-end tests"
-	@echo "  clean    - Remove build artifacts and node_modules"
+	@echo "  clean        - Remove build artifacts and node_modules"
+	@echo "  docker-build - Build the Docker image"
+	@echo "  docker-run   - Run the Docker container (set ES_URL)"
 
 setup:
 	@echo "Installing dependencies..."
@@ -27,6 +30,12 @@ setup:
 
 serve: setup
 	@cd $(DASHBOARD_DIR) && npm run dev
+
+serve-proxy: setup
+	@echo "Starting dev server with Elasticsearch proxy..."
+	@echo "  Proxying /_query → $${ES_URL:-http://localhost:9200}"
+	@echo "  Connect the dashboard to: http://localhost:3000"
+	@cd $(DASHBOARD_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
 
 build: setup
 	@echo "Building for production..."
@@ -72,3 +81,15 @@ clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(DASHBOARD_DIR)/dist $(DASHBOARD_DIR)/node_modules
 	@echo "✓ Clean complete."
+
+docker-build:
+	@echo "Building Docker image..."
+	@docker build -t esql-dashboard .
+	@echo "✓ Docker image built. Run 'make docker-run' to start the container."
+
+docker-run:
+	@echo "Starting Docker container..."
+	@echo "  Dashboard: http://localhost:8080"
+	@echo "  Proxying /_query → $${ES_URL:-http://host.docker.internal:9200}"
+	@echo "  Connect the dashboard to: http://localhost:8080"
+	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} esql-dashboard

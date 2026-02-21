@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -10,6 +10,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Chip from "@mui/material/Chip";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import AddIcon from "@mui/icons-material/Add";
@@ -17,8 +19,11 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import SearchIcon from "@mui/icons-material/Search";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
+import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
 const TIME_PRESETS: Array<{ label: string; range: TimeRange }> = [
   { label: "Last 15m", range: { from: "now-15m", to: "now" } },
@@ -29,12 +34,22 @@ const TIME_PRESETS: Array<{ label: string; range: TimeRange }> = [
   { label: "Last 30d", range: { from: "now-30d", to: "now" } },
 ];
 
+const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
+  { label: "Off", seconds: 0 },
+  { label: "10s", seconds: 10 },
+  { label: "15s", seconds: 15 },
+  { label: "30s", seconds: 30 },
+  { label: "1m", seconds: 60 },
+  { label: "5m", seconds: 300 },
+];
+
 export default function AppHeader() {
   const themeMode = useDashboardStore((s) => s.themeMode);
   const setThemeMode = useDashboardStore((s) => s.setThemeMode);
   const connected = useDashboardStore((s) => s.connected);
   const dashboard = useDashboardStore((s) => s.dashboard);
   const setTimeRange = useDashboardStore((s) => s.setTimeRange);
+  const setRefreshInterval = useDashboardStore((s) => s.setRefreshInterval);
   const setDashboardTitle = useDashboardStore((s) => s.setDashboardTitle);
   const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
@@ -42,11 +57,29 @@ export default function AppHeader() {
   const exportDashboard = useDashboardStore((s) => s.exportDashboard);
   const importDashboard = useDashboardStore((s) => s.importDashboard);
   const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
+  const currentPage = useDashboardStore((s) => s.currentPage);
+  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
 
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(dashboard.title);
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
+  const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+
+  const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
+  const timeRangeRef = useRef(dashboard.timeRange);
+  useEffect(() => {
+    timeRangeRef.current = dashboard.timeRange;
+  }, [dashboard.timeRange]);
+
+  useEffect(() => {
+    if (!refreshInterval || !connected) return;
+    const id = setInterval(() => {
+      // Spread into a new object so PanelContainers detect the change and re-fetch
+      setTimeRange({ ...timeRangeRef.current });
+    }, refreshInterval * 1000);
+    return () => clearInterval(id);
+  }, [refreshInterval, connected, setTimeRange]);
 
   const handleAddPanel = useCallback(() => {
     const newPanel = {
@@ -135,6 +168,30 @@ export default function AppHeader() {
           </Typography>
         )}
 
+        {connected && (
+          <Tabs
+            value={currentPage}
+            onChange={(_, v: "dashboard" | "discover") => setCurrentPage(v)}
+            sx={{ ml: 2, minHeight: 48 }}
+            TabIndicatorProps={{ style: { height: 3 } }}
+          >
+            <Tab
+              value="dashboard"
+              label="Dashboard"
+              icon={<DashboardIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="discover"
+              label="Discover"
+              icon={<SearchIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+          </Tabs>
+        )}
+
         <Box sx={{ flex: 1 }} />
 
         <Chip
@@ -170,6 +227,33 @@ export default function AppHeader() {
                   onClick={() => {
                     setTimeRange(preset.range);
                     setTimeAnchor(null);
+                  }}
+                >
+                  {preset.label}
+                </MenuItem>
+              ))}
+            </Menu>
+
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={(e) => setRefreshAnchor(e.currentTarget)}
+            >
+              {REFRESH_INTERVAL_PRESETS.find((p) => p.seconds === refreshInterval)?.label ??
+                `${refreshInterval}s`}
+            </Button>
+            <Menu
+              anchorEl={refreshAnchor}
+              open={Boolean(refreshAnchor)}
+              onClose={() => setRefreshAnchor(null)}
+            >
+              {REFRESH_INTERVAL_PRESETS.map((preset) => (
+                <MenuItem
+                  key={preset.label}
+                  selected={preset.seconds === refreshInterval}
+                  onClick={() => {
+                    setRefreshInterval(preset.seconds);
+                    setRefreshAnchor(null);
                   }}
                 >
                   {preset.label}

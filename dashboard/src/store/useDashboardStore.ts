@@ -17,11 +17,13 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
+  currentPage: "dashboard" | "discover";
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
   setThemeMode: (mode: "light" | "dark") => void;
   setTimeRange: (range: TimeRange) => void;
+  setRefreshInterval: (interval: number) => void;
   setDashboardTitle: (title: string) => void;
 
   addPanel: (panel: PanelDefinition) => void;
@@ -33,6 +35,7 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
+  setCurrentPage: (page: "dashboard" | "discover") => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => void;
@@ -46,6 +49,7 @@ interface DashboardState {
  */
 type PersistedState = { connection?: ElasticsearchConnection | null };
 const API_KEY_SESSION_SUFFIX = ":apiKey";
+const PASSWORD_SESSION_SUFFIX = ":password";
 
 const splitStorage = {
   getItem: (name: string): StorageValue<PersistedState> | null => {
@@ -54,8 +58,9 @@ const splitStorage = {
     try {
       const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
       const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
+      const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
       if (stored.state.connection) {
-        stored.state.connection = { ...stored.state.connection, apiKey };
+        stored.state.connection = { ...stored.state.connection, apiKey, password };
       }
       return stored;
     } catch {
@@ -64,21 +69,24 @@ const splitStorage = {
   },
   setItem: (name: string, value: StorageValue<PersistedState>): void => {
     const apiKey = value.state.connection?.apiKey ?? "";
+    const password = value.state.connection?.password ?? "";
     const toStore: StorageValue<PersistedState> = {
       ...value,
       state: {
         ...value.state,
         connection: value.state.connection
-          ? { ...value.state.connection, apiKey: "" }
+          ? { ...value.state.connection, apiKey: "", password: "" }
           : value.state.connection,
       },
     };
     localStorage.setItem(name, JSON.stringify(toStore));
     sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, apiKey);
+    sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, password);
   },
   removeItem: (name: string): void => {
     localStorage.removeItem(name);
     sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
+    sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
   },
 };
 
@@ -91,6 +99,7 @@ export const useDashboardStore = create<DashboardState>()(
       themeMode: "dark",
       editingPanelId: null,
       connectionDialogOpen: false,
+      currentPage: "dashboard",
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -98,6 +107,14 @@ export const useDashboardStore = create<DashboardState>()(
       setTimeRange: (range) =>
         set((s) => ({
           dashboard: { ...s.dashboard, timeRange: range, updatedAt: new Date().toISOString() },
+        })),
+      setRefreshInterval: (interval) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            refreshInterval: interval,
+            updatedAt: new Date().toISOString(),
+          },
         })),
       setDashboardTitle: (title) =>
         set((s) => ({
@@ -145,6 +162,7 @@ export const useDashboardStore = create<DashboardState>()(
 
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
+      setCurrentPage: (page) => set({ currentPage: page }),
 
       exportDashboard: () => {
         const { dashboard } = get();
