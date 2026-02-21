@@ -37,8 +37,25 @@ npm run dev
 
 - **Node.js** ≥ 18
 - An **Elasticsearch** cluster with:
-  - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests
+  - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests (see below)
   - An [API key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html) with read permissions
+
+### Elasticsearch CORS Configuration
+
+Since the dashboard queries Elasticsearch directly from your browser, your cluster must have CORS enabled. Add the following to your `elasticsearch.yml`:
+
+```yaml
+http.cors.enabled: true
+http.cors.allow-origin: "https://<your-dashboard-domain>"
+http.cors.allow-headers: "Authorization,Content-Type"
+```
+
+> **⚠️ Security warning:** Do **not** use `http.cors.allow-origin: "*"` in production — it allows any website to send requests to your cluster using a visitor's credentials. Only use the wildcard value for local development:
+>
+> ```yaml
+> # Local development only — do not use in production
+> http.cors.allow-origin: "*"
+> ```
 
 ## Connecting
 
