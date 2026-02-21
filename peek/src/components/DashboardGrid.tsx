@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
+import { Responsive, WidthProvider, type Layout } from "react-grid-layout/legacy";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,7 +19,7 @@ export default function DashboardGrid() {
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
   const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
 
-  const layouts = useMemo<{ lg: Layout[] }>(
+  const layouts = useMemo<{ lg: Layout }>(
     () => ({
       lg: panels.map((p) => ({
         i: p.id,
@@ -35,7 +35,7 @@ export default function DashboardGrid() {
   );
 
   const handleLayoutChange = useCallback(
-    (layout: Layout[]) => {
+    (layout: Layout) => {
       const updates = layout.map((l) => ({
         id: l.i,
         x: l.x,
