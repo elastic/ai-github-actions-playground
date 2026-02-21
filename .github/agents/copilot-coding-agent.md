@@ -5,7 +5,7 @@
 # For format details, see: https://gh.io/customagents/config
 
 name: coding-assistant
-description: AI coding assistant for the ES|QL Dashboard repository
+description: AI coding assistant for the Elastic Peek repository
 ---
 
 ## Repository Context
