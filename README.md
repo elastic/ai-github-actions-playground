@@ -40,7 +40,53 @@ npm run dev
   - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests (see below)
   - An [API key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html) with read permissions
 
-> **⚠️ Serverless not supported:** Elasticsearch Serverless does not support CORS configuration, so it cannot be used with this dashboard. Use a self-managed or Elastic Cloud (hosted) cluster instead.
+**⚠️ Serverless not supported:** Elasticsearch Serverless does not support CORS configuration, so it cannot be used with this dashboard. Use a self-managed or Elastic Cloud (hosted) cluster instead.
+
+### Generating an API Key
+
+#### Via Kibana
+
+1. Open Kibana and go to **Stack Management → Security → API keys**
+2. Click **Create API key**
+3. Give it a name (e.g. `esql-dashboard`)
+4. Under **Control security privileges**, restrict it to the indices you want to query:
+   ```json
+   {
+     "indices": [
+       {
+         "names": ["logs-*", "metrics-*"],
+         "privileges": ["read"]
+       }
+     ]
+   }
+   ```
+   Replace `logs-*`, `metrics-*` with the specific index patterns you need. Avoid granting access to `*` (all indices) unless necessary.
+5. Click **Create API key** and copy the generated key — it is only shown once
+
+#### Via the Elasticsearch REST API
+
+```bash
+curl -X POST "https://<your-elasticsearch-url>/_security/api_key" \
+  -H "Content-Type: application/json" \
+  -u "<username>:<password>" \
+  -d '{
+    "name": "esql-dashboard",
+    "role_descriptors": {
+      "esql_read": {
+        "indices": [
+          {
+            "names": ["logs-*", "metrics-*"],
+            "privileges": ["read"]
+          }
+        ]
+      }
+    }
+  }'
+```
+
+> **Note:** Use a dedicated user with limited permissions to create the API key rather than admin credentials. To avoid exposing credentials in your shell history, set them as environment variables: `ES_USER` and `ES_PASS`, then use `-u "$ES_USER:$ES_PASS"`.
+
+The response contains an `encoded` field — use that value as your API key in the dashboard connection dialog.
 
 ### Elasticsearch CORS Configuration
 
