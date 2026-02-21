@@ -13,6 +13,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { executeEsql, isEsqlError } from "../services/elasticsearch";
 import type { PanelDefinition, EsqlResponse } from "../types";
 import Visualization from "./visualizations/Visualization";
+import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
 
 interface Props {
   panel: PanelDefinition;
@@ -26,6 +27,9 @@ export default function PanelContainer({ panel }: Props) {
   const [data, setData] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
+  const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null);
+  const [, setTick] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -42,6 +46,8 @@ export default function PanelContainer({ panel }: Props) {
       const result = await executeEsql(connection, panel.query.trim(), ctrl.signal, timeRange);
       if (!ctrl.signal.aborted) {
         setData(result);
+        setExecutionTimeMs(result.executionTimeMs);
+        setLastRefreshAt(new Date());
       }
     } catch (err) {
       if (!ctrl.signal.aborted) {
@@ -58,6 +64,13 @@ export default function PanelContainer({ panel }: Props) {
     fetchData();
     return () => abortRef.current?.abort();
   }, [fetchData]);
+
+  // Periodically re-render so the "X ago" label stays current.
+  useEffect(() => {
+    if (!lastRefreshAt) return;
+    const timer = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(timer);
+  }, [lastRefreshAt]);
 
   return (
     <Paper
@@ -98,6 +111,34 @@ export default function PanelContainer({ panel }: Props) {
           {panel.title}
         </Typography>
         {loading && <CircularProgress size={14} sx={{ mr: 0.5 }} />}
+        {!loading && executionTimeMs !== null && data && lastRefreshAt && (
+          <Tooltip title={`Refreshed at ${lastRefreshAt.toLocaleTimeString()}`}>
+            <Typography
+              component="span"
+              variant="caption"
+              sx={{
+                mr: 0.5,
+                px: 0.75,
+                py: 0.125,
+                borderRadius: 1,
+                bgcolor: "action.hover",
+                fontFamily: "monospace",
+                fontSize: "0.65rem",
+                whiteSpace: "nowrap",
+                color: "text.secondary",
+                cursor: "default",
+              }}
+            >
+              {formatMs(executionTimeMs)} • {formatRowCount(data.values.length)} rows •{" "}
+              {formatTimeAgo(lastRefreshAt)}
+            </Typography>
+          </Tooltip>
+        )}
+        {!loading && error && (
+          <Tooltip title={error}>
+            <ErrorOutlineIcon sx={{ fontSize: 14, color: "error.main", mr: 0.5 }} />
+          </Tooltip>
+        )}
         <Tooltip title="Refresh">
           <IconButton size="small" onClick={fetchData} disabled={loading}>
             <RefreshIcon sx={{ fontSize: 16 }} />

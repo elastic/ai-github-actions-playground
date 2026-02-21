@@ -61,6 +61,7 @@ Once approved, a maintainer assigns the issue to an AI agent. The agent creates 
 ## UI Changes
 
 **All UI changes must include screenshots in the PR.** When your issue results in any visual change to the dashboard, the implementing PR must contain before/after screenshots demonstrating the change. Issues that describe UI changes should explicitly ask the agent to capture and attach screenshots.
+Before posting screenshots, run `cd dashboard && npm run screenshot:preflight -- --url http://127.0.0.1:3000 --output screenshot-preflight.json` and attach diagnostics instead of screenshots when errors are detected.
 
 ## Issue Guidelines
 
