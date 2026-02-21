@@ -65,7 +65,7 @@ test\:unit: setup
 test\:integration: setup
 	@cd $(DASHBOARD_DIR) && npm run test:integration
 
-test\:e2e: build
+test\:e2e: setup
 	@cd $(DASHBOARD_DIR) && npm run test:e2e
 
 clean:

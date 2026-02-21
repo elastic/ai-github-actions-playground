@@ -5,7 +5,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3000/ai-github-actions-playground/",
     trace: process.env.CI ? "on-first-retry" : "on",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
