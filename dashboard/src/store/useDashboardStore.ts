@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, type StorageValue } from "zustand/middleware";
 import type {
   DashboardDefinition,
   ElasticsearchConnection,
@@ -34,6 +34,49 @@ interface DashboardState {
   exportDashboard: () => string;
   importDashboard: (json: string) => void;
 }
+
+/**
+ * Custom storage that keeps the Elasticsearch URL in localStorage (persistent)
+ * while storing the API key only in sessionStorage (cleared when the browser
+ * session ends, reducing the exposure window of the credential).
+ */
+type PersistedState = { connection?: ElasticsearchConnection | null };
+const API_KEY_SESSION_SUFFIX = ":apiKey";
+
+const splitStorage = {
+  getItem: (name: string): StorageValue<PersistedState> | null => {
+    const localRaw = localStorage.getItem(name);
+    if (!localRaw) return null;
+    try {
+      const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
+      const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
+      if (stored.state.connection) {
+        stored.state.connection = { ...stored.state.connection, apiKey };
+      }
+      return stored;
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: StorageValue<PersistedState>): void => {
+    const apiKey = value.state.connection?.apiKey ?? "";
+    const toStore: StorageValue<PersistedState> = {
+      ...value,
+      state: {
+        ...value.state,
+        connection: value.state.connection
+          ? { ...value.state.connection, apiKey: "" }
+          : value.state.connection,
+      },
+    };
+    localStorage.setItem(name, JSON.stringify(toStore));
+    sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, apiKey);
+  },
+  removeItem: (name: string): void => {
+    localStorage.removeItem(name);
+    sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
+  },
+};
 
 function createDefaultDashboard(): DashboardDefinition {
   return {
@@ -122,6 +165,7 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: "esql-dashboard",
+      storage: splitStorage,
       partialize: (state) => ({
         connection: state.connection,
         dashboard: state.dashboard,
