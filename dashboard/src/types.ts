@@ -1,3 +1,7 @@
+import type { FormatOptions } from "@perses-dev/core";
+
+export type { FormatOptions };
+
 export interface ElasticsearchConnection {
   url: string;
   apiKey?: string;
@@ -8,6 +12,35 @@ export interface ElasticsearchConnection {
 
 export type VisualizationType = "timeseries" | "bar" | "table" | "stat" | "gauge" | "pie";
 
+export interface TimeSeriesOptions {
+  format?: FormatOptions;
+  smooth?: boolean;
+  showArea?: boolean;
+  stacked?: boolean;
+}
+
+export interface BarChartOptions {
+  format?: FormatOptions;
+  stacked?: boolean;
+  horizontal?: boolean;
+}
+
+export interface StatPanelOptions {
+  format?: FormatOptions;
+}
+
+export interface GaugePanelOptions {
+  format?: FormatOptions;
+  min?: number;
+  max?: number;
+}
+
+export type VisualizationOptions =
+  | TimeSeriesOptions
+  | BarChartOptions
+  | StatPanelOptions
+  | GaugePanelOptions;
+
 export interface PanelDefinition {
   id: string;
   title: string;
@@ -16,7 +49,7 @@ export interface PanelDefinition {
   /** Grid layout position */
   layout: { x: number; y: number; w: number; h: number };
   /** Visualization-specific options */
-  options?: Record<string, unknown>;
+  options?: VisualizationOptions;
   /** Auto-refresh interval in seconds, 0 = disabled */
   refreshInterval?: number;
 }
