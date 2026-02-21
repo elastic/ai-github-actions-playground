@@ -246,6 +246,28 @@ describe("orders queries", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Time range filter
+// ---------------------------------------------------------------------------
+
+describe("executeEsql time range filter", () => {
+  it("returns all rows when time range covers all data", async () => {
+    const result = await executeEsql(connection, "FROM web_logs", undefined, {
+      from: "now-10m",
+      to: "now",
+    });
+    expect(result.values).toHaveLength(6);
+  });
+
+  it("returns no rows when time range excludes all data", async () => {
+    const result = await executeEsql(connection, "FROM web_logs", undefined, {
+      from: "now-30d",
+      to: "now-1d",
+    });
+    expect(result.values).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Response structure verification
 // ---------------------------------------------------------------------------
 
