@@ -265,12 +265,13 @@ function GaugeOptionsEditor({
         size="small"
         type="number"
         value={options.min ?? ""}
-        onChange={(e) =>
+        onChange={(e) => {
+          const n = Number(e.target.value);
           onChange({
             ...options,
-            min: e.target.value === "" ? undefined : Number(e.target.value),
-          })
-        }
+            min: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
+          });
+        }}
         sx={{ width: 90 }}
       />
       <TextField
@@ -278,12 +279,13 @@ function GaugeOptionsEditor({
         size="small"
         type="number"
         value={options.max ?? ""}
-        onChange={(e) =>
+        onChange={(e) => {
+          const n = Number(e.target.value);
           onChange({
             ...options,
-            max: e.target.value === "" ? undefined : Number(e.target.value),
-          })
-        }
+            max: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
+          });
+        }}
         sx={{ width: 90 }}
       />
     </>

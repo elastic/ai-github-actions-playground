@@ -12,7 +12,6 @@ interface Props {
 
 export default function GaugePanel({ data, options }: Props) {
   const theme = useEChartTheme();
-  const format = options?.format;
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -26,8 +25,9 @@ export default function GaugePanel({ data, options }: Props) {
     const allValues = data.values.map((row) => Number(row[numericIdxs[0]!]) || 0);
     const autoMax = Math.max(...allValues, value * 1.5, 100);
 
-    const minVal = options?.min ?? 0;
-    const maxVal = options?.max ?? autoMax;
+    const minVal = Number.isFinite(options?.min) ? options!.min! : 0;
+    const maxVal = Number.isFinite(options?.max) ? options!.max! : autoMax;
+    const format = options?.format;
 
     return {
       ...theme,
@@ -61,7 +61,7 @@ export default function GaugePanel({ data, options }: Props) {
         },
       ],
     };
-  }, [data, theme, format, options?.min, options?.max]);
+  }, [data, theme, options]);
 
   return <EChartWrapper option={option} />;
 }
