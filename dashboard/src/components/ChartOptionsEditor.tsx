@@ -63,8 +63,8 @@ function FormatEditor({
     : "";
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <FormControl size="small" fullWidth>
+    <>
+      <FormControl size="small" sx={{ minWidth: 140 }}>
         <InputLabel id="format-unit-label">Unit</InputLabel>
         <Select
           labelId="format-unit-label"
@@ -89,11 +89,11 @@ function FormatEditor({
         </Select>
       </FormControl>
 
-      <FormControl size="small" fullWidth>
-        <InputLabel id="decimal-places-label">Decimal places</InputLabel>
+      <FormControl size="small" sx={{ minWidth: 120 }}>
+        <InputLabel id="decimal-places-label">Decimals</InputLabel>
         <Select
           labelId="decimal-places-label"
-          label="Decimal places"
+          label="Decimals"
           value={decimalPlaces}
           disabled={!hasDecimalPlaces}
           onChange={(e) => {
@@ -127,8 +127,9 @@ function FormatEditor({
           />
         }
         label={<Typography variant="body2">Short values</Typography>}
+        sx={{ ml: 0 }}
       />
-    </Box>
+    </>
   );
 }
 
@@ -138,6 +139,7 @@ interface Props {
   onChange: (options: VisualizationOptions) => void;
 }
 
+/** Horizontal row of chart customization controls rendered below the preview. */
 export default function ChartOptionsEditor({ vizType, options, onChange }: Props) {
   const format = (options as { format?: FormatOptions }).format ?? DEFAULT_FORMAT;
 
@@ -146,17 +148,12 @@ export default function ChartOptionsEditor({ vizType, options, onChange }: Props
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Typography variant="subtitle2" color="text.secondary">
-        Chart Options
+    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+        Options
       </Typography>
 
-      <Box>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-          Value Format
-        </Typography>
-        <FormatEditor value={format} onChange={handleFormatChange} />
-      </Box>
+      <FormatEditor value={format} onChange={handleFormatChange} />
 
       {vizType === "timeseries" && (
         <TimeSeriesOptionsEditor options={options as TimeSeriesOptions} onChange={onChange} />
@@ -181,7 +178,7 @@ function TimeSeriesOptionsEditor({
   onChange: (o: VisualizationOptions) => void;
 }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <>
       <FormControlLabel
         control={
           <Checkbox
@@ -190,7 +187,8 @@ function TimeSeriesOptionsEditor({
             onChange={(e) => onChange({ ...options, smooth: e.target.checked })}
           />
         }
-        label={<Typography variant="body2">Smooth lines</Typography>}
+        label={<Typography variant="body2">Smooth</Typography>}
+        sx={{ ml: 0 }}
       />
       <FormControlLabel
         control={
@@ -200,7 +198,8 @@ function TimeSeriesOptionsEditor({
             onChange={(e) => onChange({ ...options, showArea: e.target.checked })}
           />
         }
-        label={<Typography variant="body2">Show area fill</Typography>}
+        label={<Typography variant="body2">Area fill</Typography>}
+        sx={{ ml: 0 }}
       />
       <FormControlLabel
         control={
@@ -211,8 +210,9 @@ function TimeSeriesOptionsEditor({
           />
         }
         label={<Typography variant="body2">Stacked</Typography>}
+        sx={{ ml: 0 }}
       />
-    </Box>
+    </>
   );
 }
 
@@ -224,7 +224,7 @@ function BarChartOptionsEditor({
   onChange: (o: VisualizationOptions) => void;
 }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <>
       <FormControlLabel
         control={
           <Checkbox
@@ -234,6 +234,7 @@ function BarChartOptionsEditor({
           />
         }
         label={<Typography variant="body2">Stacked</Typography>}
+        sx={{ ml: 0 }}
       />
       <FormControlLabel
         control={
@@ -244,8 +245,9 @@ function BarChartOptionsEditor({
           />
         }
         label={<Typography variant="body2">Horizontal</Typography>}
+        sx={{ ml: 0 }}
       />
-    </Box>
+    </>
   );
 }
 
@@ -257,7 +259,7 @@ function GaugeOptionsEditor({
   onChange: (o: VisualizationOptions) => void;
 }) {
   return (
-    <Box sx={{ display: "flex", gap: 2 }}>
+    <>
       <TextField
         label="Min"
         size="small"
@@ -269,7 +271,7 @@ function GaugeOptionsEditor({
             min: e.target.value === "" ? undefined : Number(e.target.value),
           })
         }
-        sx={{ width: 100 }}
+        sx={{ width: 90 }}
       />
       <TextField
         label="Max"
@@ -282,9 +284,9 @@ function GaugeOptionsEditor({
             max: e.target.value === "" ? undefined : Number(e.target.value),
           })
         }
-        sx={{ width: 100 }}
+        sx={{ width: 90 }}
       />
-    </Box>
+    </>
   );
 }
 

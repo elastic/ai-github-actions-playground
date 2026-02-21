@@ -4,7 +4,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
+import InputBase from "@mui/material/InputBase";
 import Box from "@mui/material/Box";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
@@ -110,102 +110,129 @@ export default function PanelEditor() {
     <Dialog
       open={Boolean(editingId)}
       onClose={() => setEditingId(null)}
-      maxWidth="lg"
+      maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { height: "85vh" } }}
+      PaperProps={{ sx: { height: "90vh" } }}
     >
-      <DialogTitle>Edit Panel</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: "flex", gap: 2, mt: 1, height: "100%" }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
-            <TextField
-              label="Panel Title"
-              fullWidth
-              size="small"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+      <DialogTitle
+        component="div"
+        sx={{ display: "flex", alignItems: "baseline", gap: 1, pb: 1.5, pt: 2, px: 3 }}
+      >
+        <Typography variant="h6" component="span" sx={{ flexShrink: 0, lineHeight: "inherit" }}>
+          Edit
+        </Typography>
+        <InputBase
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Panel Title"
+          inputProps={{ "aria-label": "Panel title" }}
+          sx={{
+            flex: 1,
+            fontSize: "1.25rem",
+            fontWeight: 500,
+            lineHeight: "inherit",
+            "& .MuiInputBase-input": {
+              p: 0,
+              borderBottom: "1px dashed",
+              borderColor: "divider",
+              "&:focus": { borderColor: "primary.main", outline: "none" },
+            },
+          }}
+        />
+      </DialogTitle>
+
+      <Divider />
+
+      <DialogContent sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Query editor */}
+        <Box>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+            ES|QL Query
+          </Typography>
+          <Box
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              overflow: "hidden",
+            }}
+          >
+            <CodeMirror
+              value={query}
+              onChange={setQuery}
+              extensions={[sql()]}
+              theme={themeMode}
+              height="120px"
+              basicSetup={{ lineNumbers: true, foldGutter: false }}
             />
-
-            <Typography variant="subtitle2" color="text.secondary">
-              ES|QL Query
-            </Typography>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                overflow: "hidden",
-              }}
-            >
-              <CodeMirror
-                value={query}
-                onChange={setQuery}
-                extensions={[sql()]}
-                theme={themeMode}
-                height="120px"
-                basicSetup={{
-                  lineNumbers: true,
-                  foldGutter: false,
-                }}
-              />
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleRunQuery}
-                disabled={loading || !query.trim()}
-              >
-                {loading ? <CircularProgress size={18} sx={{ mr: 1 }} /> : null}
-                Run Query
-              </Button>
-              {preview && (
-                <Typography variant="caption" color="text.secondary">
-                  {preview.values.length} rows × {preview.columns.length} columns
-                </Typography>
-              )}
-            </Box>
-
-            {error && <Alert severity="error">{error}</Alert>}
-
-            <Typography variant="subtitle2" color="text.secondary">
-              Visualization Type
-            </Typography>
-            <ToggleButtonGroup
-              value={viz}
-              exclusive
-              onChange={(_, v) => v && handleVizChange(v)}
-              size="small"
-            >
-              {VIZ_OPTIONS.map((opt) => (
-                <ToggleButton key={opt.value} value={opt.value}>
-                  {opt.icon}
-                  <Typography variant="caption" sx={{ ml: 0.5 }}>
-                    {opt.label}
-                  </Typography>
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-
-            {preview && (
-              <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, p: 1, overflow: "auto" }}>
-                <Visualization type={viz} data={preview} options={options} />
-              </Paper>
-            )}
           </Box>
-
-          {showOptions && (
-            <>
-              <Divider orientation="vertical" flexItem />
-              <Box sx={{ width: 260, flexShrink: 0, overflow: "auto" }}>
-                <ChartOptionsEditor vizType={viz} options={options} onChange={setOptions} />
-              </Box>
-            </>
-          )}
         </Box>
+
+        {/* Query controls row */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleRunQuery}
+            disabled={loading || !query.trim()}
+          >
+            {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
+            Run Query
+          </Button>
+          {preview && (
+            <Typography variant="caption" color="text.secondary">
+              {preview.values.length} rows × {preview.columns.length} columns
+            </Typography>
+          )}
+          <Box sx={{ flex: 1 }} />
+          {/* Visualization type */}
+          <ToggleButtonGroup
+            value={viz}
+            exclusive
+            onChange={(_, v) => v && handleVizChange(v)}
+            size="small"
+          >
+            {VIZ_OPTIONS.map((opt) => (
+              <ToggleButton key={opt.value} value={opt.value} title={opt.label}>
+                {opt.icon}
+                <Typography variant="caption" sx={{ ml: 0.5 }}>
+                  {opt.label}
+                </Typography>
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
+
+        {error && <Alert severity="error">{error}</Alert>}
+
+        {/* Preview + options */}
+        {preview && (
+          <>
+            <Paper variant="outlined" sx={{ minHeight: 220, p: 1, overflow: "hidden" }}>
+              <Visualization type={viz} data={preview} options={options} />
+            </Paper>
+
+            {showOptions && (
+              <>
+                <Divider />
+                <ChartOptionsEditor vizType={viz} options={options} onChange={setOptions} />
+              </>
+            )}
+          </>
+        )}
+
+        {/* Show options even without a preview (e.g. when editing an existing panel) */}
+        {!preview && showOptions && (
+          <>
+            <Divider />
+            <ChartOptionsEditor vizType={viz} options={options} onChange={setOptions} />
+          </>
+        )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+
+      <Divider />
+
+      <DialogActions sx={{ px: 3, py: 1.5 }}>
         <Button color="error" onClick={handleDelete}>
           Delete Panel
         </Button>
