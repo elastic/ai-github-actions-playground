@@ -1,6 +1,7 @@
-import type { EsqlResponse } from "../../types";
+import type { EsqlColumn, EsqlResponse } from "../../types";
 
 const DATE_TYPES = new Set(["date", "datetime", "date_nanos"]);
+const TIMESTAMP_FIELD = "@timestamp";
 const NUMERIC_TYPES = new Set([
   "long",
   "integer",
@@ -16,8 +17,12 @@ const NUMERIC_TYPES = new Set([
   "counter_double",
 ]);
 
+export function isDateColumn(column: EsqlColumn): boolean {
+  return DATE_TYPES.has(column.type) || column.name === TIMESTAMP_FIELD;
+}
+
 export function findDateColumnIndex(data: EsqlResponse): number {
-  return data.columns.findIndex((c) => DATE_TYPES.has(c.type));
+  return data.columns.findIndex(isDateColumn);
 }
 
 export function findNumericColumnIndices(data: EsqlResponse): number[] {
