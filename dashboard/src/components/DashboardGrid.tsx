@@ -4,6 +4,7 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -16,6 +17,7 @@ export default function DashboardGrid() {
   const updatePanelLayouts = useDashboardStore((s) => s.updatePanelLayouts);
   const addPanel = useDashboardStore((s) => s.addPanel);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
 
   const layouts = useMemo<{ lg: Layout[] }>(
     () => ({
@@ -74,11 +76,16 @@ export default function DashboardGrid() {
           No panels yet
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Add a panel to start visualizing your Elasticsearch data with ES|QL
+          Load the default dashboard to get started, or add a panel to build your own.
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddPanel}>
-          Add Panel
-        </Button>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button variant="contained" startIcon={<DashboardIcon />} onClick={loadDefaultDashboard}>
+            Load Default Dashboard
+          </Button>
+          <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddPanel}>
+            Add Panel
+          </Button>
+        </Box>
       </Box>
     );
   }
