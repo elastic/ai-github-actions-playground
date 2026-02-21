@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -9,6 +9,7 @@ import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
+import TextField from "@mui/material/TextField";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
@@ -16,6 +17,7 @@ import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { executeEsql, isEsqlError } from "../services/elasticsearch";
 import type { EsqlColumn, EsqlResponse } from "../types";
+import { filterColumnsByName, filterEsqlResult } from "./discoverUtils";
 import DataTable from "./visualizations/DataTable";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -49,6 +51,8 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  const [fieldFilter, setFieldFilter] = useState("");
+  const [tableVersion, setTableVersion] = useState(0);
 
   const handleRunQuery = useCallback(async () => {
     if (!connection || !query.trim()) return;
@@ -59,6 +63,7 @@ export default function DiscoverPage() {
       setResult(data);
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
+      setTableVersion((prev) => prev + 1);
     } catch (err) {
       setError(isEsqlError(err) ? err.message : String(err));
       setResult(null);
@@ -77,6 +82,7 @@ export default function DiscoverPage() {
       }
       return next;
     });
+    setTableVersion((prev) => prev + 1);
   }, []);
 
   const handleCreatePanel = useCallback(() => {
@@ -92,19 +98,34 @@ export default function DiscoverPage() {
     setCurrentPage("dashboard");
   }, [query, addPanel, setEditingPanelId, setCurrentPage]);
 
-  const filteredResult: EsqlResponse | null = result
-    ? {
-        columns: result.columns.filter((c) => selectedFields.has(c.name)),
-        values: result.values.map((row) =>
-          result.columns
-            .map((col, idx) => ({ col, idx }))
-            .filter(({ col }) => selectedFields.has(col.name))
-            .map(({ idx }) => row[idx]),
-        ),
-      }
-    : null;
+  const filteredResult: EsqlResponse | null = useMemo(
+    () => filterEsqlResult(result, selectedFields),
+    [result, selectedFields],
+  );
 
-  const columns: EsqlColumn[] = result?.columns ?? [];
+  const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
+  const visibleColumns = useMemo(
+    () => filterColumnsByName(columns, fieldFilter),
+    [columns, fieldFilter],
+  );
+
+  const selectVisibleFields = useCallback(() => {
+    setSelectedFields((prev) => {
+      const next = new Set(prev);
+      for (const col of visibleColumns) next.add(col.name);
+      return next;
+    });
+    setTableVersion((prev) => prev + 1);
+  }, [visibleColumns]);
+
+  const deselectVisibleFields = useCallback(() => {
+    setSelectedFields((prev) => {
+      const next = new Set(prev);
+      for (const col of visibleColumns) next.delete(col.name);
+      return next;
+    });
+    setTableVersion((prev) => prev + 1);
+  }, [visibleColumns]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
@@ -177,6 +198,24 @@ export default function DiscoverPage() {
                 {selectedFields.size} / {columns.length} selected
               </Typography>
             )}
+            {columns.length > 0 && (
+              <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <TextField
+                  size="small"
+                  placeholder="Filter fields"
+                  value={fieldFilter}
+                  onChange={(e) => setFieldFilter(e.target.value)}
+                />
+                <Box sx={{ display: "flex", gap: 0.5 }}>
+                  <Button size="small" onClick={selectVisibleFields}>
+                    Select all
+                  </Button>
+                  <Button size="small" onClick={deselectVisibleFields}>
+                    Deselect all
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </Box>
           <Box sx={{ flex: 1, overflow: "auto" }}>
             {columns.length === 0 ? (
@@ -188,7 +227,7 @@ export default function DiscoverPage() {
                 Run a query to see fields
               </Typography>
             ) : (
-              columns.map((col) => (
+              visibleColumns.map((col) => (
                 <Box key={col.name}>
                   <Box
                     sx={{
@@ -256,7 +295,7 @@ export default function DiscoverPage() {
             </Box>
           )}
           {filteredResult && filteredResult.columns.length > 0 && (
-            <DataTable data={filteredResult} />
+            <DataTable key={tableVersion} data={filteredResult} />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
             <Box
