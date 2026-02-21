@@ -16,9 +16,9 @@
 ## Quick Start
 
 ```bash
-make setup        # install Node.js dependencies
-make serve        # start Vite dev server with hot reload
-make serve-proxy  # start dev server with Elasticsearch proxy (set ES_URL)
+make setup        # install Node.js dependencies (run this first)
+make serve        # install deps + start Vite dev server with hot reload
+make serve-proxy  # install deps + start dev server with Elasticsearch proxy (set ES_URL)
 make build        # production build to peek/dist/
 make lint         # Prettier + ESLint + TypeScript type checking
 make format       # auto-format code with Prettier
@@ -26,6 +26,8 @@ make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
 ```
+
+> **Note:** `make serve` and `make serve-proxy` auto-install dependencies. The other targets (`lint`, `format`, `build`, `test-*`) assume dependencies are already installed — run `make setup` once first.
 
 ## Running with a Proxy
 
@@ -143,7 +145,7 @@ This starts an Elasticsearch 8.17 container, seeds two indices (`web_logs` and `
 
 ### CI
 
-The `ci.yml` workflow runs lint, build, and integration tests on every push to `main` and on every PR that touches `peek/**`. The integration test job pulls the Elasticsearch Docker image and runs the same `make test` target.
+The `ci.yml` workflow runs `make ci` (lint + unit tests + build) on every push to `main` and on every PR that touches `peek/**`. Integration tests require Docker and are run separately with `make test-integration`.
 
 ## Code Quality
 

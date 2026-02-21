@@ -91,8 +91,9 @@ describe("useDashboardStore importDashboard", () => {
 
   it("imports a valid dashboard", () => {
     const dashboard = makeValidDashboard();
-    useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
 
+    expect(result).toEqual({ success: true });
     const state = useDashboardStore.getState();
     expect(state.dashboard.id).toBe("dash-1");
     expect(state.dashboard.title).toBe("Test Dashboard");
@@ -104,10 +105,12 @@ describe("useDashboardStore importDashboard", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const originalTitle = useDashboardStore.getState().dashboard.title;
 
-    useDashboardStore.getState().importDashboard("not json{{{");
+    const result = useDashboardStore.getState().importDashboard("not json{{{");
 
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
     expect(useDashboardStore.getState().dashboard.title).toBe(originalTitle);
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining("Import failed"), expect.anything());
+    expect(spy).toHaveBeenCalledWith("Import failed: invalid JSON", expect.anything());
     spy.mockRestore();
   });
 
@@ -115,10 +118,28 @@ describe("useDashboardStore importDashboard", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const originalTitle = useDashboardStore.getState().dashboard.title;
 
-    useDashboardStore.getState().importDashboard(JSON.stringify({ id: "x" }));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify({ id: "x" }));
 
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
     expect(useDashboardStore.getState().dashboard.title).toBe(originalTitle);
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining("Import failed"), expect.anything());
+    expect(spy).toHaveBeenCalledWith("Import failed:", expect.stringContaining("title:"));
+    spy.mockRestore();
+  });
+
+  it("rejects a panel with an empty id", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const bad = makeValidDashboard({
+      panels: [
+        { id: "", title: "Empty ID", query: "FROM x", visualization: "bar", layout: { x: 0, y: 0, w: 6, h: 4 } },
+      ],
+    });
+
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(bad));
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("panels.0.id");
+    expect(useDashboardStore.getState().dashboard.id).not.toBe("dash-1");
     spy.mockRestore();
   });
 
@@ -130,10 +151,11 @@ describe("useDashboardStore importDashboard", () => {
       ] as DashboardDefinition["panels"],
     });
 
-    useDashboardStore.getState().importDashboard(JSON.stringify(bad));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(bad));
 
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("panels.0.id");
     expect(useDashboardStore.getState().dashboard.id).not.toBe("dash-1");
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining("Import failed"), expect.anything());
     spy.mockRestore();
   });
 
@@ -151,10 +173,11 @@ describe("useDashboardStore importDashboard", () => {
       ],
     });
 
-    useDashboardStore.getState().importDashboard(JSON.stringify(bad));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(bad));
 
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("panels.0.visualization");
     expect(useDashboardStore.getState().dashboard.id).not.toBe("dash-1");
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining("Import failed"), expect.anything());
     spy.mockRestore();
   });
 
@@ -172,10 +195,33 @@ describe("useDashboardStore importDashboard", () => {
       ] as DashboardDefinition["panels"],
     });
 
-    useDashboardStore.getState().importDashboard(JSON.stringify(bad));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(bad));
 
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("panels.0.layout.h");
     expect(useDashboardStore.getState().dashboard.id).not.toBe("dash-1");
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining("Import failed"), expect.anything());
+    spy.mockRestore();
+  });
+
+  it("rejects a panel with zero-width layout", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const bad = makeValidDashboard({
+      panels: [
+        {
+          id: "p-1",
+          title: "Zero Width",
+          query: "FROM x",
+          visualization: "table",
+          layout: { x: 0, y: 0, w: 0, h: 4 },
+        },
+      ],
+    });
+
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(bad));
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("panels.0.layout.w");
+    expect(useDashboardStore.getState().dashboard.id).not.toBe("dash-1");
     spy.mockRestore();
   });
 
@@ -184,8 +230,9 @@ describe("useDashboardStore importDashboard", () => {
     delete (dashboard as unknown as Record<string, unknown>).description;
     delete (dashboard as unknown as Record<string, unknown>).refreshInterval;
 
-    useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
 
+    expect(result).toEqual({ success: true });
     expect(useDashboardStore.getState().dashboard.id).toBe("dash-1");
   });
 
@@ -204,8 +251,9 @@ describe("useDashboardStore importDashboard", () => {
       ],
     });
 
-    useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
 
+    expect(result).toEqual({ success: true });
     expect(useDashboardStore.getState().dashboard.panels[0].id).toBe("p-1");
   });
 });

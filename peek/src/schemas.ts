@@ -5,8 +5,8 @@ const visualizationType = z.enum(["timeseries", "bar", "table", "stat", "gauge",
 const panelLayout = z.object({
   x: z.number(),
   y: z.number(),
-  w: z.number(),
-  h: z.number(),
+  w: z.number().int().positive(),
+  h: z.number().int().positive(),
 });
 
 const timeRange = z.object({
@@ -15,7 +15,7 @@ const timeRange = z.object({
 });
 
 const panelDefinition = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   title: z.string(),
   query: z.string(),
   visualization: visualizationType,

@@ -7,13 +7,13 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  setup            - Install Node.js dependencies"
-	@echo "  serve            - Start Vite dev server with hot reload (http://localhost:3000)"
-	@echo "  serve-proxy      - Start dev server with Elasticsearch proxy (set ES_URL)"
+	@echo "  serve            - Install deps + start Vite dev server (http://localhost:3000)"
+	@echo "  serve-proxy      - Install deps + start dev server with Elasticsearch proxy (set ES_URL)"
 	@echo "  build            - Production build to peek/dist/"
-	@echo "  preview          - Preview the production build locally"
+	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - Prettier format check + ESLint + TypeScript type check"
 	@echo "  format           - Auto-format code with Prettier"
-	@echo "  ci               - Run all checks then build (same as CI pipeline)"
+	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
 	@echo "  test-unit        - Run unit tests"
@@ -38,16 +38,16 @@ serve-proxy: setup
 	@echo "  Connect the dashboard to: http://localhost:3000"
 	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
 
-build: setup
+build:
 	@echo "Building for production..."
 	@cd $(PEEK_DIR) && npm run build
 	@echo ""
 	@echo "✓ Build complete: $(PEEK_DIR)/dist/"
 
-preview: build
+preview: setup build
 	@cd $(PEEK_DIR) && npm run preview
 
-lint: setup
+lint:
 	@echo "Running Prettier format check..."
 	@cd $(PEEK_DIR) && npx prettier --check src
 	@echo ""
@@ -59,13 +59,16 @@ lint: setup
 	@echo ""
 	@echo "✓ All checks passed."
 
-format: setup
+format:
 	@echo "Formatting code with Prettier..."
 	@cd $(PEEK_DIR) && npx prettier --write src
 	@echo ""
 	@echo "✓ Formatting complete."
 
-ci: lint test-unit build
+ci:
+	@echo "Installing dependencies (strict lockfile)..."
+	@cd $(PEEK_DIR) && npm ci
+	@$(MAKE) lint test-unit build
 	@echo ""
 	@echo "✓ CI passed: lint + unit tests + build all green."
 
@@ -73,15 +76,15 @@ check: ci
 
 test: test-unit test-integration test-e2e
 
-test-unit: setup
+test-unit:
 	@echo "Running unit tests..."
 	@cd $(PEEK_DIR) && npm run test:unit
 
-test-integration: setup
+test-integration:
 	@echo "Running integration tests..."
 	@cd $(PEEK_DIR) && npm run test:integration
 
-test-e2e: setup
+test-e2e:
 	@echo "Running e2e tests..."
 	@cd $(PEEK_DIR) && npm run test:e2e
 

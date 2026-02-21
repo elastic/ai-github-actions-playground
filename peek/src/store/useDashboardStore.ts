@@ -39,7 +39,7 @@ interface DashboardState {
   setCurrentPage: (page: "dashboard" | "discover" | "docs") => void;
 
   exportDashboard: () => string;
-  importDashboard: (json: string) => void;
+  importDashboard: (json: string) => { success: boolean; error?: string };
   loadDefaultDashboard: () => void;
   resetState: () => void;
 }
@@ -175,15 +175,18 @@ export const useDashboardStore = create<DashboardState>()(
         try {
           const result = dashboardDefinitionSchema.safeParse(JSON.parse(json));
           if (!result.success) {
-            console.error(
-              "Import failed:",
-              result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
-            );
-            return;
+            const error = result.error.issues
+              .map((i) => `${i.path.join(".")}: ${i.message}`)
+              .join("; ");
+            console.error("Import failed:", error);
+            return { success: false, error };
           }
           set({ dashboard: result.data as DashboardDefinition });
+          return { success: true };
         } catch (e) {
-          console.error("Import failed: invalid JSON", e);
+          const error = e instanceof Error ? e.message : String(e);
+          console.error("Import failed: invalid JSON", error);
+          return { success: false, error };
         }
       },
 
