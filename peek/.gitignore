@@ -5,3 +5,5 @@ dist
 .env.*
 playwright-report
 test-results
+screenshot-preflight.json
+screenshot*.png

@@ -37,12 +37,12 @@ export default function WelcomeScreen() {
           Elastic Peek
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-          A lightweight dashboarding tool powered by <strong>Perses</strong> components and
-          Elasticsearch <strong>ES|QL</strong>.
+          A lightweight Elasticsearch dashboarding tool built by an{" "}
+          <strong>AI Software Factory</strong> research project.
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-          Connect to your Elasticsearch cluster to start building visualizations with ES|QL queries.
-          Your dashboard is saved locally in the browser.
+          Connect to your Elasticsearch cluster to start exploring your data. Your dashboard is
+          saved locally in the browser.
         </Typography>
         <Button variant="contained" size="large" onClick={() => setConnectionDialogOpen(true)}>
           Connect to Elasticsearch
