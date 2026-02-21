@@ -12,6 +12,10 @@ description: AI coding assistant for the ES|QL Dashboard repository
 
 @AGENTS.md
 
+## Contributing
+
+@CONTRIBUTING.md
+
 ## Development
 
 @DEVELOPING.md
