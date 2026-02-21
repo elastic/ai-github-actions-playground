@@ -71,4 +71,17 @@ describe("MAX_SELECTED_COLUMNS", () => {
   it("is set to 50", () => {
     expect(MAX_SELECTED_COLUMNS).toBe(50);
   });
+
+  it("filterEsqlResult correctly filters when limited to MAX_SELECTED_COLUMNS from a larger set", () => {
+    const result = createLargeResult(5, 100);
+    const selected = new Set(
+      result.columns.slice(0, MAX_SELECTED_COLUMNS).map((c) => c.name),
+    );
+    const filtered = filterEsqlResult(result, selected);
+
+    expect(filtered?.columns).toHaveLength(MAX_SELECTED_COLUMNS);
+    expect(filtered?.values[0]).toHaveLength(MAX_SELECTED_COLUMNS);
+    expect(filtered?.columns[0]!.name).toBe("field_0");
+    expect(filtered?.columns[49]!.name).toBe("field_49");
+  });
 });

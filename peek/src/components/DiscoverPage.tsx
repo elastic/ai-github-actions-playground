@@ -212,7 +212,8 @@ export default function DiscoverPage() {
             <Typography variant="subtitle2">Fields</Typography>
             {columns.length > 0 && (
               <Typography variant="caption" color="text.secondary">
-                {selectedFields.size} / {columns.length} selected (max {MAX_SELECTED_COLUMNS})
+                {selectedFields.size} / {columns.length} selected
+                {columns.length > MAX_SELECTED_COLUMNS && ` (max ${MAX_SELECTED_COLUMNS})`}
               </Typography>
             )}
             {columns.length > 0 && (
