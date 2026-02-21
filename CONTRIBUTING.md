@@ -49,9 +49,7 @@ from ES|QL aggregations like STATS ... BY bucket1, bucket2.
    - Add toggle in `PanelEditor.tsx`
 
 3. **Verify**:
-   - Run `make format` to auto-format code
-   - Run `make lint` to check formatting, lint rules, and types
-   - Run `make build` to confirm production build
+   - Run `make check` to run lint, unit tests, and build
 ```
 
 ### 3. Maintainer Assigns an Agent
@@ -63,7 +61,6 @@ Once approved, a maintainer assigns the issue to an AI agent. The agent creates 
 - **Bugs**: Include reproduction steps, expected vs actual behavior, and proposed fix
 - **Features**: Explain the use case, provide examples, and include step-by-step instructions
 - **Be specific**: Name the files, components, and test cases the agent should touch
-- **UI changes**: Remind the agent to include before/after screenshots in the PR
 
 ## Security
 

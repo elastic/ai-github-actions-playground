@@ -36,7 +36,7 @@ Based on the request, do what's appropriate:
 
 - **Answer questions** about the codebase — find the relevant code and explain it.
 - **Debug reported problems** — reproduce locally, run required repo commands (lint/build/test) from README, CONTRIBUTING, DEVELOPING, Makefile, or CI config, and trace the code path.
-- **Implement changes** — make the changes and verify they work by running `make lint` and `make build`.
+- **Implement changes** — make the changes and verify they work by running `make check` (lint + unit tests + build).
 - **Clarify requirements** — ask follow-up questions if the request is ambiguous.
 
 ### Step 3: Verify Changes
@@ -52,21 +52,30 @@ Before finishing:
 
 ### Screenshots for UI Changes
 
-When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request. Run the screenshot preflight first to check for errors:
+When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request.
+
+1. Start the dev server in the background:
+
+```bash
+cd peek && npm run dev &
+```
+
+2. Wait a few seconds for the server to be ready, then run the screenshot preflight:
 
 ```bash
 cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000 --output screenshot-preflight.json --screenshot screenshot.png
 ```
 
-If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
+3. If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
 
 For this repository:
 
 ```bash
-make setup   # install dependencies
-make serve   # start dev server
-make build   # production build
-make lint    # Prettier + ESLint + TypeScript type checking
-make format  # auto-format code with Prettier
-make check   # run all checks then build (equivalent to CI)
+make setup     # install dependencies
+make serve     # start dev server
+make build     # production build
+make lint      # Prettier + ESLint + TypeScript type checking
+make format    # auto-format code with Prettier
+make test-unit # run unit tests
+make check     # run all checks then build (equivalent to CI)
 ```
