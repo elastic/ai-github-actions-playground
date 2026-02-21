@@ -17,7 +17,7 @@ import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { executeEsql, isEsqlError } from "../services/elasticsearch";
 import type { EsqlColumn, EsqlResponse } from "../types";
-import { filterColumnsByName, filterEsqlResult } from "./discoverUtils";
+import { filterColumnsByName, filterEsqlResult, MAX_SELECTED_COLUMNS } from "./discoverUtils";
 import DataTable from "./visualizations/DataTable";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -59,8 +59,8 @@ export default function DiscoverPage() {
     try {
       const data = await executeEsql(connection, query.trim());
       setResult(data);
-      // By default select all fields
-      setSelectedFields(new Set(data.columns.map((c) => c.name)));
+      // By default select up to MAX_SELECTED_COLUMNS fields
+      setSelectedFields(new Set(data.columns.slice(0, MAX_SELECTED_COLUMNS).map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
     } catch (err) {
       setError(isEsqlError(err) ? err.message : String(err));
@@ -75,7 +75,7 @@ export default function DiscoverPage() {
       const next = new Set(prev);
       if (next.has(name)) {
         next.delete(name);
-      } else {
+      } else if (next.size < MAX_SELECTED_COLUMNS) {
         next.add(name);
       }
       return next;
@@ -102,6 +102,7 @@ export default function DiscoverPage() {
   );
 
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
+  const atColumnLimit = selectedFields.size >= MAX_SELECTED_COLUMNS;
   const visibleColumns = useMemo(
     () => filterColumnsByName(columns, fieldFilter),
     [columns, fieldFilter],
@@ -110,7 +111,10 @@ export default function DiscoverPage() {
   const selectVisibleFields = useCallback(() => {
     setSelectedFields((prev) => {
       const next = new Set(prev);
-      for (const col of visibleColumns) next.add(col.name);
+      for (const col of visibleColumns) {
+        if (next.size >= MAX_SELECTED_COLUMNS) break;
+        next.add(col.name);
+      }
       return next;
     });
     setTableVersion((prev) => prev + 1);
@@ -208,7 +212,7 @@ export default function DiscoverPage() {
             <Typography variant="subtitle2">Fields</Typography>
             {columns.length > 0 && (
               <Typography variant="caption" color="text.secondary">
-                {selectedFields.size} / {columns.length} selected
+                {selectedFields.size} / {columns.length} selected (max {MAX_SELECTED_COLUMNS})
               </Typography>
             )}
             {columns.length > 0 && (
@@ -256,6 +260,7 @@ export default function DiscoverPage() {
                     <Checkbox
                       size="small"
                       checked={selectedFields.has(col.name)}
+                      disabled={atColumnLimit && !selectedFields.has(col.name)}
                       onChange={() => toggleField(col.name)}
                       onClick={(e) => e.stopPropagation()}
                       sx={{ p: 0.5 }}

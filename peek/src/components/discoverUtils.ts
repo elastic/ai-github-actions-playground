@@ -1,5 +1,7 @@
 import type { EsqlColumn, EsqlResponse } from "../types";
 
+export const MAX_SELECTED_COLUMNS = 50;
+
 export function filterEsqlResult(
   result: EsqlResponse | null,
   selectedFields: Set<string>,

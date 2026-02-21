@@ -3,6 +3,7 @@ import type { EsqlResponse } from "../../src/types";
 import {
   filterColumnsByName,
   filterEsqlResult,
+  MAX_SELECTED_COLUMNS,
   paginateRows,
 } from "../../src/components/discoverUtils";
 
@@ -63,5 +64,11 @@ describe("paginateRows", () => {
   it("returns an empty array when page is beyond available data", () => {
     const rows = [["r0"], ["r1"], ["r2"], ["r3"], ["r4"]];
     expect(paginateRows(rows, 10, 2)).toEqual([]);
+  });
+});
+
+describe("MAX_SELECTED_COLUMNS", () => {
+  it("is set to 50", () => {
+    expect(MAX_SELECTED_COLUMNS).toBe(50);
   });
 });
