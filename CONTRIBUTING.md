@@ -1,4 +1,4 @@
-# Contributing to ES|QL Dashboard
+# Contributing to Elastic Peek
 
 Thank you for your interest in contributing! We welcome contributions from the community.
 

@@ -28,7 +28,7 @@ export default function WelcomeScreen() {
       >
         <StorageIcon sx={{ fontSize: 64, color: "primary.main", mb: 2 }} />
         <Typography variant="h4" gutterBottom>
-          ES|QL Dashboard
+          Elastic Peek
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
           A lightweight dashboarding tool powered by <strong>Perses</strong> components and

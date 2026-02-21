@@ -180,7 +180,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       resetState: () => {
-        splitStorage.removeItem("esql-dashboard");
+        splitStorage.removeItem("elastic-peek");
         set({
           connection: null,
           connected: false,
@@ -193,7 +193,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
     }),
     {
-      name: "esql-dashboard",
+      name: "elastic-peek",
       storage: splitStorage,
       partialize: (state) => ({
         connection: state.connection,

@@ -142,7 +142,7 @@ export default function AppHeader() {
             flexShrink: 0,
           }}
         >
-          ES|QL Dashboard
+          Elastic Peek
         </Typography>
 
         {titleEditing ? (

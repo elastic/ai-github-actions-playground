@@ -1,4 +1,4 @@
-# ES|QL Dashboard
+# Elastic Peek
 
 A lightweight, static dashboarding tool powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
 
@@ -8,7 +8,7 @@ https://elastic.github.io/ai-github-actions-playground/
 
 ## Overview
 
-ES|QL Dashboard is a browser-based dashboard builder that connects directly to your Elasticsearch cluster. The static site queries Elasticsearch using ES|QL via the `_query` REST API — or optionally via a local proxy to avoid CORS.
+Elastic Peek is a browser-based dashboard builder that connects directly to your Elasticsearch cluster. The static site queries Elasticsearch using ES|QL via the `_query` REST API — or optionally via a local proxy to avoid CORS.
 
 - **Direct browser-to-Elasticsearch** — or via a local proxy to avoid CORS
 - **ES|QL query editor** — write queries with syntax highlighting

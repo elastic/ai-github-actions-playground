@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <title>ES|QL Dashboard</title>
+  <title>Elastic Peek</title>
   <rect width="32" height="32" rx="6" fill="#0A2A65"/>
   <text x="16" y="13" font-family="monospace,Courier New,Courier" font-size="9" font-weight="bold" fill="#00BFB3" text-anchor="middle">ES</text>
   <text x="16" y="24" font-family="monospace,Courier New,Courier" font-size="9" font-weight="bold" fill="#FFC125" text-anchor="middle">|QL</text>

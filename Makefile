@@ -3,7 +3,7 @@ DASHBOARD_DIR := dashboard
 .PHONY: help setup serve serve-proxy build lint format check clean preview test test\:unit test\:integration test\:e2e docker-build docker-run
 
 help:
-	@echo "ES|QL Dashboard — a static dashboarding tool powered by Perses + ES|QL"
+	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  setup        - Install Node.js dependencies"
@@ -84,7 +84,7 @@ clean:
 
 docker-build:
 	@echo "Building Docker image..."
-	@docker build -t esql-dashboard .
+	@docker build -t elastic-peek .
 	@echo "✓ Docker image built. Run 'make docker-run' to start the container."
 
 docker-run:
@@ -92,4 +92,4 @@ docker-run:
 	@echo "  Dashboard: http://localhost:8080"
 	@echo "  Proxying /_query → $${ES_URL:-http://host.docker.internal:9200}"
 	@echo "  Connect the dashboard to: http://localhost:8080"
-	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} esql-dashboard
+	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} elastic-peek

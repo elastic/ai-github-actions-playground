@@ -1,5 +1,5 @@
 {
-  "name": "esql-dashboard",
+  "name": "elastic-peek",
   "private": true,
   "version": "0.1.0",
   "type": "module",

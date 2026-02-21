@@ -1,4 +1,4 @@
-# ES|QL Dashboard
+# Elastic Peek
 
 @README.md
 @DEVELOPING.md
