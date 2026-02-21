@@ -15,7 +15,8 @@ export async function executeEsql(
   };
 
   if (connection.username && connection.password) {
-    const credentials = btoa(`${connection.username}:${connection.password}`);
+    const bytes = new TextEncoder().encode(`${connection.username}:${connection.password}`);
+    const credentials = btoa(String.fromCharCode(...bytes));
     headers["Authorization"] = `Basic ${credentials}`;
   } else if (connection.apiKey) {
     headers["Authorization"] = `ApiKey ${connection.apiKey}`;
