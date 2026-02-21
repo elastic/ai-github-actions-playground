@@ -12,6 +12,11 @@ import TextField from "@mui/material/TextField";
 import Chip from "@mui/material/Chip";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import AddIcon from "@mui/icons-material/Add";
@@ -57,6 +62,7 @@ export default function AppHeader() {
   const exportDashboard = useDashboardStore((s) => s.exportDashboard);
   const importDashboard = useDashboardStore((s) => s.importDashboard);
   const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
+  const resetState = useDashboardStore((s) => s.resetState);
   const currentPage = useDashboardStore((s) => s.currentPage);
   const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
 
@@ -65,6 +71,7 @@ export default function AppHeader() {
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
   const timeRangeRef = useRef(dashboard.timeRange);
@@ -305,7 +312,38 @@ export default function AppHeader() {
           >
             Load Default Dashboard
           </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setMenuAnchor(null);
+              setResetDialogOpen(true);
+            }}
+            sx={{ color: "error.main" }}
+          >
+            Reset All State
+          </MenuItem>
         </Menu>
+
+        <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+          <DialogTitle>Reset All State</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This will clear all settings, connection details, and dashboard panels, restoring the
+              application to its default state. This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+            <Button
+              color="error"
+              onClick={() => {
+                resetState();
+                setResetDialogOpen(false);
+              }}
+            >
+              Reset
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Toolbar>
     </AppBar>
   );

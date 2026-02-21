@@ -40,6 +40,7 @@ interface DashboardState {
   exportDashboard: () => string;
   importDashboard: (json: string) => void;
   loadDefaultDashboard: () => void;
+  resetState: () => void;
 }
 
 /**
@@ -176,6 +177,19 @@ export const useDashboardStore = create<DashboardState>()(
 
       loadDefaultDashboard: () => {
         set({ dashboard: createDefaultDashboard() });
+      },
+
+      resetState: () => {
+        splitStorage.removeItem("esql-dashboard");
+        set({
+          connection: null,
+          connected: false,
+          dashboard: createDefaultDashboard(),
+          themeMode: "dark",
+          editingPanelId: null,
+          connectionDialogOpen: false,
+          currentPage: "dashboard",
+        });
       },
     }),
     {
