@@ -88,7 +88,7 @@ export default function ConnectionDialog() {
             type={showKey ? "text" : "password"}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            helperText="An Elasticsearch API key with read permissions"
+            helperText="Stored in session storage — cleared when the browser tab closes"
             slotProps={{
               input: {
                 endAdornment: (
