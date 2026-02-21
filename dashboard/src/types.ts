@@ -1,6 +1,8 @@
 export interface ElasticsearchConnection {
   url: string;
-  apiKey: string;
+  apiKey?: string;
+  username?: string;
+  password?: string;
   cloudId?: string;
 }
 

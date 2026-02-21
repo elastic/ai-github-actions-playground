@@ -11,11 +11,15 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { testConnection } from "../services/elasticsearch";
 import type { ElasticsearchConnection } from "../types";
+
+type AuthType = "apiKey" | "userpass";
 
 export default function ConnectionDialog() {
   const open = useDashboardStore((s) => s.connectionDialogOpen);
@@ -24,16 +28,28 @@ export default function ConnectionDialog() {
   const setConnection = useDashboardStore((s) => s.setConnection);
   const setConnected = useDashboardStore((s) => s.setConnected);
 
+  const initialAuthType: AuthType = savedConn?.username ? "userpass" : "apiKey";
+
   const [url, setUrl] = useState(savedConn?.url ?? "");
+  const [authType, setAuthType] = useState<AuthType>(initialAuthType);
   const [apiKey, setApiKey] = useState(savedConn?.apiKey ?? "");
-  const [showKey, setShowKey] = useState(false);
+  const [username, setUsername] = useState(savedConn?.username ?? "");
+  const [password, setPassword] = useState(savedConn?.password ?? "");
+  const [showSecret, setShowSecret] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const buildConnection = useCallback((): ElasticsearchConnection => {
+    if (authType === "userpass") {
+      return { url: url.trim(), username: username.trim(), password: password.trim() };
+    }
+    return { url: url.trim(), apiKey: apiKey.trim() };
+  }, [url, authType, apiKey, username, password]);
 
   const handleTest = useCallback(async () => {
     setTesting(true);
     setResult(null);
-    const conn: ElasticsearchConnection = { url: url.trim(), apiKey: apiKey.trim() };
+    const conn = buildConnection();
     const res = await testConnection(conn);
     if (res.ok) {
       setResult({ ok: true, message: "Connected successfully." });
@@ -41,10 +57,10 @@ export default function ConnectionDialog() {
       setResult({ ok: false, message: res.error });
     }
     setTesting(false);
-  }, [url, apiKey]);
+  }, [buildConnection]);
 
   const handleConnect = useCallback(async () => {
-    const conn: ElasticsearchConnection = { url: url.trim(), apiKey: apiKey.trim() };
+    const conn = buildConnection();
     setConnection(conn);
     setTesting(true);
     setResult(null);
@@ -56,7 +72,7 @@ export default function ConnectionDialog() {
     } else {
       setResult({ ok: false, message: res.error });
     }
-  }, [url, apiKey, setConnection, setConnected, setOpen]);
+  }, [buildConnection, setConnection, setConnected, setOpen]);
 
   const handleDisconnect = useCallback(() => {
     setConnected(false);
@@ -69,9 +85,9 @@ export default function ConnectionDialog() {
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Enter your Elasticsearch endpoint and API key. The connection is made directly from your
-            browser — no data passes through any intermediary server. Ensure CORS is configured on
-            your cluster.
+            Enter your Elasticsearch endpoint and credentials. The connection is made directly from
+            your browser — no data passes through any intermediary server. Ensure CORS is configured
+            on your cluster.
           </Typography>
           <TextField
             label="Elasticsearch URL"
@@ -81,26 +97,67 @@ export default function ConnectionDialog() {
             onChange={(e) => setUrl(e.target.value)}
             helperText="The full URL including protocol and port"
           />
-          <TextField
-            label="API Key"
-            placeholder="base64-encoded API key"
-            fullWidth
-            type={showKey ? "text" : "password"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            helperText="Stored in session storage — cleared when the browser tab closes"
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setShowKey(!showKey)}>
-                      {showKey ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
+          <Tabs
+            value={authType}
+            onChange={(_, v: AuthType) => {
+              setAuthType(v);
+              setResult(null);
             }}
-          />
+          >
+            <Tab label="API Key" value="apiKey" />
+            <Tab label="Username / Password" value="userpass" />
+          </Tabs>
+          {authType === "apiKey" && (
+            <TextField
+              label="API Key"
+              placeholder="base64-encoded API key"
+              fullWidth
+              type={showSecret ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              helperText="Stored in session storage — cleared when the browser tab closes"
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setShowSecret(!showSecret)}>
+                        {showSecret ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          )}
+          {authType === "userpass" && (
+            <>
+              <TextField
+                label="Username"
+                fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <TextField
+                label="Password"
+                fullWidth
+                type={showSecret ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                helperText="Stored in session storage — cleared when the browser tab closes"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setShowSecret(!showSecret)}>
+                          {showSecret ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </>
+          )}
           {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
         </Box>
       </DialogContent>

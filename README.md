@@ -38,7 +38,7 @@ npm run dev
 - **Node.js** ≥ 18
 - An **Elasticsearch** cluster with:
   - [CORS configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html) to allow browser requests (see below)
-  - An [API key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html) with read permissions
+  - An [API key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html) with read permissions, or a username and password
 
 ### Elasticsearch CORS Configuration
 
@@ -61,7 +61,7 @@ http.cors.allow-headers: "Authorization,Content-Type"
 
 1. Open the dashboard in your browser
 2. Click **Connect to Elasticsearch**
-3. Enter your Elasticsearch URL and API key
+3. Enter your Elasticsearch URL and choose your authentication method — **API Key** or **Username / Password**
 4. Click **Connect**
 
 The connection is made directly from your browser. No credentials are sent to any intermediary server.
