@@ -17,7 +17,7 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage: "dashboard" | "discover";
+  currentPage: "dashboard" | "discover" | "docs";
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -35,7 +35,7 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (page: "dashboard" | "discover") => void;
+  setCurrentPage: (page: "dashboard" | "discover" | "docs") => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => void;

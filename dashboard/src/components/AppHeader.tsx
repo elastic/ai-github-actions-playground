@@ -26,6 +26,7 @@ import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
@@ -175,29 +176,36 @@ export default function AppHeader() {
           </Typography>
         )}
 
-        {connected && (
-          <Tabs
-            value={currentPage}
-            onChange={(_, v: "dashboard" | "discover") => setCurrentPage(v)}
-            sx={{ ml: 2, minHeight: 48 }}
-            TabIndicatorProps={{ style: { height: 3 } }}
-          >
-            <Tab
-              value="dashboard"
-              label="Dashboard"
-              icon={<DashboardIcon fontSize="small" />}
-              iconPosition="start"
-              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-            />
-            <Tab
-              value="discover"
-              label="Discover"
-              icon={<SearchIcon fontSize="small" />}
-              iconPosition="start"
-              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-            />
-          </Tabs>
-        )}
+        <Tabs
+          value={currentPage}
+          onChange={(_, v: "dashboard" | "discover" | "docs") => setCurrentPage(v)}
+          sx={{ ml: 2, minHeight: 48 }}
+          TabIndicatorProps={{ style: { height: 3 } }}
+        >
+          <Tab
+            value="dashboard"
+            label="Dashboard"
+            icon={<DashboardIcon fontSize="small" />}
+            iconPosition="start"
+            disabled={!connected}
+            sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+          />
+          <Tab
+            value="discover"
+            label="Discover"
+            icon={<SearchIcon fontSize="small" />}
+            iconPosition="start"
+            disabled={!connected}
+            sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+          />
+          <Tab
+            value="docs"
+            label="Docs"
+            icon={<MenuBookIcon fontSize="small" />}
+            iconPosition="start"
+            sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+          />
+        </Tabs>
 
         <Box sx={{ flex: 1 }} />
 
