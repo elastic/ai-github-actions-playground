@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
+import { Responsive, WidthProvider, type Layout, type Layouts } from "react-grid-layout";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -35,8 +35,10 @@ export default function DashboardGrid() {
   );
 
   const handleLayoutChange = useCallback(
-    (layout: Layout[]) => {
-      const updates = layout.map((l) => ({
+    (_currentLayout: Layout[], allLayouts: Layouts) => {
+      const lgLayout = allLayouts.lg;
+      if (!lgLayout) return;
+      const updates = lgLayout.map((l) => ({
         id: l.i,
         x: l.x,
         y: l.y,
