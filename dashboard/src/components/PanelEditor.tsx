@@ -12,6 +12,7 @@ import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
+import Divider from "@mui/material/Divider";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TableChartIcon from "@mui/icons-material/TableChart";
@@ -22,8 +23,9 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { executeEsql, isEsqlError } from "../services/elasticsearch";
-import type { VisualizationType, EsqlResponse } from "../types";
+import type { VisualizationType, EsqlResponse, VisualizationOptions } from "../types";
 import Visualization from "./visualizations/Visualization";
+import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
   { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
@@ -48,6 +50,7 @@ export default function PanelEditor() {
   const [title, setTitle] = useState("");
   const [query, setQuery] = useState("");
   const [viz, setViz] = useState<VisualizationType>("timeseries");
+  const [options, setOptions] = useState<VisualizationOptions>(() => defaultOptions("timeseries"));
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +60,22 @@ export default function PanelEditor() {
       setTitle(panel.title);
       setQuery(panel.query);
       setViz(panel.visualization);
+      setOptions(panel.options ?? defaultOptions(panel.visualization));
       setPreview(null);
       setError(null);
     }
   }, [panel]);
+
+  const handleVizChange = useCallback(
+    (newViz: VisualizationType) => {
+      setViz(newViz);
+      // Reset options to defaults for the new viz type, preserving format if set
+      const currentFormat = (options as { format?: unknown }).format;
+      const next = defaultOptions(newViz);
+      setOptions(currentFormat ? { ...next, format: currentFormat } : next);
+    },
+    [options],
+  );
 
   const handleRunQuery = useCallback(async () => {
     if (!connection || !query.trim()) return;
@@ -79,15 +94,17 @@ export default function PanelEditor() {
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
-    updatePanel(editingId, { title, query, visualization: viz });
+    updatePanel(editingId, { title, query, visualization: viz, options });
     setEditingId(null);
-  }, [editingId, title, query, viz, updatePanel, setEditingId]);
+  }, [editingId, title, query, viz, options, updatePanel, setEditingId]);
 
   const handleDelete = useCallback(() => {
     if (!editingId) return;
     removePanel(editingId);
     setEditingId(null);
   }, [editingId, removePanel, setEditingId]);
+
+  const showOptions = viz !== "table" && viz !== "pie";
 
   return (
     <Dialog
@@ -99,76 +116,92 @@ export default function PanelEditor() {
     >
       <DialogTitle>Edit Panel</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1, height: "100%" }}>
-          <TextField
-            label="Panel Title"
-            fullWidth
-            size="small"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-
-          <Typography variant="subtitle2" color="text.secondary">
-            ES|QL Query
-          </Typography>
-          <Box
-            sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              overflow: "hidden",
-            }}
-          >
-            <CodeMirror
-              value={query}
-              onChange={setQuery}
-              extensions={[sql()]}
-              theme={themeMode}
-              height="120px"
-              basicSetup={{
-                lineNumbers: true,
-                foldGutter: false,
-              }}
-            />
-          </Box>
-
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <Button
-              variant="contained"
+        <Box sx={{ display: "flex", gap: 2, mt: 1, height: "100%" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+            <TextField
+              label="Panel Title"
+              fullWidth
               size="small"
-              onClick={handleRunQuery}
-              disabled={loading || !query.trim()}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+
+            <Typography variant="subtitle2" color="text.secondary">
+              ES|QL Query
+            </Typography>
+            <Box
+              sx={{
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                overflow: "hidden",
+              }}
             >
-              {loading ? <CircularProgress size={18} sx={{ mr: 1 }} /> : null}
-              Run Query
-            </Button>
+              <CodeMirror
+                value={query}
+                onChange={setQuery}
+                extensions={[sql()]}
+                theme={themeMode}
+                height="120px"
+                basicSetup={{
+                  lineNumbers: true,
+                  foldGutter: false,
+                }}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleRunQuery}
+                disabled={loading || !query.trim()}
+              >
+                {loading ? <CircularProgress size={18} sx={{ mr: 1 }} /> : null}
+                Run Query
+              </Button>
+              {preview && (
+                <Typography variant="caption" color="text.secondary">
+                  {preview.values.length} rows × {preview.columns.length} columns
+                </Typography>
+              )}
+            </Box>
+
+            {error && <Alert severity="error">{error}</Alert>}
+
+            <Typography variant="subtitle2" color="text.secondary">
+              Visualization Type
+            </Typography>
+            <ToggleButtonGroup
+              value={viz}
+              exclusive
+              onChange={(_, v) => v && handleVizChange(v)}
+              size="small"
+            >
+              {VIZ_OPTIONS.map((opt) => (
+                <ToggleButton key={opt.value} value={opt.value}>
+                  {opt.icon}
+                  <Typography variant="caption" sx={{ ml: 0.5 }}>
+                    {opt.label}
+                  </Typography>
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+
             {preview && (
-              <Typography variant="caption" color="text.secondary">
-                {preview.values.length} rows × {preview.columns.length} columns
-              </Typography>
+              <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, p: 1, overflow: "auto" }}>
+                <Visualization type={viz} data={preview} options={options} />
+              </Paper>
             )}
           </Box>
 
-          {error && <Alert severity="error">{error}</Alert>}
-
-          <Typography variant="subtitle2" color="text.secondary">
-            Visualization Type
-          </Typography>
-          <ToggleButtonGroup value={viz} exclusive onChange={(_, v) => v && setViz(v)} size="small">
-            {VIZ_OPTIONS.map((opt) => (
-              <ToggleButton key={opt.value} value={opt.value}>
-                {opt.icon}
-                <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {opt.label}
-                </Typography>
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-
-          {preview && (
-            <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, p: 1, overflow: "auto" }}>
-              <Visualization type={viz} data={preview} />
-            </Paper>
+          {showOptions && (
+            <>
+              <Divider orientation="vertical" flexItem />
+              <Box sx={{ width: 260, flexShrink: 0, overflow: "auto" }}>
+                <ChartOptionsEditor vizType={viz} options={options} onChange={setOptions} />
+              </Box>
+            </>
           )}
         </Box>
       </DialogContent>

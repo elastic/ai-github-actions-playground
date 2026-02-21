@@ -1,4 +1,12 @@
-import type { VisualizationType, EsqlResponse } from "../../types";
+import type {
+  VisualizationType,
+  EsqlResponse,
+  VisualizationOptions,
+  TimeSeriesOptions,
+  BarChartOptions,
+  StatPanelOptions,
+  GaugePanelOptions,
+} from "../../types";
 import TimeSeriesChart from "./TimeSeriesChart";
 import BarChart from "./BarChart";
 import DataTable from "./DataTable";
@@ -9,20 +17,21 @@ import PieChart from "./PieChart";
 interface Props {
   type: VisualizationType;
   data: EsqlResponse;
+  options?: VisualizationOptions;
 }
 
-export default function Visualization({ type, data }: Props) {
+export default function Visualization({ type, data, options }: Props) {
   switch (type) {
     case "timeseries":
-      return <TimeSeriesChart data={data} />;
+      return <TimeSeriesChart data={data} options={options as TimeSeriesOptions | undefined} />;
     case "bar":
-      return <BarChart data={data} />;
+      return <BarChart data={data} options={options as BarChartOptions | undefined} />;
     case "table":
       return <DataTable data={data} />;
     case "stat":
-      return <StatPanel data={data} />;
+      return <StatPanel data={data} options={options as StatPanelOptions | undefined} />;
     case "gauge":
-      return <GaugePanel data={data} />;
+      return <GaugePanel data={data} options={options as GaugePanelOptions | undefined} />;
     case "pie":
       return <PieChart data={data} />;
     default:

@@ -1,15 +1,21 @@
 import { useMemo } from "react";
-import type { EsqlResponse } from "../../types";
+import { formatValue } from "@perses-dev/core";
+import type { EsqlResponse, TimeSeriesOptions } from "../../types";
 import { useEChartTheme } from "./useEChartTheme";
 import { findDateColumnIndex, findNumericColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
+  options?: TimeSeriesOptions;
 }
 
-export default function TimeSeriesChart({ data }: Props) {
+export default function TimeSeriesChart({ data, options }: Props) {
   const theme = useEChartTheme();
+  const smooth = options?.smooth !== false;
+  const showArea = options?.showArea !== false;
+  const stacked = options?.stacked === true;
+  const format = options?.format;
 
   const option = useMemo(() => {
     const dateIdx = findDateColumnIndex(data);
@@ -28,10 +34,11 @@ export default function TimeSeriesChart({ data }: Props) {
       name: data.columns[colIdx]!.name,
       type: "line",
       data: getColumnValues(data, colIdx).map((v, j) => [xData[j], v]),
-      smooth: true,
+      smooth,
       showSymbol: data.values.length < 50,
       lineStyle: { width: 2 },
-      areaStyle: numericIdxs.length === 1 ? { opacity: 0.1 } : undefined,
+      areaStyle: showArea && (numericIdxs.length === 1 || stacked) ? { opacity: 0.1 } : undefined,
+      stack: stacked ? "total" : undefined,
       itemStyle: { color: theme.color[i % theme.color.length] },
     }));
 
@@ -56,11 +63,15 @@ export default function TimeSeriesChart({ data }: Props) {
       yAxis: {
         ...theme.yAxis,
         type: "value",
+        axisLabel: {
+          ...theme.yAxis.axisLabel,
+          ...(format ? { formatter: (v: number) => formatValue(v, format) } : {}),
+        },
       },
       dataZoom: dateIdx >= 0 ? [{ type: "inside", start: 0, end: 100 }] : undefined,
       series,
     };
-  }, [data, theme]);
+  }, [data, theme, smooth, showArea, stacked, format]);
 
   return <EChartWrapper option={option} />;
 }

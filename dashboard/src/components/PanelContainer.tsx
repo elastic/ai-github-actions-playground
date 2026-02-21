@@ -139,7 +139,7 @@ export default function PanelContainer({ panel }: Props) {
             <CircularProgress size={32} />
           </Box>
         ) : data ? (
-          <Visualization type={panel.visualization} data={data} />
+          <Visualization type={panel.visualization} data={data} options={panel.options} />
         ) : (
           <Box
             sx={{
