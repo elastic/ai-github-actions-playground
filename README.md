@@ -8,9 +8,9 @@ https://elastic.github.io/ai-github-actions-playground/
 
 ## Overview
 
-ES|QL Dashboard is a browser-based dashboard builder that connects directly to your Elasticsearch cluster. No backend server required — the static site queries Elasticsearch using ES|QL via the `_query` REST API.
+ES|QL Dashboard is a browser-based dashboard builder that connects directly to your Elasticsearch cluster. The static site queries Elasticsearch using ES|QL via the `_query` REST API — or optionally via a local proxy to avoid CORS.
 
-- **Direct browser-to-Elasticsearch** — no proxy, no middleware
+- **Direct browser-to-Elasticsearch** — or via a local proxy to avoid CORS
 - **ES|QL query editor** — write queries with syntax highlighting
 - **Multiple visualization types** — time series, bar charts, pie charts, tables, stats, gauges
 - **Drag-and-drop layout** — resize and rearrange panels freely
@@ -23,6 +23,12 @@ ES|QL Dashboard is a browser-based dashboard builder that connects directly to y
 ```bash
 make setup   # install dependencies
 make serve   # start dev server at http://localhost:3000
+```
+
+Or use the built-in proxy to avoid CORS (see [Running with a Proxy](#running-with-a-proxy)):
+
+```bash
+ES_URL=http://localhost:9200 make serve-proxy
 ```
 
 Or manually:
@@ -87,6 +93,48 @@ If running the dev server locally, also allow `http://localhost:3000`.
 When the dashboard is served over HTTPS (e.g. the live demo at `https://elastic.github.io`) and you connect to a local Elasticsearch at `http://localhost`, your browser may display a **Private Network Access** permission prompt. This is a security feature in Chromium-based browsers that restricts public websites from making requests to your local network.
 
 If you see this prompt, click **Allow** to permit the connection. If no prompt appears and the connection is blocked, check `chrome://flags/#private-network-access-respect-preflight-results` or try using the dashboard from the local dev server (`http://localhost:3000`) instead, which avoids the HTTPS-to-HTTP restriction.
+
+## Running with a Proxy
+
+If you cannot configure CORS on your Elasticsearch cluster, you can run a local proxy that forwards `/_query` requests from the dashboard to Elasticsearch. The proxy sits on the same origin as the dashboard, so the browser never makes a cross-origin request.
+
+### Dev Server Proxy
+
+Start the Vite dev server with the proxy enabled:
+
+```bash
+ES_URL=http://localhost:9200 make serve-proxy
+# or:
+cd dashboard
+ES_URL=http://localhost:9200 npm run dev
+```
+
+Then, when connecting the dashboard, enter `http://localhost:3000` as the Elasticsearch URL (no path). The dev server will forward `/_query` to your Elasticsearch cluster.
+
+### Docker (proxy + dashboard in one container)
+
+The Docker image bundles the dashboard and an nginx proxy together. Run it against any Elasticsearch instance without changing your Elasticsearch CORS configuration:
+
+```bash
+# Build the image
+make docker-build
+
+# Run against a local Elasticsearch
+make docker-run
+
+# Run against a remote cluster
+ES_URL=https://my-cluster.es.io:9200 make docker-run
+```
+
+Or with Docker Compose:
+
+```bash
+ES_URL=http://my-elasticsearch:9200 docker compose up
+```
+
+Then open `http://localhost:8080` in your browser. Enter `http://localhost:8080` as the Elasticsearch URL when connecting — the proxy will forward all `/_query` requests to `ES_URL`.
+
+> **Note:** `ES_URL` defaults to `http://host.docker.internal:9200`, which resolves to the host machine on Docker Desktop (Mac, Windows, and Linux with Docker Desktop). For Linux with Docker Engine, use `http://172.17.0.1:9200` or the actual IP of your Elasticsearch host.
 
 ## Technology
 
