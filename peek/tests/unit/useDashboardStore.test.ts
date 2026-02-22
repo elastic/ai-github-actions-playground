@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardDefinition } from "../../src/types";
 
@@ -140,7 +140,7 @@ describe("useDashboardStore updatePanel", () => {
 
   it("does not affect unrelated panels", () => {
     const panels = useDashboardStore.getState().dashboard.panels;
-    if (panels.length < 2) return; // skip if default only has 1 panel
+    expect(panels.length).toBeGreaterThanOrEqual(2);
 
     const targetId = panels[0].id;
     const otherId = panels[1].id;
@@ -180,24 +180,32 @@ describe("useDashboardStore setTimeRange / setDashboardTitle", () => {
     localStorageMock.clear();
     sessionStorageMock.clear();
     useDashboardStore.getState().resetState();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("setTimeRange updates the time range and advances updatedAt", () => {
     const before = useDashboardStore.getState().dashboard.updatedAt;
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
     useDashboardStore.getState().setTimeRange({ from: "now-7d", to: "now" });
 
     const state = useDashboardStore.getState();
     expect(state.dashboard.timeRange).toEqual({ from: "now-7d", to: "now" });
-    expect(state.dashboard.updatedAt >= before).toBe(true);
+    expect(state.dashboard.updatedAt).not.toBe(before);
   });
 
   it("setDashboardTitle updates the title and advances updatedAt", () => {
     const before = useDashboardStore.getState().dashboard.updatedAt;
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
     useDashboardStore.getState().setDashboardTitle("My Custom Title");
 
     const state = useDashboardStore.getState();
     expect(state.dashboard.title).toBe("My Custom Title");
-    expect(state.dashboard.updatedAt >= before).toBe(true);
+    expect(state.dashboard.updatedAt).not.toBe(before);
   });
 });
 
