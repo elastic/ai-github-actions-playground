@@ -31,6 +31,7 @@ import type {
 } from "../types";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
+import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
   { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
@@ -83,7 +84,7 @@ export default function PanelEditor() {
   );
 
   const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim()) return;
+    if (!connection || !query.trim() || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -96,7 +97,9 @@ export default function PanelEditor() {
     } finally {
       setLoading(false);
     }
-  }, [connection, query]);
+  }, [connection, query, loading]);
+
+  const queryEditorExtensions = [sql(), runQueryShortcutExtension(() => void handleRunQuery())];
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
@@ -181,7 +184,7 @@ export default function PanelEditor() {
             <CodeMirror
               value={query}
               onChange={setQuery}
-              extensions={[sql()]}
+              extensions={queryEditorExtensions}
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}
@@ -198,7 +201,7 @@ export default function PanelEditor() {
             disabled={loading || !query.trim()}
           >
             {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
-            Run Query
+            Run Query (Ctrl/Cmd+Enter)
           </Button>
           {preview && (
             <Typography variant="caption" color="text.secondary">
