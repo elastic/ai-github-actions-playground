@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardDefinition } from "../../src/types";
 
@@ -81,6 +81,158 @@ function makeValidDashboard(overrides: Partial<DashboardDefinition> = {}): Dashb
     ...overrides,
   };
 }
+
+describe("useDashboardStore addPanel / removePanel", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("addPanel increases panel count", () => {
+    const before = useDashboardStore.getState().dashboard.panels.length;
+    useDashboardStore.getState().addPanel({
+      id: "new-1",
+      title: "New",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    expect(useDashboardStore.getState().dashboard.panels.length).toBe(before + 1);
+  });
+
+  it("removePanel removes the correct panel by ID", () => {
+    useDashboardStore.getState().addPanel({
+      id: "to-remove",
+      title: "Remove Me",
+      query: "FROM x",
+      visualization: "table",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    const beforeCount = useDashboardStore.getState().dashboard.panels.length;
+
+    useDashboardStore.getState().removePanel("to-remove");
+
+    const after = useDashboardStore.getState().dashboard.panels;
+    expect(after.length).toBe(beforeCount - 1);
+    expect(after.find((p) => p.id === "to-remove")).toBeUndefined();
+  });
+});
+
+describe("useDashboardStore updatePanel", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("merges partial updates into the target panel", () => {
+    const panels = useDashboardStore.getState().dashboard.panels;
+    const targetId = panels[0].id;
+
+    useDashboardStore.getState().updatePanel(targetId, { title: "Updated Title" });
+
+    const updated = useDashboardStore.getState().dashboard.panels.find((p) => p.id === targetId);
+    expect(updated?.title).toBe("Updated Title");
+    // Original query should be unchanged
+    expect(updated?.query).toBe(panels[0].query);
+  });
+
+  it("does not affect unrelated panels", () => {
+    const panels = useDashboardStore.getState().dashboard.panels;
+    expect(panels.length).toBeGreaterThanOrEqual(2);
+
+    const targetId = panels[0].id;
+    const otherId = panels[1].id;
+    const otherTitle = panels[1].title;
+
+    useDashboardStore.getState().updatePanel(targetId, { title: "Changed" });
+
+    const other = useDashboardStore.getState().dashboard.panels.find((p) => p.id === otherId);
+    expect(other?.title).toBe(otherTitle);
+  });
+});
+
+describe("useDashboardStore updatePanelLayouts", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("updates layout positions without affecting other panel fields", () => {
+    const panels = useDashboardStore.getState().dashboard.panels;
+    const targetId = panels[0].id;
+    const originalTitle = panels[0].title;
+
+    useDashboardStore.getState().updatePanelLayouts([
+      { id: targetId, x: 3, y: 7, w: 8, h: 6 },
+    ]);
+
+    const updated = useDashboardStore.getState().dashboard.panels.find((p) => p.id === targetId);
+    expect(updated?.layout).toEqual(expect.objectContaining({ x: 3, y: 7, w: 8, h: 6 }));
+    expect(updated?.title).toBe(originalTitle);
+  });
+});
+
+describe("useDashboardStore setTimeRange / setDashboardTitle", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("setTimeRange updates the time range and advances updatedAt", () => {
+    const before = useDashboardStore.getState().dashboard.updatedAt;
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+    useDashboardStore.getState().setTimeRange({ from: "now-7d", to: "now" });
+
+    const state = useDashboardStore.getState();
+    expect(state.dashboard.timeRange).toEqual({ from: "now-7d", to: "now" });
+    expect(state.dashboard.updatedAt).not.toBe(before);
+  });
+
+  it("setDashboardTitle updates the title and advances updatedAt", () => {
+    const before = useDashboardStore.getState().dashboard.updatedAt;
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+    useDashboardStore.getState().setDashboardTitle("My Custom Title");
+
+    const state = useDashboardStore.getState();
+    expect(state.dashboard.title).toBe("My Custom Title");
+    expect(state.dashboard.updatedAt).not.toBe(before);
+  });
+});
+
+describe("useDashboardStore exportDashboard / importDashboard round-trip", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("export then import preserves all fields", () => {
+    // Modify the dashboard to have distinctive values
+    useDashboardStore.getState().setDashboardTitle("Round-Trip Test");
+    useDashboardStore.getState().setTimeRange({ from: "now-30d", to: "now" });
+
+    const exported = useDashboardStore.getState().exportDashboard();
+
+    // Reset to defaults and re-import
+    useDashboardStore.getState().resetState();
+    const result = useDashboardStore.getState().importDashboard(exported);
+
+    expect(result).toEqual({ success: true });
+    const state = useDashboardStore.getState();
+    expect(state.dashboard.title).toBe("Round-Trip Test");
+    expect(state.dashboard.timeRange).toEqual({ from: "now-30d", to: "now" });
+  });
+});
 
 describe("useDashboardStore importDashboard", () => {
   beforeEach(() => {
