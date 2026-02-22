@@ -110,6 +110,22 @@ describe("DataStreamsPage", () => {
     expect(screen.getByText(".system-stream")).toBeInTheDocument();
   });
 
+  it("does not show a system stream in the details pane when system streams are hidden by default", async () => {
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(<DataStreamsPage />);
+
+    // The detail heading should show the first *visible* stream (logs-a), not the hidden one
+    await screen.findByRole("heading", { level: 6, name: "logs-a" });
+    expect(screen.queryByRole("heading", { level: 6, name: ".system-stream" })).not.toBeInTheDocument();
+  });
+
   it("ignores stale field-cap responses when selection changes quickly", async () => {
     const user = userEvent.setup();
     const firstFields = deferred<{ fields: Record<string, Record<string, { type: string }>> }>();

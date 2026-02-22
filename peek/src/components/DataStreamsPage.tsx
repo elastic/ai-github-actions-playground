@@ -107,6 +107,14 @@ export default function DataStreamsPage() {
     void loadFields(selectedName);
   }, [selectedName, loadFields]);
 
+  // When system streams are hidden, ensure the selected stream is not a hidden system stream.
+  useEffect(() => {
+    if (showSystemStreams) return;
+    if (!selectedName?.startsWith(".")) return;
+    const firstVisible = dataStreams.find((s) => !s.name.startsWith("."));
+    setSelectedName(firstVisible?.name ?? null);
+  }, [showSystemStreams, selectedName, dataStreams]);
+
   const filteredStreams = useMemo(() => {
     const term = search.trim().toLowerCase();
     return dataStreams.filter((stream) => {
