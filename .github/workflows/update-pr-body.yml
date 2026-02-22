@@ -13,6 +13,7 @@ jobs:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'skip-pr-body-update')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-update-pr-body.lock.yml@main
     with:
+      model: gpt-4.1-mini
       additional-instructions: |
         Strip any "original prompt" or raw issue prompt text from the PR body.
         Keep the PR body clean and concise, focusing on what changed and why.
