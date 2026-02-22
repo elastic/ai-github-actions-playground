@@ -37,7 +37,7 @@ export default function ChatPage() {
   const configured = isConfigured();
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = useCallback(async () => {
