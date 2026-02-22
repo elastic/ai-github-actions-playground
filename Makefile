@@ -1,7 +1,7 @@
 PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run
-.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-harness-up otel-harness-down otel-harness-logs
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-harness-up otel-harness-down otel-harness-logs otel-cloud-up otel-cloud-down otel-cloud-logs
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -27,6 +27,9 @@ help:
 	@echo "  otel-harness-up  - Start Elasticsearch + OTel host metrics harness"
 	@echo "  otel-harness-down - Stop and remove OTel host metrics harness"
 	@echo "  otel-harness-logs - Tail OTel collector logs"
+	@echo "  otel-cloud-up    - Send OTel data to a remote Elastic cluster (set ES_URL, ES_API_KEY)"
+	@echo "  otel-cloud-down  - Stop remote OTel harness"
+	@echo "  otel-cloud-logs  - Tail remote OTel collector logs"
 
 setup:
 	@echo "Installing dependencies..."
@@ -126,3 +129,16 @@ otel-harness-down:
 
 otel-harness-logs:
 	@docker compose -f docker-compose.otel-harness.yml logs -f otel-collector
+
+otel-cloud-up:
+	@echo "Starting OTel harness → remote Elastic cluster..."
+	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml up -d
+	@echo "✓ Sending traces, metrics, and logs to $${ES_URL}"
+
+otel-cloud-down:
+	@echo "Stopping remote OTel harness..."
+	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml down -v
+	@echo "✓ Stopped."
+
+otel-cloud-logs:
+	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml logs -f otel-collector

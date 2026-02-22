@@ -1,0 +1,8 @@
+# Override for sending OTel data to a remote Elastic Cloud cluster.
+# Usage: ES_URL=https://my-cluster.es.cloud:443 ES_API_KEY=... make otel-cloud-up
+services:
+  elasticsearch:
+    profiles: [never]  # disable local ES
+
+  otel-collector:
+    depends_on: {}  # remove elasticsearch dependency
