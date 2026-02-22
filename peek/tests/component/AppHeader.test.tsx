@@ -36,4 +36,21 @@ describe("AppHeader", () => {
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
+
+  it("shows time controls on query pages", () => {
+    useDashboardStore.getState().setCurrentPage("discover");
+    render(<AppHeader />);
+
+    const headerButtons = screen.getAllByRole("button");
+    expect(headerButtons.length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
+  });
+
+  it("hides time controls on non-time pages", () => {
+    useDashboardStore.getState().setCurrentPage("settings");
+    render(<AppHeader />);
+
+    expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
+  });
 });

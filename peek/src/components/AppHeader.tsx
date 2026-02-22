@@ -55,6 +55,9 @@ export default function AppHeader() {
 
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
+  const showTimeControls =
+    connected &&
+    (currentPage === "dashboard" || currentPage === "discover" || currentPage === "explore");
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
   const timeRangeRef = useRef(dashboard.timeRange);
@@ -63,13 +66,13 @@ export default function AppHeader() {
   }, [dashboard.timeRange]);
 
   useEffect(() => {
-    if (!refreshInterval || !connected) return;
+    if (!refreshInterval || !showTimeControls) return;
     const id = setInterval(() => {
       // Spread into a new object so PanelContainers detect the change and re-fetch
       setTimeRange({ ...timeRangeRef.current });
     }, refreshInterval * 1000);
     return () => clearInterval(id);
-  }, [refreshInterval, connected, setTimeRange]);
+  }, [refreshInterval, showTimeControls, setTimeRange]);
 
   const handleAddPanel = useCallback(() => {
     const newPanel = {
@@ -109,7 +112,7 @@ export default function AppHeader() {
 
         <Box sx={{ flex: 1 }} />
 
-        {connected && (
+        {showTimeControls && (
           <>
             <Button size="small" variant="outlined" onClick={(e) => setTimeAnchor(e.currentTarget)}>
               {TIME_PRESETS.find(
