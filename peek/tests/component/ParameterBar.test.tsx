@@ -86,7 +86,7 @@ describe("ParameterBar", () => {
     const user = userEvent.setup();
     render(<ParameterBar />);
 
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: /add parameter/i }));
     await screen.findByRole("dialog");
 
     await user.type(screen.getByLabelText("Name"), "service");
@@ -128,9 +128,8 @@ describe("ParameterBar", () => {
 
     render(<ParameterBar />);
 
-    const serviceRow = screen.getByText("Service:").closest("div");
-    expect(serviceRow).toBeTruthy();
-    const [editButton] = within(serviceRow!).getAllByRole("button");
+    const serviceRow = screen.getByTestId("parameter-row-service");
+    const [editButton] = within(serviceRow).getAllByRole("button");
     await user.click(editButton);
     await screen.findByRole("dialog");
 

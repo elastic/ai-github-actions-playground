@@ -224,15 +224,20 @@ export const useDashboardStore = create<DashboardState>()(
         })),
 
       setParameterValue: (name, value) =>
-        set((s) => ({
-          dashboard: {
-            ...s.dashboard,
-            parameters: (s.dashboard.parameters ?? []).map((p) =>
-              p.name === name ? { ...p, value } : p,
-            ),
-            updatedAt: new Date().toISOString(),
-          },
-        })),
+        set((s) => {
+          const parameters = s.dashboard.parameters ?? [];
+          const target = parameters.find((p) => p.name === name);
+          if (!target || target.value === value) {
+            return { dashboard: s.dashboard };
+          }
+          return {
+            dashboard: {
+              ...s.dashboard,
+              parameters: parameters.map((p) => (p.name === name ? { ...p, value } : p)),
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
 
       exportDashboard: () => {
         const { dashboard } = get();

@@ -32,7 +32,7 @@ const parameterSource = z.discriminatedUnion("mode", [
 
 const dashboardParameter = z.object({
   name: z.string().min(1),
-  label: z.string(),
+  label: z.string().min(1),
   type: z.literal("keyword"),
   source: parameterSource,
   value: z.string(),

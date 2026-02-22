@@ -1,22 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardParameter } from "../../src/types";
-
-const makeStorageMock = () => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-};
+import { makeStorageMock } from "../fixtures/test-utils";
 
 const localStorageMock = makeStorageMock();
 const sessionStorageMock = makeStorageMock();
@@ -162,5 +147,16 @@ describe("useDashboardStore parameter actions", () => {
     const params = useDashboardStore.getState().dashboard.parameters!;
     expect(params[0].value).toBe("changed");
     expect(params[1].value).toBe("node-1");
+  });
+
+  it("setParameterValue is a no-op when parameter name is missing", () => {
+    useDashboardStore.getState().addParameter(sampleParam);
+    const before = useDashboardStore.getState().dashboard.updatedAt;
+
+    useDashboardStore.getState().setParameterValue("missing", "ignored");
+
+    const state = useDashboardStore.getState();
+    expect(state.dashboard.parameters?.[0]?.value).toBe("web");
+    expect(state.dashboard.updatedAt).toBe(before);
   });
 });

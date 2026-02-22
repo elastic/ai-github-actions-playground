@@ -165,7 +165,7 @@ export default function ParameterBar() {
           Variables
         </Typography>
         <Tooltip title="Add variable">
-          <IconButton size="small" onClick={openAdd}>
+          <IconButton size="small" onClick={openAdd} aria-label="Add parameter">
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
@@ -205,7 +205,7 @@ export default function ParameterBar() {
         ))}
 
         <Tooltip title="Add variable">
-          <IconButton size="small" onClick={openAdd}>
+          <IconButton size="small" onClick={openAdd} aria-label="Add parameter">
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
@@ -299,8 +299,8 @@ export default function ParameterBar() {
               </Box>
               {esqlOptions.length > 0 && (
                 <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                  {esqlOptions.slice(0, 20).map((opt) => (
-                    <Chip key={opt} label={opt} size="small" variant="outlined" />
+                  {esqlOptions.slice(0, 20).map((opt, idx) => (
+                    <Chip key={`${opt}-${idx}`} label={opt} size="small" variant="outlined" />
                   ))}
                   {esqlOptions.length > 20 && (
                     <Typography variant="caption" color="text.secondary">
@@ -382,7 +382,10 @@ function ParameterControl({
         : [];
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+    <Box
+      data-testid={`parameter-row-${param.name}`}
+      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+    >
       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
         {param.label || param.name}:
       </Typography>
@@ -396,10 +399,12 @@ function ParameterControl({
             sx={{ fontSize: "0.75rem", height: 28 }}
           >
             {param.value && !options.includes(param.value) && (
-              <MenuItem value={param.value}>{param.value}</MenuItem>
+              <MenuItem key={`param-value-${param.value}`} value={param.value}>
+                {param.value}
+              </MenuItem>
             )}
-            {options.map((opt) => (
-              <MenuItem key={opt} value={opt}>
+            {options.map((opt, idx) => (
+              <MenuItem key={`option-${idx}-${opt}`} value={opt}>
                 {opt}
               </MenuItem>
             ))}
