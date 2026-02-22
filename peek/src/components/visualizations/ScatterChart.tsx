@@ -55,7 +55,7 @@ export default function ScatterChart({ data, options }: Props) {
       type: "scatter" as const,
       data: points,
       itemStyle: {
-        color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC",
+        color: theme.color?.length ? theme.color[i % theme.color.length] : "#0077CC",
       },
     }));
 
@@ -82,7 +82,7 @@ export default function ScatterChart({ data, options }: Props) {
         type: "value" as const,
         name: data.columns[yIdx]!.name,
         axisLabel: {
-          ...theme.yAxis.axisLabel,
+          ...(theme.yAxis?.axisLabel ?? {}),
           ...axisLabelFormatter,
         },
       },

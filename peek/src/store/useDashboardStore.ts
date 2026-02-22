@@ -195,7 +195,7 @@ export const useDashboardStore = create<DashboardState>()(
         if (!source) return null;
         const newId = crypto.randomUUID();
         const clone: PanelDefinition = {
-          ...source,
+          ...structuredClone(source),
           id: newId,
           title: `${source.title} (copy)`,
           layout: { ...source.layout, y: Infinity },

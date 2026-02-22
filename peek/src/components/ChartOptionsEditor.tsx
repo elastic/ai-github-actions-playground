@@ -313,7 +313,7 @@ function HistogramOptionsEditor({
         const n = Number(e.target.value);
         onChange({
           ...options,
-          bins: !Number.isFinite(n) || n < 1 ? 10 : Math.round(n),
+          bins: !Number.isFinite(n) || n < 1 ? 10 : Math.min(Math.round(n), 100),
         });
       }}
       sx={{ width: 90 }}

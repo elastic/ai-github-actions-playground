@@ -210,26 +210,33 @@ describe("useDashboardStore duplicatePanel", () => {
     vi.useRealTimers();
   });
 
-  it("does not share layout reference between source and clone", () => {
+  it("deep clones so source and clone do not share references", () => {
     useDashboardStore.getState().addPanel({
       id: "ref-test",
       title: "Ref Test",
       query: "FROM x",
       visualization: "bar",
       layout: { x: 0, y: 0, w: 6, h: 4 },
-      options: { stacked: true, horizontal: false },
+      options: { stacked: true, horizontal: false, format: { unit: "bytes", shortValues: true } },
     });
 
     const newId = useDashboardStore.getState().duplicatePanel("ref-test");
     const source = useDashboardStore.getState().dashboard.panels.find((p) => p.id === "ref-test");
     const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
 
-    // Values should be equal (except y which is Infinity)
+    // Layout values should be equal (except y which is Infinity)
     expect(clone!.layout.x).toBe(source!.layout.x);
     expect(clone!.layout.w).toBe(source!.layout.w);
     expect(clone!.layout.h).toBe(source!.layout.h);
     // Layout objects should not be the same reference
     expect(clone!.layout).not.toBe(source!.layout);
+    // Options should be deeply equal but not the same reference
+    expect(clone!.options).not.toBe(source!.options);
+    // Nested format object should also be independent
+    const cloneFormat = (clone!.options as Record<string, unknown>).format;
+    const sourceFormat = (source!.options as Record<string, unknown>).format;
+    expect(cloneFormat).toEqual(sourceFormat);
+    expect(cloneFormat).not.toBe(sourceFormat);
   });
 });
 
