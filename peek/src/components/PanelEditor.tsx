@@ -274,13 +274,19 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
               </MenuItem>
             ))}
           </Menu>
-          <Box sx={{ flex: 1 }} />
-          {/* Visualization type */}
+        </Box>
+
+        {/* Visualization type selector */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            Visualization
+          </Typography>
           <ToggleButtonGroup
             value={viz}
             exclusive
             onChange={(_, v) => v && handleVizChange(v)}
             size="small"
+            sx={{ flexWrap: "wrap" }}
           >
             {VIZ_OPTIONS.map((opt) => (
               <ToggleButton key={opt.value} value={opt.value} title={opt.label}>
