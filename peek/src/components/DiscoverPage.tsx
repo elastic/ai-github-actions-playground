@@ -20,6 +20,7 @@ import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
 import DataTable from "./visualizations/DataTable";
+import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
   if (type === "date" || type === "date_nanos") return "warning";
@@ -54,7 +55,7 @@ export default function DiscoverPage() {
   const [tableVersion, setTableVersion] = useState(0);
 
   const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim()) return;
+    if (!connection || !query.trim() || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -70,7 +71,12 @@ export default function DiscoverPage() {
     } finally {
       setLoading(false);
     }
-  }, [connection, query]);
+  }, [connection, query, loading]);
+
+  const queryEditorExtensions = useMemo(
+    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    [handleRunQuery],
+  );
 
   const toggleField = useCallback((name: string) => {
     setSelectedFields((prev) => {
@@ -165,7 +171,7 @@ export default function DiscoverPage() {
           <CodeMirror
             value={query}
             onChange={setQuery}
-            extensions={[sql()]}
+            extensions={queryEditorExtensions}
             theme={themeMode}
             height="100px"
             basicSetup={{ lineNumbers: true, foldGutter: false }}
@@ -179,7 +185,7 @@ export default function DiscoverPage() {
             onClick={handleRunQuery}
             disabled={loading || !query.trim()}
           >
-            Run Query
+            Run Query (Ctrl/Cmd+Enter)
           </Button>
           {result && (
             <Typography variant="caption" color="text.secondary">
