@@ -175,6 +175,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
+                  key={item.page}
                   selected={isActive}
                   disabled={isDisabled}
                   onClick={() => setCurrentPage(item.page)}
