@@ -4,11 +4,16 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
 import AddIcon from "@mui/icons-material/Add";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
@@ -37,27 +42,84 @@ export default function AppHeader() {
     connected,
     currentPage,
     dashboard,
+    connectionProfiles,
+    activeProfileId,
     setTimeRange,
     setRefreshInterval,
     setEditingPanelId,
     addPanel,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    setActiveProfileId,
+    setConnectionDialogOpen,
   } = useDashboardStore(
     useShallow((s) => ({
       connected: s.connected,
       currentPage: s.currentPage,
       dashboard: s.dashboard,
+      connectionProfiles: s.connectionProfiles,
+      activeProfileId: s.activeProfileId,
       setTimeRange: s.setTimeRange,
       setRefreshInterval: s.setRefreshInterval,
       setEditingPanelId: s.setEditingPanelId,
       addPanel: s.addPanel,
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+      setActiveProfileId: s.setActiveProfileId,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
     })),
   );
 
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
+  const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
+  const [switchingProfile, setSwitchingProfile] = useState(false);
   const showTimeControls =
     connected &&
     (currentPage === "dashboard" || currentPage === "discover" || currentPage === "explore");
+
+  const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
+
+  const handleSwitchProfile = useCallback(
+    async (profileId: string) => {
+      if (switchingProfile) return;
+      const profile = connectionProfiles.find((p) => p.id === profileId);
+      if (!profile) return;
+      setProfileAnchor(null);
+      setSwitchingProfile(true);
+      const conn = profile.connection;
+      try {
+        const client = new ElasticsearchClient(conn);
+        await client.getClusterInfo();
+        const caps = await client.getCapabilities();
+        setConnection(conn);
+        setConnected(true);
+        setCapabilities(caps);
+        setActiveProfileId(profileId);
+      } catch (err: unknown) {
+        const message = isElasticsearchError(err) ? err.message : String(err);
+        console.error("Profile switch failed:", message);
+        setConnected(false);
+        setCapabilities(null);
+        setConnection(conn);
+        setActiveProfileId(profileId);
+        setConnectionDialogOpen(true);
+      } finally {
+        setSwitchingProfile(false);
+      }
+    },
+    [
+      switchingProfile,
+      connectionProfiles,
+      setConnection,
+      setConnected,
+      setCapabilities,
+      setActiveProfileId,
+      setConnectionDialogOpen,
+    ],
+  );
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
   const timeRangeRef = useRef(dashboard.timeRange);
@@ -120,6 +182,50 @@ export default function AppHeader() {
         >
           Peek
         </Typography>
+
+        {connected && connectionProfiles.length > 0 && (
+          <>
+            <Chip
+              label={switchingProfile ? "Connecting…" : (activeProfile?.name ?? "No profile")}
+              size="small"
+              variant="outlined"
+              onClick={(e) => setProfileAnchor(e.currentTarget)}
+              disabled={switchingProfile}
+              aria-label="Switch connection profile"
+              sx={{ maxWidth: 180 }}
+            />
+            <Menu
+              anchorEl={profileAnchor}
+              open={Boolean(profileAnchor)}
+              onClose={() => setProfileAnchor(null)}
+            >
+              {connectionProfiles.map((profile) => (
+                <MenuItem
+                  key={profile.id}
+                  selected={profile.id === activeProfileId}
+                  disabled={switchingProfile}
+                  onClick={() => void handleSwitchProfile(profile.id)}
+                >
+                  <ListItemText
+                    primary={profile.name}
+                    secondary={profile.connection.url}
+                    secondaryTypographyProps={{ fontSize: "0.7rem", noWrap: true }}
+                  />
+                </MenuItem>
+              ))}
+              <Divider />
+              <MenuItem
+                onClick={() => {
+                  setProfileAnchor(null);
+                  setConnectionDialogOpen(true);
+                }}
+              >
+                <ListItemText primary="Manage profiles…" />
+                <SettingsIcon fontSize="small" sx={{ ml: 1, color: "text.secondary" }} />
+              </MenuItem>
+            </Menu>
+          </>
+        )}
 
         <Box sx={{ flex: 1 }} />
 

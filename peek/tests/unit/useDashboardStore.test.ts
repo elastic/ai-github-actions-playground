@@ -655,3 +655,142 @@ describe("useDashboardStore importDashboard", () => {
     },
   );
 });
+
+describe("useDashboardStore connection profiles", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("saveConnectionProfile creates a profile from the provided connection", () => {
+    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
+
+    const id = useDashboardStore.getState().saveConnectionProfile("Dev Cluster", conn);
+
+    expect(id).toBeTruthy();
+    const state = useDashboardStore.getState();
+    expect(state.connectionProfiles).toHaveLength(1);
+    expect(state.connectionProfiles[0].name).toBe("Dev Cluster");
+    expect(state.connectionProfiles[0].connection.url).toBe("https://dev.example.com");
+    expect(state.connectionProfiles[0].connection.apiKey).toBe("dev-key");
+    expect(state.activeProfileId).toBe(id);
+  });
+
+  it("saveConnectionProfile adds multiple profiles", () => {
+    useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    useDashboardStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
+
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(2);
+  });
+
+  it("deleteConnectionProfile removes the profile by ID", () => {
+    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
+    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
+
+    useDashboardStore.getState().deleteConnectionProfile(id);
+
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
+  });
+
+  it("deleteConnectionProfile clears activeProfileId when deleting the active profile", () => {
+    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
+    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
+    expect(useDashboardStore.getState().activeProfileId).toBe(id);
+
+    useDashboardStore.getState().deleteConnectionProfile(id);
+
+    expect(useDashboardStore.getState().activeProfileId).toBeNull();
+  });
+
+  it("deleteConnectionProfile preserves activeProfileId when deleting a different profile", () => {
+    const devId = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    const prodId = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
+
+    useDashboardStore.getState().deleteConnectionProfile(devId);
+
+    expect(useDashboardStore.getState().activeProfileId).toBe(prodId);
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
+  });
+
+  it("renameConnectionProfile updates the profile name", () => {
+    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
+    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
+
+    useDashboardStore.getState().renameConnectionProfile(id, "Development");
+
+    const profile = useDashboardStore.getState().connectionProfiles[0];
+    expect(profile.name).toBe("Development");
+    expect(profile.connection.url).toBe("https://dev.example.com");
+  });
+
+  it("getConnectionProfile returns the correct profile", () => {
+    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
+    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
+
+    const profile = useDashboardStore.getState().getConnectionProfile(id);
+
+    expect(profile).toBeDefined();
+    expect(profile!.name).toBe("Dev");
+  });
+
+  it("getConnectionProfile returns undefined for unknown id", () => {
+    const profile = useDashboardStore.getState().getConnectionProfile("nonexistent");
+
+    expect(profile).toBeUndefined();
+  });
+
+  it("setActiveProfileId updates the active profile", () => {
+    useDashboardStore.getState().setActiveProfileId("some-id");
+
+    expect(useDashboardStore.getState().activeProfileId).toBe("some-id");
+  });
+
+  it("saveConnectionProfile returns null for duplicate name", () => {
+    useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev2.example.com", apiKey: "key2" });
+
+    expect(id).toBeNull();
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
+  });
+
+  it("deleteConnectionProfile cleans up sessionStorage credentials", () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    // Trigger persistence so credentials are written to sessionStorage
+    const apiKeyKey = `elastic-peek:profile:${id}:apiKey`;
+    const passwordKey = `elastic-peek:profile:${id}:password`;
+    sessionStorageMock.setItem(apiKeyKey, "dev-key");
+    sessionStorageMock.setItem(passwordKey, "dev-pass");
+
+    useDashboardStore.getState().deleteConnectionProfile(id!);
+
+    expect(sessionStorageMock.getItem(apiKeyKey)).toBeNull();
+    expect(sessionStorageMock.getItem(passwordKey)).toBeNull();
+  });
+
+  it("resetState clears connection profiles", () => {
+    useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
+
+    useDashboardStore.getState().resetState();
+
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
+    expect(useDashboardStore.getState().activeProfileId).toBeNull();
+  });
+});

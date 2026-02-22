@@ -1,10 +1,16 @@
 import type { FormatOptions } from "@perses-dev/core";
-import type { EsqlResponse, EsqlError } from "./services/es";
+import type { ElasticsearchConnection, EsqlResponse, EsqlError } from "./services/es";
 
 export type { FormatOptions };
 
 // ES-specific types are now sourced from the generated OpenAPI types.
 export type { ElasticsearchConnection, EsqlColumn, EsqlResponse, EsqlError } from "./services/es";
+
+export interface ConnectionProfile {
+  id: string;
+  name: string;
+  connection: ElasticsearchConnection;
+}
 
 export type VisualizationType =
   | "timeseries"
