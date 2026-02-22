@@ -10,6 +10,11 @@ interface UseEsqlQueryOptions {
   buildRequest?: (queryText: string) => EsqlQueryParams;
 }
 
+function getServerDurationMs(data: EsqlResponse): number | null {
+  const took = (data as { took?: unknown }).took;
+  return typeof took === "number" && Number.isFinite(took) ? took : null;
+}
+
 export function useEsqlQuery({
   connection,
   onSuccess,
@@ -47,17 +52,18 @@ export function useEsqlQuery({
       setActiveStep(stepIndex);
       setError(null);
       try {
-        const startTime = performance.now();
         const client = new ElasticsearchClient(connection);
         const trimmedQuery = queryText.trim();
         const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
         const data = await client.query(request, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
-          const elapsedMs = Math.round(performance.now() - startTime);
-          if (stepIndex === null) {
-            setLastRunDurationMs(elapsedMs);
-          } else {
-            setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: elapsedMs }));
+          const serverDurationMs = getServerDurationMs(data);
+          if (serverDurationMs !== null) {
+            if (stepIndex === null) {
+              setLastRunDurationMs(serverDurationMs);
+            } else {
+              setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
+            }
           }
           onSuccess(data, trimmedQuery);
         }

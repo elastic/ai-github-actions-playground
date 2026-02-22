@@ -59,7 +59,7 @@ export default function QueryPipelineSteps({
                     <PlayArrowIcon sx={{ fontSize: "1rem !important" }} />
                   )
                 }
-                label={`${idx + 1}. ${step}${durationMs !== undefined ? ` • ${formatDuration(durationMs)}` : ""}`}
+                label={`${idx + 1}. ${step}${durationMs !== undefined ? ` • ES ${formatDuration(durationMs)}` : ""}`}
                 onClick={() => onRunStep(cumulativeQuery, idx)}
                 disabled={loading}
                 variant="outlined"

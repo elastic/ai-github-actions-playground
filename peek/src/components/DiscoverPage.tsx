@@ -240,7 +240,7 @@ export default function DiscoverPage() {
           {result && (
             <Typography variant="caption" color="text.secondary">
               {result.values.length} rows × {result.columns.length} columns
-              {lastRunDurationMs !== null ? ` • ${formatDuration(lastRunDurationMs)}` : ""}
+              {lastRunDurationMs !== null ? ` • ES ${formatDuration(lastRunDurationMs)}` : ""}
             </Typography>
           )}
           <Button
