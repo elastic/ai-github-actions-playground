@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 import type {
+  ConnectionProfile,
   DashboardDefinition,
   DashboardParameter,
   ElasticsearchConnection,
@@ -17,6 +18,8 @@ interface DashboardState {
   connection: ElasticsearchConnection | null;
   connected: boolean;
   capabilities: UserCapabilities | null;
+  connectionProfiles: ConnectionProfile[];
+  activeProfileId: string | null;
   dashboard: DashboardDefinition;
   themeMode: "light" | "dark";
   editingPanelId: string | null;
@@ -38,6 +41,11 @@ interface DashboardState {
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
   setCapabilities: (caps: UserCapabilities | null) => void;
+  saveConnectionProfile: (name: string) => string | null;
+  deleteConnectionProfile: (id: string) => void;
+  renameConnectionProfile: (id: string, name: string) => void;
+  setActiveProfileId: (id: string | null) => void;
+  getConnectionProfile: (id: string) => ConnectionProfile | undefined;
   setThemeMode: (mode: "light" | "dark") => void;
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
@@ -85,10 +93,25 @@ interface DashboardState {
  * while storing the API key only in sessionStorage (cleared when the browser
  * session ends, reducing the exposure window of the credential).
  */
-type PersistedState = { connection?: ElasticsearchConnection | null };
+type PersistedState = {
+  connection?: ElasticsearchConnection | null;
+  connectionProfiles?: ConnectionProfile[];
+  activeProfileId?: string | null;
+};
 const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
+const PROFILE_SESSION_PREFIX = ":profile:";
 const QUERY_HISTORY_MAX_SIZE = 10;
+
+/** Strip credentials from a connection, returning redacted copy. */
+function stripCredentials(conn: ElasticsearchConnection): ElasticsearchConnection {
+  return { ...conn, apiKey: "", password: "" };
+}
+
+/** Strip credentials from an array of connection profiles. */
+function stripProfileCredentials(profiles: ConnectionProfile[]): ConnectionProfile[] {
+  return profiles.map((p) => ({ ...p, connection: stripCredentials(p.connection) }));
+}
 
 const splitStorage = {
   getItem: (name: string): StorageValue<PersistedState> | null => {
@@ -96,10 +119,28 @@ const splitStorage = {
     if (!localRaw) return null;
     try {
       const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
+      // Restore active connection credentials
       const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
       const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
       if (stored.state.connection) {
         stored.state.connection = { ...stored.state.connection, apiKey, password };
+      }
+      // Restore profile credentials from sessionStorage
+      if (stored.state.connectionProfiles) {
+        stored.state.connectionProfiles = stored.state.connectionProfiles.map((profile) => {
+          const pApiKey =
+            sessionStorage.getItem(
+              name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+            ) ?? "";
+          const pPassword =
+            sessionStorage.getItem(
+              name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+            ) ?? "";
+          return {
+            ...profile,
+            connection: { ...profile.connection, apiKey: pApiKey, password: pPassword },
+          };
+        });
       }
       return stored;
     } catch {
@@ -109,13 +150,26 @@ const splitStorage = {
   setItem: (name: string, value: StorageValue<PersistedState>): void => {
     const apiKey = value.state.connection?.apiKey ?? "";
     const password = value.state.connection?.password ?? "";
+    // Save profile credentials to sessionStorage, strip from localStorage
+    const profiles = value.state.connectionProfiles ?? [];
+    for (const profile of profiles) {
+      sessionStorage.setItem(
+        name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+        profile.connection.apiKey ?? "",
+      );
+      sessionStorage.setItem(
+        name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+        profile.connection.password ?? "",
+      );
+    }
     const toStore: StorageValue<PersistedState> = {
       ...value,
       state: {
         ...value.state,
         connection: value.state.connection
-          ? { ...value.state.connection, apiKey: "", password: "" }
+          ? stripCredentials(value.state.connection)
           : value.state.connection,
+        connectionProfiles: profiles.length > 0 ? stripProfileCredentials(profiles) : profiles,
       },
     };
     localStorage.setItem(name, JSON.stringify(toStore));
@@ -123,6 +177,23 @@ const splitStorage = {
     sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, password);
   },
   removeItem: (name: string): void => {
+    // Clean up profile credential keys from sessionStorage
+    const localRaw = localStorage.getItem(name);
+    if (localRaw) {
+      try {
+        const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
+        for (const profile of stored.state.connectionProfiles ?? []) {
+          sessionStorage.removeItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          );
+          sessionStorage.removeItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          );
+        }
+      } catch {
+        /* ignore parse errors during cleanup */
+      }
+    }
     localStorage.removeItem(name);
     sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
     sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
@@ -135,6 +206,8 @@ export const useDashboardStore = create<DashboardState>()(
       connection: null,
       connected: false,
       capabilities: null,
+      connectionProfiles: [],
+      activeProfileId: null,
       dashboard: createDefaultDashboard(),
       themeMode: "dark",
       editingPanelId: null,
@@ -146,6 +219,36 @@ export const useDashboardStore = create<DashboardState>()(
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
       setCapabilities: (caps) => set({ capabilities: caps }),
+
+      saveConnectionProfile: (name) => {
+        const { connection, connectionProfiles } = get();
+        if (!connection) return null;
+        const id = crypto.randomUUID();
+        const profile: ConnectionProfile = { id, name, connection: { ...connection } };
+        set({ connectionProfiles: [...connectionProfiles, profile], activeProfileId: id });
+        return id;
+      },
+
+      deleteConnectionProfile: (id) =>
+        set((s) => {
+          const filtered = s.connectionProfiles.filter((p) => p.id !== id);
+          return {
+            connectionProfiles: filtered,
+            activeProfileId: s.activeProfileId === id ? null : s.activeProfileId,
+          };
+        }),
+
+      renameConnectionProfile: (id, name) =>
+        set((s) => ({
+          connectionProfiles: s.connectionProfiles.map((p) => (p.id === id ? { ...p, name } : p)),
+        })),
+
+      setActiveProfileId: (id) => set({ activeProfileId: id }),
+
+      getConnectionProfile: (id) => {
+        return get().connectionProfiles.find((p) => p.id === id);
+      },
+
       setThemeMode: (mode) => set({ themeMode: mode }),
       setTimeRange: (range) =>
         set((s) => ({
@@ -332,6 +435,8 @@ export const useDashboardStore = create<DashboardState>()(
           connection: null,
           connected: false,
           capabilities: null,
+          connectionProfiles: [],
+          activeProfileId: null,
           dashboard: createDefaultDashboard(),
           themeMode: "dark",
           editingPanelId: null,
@@ -347,6 +452,8 @@ export const useDashboardStore = create<DashboardState>()(
       storage: splitStorage,
       partialize: (state) => ({
         connection: state.connection,
+        connectionProfiles: state.connectionProfiles,
+        activeProfileId: state.activeProfileId,
         dashboard: state.dashboard,
         themeMode: state.themeMode,
         queryHistory: state.queryHistory,
