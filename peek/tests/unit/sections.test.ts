@@ -43,4 +43,14 @@ describe("parseDocSection", () => {
     const section = parseDocSection("test", raw);
     expect(section.body[0]).toBe("Talks to Elasticsearch via the _query REST API.");
   });
+
+  it("does not unescape non-markdown escapes like regex and paths", () => {
+    const raw =
+      "# Title\n\nRegex example: \\d+ should stay escaped.\n\nWindows path: C:\\Users\\me.\n";
+    const section = parseDocSection("test", raw);
+    expect(section.body).toEqual([
+      "Regex example: \\d+ should stay escaped.",
+      "Windows path: C:\\Users\\me.",
+    ]);
+  });
 });

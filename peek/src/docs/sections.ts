@@ -19,7 +19,7 @@ export interface DocSection {
  * Parse a simple Markdown string into a DocSection.
  * The first `# Heading` line becomes the title; the remaining
  * blank-line-separated blocks become the body paragraphs.
- * Markdown escape sequences (e.g. `\_`) are unescaped in the output.
+ * Markdown punctuation escape sequences (e.g. `\_`) are unescaped in the output.
  */
 export function parseDocSection(id: string, raw: string): DocSection {
   const lines = raw.trim().split("\n");
@@ -31,7 +31,7 @@ export function parseDocSection(id: string, raw: string): DocSection {
     .trim();
   const body = bodyText
     .split(/\n\n+/)
-    .map((p) => p.trim().replace(/\\(.)/g, "$1"))
+    .map((p) => p.trim().replace(/\\([\\`*_{}[\]()#+\-.!|>~])/g, "$1"))
     .filter(Boolean);
   return { id, title, body };
 }

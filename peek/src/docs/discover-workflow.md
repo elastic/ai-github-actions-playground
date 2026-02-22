@@ -2,6 +2,8 @@
 
 Switch to the Query Lab tab to run ad-hoc ES|QL queries and explore results in a table.
 
+Use Recent queries to re-apply query text from successful runs.
+
 Use the field list on the left to select which columns are shown.
 
 Filter columns by name using the search box above the field list.
