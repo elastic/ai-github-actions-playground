@@ -21,6 +21,7 @@ import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
+import DashboardManagementPage from "./components/DashboardManagementPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -61,6 +62,8 @@ export default function App() {
                 <DocsPage />
               ) : currentPage === "settings" ? (
                 <SettingsPage />
+              ) : currentPage === "dashboardManagement" ? (
+                <DashboardManagementPage />
               ) : currentPage === "chat" ? (
                 <ChatPage />
               ) : !connected ? (

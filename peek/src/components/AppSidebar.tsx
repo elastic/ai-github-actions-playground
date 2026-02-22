@@ -29,7 +29,8 @@ type Page =
   | "docs"
   | "console"
   | "chat"
-  | "settings";
+  | "settings"
+  | "dashboardManagement";
 
 interface NavItem {
   label: string;
@@ -270,6 +271,15 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           }}
         >
           LLM Settings
+        </MenuItem>
+        <MenuItem
+          selected={currentPage === "dashboardManagement"}
+          onClick={() => {
+            setCurrentPage("dashboardManagement");
+            setSettingsAnchor(null);
+          }}
+        >
+          Dashboard Management
         </MenuItem>
       </Menu>
     </Box>

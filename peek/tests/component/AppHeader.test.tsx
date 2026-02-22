@@ -23,16 +23,17 @@ describe("AppHeader", () => {
     expect(screen.getByRole("img", { name: "Peek" })).toBeInTheDocument();
   });
 
-  it("shows dashboard actions when connected", () => {
+  it("shows Add Panel button on the dashboard page", () => {
+    useDashboardStore.getState().setCurrentPage("dashboard");
     render(<AppHeader />);
 
-    expect(screen.getByRole("button", { name: /dashboard actions/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add panel/i })).toBeInTheDocument();
   });
 
-  it("hides dashboard actions when disconnected", () => {
-    useDashboardStore.getState().setConnected(false);
+  it("hides Add Panel button on non-dashboard pages", () => {
+    useDashboardStore.getState().setCurrentPage("discover");
     render(<AppHeader />);
 
-    expect(screen.queryByRole("button", { name: /dashboard actions/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 });
