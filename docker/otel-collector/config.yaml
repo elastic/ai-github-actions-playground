@@ -1,5 +1,5 @@
 receivers:
-  hostmetrics:
+  hostmetrics/system:
     collection_interval: 15s
     root_path: /hostfs
     scrapers:
@@ -11,31 +11,48 @@ receivers:
       paging:
       process:
       processes:
-  otlp:
+  otlp/fromsdk:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
 
+connectors:
+  elasticapm: {}
+
 processors:
-  batch:
+  batch: {}
+  elasticapm: {}
 
 exporters:
-  elasticsearch:
+  elasticsearch/otel:
     endpoints: ["http://elasticsearch:9200"]
     mapping:
-      mode: ecs
+      mode: otel
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
 
 service:
+  extensions: [health_check]
   pipelines:
-    metrics:
-      receivers: [hostmetrics]
+    traces/fromsdk:
+      receivers: [otlp/fromsdk]
+      processors: [elasticapm, batch]
+      exporters: [elasticapm, elasticsearch/otel]
+    metrics/fromsdk:
+      receivers: [otlp/fromsdk]
       processors: [batch]
-      exporters: [elasticsearch]
-    traces:
-      receivers: [otlp]
+      exporters: [elasticsearch/otel]
+    metrics/hostmetrics:
+      receivers: [hostmetrics/system]
       processors: [batch]
-      exporters: [elasticsearch]
-    logs:
-      receivers: [otlp]
+      exporters: [elasticsearch/otel]
+    metrics/aggregated-metrics:
+      receivers: [elasticapm]
       processors: [batch]
-      exporters: [elasticsearch]
+      exporters: [elasticsearch/otel]
+    logs/fromsdk:
+      receivers: [otlp/fromsdk]
+      processors: [batch]
+      exporters: [elasticsearch/otel]

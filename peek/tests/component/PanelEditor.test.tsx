@@ -34,11 +34,7 @@ vi.mock("../../src/components/visualizations/Visualization", () => ({
   default: () => <div data-testid="visualization-mock" />,
 }));
 vi.mock("../../src/components/QueryPipelineSteps", () => ({
-  default: ({
-    onRunStep,
-  }: {
-    onRunStep: (query: string, stepIndex: number) => void;
-  }) => (
+  default: ({ onRunStep }: { onRunStep: (query: string, stepIndex: number) => void }) => (
     <button type="button" onClick={() => onRunStep("FROM panel-step-* | LIMIT 2", 1)}>
       Run step 2
     </button>
@@ -110,13 +106,16 @@ describe("PanelEditor", () => {
     expect(screen.queryByText("Options")).not.toBeInTheDocument();
   });
 
-  it.each(["Scatter", "Histogram"])("switching to %s keeps format options visible", async (vizTitle) => {
-    const user = userEvent.setup();
-    render(<PanelEditor />);
+  it.each(["Scatter", "Histogram"])(
+    "switching to %s keeps format options visible",
+    async (vizTitle) => {
+      const user = userEvent.setup();
+      render(<PanelEditor />);
 
-    await user.click(screen.getByTitle(vizTitle));
-    expect(screen.getByText("Options")).toBeInTheDocument();
-  });
+      await user.click(screen.getByTitle(vizTitle));
+      expect(screen.getByText("Options")).toBeInTheDocument();
+    },
+  );
 
   it("Save button calls updatePanel with current panel state", async () => {
     const user = userEvent.setup();

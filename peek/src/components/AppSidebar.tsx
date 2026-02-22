@@ -19,6 +19,7 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import TimelineIcon from "@mui/icons-material/Timeline";
 import { useState } from "react";
 import { useDashboardStore } from "../store/useDashboardStore";
 
@@ -27,6 +28,7 @@ type Page =
   | "discover"
   | "dataStreams"
   | "explore"
+  | "traces"
   | "docs"
   | "console"
   | "chat"
@@ -71,6 +73,12 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Metrics",
         page: "explore",
         icon: <ExploreIcon fontSize="small" />,
+        requiresConnection: true,
+      },
+      {
+        label: "Traces",
+        page: "traces",
+        icon: <TimelineIcon fontSize="small" />,
         requiresConnection: true,
       },
       {

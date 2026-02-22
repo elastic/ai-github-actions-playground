@@ -1,7 +1,10 @@
 import { useMemo, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -9,31 +12,65 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DownloadIcon from "@mui/icons-material/Download";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import type { EsqlResponse } from "../../types";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 import { isNumericType } from "./chartUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
 
+type SortDirection = "asc" | "desc";
+
+export interface SortState {
+  columnName: string;
+  direction: SortDirection;
+}
+
+function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
+  const kept = order.filter((i) => allIndices.includes(i));
+  const missing = allIndices.filter((i) => !kept.includes(i));
+  return [...kept, ...missing];
+}
+
 interface Props {
   data: EsqlResponse;
   onExportCsv?: () => void;
+  onRemoveColumn?: (name: string) => void;
+  currentSort?: SortState | null;
+  onSortChange?: (columnName: string, direction: SortDirection | null) => void;
 }
 
-export default function DataTable({ data, onExportCsv }: Props) {
+export default function DataTable({
+  data,
+  onExportCsv,
+  onRemoveColumn,
+  currentSort,
+  onSortChange,
+}: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
+  const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuColumnIndex, setMenuColumnIndex] = useState<number | null>(null);
+  const allColumnIndices = useMemo(() => data.columns.map((_, i) => i), [data.columns]);
+  const resolvedColumnOrder = useMemo(
+    () => reconcileColumnOrder(columnOrder, allColumnIndices),
+    [columnOrder, allColumnIndices],
+  );
 
   const emptyColumnIndices = useMemo(() => getEmptyColumnIndices(data), [data]);
 
-  const visibleColumnIndices = useMemo(() => {
-    const indices = data.columns.map((_, i) => i);
-    return showEmptyColumns ? indices : indices.filter((i) => !emptyColumnIndices.has(i));
-  }, [data.columns, emptyColumnIndices, showEmptyColumns]);
+  const orderedVisibleColumnIndices = useMemo(() => {
+    const visible = showEmptyColumns
+      ? allColumnIndices
+      : allColumnIndices.filter((i) => !emptyColumnIndices.has(i));
+    return resolvedColumnOrder.filter((i) => visible.includes(i));
+  }, [allColumnIndices, emptyColumnIndices, showEmptyColumns, resolvedColumnOrder]);
 
   const visibleRows = useMemo(
     () => paginateRows(data.values, page, rowsPerPage),
@@ -46,6 +83,43 @@ export default function DataTable({ data, onExportCsv }: Props) {
 
   const handleCloseInspector = useCallback(() => {
     setInspectedRow(null);
+  }, []);
+
+  const handleSortToggle = useCallback(
+    (columnName: string) => {
+      if (!onSortChange) return;
+      if (!currentSort || currentSort.columnName !== columnName) {
+        onSortChange(columnName, "asc");
+      } else if (currentSort.direction === "asc") {
+        onSortChange(columnName, "desc");
+      } else {
+        onSortChange(columnName, null);
+      }
+      setPage(0);
+    },
+    [currentSort, onSortChange],
+  );
+
+  const moveColumn = useCallback(
+    (columnIndex: number, direction: "left" | "right") => {
+      setColumnOrder((prev) => {
+        const nextIndices = data.columns.map((_, i) => i);
+        const normalized = reconcileColumnOrder(prev, nextIndices);
+        const from = normalized.indexOf(columnIndex);
+        if (from < 0) return prev;
+        const to = direction === "left" ? from - 1 : from + 1;
+        if (to < 0 || to >= normalized.length) return prev;
+        const next = [...normalized];
+        [next[from], next[to]] = [next[to]!, next[from]!];
+        return next;
+      });
+    },
+    [data.columns],
+  );
+
+  const closeMenu = useCallback(() => {
+    setMenuAnchor(null);
+    setMenuColumnIndex(null);
   }, []);
 
   if (data.columns.length === 0) {
@@ -91,8 +165,9 @@ export default function DataTable({ data, onExportCsv }: Props) {
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              {visibleColumnIndices.map((colIdx) => {
+              {orderedVisibleColumnIndices.map((colIdx) => {
                 const col = data.columns[colIdx]!;
+                const isSorted = currentSort?.columnName === col.name;
                 return (
                   <TableCell
                     key={col.name}
@@ -102,10 +177,28 @@ export default function DataTable({ data, onExportCsv }: Props) {
                       fontSize: "0.75rem",
                     }}
                   >
-                    {col.name}
-                    <Typography component="span" variant="caption" sx={{ ml: 0.5, opacity: 0.5 }}>
-                      {col.type}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                      <TableSortLabel
+                        active={isSorted}
+                        direction={isSorted ? currentSort!.direction : "asc"}
+                        onClick={() => handleSortToggle(col.name)}
+                      >
+                        {col.name}
+                      </TableSortLabel>
+                      <Typography component="span" variant="caption" sx={{ opacity: 0.5 }}>
+                        {col.type}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        aria-label={`column actions for ${col.name}`}
+                        onClick={(event) => {
+                          setMenuAnchor(event.currentTarget);
+                          setMenuColumnIndex(colIdx);
+                        }}
+                      >
+                        <MoreVertIcon fontSize="inherit" />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 );
               })}
@@ -131,7 +224,7 @@ export default function DataTable({ data, onExportCsv }: Props) {
                   }}
                   sx={{ cursor: "pointer" }}
                 >
-                  {visibleColumnIndices.map((colIdx) => {
+                  {orderedVisibleColumnIndices.map((colIdx) => {
                     const col = data.columns[colIdx];
                     const cell = row[colIdx];
                     const numeric = col ? isNumericType(col.type) : false;
@@ -197,6 +290,62 @@ export default function DataTable({ data, onExportCsv }: Props) {
         columns={data.columns}
         row={inspectedRow}
       />
+      <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
+        <MenuItem
+          disabled={!onSortChange}
+          onClick={() => {
+            if (menuColumnIndex !== null && onSortChange) {
+              const col = data.columns[menuColumnIndex];
+              if (col) onSortChange(col.name, "asc");
+              setPage(0);
+            }
+            closeMenu();
+          }}
+        >
+          Sort A→Z
+        </MenuItem>
+        <MenuItem
+          disabled={!onSortChange}
+          onClick={() => {
+            if (menuColumnIndex !== null && onSortChange) {
+              const col = data.columns[menuColumnIndex];
+              if (col) onSortChange(col.name, "desc");
+              setPage(0);
+            }
+            closeMenu();
+          }}
+        >
+          Sort Z→A
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuColumnIndex !== null) moveColumn(menuColumnIndex, "left");
+            closeMenu();
+          }}
+        >
+          Move column left
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuColumnIndex !== null) moveColumn(menuColumnIndex, "right");
+            closeMenu();
+          }}
+        >
+          Move column right
+        </MenuItem>
+        <MenuItem
+          disabled={menuColumnIndex === null || !onRemoveColumn}
+          onClick={() => {
+            if (menuColumnIndex !== null) {
+              const column = data.columns[menuColumnIndex];
+              if (column && onRemoveColumn) onRemoveColumn(column.name);
+            }
+            closeMenu();
+          }}
+        >
+          Remove column
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

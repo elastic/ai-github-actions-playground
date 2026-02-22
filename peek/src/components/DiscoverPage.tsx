@@ -20,9 +20,10 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
-import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
+import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
+import type { SortState } from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -62,6 +63,7 @@ export default function DiscoverPage() {
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
+  const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const effectiveQuery = discoverQueryDraft ?? query;
 
   const { runQuery, loading, error, activeStep, stepDurationsMs, clearTimings } = useEsqlQuery({
@@ -84,6 +86,7 @@ export default function DiscoverPage() {
       }
       clearTimings();
       setQuery(nextQuery);
+      setCurrentSort(null);
     },
     [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
   );
@@ -91,6 +94,17 @@ export default function DiscoverPage() {
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
+  );
+  const handleSortChange = useCallback(
+    (columnName: string, direction: "asc" | "desc" | null) => {
+      const newSort = direction ? { columnName, direction } : null;
+      setCurrentSort(newSort);
+      const newQuery = applyEsqlSort(effectiveQuery, columnName, direction);
+      if (discoverQueryDraft) setDiscoverQueryDraft(null);
+      setQuery(newQuery);
+      void runQuery(newQuery);
+    },
+    [effectiveQuery, discoverQueryDraft, setDiscoverQueryDraft, runQuery],
   );
   const handleSelectHistory = useCallback(
     (selectedQuery: string) => {
@@ -390,7 +404,14 @@ export default function DiscoverPage() {
             </Box>
           )}
           {filteredResult && filteredResult.columns.length > 0 && (
-            <DataTable key={tableVersion} data={filteredResult} onExportCsv={handleExportCsv} />
+            <DataTable
+              key={tableVersion}
+              data={filteredResult}
+              onExportCsv={handleExportCsv}
+              onRemoveColumn={toggleField}
+              currentSort={currentSort}
+              onSortChange={handleSortChange}
+            />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
             <Box

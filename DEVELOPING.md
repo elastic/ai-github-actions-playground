@@ -71,7 +71,7 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 **Proxy mode** (no CORS required):
 ```
-┌─────────────┐    /_query      ┌───────────┐    /_query      ┌────────────────────┐
+┌─────────────┐    /_es/*       ┌───────────┐    /*            ┌────────────────────┐
 │   Browser    │ ─────────────▶  │   Proxy   │ ─────────────▶  │   Elasticsearch    │
 │              │ ◀─────────────  │  (local)  │ ◀─────────────  │   cluster          │
 └─────────────┘    JSON          └───────────┘    JSON          └────────────────────┘

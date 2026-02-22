@@ -36,9 +36,7 @@ describe("HistogramChart", () => {
     };
     render(<HistogramChart data={data} />);
     const option = getLastSetOptionCall();
-    expect(option.title).toEqual(
-      expect.objectContaining({ text: "No numeric data to display" }),
-    );
+    expect(option.title).toEqual(expect.objectContaining({ text: "No numeric data to display" }));
   });
 
   it("shows error title when all numeric values are null", () => {
@@ -48,9 +46,7 @@ describe("HistogramChart", () => {
     };
     render(<HistogramChart data={data} />);
     const option = getLastSetOptionCall();
-    expect(option.title).toEqual(
-      expect.objectContaining({ text: "No numeric data to display" }),
-    );
+    expect(option.title).toEqual(expect.objectContaining({ text: "No numeric data to display" }));
   });
 
   it("distributes values into the correct number of bins", () => {

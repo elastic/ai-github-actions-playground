@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DataTable from "../../src/components/visualizations/DataTable";
 import type { EsqlResponse } from "../../src/types";
@@ -13,6 +13,7 @@ const mockData: EsqlResponse = {
   values: [
     ["2025-06-15T12:00:00.000Z", "hello world", 42],
     ["2025-06-15T13:00:00.000Z", "foo bar", null],
+    ["2025-06-15T11:00:00.000Z", "aaa", 5],
   ],
 };
 
@@ -76,9 +77,7 @@ describe("DataTable", () => {
     expect(screen.getByText("Row Inspector")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /close inspector/i }));
-    await waitFor(() =>
-      expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument());
   });
 
   it("copies selected row JSON from the inspector", async () => {
@@ -145,5 +144,69 @@ describe("DataTable", () => {
     render(<DataTable data={{ columns: [], values: [] }} />);
 
     expect(screen.getByText("No data")).toBeInTheDocument();
+  });
+
+  it("calls onSortChange on first header click with asc direction", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    render(<DataTable data={mockData} onSortChange={onSortChange} />);
+
+    await user.click(screen.getByRole("button", { name: /^count$/i }));
+
+    expect(onSortChange).toHaveBeenCalledWith("count", "asc");
+  });
+
+  it("calls onSortChange with desc when already sorted asc", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    render(
+      <DataTable
+        data={mockData}
+        currentSort={{ columnName: "count", direction: "asc" }}
+        onSortChange={onSortChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^count$/i }));
+
+    expect(onSortChange).toHaveBeenCalledWith("count", "desc");
+  });
+
+  it("calls onSortChange with null when already sorted desc", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    render(
+      <DataTable
+        data={mockData}
+        currentSort={{ columnName: "count", direction: "desc" }}
+        onSortChange={onSortChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^count$/i }));
+
+    expect(onSortChange).toHaveBeenCalledWith("count", null);
+  });
+
+  it("moves columns via header menu actions", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByRole("button", { name: /column actions for count/i }));
+    await user.click(screen.getByRole("menuitem", { name: /move column left/i }));
+
+    const headers = screen.getAllByRole("columnheader");
+    expect(within(headers[1]!).getByText("count")).toBeInTheDocument();
+  });
+
+  it("calls onRemoveColumn from header menu", async () => {
+    const user = userEvent.setup();
+    const onRemoveColumn = vi.fn();
+    render(<DataTable data={mockData} onRemoveColumn={onRemoveColumn} />);
+
+    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
+    await user.click(screen.getByRole("menuitem", { name: /remove column/i }));
+
+    expect(onRemoveColumn).toHaveBeenCalledWith("message");
   });
 });

@@ -11,3 +11,7 @@ Use Recent queries in the panel editor to re-apply a query that previously ran s
 Use the time picker and refresh interval controls in the header to control the query time range.
 
 Export your dashboard as a JSON file from the overflow menu, and import it on another machine.
+
+Use dashboard variables in panel queries to reuse one dashboard across environments and drill-down contexts without duplicating panels.
+
+When a panel shows errors, re-run its query in Query Lab first to isolate query syntax issues from visualization configuration issues.
