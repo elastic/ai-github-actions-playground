@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -9,15 +10,18 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+import DownloadIcon from "@mui/icons-material/Download";
 import type { EsqlResponse } from "../../types";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 import { isNumericType } from "./chartUtils";
 
 interface Props {
   data: EsqlResponse;
+  onExportCsv?: () => void;
 }
 
-export default function DataTable({ data }: Props) {
+export default function DataTable({ data, onExportCsv }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
@@ -129,18 +133,36 @@ export default function DataTable({ data }: Props) {
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePagination
-        component="div"
-        count={data.values.length}
-        page={page}
-        onPageChange={(_, nextPage) => setPage(nextPage)}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(event) => {
-          setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0);
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          borderTop: 1,
+          borderColor: "divider",
+          px: 1,
         }}
-        rowsPerPageOptions={[25, 50, 100]}
-      />
+      >
+        <TablePagination
+          component="div"
+          count={data.values.length}
+          page={page}
+          onPageChange={(_, nextPage) => setPage(nextPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[25, 50, 100]}
+          sx={{ flex: 1 }}
+        />
+        {onExportCsv && (
+          <Tooltip title="Export currently visible results as CSV">
+            <Button size="small" variant="text" startIcon={<DownloadIcon />} onClick={onExportCsv}>
+              Export CSV
+            </Button>
+          </Tooltip>
+        )}
+      </Box>
     </Box>
   );
 }

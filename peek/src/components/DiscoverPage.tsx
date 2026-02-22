@@ -14,7 +14,6 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import DownloadIcon from "@mui/icons-material/Download";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -22,7 +21,6 @@ import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
-import { formatDuration } from "./formatDuration";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
@@ -66,18 +64,17 @@ export default function DiscoverPage() {
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const effectiveQuery = discoverQueryDraft ?? query;
 
-  const { runQuery, loading, error, activeStep, stepDurationsMs, lastRunDurationMs, clearTimings } =
-    useEsqlQuery({
-      connection,
-      onSuccess: (data, executedQuery) => {
-        setResult(data);
-        // By default select all fields
-        setSelectedFields(new Set(data.columns.map((c) => c.name)));
-        setTableVersion((prev) => prev + 1);
-        appendQueryToHistory(executedQuery);
-      },
-      onFailure: () => setResult(null),
-    });
+  const { runQuery, loading, error, activeStep, stepDurationsMs, clearTimings } = useEsqlQuery({
+    connection,
+    onSuccess: (data, executedQuery) => {
+      setResult(data);
+      // By default select all fields
+      setSelectedFields(new Set(data.columns.map((c) => c.name)));
+      setTableVersion((prev) => prev + 1);
+      appendQueryToHistory(executedQuery);
+    },
+    onFailure: () => setResult(null),
+  });
 
   const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
   const handleQueryChange = useCallback(
@@ -194,17 +191,41 @@ export default function DiscoverPage() {
           <Typography variant="subtitle2" color="text.secondary">
             ES|QL Query
           </Typography>
-          <Typography
-            component="a"
-            href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
-            target="_blank"
-            rel="noreferrer"
-            variant="caption"
-            color="primary.main"
-            sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
-          >
-            ES|QL documentation
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              variant="text"
+              size="small"
+              onClick={(e) => setHistoryAnchor(e.currentTarget)}
+              disabled={queryHistory.length === 0}
+            >
+              Recent queries
+            </Button>
+            <Menu
+              anchorEl={historyAnchor}
+              open={Boolean(historyAnchor)}
+              onClose={() => setHistoryAnchor(null)}
+            >
+              {queryHistory.map((historyQuery, idx) => (
+                <MenuItem
+                  key={`${historyQuery}-${idx}`}
+                  onClick={() => handleSelectHistory(historyQuery)}
+                >
+                  {historyQuery}
+                </MenuItem>
+              ))}
+            </Menu>
+            <Typography
+              component="a"
+              href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
+              target="_blank"
+              rel="noreferrer"
+              variant="caption"
+              color="primary.main"
+              sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+            >
+              ES|QL documentation
+            </Typography>
+          </Box>
         </Box>
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
           <CodeMirror
@@ -223,7 +244,7 @@ export default function DiscoverPage() {
           stepDurationsMs={stepDurationsMs}
           onRunStep={handleRunStep}
         />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
           <Button
             variant="contained"
             size="small"
@@ -233,34 +254,6 @@ export default function DiscoverPage() {
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
-          {result && (
-            <Typography variant="caption" color="text.secondary">
-              {result.values.length} rows × {result.columns.length} columns
-              {lastRunDurationMs !== null ? ` • ES ${formatDuration(lastRunDurationMs)}` : ""}
-            </Typography>
-          )}
-          <Button
-            variant="text"
-            size="small"
-            onClick={(e) => setHistoryAnchor(e.currentTarget)}
-            disabled={queryHistory.length === 0}
-          >
-            Recent queries
-          </Button>
-          <Menu
-            anchorEl={historyAnchor}
-            open={Boolean(historyAnchor)}
-            onClose={() => setHistoryAnchor(null)}
-          >
-            {queryHistory.map((historyQuery, idx) => (
-              <MenuItem
-                key={`${historyQuery}-${idx}`}
-                onClick={() => handleSelectHistory(historyQuery)}
-              >
-                {historyQuery}
-              </MenuItem>
-            ))}
-          </Menu>
           <Box sx={{ flex: 1 }} />
           <Tooltip title="Create a dashboard panel from this query">
             <span>
@@ -271,20 +264,7 @@ export default function DiscoverPage() {
                 onClick={handleCreatePanel}
                 disabled={!effectiveQuery.trim()}
               >
-                Create Panel
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title="Export currently visible results as CSV">
-            <span>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<DownloadIcon />}
-                onClick={handleExportCsv}
-                disabled={!filteredResult || filteredResult.columns.length === 0}
-              >
-                Export CSV
+                Convert to Visualization
               </Button>
             </span>
           </Tooltip>
@@ -410,7 +390,7 @@ export default function DiscoverPage() {
             </Box>
           )}
           {filteredResult && filteredResult.columns.length > 0 && (
-            <DataTable key={tableVersion} data={filteredResult} />
+            <DataTable key={tableVersion} data={filteredResult} onExportCsv={handleExportCsv} />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
             <Box

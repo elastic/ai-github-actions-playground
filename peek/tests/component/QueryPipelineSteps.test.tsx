@@ -71,7 +71,7 @@ describe("QueryPipelineSteps", () => {
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 
-  it("shows ES timing label on steps when timing is provided", () => {
+  it("shows timing label on steps when timing is provided", () => {
     render(
       <QueryPipelineSteps
         query="FROM logs-* | SORT @timestamp DESC | LIMIT 50"
@@ -83,7 +83,7 @@ describe("QueryPipelineSteps", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /2\. SORT @timestamp DESC.*ES 1\.2s/i }),
+      screen.getByRole("button", { name: /2\. SORT @timestamp DESC.*1\.2s/i }),
     ).toBeInTheDocument();
   });
 });

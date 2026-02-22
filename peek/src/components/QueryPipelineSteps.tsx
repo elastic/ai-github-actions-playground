@@ -44,7 +44,15 @@ export default function QueryPipelineSteps({
         const isRunning = loading && activeStep === idx;
         const durationMs = stepDurationsMs?.[idx];
         return (
-          <Tooltip key={idx} title={cumulativeQuery} placement="bottom-start">
+          <Tooltip
+            key={idx}
+            title={
+              durationMs !== undefined
+                ? `${cumulativeQuery}\n\nDuration: ${formatDuration(durationMs)}`
+                : cumulativeQuery
+            }
+            placement="bottom-start"
+          >
             <span>
               <Chip
                 size="small"
@@ -55,7 +63,7 @@ export default function QueryPipelineSteps({
                     <PlayArrowIcon sx={{ fontSize: "1rem !important" }} />
                   )
                 }
-                label={`${idx + 1}. ${step}${durationMs !== undefined ? ` • ES ${formatDuration(durationMs)}` : ""}`}
+                label={`${idx + 1}. ${step}${durationMs !== undefined ? ` • ${formatDuration(durationMs)}` : ""}`}
                 onClick={() => onRunStep(cumulativeQuery, idx)}
                 disabled={loading}
                 variant="outlined"
