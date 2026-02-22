@@ -27,10 +27,9 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import TerminalIcon from "@mui/icons-material/Terminal";
 import ExploreIcon from "@mui/icons-material/Explore";
 import DatasetIcon from "@mui/icons-material/Dataset";
-import ChatIcon from "@mui/icons-material/Chat";
-import SettingsApplicationsIcon from "@mui/icons-material/SettingsApplications";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -212,7 +211,7 @@ export default function AppHeader() {
         {connected && (
           <Tabs
             value={tabValue}
-            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs" | "chat" | "settings") =>
+            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs" | "console") =>
               setCurrentPage(v)
             }
             sx={{ ml: 2, minHeight: 48 }}
@@ -240,9 +239,9 @@ export default function AppHeader() {
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
             <Tab
-              value="chat"
-              label="Chat"
-              icon={<ChatIcon fontSize="small" />}
+              value="console"
+              label="Console"
+              icon={<TerminalIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
@@ -250,49 +249,12 @@ export default function AppHeader() {
               value="docs"
               label="Docs"
               icon={<MenuBookIcon fontSize="small" />}
-              iconPosition="start"
-              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-            />
-            <Tab
-              value="settings"
-              label="Settings"
-              icon={<SettingsApplicationsIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
           </Tabs>
         )}
 
-        {!connected && (
-          <Tabs
-            value={["chat", "docs", "settings"].includes(currentPage) ? currentPage : false}
-            onChange={(_, v: "docs" | "chat" | "settings") => setCurrentPage(v)}
-            sx={{ ml: 2, minHeight: 48 }}
-            TabIndicatorProps={{ style: { height: 3 } }}
-          >
-            <Tab
-              value="chat"
-              label="Chat"
-              icon={<ChatIcon fontSize="small" />}
-              iconPosition="start"
-              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-            />
-            <Tab
-              value="docs"
-              label="Docs"
-              icon={<MenuBookIcon fontSize="small" />}
-              iconPosition="start"
-              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-            />
-            <Tab
-              value="settings"
-              label="Settings"
-              icon={<SettingsApplicationsIcon fontSize="small" />}
-              iconPosition="start"
-              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
-            />
-          </Tabs>
-        )}
         {connected && (
           <>
             <Button

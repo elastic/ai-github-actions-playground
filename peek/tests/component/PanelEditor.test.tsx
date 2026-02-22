@@ -33,6 +33,17 @@ vi.mock("@codemirror/lang-sql", () => ({
 vi.mock("../../src/components/visualizations/Visualization", () => ({
   default: () => <div data-testid="visualization-mock" />,
 }));
+vi.mock("../../src/components/QueryPipelineSteps", () => ({
+  default: ({
+    onRunStep,
+  }: {
+    onRunStep: (query: string, stepIndex: number) => void;
+  }) => (
+    <button type="button" onClick={() => onRunStep("FROM panel-step-* | LIMIT 2", 1)}>
+      Run step 2
+    </button>
+  ),
+}));
 
 describe("PanelEditor", () => {
   let panelId: string;
@@ -41,7 +52,9 @@ describe("PanelEditor", () => {
     queryMock.mockReset();
     queryMock.mockResolvedValue({ columns: [], values: [], executionTimeMs: 1 });
     useDashboardStore.getState().resetState();
-    useDashboardStore.getState().setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
+    useDashboardStore
+      .getState()
+      .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
     useDashboardStore.getState().setConnected(true);
     useDashboardStore
       .getState()
@@ -137,9 +150,43 @@ describe("PanelEditor", () => {
             },
           },
         },
-        params: expect.arrayContaining([{ _tstart: "2025-06-15T11:00:00.000Z" }, { _tend: "2025-06-15T12:00:00.000Z" }, { service: "web" }]),
+        params: expect.arrayContaining([
+          { _tstart: "2025-06-15T11:00:00.000Z" },
+          { _tend: "2025-06-15T12:00:00.000Z" },
+          { service: "web" },
+        ]),
       }),
       expect.any(AbortSignal),
     );
+  });
+
+  it("can select a recent query and run it", async () => {
+    const user = userEvent.setup();
+    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    render(<PanelEditor />);
+
+    await user.click(screen.getByRole("button", { name: /recent queries/i }));
+    await user.click(screen.getByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "FROM metrics-* | LIMIT 5" }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("stores the executed step query in history", async () => {
+    const user = userEvent.setup();
+    render(<PanelEditor />);
+
+    await user.click(screen.getByRole("button", { name: /run step 2/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "FROM panel-step-* | LIMIT 2" }),
+      expect.any(AbortSignal),
+    );
+    expect(useDashboardStore.getState().queryHistory[0]).toBe("FROM panel-step-* | LIMIT 2");
   });
 });

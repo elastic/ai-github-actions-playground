@@ -10,6 +10,8 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -49,6 +51,8 @@ export default function DiscoverPage() {
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
   const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
   const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
+  const queryHistory = useDashboardStore((s) => s.queryHistory);
+  const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
@@ -58,15 +62,17 @@ export default function DiscoverPage() {
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
+  const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const effectiveQuery = discoverQueryDraft ?? query;
 
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
-    onSuccess: (data) => {
+    onSuccess: (data, executedQuery) => {
       setResult(data);
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
+      appendQueryToHistory(executedQuery);
     },
     onFailure: () => setResult(null),
   });
@@ -85,6 +91,14 @@ export default function DiscoverPage() {
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
+  );
+  const handleSelectHistory = useCallback(
+    (selectedQuery: string) => {
+      setDiscoverQueryDraft(null);
+      setQuery(selectedQuery);
+      setHistoryAnchor(null);
+    },
+    [setDiscoverQueryDraft],
   );
   const queryEditorExtensions = useMemo(
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
@@ -219,6 +233,28 @@ export default function DiscoverPage() {
               {result.values.length} rows × {result.columns.length} columns
             </Typography>
           )}
+          <Button
+            variant="text"
+            size="small"
+            onClick={(e) => setHistoryAnchor(e.currentTarget)}
+            disabled={queryHistory.length === 0}
+          >
+            Recent queries
+          </Button>
+          <Menu
+            anchorEl={historyAnchor}
+            open={Boolean(historyAnchor)}
+            onClose={() => setHistoryAnchor(null)}
+          >
+            {queryHistory.map((historyQuery, idx) => (
+              <MenuItem
+                key={`${historyQuery}-${idx}`}
+                onClick={() => handleSelectHistory(historyQuery)}
+              >
+                {historyQuery}
+              </MenuItem>
+            ))}
+          </Menu>
           <Box sx={{ flex: 1 }} />
           <Tooltip title="Create a dashboard panel from this query">
             <span>

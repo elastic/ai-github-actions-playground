@@ -15,6 +15,7 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import ExplorePage from "./components/ExplorePage";
 import DocsPage from "./components/DocsPage";
+import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
@@ -58,6 +59,8 @@ export default function App() {
             <ExplorePage />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
+          ) : currentPage === "console" ? (
+            <ApiConsolePage />
           ) : (
             <DashboardGrid />
           )}
