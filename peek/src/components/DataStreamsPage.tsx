@@ -267,7 +267,8 @@ export default function DataStreamsPage() {
                     Write index
                   </Typography>
                   <Typography variant="body2" data-testid="data-stream-meta-write-index">
-                    {selectedDataStream.indices[selectedDataStream.indices.length - 1]?.index_name ?? "n/a"}
+                    {selectedDataStream.indices[selectedDataStream.indices.length - 1]
+                      ?.index_name ?? "n/a"}
                   </Typography>
 
                   <Typography variant="caption" color="text.secondary">
