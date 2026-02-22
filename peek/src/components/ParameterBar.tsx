@@ -45,7 +45,7 @@ function parseParameterValue(
   }
   if (type === "number") {
     const parsed = Number(rawValue);
-    if (rawValue.trim() === "" || Number.isNaN(parsed)) {
+    if (rawValue.trim() === "" || Number.isNaN(parsed) || !Number.isFinite(parsed)) {
       return { error: "Enter a valid number." };
     }
     return { value: parsed };
@@ -133,6 +133,10 @@ export default function ParameterBar() {
   const handleTypeChange = useCallback((nextType: DashboardParameter["type"]) => {
     setDraft((prev) => ({ ...prev, type: nextType }));
     setDraftValueInput((prevInput) => {
+      if (nextType === "boolean") {
+        const parsed = parseParameterValue(nextType, prevInput);
+        return parsed.error ? "false" : formatValueForInput(nextType, parsed.value);
+      }
       const parsed = parseParameterValue(nextType, prevInput);
       return parsed.error ? "" : formatValueForInput(nextType, parsed.value ?? "");
     });
@@ -334,7 +338,7 @@ export default function ParameterBar() {
               label="Default value"
               size="small"
               fullWidth
-              value={draftValueInput || "false"}
+              value={draftValueInput}
               onChange={(e) => setDraftValueInput(e.target.value)}
             >
               <MenuItem value="true">true</MenuItem>
