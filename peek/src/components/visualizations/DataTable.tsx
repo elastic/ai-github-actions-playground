@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
+import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -10,7 +11,7 @@ import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import type { EsqlResponse } from "../../types";
-import { paginateRows } from "../discoverUtils";
+import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 import { isNumericType } from "./chartUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
 
@@ -22,6 +23,14 @@ export default function DataTable({ data }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
+  const [showEmptyColumns, setShowEmptyColumns] = useState(false);
+
+  const emptyColumnIndices = useMemo(() => getEmptyColumnIndices(data), [data]);
+
+  const visibleColumnIndices = useMemo(() => {
+    const indices = data.columns.map((_, i) => i);
+    return showEmptyColumns ? indices : indices.filter((i) => !emptyColumnIndices.has(i));
+  }, [data.columns, emptyColumnIndices, showEmptyColumns]);
 
   const visibleRows = useMemo(
     () => paginateRows(data.values, page, rowsPerPage),
@@ -44,27 +53,59 @@ export default function DataTable({ data }: Props) {
     );
   }
 
+  const hiddenCount = emptyColumnIndices.size;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {hiddenCount > 0 && (
+        <Box
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            {showEmptyColumns
+              ? `${hiddenCount} empty ${hiddenCount === 1 ? "column" : "columns"}`
+              : `${hiddenCount} empty ${hiddenCount === 1 ? "column" : "columns"} hidden`}
+          </Typography>
+          <Link
+            component="button"
+            variant="caption"
+            onClick={() => setShowEmptyColumns((prev) => !prev)}
+            sx={{ cursor: "pointer" }}
+          >
+            {showEmptyColumns ? "Hide" : "Show"}
+          </Link>
+        </Box>
+      )}
       <TableContainer sx={{ flex: 1, minHeight: 0 }}>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              {data.columns.map((col) => (
-                <TableCell
-                  key={col.name}
-                  sx={{
-                    fontWeight: 600,
-                    whiteSpace: "nowrap",
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  {col.name}
-                  <Typography component="span" variant="caption" sx={{ ml: 0.5, opacity: 0.5 }}>
-                    {col.type}
-                  </Typography>
-                </TableCell>
-              ))}
+              {visibleColumnIndices.map((colIdx) => {
+                const col = data.columns[colIdx]!;
+                return (
+                  <TableCell
+                    key={col.name}
+                    sx={{
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    {col.name}
+                    <Typography component="span" variant="caption" sx={{ ml: 0.5, opacity: 0.5 }}>
+                      {col.type}
+                    </Typography>
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -76,12 +117,13 @@ export default function DataTable({ data }: Props) {
                 enterDelay={600}
               >
                 <TableRow hover onClick={() => handleRowClick(row)} sx={{ cursor: "pointer" }}>
-                  {row.map((cell, cellIdx) => {
-                    const col = data.columns[cellIdx];
+                  {visibleColumnIndices.map((colIdx) => {
+                    const col = data.columns[colIdx];
+                    const cell = row[colIdx];
                     const numeric = col ? isNumericType(col.type) : false;
                     return (
                       <TableCell
-                        key={cellIdx}
+                        key={colIdx}
                         sx={{
                           whiteSpace: "nowrap",
                           fontSize: "0.75rem",

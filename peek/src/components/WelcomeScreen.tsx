@@ -80,8 +80,7 @@ export default function WelcomeScreen() {
           Elastic Peek
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-          A lightweight Elasticsearch dashboarding tool built by an{" "}
-          <strong>AI Software Factory</strong> research project.
+          A lightweight interface for Elasticsearch
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
           Connect to your Elasticsearch cluster to start exploring your data. Your dashboard is

@@ -39,6 +39,9 @@
   "overrides": {
     "glob": "^13.0.0"
   },
+  "overridesMeta": {
+    "glob": "Pinned to force consistent transitive dependency resolution. Glob v13 has breaking changes (including CLI split to glob-bin) and Node runtime requirements (20 or >=22); revisit this override when upgrading related tooling."
+  },
   "devDependencies": {
     "@elastic/elasticsearch": "^9.3.2",
     "@eslint/js": "^9.39.3",
