@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -10,6 +10,8 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -45,6 +47,7 @@ export default function DiscoverPage() {
   const addPanel = useDashboardStore((s) => s.addPanel);
   const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const refreshInterval = useDashboardStore((s) => s.dashboard.refreshInterval ?? 0);
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
@@ -53,6 +56,7 @@ export default function DiscoverPage() {
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
+  const [liveTail, setLiveTail] = useState(false);
 
   const handleRunQuery = useCallback(async () => {
     if (!connection || !query.trim() || loading) return;
@@ -72,6 +76,22 @@ export default function DiscoverPage() {
       setLoading(false);
     }
   }, [connection, query, loading]);
+
+  // Keep a ref to the latest handleRunQuery so the live-tail interval never
+  // captures a stale closure (handleRunQuery changes when loading changes).
+  const handleRunQueryRef = useRef(handleRunQuery);
+  useEffect(() => {
+    handleRunQueryRef.current = handleRunQuery;
+  }, [handleRunQuery]);
+
+  // Live Tail: auto-re-run query on the dashboard refresh interval.
+  useEffect(() => {
+    if (!liveTail || !connection || !refreshInterval || !query.trim()) return;
+    const id = setInterval(() => {
+      void handleRunQueryRef.current();
+    }, refreshInterval * 1000);
+    return () => clearInterval(id);
+  }, [liveTail, connection, refreshInterval, query]);
 
   const queryEditorExtensions = useMemo(
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
@@ -187,6 +207,36 @@ export default function DiscoverPage() {
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
+          <Tooltip
+            title={
+              !connection
+                ? "Connect to Elasticsearch to use Live Tail"
+                : !refreshInterval
+                  ? "Set a refresh interval in the header to use Live Tail"
+                  : !query.trim()
+                    ? "Enter a query to use Live Tail"
+                    : `Auto-reruns query every ${refreshInterval}s`
+            }
+          >
+            <span>
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={liveTail}
+                    onChange={(e) => setLiveTail(e.target.checked)}
+                    disabled={!connection || !query.trim() || !refreshInterval}
+                  />
+                }
+                label={
+                  <Typography variant="caption">
+                    {`Live Tail${refreshInterval ? ` (${refreshInterval}s)` : ""}`}
+                  </Typography>
+                }
+                sx={{ ml: 0.5 }}
+              />
+            </span>
+          </Tooltip>
           {result && (
             <Typography variant="caption" color="text.secondary">
               {result.values.length} rows × {result.columns.length} columns
