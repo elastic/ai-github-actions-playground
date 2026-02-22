@@ -181,21 +181,34 @@ export const useDashboardStore = create<DashboardState>()(
         set((s) => ({
           dashboard: {
             ...s.dashboard,
-            parameters: [...(s.dashboard.parameters ?? []), param],
+            parameters: [
+              ...(s.dashboard.parameters ?? []).filter((existing) => existing.name !== param.name),
+              param,
+            ],
             updatedAt: new Date().toISOString(),
           },
         })),
 
       updateParameter: (name, updates) =>
-        set((s) => ({
-          dashboard: {
-            ...s.dashboard,
-            parameters: (s.dashboard.parameters ?? []).map((p) =>
-              p.name === name ? { ...p, ...updates } : p,
-            ),
-            updatedAt: new Date().toISOString(),
-          },
-        })),
+        set((s) => {
+          const parameters = s.dashboard.parameters ?? [];
+          const target = parameters.find((p) => p.name === name);
+          if (!target) {
+            return { dashboard: s.dashboard };
+          }
+          const nextName = updates.name ?? name;
+          const next = { ...target, ...updates, name: nextName };
+          return {
+            dashboard: {
+              ...s.dashboard,
+              parameters: [
+                ...parameters.filter((p) => p.name !== name && p.name !== nextName),
+                next,
+              ],
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
 
       removeParameter: (name) =>
         set((s) => ({

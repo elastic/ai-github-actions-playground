@@ -33,6 +33,7 @@ const EMPTY_PARAM: DashboardParameter = {
   source: { mode: "text" },
   value: "",
 };
+const EMPTY_PARAMETERS: DashboardParameter[] = [];
 
 export default function ParameterBar() {
   const {
@@ -44,7 +45,7 @@ export default function ParameterBar() {
     removeParameter,
   } = useDashboardStore(
     useShallow((s) => ({
-      parameters: s.dashboard.parameters ?? [],
+      parameters: s.dashboard.parameters ?? EMPTY_PARAMETERS,
       connection: s.connection,
       setParameterValue: s.setParameterValue,
       addParameter: s.addParameter,
@@ -343,10 +344,12 @@ function ParameterControl({
 }: ParameterControlProps) {
   const [esqlOptions, setEsqlOptions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  const hasQueryableEsqlSource =
+    param.source.mode === "esql" && Boolean(param.source.query.trim()) && Boolean(connection);
 
   // Fetch options from ES|QL when source mode is esql
   useEffect(() => {
-    if (param.source.mode !== "esql" || !param.source.query.trim() || !connection) return;
+    if (!hasQueryableEsqlSource || param.source.mode !== "esql" || !connection) return;
 
     abortRef.current?.abort();
     const ctrl = new AbortController();
@@ -367,13 +370,15 @@ function ParameterControl({
       });
 
     return () => ctrl.abort();
-  }, [param.source, connection]);
+  }, [param.source, connection, hasQueryableEsqlSource]);
 
   const options =
     param.source.mode === "options"
       ? param.source.values
       : param.source.mode === "esql"
-        ? esqlOptions
+        ? hasQueryableEsqlSource
+          ? esqlOptions
+          : []
         : [];
 
   return (

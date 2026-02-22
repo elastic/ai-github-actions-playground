@@ -105,6 +105,51 @@ describe("useDashboardStore parameter actions", () => {
     expect(useDashboardStore.getState().dashboard.parameters).toHaveLength(1);
   });
 
+  it("addParameter replaces an existing parameter with the same name", () => {
+    useDashboardStore.getState().addParameter(sampleParam);
+    useDashboardStore.getState().addParameter({
+      ...sampleParam,
+      label: "Service (updated)",
+      value: "api",
+    });
+
+    const params = useDashboardStore.getState().dashboard.parameters!;
+    expect(params).toHaveLength(1);
+    expect(params[0]).toEqual(
+      expect.objectContaining({
+        name: "service",
+        label: "Service (updated)",
+        value: "api",
+      }),
+    );
+  });
+
+  it("updateParameter keeps names unique when renaming to an existing name", () => {
+    useDashboardStore.getState().addParameter(sampleParam);
+    useDashboardStore.getState().addParameter({
+      ...sampleParam,
+      name: "environment",
+      label: "Environment",
+      value: "prod",
+    });
+
+    useDashboardStore.getState().updateParameter("service", {
+      name: "environment",
+      label: "Env (renamed)",
+      value: "staging",
+    });
+
+    const params = useDashboardStore.getState().dashboard.parameters!;
+    expect(params).toHaveLength(1);
+    expect(params[0]).toEqual(
+      expect.objectContaining({
+        name: "environment",
+        label: "Env (renamed)",
+        value: "staging",
+      }),
+    );
+  });
+
   it("setParameterValue does not affect other parameters", () => {
     useDashboardStore.getState().addParameter(sampleParam);
     useDashboardStore.getState().addParameter({

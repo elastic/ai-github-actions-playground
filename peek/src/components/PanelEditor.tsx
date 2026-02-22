@@ -23,6 +23,8 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import type { EsqlQueryParams } from "../services/es";
+import { buildQueryParams } from "../services/datemath";
 import type {
   VisualizationType,
   EsqlResponse,
@@ -49,6 +51,8 @@ export default function PanelEditor() {
   const updatePanel = useDashboardStore((s) => s.updatePanel);
   const removePanel = useDashboardStore((s) => s.removePanel);
   const connection = useDashboardStore((s) => s.connection);
+  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
+  const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const themeMode = useDashboardStore((s) => s.themeMode);
 
   const panel = panels.find((p) => p.id === editingId);
@@ -89,7 +93,23 @@ export default function PanelEditor() {
     setError(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const data = await client.query({ query: query.trim() });
+      const queryText = query.trim();
+      const body: EsqlQueryParams = { query: queryText };
+      if (timeRange) {
+        body.filter = {
+          range: {
+            "@timestamp": {
+              gte: timeRange.from,
+              lte: timeRange.to,
+            },
+          },
+        };
+        const queryParams = buildQueryParams(queryText, timeRange, parameters);
+        if (queryParams.length > 0) {
+          body.params = queryParams;
+        }
+      }
+      const data = await client.query(body);
       setPreview(data);
     } catch (err) {
       setError(isElasticsearchError(err) ? err.message : String(err));
@@ -97,7 +117,7 @@ export default function PanelEditor() {
     } finally {
       setLoading(false);
     }
-  }, [connection, query, loading]);
+  }, [connection, query, loading, timeRange, parameters]);
 
   const queryEditorExtensions = [sql(), runQueryShortcutExtension(() => void handleRunQuery())];
 
