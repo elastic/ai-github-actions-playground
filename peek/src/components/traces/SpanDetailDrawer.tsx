@@ -16,6 +16,8 @@ import type { Span } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
 import { getServiceColor } from "./traceColors";
 
+const DEFAULT_FIELD_MAPPING_SERVICE = "service.name";
+
 interface SpanDetailDrawerProps {
   span: Span | null;
   open: boolean;
@@ -310,5 +312,3 @@ export default function SpanDetailDrawer({
     </Drawer>
   );
 }
-
-const DEFAULT_FIELD_MAPPING_SERVICE = "service.name";

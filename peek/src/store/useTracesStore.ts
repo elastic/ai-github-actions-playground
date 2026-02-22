@@ -52,7 +52,8 @@ export const useTracesStore = create<TracesState>()((set) => ({
   setSelectedTraceSpans: (spans) => set({ selectedTraceSpans: spans }),
   setSelectedSpanId: (spanId) => set({ selectedSpanId: spanId, drawerOpen: spanId !== null }),
   setViewMode: (mode) => set({ viewMode: mode }),
-  setDrawerOpen: (open) => set({ drawerOpen: open, selectedSpanId: open ? undefined : null }),
+  setDrawerOpen: (open) =>
+    set(open ? { drawerOpen: true } : { drawerOpen: false, selectedSpanId: null }),
   addTagFilter: (key, value, exclude = false) =>
     set((s) => ({
       filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
