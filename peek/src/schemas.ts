@@ -1,6 +1,16 @@
 import { z } from "zod";
 
-const visualizationType = z.enum(["timeseries", "bar", "table", "stat", "gauge", "pie"]);
+const visualizationType = z.enum([
+  "timeseries",
+  "bar",
+  "table",
+  "stat",
+  "gauge",
+  "pie",
+  "heatmap",
+  "scatter",
+  "histogram",
+]);
 
 const panelLayout = z.object({
   x: z.number(),

@@ -21,6 +21,9 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 import NumbersIcon from "@mui/icons-material/Numbers";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import SpeedIcon from "@mui/icons-material/Speed";
+import GridOnIcon from "@mui/icons-material/GridOn";
+import ScatterPlotIcon from "@mui/icons-material/ScatterPlot";
+import EqualizerIcon from "@mui/icons-material/Equalizer";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -47,6 +50,9 @@ const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; labe
   { value: "stat", icon: <NumbersIcon />, label: "Stat" },
   { value: "gauge", icon: <SpeedIcon />, label: "Gauge" },
   { value: "pie", icon: <PieChartIcon />, label: "Pie" },
+  { value: "heatmap", icon: <GridOnIcon />, label: "Heatmap" },
+  { value: "scatter", icon: <ScatterPlotIcon />, label: "Scatter" },
+  { value: "histogram", icon: <EqualizerIcon />, label: "Histogram" },
 ];
 
 export default function PanelEditor() {
@@ -114,7 +120,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     (newViz: VisualizationType) => {
       setViz(newViz);
       const next = defaultOptions(newViz);
-      const supportsFormat = newViz !== "table" && newViz !== "pie";
+      const supportsFormat = newViz !== "table" && newViz !== "pie" && newViz !== "heatmap";
       const currentFormat = (options as { format?: FormatOptions }).format;
       setOptions(supportsFormat && currentFormat ? { ...next, format: currentFormat } : next);
     },
@@ -148,7 +154,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setEditingId(null);
   }, [editingId, removePanel, setEditingId]);
 
-  const showOptions = viz !== "table" && viz !== "pie";
+  const showOptions = viz !== "table" && viz !== "pie" && viz !== "heatmap";
 
   return (
     <Dialog
@@ -268,13 +274,19 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
               </MenuItem>
             ))}
           </Menu>
-          <Box sx={{ flex: 1 }} />
-          {/* Visualization type */}
+        </Box>
+
+        {/* Visualization type selector */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            Visualization
+          </Typography>
           <ToggleButtonGroup
             value={viz}
             exclusive
             onChange={(_, v) => v && handleVizChange(v)}
             size="small"
+            sx={{ flexWrap: "wrap" }}
           >
             {VIZ_OPTIONS.map((opt) => (
               <ToggleButton key={opt.value} value={opt.value} title={opt.label}>

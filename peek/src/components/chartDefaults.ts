@@ -1,6 +1,9 @@
 import type {
   BarChartOptions,
   GaugePanelOptions,
+  HeatmapChartOptions,
+  HistogramChartOptions,
+  ScatterChartOptions,
   StatPanelOptions,
   TimeSeriesOptions,
   VisualizationOptions,
@@ -21,6 +24,12 @@ export function defaultOptions(vizType: VisualizationType): VisualizationOptions
       return {};
     case "pie":
       return {};
+    case "heatmap":
+      return {} satisfies HeatmapChartOptions;
+    case "scatter":
+      return {} satisfies ScatterChartOptions;
+    case "histogram":
+      return { bins: 10 } satisfies HistogramChartOptions;
     default:
       throw new Error(`Unsupported visualization type: ${vizType}`);
   }
