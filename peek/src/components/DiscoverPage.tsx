@@ -22,6 +22,7 @@ import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
+import { formatDuration } from "./formatDuration";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
@@ -65,17 +66,18 @@ export default function DiscoverPage() {
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const effectiveQuery = discoverQueryDraft ?? query;
 
-  const { runQuery, loading, error, activeStep } = useEsqlQuery({
-    connection,
-    onSuccess: (data, executedQuery) => {
-      setResult(data);
-      // By default select all fields
-      setSelectedFields(new Set(data.columns.map((c) => c.name)));
-      setTableVersion((prev) => prev + 1);
-      appendQueryToHistory(executedQuery);
-    },
-    onFailure: () => setResult(null),
-  });
+  const { runQuery, loading, error, activeStep, stepDurationsMs, lastRunDurationMs, clearTimings } =
+    useEsqlQuery({
+      connection,
+      onSuccess: (data, executedQuery) => {
+        setResult(data);
+        // By default select all fields
+        setSelectedFields(new Set(data.columns.map((c) => c.name)));
+        setTableVersion((prev) => prev + 1);
+        appendQueryToHistory(executedQuery);
+      },
+      onFailure: () => setResult(null),
+    });
 
   const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
   const handleQueryChange = useCallback(
@@ -83,9 +85,10 @@ export default function DiscoverPage() {
       if (discoverQueryDraft) {
         setDiscoverQueryDraft(null);
       }
+      clearTimings();
       setQuery(nextQuery);
     },
-    [discoverQueryDraft, setDiscoverQueryDraft],
+    [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
   );
 
   const handleRunStep = useCallback(
@@ -95,10 +98,11 @@ export default function DiscoverPage() {
   const handleSelectHistory = useCallback(
     (selectedQuery: string) => {
       setDiscoverQueryDraft(null);
+      clearTimings();
       setQuery(selectedQuery);
       setHistoryAnchor(null);
     },
-    [setDiscoverQueryDraft],
+    [setDiscoverQueryDraft, clearTimings],
   );
   const queryEditorExtensions = useMemo(
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
@@ -216,6 +220,7 @@ export default function DiscoverPage() {
           query={effectiveQuery}
           loading={loading}
           activeStep={activeStep}
+          stepDurationsMs={stepDurationsMs}
           onRunStep={handleRunStep}
         />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -231,6 +236,7 @@ export default function DiscoverPage() {
           {result && (
             <Typography variant="caption" color="text.secondary">
               {result.values.length} rows × {result.columns.length} columns
+              {lastRunDurationMs !== null ? ` • ES ${formatDuration(lastRunDurationMs)}` : ""}
             </Typography>
           )}
           <Button

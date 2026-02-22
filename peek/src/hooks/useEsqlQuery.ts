@@ -10,6 +10,11 @@ interface UseEsqlQueryOptions {
   buildRequest?: (queryText: string) => EsqlQueryParams;
 }
 
+function getServerDurationMs(data: EsqlResponse): number | null {
+  const took = (data as { took?: unknown }).took;
+  return typeof took === "number" && Number.isFinite(took) ? took : null;
+}
+
 export function useEsqlQuery({
   connection,
   onSuccess,
@@ -19,9 +24,15 @@ export function useEsqlQuery({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [stepDurationsMs, setStepDurationsMs] = useState<Record<number, number>>({});
+  const [lastRunDurationMs, setLastRunDurationMs] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const clearError = useCallback(() => setError(null), []);
+  const clearTimings = useCallback(() => {
+    setStepDurationsMs({});
+    setLastRunDurationMs(null);
+  }, []);
 
   useEffect(
     () => () => {
@@ -46,6 +57,19 @@ export function useEsqlQuery({
         const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
         const data = await client.query(request, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          const serverDurationMs = getServerDurationMs(data);
+          if (stepIndex === null) {
+            setStepDurationsMs({});
+            setLastRunDurationMs(serverDurationMs);
+          } else if (serverDurationMs !== null) {
+            setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
+          } else {
+            setStepDurationsMs((prev) => {
+              const next = { ...prev };
+              delete next[stepIndex];
+              return next;
+            });
+          }
           onSuccess(data, trimmedQuery);
         }
       } catch (err) {
@@ -66,5 +90,14 @@ export function useEsqlQuery({
     [connection, onSuccess, onFailure, buildRequest],
   );
 
-  return { runQuery, loading, error, activeStep, clearError };
+  return {
+    runQuery,
+    loading,
+    error,
+    activeStep,
+    stepDurationsMs,
+    lastRunDurationMs,
+    clearError,
+    clearTimings,
+  };
 }
