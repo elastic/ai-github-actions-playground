@@ -144,7 +144,7 @@ export default function DataStreamsPage() {
             disabled={!selectedName}
             onClick={handleOpenInDiscover}
           >
-            Open in Discover
+            Open in Query Lab
           </Button>
         </Stack>
       </Paper>
