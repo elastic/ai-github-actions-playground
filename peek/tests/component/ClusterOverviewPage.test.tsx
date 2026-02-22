@@ -6,12 +6,14 @@ import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
+const getClusterHealthMock = vi.fn();
 const getDataStreamsMock = vi.fn();
 const resolveIndexMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getClusterInfo: getClusterInfoMock,
+    getClusterHealth: getClusterHealthMock,
     getDataStreams: getDataStreamsMock,
     resolveIndex: resolveIndexMock,
   })),
@@ -53,6 +55,13 @@ describe("ClusterOverviewPage", () => {
 
   it("renders cluster info after loading", async () => {
     getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
+    getClusterHealthMock.mockResolvedValue({
+      status: "green",
+      number_of_nodes: 3,
+      number_of_data_nodes: 2,
+      active_primary_shards: 12,
+      unassigned_shards: 0,
+    });
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
@@ -71,6 +80,8 @@ describe("ClusterOverviewPage", () => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
     });
     expect(screen.getByText("8.14.0")).toBeInTheDocument();
+    expect(screen.getByText("Status: GREEN")).toBeInTheDocument();
+    expect(screen.getByText("Nodes: 3")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument(); // data stream count
     expect(screen.getByText("3")).toBeInTheDocument(); // index count
     expect(screen.getByText("1")).toBeInTheDocument(); // alias count
@@ -78,6 +89,7 @@ describe("ClusterOverviewPage", () => {
 
   it("shows error alert on failure", async () => {
     getClusterInfoMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    getClusterHealthMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     getDataStreamsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     resolveIndexMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
 
@@ -91,6 +103,13 @@ describe("ClusterOverviewPage", () => {
   it("refreshes data when Refresh button is clicked", async () => {
     const user = userEvent.setup();
     getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
+    getClusterHealthMock.mockResolvedValue({
+      status: "yellow",
+      number_of_nodes: 2,
+      number_of_data_nodes: 1,
+      active_primary_shards: 4,
+      unassigned_shards: 1,
+    });
     getDataStreamsMock.mockResolvedValue({ data_streams: [] });
     resolveIndexMock.mockResolvedValue({ indices: [], aliases: [], data_streams: [] });
 
@@ -111,5 +130,26 @@ describe("ClusterOverviewPage", () => {
     await waitFor(() => {
       expect(screen.getByText("1")).toBeInTheDocument(); // updated data stream count
     });
+  });
+
+  it("shows unavailable metrics and warning on partial failures", async () => {
+    getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
+    getClusterHealthMock.mockResolvedValue({
+      status: "yellow",
+      number_of_nodes: 2,
+      number_of_data_nodes: 1,
+      active_primary_shards: 5,
+      unassigned_shards: 2,
+    });
+    getDataStreamsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
+    resolveIndexMock.mockRejectedValue({ status: 403, message: "Forbidden" });
+
+    render(<ClusterOverviewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("test-cluster")).toBeInTheDocument();
+    });
+    expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Unavailable")).toHaveLength(3);
   });
 });

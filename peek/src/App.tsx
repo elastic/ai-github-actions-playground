@@ -37,6 +37,7 @@ export default function App() {
     currentPage === "dashboard" ||
     currentPage === "discover" ||
     currentPage === "dataStreams" ||
+    currentPage === "clusterOverview" ||
     currentPage === "explore" ||
     currentPage === "console" ||
     currentPage === "settings" ||

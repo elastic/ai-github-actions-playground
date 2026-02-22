@@ -11,16 +11,16 @@ import {
   ElasticsearchClient,
   isElasticsearchError,
   type ClusterInfoResponse,
-  type GetDataStreamsResponse,
-  type ResolveIndexResponse,
+  type ClusterHealthResponse,
 } from "../services/es";
 import { useDashboardStore } from "../store/useDashboardStore";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
-  dataStreamCount: number;
-  indexCount: number;
-  aliasCount: number;
+  clusterHealth: ClusterHealthResponse | null;
+  dataStreamCount: number | null;
+  indexCount: number | null;
+  aliasCount: number | null;
 }
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -38,32 +38,65 @@ export default function ClusterOverviewPage() {
   const connection = useDashboardStore((s) => s.connection);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [partialErrors, setPartialErrors] = useState<string[]>([]);
   const [data, setData] = useState<OverviewData>({
     clusterInfo: null,
-    dataStreamCount: 0,
-    indexCount: 0,
-    aliasCount: 0,
+    clusterHealth: null,
+    dataStreamCount: null,
+    indexCount: null,
+    aliasCount: null,
   });
 
   const loadOverview = useCallback(async () => {
     if (!connection) return;
     setLoading(true);
     setError(null);
+    setPartialErrors([]);
     try {
       const client = new ElasticsearchClient(connection);
-      const [clusterInfo, dataStreams, resolveIndex] = await Promise.all([
-        client.getClusterInfo(),
-        client.getDataStreams().catch((): GetDataStreamsResponse => ({ data_streams: [] })),
-        client
-          .resolveIndex("*")
-          .catch((): ResolveIndexResponse => ({ indices: [], aliases: [], data_streams: [] })),
-      ]);
-      setData({
-        clusterInfo,
-        dataStreamCount: dataStreams.data_streams?.length ?? 0,
-        indexCount: resolveIndex.indices?.length ?? 0,
-        aliasCount: resolveIndex.aliases?.length ?? 0,
-      });
+      const [clusterInfoResult, clusterHealthResult, dataStreamsResult, resolveIndexResult] =
+        await Promise.allSettled([
+          client.getClusterInfo(),
+          client.getClusterHealth(),
+          client.getDataStreams(),
+          client.resolveIndex("*"),
+        ]);
+
+      const nextData: OverviewData = {
+        clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
+        clusterHealth: clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
+        dataStreamCount:
+          dataStreamsResult.status === "fulfilled"
+            ? (dataStreamsResult.value.data_streams?.length ?? 0)
+            : null,
+        indexCount:
+          resolveIndexResult.status === "fulfilled"
+            ? (resolveIndexResult.value.indices?.length ?? 0)
+            : null,
+        aliasCount:
+          resolveIndexResult.status === "fulfilled"
+            ? (resolveIndexResult.value.aliases?.length ?? 0)
+            : null,
+      };
+      setData(nextData);
+
+      const failedParts: string[] = [];
+      if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
+      if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
+      if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
+      if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
+      if (failedParts.length > 0) {
+        setPartialErrors(failedParts);
+      }
+
+      if (failedParts.length === 4) {
+        const firstError = clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
+        setError(
+          isElasticsearchError(firstError)
+            ? firstError.message
+            : "Failed to load cluster overview data.",
+        );
+      }
     } catch (err) {
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
@@ -76,6 +109,27 @@ export default function ClusterOverviewPage() {
   }, [loadOverview]);
 
   const { clusterInfo } = data;
+  const { clusterHealth } = data;
+  const clusterStatus = clusterHealth?.status?.toUpperCase() ?? "UNKNOWN";
+  const clusterStatusColor =
+    clusterHealth?.status === "green"
+      ? "success"
+      : clusterHealth?.status === "yellow"
+        ? "warning"
+        : clusterHealth?.status === "red"
+          ? "error"
+          : "default";
+
+  function renderCount(value: number | null) {
+    if (value === null) {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          Unavailable
+        </Typography>
+      );
+    }
+    return <Typography variant="h4">{value}</Typography>;
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -91,6 +145,11 @@ export default function ClusterOverviewPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
+      {!error && partialErrors.length > 0 && (
+        <Alert severity="warning">
+          Partial data loaded. Unavailable: {partialErrors.join(", ")}.
+        </Alert>
+      )}
 
       {loading && !clusterInfo ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
@@ -107,6 +166,15 @@ export default function ClusterOverviewPage() {
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                       <Chip size="small" label={`UUID: ${clusterInfo.cluster_uuid}`} />
                       <Chip size="small" label={`Node: ${clusterInfo.name}`} />
+                      {clusterHealth?.number_of_nodes !== undefined && (
+                        <Chip size="small" label={`Nodes: ${clusterHealth.number_of_nodes}`} />
+                      )}
+                      {clusterHealth?.number_of_data_nodes !== undefined && (
+                        <Chip
+                          size="small"
+                          label={`Data nodes: ${clusterHealth.number_of_data_nodes}`}
+                        />
+                      )}
                     </Stack>
                   </Stack>
                 ) : (
@@ -141,20 +209,53 @@ export default function ClusterOverviewPage() {
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
+              <InfoCard title="Health">
+                {clusterHealth ? (
+                  <Stack spacing={1}>
+                    <Chip
+                      size="small"
+                      color={clusterStatusColor}
+                      label={`Status: ${clusterStatus}`}
+                      sx={{ width: "fit-content" }}
+                    />
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      {clusterHealth.active_primary_shards !== undefined && (
+                        <Chip
+                          size="small"
+                          label={`Primary shards: ${clusterHealth.active_primary_shards}`}
+                        />
+                      )}
+                      {clusterHealth.unassigned_shards !== undefined && (
+                        <Chip
+                          size="small"
+                          label={`Unassigned shards: ${clusterHealth.unassigned_shards}`}
+                        />
+                      )}
+                    </Stack>
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No cluster health available.
+                  </Typography>
+                )}
+              </InfoCard>
+            </Box>
+
+            <Box sx={{ flex: 1 }}>
               <InfoCard title="Data Streams">
-                <Typography variant="h4">{data.dataStreamCount}</Typography>
+                {renderCount(data.dataStreamCount)}
               </InfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Indices">
-                <Typography variant="h4">{data.indexCount}</Typography>
+                {renderCount(data.indexCount)}
               </InfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Aliases">
-                <Typography variant="h4">{data.aliasCount}</Typography>
+                {renderCount(data.aliasCount)}
               </InfoCard>
             </Box>
           </Stack>
