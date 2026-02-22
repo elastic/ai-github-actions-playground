@@ -27,6 +27,7 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import ExploreIcon from "@mui/icons-material/Explore";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -206,7 +207,7 @@ export default function AppHeader() {
         {connected && (
           <Tabs
             value={currentPage}
-            onChange={(_, v: "dashboard" | "discover" | "dataStreams" | "docs") =>
+            onChange={(_, v: "dashboard" | "discover" | "dataStreams" | "explore" | "docs") =>
               setCurrentPage(v)
             }
             sx={{ ml: 2, minHeight: 48 }}
@@ -223,6 +224,13 @@ export default function AppHeader() {
               value="discover"
               label="Discover"
               icon={<SearchIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="explore"
+              label="Explore"
+              icon={<ExploreIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />

@@ -12,6 +12,7 @@ import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
+import ExplorePage from "./components/ExplorePage";
 import DocsPage from "./components/DocsPage";
 import DataStreamsPage from "./components/DataStreamsPage";
 
@@ -45,6 +46,8 @@ export default function App() {
             <WelcomeScreen />
           ) : currentPage === "dataStreams" ? (
             <DataStreamsPage />
+          ) : currentPage === "explore" ? (
+            <ExplorePage />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
           ) : (
