@@ -6,6 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import EditIcon from "@mui/icons-material/Edit";
+import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -32,8 +33,37 @@ export default function PanelContainer({ panel }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
   const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null);
+  const [exportImage, setExportImage] = useState<(() => string) | null>(null);
   const [, setTick] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const supportsImageExport =
+    panel.visualization === "timeseries" ||
+    panel.visualization === "bar" ||
+    panel.visualization === "gauge" ||
+    panel.visualization === "pie";
+
+  useEffect(() => {
+    if (!supportsImageExport) {
+      setExportImage(null);
+    }
+  }, [supportsImageExport]);
+
+  const handleExportImage = useCallback(() => {
+    if (!exportImage) return;
+    const dataUrl = exportImage();
+    if (!dataUrl) return;
+    const safeTitle =
+      panel.title
+        .trim()
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase() || "panel";
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${safeTitle}-${timestamp}.png`;
+    a.click();
+  }, [exportImage, panel.title]);
 
   const fetchData = useCallback(async () => {
     if (!connection || !panel.query.trim()) return;
@@ -159,6 +189,19 @@ export default function PanelContainer({ panel }: Props) {
             <ErrorOutlineIcon sx={{ fontSize: 14, color: "error.main", mr: 0.5 }} />
           </Tooltip>
         )}
+        {supportsImageExport && (
+          <Tooltip title="Download PNG">
+            <span>
+              <IconButton
+                size="small"
+                onClick={handleExportImage}
+                disabled={loading || !exportImage}
+              >
+                <DownloadIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
         <Tooltip title="Refresh">
           <IconButton size="small" onClick={fetchData} disabled={loading}>
             <RefreshIcon sx={{ fontSize: 16 }} />
@@ -201,7 +244,12 @@ export default function PanelContainer({ panel }: Props) {
             <CircularProgress size={32} />
           </Box>
         ) : data ? (
-          <Visualization type={panel.visualization} data={data} options={panel.options} />
+          <Visualization
+            type={panel.visualization}
+            data={data}
+            options={panel.options}
+            onExportReady={setExportImage}
+          />
         ) : (
           <Box
             sx={{

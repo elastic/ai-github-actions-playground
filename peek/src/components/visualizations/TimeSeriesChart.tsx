@@ -8,9 +8,10 @@ import EChartWrapper from "./EChartWrapper";
 interface Props {
   data: EsqlResponse;
   options?: TimeSeriesOptions;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function TimeSeriesChart({ data, options }: Props) {
+export default function TimeSeriesChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
   const smooth = options?.smooth !== false;
   const showArea = options?.showArea !== false;
@@ -73,5 +74,5 @@ export default function TimeSeriesChart({ data, options }: Props) {
     };
   }, [data, theme, smooth, showArea, stacked, format]);
 
-  return <EChartWrapper option={option} />;
+  return <EChartWrapper option={option} onExportReady={onExportReady} />;
 }
