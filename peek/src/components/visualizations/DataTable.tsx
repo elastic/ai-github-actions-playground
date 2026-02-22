@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
@@ -8,10 +8,12 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import type { EsqlResponse } from "../../types";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 import { isNumericType } from "./chartUtils";
+import RowInspectorFlyout from "./RowInspectorFlyout";
 
 interface Props {
   data: EsqlResponse;
@@ -20,6 +22,7 @@ interface Props {
 export default function DataTable({ data }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
 
   const emptyColumnIndices = useMemo(() => getEmptyColumnIndices(data), [data]);
@@ -33,6 +36,14 @@ export default function DataTable({ data }: Props) {
     () => paginateRows(data.values, page, rowsPerPage),
     [data.values, page, rowsPerPage],
   );
+
+  const handleRowClick = useCallback((row: unknown[]) => {
+    setInspectedRow(row);
+  }, []);
+
+  const handleCloseInspector = useCallback(() => {
+    setInspectedRow(null);
+  }, []);
 
   if (data.columns.length === 0) {
     return (
@@ -99,32 +110,50 @@ export default function DataTable({ data }: Props) {
           </TableHead>
           <TableBody>
             {visibleRows.map((row, rowIdx) => (
-              <TableRow key={page * rowsPerPage + rowIdx} hover>
-                {visibleColumnIndices.map((colIdx) => {
-                  const col = data.columns[colIdx];
-                  const cell = row[colIdx];
-                  const numeric = col ? isNumericType(col.type) : false;
-                  return (
-                    <TableCell
-                      key={colIdx}
-                      sx={{
-                        whiteSpace: "nowrap",
-                        fontSize: "0.75rem",
-                        fontFamily: numeric ? "monospace" : "inherit",
-                        textAlign: numeric ? "right" : "left",
-                      }}
-                    >
-                      {cell === null ? (
-                        <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
-                          null
-                        </Typography>
-                      ) : (
-                        String(cell)
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
+              <Tooltip
+                key={page * rowsPerPage + rowIdx}
+                title="Click to inspect row"
+                placement="left"
+                enterDelay={600}
+              >
+                <TableRow
+                  hover
+                  tabIndex={0}
+                  onClick={() => handleRowClick(row)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleRowClick(row);
+                    }
+                  }}
+                  sx={{ cursor: "pointer" }}
+                >
+                  {visibleColumnIndices.map((colIdx) => {
+                    const col = data.columns[colIdx];
+                    const cell = row[colIdx];
+                    const numeric = col ? isNumericType(col.type) : false;
+                    return (
+                      <TableCell
+                        key={colIdx}
+                        sx={{
+                          whiteSpace: "nowrap",
+                          fontSize: "0.75rem",
+                          fontFamily: numeric ? "monospace" : "inherit",
+                          textAlign: numeric ? "right" : "left",
+                        }}
+                      >
+                        {cell === null ? (
+                          <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
+                            null
+                          </Typography>
+                        ) : (
+                          String(cell)
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              </Tooltip>
             ))}
           </TableBody>
         </Table>
@@ -140,6 +169,12 @@ export default function DataTable({ data }: Props) {
           setPage(0);
         }}
         rowsPerPageOptions={[25, 50, 100]}
+      />
+      <RowInspectorFlyout
+        open={inspectedRow !== null}
+        onClose={handleCloseInspector}
+        columns={data.columns}
+        row={inspectedRow}
       />
     </Box>
   );
