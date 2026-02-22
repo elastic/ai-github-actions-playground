@@ -7,6 +7,7 @@ import type {
   PanelDefinition,
   TimeRange,
 } from "../types";
+import type { UserCapabilities } from "../services/es";
 import { dashboardDefinitionSchema } from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
 
@@ -15,6 +16,7 @@ export { createDefaultDashboard };
 interface DashboardState {
   connection: ElasticsearchConnection | null;
   connected: boolean;
+  capabilities: UserCapabilities | null;
   dashboard: DashboardDefinition;
   themeMode: "light" | "dark";
   editingPanelId: string | null;
@@ -23,6 +25,7 @@ interface DashboardState {
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
+  setCapabilities: (caps: UserCapabilities | null) => void;
   setThemeMode: (mode: "light" | "dark") => void;
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
@@ -103,6 +106,7 @@ export const useDashboardStore = create<DashboardState>()(
     (set, get) => ({
       connection: null,
       connected: false,
+      capabilities: null,
       dashboard: createDefaultDashboard(),
       themeMode: "dark",
       editingPanelId: null,
@@ -111,6 +115,7 @@ export const useDashboardStore = create<DashboardState>()(
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
+      setCapabilities: (caps) => set({ capabilities: caps }),
       setThemeMode: (mode) => set({ themeMode: mode }),
       setTimeRange: (range) =>
         set((s) => ({
@@ -245,6 +250,7 @@ export const useDashboardStore = create<DashboardState>()(
         set({
           connection: null,
           connected: false,
+          capabilities: null,
           dashboard: createDefaultDashboard(),
           themeMode: "dark",
           editingPanelId: null,
