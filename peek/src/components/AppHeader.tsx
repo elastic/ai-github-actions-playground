@@ -27,6 +27,7 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import TerminalIcon from "@mui/icons-material/Terminal";
 import ExploreIcon from "@mui/icons-material/Explore";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -210,7 +211,9 @@ export default function AppHeader() {
         {connected && (
           <Tabs
             value={tabValue}
-            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs") => setCurrentPage(v)}
+            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs" | "console") =>
+              setCurrentPage(v)
+            }
             sx={{ ml: 2, minHeight: 48 }}
             TabIndicatorProps={{ style: { height: 3 } }}
           >
@@ -232,6 +235,13 @@ export default function AppHeader() {
               value="explore"
               label="Metrics"
               icon={<ExploreIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="console"
+              label="Console"
+              icon={<TerminalIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
