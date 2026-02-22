@@ -34,6 +34,38 @@ const EMPTY_PARAM: DashboardParameter = {
   value: "",
 };
 const EMPTY_PARAMETERS: DashboardParameter[] = [];
+type ParameterValue = DashboardParameter["value"];
+
+function parseParameterValue(
+  type: DashboardParameter["type"],
+  rawValue: string,
+): { value?: ParameterValue; error?: string } {
+  if (type === "keyword") {
+    return { value: rawValue };
+  }
+  if (type === "number") {
+    const parsed = Number(rawValue);
+    if (rawValue.trim() === "" || Number.isNaN(parsed)) {
+      return { error: "Enter a valid number." };
+    }
+    return { value: parsed };
+  }
+  if (type === "boolean") {
+    if (rawValue === "true") return { value: true };
+    if (rawValue === "false") return { value: false };
+    return { error: "Choose true or false." };
+  }
+  const parsed = Date.parse(rawValue);
+  if (rawValue.trim() === "" || Number.isNaN(parsed)) {
+    return { error: "Enter a valid date/time." };
+  }
+  return { value: new Date(parsed).toISOString() };
+}
+
+function formatValueForInput(type: DashboardParameter["type"], value: ParameterValue): string {
+  if (type === "boolean") return String(Boolean(value));
+  return String(value ?? "");
+}
 
 export default function ParameterBar() {
   const {
@@ -57,6 +89,7 @@ export default function ParameterBar() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<DashboardParameter | null>(null);
   const [draft, setDraft] = useState<DashboardParameter>(EMPTY_PARAM);
+  const [draftValueInput, setDraftValueInput] = useState("");
   const [optionsInput, setOptionsInput] = useState("");
   const [esqlOptions, setEsqlOptions] = useState<string[]>([]);
   const [esqlLoading, setEsqlLoading] = useState(false);
@@ -66,6 +99,7 @@ export default function ParameterBar() {
   const openAdd = useCallback(() => {
     setEditing(null);
     setDraft(EMPTY_PARAM);
+    setDraftValueInput("");
     setOptionsInput("");
     setEsqlOptions([]);
     setEsqlError(null);
@@ -75,6 +109,7 @@ export default function ParameterBar() {
   const openEdit = useCallback((param: DashboardParameter) => {
     setEditing(param);
     setDraft({ ...param });
+    setDraftValueInput(formatValueForInput(param.type, param.value));
     setOptionsInput(param.source.mode === "options" ? param.source.values.join(", ") : "");
     setEsqlOptions([]);
     setEsqlError(null);
@@ -86,6 +121,14 @@ export default function ParameterBar() {
       if (mode === "text") return { ...prev, source: { mode: "text" } };
       if (mode === "options") return { ...prev, source: { mode: "options", values: [] } };
       return { ...prev, source: { mode: "esql", query: "" } };
+    });
+  }, []);
+
+  const handleTypeChange = useCallback((nextType: DashboardParameter["type"]) => {
+    setDraft((prev) => ({ ...prev, type: nextType }));
+    setDraftValueInput((prevInput) => {
+      const parsed = parseParameterValue(nextType, prevInput);
+      return parsed.error ? "" : formatValueForInput(nextType, parsed.value ?? "");
     });
   }, []);
 
@@ -119,16 +162,25 @@ export default function ParameterBar() {
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const handleSave = useCallback(() => {
-    const param: DashboardParameter = { ...draft, name: draft.name.trim() };
+    const parsedDefaultValue = parseParameterValue(draft.type, draftValueInput);
+    if (parsedDefaultValue.error || parsedDefaultValue.value === undefined) return;
+    const param: DashboardParameter = {
+      ...draft,
+      name: draft.name.trim(),
+      value: parsedDefaultValue.value,
+    };
     if (!param.name) return;
 
     if (param.source.mode === "options") {
+      const typedOptions = optionsInput
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean)
+        .map((v) => parseParameterValue(param.type, v));
+      if (typedOptions.some((entry) => entry.error)) return;
       param.source = {
         mode: "options",
-        values: optionsInput
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean),
+        values: typedOptions.map((entry) => String(entry.value)),
       };
     }
 
@@ -144,7 +196,31 @@ export default function ParameterBar() {
     }
 
     setDialogOpen(false);
-  }, [draft, optionsInput, editing, addParameter, updateParameter, removeParameter]);
+  }, [
+    draft,
+    draftValueInput,
+    optionsInput,
+    editing,
+    addParameter,
+    updateParameter,
+    removeParameter,
+  ]);
+
+  const draftValueValidation = parseParameterValue(draft.type, draftValueInput);
+  const optionsValidationError =
+    draft.source.mode === "options"
+      ? optionsInput
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean)
+          .map((v) => parseParameterValue(draft.type, v))
+          .find((entry) => entry.error)?.error
+      : undefined;
+  const canSave =
+    Boolean(draft.name.trim()) &&
+    !draftValueValidation.error &&
+    draftValueValidation.value !== undefined &&
+    !optionsValidationError;
 
   if (parameters.length === 0 && !dialogOpen) {
     return (
@@ -234,12 +310,46 @@ export default function ParameterBar() {
             fullWidth
           />
           <TextField
-            label="Default value"
+            select
+            label="Type"
             size="small"
-            value={draft.value}
-            onChange={(e) => setDraft((d) => ({ ...d, value: e.target.value }))}
             fullWidth
-          />
+            value={draft.type}
+            onChange={(e) => handleTypeChange(e.target.value as DashboardParameter["type"])}
+          >
+            <MenuItem value="keyword">keyword</MenuItem>
+            <MenuItem value="number">number</MenuItem>
+            <MenuItem value="boolean">boolean</MenuItem>
+            <MenuItem value="date">date</MenuItem>
+          </TextField>
+          {draft.type === "boolean" ? (
+            <TextField
+              select
+              label="Default value"
+              size="small"
+              fullWidth
+              value={draftValueInput || "false"}
+              onChange={(e) => setDraftValueInput(e.target.value)}
+            >
+              <MenuItem value="true">true</MenuItem>
+              <MenuItem value="false">false</MenuItem>
+            </TextField>
+          ) : (
+            <TextField
+              label="Default value"
+              size="small"
+              value={draftValueInput}
+              onChange={(e) => setDraftValueInput(e.target.value)}
+              helperText={
+                draftValueValidation.error ??
+                (draft.type === "date"
+                  ? "Use an ISO-like date/time value (for example 2025-01-01T00:00:00Z)"
+                  : undefined)
+              }
+              error={Boolean(draftValueValidation.error)}
+              fullWidth
+            />
+          )}
 
           <Typography variant="subtitle2" sx={{ mt: 1 }}>
             Value source
@@ -263,7 +373,8 @@ export default function ParameterBar() {
               size="small"
               value={optionsInput}
               onChange={(e) => setOptionsInput(e.target.value)}
-              helperText='e.g. "web,api,worker"'
+              helperText={optionsValidationError ?? 'e.g. "web,api,worker"'}
+              error={Boolean(optionsValidationError)}
               fullWidth
             />
           )}
@@ -314,7 +425,7 @@ export default function ParameterBar() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave} disabled={!draft.name.trim()}>
+          <Button variant="contained" onClick={handleSave} disabled={!canSave}>
             {editing ? "Save" : "Add"}
           </Button>
         </DialogActions>
@@ -330,7 +441,7 @@ export default function ParameterBar() {
 interface ParameterControlProps {
   param: DashboardParameter;
   connection: ReturnType<typeof useDashboardStore.getState>["connection"];
-  onChange: (value: string) => void;
+  onChange: (value: DashboardParameter["value"]) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -343,6 +454,7 @@ function ParameterControl({
   onDelete,
 }: ParameterControlProps) {
   const [esqlOptions, setEsqlOptions] = useState<string[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const hasQueryableEsqlSource =
     param.source.mode === "esql" && Boolean(param.source.query.trim()) && Boolean(connection);
@@ -372,7 +484,7 @@ function ParameterControl({
     return () => ctrl.abort();
   }, [param.source, connection, hasQueryableEsqlSource]);
 
-  const options =
+  const optionStrings =
     param.source.mode === "options"
       ? param.source.values
       : param.source.mode === "esql"
@@ -380,6 +492,11 @@ function ParameterControl({
           ? esqlOptions
           : []
         : [];
+  const options = optionStrings
+    .map((opt) => ({ label: opt, parsed: parseParameterValue(param.type, opt) }))
+    .filter((entry) => entry.parsed.value !== undefined)
+    .map((entry) => ({ label: entry.label, value: entry.parsed.value as ParameterValue }));
+  const currentValueInput = formatValueForInput(param.type, param.value);
 
   return (
     <Box
@@ -390,22 +507,42 @@ function ParameterControl({
         {param.label || param.name}:
       </Typography>
 
-      {options.length > 0 ? (
+      {options.length > 0 || param.type === "boolean" ? (
         <FormControl size="small" sx={{ minWidth: 100 }}>
           <Select
-            value={param.value}
-            onChange={(e) => onChange(e.target.value)}
+            value={currentValueInput}
+            onChange={(e) => {
+              const parsed = parseParameterValue(param.type, e.target.value);
+              if (parsed.value === undefined) {
+                setValidationError(parsed.error ?? "Invalid value");
+                return;
+              }
+              setValidationError(null);
+              onChange(parsed.value);
+            }}
             displayEmpty
             sx={{ fontSize: "0.75rem", height: 28 }}
           >
-            {param.value && !options.includes(param.value) && (
-              <MenuItem key={`param-value-${param.value}`} value={param.value}>
-                {param.value}
-              </MenuItem>
+            {currentValueInput &&
+              !options.some(
+                (opt) => formatValueForInput(param.type, opt.value) === currentValueInput,
+              ) && (
+                <MenuItem key={`param-value-${param.name}`} value={currentValueInput}>
+                  {currentValueInput}
+                </MenuItem>
+              )}
+            {param.type === "boolean" && options.length === 0 && (
+              <>
+                <MenuItem value="true">true</MenuItem>
+                <MenuItem value="false">false</MenuItem>
+              </>
             )}
             {options.map((opt, idx) => (
-              <MenuItem key={`option-${idx}-${opt}`} value={opt}>
-                {opt}
+              <MenuItem
+                key={`option-${idx}-${opt.label}`}
+                value={formatValueForInput(param.type, opt.value)}
+              >
+                {opt.label}
               </MenuItem>
             ))}
           </Select>
@@ -413,8 +550,18 @@ function ParameterControl({
       ) : (
         <TextField
           size="small"
-          value={param.value}
-          onChange={(e) => onChange(e.target.value)}
+          value={currentValueInput}
+          onChange={(e) => {
+            const parsed = parseParameterValue(param.type, e.target.value);
+            if (parsed.value === undefined) {
+              setValidationError(parsed.error ?? "Invalid value");
+              return;
+            }
+            setValidationError(null);
+            onChange(parsed.value);
+          }}
+          error={Boolean(validationError)}
+          helperText={validationError}
           sx={{
             width: 120,
             "& .MuiInputBase-input": { fontSize: "0.75rem", py: 0.5, px: 1 },

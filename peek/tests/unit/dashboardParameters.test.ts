@@ -39,6 +39,19 @@ describe("useDashboardStore parameter actions", () => {
     expect(params![0].value).toBe("api");
   });
 
+  it("setParameterValue supports typed values", () => {
+    useDashboardStore.getState().addParameter({
+      name: "threshold",
+      label: "Threshold",
+      type: "number",
+      source: { mode: "text" },
+      value: 10,
+    });
+    useDashboardStore.getState().setParameterValue("threshold", 25);
+    const params = useDashboardStore.getState().dashboard.parameters;
+    expect(params![0].value).toBe(25);
+  });
+
   it("updateParameter merges partial updates", () => {
     useDashboardStore.getState().addParameter(sampleParam);
     useDashboardStore.getState().updateParameter("service", { label: "Svc", value: "worker" });
@@ -71,6 +84,20 @@ describe("useDashboardStore parameter actions", () => {
       source: { mode: "options", values: ["prod", "staging", "dev"] },
       value: "prod",
     });
+    useDashboardStore.getState().addParameter({
+      name: "enabled",
+      label: "Enabled",
+      type: "boolean",
+      source: { mode: "text" },
+      value: true,
+    });
+    useDashboardStore.getState().addParameter({
+      name: "from_date",
+      label: "From Date",
+      type: "date",
+      source: { mode: "text" },
+      value: "2025-01-01T00:00:00.000Z",
+    });
 
     const exported = useDashboardStore.getState().exportDashboard();
     useDashboardStore.getState().resetState();
@@ -78,9 +105,19 @@ describe("useDashboardStore parameter actions", () => {
     expect(result).toEqual({ success: true });
 
     const params = useDashboardStore.getState().dashboard.parameters;
-    expect(params).toHaveLength(2);
+    expect(params).toHaveLength(4);
     expect(params![0].name).toBe("service");
     expect(params![1].source).toEqual({ mode: "options", values: ["prod", "staging", "dev"] });
+    expect(params![2]).toEqual(
+      expect.objectContaining({ name: "enabled", type: "boolean", value: true }),
+    );
+    expect(params![3]).toEqual(
+      expect.objectContaining({
+        name: "from_date",
+        type: "date",
+        value: "2025-01-01T00:00:00.000Z",
+      }),
+    );
   });
 
   it("addParameter initializes the parameters array when undefined", () => {

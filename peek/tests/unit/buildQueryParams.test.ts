@@ -23,8 +23,8 @@ describe("buildQueryParams", () => {
     const query =
       'FROM logs-* | WHERE service.name == ?service | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)';
     const userParams = [
-      { name: "service", value: "web" },
-      { name: "environment", value: "prod" },
+      { name: "service", type: "keyword" as const, source: { mode: "text" as const }, label: "Service", value: "web" },
+      { name: "environment", type: "keyword" as const, source: { mode: "text" as const }, label: "Environment", value: "prod" },
     ];
     const params = buildQueryParams(query, { from: "now-1h", to: "now" }, userParams);
     expect(params).toHaveLength(3);
@@ -35,7 +35,9 @@ describe("buildQueryParams", () => {
 
   it("excludes user params not referenced in the query", () => {
     const query = "FROM logs-* | STATS COUNT(*)";
-    const userParams = [{ name: "service", value: "web" }];
+    const userParams = [
+      { name: "service", label: "Service", type: "keyword", source: { mode: "text" }, value: "web" },
+    ];
     const params = buildQueryParams(query, { from: "now-1h", to: "now" }, userParams);
     expect(params).toEqual([]);
   });
@@ -44,8 +46,8 @@ describe("buildQueryParams", () => {
     const query =
       "FROM logs-* | WHERE service.name == ?service AND host.name == ?host";
     const userParams = [
-      { name: "service", value: "api" },
-      { name: "host", value: "node-1" },
+      { name: "service", type: "keyword" as const, source: { mode: "text" as const }, label: "Service", value: "api" },
+      { name: "host", type: "keyword" as const, source: { mode: "text" as const }, label: "Host", value: "node-1" },
     ];
     const params = buildQueryParams(query, { from: "now-1h", to: "now" }, userParams);
     expect(params).toHaveLength(2);
@@ -61,8 +63,8 @@ describe("buildQueryParams", () => {
   it("skips user params with empty names", () => {
     const query = "FROM logs-* | WHERE x == ?service";
     const userParams = [
-      { name: "", value: "ignored" },
-      { name: "service", value: "web" },
+      { name: "", type: "keyword" as const, source: { mode: "text" as const }, label: "Ignored", value: "ignored" },
+      { name: "service", type: "keyword" as const, source: { mode: "text" as const }, label: "Service", value: "web" },
     ];
     const params = buildQueryParams(query, { from: "now-1h", to: "now" }, userParams);
     expect(params).toHaveLength(1);
@@ -72,8 +74,8 @@ describe("buildQueryParams", () => {
   it("does not match placeholder name prefixes", () => {
     const query = "FROM logs-* | WHERE env_name == ?env_name";
     const userParams = [
-      { name: "env", value: "prod" },
-      { name: "env_name", value: "web" },
+      { name: "env", type: "keyword" as const, source: { mode: "text" as const }, label: "Env", value: "prod" },
+      { name: "env_name", type: "keyword" as const, source: { mode: "text" as const }, label: "Env Name", value: "web" },
     ];
     const params = buildQueryParams(query, { from: "now-1h", to: "now" }, userParams);
     expect(params).toHaveLength(1);
@@ -86,5 +88,26 @@ describe("buildQueryParams", () => {
     const params = buildQueryParams(query, { from: "now-1h", to: "now" }, undefined);
     expect(params).toHaveLength(1);
     expect(params[0]).toHaveProperty("_tstart");
+  });
+
+  it("serializes number, boolean, and date parameters", () => {
+    const query =
+      "FROM logs-* | WHERE latency > ?latency AND is_error == ?is_error AND @timestamp >= ?from_date";
+    const params = buildQueryParams(query, { from: "now-1h", to: "now" }, [
+      { name: "latency", label: "Latency", type: "number", source: { mode: "text" }, value: 42 },
+      { name: "is_error", label: "Error", type: "boolean", source: { mode: "text" }, value: true },
+      {
+        name: "from_date",
+        label: "From Date",
+        type: "date",
+        source: { mode: "text" },
+        value: "2025-06-01T00:00:00-05:00",
+      },
+    ]);
+    expect(params).toEqual([
+      { latency: 42 },
+      { is_error: true },
+      { from_date: "2025-06-01T05:00:00.000Z" },
+    ]);
   });
 });

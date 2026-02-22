@@ -143,4 +143,48 @@ describe("ParameterBar", () => {
       expect(params[0]?.name).toBe("env");
     });
   });
+
+  it("adds a number variable and stores numeric value", async () => {
+    const user = userEvent.setup();
+    render(<ParameterBar />);
+
+    await user.click(screen.getByRole("button", { name: /add parameter/i }));
+    await screen.findByRole("dialog");
+
+    await user.type(screen.getByLabelText("Name"), "threshold");
+    await user.type(screen.getByLabelText("Label"), "Threshold");
+    await user.click(screen.getByLabelText("Type"));
+    await user.click(screen.getByRole("option", { name: "number" }));
+    await user.type(screen.getByLabelText("Default value"), "42");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    await waitFor(() => {
+      expect(useDashboardStore.getState().dashboard.parameters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "threshold",
+            type: "number",
+            value: 42,
+          }),
+        ]),
+      );
+    });
+  });
+
+  it("blocks invalid date values with inline validation", async () => {
+    const user = userEvent.setup();
+    render(<ParameterBar />);
+
+    await user.click(screen.getByRole("button", { name: /add parameter/i }));
+    await screen.findByRole("dialog");
+
+    await user.type(screen.getByLabelText("Name"), "from_date");
+    await user.type(screen.getByLabelText("Label"), "From Date");
+    await user.click(screen.getByLabelText("Type"));
+    await user.click(screen.getByRole("option", { name: "date" }));
+    await user.type(screen.getByLabelText("Default value"), "not-a-date");
+
+    expect(screen.getByText("Enter a valid date/time.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
+  });
 });
