@@ -67,4 +67,24 @@ describe("ExplorePage", () => {
       expect(dashboardState.dashboard.timeRange).toEqual({ from: "now-24h", to: "now" });
     });
   });
+
+  it("coerces restored counter metric aggregation to count", async () => {
+    listFieldsMock.mockResolvedValue([
+      { name: "system.network.in.bytes", type: "long", metricType: "counter" },
+    ]);
+    window.history.replaceState(
+      {},
+      "",
+      "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now",
+    );
+
+    render(<ExplorePage />);
+
+    await waitFor(() => {
+      const explorerState = useExplorerStore.getState();
+      expect(explorerState.selectedMetric).toBe("system.network.in.bytes");
+      expect(explorerState.metricType).toBe("counter");
+      expect(explorerState.aggregation).toBe("count");
+    });
+  });
 });

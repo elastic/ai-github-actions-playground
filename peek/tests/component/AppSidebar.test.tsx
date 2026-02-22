@@ -157,6 +157,17 @@ describe("AppSidebar", () => {
     expect(useDashboardStore.getState().currentPage).toBe("settings");
   });
 
+  it("opens settings menu and navigates to Dashboard Management", async () => {
+    useDashboardStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    render(<AppSidebar />);
+
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: /dashboard management/i }));
+
+    expect(useDashboardStore.getState().currentPage).toBe("dashboardManagement");
+  });
+
   it("toggles theme from sidebar settings menu", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();

@@ -54,6 +54,7 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
   }, [rowObject]);
 
   const handleClose = useCallback(() => {
+    setCopied(false);
     setShowNullFields(false);
     setSearchQuery("");
     setCopyError(null);
@@ -128,11 +129,14 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
         <Typography variant="subtitle1" fontWeight={600}>
           Row Inspector
         </Typography>
-        {nullFieldCount > 0 && (
-          <Button size="small" onClick={() => setShowNullFields((prev) => !prev)}>
-            {showNullFields ? "Hide null fields" : `Show null fields (${nullFieldCount})`}
-          </Button>
-        )}
+        <Button
+          size="small"
+          onClick={() => setShowNullFields((prev) => !prev)}
+          disabled={nullFieldCount === 0}
+          sx={{ visibility: nullFieldCount > 0 ? "visible" : "hidden" }}
+        >
+          {showNullFields ? "Hide null fields" : `Show null fields (${nullFieldCount})`}
+        </Button>
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Tooltip title={copied ? "Copied!" : "Copy JSON"}>
             <IconButton size="small" onClick={handleCopyJson} aria-label="Copy JSON">

@@ -31,7 +31,8 @@ type Page =
   | "console"
   | "chat"
   | "settings"
-  | "clusterOverview";
+  | "clusterOverview"
+  | "dashboardManagement";
 
 interface NavItem {
   label: string;
@@ -182,6 +183,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
+                  key={item.page}
                   selected={isActive}
                   disabled={isDisabled}
                   onClick={() => setCurrentPage(item.page)}
@@ -278,6 +280,15 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           }}
         >
           LLM Settings
+        </MenuItem>
+        <MenuItem
+          selected={currentPage === "dashboardManagement"}
+          onClick={() => {
+            setCurrentPage("dashboardManagement");
+            setSettingsAnchor(null);
+          }}
+        >
+          Dashboard Management
         </MenuItem>
       </Menu>
     </Box>

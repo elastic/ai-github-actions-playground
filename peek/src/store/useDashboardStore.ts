@@ -30,7 +30,8 @@ interface DashboardState {
     | "console"
     | "chat"
     | "settings"
-    | "clusterOverview";
+    | "clusterOverview"
+    | "dashboardManagement";
   discoverQueryDraft: string | null;
   queryHistory: string[];
 
@@ -61,7 +62,8 @@ interface DashboardState {
       | "console"
       | "chat"
       | "settings"
-      | "clusterOverview",
+      | "clusterOverview"
+      | "dashboardManagement",
   ) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;

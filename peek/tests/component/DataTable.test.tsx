@@ -17,7 +17,16 @@ const mockData: EsqlResponse = {
 };
 
 describe("DataTable", () => {
+  let originalClipboard: Clipboard | undefined;
+
   afterEach(() => {
+    if (originalClipboard) {
+      Object.defineProperty(navigator, "clipboard", {
+        value: originalClipboard,
+        configurable: true,
+      });
+      originalClipboard = undefined;
+    }
     vi.restoreAllMocks();
   });
 
@@ -75,6 +84,7 @@ describe("DataTable", () => {
   it("copies selected row JSON from the inspector", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
+    originalClipboard = navigator.clipboard;
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText },
       configurable: true,

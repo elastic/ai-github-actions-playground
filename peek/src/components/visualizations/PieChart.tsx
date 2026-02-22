@@ -6,9 +6,10 @@ import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function PieChart({ data }: Props) {
+export default function PieChart({ data, onExportReady }: Props) {
   const theme = useEChartTheme();
 
   const option = useMemo(() => {
@@ -65,5 +66,5 @@ export default function PieChart({ data }: Props) {
     };
   }, [data, theme]);
 
-  return <EChartWrapper option={option} />;
+  return <EChartWrapper option={option} onExportReady={onExportReady} />;
 }

@@ -27,13 +27,14 @@ echarts.use([
 interface Props {
   option: Record<string, unknown>;
   style?: React.CSSProperties;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
 /**
  * Lightweight ECharts wrapper component.
  * Perses uses a similar pattern via @perses-dev/components EChart.
  */
-export default function EChartWrapper({ option, style }: Props) {
+export default function EChartWrapper({ option, style, onExportReady }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
 
@@ -59,6 +60,12 @@ export default function EChartWrapper({ option, style }: Props) {
       chartRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => chartRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   return (
     <Box ref={containerRef} sx={{ width: "100%", height: "100%", minHeight: 120, ...style }} />
