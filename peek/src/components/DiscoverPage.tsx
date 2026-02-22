@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -46,12 +46,21 @@ export default function DiscoverPage() {
   const addPanel = useDashboardStore((s) => s.addPanel);
   const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
+  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
+
+  useEffect(() => {
+    if (!discoverQueryDraft) return;
+    setQuery(discoverQueryDraft);
+    setDiscoverQueryDraft(null);
+  }, [discoverQueryDraft, setDiscoverQueryDraft]);
+
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
     onSuccess: (data) => {
