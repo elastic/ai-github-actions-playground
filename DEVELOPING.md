@@ -29,6 +29,8 @@ make format       # auto-format code with Prettier
 make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
+make otel-harness-up   # start local Elasticsearch + OTel host metrics harness
+make otel-harness-down # stop and remove OTel host metrics harness
 ```
 
 > **Note:** `make serve` and `make serve-proxy` auto-install dependencies. The other targets (`lint`, `format`, `build`, `test-*`) assume dependencies are already installed — run `make setup` once first.
@@ -101,6 +103,38 @@ ES_URL=http://my-elasticsearch:9200 docker compose up
 ```
 
 Open `http://localhost:8080` and enter `http://localhost:8080` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_query` requests to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
+
+## OTel Host Metrics Harness
+
+Use this harness to generate real host metrics in a local `metrics-*` index so query work can run against incoming telemetry instead of seeded fixtures.
+
+```bash
+make otel-harness-up
+```
+
+This starts:
+- Elasticsearch (`http://localhost:9200`)
+- OpenTelemetry Collector (`hostmetrics` receiver + Elasticsearch exporter)
+
+Stop it with:
+
+```bash
+make otel-harness-down
+```
+
+Optional:
+
+```bash
+make otel-harness-logs
+```
+
+Quick data check:
+
+```bash
+curl -s -X POST 'http://localhost:9200/_query' \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"FROM metrics-hostmetricsreceiver-default | STATS count = COUNT(*) BY dataset = data_stream.dataset, metric_type = type | SORT count DESC"}'
+```
 
 ## Testing
 
