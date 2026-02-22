@@ -212,7 +212,9 @@ export default function DataStreamsPage() {
               >
                 <ListItemText
                   primary={stream.name}
-                  secondary={`${stream.indices.length} backing indices`}
+                  secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
+                    stream.indices.length === 1 ? "Index" : "Indices"
+                  }`}
                 />
               </ListItemButton>
             ))}
@@ -230,12 +232,63 @@ export default function DataStreamsPage() {
         >
           <Box sx={{ p: 1.5 }}>
             {selectedDataStream ? (
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <Typography variant="h6">{selectedDataStream.name}</Typography>
-                <Chip size="small" label={`status: ${selectedDataStream.status}`} />
-                <Chip size="small" label={`generation: ${selectedDataStream.generation}`} />
-                <Chip size="small" label={`template: ${selectedDataStream.template}`} />
-              </Stack>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(120px, auto) 1fr",
+                    rowGap: 0.5,
+                    columnGap: 1.5,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    Status
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-status">
+                    {selectedDataStream.status}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Generation
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-generation">
+                    {selectedDataStream.generation}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Backing indices
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
+                    {selectedDataStream.indices.length}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Write index
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-write-index">
+                    {selectedDataStream.indices[selectedDataStream.indices.length - 1]?.index_name ?? "n/a"}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Managed by
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-managed-by">
+                    {selectedDataStream.next_generation_managed_by}
+                  </Typography>
+
+                  {selectedDataStream.ilm_policy && (
+                    <>
+                      <Typography variant="caption" color="text.secondary">
+                        ILM policy
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
+                        {selectedDataStream.ilm_policy}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+              </Box>
             ) : (
               <Typography variant="body2" color="text.secondary">
                 Select a data stream.
