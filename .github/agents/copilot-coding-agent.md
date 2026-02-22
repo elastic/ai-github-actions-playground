@@ -67,7 +67,7 @@ for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000 >/dev/null && break; sle
 2. Run the screenshot preflight, passing `--url` with the route that shows your feature (not the default connections page):
 
 ```bash
-cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000 --output screenshot-preflight.json --screenshot screenshot.png
+cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000/<feature-route> --output screenshot-preflight.json --screenshot screenshot.png
 ```
 
 3. Stop the dev server:
