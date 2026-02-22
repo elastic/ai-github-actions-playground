@@ -12,9 +12,9 @@ import ExplorePage from "../components/ExplorePage";
 import SettingsPage from "../components/SettingsPage";
 import TracesPage from "../components/traces/TracesPage";
 
-type NavGroup = "Workspace" | "System" | "Help" | "Settings";
+export type NavGroup = "Workspace" | "System" | "Help" | "Settings";
 
-interface PageConfig {
+export interface PageConfig {
   path: string;
   component: ComponentType;
   requiresConnection: boolean;
@@ -96,3 +96,6 @@ export const PAGE_MANIFEST = {
 } as const satisfies Record<string, PageConfig>;
 
 export type PageId = keyof typeof PAGE_MANIFEST;
+
+/** Sidebar section display order. Sections not listed here won't appear. */
+export const NAV_SECTION_ORDER: NavGroup[] = ["Workspace", "System", "Help"];

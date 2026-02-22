@@ -25,7 +25,8 @@ processors:
 
 exporters:
   elasticsearch/otel:
-    endpoints: ["http://elasticsearch:9200"]
+    endpoints: ["${env:ES_URL:-http://elasticsearch:9200}"]
+    api_key: ${env:ES_API_KEY:-}
     mapping:
       mode: otel
 

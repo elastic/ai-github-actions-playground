@@ -22,7 +22,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import { useState } from "react";
 
-import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
+import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId } from "../routes/manifest";
 import { useDashboardStore } from "../store/useDashboardStore";
 
 interface NavItem {
@@ -42,7 +42,7 @@ interface AppSidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const NAV_ICONS: Partial<Record<PageId, React.ReactNode>> = {
+const NAV_ICONS: Record<PageId, React.ReactNode> = {
   dashboard: <DashboardIcon fontSize="small" />,
   discover: <SearchIcon fontSize="small" />,
   explore: <ExploreIcon fontSize="small" />,
@@ -52,31 +52,36 @@ const NAV_ICONS: Partial<Record<PageId, React.ReactNode>> = {
   clusterOverview: <InfoIcon fontSize="small" />,
   dataStreams: <DatasetIcon fontSize="small" />,
   docs: <MenuBookIcon fontSize="small" />,
+  settings: <SettingsIcon fontSize="small" />,
+  dashboardManagement: <SettingsIcon fontSize="small" />,
 };
 
-const NAV_SECTIONS: NavSection[] = [
-  ...Object.entries(
-    (Object.entries(PAGE_MANIFEST) as Array<[PageId, (typeof PAGE_MANIFEST)[PageId]]>).reduce<
-      Record<string, NavItem[]>
-    >((sections, [page, config]) => {
-      if (!config.nav.showInSidebar) {
-        return sections;
-      }
-      const section = sections[config.nav.group] ?? [];
-      section.push({
-        label: config.nav.label,
-        page,
-        icon: NAV_ICONS[page] ?? <DashboardIcon fontSize="small" />,
-        requiresConnection: config.requiresConnection,
-      });
-      sections[config.nav.group] = section;
-      return sections;
-    }, {}),
-  ).map(([label, items]) => ({
-    label,
-    items: items.sort((a, b) => PAGE_MANIFEST[a.page].nav.order - PAGE_MANIFEST[b.page].nav.order),
-  })),
-];
+function buildNavSections(): NavSection[] {
+  const groups = new Map<string, NavItem[]>();
+
+  for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<
+    [PageId, (typeof PAGE_MANIFEST)[PageId]]
+  >) {
+    if (!config.nav.showInSidebar) continue;
+    const items = groups.get(config.nav.group) ?? [];
+    items.push({
+      label: config.nav.label,
+      page,
+      icon: NAV_ICONS[page],
+      requiresConnection: config.requiresConnection,
+    });
+    groups.set(config.nav.group, items);
+  }
+
+  return NAV_SECTION_ORDER.filter((group) => groups.has(group)).map((group) => ({
+    label: group,
+    items: groups
+      .get(group)!
+      .sort((a, b) => PAGE_MANIFEST[a.page].nav.order - PAGE_MANIFEST[b.page].nav.order),
+  }));
+}
+
+const NAV_SECTIONS: NavSection[] = buildNavSections();
 
 export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {
   const connected = useDashboardStore((s) => s.connected);
