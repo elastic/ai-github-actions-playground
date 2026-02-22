@@ -126,6 +126,32 @@ describe("DataStreamsPage", () => {
     expect(screen.queryByRole("heading", { level: 6, name: ".system-stream" })).not.toBeInTheDocument();
   });
 
+  it("re-selects first visible stream when hiding system streams after selecting one", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(<DataStreamsPage />);
+
+    await screen.findByRole("heading", { level: 6, name: "logs-a" });
+    await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
+    await user.click(screen.getByText(".system-stream"));
+    await screen.findByRole("heading", { level: 6, name: ".system-stream" });
+
+    await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 6, name: "logs-a" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { level: 6, name: ".system-stream" })).not.toBeInTheDocument();
+    });
+  });
+
   it("ignores stale field-cap responses when selection changes quickly", async () => {
     const user = userEvent.setup();
     const firstFields = deferred<{ fields: Record<string, Record<string, { type: string }>> }>();

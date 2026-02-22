@@ -141,7 +141,9 @@ export default function AppHeader() {
           sx={{
             fontWeight: 700,
             background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
+            backgroundClip: "text",
             WebkitBackgroundClip: "text",
+            color: "transparent",
             WebkitTextFillColor: "transparent",
             lineHeight: 1,
             mr: 2,

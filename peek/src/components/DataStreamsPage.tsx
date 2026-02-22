@@ -57,17 +57,24 @@ export default function DataStreamsPage() {
       const nextStreams = response.data_streams ?? [];
       setDataStreams(nextStreams);
       setSelectedName((current) => {
-        if (current && nextStreams.some((stream) => stream.name === current)) {
+        if (
+          current &&
+          nextStreams.some((stream) => stream.name === current) &&
+          (showSystemStreams || !current.startsWith("."))
+        ) {
           return current;
         }
-        return nextStreams[0]?.name ?? null;
+        const firstVisible = showSystemStreams
+          ? nextStreams[0]
+          : nextStreams.find((stream) => !stream.name.startsWith("."));
+        return firstVisible?.name ?? null;
       });
     } catch (err) {
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
       setLoadingStreams(false);
     }
-  }, [connection]);
+  }, [connection, showSystemStreams]);
 
   const loadFields = useCallback(
     async (dataStreamName: string) => {
