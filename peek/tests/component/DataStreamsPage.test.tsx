@@ -66,7 +66,7 @@ describe("DataStreamsPage", () => {
       expect(screen.getByRole("heading", { level: 6, name: "logs-b" })).toBeInTheDocument(),
     );
 
-    await user.click(screen.getByRole("button", { name: /open in discover/i }));
+    await user.click(screen.getByRole("button", { name: /open in query lab/i }));
     expect(useDashboardStore.getState().discoverQueryDraft).toBe(
       "FROM logs-b | SORT @timestamp DESC | LIMIT 50",
     );
