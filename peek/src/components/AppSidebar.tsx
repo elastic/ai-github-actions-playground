@@ -22,24 +22,12 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import { useState } from "react";
 
+import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
 import { useDashboardStore } from "../store/useDashboardStore";
-
-type Page =
-  | "dashboard"
-  | "discover"
-  | "dataStreams"
-  | "explore"
-  | "traces"
-  | "docs"
-  | "console"
-  | "chat"
-  | "settings"
-  | "clusterOverview"
-  | "dashboardManagement";
 
 interface NavItem {
   label: string;
-  page: Page;
+  page: PageId;
   icon: React.ReactNode;
   requiresConnection?: boolean;
 }
@@ -54,74 +42,40 @@ interface AppSidebarProps {
   onToggleCollapse?: () => void;
 }
 
+const NAV_ICONS: Partial<Record<PageId, React.ReactNode>> = {
+  dashboard: <DashboardIcon fontSize="small" />,
+  discover: <SearchIcon fontSize="small" />,
+  explore: <ExploreIcon fontSize="small" />,
+  traces: <TimelineIcon fontSize="small" />,
+  console: <TerminalIcon fontSize="small" />,
+  chat: <ChatIcon fontSize="small" />,
+  clusterOverview: <InfoIcon fontSize="small" />,
+  dataStreams: <DatasetIcon fontSize="small" />,
+  docs: <MenuBookIcon fontSize="small" />,
+};
+
 const NAV_SECTIONS: NavSection[] = [
-  {
-    label: "Workspace",
-    items: [
-      {
-        label: "Dashboard",
-        page: "dashboard",
-        icon: <DashboardIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-      {
-        label: "Query Lab",
-        page: "discover",
-        icon: <SearchIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-      {
-        label: "Metrics",
-        page: "explore",
-        icon: <ExploreIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-      {
-        label: "Traces",
-        page: "traces",
-        icon: <TimelineIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-      {
-        label: "Console",
-        page: "console",
-        icon: <TerminalIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-      {
-        label: "Chat",
-        page: "chat",
-        icon: <ChatIcon fontSize="small" />,
-      },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      {
-        label: "Cluster Overview",
-        page: "clusterOverview",
-        icon: <InfoIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-      {
-        label: "Data Streams",
-        page: "dataStreams",
-        icon: <DatasetIcon fontSize="small" />,
-        requiresConnection: true,
-      },
-    ],
-  },
-  {
-    label: "Help",
-    items: [
-      {
-        label: "Docs",
-        page: "docs",
-        icon: <MenuBookIcon fontSize="small" />,
-      },
-    ],
-  },
+  ...Object.entries(
+    (Object.entries(PAGE_MANIFEST) as Array<[PageId, (typeof PAGE_MANIFEST)[PageId]]>).reduce<
+      Record<string, NavItem[]>
+    >((sections, [page, config]) => {
+      if (!config.nav.showInSidebar) {
+        return sections;
+      }
+      const section = sections[config.nav.group] ?? [];
+      section.push({
+        label: config.nav.label,
+        page,
+        icon: NAV_ICONS[page] ?? <DashboardIcon fontSize="small" />,
+        requiresConnection: config.requiresConnection,
+      });
+      sections[config.nav.group] = section;
+      return sections;
+    }, {}),
+  ).map(([label, items]) => ({
+    label,
+    items: items.sort((a, b) => PAGE_MANIFEST[a.page].nav.order - PAGE_MANIFEST[b.page].nav.order),
+  })),
 ];
 
 export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {

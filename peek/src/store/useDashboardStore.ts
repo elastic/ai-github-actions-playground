@@ -10,6 +10,7 @@ import type {
   TimeRange,
 } from "../types";
 import type { UserCapabilities } from "../services/es";
+import type { PageId } from "../routes/manifest";
 import { dashboardDefinitionSchema } from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
 
@@ -25,18 +26,7 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage:
-    | "dashboard"
-    | "discover"
-    | "dataStreams"
-    | "explore"
-    | "traces"
-    | "docs"
-    | "console"
-    | "chat"
-    | "settings"
-    | "clusterOverview"
-    | "dashboardManagement";
+  currentPage: PageId;
   discoverQueryDraft: string | null;
   queryHistory: string[];
 
@@ -63,20 +53,7 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (
-    page:
-      | "dashboard"
-      | "discover"
-      | "dataStreams"
-      | "explore"
-      | "traces"
-      | "docs"
-      | "console"
-      | "chat"
-      | "settings"
-      | "clusterOverview"
-      | "dashboardManagement",
-  ) => void;
+  setCurrentPage: (page: PageId) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;
 
