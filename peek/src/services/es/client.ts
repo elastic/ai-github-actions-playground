@@ -60,6 +60,20 @@ export interface ElasticsearchError {
  */
 export type EsqlError = ElasticsearchError;
 
+/**
+ * Capabilities derived from the user's API key / credentials.
+ * Used to gate UI features based on what the user is allowed to do.
+ */
+export interface UserCapabilities {
+  /** Whether the user can manage data streams (create, delete, rollover, etc.) */
+  canManageDataStreams: boolean;
+}
+
+/** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
+interface HasPrivilegesResponse {
+  cluster?: Record<string, boolean>;
+}
+
 // ---------------------------------------------------------------------------
 // Client
 // ---------------------------------------------------------------------------
@@ -195,6 +209,31 @@ export class ElasticsearchClient {
 
   async getClusterInfo(signal?: AbortSignal): Promise<ClusterInfoResponse> {
     return this._fetch<ClusterInfoResponse>("/", { signal });
+  }
+
+  // -------------------------------------------------------------------------
+  // Security / capabilities
+  // -------------------------------------------------------------------------
+
+  /**
+   * Queries the Elasticsearch security API to determine what the current
+   * credential is allowed to do.  Falls back to a safe minimal set when the
+   * security API is unavailable (e.g. un-secured clusters or CORS limits).
+   */
+  async getCapabilities(signal?: AbortSignal): Promise<UserCapabilities> {
+    try {
+      const response = await this._fetch<HasPrivilegesResponse>("/_security/user/_has_privileges", {
+        method: "POST",
+        body: JSON.stringify({ cluster: ["manage_data_stream"] }),
+        signal,
+      });
+      return {
+        canManageDataStreams: response.cluster?.["manage_data_stream"] ?? false,
+      };
+    } catch {
+      // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
+      return { canManageDataStreams: false };
+    }
   }
 
   // -------------------------------------------------------------------------
