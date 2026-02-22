@@ -4,6 +4,7 @@ import {
   filterColumnsByName,
   filterEsqlResult,
   paginateRows,
+  toCsv,
 } from "../../src/components/discoverUtils";
 
 function createLargeResult(rowCount = 1000, columnCount = 500): EsqlResponse {
@@ -63,5 +64,36 @@ describe("paginateRows", () => {
   it("returns an empty array when page is beyond available data", () => {
     const rows = [["r0"], ["r1"], ["r2"], ["r3"], ["r4"]];
     expect(paginateRows(rows, 10, 2)).toEqual([]);
+  });
+});
+
+describe("toCsv", () => {
+  it("serializes headers and rows with csv escaping", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "name", type: "keyword" },
+        { name: "message", type: "text" },
+      ],
+      values: [
+        ["alice", 'hello "world"'],
+        ["bob", "line1\nline2,with comma"],
+        [null, undefined],
+      ],
+    };
+
+    expect(toCsv(data)).toBe(
+      'name,message\r\nalice,"hello ""world"""\r\nbob,"line1\nline2,with comma"\r\n,',
+    );
+  });
+
+  it("prefixes formula-like cells to prevent spreadsheet execution", () => {
+    const data: EsqlResponse = {
+      columns: [{ name: "value", type: "keyword" }],
+      values: [["=SUM(1,2)"], ["+10"], ["-5"], ["@cmd"], [" =SUM(3,4)"]],
+    };
+
+    expect(toCsv(data)).toBe(
+      'value\r\n"\'=SUM(1,2)"\r\n\'+10\r\n\'-5\r\n\'@cmd\r\n"\' =SUM(3,4)"',
+    );
   });
 });

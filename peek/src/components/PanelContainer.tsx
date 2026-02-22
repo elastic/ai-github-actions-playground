@@ -12,6 +12,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
+import { buildTimeParams } from "../services/datemath";
 import type { PanelDefinition, EsqlResponse } from "../types";
 import Visualization from "./visualizations/Visualization";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
@@ -45,7 +46,8 @@ export default function PanelContainer({ panel }: Props) {
 
     try {
       const client = new ElasticsearchClient(connection);
-      const body: EsqlQueryParams = { query: panel.query.trim() };
+      const query = panel.query.trim();
+      const body: EsqlQueryParams = { query };
       if (timeRange) {
         body.filter = {
           range: {
@@ -55,6 +57,10 @@ export default function PanelContainer({ panel }: Props) {
             },
           },
         };
+        const timeParams = buildTimeParams(query, timeRange);
+        if (timeParams.length > 0) {
+          body.params = timeParams;
+        }
       }
       const result = await client.query(body, ctrl.signal);
       if (!ctrl.signal.aborted) {
