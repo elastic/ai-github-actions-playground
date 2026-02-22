@@ -222,7 +222,7 @@ export default function ParameterBar() {
             onChange={(e) =>
               setDraft((d) => ({ ...d, name: e.target.value.replace(/[^a-zA-Z0-9_]/g, "") }))
             }
-            helperText="Used in queries as ?name"
+            helperText="Used in queries as ?name (letters, numbers, underscore only)"
             fullWidth
           />
           <TextField
