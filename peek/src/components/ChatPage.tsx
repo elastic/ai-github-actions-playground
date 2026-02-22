@@ -17,8 +17,15 @@ import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
 import { useDashboardStore } from "../store/useDashboardStore";
 
 export default function ChatPage() {
-  const { config, messages, addMessage, updateMessage, removeMessage, clearMessages, isConfigured } =
-    useLLMStore(
+  const {
+    config,
+    messages,
+    addMessage,
+    updateMessage,
+    removeMessage,
+    clearMessages,
+    isConfigured,
+  } = useLLMStore(
     useShallow((s) => ({
       config: s.config,
       messages: s.messages,
