@@ -2,13 +2,13 @@ import { test, expect } from "@playwright/test";
 
 test.describe("smoke – site navigation", () => {
   test("loads the welcome screen when not connected", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("");
     await expect(page.getByRole("heading", { name: "Elastic Peek" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Connect to Elasticsearch" })).toBeVisible();
   });
 
   test("opens and closes the connection dialog", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("");
     await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
     await expect(page.getByRole("dialog", { name: "Elasticsearch Connection" })).toBeVisible();
     await expect(page.getByRole("textbox", { name: "Elasticsearch URL" })).toBeVisible();
@@ -23,7 +23,7 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("shows disabled Connect button until a URL is entered", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("");
     await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
 
     const connectBtn = page.getByRole("button", { name: "Connect", exact: true });
@@ -34,7 +34,7 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("switches between API Key and Username / Password tabs", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("");
     await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
 
     // Default tab is API Key
@@ -50,7 +50,7 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("reset button clears persisted state", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("");
     await expect(page.getByRole("button", { name: /Reset/i })).toBeVisible();
   });
 });
