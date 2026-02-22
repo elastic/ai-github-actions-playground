@@ -3,6 +3,7 @@ import type { EsqlResponse } from "../../src/types";
 import {
   filterColumnsByName,
   filterEsqlResult,
+  getEmptyColumnIndices,
   paginateRows,
   splitEsqlPipeline,
   toCsv,
@@ -78,6 +79,70 @@ describe("splitEsqlPipeline", () => {
 
   it("ignores a trailing pipe without adding empty stages", () => {
     expect(splitEsqlPipeline("FROM logs-* | LIMIT 10 |")).toEqual(["FROM logs-*", "LIMIT 10"]);
+  });
+});
+
+describe("getEmptyColumnIndices", () => {
+  it("returns indices of columns where all values are null", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "a", type: "keyword" },
+        { name: "b", type: "keyword" },
+        { name: "c", type: "keyword" },
+      ],
+      values: [
+        ["hello", null, null],
+        ["world", null, null],
+      ],
+    };
+    expect(getEmptyColumnIndices(data)).toEqual(new Set([1, 2]));
+  });
+
+  it("returns an empty set when all columns have data", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "a", type: "keyword" },
+        { name: "b", type: "keyword" },
+      ],
+      values: [["hello", "world"]],
+    };
+    expect(getEmptyColumnIndices(data)).toEqual(new Set());
+  });
+
+  it("returns an empty set when there are no rows", () => {
+    const data: EsqlResponse = {
+      columns: [{ name: "a", type: "keyword" }],
+      values: [],
+    };
+    expect(getEmptyColumnIndices(data)).toEqual(new Set());
+  });
+
+  it("treats undefined values as empty", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "a", type: "keyword" },
+        { name: "b", type: "keyword" },
+      ],
+      values: [
+        ["hello", undefined],
+        ["world", undefined],
+      ],
+    };
+    expect(getEmptyColumnIndices(data)).toEqual(new Set([1]));
+  });
+
+  it("does not mark a column as empty when at least one row has a non-null value", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "a", type: "keyword" },
+        { name: "b", type: "keyword" },
+      ],
+      values: [
+        [null, null],
+        ["hello", null],
+      ],
+    };
+    expect(getEmptyColumnIndices(data)).toEqual(new Set([1]));
   });
 });
 

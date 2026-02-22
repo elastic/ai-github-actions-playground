@@ -29,6 +29,21 @@ export function filterColumnsByName(columns: EsqlColumn[], query: string): EsqlC
   return columns.filter((column) => column.name.toLowerCase().includes(normalizedQuery));
 }
 
+/**
+ * Returns a set of column indices where every row value is null or undefined.
+ * Returns an empty set when there are no rows so that column headers stay visible.
+ */
+export function getEmptyColumnIndices(data: EsqlResponse): Set<number> {
+  if (data.values.length === 0) return new Set();
+  const emptySet = new Set<number>();
+  for (let colIdx = 0; colIdx < data.columns.length; colIdx++) {
+    if (data.values.every((row) => row[colIdx] === null || row[colIdx] === undefined)) {
+      emptySet.add(colIdx);
+    }
+  }
+  return emptySet;
+}
+
 export function paginateRows(values: unknown[][], page: number, rowsPerPage: number): unknown[][] {
   const start = page * rowsPerPage;
   return values.slice(start, start + rowsPerPage);
