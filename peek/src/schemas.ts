@@ -30,13 +30,54 @@ const parameterSource = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal("esql"), query: z.string() }),
 ]);
 
-const dashboardParameter = z.object({
-  name: z.string().min(1),
-  label: z.string().min(1),
-  type: z.literal("keyword"),
-  source: parameterSource,
-  value: z.string(),
-});
+const dashboardParameter = z
+  .object({
+    name: z.string().min(1),
+    label: z.string().min(1),
+    type: z.enum(["keyword", "number", "boolean", "date"]).default("keyword"),
+    source: parameterSource,
+    value: z.union([z.string(), z.number(), z.boolean()]),
+  })
+  .superRefine((param, ctx) => {
+    if (param.type === "keyword" && typeof param.value !== "string") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["value"],
+        message: "Keyword parameters require a string value",
+      });
+    }
+    if (param.type === "number" && typeof param.value !== "number") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["value"],
+        message: "Number parameters require a numeric value",
+      });
+    }
+    if (param.type === "boolean" && typeof param.value !== "boolean") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["value"],
+        message: "Boolean parameters require true/false",
+      });
+    }
+    if (param.type === "date") {
+      if (typeof param.value !== "string") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["value"],
+          message: "Date parameters require an ISO-8601 string value",
+        });
+        return;
+      }
+      if (Number.isNaN(Date.parse(param.value))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["value"],
+          message: "Date parameters require a valid date value",
+        });
+      }
+    }
+  });
 
 export const dashboardDefinitionSchema = z.object({
   id: z.string(),

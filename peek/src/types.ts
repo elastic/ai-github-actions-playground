@@ -67,12 +67,12 @@ export interface DashboardParameter {
   name: string;
   /** Human-readable label shown in the parameter bar. */
   label: string;
-  /** ES|QL param type – currently always "keyword". */
-  type: "keyword";
+  /** ES|QL parameter type. */
+  type: "keyword" | "number" | "boolean" | "date";
   /** How values are provided. */
   source: ParameterSource;
   /** Current value of the parameter. */
-  value: string;
+  value: string | number | boolean;
 }
 
 export interface DashboardDefinition {

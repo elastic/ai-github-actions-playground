@@ -67,7 +67,7 @@ interface DashboardState {
   addParameter: (param: DashboardParameter) => void;
   updateParameter: (name: string, updates: Partial<DashboardParameter>) => void;
   removeParameter: (name: string) => void;
-  setParameterValue: (name: string, value: string) => void;
+  setParameterValue: (name: string, value: DashboardParameter["value"]) => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => { success: boolean; error?: string };

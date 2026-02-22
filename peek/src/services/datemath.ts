@@ -5,7 +5,7 @@
  * possible.
  */
 
-import type { TimeRange } from "../types";
+import type { DashboardParameter, TimeRange } from "../types";
 
 const UNIT_MS: Record<string, number> = {
   s: 1_000,
@@ -73,17 +73,45 @@ export function buildTimeParams(
 export function buildQueryParams(
   query: string,
   timeRange: TimeRange,
-  userParams?: Array<{ name: string; value: string }>,
-): Array<Record<string, string>> {
-  const params = buildTimeParams(query, timeRange);
+  userParams?: DashboardParameter[],
+): Array<Record<string, string | number | boolean>> {
+  const params: Array<Record<string, string | number | boolean>> = buildTimeParams(
+    query,
+    timeRange,
+  );
 
   if (userParams) {
-    for (const { name, value } of userParams) {
+    for (const { name, value, type } of userParams) {
       if (name && hasNamedPlaceholder(query, name)) {
-        params.push({ [name]: value });
+        params.push({ [name]: serializeDashboardParam(type, value) });
       }
     }
   }
 
   return params;
+}
+
+function serializeDashboardParam(
+  type: DashboardParameter["type"],
+  value: DashboardParameter["value"],
+): string | number | boolean {
+  switch (type) {
+    case "number": {
+      const n = Number(value);
+      if (!Number.isFinite(n)) {
+        throw new TypeError(`Invalid numeric value: ${String(value)}`);
+      }
+      return n;
+    }
+    case "boolean":
+      if (typeof value === "boolean") return value;
+      return String(value).toLowerCase() === "true";
+    case "date": {
+      const parsed = Date.parse(String(value));
+      return Number.isNaN(parsed) ? String(value) : new Date(parsed).toISOString();
+    }
+    case "keyword":
+    default:
+      return String(value);
+  }
 }

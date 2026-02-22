@@ -153,7 +153,15 @@ const initialState: Omit<
 export const useExplorerStore = create<ExplorerState>()((set) => ({
   ...initialState,
 
-  setIndexPattern: (pattern) => set({ indexPattern: pattern, fields: [], selectedMetric: null }),
+  setIndexPattern: (pattern) =>
+    set({
+      indexPattern: pattern,
+      fields: [],
+      selectedMetric: null,
+      filters: [],
+      groupBy: null,
+      queryResult: { status: "idle" },
+    }),
   setFields: (fields) => set({ fields }),
   setFieldsLoading: (loading) => set({ fieldsLoading: loading }),
   setSelectedMetric: (metric, metricType) =>
