@@ -9,6 +9,10 @@ const NOW = new Date("2025-06-15T12:00:00.000Z");
 // ---------------------------------------------------------------------------
 
 describe("resolveDateTime", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('resolves "now" to the provided time', () => {
     const result = resolveDateTime("now", NOW);
     expect(result?.toISOString()).toBe("2025-06-15T12:00:00.000Z");
@@ -52,7 +56,6 @@ describe("resolveDateTime", () => {
     vi.useFakeTimers({ now: NOW });
     const result = resolveDateTime("now");
     expect(result?.toISOString()).toBe(NOW.toISOString());
-    vi.useRealTimers();
   });
 });
 

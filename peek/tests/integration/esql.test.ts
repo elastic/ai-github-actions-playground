@@ -247,7 +247,7 @@ describe("client.query time range filter", () => {
     const result = await client.query({
       query: "FROM web_logs",
       filter: {
-        range: { "@timestamp": { gte: "now-10m", lte: "now" } },
+        range: { "@timestamp": { gte: "now-1h", lte: "now" } },
       },
     });
     expect(result.values).toHaveLength(6);
