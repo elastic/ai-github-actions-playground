@@ -2,7 +2,7 @@
   <img src="peek/public/logo.png" alt="Elastic Peek" width="200">
 </p>
 
-# AI Software Engineering Factory — Proof of Concept
+# Elastic Peel: AI Software Engineering Factory (Research Project)
 
 This repository is a proof-of-concept **AI Software Engineering Factory** built on [elastic/ai-github-actions](https://github.com/elastic/ai-github-actions). It demonstrates how a suite of AI-powered GitHub Actions workflows can autonomously triage issues, review pull requests, propose fixes, and iterate on a real codebase with minimal human intervention.
 
@@ -24,7 +24,7 @@ The workflows are powered by [elastic/ai-github-actions](https://github.com/elas
 
 ## The Product: Elastic Peek
 
-The codebase that the factory operates on is **Elastic Peek**, a lightweight, static dashboarding tool powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
+The codebase that the factory operates on is **Elastic Peek**, a lightweight, browser-only, backend-free, UI for interacting with Elasticsearch. It's powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
 
 ### Live Demo
 
