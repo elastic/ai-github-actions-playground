@@ -13,6 +13,8 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TableChartIcon from "@mui/icons-material/TableChart";
@@ -66,6 +68,8 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
   const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const themeMode = useDashboardStore((s) => s.themeMode);
+  const queryHistory = useDashboardStore((s) => s.queryHistory);
+  const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
 
   const [title, setTitle] = useState(panel.title);
   const [query, setQuery] = useState(panel.query);
@@ -74,6 +78,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     panel.options ?? defaultOptions(panel.visualization),
   );
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
+  const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
       const body: EsqlQueryParams = { query: queryText };
@@ -96,7 +101,10 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   );
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
-    onSuccess: setPreview,
+    onSuccess: (data) => {
+      setPreview(data);
+      appendQueryToHistory(query);
+    },
     onFailure: () => setPreview(null),
     buildRequest,
   });
@@ -118,6 +126,10 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
   );
+  const handleSelectHistory = useCallback((selectedQuery: string) => {
+    setQuery(selectedQuery);
+    setHistoryAnchor(null);
+  }, []);
   const queryEditorExtensions = useMemo(
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
     [handleRunQuery],
@@ -236,6 +248,28 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
               {preview.values.length} rows × {preview.columns.length} columns
             </Typography>
           )}
+          <Button
+            variant="text"
+            size="small"
+            onClick={(e) => setHistoryAnchor(e.currentTarget)}
+            disabled={queryHistory.length === 0}
+          >
+            Recent queries
+          </Button>
+          <Menu
+            anchorEl={historyAnchor}
+            open={Boolean(historyAnchor)}
+            onClose={() => setHistoryAnchor(null)}
+          >
+            {queryHistory.map((historyQuery, idx) => (
+              <MenuItem
+                key={`${historyQuery}-${idx}`}
+                onClick={() => handleSelectHistory(historyQuery)}
+              >
+                {historyQuery}
+              </MenuItem>
+            ))}
+          </Menu>
           <Box sx={{ flex: 1 }} />
           {/* Visualization type */}
           <ToggleButtonGroup

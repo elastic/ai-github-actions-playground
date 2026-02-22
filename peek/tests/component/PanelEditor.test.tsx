@@ -41,7 +41,9 @@ describe("PanelEditor", () => {
     queryMock.mockReset();
     queryMock.mockResolvedValue({ columns: [], values: [], executionTimeMs: 1 });
     useDashboardStore.getState().resetState();
-    useDashboardStore.getState().setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
+    useDashboardStore
+      .getState()
+      .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
     useDashboardStore.getState().setConnected(true);
     useDashboardStore
       .getState()
@@ -137,8 +139,28 @@ describe("PanelEditor", () => {
             },
           },
         },
-        params: expect.arrayContaining([{ _tstart: "2025-06-15T11:00:00.000Z" }, { _tend: "2025-06-15T12:00:00.000Z" }, { service: "web" }]),
+        params: expect.arrayContaining([
+          { _tstart: "2025-06-15T11:00:00.000Z" },
+          { _tend: "2025-06-15T12:00:00.000Z" },
+          { service: "web" },
+        ]),
       }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("can select a recent query and run it", async () => {
+    const user = userEvent.setup();
+    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    render(<PanelEditor />);
+
+    await user.click(screen.getByRole("button", { name: /recent queries/i }));
+    await user.click(screen.getByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "FROM metrics-* | LIMIT 5" }),
       expect.any(AbortSignal),
     );
   });
