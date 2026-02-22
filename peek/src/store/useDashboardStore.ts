@@ -415,7 +415,7 @@ export const useDashboardStore = create<DashboardState>()(
             console.error("Import failed:", error);
             return { success: false, error };
           }
-          set({ dashboard: result.data as DashboardDefinition });
+          set({ dashboard: result.data });
           return { success: true };
         } catch (e) {
           const error = e instanceof Error ? e.message : String(e);
