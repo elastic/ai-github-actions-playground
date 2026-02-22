@@ -158,7 +158,7 @@ describe("buildExplorerQuery", () => {
     expect(whereSection).toContain('region == "us-east-1"');
     expect(whereSection).toContain('env != "staging"');
     // All connected by AND
-    expect(whereSection.match(/AND/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(whereSection.match(/AND/g)?.length).toBe(4);
   });
 });
 
