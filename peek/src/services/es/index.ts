@@ -11,4 +11,5 @@ export type {
   EsqlQueryParams,
   EsqlQueryResponse,
   ClusterInfoResponse,
+  UserCapabilities,
 } from "./client";
