@@ -101,6 +101,7 @@ export default function AppHeader() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
+  const tabValue = currentPage === "dataStreams" ? false : currentPage;
   const timeRangeRef = useRef(dashboard.timeRange);
   useEffect(() => {
     timeRangeRef.current = dashboard.timeRange;
@@ -208,7 +209,7 @@ export default function AppHeader() {
 
         {connected && (
           <Tabs
-            value={currentPage}
+            value={tabValue}
             onChange={(_, v: "dashboard" | "discover" | "explore" | "docs") =>
               setCurrentPage(v)
             }
