@@ -26,6 +26,6 @@ export function resolveDateTime(expr: string, now: Date = new Date()): Date | un
   const [, sign, amount, unit] = match;
   if (!sign) return new Date(now.getTime()); // plain "now"
 
-  const ms = Number(amount) * (UNIT_MS[unit!] ?? 0);
+  const ms = Number(amount) * UNIT_MS[unit!]!;
   return new Date(now.getTime() + (sign === "+" ? ms : -ms));
 }
