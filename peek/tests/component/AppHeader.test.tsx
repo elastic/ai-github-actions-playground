@@ -49,23 +49,12 @@ describe("AppHeader", () => {
     expect(useDashboardStore.getState().currentPage).toBe("settings");
   });
 
-  it("opens Chat from the settings menu", async () => {
+  it("does not render Chat in the settings menu", async () => {
     const user = userEvent.setup();
     render(<AppHeader />);
 
     await user.click(screen.getByRole("button", { name: /settings/i }));
-    await user.click(screen.getByRole("menuitem", { name: "Chat" }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("chat");
-  });
-
-  it("does not warn when current page is dataStreams", () => {
-    useDashboardStore.getState().setCurrentPage("dataStreams");
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    render(<AppHeader />);
-
-    expect(errorSpy).not.toHaveBeenCalled();
-    errorSpy.mockRestore();
+    expect(screen.queryByRole("menuitem", { name: "Chat" })).not.toBeInTheDocument();
   });
 });
