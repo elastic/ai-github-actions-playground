@@ -1,7 +1,7 @@
 import { ElasticsearchContainer, type StartedElasticsearchContainer } from "@testcontainers/elasticsearch";
 import { Client } from "@elastic/elasticsearch";
 
-const ES_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.17.0";
+const ES_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.0.0";
 
 export interface TestContext {
   container: StartedElasticsearchContainer;

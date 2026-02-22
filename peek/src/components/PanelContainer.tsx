@@ -10,7 +10,9 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { executeEsql, isEsqlError } from "../services/elasticsearch";
+import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import type { EsqlQueryParams } from "../services/es";
+import { buildTimeParams } from "../services/datemath";
 import type { PanelDefinition, EsqlResponse } from "../types";
 import Visualization from "./visualizations/Visualization";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
@@ -43,7 +45,24 @@ export default function PanelContainer({ panel }: Props) {
     setError(null);
 
     try {
-      const result = await executeEsql(connection, panel.query.trim(), ctrl.signal, timeRange);
+      const client = new ElasticsearchClient(connection);
+      const query = panel.query.trim();
+      const body: EsqlQueryParams = { query };
+      if (timeRange) {
+        body.filter = {
+          range: {
+            "@timestamp": {
+              gte: timeRange.from,
+              lte: timeRange.to,
+            },
+          },
+        };
+        const timeParams = buildTimeParams(query, timeRange);
+        if (timeParams.length > 0) {
+          body.params = timeParams;
+        }
+      }
+      const result = await client.query(body, ctrl.signal);
       if (!ctrl.signal.aborted) {
         setData(result);
         setExecutionTimeMs(result.executionTimeMs);
@@ -51,7 +70,7 @@ export default function PanelContainer({ panel }: Props) {
       }
     } catch (err) {
       if (!ctrl.signal.aborted) {
-        setError(isEsqlError(err) ? err.message : String(err));
+        setError(isElasticsearchError(err) ? err.message : String(err));
       }
     } finally {
       if (!ctrl.signal.aborted) {

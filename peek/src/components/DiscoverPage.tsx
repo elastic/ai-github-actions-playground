@@ -15,7 +15,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { executeEsql, isEsqlError } from "../services/elasticsearch";
+import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { filterColumnsByName, filterEsqlResult } from "./discoverUtils";
 import DataTable from "./visualizations/DataTable";
@@ -57,13 +57,14 @@ export default function DiscoverPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await executeEsql(connection, query.trim());
+      const client = new ElasticsearchClient(connection);
+      const data = await client.query({ query: query.trim() });
       setResult(data);
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
     } catch (err) {
-      setError(isEsqlError(err) ? err.message : String(err));
+      setError(isElasticsearchError(err) ? err.message : String(err));
       setResult(null);
     } finally {
       setLoading(false);

@@ -54,19 +54,27 @@ Before finishing:
 
 When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request.
 
-1. Start the dev server in the background:
+1. Start the dev server in the background and wait until it is ready:
 
 ```bash
 cd peek && npm run dev &
+DEV_PID=$!
+for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000 >/dev/null && break; sleep 1; done
 ```
 
-2. Wait a few seconds for the server to be ready, then run the screenshot preflight:
+2. Run the screenshot preflight:
 
 ```bash
 cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000 --output screenshot-preflight.json --screenshot screenshot.png
 ```
 
-3. If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
+3. Stop the dev server:
+
+```bash
+kill $DEV_PID
+```
+
+4. If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
 
 For this repository:
 

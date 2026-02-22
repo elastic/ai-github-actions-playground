@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { resolveDateTime } from "../../src/services/datemath";
-import { buildTimeParams } from "../../src/services/elasticsearch";
+import { resolveDateTime, buildTimeParams } from "../../src/services/datemath";
 
 // Fixed reference time for deterministic tests
 const NOW = new Date("2025-06-15T12:00:00.000Z");

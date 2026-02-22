@@ -16,7 +16,7 @@ import Tabs from "@mui/material/Tabs";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { testConnection } from "../services/elasticsearch";
+import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../types";
 
 type AuthType = "apiKey" | "userpass";
@@ -60,27 +60,33 @@ export default function ConnectionDialog() {
     setTesting(true);
     setResult(null);
     const conn = buildConnection();
-    const res = await testConnection(conn);
-    if (res.ok) {
+    try {
+      const client = new ElasticsearchClient(conn);
+      await client.getClusterInfo();
       setResult({ ok: true, message: "Connected successfully." });
-    } else {
-      setResult({ ok: false, message: res.error });
+    } catch (err: unknown) {
+      const message = isElasticsearchError(err) ? err.message : String(err);
+      setResult({ ok: false, message });
+    } finally {
+      setTesting(false);
     }
-    setTesting(false);
   }, [buildConnection]);
 
   const handleConnect = useCallback(async () => {
     const conn = buildConnection();
     setTesting(true);
     setResult(null);
-    const res = await testConnection(conn);
-    setTesting(false);
-    if (res.ok) {
+    try {
+      const client = new ElasticsearchClient(conn);
+      await client.getClusterInfo();
       setConnection(conn);
       setConnected(true);
       setOpen(false);
-    } else {
-      setResult({ ok: false, message: res.error });
+    } catch (err: unknown) {
+      const message = isElasticsearchError(err) ? err.message : String(err);
+      setResult({ ok: false, message });
+    } finally {
+      setTesting(false);
     }
   }, [buildConnection, setConnection, setConnected, setOpen]);
 
