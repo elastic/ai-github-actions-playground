@@ -178,12 +178,14 @@ export default function DimensionSidebar({
       <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
         <Typography variant="subtitle2">Dimensions</Typography>
         {metricNamespace && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" display="block">
             Scoped to {metricNamespace}
           </Typography>
         )}
-        <Typography variant="caption" color="text.secondary">
-          {dimensionFields.length} fields
+        <Typography variant="caption" color="text.secondary" display="block">
+          {dimensionFields.length} fields — select to expand, use{" "}
+          <GroupWorkIcon aria-label="group by" sx={{ fontSize: 10, verticalAlign: "middle" }} /> to
+          group by
         </Typography>
         <TextField
           size="small"
