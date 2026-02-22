@@ -31,6 +31,14 @@ export type EsqlQueryResponse =
 /** Response from GET / (cluster info) */
 export type ClusterInfoResponse =
   operations["info"]["responses"][200]["content"]["application/json"];
+export interface ClusterHealthResponse {
+  status?: "green" | "yellow" | "red";
+  number_of_nodes?: number;
+  number_of_data_nodes?: number;
+  active_primary_shards?: number;
+  active_shards?: number;
+  unassigned_shards?: number;
+}
 export type ResolveIndexResponse =
   operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
 export type GetDataStreamsResponse =
@@ -219,6 +227,10 @@ export class ElasticsearchClient {
 
   async getClusterInfo(signal?: AbortSignal): Promise<ClusterInfoResponse> {
     return this._fetch<ClusterInfoResponse>("/", { signal });
+  }
+
+  async getClusterHealth(signal?: AbortSignal): Promise<ClusterHealthResponse> {
+    return this._fetch<ClusterHealthResponse>("/_cluster/health", { signal });
   }
 
   async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {
