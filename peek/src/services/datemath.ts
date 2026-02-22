@@ -96,8 +96,13 @@ function serializeDashboardParam(
   value: DashboardParameter["value"],
 ): string | number | boolean {
   switch (type) {
-    case "number":
-      return typeof value === "number" ? value : Number(value);
+    case "number": {
+      const n = Number(value);
+      if (!Number.isFinite(n)) {
+        throw new TypeError(`Invalid numeric value: ${String(value)}`);
+      }
+      return n;
+    }
     case "boolean":
       if (typeof value === "boolean") return value;
       return String(value).toLowerCase() === "true";

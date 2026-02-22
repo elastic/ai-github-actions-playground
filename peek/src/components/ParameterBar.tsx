@@ -62,8 +62,14 @@ function parseParameterValue(
   return { value: new Date(parsed).toISOString() };
 }
 
-function formatValueForInput(type: DashboardParameter["type"], value: ParameterValue): string {
-  if (type === "boolean") return String(Boolean(value));
+function formatValueForInput(
+  type: DashboardParameter["type"],
+  value: ParameterValue | null | undefined,
+): string {
+  if (type === "boolean") {
+    if (value === null || value === undefined) return "";
+    return String(value);
+  }
   return String(value ?? "");
 }
 
@@ -271,7 +277,7 @@ export default function ParameterBar() {
 
         {parameters.map((param) => (
           <ParameterControl
-            key={param.name}
+            key={`${param.name}:${param.type}:${String(param.value)}`}
             param={param}
             connection={connection}
             onChange={(val) => setParameterValue(param.name, val)}
@@ -497,12 +503,7 @@ function ParameterControl({
     .filter((entry) => entry.parsed.value !== undefined)
     .map((entry) => ({ label: entry.label, value: entry.parsed.value as ParameterValue }));
   const currentValueInput = formatValueForInput(param.type, param.value);
-  const [draftInput, setDraftInput] = useState(currentValueInput);
-
-  useEffect(() => {
-    setDraftInput(currentValueInput);
-    setValidationError(null);
-  }, [currentValueInput]);
+  const [draftInput, setDraftInput] = useState(() => currentValueInput);
 
   const commitDraftValue = useCallback(() => {
     const parsed = parseParameterValue(param.type, draftInput);
@@ -572,7 +573,9 @@ function ParameterControl({
             const nextInput = e.target.value;
             setDraftInput(nextInput);
             const parsed = parseParameterValue(param.type, nextInput);
-            setValidationError(parsed.value === undefined ? (parsed.error ?? "Invalid value") : null);
+            setValidationError(
+              parsed.value === undefined ? (parsed.error ?? "Invalid value") : null,
+            );
           }}
           onBlur={commitDraftValue}
           onKeyDown={(e) => {
