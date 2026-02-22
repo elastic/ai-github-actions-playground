@@ -122,6 +122,124 @@ describe("useDashboardStore addPanel / removePanel", () => {
   });
 });
 
+describe("useDashboardStore duplicatePanel", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("creates a copy with a new id and appended title", () => {
+    const panels = useDashboardStore.getState().dashboard.panels;
+    const sourceId = panels[0].id;
+    const source = panels[0];
+
+    const newId = useDashboardStore.getState().duplicatePanel(sourceId);
+
+    expect(newId).toBeTruthy();
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+    expect(clone).toBeDefined();
+    expect(clone!.id).not.toBe(sourceId);
+    expect(clone!.title).toBe(`${source.title} (copy)`);
+    expect(clone!.query).toBe(source.query);
+    expect(clone!.visualization).toBe(source.visualization);
+  });
+
+  it("preserves options on the duplicated panel", () => {
+    useDashboardStore.getState().addPanel({
+      id: "opts-panel",
+      title: "With Options",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+      options: { stacked: true, horizontal: false },
+    });
+
+    const newId = useDashboardStore.getState().duplicatePanel("opts-panel");
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+
+    expect(clone!.options).toEqual({ stacked: true, horizontal: false });
+  });
+
+  it("returns null for a non-existent panel", () => {
+    const result = useDashboardStore.getState().duplicatePanel("does-not-exist");
+    expect(result).toBeNull();
+  });
+
+  it("increases panel count by exactly 1", () => {
+    const before = useDashboardStore.getState().dashboard.panels.length;
+    const sourceId = useDashboardStore.getState().dashboard.panels[0].id;
+
+    useDashboardStore.getState().duplicatePanel(sourceId);
+
+    expect(useDashboardStore.getState().dashboard.panels.length).toBe(before + 1);
+  });
+
+  it("sets layout.y to Infinity for grid reflow and preserves other layout props", () => {
+    useDashboardStore.getState().addPanel({
+      id: "layout-test",
+      title: "Layout Test",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 3, y: 2, w: 8, h: 5 },
+    });
+
+    const newId = useDashboardStore.getState().duplicatePanel("layout-test");
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+
+    expect(clone!.layout.y).toBe(Infinity);
+    expect(clone!.layout.x).toBe(3);
+    expect(clone!.layout.w).toBe(8);
+    expect(clone!.layout.h).toBe(5);
+  });
+
+  it("advances the dashboard updatedAt timestamp", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    // Reset so updatedAt uses the fake time
+    useDashboardStore.getState().resetState();
+
+    const beforeTimestamp = useDashboardStore.getState().dashboard.updatedAt;
+    const sourceId = useDashboardStore.getState().dashboard.panels[0].id;
+
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+    useDashboardStore.getState().duplicatePanel(sourceId);
+
+    const afterTimestamp = useDashboardStore.getState().dashboard.updatedAt;
+    expect(afterTimestamp).not.toBe(beforeTimestamp);
+    vi.useRealTimers();
+  });
+
+  it("deep clones so source and clone do not share references", () => {
+    useDashboardStore.getState().addPanel({
+      id: "ref-test",
+      title: "Ref Test",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+      options: { stacked: true, horizontal: false, format: { unit: "bytes", shortValues: true } },
+    });
+
+    const newId = useDashboardStore.getState().duplicatePanel("ref-test");
+    const source = useDashboardStore.getState().dashboard.panels.find((p) => p.id === "ref-test");
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+
+    // Layout values should be equal (except y which is Infinity)
+    expect(clone!.layout.x).toBe(source!.layout.x);
+    expect(clone!.layout.w).toBe(source!.layout.w);
+    expect(clone!.layout.h).toBe(source!.layout.h);
+    // Layout objects should not be the same reference
+    expect(clone!.layout).not.toBe(source!.layout);
+    // Options should be deeply equal but not the same reference
+    expect(clone!.options).not.toBe(source!.options);
+    // Nested format object should also be independent
+    const cloneFormat = (clone!.options as Record<string, unknown>).format;
+    const sourceFormat = (source!.options as Record<string, unknown>).format;
+    expect(cloneFormat).toEqual(sourceFormat);
+    expect(cloneFormat).not.toBe(sourceFormat);
+  });
+});
+
 describe("useDashboardStore updatePanel", () => {
   beforeEach(() => {
     localStorageMock.clear();
@@ -378,7 +496,7 @@ describe("useDashboardStore importDashboard", () => {
           id: "p-1",
           title: "Bad Viz",
           query: "FROM x",
-          visualization: "heatmap" as "bar",
+          visualization: "treemap" as "bar",
           layout: { x: 0, y: 0, w: 6, h: 4 },
         },
       ],
@@ -467,4 +585,25 @@ describe("useDashboardStore importDashboard", () => {
     expect(result).toEqual({ success: true });
     expect(useDashboardStore.getState().dashboard.panels[0].id).toBe("p-1");
   });
+
+  it.each(["heatmap", "scatter", "histogram"] as const)(
+    "accepts the %s visualization type",
+    (vizType) => {
+      const dashboard = makeValidDashboard({
+        panels: [
+          {
+            id: "viz-panel",
+            title: "New Viz",
+            query: "FROM x",
+            visualization: vizType,
+            layout: { x: 0, y: 0, w: 6, h: 4 },
+          },
+        ],
+      });
+
+      const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+      expect(result).toEqual({ success: true });
+      expect(useDashboardStore.getState().dashboard.panels[0].visualization).toBe(vizType);
+    },
+  );
 });

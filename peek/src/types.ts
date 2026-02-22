@@ -6,7 +6,16 @@ export type { FormatOptions };
 // ES-specific types are now sourced from the generated OpenAPI types.
 export type { ElasticsearchConnection, EsqlColumn, EsqlResponse, EsqlError } from "./services/es";
 
-export type VisualizationType = "timeseries" | "bar" | "table" | "stat" | "gauge" | "pie";
+export type VisualizationType =
+  | "timeseries"
+  | "bar"
+  | "table"
+  | "stat"
+  | "gauge"
+  | "pie"
+  | "heatmap"
+  | "scatter"
+  | "histogram";
 
 export interface TimeSeriesOptions {
   format?: FormatOptions;
@@ -35,12 +44,28 @@ export interface PieChartOptions {
   format?: FormatOptions;
 }
 
+export interface HeatmapChartOptions {
+  format?: FormatOptions;
+}
+
+export interface ScatterChartOptions {
+  format?: FormatOptions;
+}
+
+export interface HistogramChartOptions {
+  format?: FormatOptions;
+  bins?: number;
+}
+
 export type VisualizationOptions =
   | TimeSeriesOptions
   | BarChartOptions
   | StatPanelOptions
   | GaugePanelOptions
-  | PieChartOptions;
+  | PieChartOptions
+  | HeatmapChartOptions
+  | ScatterChartOptions
+  | HistogramChartOptions;
 
 export interface PanelDefinition {
   id: string;
