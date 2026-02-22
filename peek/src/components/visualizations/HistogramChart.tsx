@@ -45,7 +45,7 @@ export default function HistogramChart({ data, options }: Props) {
     for (const v of values) {
       let idx = Math.floor((v - min) / binWidth);
       if (idx >= bins) idx = bins - 1;
-      counts[idx]!++;
+      counts[idx]++;
     }
 
     const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};

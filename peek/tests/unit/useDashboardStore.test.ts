@@ -165,6 +165,72 @@ describe("useDashboardStore duplicatePanel", () => {
     const result = useDashboardStore.getState().duplicatePanel("does-not-exist");
     expect(result).toBeNull();
   });
+
+  it("increases panel count by exactly 1", () => {
+    const before = useDashboardStore.getState().dashboard.panels.length;
+    const sourceId = useDashboardStore.getState().dashboard.panels[0].id;
+
+    useDashboardStore.getState().duplicatePanel(sourceId);
+
+    expect(useDashboardStore.getState().dashboard.panels.length).toBe(before + 1);
+  });
+
+  it("sets layout.y to Infinity for grid reflow and preserves other layout props", () => {
+    useDashboardStore.getState().addPanel({
+      id: "layout-test",
+      title: "Layout Test",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 3, y: 2, w: 8, h: 5 },
+    });
+
+    const newId = useDashboardStore.getState().duplicatePanel("layout-test");
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+
+    expect(clone!.layout.y).toBe(Infinity);
+    expect(clone!.layout.x).toBe(3);
+    expect(clone!.layout.w).toBe(8);
+    expect(clone!.layout.h).toBe(5);
+  });
+
+  it("advances the dashboard updatedAt timestamp", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    // Reset so updatedAt uses the fake time
+    useDashboardStore.getState().resetState();
+
+    const beforeTimestamp = useDashboardStore.getState().dashboard.updatedAt;
+    const sourceId = useDashboardStore.getState().dashboard.panels[0].id;
+
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+    useDashboardStore.getState().duplicatePanel(sourceId);
+
+    const afterTimestamp = useDashboardStore.getState().dashboard.updatedAt;
+    expect(afterTimestamp).not.toBe(beforeTimestamp);
+    vi.useRealTimers();
+  });
+
+  it("does not share layout reference between source and clone", () => {
+    useDashboardStore.getState().addPanel({
+      id: "ref-test",
+      title: "Ref Test",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+      options: { stacked: true, horizontal: false },
+    });
+
+    const newId = useDashboardStore.getState().duplicatePanel("ref-test");
+    const source = useDashboardStore.getState().dashboard.panels.find((p) => p.id === "ref-test");
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+
+    // Values should be equal (except y which is Infinity)
+    expect(clone!.layout.x).toBe(source!.layout.x);
+    expect(clone!.layout.w).toBe(source!.layout.w);
+    expect(clone!.layout.h).toBe(source!.layout.h);
+    // Layout objects should not be the same reference
+    expect(clone!.layout).not.toBe(source!.layout);
+  });
 });
 
 describe("useDashboardStore updatePanel", () => {
