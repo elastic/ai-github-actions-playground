@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+
 import sections from "../docs/sections";
 
 function normalizeText(text: string): string {

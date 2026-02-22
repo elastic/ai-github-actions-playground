@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import { fetchDemoConfig, type DemoConfig } from "../services/demo";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";

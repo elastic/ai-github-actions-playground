@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import type { Span } from "../components/traces/traceUtils";
 import type { TraceFilters } from "../components/traces/traceQueryBuilder";
 import { EMPTY_FILTERS } from "../components/traces/traceQueryBuilder";

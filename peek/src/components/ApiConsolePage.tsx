@@ -18,6 +18,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 

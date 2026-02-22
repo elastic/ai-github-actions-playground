@@ -19,6 +19,7 @@ import CodeIcon from "@mui/icons-material/Code";
 import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import { useShallow } from "zustand/react/shallow";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import {
   useExplorerStore,
@@ -34,10 +35,11 @@ import {
 } from "../services/es";
 import type { AggregationType, FieldInfo, ExplorerFilter } from "../services/es";
 import { buildTimeParams } from "../services/datemath";
+import type { EsqlResponse } from "../types";
+
 import MetricSearch from "./MetricSearch";
 import DimensionSidebar from "./DimensionSidebar";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
-import type { EsqlResponse } from "../types";
 
 function metricNamespaceOf(metricName: string): string {
   const dot = metricName.indexOf(".");

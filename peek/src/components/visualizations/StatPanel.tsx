@@ -1,9 +1,11 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { formatValue } from "@perses-dev/core";
+
 import type { EsqlResponse, FormatOptions, StatPanelOptions } from "../../types";
-import { findNumericColumnIndices } from "./chartUtils";
 import { CHART_COLORS } from "../../theme";
+
+import { findNumericColumnIndices } from "./chartUtils";
 
 function formatStatValue(value: unknown, format?: FormatOptions): string {
   if (value == null) return "—";

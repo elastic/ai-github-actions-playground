@@ -12,6 +12,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useShallow } from "zustand/react/shallow";
+
 import { useLLMStore, type LLMProvider } from "../store/useLLMStore";
 
 const PROVIDERS: Array<{ value: LLMProvider; label: string }> = [

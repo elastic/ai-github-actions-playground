@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import type { TimeRange } from "../types";
 import type { AggregationType, ExplorerFilter, FieldInfo, MetricType } from "../services/es";
 

@@ -9,6 +9,7 @@ import type {
   ScatterChartOptions,
   HistogramChartOptions,
 } from "../../types";
+
 import TimeSeriesChart from "./TimeSeriesChart";
 import BarChart from "./BarChart";
 import DataTable from "./DataTable";

@@ -5,6 +5,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+
 import { splitEsqlPipeline } from "./discoverUtils";
 import { formatDuration } from "./formatDuration";
 

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
+
 import type { EsqlResponse, ScatterChartOptions } from "../../types";
+
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";

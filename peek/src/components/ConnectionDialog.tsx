@@ -22,6 +22,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../types";
@@ -191,6 +192,7 @@ export default function ConnectionDialog() {
                           if (e.key === "Escape") setEditingProfileId(null);
                         }}
                         onClick={(e) => e.stopPropagation()}
+                        // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline rename
                         autoFocus
                         sx={{ mr: 1 }}
                       />

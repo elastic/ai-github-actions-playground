@@ -14,6 +14,7 @@ import {
   isUnitWithDecimalPlaces,
   isUnitWithShortValues,
 } from "@perses-dev/core";
+
 import type {
   BarChartOptions,
   FormatOptions,

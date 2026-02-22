@@ -26,6 +26,7 @@ import ScatterPlotIcon from "@mui/icons-material/ScatterPlot";
 import EqualizerIcon from "@mui/icons-material/Equalizer";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
@@ -37,6 +38,7 @@ import type {
   PanelDefinition,
 } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
+
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";

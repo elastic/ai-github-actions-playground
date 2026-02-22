@@ -11,20 +11,22 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
+
 import { useDashboardStore } from "../../store/useDashboardStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
+import type { EsqlResponse } from "../../types";
+import type { TracesViewMode } from "../../store/useTracesStore";
+import WaterfallChart from "../visualizations/WaterfallChart";
+import TraceScatterChart from "../visualizations/TraceScatterChart";
+
+import { getServiceColor } from "./traceColors";
+import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
   DEFAULT_FIELD_MAPPING,
 } from "./traceQueryBuilder";
-import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
-import { getServiceColor } from "./traceColors";
-import type { EsqlResponse } from "../../types";
-import type { TracesViewMode } from "../../store/useTracesStore";
-import WaterfallChart from "../visualizations/WaterfallChart";
-import TraceScatterChart from "../visualizations/TraceScatterChart";
 import SpanDetailDrawer from "./SpanDetailDrawer";
 
 const thStyle: React.CSSProperties = {

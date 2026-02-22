@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
+
 import type { EsqlResponse, GaugePanelOptions } from "../../types";
+
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";

@@ -177,3 +177,68 @@ make otel-harness-down               # stop when done
 `make ci` runs lint + unit tests + build on every push to `main` and on every PR that touches `peek/**`. Integration tests are not part of the default CI pipeline — run them locally with `make test-integration`.
 
 Production builds (`make build`) output to `peek/dist/` and are deployed to GitHub Pages by the `deploy-pages.yml` workflow on every push to `main`.
+
+## Engineering Standards
+
+Many rules (no `any`, `import type`, import ordering, no duplicate imports) are enforced automatically by ESLint and TypeScript — see `peek/eslint.config.js` and `peek/tsconfig.json`. This section covers the design guidance that requires human judgment.
+
+### TypeScript
+
+- Prefer discriminated unions for state modeling (e.g., `{ status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: Error }`) over optional fields.
+- Prefer `interface` for object shapes and `type` for unions, intersections, and mapped types.
+
+### React
+
+- Prefer composition (children, render props, slots) over prop drilling. If a prop passes through a component that doesn't use it, restructure.
+- Don't use `useEffect` to synchronize derived state — compute it during render instead.
+- A component with more than 8 props or 200 lines is a code smell. Consider decomposing.
+
+### State Management
+
+Use the simplest solution that works, in this order: `useState` → derived state (compute during render) → `useReducer` → React Context → URL state → Zustand.
+
+### Testing Standards
+
+- Include at least one `vitest-axe` accessibility check per component test suite (`expect(await axe(container)).toHaveNoViolations()`).
+- Test behavior (what the user sees), not implementation details (internal state, hook call counts).
+- Test error states, loading states, and empty states — not just the happy path.
+
+## Accessibility Standards
+
+This project targets **WCAG 2.2 Level AA** conformance. Many structural issues (missing alt text, invalid ARIA, click without keyboard, missing labels) are caught by `eslint-plugin-jsx-a11y` and `vitest-axe`. This section covers what automation cannot catch.
+
+### Color & Contrast
+
+- 4.5:1 contrast ratio for normal text, 3:1 for large text (>= 18pt or >= 14pt bold), 3:1 for UI components and graphical objects.
+- Never use color as the sole means of conveying information — add an icon, text, or pattern.
+
+### Keyboard & Focus
+
+- Every interactive element must be keyboard-operable (Tab to focus, Enter/Space to activate, Escape to dismiss overlays).
+- No keyboard traps. Modal dialogs trap focus and provide Escape to close.
+- Manage focus on route changes (move to main content or page heading) and dialog open/close (return focus to the trigger element).
+
+### Semantic HTML & ARIA
+
+- Use correct elements: `<button>` for actions, `<a>` for navigation, never `<div onClick>`. Logical heading hierarchy, no skipped levels, one `<h1>` per page.
+- Prefer native HTML semantics over ARIA. If ARIA is used, implement the full contract (e.g., `role="tablist"` requires `role="tab"` children with `aria-selected`, arrow key navigation, and linked `role="tabpanel"`).
+- Use landmark regions (`<main>`, `<nav>`, `<header>`, `<footer>`).
+
+### Forms
+
+- Every form input needs a visible `<label>` (via `htmlFor`). Error messages linked to inputs via `aria-describedby`. Group related inputs with `<fieldset>` and `<legend>`.
+
+### Motion
+
+- Respect `prefers-reduced-motion` — reduce or remove animations when this media query matches.
+
+## PR Checklist (UI Changes)
+
+For any PR that modifies UI, verify the items that CI cannot check automatically:
+
+- [ ] Interactive elements are keyboard accessible (tab, activate, dismiss)
+- [ ] Color contrast meets the ratios above
+- [ ] Color is not the sole indicator of meaning
+- [ ] Focus is managed correctly on route changes and dialog open/close
+- [ ] Loading, empty, and error states are handled and designed
+- [ ] Heading hierarchy is logical (no skipped levels)
