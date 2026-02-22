@@ -12,9 +12,17 @@ import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DownloadIcon from "@mui/icons-material/Download";
+import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
+import BookmarksIcon from "@mui/icons-material/Bookmarks";
+import DeleteIcon from "@mui/icons-material/Delete";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -54,6 +62,9 @@ export default function DiscoverPage() {
   const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
   const queryHistory = useDashboardStore((s) => s.queryHistory);
   const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
+  const discoverQueryLibrary = useDashboardStore((s) => s.discoverQueryLibrary);
+  const saveQueryToLibrary = useDashboardStore((s) => s.saveQueryToLibrary);
+  const deleteQueryFromLibrary = useDashboardStore((s) => s.deleteQueryFromLibrary);
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
@@ -64,6 +75,9 @@ export default function DiscoverPage() {
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
+  const [libraryAnchor, setLibraryAnchor] = useState<HTMLElement | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveQueryName, setSaveQueryName] = useState("");
   const effectiveQuery = discoverQueryDraft ?? query;
 
   const { runQuery, loading, error, activeStep, stepDurationsMs, lastRunDurationMs, clearTimings } =
@@ -101,6 +115,28 @@ export default function DiscoverPage() {
       clearTimings();
       setQuery(selectedQuery);
       setHistoryAnchor(null);
+    },
+    [setDiscoverQueryDraft, clearTimings],
+  );
+
+  const handleOpenSaveDialog = useCallback(() => {
+    setSaveQueryName("");
+    setSaveDialogOpen(true);
+  }, []);
+
+  const handleConfirmSave = useCallback(() => {
+    if (saveQueryName.trim()) {
+      saveQueryToLibrary(saveQueryName.trim(), effectiveQuery);
+    }
+    setSaveDialogOpen(false);
+  }, [saveQueryName, effectiveQuery, saveQueryToLibrary]);
+
+  const handleLoadFromLibrary = useCallback(
+    (savedQuery: string) => {
+      setDiscoverQueryDraft(null);
+      clearTimings();
+      setQuery(savedQuery);
+      setLibraryAnchor(null);
     },
     [setDiscoverQueryDraft, clearTimings],
   );
@@ -261,6 +297,62 @@ export default function DiscoverPage() {
               </MenuItem>
             ))}
           </Menu>
+          <Tooltip title="Save current query to library">
+            <span>
+              <Button
+                variant="text"
+                size="small"
+                startIcon={<BookmarkAddIcon />}
+                onClick={handleOpenSaveDialog}
+                disabled={!effectiveQuery.trim()}
+              >
+                Save query
+              </Button>
+            </span>
+          </Tooltip>
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<BookmarksIcon />}
+            onClick={(e) => setLibraryAnchor(e.currentTarget)}
+            disabled={discoverQueryLibrary.length === 0}
+          >
+            Saved queries
+          </Button>
+          <Menu
+            anchorEl={libraryAnchor}
+            open={Boolean(libraryAnchor)}
+            onClose={() => setLibraryAnchor(null)}
+          >
+            {discoverQueryLibrary.map((saved) => (
+              <MenuItem
+                key={saved.id}
+                sx={{ display: "flex", alignItems: "center", gap: 1, pr: 0.5 }}
+              >
+                <Box
+                  sx={{ flex: 1, minWidth: 0, overflow: "hidden" }}
+                  onClick={() => handleLoadFromLibrary(saved.query)}
+                >
+                  <Typography variant="body2" noWrap>
+                    {saved.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap display="block">
+                    {saved.query}
+                  </Typography>
+                </Box>
+                <IconButton
+                  size="small"
+                  aria-label={`Delete saved query ${saved.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteQueryFromLibrary(saved.id);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </MenuItem>
+            ))}
+          </Menu>
           <Box sx={{ flex: 1 }} />
           <Tooltip title="Create a dashboard panel from this query">
             <span>
@@ -290,6 +382,46 @@ export default function DiscoverPage() {
           </Tooltip>
         </Box>
       </Paper>
+
+      {/* Save query dialog */}
+      <Dialog
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Save query</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Query name"
+            fullWidth
+            size="small"
+            value={saveQueryName}
+            onChange={(e) => setSaveQueryName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleConfirmSave();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => setSaveDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={handleConfirmSave}
+            disabled={!saveQueryName.trim()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {error && <Alert severity="error">{error}</Alert>}
 

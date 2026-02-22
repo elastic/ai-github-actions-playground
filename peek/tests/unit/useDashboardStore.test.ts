@@ -223,6 +223,69 @@ describe("useDashboardStore query history", () => {
   });
 });
 
+describe("useDashboardStore query library", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("saveQueryToLibrary adds a new entry", () => {
+    useDashboardStore.getState().saveQueryToLibrary("My Query", "FROM logs-* | LIMIT 10");
+
+    const library = useDashboardStore.getState().discoverQueryLibrary;
+    expect(library).toHaveLength(1);
+    expect(library[0].name).toBe("My Query");
+    expect(library[0].query).toBe("FROM logs-* | LIMIT 10");
+    expect(library[0].id).toBeDefined();
+    expect(library[0].updatedAt).toBeDefined();
+  });
+
+  it("saveQueryToLibrary overwrites an entry with the same name", () => {
+    useDashboardStore.getState().saveQueryToLibrary("My Query", "FROM logs-* | LIMIT 10");
+    useDashboardStore.getState().saveQueryToLibrary("My Query", "FROM metrics-* | LIMIT 5");
+
+    const library = useDashboardStore.getState().discoverQueryLibrary;
+    expect(library).toHaveLength(1);
+    expect(library[0].query).toBe("FROM metrics-* | LIMIT 5");
+  });
+
+  it("saveQueryToLibrary ignores blank name or query", () => {
+    useDashboardStore.getState().saveQueryToLibrary("", "FROM logs-* | LIMIT 10");
+    useDashboardStore.getState().saveQueryToLibrary("My Query", "   ");
+
+    expect(useDashboardStore.getState().discoverQueryLibrary).toHaveLength(0);
+  });
+
+  it("saveQueryToLibrary trims name and query whitespace", () => {
+    useDashboardStore.getState().saveQueryToLibrary("  Errors  ", "  FROM logs-* | LIMIT 10  ");
+
+    const library = useDashboardStore.getState().discoverQueryLibrary;
+    expect(library[0].name).toBe("Errors");
+    expect(library[0].query).toBe("FROM logs-* | LIMIT 10");
+  });
+
+  it("deleteQueryFromLibrary removes the correct entry", () => {
+    useDashboardStore.getState().saveQueryToLibrary("Query A", "FROM a");
+    useDashboardStore.getState().saveQueryToLibrary("Query B", "FROM b");
+    const { discoverQueryLibrary } = useDashboardStore.getState();
+    const idA = discoverQueryLibrary[0].id;
+
+    useDashboardStore.getState().deleteQueryFromLibrary(idA);
+
+    const after = useDashboardStore.getState().discoverQueryLibrary;
+    expect(after).toHaveLength(1);
+    expect(after[0].name).toBe("Query B");
+  });
+
+  it("resetState clears the query library", () => {
+    useDashboardStore.getState().saveQueryToLibrary("My Query", "FROM logs-* | LIMIT 10");
+    useDashboardStore.getState().resetState();
+
+    expect(useDashboardStore.getState().discoverQueryLibrary).toEqual([]);
+  });
+});
+
 describe("useDashboardStore setTimeRange / setDashboardTitle", () => {
   beforeEach(() => {
     localStorageMock.clear();

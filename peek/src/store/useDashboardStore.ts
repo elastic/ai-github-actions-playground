@@ -13,6 +13,13 @@ import { createDefaultDashboard } from "../dashboards/default";
 
 export { createDefaultDashboard };
 
+export interface SavedQuery {
+  id: string;
+  name: string;
+  query: string;
+  updatedAt: string;
+}
+
 interface DashboardState {
   connection: ElasticsearchConnection | null;
   connected: boolean;
@@ -32,6 +39,7 @@ interface DashboardState {
     | "settings";
   discoverQueryDraft: string | null;
   queryHistory: string[];
+  discoverQueryLibrary: SavedQuery[];
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -63,6 +71,8 @@ interface DashboardState {
   ) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;
+  saveQueryToLibrary: (name: string, query: string) => void;
+  deleteQueryFromLibrary: (id: string) => void;
 
   addParameter: (param: DashboardParameter) => void;
   updateParameter: (name: string, updates: Partial<DashboardParameter>) => void;
@@ -137,6 +147,7 @@ export const useDashboardStore = create<DashboardState>()(
       currentPage: "dashboard",
       discoverQueryDraft: null,
       queryHistory: [],
+      discoverQueryLibrary: [],
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -213,6 +224,31 @@ export const useDashboardStore = create<DashboardState>()(
             queryHistory: [trimmedQuery, ...dedupedHistory].slice(0, QUERY_HISTORY_MAX_SIZE),
           };
         }),
+      saveQueryToLibrary: (name, query) =>
+        set((s) => {
+          const trimmedName = name.trim();
+          const trimmedQuery = query.trim();
+          if (!trimmedName || !trimmedQuery) return {};
+          const now = new Date().toISOString();
+          const existing = s.discoverQueryLibrary.find((q) => q.name === trimmedName);
+          if (existing) {
+            return {
+              discoverQueryLibrary: s.discoverQueryLibrary.map((q) =>
+                q.id === existing.id ? { ...q, query: trimmedQuery, updatedAt: now } : q,
+              ),
+            };
+          }
+          return {
+            discoverQueryLibrary: [
+              ...s.discoverQueryLibrary,
+              { id: crypto.randomUUID(), name: trimmedName, query: trimmedQuery, updatedAt: now },
+            ],
+          };
+        }),
+      deleteQueryFromLibrary: (id) =>
+        set((s) => ({
+          discoverQueryLibrary: s.discoverQueryLibrary.filter((q) => q.id !== id),
+        })),
 
       addParameter: (param) =>
         set((s) => ({
@@ -313,6 +349,7 @@ export const useDashboardStore = create<DashboardState>()(
           currentPage: "dashboard",
           discoverQueryDraft: null,
           queryHistory: [],
+          discoverQueryLibrary: [],
         });
       },
     }),
@@ -324,6 +361,7 @@ export const useDashboardStore = create<DashboardState>()(
         dashboard: state.dashboard,
         themeMode: state.themeMode,
         queryHistory: state.queryHistory,
+        discoverQueryLibrary: state.discoverQueryLibrary,
       }),
     },
   ),
