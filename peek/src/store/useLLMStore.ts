@@ -7,6 +7,7 @@ export interface LLMConfig {
   provider: LLMProvider;
   apiKey: string;
   model: string;
+  tabAutocompleteEnabled: boolean;
 }
 
 export interface ChatMessage {
@@ -22,6 +23,7 @@ interface LLMState {
   setProvider: (provider: LLMProvider) => void;
   setApiKey: (apiKey: string) => void;
   setModel: (model: string) => void;
+  setTabAutocompleteEnabled: (enabled: boolean) => void;
   isConfigured: () => boolean;
 
   addMessage: (message: ChatMessage) => void;
@@ -35,6 +37,7 @@ const DEFAULT_CONFIG: LLMConfig = {
   provider: "openai",
   apiKey: "",
   model: "gpt-4o-mini",
+  tabAutocompleteEnabled: false,
 };
 
 const DEFAULT_MODEL_BY_PROVIDER: Record<LLMProvider, string> = {
@@ -103,6 +106,8 @@ export const useLLMStore = create<LLMState>()(
         })),
       setApiKey: (apiKey) => set((s) => ({ config: { ...s.config, apiKey } })),
       setModel: (model) => set((s) => ({ config: { ...s.config, model } })),
+      setTabAutocompleteEnabled: (enabled) =>
+        set((s) => ({ config: { ...s.config, tabAutocompleteEnabled: enabled } })),
       isConfigured: () => {
         const { config } = get();
         return config.apiKey.trim().length > 0;

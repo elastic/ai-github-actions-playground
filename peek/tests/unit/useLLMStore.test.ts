@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
@@ -20,6 +21,7 @@ describe("useLLMStore", () => {
     expect(state.config.provider).toBe("openai");
     expect(state.config.apiKey).toBe("");
     expect(state.config.model).toBe("gpt-4o-mini");
+    expect(state.config.tabAutocompleteEnabled).toBe(false);
     expect(state.messages).toEqual([]);
   });
 
@@ -58,6 +60,11 @@ describe("useLLMStore", () => {
   it("setModel updates the model", () => {
     useLLMStore.getState().setModel("gpt-4o");
     expect(useLLMStore.getState().config.model).toBe("gpt-4o");
+  });
+
+  it("setTabAutocompleteEnabled updates the autocomplete toggle", () => {
+    useLLMStore.getState().setTabAutocompleteEnabled(true);
+    expect(useLLMStore.getState().config.tabAutocompleteEnabled).toBe(true);
   });
 
   it("addMessage appends a message", () => {
@@ -116,6 +123,7 @@ describe("useLLMStore", () => {
     expect(state.config.apiKey).toBe("");
     expect(state.config.model).toBe("gpt-4o-mini");
     expect(state.config.provider).toBe("openai");
+    expect(state.config.tabAutocompleteEnabled).toBe(false);
     expect(state.messages).toEqual([]);
   });
 });

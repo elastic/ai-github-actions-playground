@@ -25,10 +25,12 @@ import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
 import TracesPage from "./components/traces/TracesPage";
 import DashboardManagementPage from "./components/DashboardManagementPage";
+import { useGlobalTabAutocomplete } from "./hooks/useGlobalTabAutocomplete";
 
 const currentYear = new Date().getFullYear();
 
 export default function App() {
+  useGlobalTabAutocomplete();
   const themeMode = useDashboardStore((s) => s.themeMode);
   const connected = useDashboardStore((s) => s.connected);
   const currentPage = useDashboardStore((s) => s.currentPage);
