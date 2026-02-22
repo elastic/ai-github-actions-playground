@@ -50,6 +50,7 @@ describe("useDashboardStore resetState", () => {
     expect(state.themeMode).toBe("dark");
     expect(state.currentPage).toBe("dashboard");
     expect(state.discoverQueryDraft).toBeNull();
+    expect(state.queryHistory).toEqual([]);
     expect(state.editingPanelId).toBeNull();
     expect(state.connectionDialogOpen).toBe(false);
   });
@@ -167,13 +168,58 @@ describe("useDashboardStore updatePanelLayouts", () => {
     const targetId = panels[0].id;
     const originalTitle = panels[0].title;
 
-    useDashboardStore.getState().updatePanelLayouts([
-      { id: targetId, x: 3, y: 7, w: 8, h: 6 },
-    ]);
+    useDashboardStore.getState().updatePanelLayouts([{ id: targetId, x: 3, y: 7, w: 8, h: 6 }]);
 
     const updated = useDashboardStore.getState().dashboard.panels.find((p) => p.id === targetId);
     expect(updated?.layout).toEqual(expect.objectContaining({ x: 3, y: 7, w: 8, h: 6 }));
     expect(updated?.title).toBe(originalTitle);
+  });
+});
+
+describe("useDashboardStore query history", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("prepends trimmed queries to history", () => {
+    useDashboardStore.getState().appendQueryToHistory("  FROM logs-* | LIMIT 10  ");
+    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+
+    expect(useDashboardStore.getState().queryHistory).toEqual([
+      "FROM metrics-* | LIMIT 5",
+      "FROM logs-* | LIMIT 10",
+    ]);
+  });
+
+  it("does not append adjacent duplicates", () => {
+    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
+    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
+
+    expect(useDashboardStore.getState().queryHistory).toEqual(["FROM logs-* | LIMIT 10"]);
+  });
+
+  it("moves existing queries to the front instead of duplicating", () => {
+    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
+    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
+
+    expect(useDashboardStore.getState().queryHistory).toEqual([
+      "FROM logs-* | LIMIT 10",
+      "FROM metrics-* | LIMIT 5",
+    ]);
+  });
+
+  it("caps history size at 10 entries", () => {
+    for (let i = 1; i <= 12; i += 1) {
+      useDashboardStore.getState().appendQueryToHistory(`FROM logs-* | LIMIT ${i}`);
+    }
+
+    const history = useDashboardStore.getState().queryHistory;
+    expect(history).toHaveLength(10);
+    expect(history[0]).toBe("FROM logs-* | LIMIT 12");
+    expect(history[9]).toBe("FROM logs-* | LIMIT 3");
   });
 });
 
@@ -285,7 +331,13 @@ describe("useDashboardStore importDashboard", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const bad = makeValidDashboard({
       panels: [
-        { id: "", title: "Empty ID", query: "FROM x", visualization: "bar", layout: { x: 0, y: 0, w: 6, h: 4 } },
+        {
+          id: "",
+          title: "Empty ID",
+          query: "FROM x",
+          visualization: "bar",
+          layout: { x: 0, y: 0, w: 6, h: 4 },
+        },
       ],
     });
 
@@ -301,7 +353,12 @@ describe("useDashboardStore importDashboard", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const bad = makeValidDashboard({
       panels: [
-        { title: "No ID", query: "FROM x", visualization: "bar", layout: { x: 0, y: 0, w: 6, h: 4 } },
+        {
+          title: "No ID",
+          query: "FROM x",
+          visualization: "bar",
+          layout: { x: 0, y: 0, w: 6, h: 4 },
+        },
       ] as DashboardDefinition["panels"],
     });
 

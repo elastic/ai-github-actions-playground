@@ -87,7 +87,9 @@ export default function MetricSearch({
       <FormControl size="small" sx={{ minWidth: 180 }}>
         <InputLabel>Namespace</InputLabel>
         <Select
-          value={selectedNamespace && namespaces.includes(selectedNamespace) ? selectedNamespace : ""}
+          value={
+            selectedNamespace && namespaces.includes(selectedNamespace) ? selectedNamespace : ""
+          }
           label="Namespace"
           onChange={(e) => onNamespaceChange((e.target.value as string) || null)}
         >

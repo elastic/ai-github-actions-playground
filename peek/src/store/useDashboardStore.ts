@@ -23,6 +23,7 @@ interface DashboardState {
   connectionDialogOpen: boolean;
   currentPage: "dashboard" | "discover" | "dataStreams" | "explore" | "docs";
   discoverQueryDraft: string | null;
+  queryHistory: string[];
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -43,6 +44,7 @@ interface DashboardState {
   setConnectionDialogOpen: (open: boolean) => void;
   setCurrentPage: (page: "dashboard" | "discover" | "dataStreams" | "explore" | "docs") => void;
   setDiscoverQueryDraft: (query: string | null) => void;
+  appendQueryToHistory: (query: string) => void;
 
   addParameter: (param: DashboardParameter) => void;
   updateParameter: (name: string, updates: Partial<DashboardParameter>) => void;
@@ -63,6 +65,7 @@ interface DashboardState {
 type PersistedState = { connection?: ElasticsearchConnection | null };
 const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
+const QUERY_HISTORY_MAX_SIZE = 10;
 
 const splitStorage = {
   getItem: (name: string): StorageValue<PersistedState> | null => {
@@ -115,6 +118,7 @@ export const useDashboardStore = create<DashboardState>()(
       connectionDialogOpen: false,
       currentPage: "dashboard",
       discoverQueryDraft: null,
+      queryHistory: [],
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -180,6 +184,17 @@ export const useDashboardStore = create<DashboardState>()(
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCurrentPage: (page) => set({ currentPage: page }),
       setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
+      appendQueryToHistory: (query) =>
+        set((s) => {
+          const trimmedQuery = query.trim();
+          if (!trimmedQuery) {
+            return {};
+          }
+          const dedupedHistory = s.queryHistory.filter((entry) => entry !== trimmedQuery);
+          return {
+            queryHistory: [trimmedQuery, ...dedupedHistory].slice(0, QUERY_HISTORY_MAX_SIZE),
+          };
+        }),
 
       addParameter: (param) =>
         set((s) => ({
@@ -279,6 +294,7 @@ export const useDashboardStore = create<DashboardState>()(
           connectionDialogOpen: false,
           currentPage: "dashboard",
           discoverQueryDraft: null,
+          queryHistory: [],
         });
       },
     }),
@@ -289,6 +305,7 @@ export const useDashboardStore = create<DashboardState>()(
         connection: state.connection,
         dashboard: state.dashboard,
         themeMode: state.themeMode,
+        queryHistory: state.queryHistory,
       }),
     },
   ),

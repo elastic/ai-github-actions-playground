@@ -38,13 +38,16 @@ jobs:
         run: npm run build
 
       - name: Generate demo config
-        if: vars.DEMO_URL != '' && vars.DEMO_USERNAME != '' && secrets.DEMO_PASSWORD != ''
         working-directory: peek/dist
         env:
           DEMO_URL: ${{ vars.DEMO_URL }}
-          DEMO_USERNAME: ${{ vars.DEMO_USERNAME }}
+          DEMO_USERNAME: ${{ secrets.DEMO_USERNAME }}
           DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: |
+          if [ -z "${DEMO_PASSWORD}" ]; then
+            echo "DEMO_PASSWORD is not set; skipping demo config generation."
+            exit 0
+          fi
           jq -n \
             --arg url "$DEMO_URL" \
             --arg username "$DEMO_USERNAME" \

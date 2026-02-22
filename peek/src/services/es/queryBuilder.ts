@@ -36,7 +36,16 @@ export interface ExplorerQueryResult {
 
 const DEFAULT_BUCKET_COUNT = 50;
 
-const GAUGE_AGGREGATIONS: AggregationType[] = ["avg", "sum", "min", "max", "count", "p50", "p95", "p99"];
+const GAUGE_AGGREGATIONS: AggregationType[] = [
+  "avg",
+  "sum",
+  "min",
+  "max",
+  "count",
+  "p50",
+  "p95",
+  "p99",
+];
 const COUNTER_AGGREGATIONS: AggregationType[] = [
   "sum",
   "avg",

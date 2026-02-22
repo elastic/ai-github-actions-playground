@@ -210,9 +210,7 @@ export default function AppHeader() {
         {connected && (
           <Tabs
             value={tabValue}
-            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs") =>
-              setCurrentPage(v)
-            }
+            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs") => setCurrentPage(v)}
             sx={{ ml: 2, minHeight: 48 }}
             TabIndicatorProps={{ style: { height: 3 } }}
           >
