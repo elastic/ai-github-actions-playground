@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -22,15 +22,17 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type {
   VisualizationType,
   EsqlResponse,
   VisualizationOptions,
   FormatOptions,
+  PanelDefinition,
 } from "../types";
+import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
+import QueryPipelineSteps from "./QueryPipelineSteps";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
@@ -44,33 +46,35 @@ const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; labe
 
 export default function PanelEditor() {
   const editingId = useDashboardStore((s) => s.editingPanelId);
-  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
   const panels = useDashboardStore((s) => s.dashboard.panels);
+  const panel = panels.find((p) => p.id === editingId);
+
+  if (!panel || !editingId) {
+    return null;
+  }
+
+  return <PanelEditorDialog key={editingId} panel={panel} editingId={editingId} />;
+}
+
+function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
+  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
   const updatePanel = useDashboardStore((s) => s.updatePanel);
   const removePanel = useDashboardStore((s) => s.removePanel);
   const connection = useDashboardStore((s) => s.connection);
   const themeMode = useDashboardStore((s) => s.themeMode);
 
-  const panel = panels.find((p) => p.id === editingId);
-
-  const [title, setTitle] = useState("");
-  const [query, setQuery] = useState("");
-  const [viz, setViz] = useState<VisualizationType>("timeseries");
-  const [options, setOptions] = useState<VisualizationOptions>(() => defaultOptions("timeseries"));
+  const [title, setTitle] = useState(panel.title);
+  const [query, setQuery] = useState(panel.query);
+  const [viz, setViz] = useState<VisualizationType>(panel.visualization);
+  const [options, setOptions] = useState<VisualizationOptions>(
+    panel.options ?? defaultOptions(panel.visualization),
+  );
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (panel) {
-      setTitle(panel.title);
-      setQuery(panel.query);
-      setViz(panel.visualization);
-      setOptions(panel.options ?? defaultOptions(panel.visualization));
-      setPreview(null);
-      setError(null);
-    }
-  }, [panel]);
+  const { runQuery, loading, error, activeStep } = useEsqlQuery({
+    connection,
+    onSuccess: setPreview,
+    onFailure: () => setPreview(null),
+  });
 
   const handleVizChange = useCallback(
     (newViz: VisualizationType) => {
@@ -83,23 +87,16 @@ export default function PanelEditor() {
     [options],
   );
 
-  const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim() || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const data = await client.query({ query: query.trim() });
-      setPreview(data);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
-      setPreview(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, query, loading]);
+  const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
 
-  const queryEditorExtensions = [sql(), runQueryShortcutExtension(() => void handleRunQuery())];
+  const handleRunStep = useCallback(
+    (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
+    [runQuery],
+  );
+  const queryEditorExtensions = useMemo(
+    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    [handleRunQuery],
+  );
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
@@ -190,6 +187,12 @@ export default function PanelEditor() {
               basicSetup={{ lineNumbers: true, foldGutter: false }}
             />
           </Box>
+          <QueryPipelineSteps
+            query={query}
+            loading={loading}
+            activeStep={activeStep}
+            onRunStep={handleRunStep}
+          />
         </Box>
 
         {/* Query controls row */}
