@@ -133,7 +133,7 @@ Quick data check:
 ```bash
 curl -s -X POST 'http://localhost:9200/_query' \
   -H 'Content-Type: application/json' \
-  -d '{"query":"FROM metrics-* | STATS count = COUNT(*) BY metricset_name = metricset.name | SORT count DESC"}'
+  -d '{"query":"FROM metrics-hostmetricsreceiver-default | STATS count = COUNT(*) BY dataset = data_stream.dataset, metric_type = type | SORT count DESC"}'
 ```
 
 ## Testing
