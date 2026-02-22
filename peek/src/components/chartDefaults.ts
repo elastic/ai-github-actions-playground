@@ -17,8 +17,11 @@ export function defaultOptions(vizType: VisualizationType): VisualizationOptions
       return {} satisfies StatPanelOptions;
     case "gauge":
       return {} satisfies GaugePanelOptions;
+    case "table":
+      return {};
+    case "pie":
+      return {};
     default:
-      // "table" and "pie" have no customization options
-      return {} satisfies StatPanelOptions;
+      throw new Error(`Unsupported visualization type: ${vizType}`);
   }
 }

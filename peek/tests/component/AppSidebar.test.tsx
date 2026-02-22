@@ -132,4 +132,39 @@ describe("AppSidebar", () => {
     );
     expect(screen.getByRole("button", { name: /console/i })).not.toHaveAttribute("aria-current");
   });
+
+  it("renders icon-only mode when collapsed and supports toggle", async () => {
+    const user = userEvent.setup();
+    const onToggleCollapse = vi.fn();
+    render(<AppSidebar collapsed onToggleCollapse={onToggleCollapse} />);
+
+    expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
+    expect(screen.queryByText("System")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /dashboard/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /expand navigation/i }));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens settings menu and navigates to LLM settings", async () => {
+    useDashboardStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    render(<AppSidebar />);
+
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: /llm settings/i }));
+
+    expect(useDashboardStore.getState().currentPage).toBe("settings");
+  });
+
+  it("toggles theme from sidebar settings menu", async () => {
+    useDashboardStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    render(<AppSidebar />);
+
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
+
+    expect(useDashboardStore.getState().themeMode).toBe("light");
+  });
 });

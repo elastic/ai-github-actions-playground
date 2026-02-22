@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
+import Button from "@mui/material/Button";
 import { lightTheme, darkTheme } from "./theme";
 import { useDashboardStore } from "./store/useDashboardStore";
 import AppHeader from "./components/AppHeader";
@@ -27,6 +28,8 @@ export default function App() {
   const themeMode = useDashboardStore((s) => s.themeMode);
   const connected = useDashboardStore((s) => s.connected);
   const currentPage = useDashboardStore((s) => s.currentPage);
+  const resetState = useDashboardStore((s) => s.resetState);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
 
   return (
@@ -35,7 +38,12 @@ export default function App() {
       <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <AppHeader />
         <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
-          <AppSidebar />
+          {connected && (
+            <AppSidebar
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+            />
+          )}
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
             {connected && currentPage === "dashboard" && <ParameterBar />}
             <Box
@@ -82,6 +90,7 @@ export default function App() {
                 borderTop: 1,
                 borderColor: "divider",
                 bgcolor: "background.paper",
+                position: "relative",
               }}
             >
               <Link
@@ -116,6 +125,16 @@ export default function App() {
                   Elasticsearch B.V.
                 </Link>
               </Typography>
+              <Button
+                size="small"
+                color="error"
+                variant="text"
+                onClick={resetState}
+                aria-label="Reset state"
+                sx={{ position: "absolute", right: 8 }}
+              >
+                Reset
+              </Button>
             </Box>
           </Box>
         </Box>

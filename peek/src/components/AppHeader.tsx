@@ -7,14 +7,7 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
 import AddIcon from "@mui/icons-material/Add";
-import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -39,52 +32,36 @@ const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
   { label: "5m", seconds: 300 },
 ];
 
+const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
+
 export default function AppHeader() {
   const {
-    themeMode,
-    setThemeMode,
     connected,
     dashboard,
     setTimeRange,
     setRefreshInterval,
-    setDashboardTitle,
-    setConnectionDialogOpen,
     setEditingPanelId,
     addPanel,
     exportDashboard,
     importDashboard,
     loadDefaultDashboard,
-    resetState,
-    currentPage,
-    setCurrentPage,
   } = useDashboardStore(
     useShallow((s) => ({
-      themeMode: s.themeMode,
-      setThemeMode: s.setThemeMode,
       connected: s.connected,
       dashboard: s.dashboard,
       setTimeRange: s.setTimeRange,
       setRefreshInterval: s.setRefreshInterval,
-      setDashboardTitle: s.setDashboardTitle,
-      setConnectionDialogOpen: s.setConnectionDialogOpen,
       setEditingPanelId: s.setEditingPanelId,
       addPanel: s.addPanel,
       exportDashboard: s.exportDashboard,
       importDashboard: s.importDashboard,
       loadDefaultDashboard: s.loadDefaultDashboard,
-      resetState: s.resetState,
-      currentPage: s.currentPage,
-      setCurrentPage: s.setCurrentPage,
     })),
   );
 
-  const [titleEditing, setTitleEditing] = useState(false);
-  const [titleValue, setTitleValue] = useState(dashboard.title);
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
-  const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
   const timeRangeRef = useRef(dashboard.timeRange);
@@ -143,54 +120,26 @@ export default function AppHeader() {
   return (
     <AppBar position="static" color="default" elevation={1} sx={{ zIndex: 1201 }}>
       <Toolbar variant="dense" sx={{ gap: 1 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            mr: 2,
-            flexShrink: 0,
-          }}
-        >
-          Elastic Peek
-        </Typography>
-
-        {connected && (
-          <>
-            {titleEditing ? (
-              <TextField
-                size="small"
-                value={titleValue}
-                onChange={(e) => setTitleValue(e.target.value)}
-                onBlur={() => {
-                  setDashboardTitle(titleValue);
-                  setTitleEditing(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setDashboardTitle(titleValue);
-                    setTitleEditing(false);
-                  }
-                }}
-                autoFocus
-                sx={{ width: 240 }}
-              />
-            ) : (
-              <Typography
-                variant="subtitle1"
-                sx={{ cursor: "pointer", "&:hover": { opacity: 0.8 } }}
-                onClick={() => {
-                  setTitleValue(dashboard.title);
-                  setTitleEditing(true);
-                }}
-              >
-                {dashboard.title}
-              </Typography>
-            )}
-          </>
-        )}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mr: 2, flexShrink: 0 }}>
+          <Box
+            component="img"
+            src={logoUrl}
+            alt="Peek"
+            sx={{ width: 48, height: 48, objectFit: "contain" }}
+          />
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              lineHeight: 1,
+            }}
+          >
+            Peek
+          </Typography>
+        </Box>
 
         <Box sx={{ flex: 1 }} />
 
@@ -263,92 +212,33 @@ export default function AppHeader() {
           </>
         )}
 
-        <IconButton
-          size="small"
-          color={currentPage === "settings" ? "primary" : "default"}
-          onClick={(e) => setSettingsAnchor(e.currentTarget)}
-          aria-label="Settings"
-        >
-          <SettingsIcon fontSize="small" />
-        </IconButton>
-        <Menu
-          anchorEl={settingsAnchor}
-          open={Boolean(settingsAnchor)}
-          onClose={() => setSettingsAnchor(null)}
-        >
-          <MenuItem
-            onClick={() => {
-              setConnectionDialogOpen(true);
-              setSettingsAnchor(null);
-            }}
-          >
-            Connection Settings
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setThemeMode(themeMode === "dark" ? "light" : "dark");
-              setSettingsAnchor(null);
-            }}
-          >
-            Dark/Light Mode
-          </MenuItem>
-          <MenuItem
-            selected={currentPage === "settings"}
-            onClick={() => {
-              setCurrentPage("settings");
-              setSettingsAnchor(null);
-            }}
-          >
-            LLM Settings
-          </MenuItem>
-        </Menu>
-
-        <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-          <MoreVertIcon fontSize="small" />
-        </IconButton>
-        <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-          <MenuItem onClick={handleExport}>Export Dashboard</MenuItem>
-          <MenuItem onClick={handleImport}>Import Dashboard</MenuItem>
-          <MenuItem
-            onClick={() => {
-              loadDefaultDashboard();
-              setMenuAnchor(null);
-            }}
-          >
-            Load Default Dashboard
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setMenuAnchor(null);
-              setResetDialogOpen(true);
-            }}
-            sx={{ color: "error.main" }}
-          >
-            Reset All State
-          </MenuItem>
-        </Menu>
-
-        <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
-          <DialogTitle>Reset All State</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              This will clear all settings, connection details, and dashboard panels, restoring the
-              application to its default state. This action cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
-            <Button
-              color="error"
-              onClick={() => {
-                resetState();
-                setResetDialogOpen(false);
-              }}
+        {connected && (
+          <>
+            <IconButton
+              size="small"
+              onClick={(e) => setMenuAnchor(e.currentTarget)}
+              aria-label="Dashboard actions"
             >
-              Reset
-            </Button>
-          </DialogActions>
-        </Dialog>
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={() => setMenuAnchor(null)}
+            >
+              <MenuItem onClick={handleExport}>Export Dashboard</MenuItem>
+              <MenuItem onClick={handleImport}>Import Dashboard</MenuItem>
+              <MenuItem
+                onClick={() => {
+                  loadDefaultDashboard();
+                  setMenuAnchor(null);
+                }}
+              >
+                Load Default Dashboard
+              </MenuItem>
+            </Menu>
+          </>
+        )}
       </Toolbar>
     </AppBar>
   );

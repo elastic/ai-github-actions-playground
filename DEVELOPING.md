@@ -30,6 +30,7 @@ make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
 make otel-harness-up   # start local Elasticsearch + OTel host metrics harness
+make otel-harness-logs # tail logs from the already-running harness started by otel-harness-up
 make otel-harness-down # stop and remove OTel host metrics harness
 ```
 

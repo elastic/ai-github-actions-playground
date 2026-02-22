@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import AppHeader from "../../src/components/AppHeader";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -17,44 +16,23 @@ describe("AppHeader", () => {
     useDashboardStore.getState().setConnected(true);
   });
 
-  it("renders the dashboard title", () => {
+  it("renders the Peek branding", () => {
     render(<AppHeader />);
 
-    expect(screen.getByText("Default")).toBeInTheDocument();
+    expect(screen.getByText("Peek")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Peek" })).toBeInTheDocument();
   });
 
-  it("renders the Elastic Peek branding", () => {
+  it("shows dashboard actions when connected", () => {
     render(<AppHeader />);
 
-    expect(screen.getByText("Elastic Peek")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /dashboard actions/i })).toBeInTheDocument();
   });
 
-  it("toggles theme from the settings menu", async () => {
-    const user = userEvent.setup();
+  it("hides dashboard actions when disconnected", () => {
+    useDashboardStore.getState().setConnected(false);
     render(<AppHeader />);
 
-    await user.click(screen.getByRole("button", { name: /settings/i }));
-    await user.click(screen.getByRole("menuitem", { name: "Dark/Light Mode" }));
-
-    expect(useDashboardStore.getState().themeMode).toBe("light");
-  });
-
-  it("opens LLM settings from the settings menu", async () => {
-    const user = userEvent.setup();
-    render(<AppHeader />);
-
-    await user.click(screen.getByRole("button", { name: /settings/i }));
-    await user.click(screen.getByRole("menuitem", { name: "LLM Settings" }));
-
-    expect(useDashboardStore.getState().currentPage).toBe("settings");
-  });
-
-  it("does not render Chat in the settings menu", async () => {
-    const user = userEvent.setup();
-    render(<AppHeader />);
-
-    await user.click(screen.getByRole("button", { name: /settings/i }));
-
-    expect(screen.queryByRole("menuitem", { name: "Chat" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /dashboard actions/i })).not.toBeInTheDocument();
   });
 });
