@@ -27,7 +27,13 @@ describe("ChatPage", () => {
     useLLMStore.getState().resetLLMState();
     useDashboardStore.getState().resetState();
 
-    vi.mocked(createOpenAI).mockReturnValue((model: string) => ({ model }) as never);
+    const modelFactory = Object.assign(
+      (model: string) => ({ model, adapter: "responses" }),
+      {
+        chat: (model: string) => ({ model, adapter: "chat" }),
+      },
+    );
+    vi.mocked(createOpenAI).mockReturnValue(modelFactory as never);
   });
 
   it("shows unconfigured message when no API key is set", () => {
@@ -109,6 +115,28 @@ describe("ChatPage", () => {
       expect(screen.getByText("API down")).toBeInTheDocument();
     });
     expect(screen.queryByText("Error: API down")).not.toBeInTheDocument();
+  });
+
+  it("uses chat-completions adapter for OpenRouter", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    useLLMStore.getState().setProvider("openrouter");
+    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+
+    render(<ChatPage />);
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expect.objectContaining({
+            adapter: "chat",
+          }),
+        }),
+      );
+    });
   });
 
   it("clears messages and disables clear button", async () => {
