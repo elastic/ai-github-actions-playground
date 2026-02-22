@@ -80,35 +80,41 @@ export default function DimensionSidebar({
 
   const handleToggleExpand = useCallback(
     async (fieldName: string) => {
-      const current = dimensionStates[fieldName];
-      if (current?.expanded) {
-        setDimensionStates((prev) => ({
+      let shouldLoadValues = false;
+      setDimensionStates((prev) => {
+        const current = prev[fieldName];
+        if (current?.expanded) {
+          return {
+            ...prev,
+            [fieldName]: {
+              ...current,
+              expanded: false,
+              loading: false,
+            },
+          };
+        }
+        if (current?.values.length) {
+          return {
+            ...prev,
+            [fieldName]: {
+              ...current,
+              expanded: true,
+              loading: false,
+            },
+          };
+        }
+        shouldLoadValues = true;
+        if (!client) {
+          return prev;
+        }
+        return {
           ...prev,
-          [fieldName]: {
-            ...prev[fieldName]!,
-            expanded: false,
-            loading: false,
-            values: prev[fieldName]!.values,
-          },
-        }));
-        return;
-      }
+          [fieldName]: { expanded: true, loading: true, values: [] },
+        };
+      });
 
-      // Expand and load values if not already loaded
-      if (current?.values.length) {
-        setDimensionStates((prev) => ({
-          ...prev,
-          [fieldName]: { ...prev[fieldName]!, expanded: true },
-        }));
-        return;
-      }
-
+      if (!shouldLoadValues) return;
       if (!client) return;
-
-      setDimensionStates((prev) => ({
-        ...prev,
-        [fieldName]: { expanded: true, loading: true, values: [] },
-      }));
 
       try {
         abortRef.current?.abort();
@@ -131,7 +137,7 @@ export default function DimensionSidebar({
         }));
       }
     },
-    [dimensionStates, client, indexPattern],
+    [client, indexPattern],
   );
 
   if (dimensionFields.length === 0) {

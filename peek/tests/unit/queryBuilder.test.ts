@@ -48,8 +48,8 @@ describe("buildExplorerQuery", () => {
       }),
     );
 
-    expect(result.esql).toContain('host.name == "web-01"');
-    expect(result.esql).toContain('service.name != "test"');
+    expect(result.esql).toContain('`host.name` == "web-01"');
+    expect(result.esql).toContain('`service.name` != "test"');
   });
 
   it("includes LIKE operator in filters", () => {
@@ -59,7 +59,7 @@ describe("buildExplorerQuery", () => {
       }),
     );
 
-    expect(result.esql).toContain('host.name LIKE "web-*"');
+    expect(result.esql).toContain('`host.name` LIKE "web-*"');
   });
 
   it("escapes special characters in filter values", () => {
@@ -69,7 +69,7 @@ describe("buildExplorerQuery", () => {
       }),
     );
 
-    expect(result.esql).toContain('host.name == "my \\"host\\""');
+    expect(result.esql).toContain('`host.name` == "my \\"host\\""');
   });
 
   it("includes groupBy in STATS clause", () => {
@@ -139,7 +139,7 @@ describe("buildExplorerQuery", () => {
       }),
     );
 
-    expect(result.esql).toContain('path == "C:\\\\Users\\\\test"');
+    expect(result.esql).toContain('`path` == "C:\\\\Users\\\\test"');
   });
 
   it("combines multiple filters with AND", () => {
@@ -154,9 +154,9 @@ describe("buildExplorerQuery", () => {
     );
 
     const whereSection = result.esql.split("WHERE ")[1]?.split(" | ")[0] ?? "";
-    expect(whereSection).toContain('host.name == "web-01"');
-    expect(whereSection).toContain('region == "us-east-1"');
-    expect(whereSection).toContain('env != "staging"');
+    expect(whereSection).toContain('`host.name` == "web-01"');
+    expect(whereSection).toContain('`region` == "us-east-1"');
+    expect(whereSection).toContain('`env` != "staging"');
     // All connected by AND
     expect(whereSection.match(/AND/g)?.length).toBe(4);
   });
@@ -180,11 +180,17 @@ describe("getAggregationOptions", () => {
     expect(options).toContain("min");
     expect(options).toContain("max");
     expect(options).toContain("count");
+    expect(options).toContain("p50");
+    expect(options).toContain("p95");
+    expect(options).toContain("p99");
   });
 
   it("returns counter-appropriate options starting with sum", () => {
     const options = getAggregationOptions("counter");
     expect(options[0]).toBe("sum");
     expect(options).toContain("avg");
+    expect(options).toContain("p50");
+    expect(options).toContain("p95");
+    expect(options).toContain("p99");
   });
 });

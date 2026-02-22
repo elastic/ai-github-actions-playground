@@ -136,6 +136,26 @@ describe("getFieldValues", () => {
     const result = await getFieldValues(client, "metrics-*", "host.name");
     expect(result).toEqual([]);
   });
+
+  it("escapes field identifiers in the generated ES|QL", async () => {
+    const queryFn = vi.fn().mockResolvedValue({
+      columns: [
+        { name: "count", type: "long" },
+        { name: "host.name", type: "keyword" },
+      ],
+      values: [[10, "web-01"]],
+    });
+    const client = makeMockClient(queryFn);
+
+    await getFieldValues(client, "metrics-*", "host.name");
+
+    expect(queryFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.stringContaining("BY `host.name`"),
+      }),
+      undefined,
+    );
+  });
 });
 
 describe("getFieldCardinality", () => {
@@ -164,5 +184,22 @@ describe("getFieldCardinality", () => {
 
     expect(result).toEqual({});
     expect(queryFn).not.toHaveBeenCalled();
+  });
+
+  it("escapes field names in COUNT_DISTINCT expressions", async () => {
+    const queryFn = vi.fn().mockResolvedValue({
+      columns: [{ name: "host.name_card", type: "long" }],
+      values: [[42]],
+    });
+    const client = makeMockClient(queryFn);
+
+    await getFieldCardinality(client, "metrics-*", ["host.name"]);
+
+    expect(queryFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.stringContaining("`host.name_card` = COUNT_DISTINCT(`host.name`)"),
+      }),
+      undefined,
+    );
   });
 });

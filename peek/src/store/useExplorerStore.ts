@@ -2,6 +2,12 @@ import { create } from "zustand";
 import type { TimeRange } from "../types";
 import type { AggregationType, ExplorerFilter, FieldInfo, MetricType } from "../services/es";
 
+const VALID_AGGREGATIONS: AggregationType[] = ["avg", "sum", "min", "max", "count", "p50", "p95", "p99"];
+
+function isAggregationType(value: string | null): value is AggregationType {
+  return value !== null && VALID_AGGREGATIONS.includes(value as AggregationType);
+}
+
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
@@ -77,6 +83,7 @@ export function deserializeExplorerState(search: string): {
   to?: string;
 } {
   const params = new URLSearchParams(search);
+  const rawAgg = params.get("agg");
   const filters: ExplorerFilter[] = [];
   for (const [key, value] of params.entries()) {
     if (key.startsWith("filter.")) {
@@ -95,7 +102,7 @@ export function deserializeExplorerState(search: string): {
   return {
     indexPattern: params.get("index") ?? undefined,
     metric: params.get("metric") ?? undefined,
-    aggregation: (params.get("agg") as AggregationType) ?? undefined,
+    aggregation: isAggregationType(rawAgg) ? rawAgg : undefined,
     groupBy: params.get("groupBy") ?? undefined,
     filters,
     from: params.get("from") ?? undefined,

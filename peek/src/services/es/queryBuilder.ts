@@ -36,8 +36,17 @@ export interface ExplorerQueryResult {
 
 const DEFAULT_BUCKET_COUNT = 50;
 
-const GAUGE_AGGREGATIONS: AggregationType[] = ["avg", "sum", "min", "max", "count"];
-const COUNTER_AGGREGATIONS: AggregationType[] = ["sum", "avg", "min", "max", "count"];
+const GAUGE_AGGREGATIONS: AggregationType[] = ["avg", "sum", "min", "max", "count", "p50", "p95", "p99"];
+const COUNTER_AGGREGATIONS: AggregationType[] = [
+  "sum",
+  "avg",
+  "min",
+  "max",
+  "count",
+  "p50",
+  "p95",
+  "p99",
+];
 
 export function getDefaultAggregation(metricType: MetricType): AggregationType {
   return metricType === "counter" ? "sum" : "avg";
@@ -55,14 +64,19 @@ function escapeEsqlString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
+function escapeEsqlIdentifier(identifier: string): string {
+  return `\`${identifier.replace(/`/g, "``")}\``;
+}
+
 function buildFilterClause(filters: ExplorerFilter[]): string {
   if (filters.length === 0) return "";
   const conditions = filters.map((f) => {
+    const escapedField = escapeEsqlIdentifier(f.field);
     const escaped = escapeEsqlString(f.value);
     if (f.op === "LIKE") {
-      return `${f.field} LIKE "${escaped}"`;
+      return `${escapedField} LIKE "${escaped}"`;
     }
-    return `${f.field} ${f.op} "${escaped}"`;
+    return `${escapedField} ${f.op} "${escaped}"`;
   });
   return conditions.join(" AND ");
 }

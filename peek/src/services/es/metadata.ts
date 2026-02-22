@@ -17,6 +17,10 @@ export interface FieldValueEntry {
   count: number;
 }
 
+function escapeEsqlIdentifier(identifier: string): string {
+  return `\`${identifier.replace(/`/g, "``")}\``;
+}
+
 // ---------------------------------------------------------------------------
 // Metric type classification
 // ---------------------------------------------------------------------------
@@ -81,12 +85,15 @@ export async function getFieldValues(
   limit: number = 20,
   signal?: AbortSignal,
 ): Promise<FieldValueEntry[]> {
-  const query = `FROM ${indexPattern} | STATS count = COUNT(*) BY ${field} | SORT count DESC | LIMIT ${limit}`;
+  const escapedField = escapeEsqlIdentifier(field);
+  const query =
+    `FROM ${indexPattern} | STATS count = COUNT(*) BY ${escapedField} | ` +
+    `SORT count DESC | LIMIT ${limit}`;
   const response = await client.query({ query }, signal);
 
   // Expect two columns: count and the field
   const countIdx = response.columns.findIndex((c) => c.name === "count");
-  const fieldIdx = response.columns.findIndex((c) => c.name === field);
+  const fieldIdx = response.columns.findIndex((c) => c.name === field || c.name === escapedField);
 
   if (countIdx < 0 || fieldIdx < 0) return [];
 
@@ -110,7 +117,9 @@ export async function getFieldCardinality(
 ): Promise<Record<string, number>> {
   if (fields.length === 0) return {};
 
-  const statsExprs = fields.map((f) => `\`${f}_card\` = COUNT_DISTINCT(${f})`).join(", ");
+  const statsExprs = fields
+    .map((f) => `${escapeEsqlIdentifier(`${f}_card`)} = COUNT_DISTINCT(${escapeEsqlIdentifier(f)})`)
+    .join(", ");
   const query = `FROM ${indexPattern} | STATS ${statsExprs}`;
   const response = await client.query({ query }, signal);
 
