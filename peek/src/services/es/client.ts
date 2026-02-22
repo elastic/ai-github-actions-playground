@@ -31,6 +31,15 @@ export type EsqlQueryResponse =
 /** Response from GET / (cluster info) */
 export type ClusterInfoResponse =
   operations["info"]["responses"][200]["content"]["application/json"];
+export type ResolveIndexResponse =
+  operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
+export type GetDataStreamsResponse =
+  operations["indices-get-data-stream"]["responses"][200]["content"]["application/json"];
+export type DataStreamInfo = GetDataStreamsResponse["data_streams"][number];
+export type ResolveIndexDataStreamInfo = ResolveIndexResponse["data_streams"][number];
+export type FieldCapsResponse =
+  operations["field-caps-2"]["responses"][200]["content"]["application/json"];
+export type FieldCapability = components["schemas"]["_global.field_caps.FieldCapability"];
 
 /**
  * Backward-compatible alias — matches the shape components were already using.
@@ -209,6 +218,30 @@ export class ElasticsearchClient {
 
   async getClusterInfo(signal?: AbortSignal): Promise<ClusterInfoResponse> {
     return this._fetch<ClusterInfoResponse>("/", { signal });
+  }
+
+  async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {
+    return this._fetch<ResolveIndexResponse>(`/_resolve/index/${encodeURIComponent(name)}`, {
+      signal,
+    });
+  }
+
+  async getDataStreams(name?: string, signal?: AbortSignal): Promise<GetDataStreamsResponse> {
+    const path = name ? `/_data_stream/${encodeURIComponent(name)}` : "/_data_stream";
+    return this._fetch<GetDataStreamsResponse>(path, { signal });
+  }
+
+  async getFieldCaps(
+    index: string,
+    fields?: string[],
+    signal?: AbortSignal,
+  ): Promise<FieldCapsResponse> {
+    const params = new URLSearchParams();
+    const normalizedFields = fields?.map((field) => field.trim()).filter(Boolean) ?? [];
+    params.set("fields", normalizedFields.length > 0 ? normalizedFields.join(",") : "*");
+    const query = params.toString();
+    const path = `/${encodeURIComponent(index)}/_field_caps${query ? `?${query}` : ""}`;
+    return this._fetch<FieldCapsResponse>(path, { signal });
   }
 
   // -------------------------------------------------------------------------

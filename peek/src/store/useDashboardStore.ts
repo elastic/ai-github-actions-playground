@@ -20,7 +20,8 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage: "dashboard" | "discover" | "docs";
+  currentPage: "dashboard" | "discover" | "dataStreams" | "docs";
+  discoverQueryDraft: string | null;
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -39,7 +40,8 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (page: "dashboard" | "discover" | "docs") => void;
+  setCurrentPage: (page: "dashboard" | "discover" | "dataStreams" | "docs") => void;
+  setDiscoverQueryDraft: (query: string | null) => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => { success: boolean; error?: string };
@@ -106,6 +108,7 @@ export const useDashboardStore = create<DashboardState>()(
       editingPanelId: null,
       connectionDialogOpen: false,
       currentPage: "dashboard",
+      discoverQueryDraft: null,
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -170,6 +173,7 @@ export const useDashboardStore = create<DashboardState>()(
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCurrentPage: (page) => set({ currentPage: page }),
+      setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
 
       exportDashboard: () => {
         const { dashboard } = get();
@@ -210,6 +214,7 @@ export const useDashboardStore = create<DashboardState>()(
           editingPanelId: null,
           connectionDialogOpen: false,
           currentPage: "dashboard",
+          discoverQueryDraft: null,
         });
       },
     }),
