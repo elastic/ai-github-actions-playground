@@ -91,23 +91,24 @@ function buildFilterClause(filters: ExplorerFilter[]): string {
 }
 
 function buildAggExpression(aggregation: AggregationType, field: string): string {
+  const escapedField = escapeEsqlIdentifier(field);
   switch (aggregation) {
     case "avg":
-      return `AVG(${field})`;
+      return `AVG(${escapedField})`;
     case "sum":
-      return `SUM(${field})`;
+      return `SUM(${escapedField})`;
     case "min":
-      return `MIN(${field})`;
+      return `MIN(${escapedField})`;
     case "max":
-      return `MAX(${field})`;
+      return `MAX(${escapedField})`;
     case "count":
-      return `COUNT(${field})`;
+      return `COUNT(${escapedField})`;
     case "p50":
-      return `PERCENTILE(${field}, 50)`;
+      return `PERCENTILE(${escapedField}, 50)`;
     case "p95":
-      return `PERCENTILE(${field}, 95)`;
+      return `PERCENTILE(${escapedField}, 95)`;
     case "p99":
-      return `PERCENTILE(${field}, 99)`;
+      return `PERCENTILE(${escapedField}, 99)`;
   }
 }
 
@@ -148,7 +149,9 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   const bucketExpr = `BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`;
 
   if (q.groupBy) {
-    parts.push(`STATS ${aggAlias} = ${aggExpr} BY timestamp = ${bucketExpr}, ${q.groupBy}`);
+    parts.push(
+      `STATS ${aggAlias} = ${aggExpr} BY timestamp = ${bucketExpr}, ${escapeEsqlIdentifier(q.groupBy)}`,
+    );
   } else {
     parts.push(`STATS ${aggAlias} = ${aggExpr} BY timestamp = ${bucketExpr}`);
   }
