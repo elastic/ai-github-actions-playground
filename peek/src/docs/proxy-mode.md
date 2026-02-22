@@ -9,3 +9,7 @@ Then enter http://localhost:3000/\_es as the Elasticsearch URL in the connection
 The legacy /\_query proxy path also remains available for ES|QL queries only.
 
 The Docker image also includes a built-in nginx proxy — set the ES_URL environment variable when running the container and enter http://localhost:8080/\_es as the Elasticsearch URL.
+
+Use proxy mode when your Elasticsearch cluster cannot or should not expose browser CORS headers directly.
+
+If requests fail in proxy mode, confirm the `ES_URL` target is reachable from the machine running Peek and that the upstream credentials have permission for the requested APIs.

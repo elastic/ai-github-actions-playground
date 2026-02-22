@@ -62,6 +62,14 @@ Once approved, a maintainer assigns the issue to an AI agent. The agent creates 
 - **Features**: Explain the use case, provide examples, and include step-by-step instructions
 - **Be specific**: Name the files, components, and test cases the agent should touch
 
+## Documentation Updates
+
+Feature and UX changes should include matching documentation updates in `peek/src/docs/` for user-facing behavior changes.
+
+Before filing or reviewing a feature issue, verify whether an in-product docs section exists for the surface being changed (for example Query Lab, Metrics, Console, Data Streams, Chat, or Settings).
+
+Use [DOCUMENTATION_STANDARDS.md](DOCUMENTATION_STANDARDS.md) for required structure, writing style, and review expectations.
+
 ## Security
 
 If you discover a security vulnerability, please use [GitHub's private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) — **do not** open a public issue.
