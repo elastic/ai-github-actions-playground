@@ -23,7 +23,7 @@ describe("buildExplorerQuery", () => {
     const result = buildExplorerQuery(makeQuery());
 
     expect(result.esql).toContain("FROM metrics-*");
-    expect(result.esql).toContain("AVG(system.cpu.total.pct)");
+    expect(result.esql).toContain("AVG(`system.cpu.total.pct`)");
     expect(result.esql).toContain("BUCKET(@timestamp, 50,");
     expect(result.esql).toContain("SORT timestamp");
     expect(result.yAxisLabel).toBe("Avg pct");
@@ -34,7 +34,7 @@ describe("buildExplorerQuery", () => {
       makeQuery({ metricType: "counter", aggregation: "sum" }),
     );
 
-    expect(result.esql).toContain("SUM(system.cpu.total.pct)");
+    expect(result.esql).toContain("SUM(`system.cpu.total.pct`)");
     expect(result.yAxisLabel).toBe("Sum pct");
   });
 
@@ -78,7 +78,17 @@ describe("buildExplorerQuery", () => {
     );
 
     expect(result.esql).toContain("BY timestamp =");
-    expect(result.esql).toContain(", service.name");
+    expect(result.esql).toContain(", `service.name`");
+  });
+
+  it("escapes metric field identifiers containing backticks in aggregation expressions", () => {
+    const result = buildExplorerQuery(makeQuery({ metricField: "field`with`backticks" }));
+    expect(result.esql).toContain("AVG(`field``with``backticks`)");
+  });
+
+  it("escapes groupBy field identifiers containing backticks", () => {
+    const result = buildExplorerQuery(makeQuery({ groupBy: "dim`field" }));
+    expect(result.esql).toContain(", `dim``field`");
   });
 
   it("uses custom bucket count", () => {
@@ -89,37 +99,37 @@ describe("buildExplorerQuery", () => {
 
   it("builds min aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "min" }));
-    expect(result.esql).toContain("MIN(system.cpu.total.pct)");
+    expect(result.esql).toContain("MIN(`system.cpu.total.pct`)");
     expect(result.yAxisLabel).toBe("Min pct");
   });
 
   it("builds max aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "max" }));
-    expect(result.esql).toContain("MAX(system.cpu.total.pct)");
+    expect(result.esql).toContain("MAX(`system.cpu.total.pct`)");
     expect(result.yAxisLabel).toBe("Max pct");
   });
 
   it("builds count aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "count" }));
-    expect(result.esql).toContain("COUNT(system.cpu.total.pct)");
+    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
     expect(result.yAxisLabel).toBe("Count pct");
   });
 
   it("builds p50 percentile aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "p50" }));
-    expect(result.esql).toContain("PERCENTILE(system.cpu.total.pct, 50)");
+    expect(result.esql).toContain("PERCENTILE(`system.cpu.total.pct`, 50)");
     expect(result.yAxisLabel).toBe("p50 pct");
   });
 
   it("builds p95 percentile aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "p95" }));
-    expect(result.esql).toContain("PERCENTILE(system.cpu.total.pct, 95)");
+    expect(result.esql).toContain("PERCENTILE(`system.cpu.total.pct`, 95)");
     expect(result.yAxisLabel).toBe("p95 pct");
   });
 
   it("builds p99 percentile aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "p99" }));
-    expect(result.esql).toContain("PERCENTILE(system.cpu.total.pct, 99)");
+    expect(result.esql).toContain("PERCENTILE(`system.cpu.total.pct`, 99)");
     expect(result.yAxisLabel).toBe("p99 pct");
   });
 
