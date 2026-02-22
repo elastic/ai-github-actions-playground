@@ -8,6 +8,6 @@
 
 ## Checklist
 
-- [ ] Ran `make lint` and `make build` successfully
+- [ ] Ran `make check` successfully (lint + unit tests + build)
 - [ ] Included screenshot if I made a UX change
 - [ ] Updated documentation if applicable
