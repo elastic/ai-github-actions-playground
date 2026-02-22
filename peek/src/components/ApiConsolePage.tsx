@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -86,14 +86,23 @@ function RequestCard({
 }: RequestCardProps) {
   const showBody = METHODS_WITH_BODY.includes(entry.method);
   const [copied, setCopied] = useState(false);
+  const serializedResponse = useCallback((body: unknown): string => {
+    try {
+      return JSON.stringify(body, (_key, value) =>
+        typeof value === "bigint" ? value.toString() : value,
+      2);
+    } catch {
+      return String(body);
+    }
+  }, []);
 
   const handleCopy = useCallback(() => {
     if (!entry.response || entry.response.status !== "success") return;
-    const text = JSON.stringify(entry.response.body, null, 2);
+    const text = serializedResponse(entry.response.body);
     void navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [entry.response]);
+  }, [entry.response, serializedResponse]);
 
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
@@ -222,7 +231,7 @@ function RequestCard({
                   }}
                 >
                   <CodeMirror
-                    value={JSON.stringify(entry.response.body, null, 2)}
+                    value={serializedResponse(entry.response.body)}
                     extensions={[json()]}
                     theme={themeMode}
                     editable={false}
@@ -243,7 +252,22 @@ export default function ApiConsolePage() {
   const themeMode = useDashboardStore((s) => s.themeMode);
 
   const [entries, setEntries] = useState<RequestEntry[]>(() => [makeEntry()]);
+  const entriesRef = useRef(entries);
   const abortRefs = useRef<Map<string, AbortController>>(new Map());
+
+  useEffect(() => {
+    entriesRef.current = entries;
+  }, [entries]);
+
+  useEffect(
+    () => () => {
+      for (const controller of abortRefs.current.values()) {
+        controller.abort();
+      }
+      abortRefs.current.clear();
+    },
+    [],
+  );
 
   const updateEntry = useCallback((id: string, updates: Partial<RequestEntry>) => {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
@@ -261,7 +285,7 @@ export default function ApiConsolePage() {
 
   const sendRequest = useCallback(
     async (id: string) => {
-      const entry = entries.find((e) => e.id === id);
+      const entry = entriesRef.current.find((e) => e.id === id);
       if (!entry || !connection) return;
 
       // Cancel any in-flight request for this entry
@@ -294,7 +318,7 @@ export default function ApiConsolePage() {
         updateEntry(id, { response: { status: "error", message } });
       }
     },
-    [entries, connection, updateEntry],
+    [connection, updateEntry],
   );
 
   return (

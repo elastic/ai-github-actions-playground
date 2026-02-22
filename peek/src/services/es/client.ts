@@ -81,6 +81,7 @@ interface HasPrivilegesResponse {
 const MAX_RETRIES = 3;
 const RETRY_STATUSES = new Set([429, 503]);
 const INITIAL_BACKOFF_MS = 500;
+const RAW_REQUEST_TIMEOUT_MS = 30_000;
 
 function sleepAbortable(ms: number, signal?: AbortSignal | null): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -248,10 +249,22 @@ export class ElasticsearchClient {
     signal?: AbortSignal,
   ): Promise<{ status: number; body: unknown }> {
     const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort(new DOMException("Request timed out", "AbortError"));
+    }, RAW_REQUEST_TIMEOUT_MS);
+    const onAbort = () => {
+      controller.abort(signal?.reason);
+    };
+    if (signal?.aborted) {
+      onAbort();
+    } else {
+      signal?.addEventListener("abort", onAbort, { once: true });
+    }
     const init: RequestInit = {
       method,
       headers: { ...this.headers },
-      signal: signal ?? undefined,
+      signal: controller.signal,
     };
     if (body && body.trim()) {
       init.body = body;
@@ -260,11 +273,15 @@ export class ElasticsearchClient {
     try {
       response = await fetch(url, init);
     } catch (err) {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener("abort", onAbort);
       throw {
         status: 0,
         message: err instanceof Error ? err.message : String(err),
       } satisfies ElasticsearchError;
     }
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onAbort);
     const contentType = response.headers.get("content-type") ?? "";
     let responseBody: unknown;
     if (contentType.includes("application/json")) {
