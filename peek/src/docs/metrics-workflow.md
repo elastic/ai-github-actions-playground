@@ -1,6 +1,6 @@
 # Metrics
 
-Switch to the Metrics tab to explore time-series metrics without writing ES|QL by hand.
+Open Metrics from the sidebar to explore time-series metrics without writing ES|QL by hand.
 
 Pick a namespace first, then search and select a metric field.
 

@@ -1,6 +1,6 @@
 # Query Lab
 
-Switch to the Query Lab tab to run ad-hoc ES|QL queries and explore results in a table.
+Open Query Lab from the sidebar to run ad-hoc ES|QL queries and explore results in a table.
 
 Use Recent queries to re-apply query text from successful runs.
 
