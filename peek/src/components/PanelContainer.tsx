@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import EditIcon from "@mui/icons-material/Edit";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -26,6 +27,7 @@ export default function PanelContainer({ panel }: Props) {
   const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
   const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const duplicatePanel = useDashboardStore((s) => s.duplicatePanel);
 
   const [data, setData] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -162,6 +164,17 @@ export default function PanelContainer({ panel }: Props) {
         <Tooltip title="Refresh">
           <IconButton size="small" onClick={fetchData} disabled={loading}>
             <RefreshIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Duplicate panel">
+          <IconButton
+            size="small"
+            onClick={() => {
+              const newId = duplicatePanel(panel.id);
+              if (newId) setEditingPanelId(newId);
+            }}
+          >
+            <ContentCopyIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
         <Tooltip title="Edit panel">

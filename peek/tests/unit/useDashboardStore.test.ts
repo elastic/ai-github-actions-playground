@@ -122,6 +122,51 @@ describe("useDashboardStore addPanel / removePanel", () => {
   });
 });
 
+describe("useDashboardStore duplicatePanel", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("creates a copy with a new id and appended title", () => {
+    const panels = useDashboardStore.getState().dashboard.panels;
+    const sourceId = panels[0].id;
+    const source = panels[0];
+
+    const newId = useDashboardStore.getState().duplicatePanel(sourceId);
+
+    expect(newId).toBeTruthy();
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+    expect(clone).toBeDefined();
+    expect(clone!.id).not.toBe(sourceId);
+    expect(clone!.title).toBe(`${source.title} (copy)`);
+    expect(clone!.query).toBe(source.query);
+    expect(clone!.visualization).toBe(source.visualization);
+  });
+
+  it("preserves options on the duplicated panel", () => {
+    useDashboardStore.getState().addPanel({
+      id: "opts-panel",
+      title: "With Options",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+      options: { stacked: true, horizontal: false },
+    });
+
+    const newId = useDashboardStore.getState().duplicatePanel("opts-panel");
+    const clone = useDashboardStore.getState().dashboard.panels.find((p) => p.id === newId);
+
+    expect(clone!.options).toEqual({ stacked: true, horizontal: false });
+  });
+
+  it("returns null for a non-existent panel", () => {
+    const result = useDashboardStore.getState().duplicatePanel("does-not-exist");
+    expect(result).toBeNull();
+  });
+});
+
 describe("useDashboardStore updatePanel", () => {
   beforeEach(() => {
     localStorageMock.clear();
@@ -378,7 +423,7 @@ describe("useDashboardStore importDashboard", () => {
           id: "p-1",
           title: "Bad Viz",
           query: "FROM x",
-          visualization: "heatmap" as "bar",
+          visualization: "treemap" as "bar",
           layout: { x: 0, y: 0, w: 6, h: 4 },
         },
       ],
@@ -467,4 +512,25 @@ describe("useDashboardStore importDashboard", () => {
     expect(result).toEqual({ success: true });
     expect(useDashboardStore.getState().dashboard.panels[0].id).toBe("p-1");
   });
+
+  it.each(["heatmap", "scatter", "histogram"] as const)(
+    "accepts the %s visualization type",
+    (vizType) => {
+      const dashboard = makeValidDashboard({
+        panels: [
+          {
+            id: "viz-panel",
+            title: "New Viz",
+            query: "FROM x",
+            visualization: vizType,
+            layout: { x: 0, y: 0, w: 6, h: 4 },
+          },
+        ],
+      });
+
+      const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+      expect(result).toEqual({ success: true });
+      expect(useDashboardStore.getState().dashboard.panels[0].visualization).toBe(vizType);
+    },
+  );
 });

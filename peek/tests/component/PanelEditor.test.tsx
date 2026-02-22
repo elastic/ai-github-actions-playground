@@ -87,6 +87,9 @@ describe("PanelEditor", () => {
     expect(screen.getByTitle("Stat")).toBeInTheDocument();
     expect(screen.getByTitle("Gauge")).toBeInTheDocument();
     expect(screen.getByTitle("Pie")).toBeInTheDocument();
+    expect(screen.getByTitle("Heatmap")).toBeInTheDocument();
+    expect(screen.getByTitle("Scatter")).toBeInTheDocument();
+    expect(screen.getByTitle("Histogram")).toBeInTheDocument();
   });
 
   it("switching to table hides format options (ChartOptionsEditor)", async () => {

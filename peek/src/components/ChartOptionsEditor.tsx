@@ -18,6 +18,7 @@ import type {
   BarChartOptions,
   FormatOptions,
   GaugePanelOptions,
+  HistogramChartOptions,
   TimeSeriesOptions,
   VisualizationOptions,
   VisualizationType,
@@ -165,6 +166,10 @@ export default function ChartOptionsEditor({ vizType, options, onChange }: Props
       {vizType === "gauge" && (
         <GaugeOptionsEditor options={options as GaugePanelOptions} onChange={onChange} />
       )}
+
+      {vizType === "histogram" && (
+        <HistogramOptionsEditor options={options as HistogramChartOptions} onChange={onChange} />
+      )}
     </Box>
   );
 }
@@ -288,5 +293,31 @@ function GaugeOptionsEditor({
         sx={{ width: 90 }}
       />
     </>
+  );
+}
+
+function HistogramOptionsEditor({
+  options,
+  onChange,
+}: {
+  options: HistogramChartOptions;
+  onChange: (o: VisualizationOptions) => void;
+}) {
+  return (
+    <TextField
+      label="Bins"
+      size="small"
+      type="number"
+      value={options.bins ?? 10}
+      onChange={(e) => {
+        const n = Number(e.target.value);
+        onChange({
+          ...options,
+          bins: !Number.isFinite(n) || n < 1 ? 10 : Math.round(n),
+        });
+      }}
+      sx={{ width: 90 }}
+      inputProps={{ min: 1, max: 100 }}
+    />
   );
 }

@@ -1,12 +1,20 @@
 import { useRef, useEffect } from "react";
 import * as echarts from "echarts/core";
-import { LineChart, BarChart, PieChart, GaugeChart } from "echarts/charts";
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  GaugeChart,
+  HeatmapChart,
+  ScatterChart,
+} from "echarts/charts";
 import {
   GridComponent,
   TooltipComponent,
   LegendComponent,
   TitleComponent,
   DataZoomComponent,
+  VisualMapComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import Box from "@mui/material/Box";
@@ -16,11 +24,14 @@ echarts.use([
   BarChart,
   PieChart,
   GaugeChart,
+  HeatmapChart,
+  ScatterChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
   TitleComponent,
   DataZoomComponent,
+  VisualMapComponent,
   CanvasRenderer,
 ]);
 

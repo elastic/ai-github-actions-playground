@@ -44,6 +44,7 @@ interface DashboardState {
   addPanel: (panel: PanelDefinition) => void;
   updatePanel: (id: string, updates: Partial<PanelDefinition>) => void;
   removePanel: (id: string) => void;
+  duplicatePanel: (id: string) => string | null;
   updatePanelLayouts: (
     layouts: Array<{ id: string; x: number; y: number; w: number; h: number }>,
   ) => void;
@@ -185,6 +186,27 @@ export const useDashboardStore = create<DashboardState>()(
             updatedAt: new Date().toISOString(),
           },
         })),
+
+      duplicatePanel: (id) => {
+        const state = get();
+        const source = state.dashboard.panels.find((p) => p.id === id);
+        if (!source) return null;
+        const newId = crypto.randomUUID();
+        const clone: PanelDefinition = {
+          ...source,
+          id: newId,
+          title: `${source.title} (copy)`,
+          layout: { ...source.layout, y: Infinity },
+        };
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            panels: [...s.dashboard.panels, clone],
+            updatedAt: new Date().toISOString(),
+          },
+        }));
+        return newId;
+      },
 
       updatePanelLayouts: (layouts) =>
         set((s) => ({
