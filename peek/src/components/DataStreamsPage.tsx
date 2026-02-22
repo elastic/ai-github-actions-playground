@@ -27,6 +27,19 @@ function toFieldRows(fieldCaps: FieldCapsResponse) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function parseDataStreamName(name: string) {
+  const firstDash = name.indexOf("-");
+  const lastDash = name.lastIndexOf("-");
+  if (firstDash <= 0 || lastDash <= firstDash + 1 || lastDash >= name.length - 1) {
+    return null;
+  }
+  return {
+    type: name.slice(0, firstDash),
+    dataset: name.slice(firstDash + 1, lastDash),
+    namespace: name.slice(lastDash + 1),
+  };
+}
+
 export default function DataStreamsPage() {
   const connection = useDashboardStore((s) => s.connection);
   const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
@@ -46,6 +59,10 @@ export default function DataStreamsPage() {
   const selectedDataStream = useMemo(
     () => dataStreams.find((stream) => stream.name === selectedName) ?? null,
     [dataStreams, selectedName],
+  );
+  const selectedDataStreamParts = useMemo(
+    () => (selectedDataStream ? parseDataStreamName(selectedDataStream.name) : null),
+    [selectedDataStream],
   );
 
   const loadDataStreams = useCallback(async () => {
@@ -145,6 +162,14 @@ export default function DataStreamsPage() {
     setCurrentPage("discover");
   }, [selectedName, setCurrentPage, setDiscoverQueryDraft]);
 
+  const openFleetQuery = useCallback(
+    (query: string) => {
+      setDiscoverQueryDraft(query);
+      setCurrentPage("discover");
+    },
+    [setCurrentPage, setDiscoverQueryDraft],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -167,6 +192,28 @@ export default function DataStreamsPage() {
             onClick={handleOpenInDiscover}
           >
             Open in Query Lab
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() =>
+              openFleetQuery(
+                "FROM logs-*,metrics-*,traces-* | STATS doc_count = COUNT(*) BY `data_stream.dataset` | SORT doc_count DESC | LIMIT 20",
+              )
+            }
+          >
+            Fleet Datasets
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() =>
+              openFleetQuery(
+                "FROM logs-*,metrics-*,traces-* | STATS shippers = COUNT_DISTINCT(`agent.id`)",
+              )
+            }
+          >
+            Fleet Shippers
           </Button>
         </Stack>
       </Paper>
@@ -235,6 +282,13 @@ export default function DataStreamsPage() {
             {selectedDataStream ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <Typography variant="h6">{selectedDataStream.name}</Typography>
+                {selectedDataStreamParts && (
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                    <Chip size="small" label={`type: ${selectedDataStreamParts.type}`} />
+                    <Chip size="small" label={`dataset: ${selectedDataStreamParts.dataset}`} />
+                    <Chip size="small" label={`namespace: ${selectedDataStreamParts.namespace}`} />
+                  </Stack>
+                )}
                 <Box
                   sx={{
                     display: "grid",

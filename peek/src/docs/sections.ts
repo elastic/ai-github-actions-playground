@@ -9,6 +9,7 @@ import visualizationsRaw from "./visualizations.md?raw";
 import keyboardShortcutsRaw from "./keyboard-shortcuts.md?raw";
 import consoleRaw from "./console.md?raw";
 import dataStreamsRaw from "./data-streams.md?raw";
+import fleetRaw from "./fleet.md?raw";
 import chatRaw from "./chat.md?raw";
 import llmSettingsRaw from "./llm-settings.md?raw";
 import clusterOverviewRaw from "./cluster-overview.md?raw";
@@ -56,6 +57,7 @@ const sections: DocSection[] = [
   parseDocSection("keyboard-shortcuts", keyboardShortcutsRaw),
   parseDocSection("console", consoleRaw),
   parseDocSection("data-streams", dataStreamsRaw),
+  parseDocSection("fleet", fleetRaw),
   parseDocSection("chat", chatRaw),
   parseDocSection("llm-settings", llmSettingsRaw),
   parseDocSection("cluster-overview", clusterOverviewRaw),
