@@ -163,7 +163,10 @@ export class ElasticsearchClient {
     }
 
     // Should never reach here, but satisfy TypeScript
-    throw lastError ?? ({ status: 0, message: "Unexpected error in _fetch" } satisfies ElasticsearchError);
+    throw (
+      lastError ??
+      ({ status: 0, message: "Unexpected error in _fetch" } satisfies ElasticsearchError)
+    );
   }
 
   // -------------------------------------------------------------------------

@@ -4,8306 +4,8875 @@
  */
 
 export interface paths {
-    "/_query": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run an ES|QL query
-         * @description Get search results for an ES|QL (Elasticsearch query language) query.
-         */
-        post: operations["esql-query"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/_query": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/_query/async": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run an async ES|QL query
-         * @description Asynchronously run an ES|QL (Elasticsearch query language) query, monitor its progress, and retrieve results when they become available.
-         *
-         *     The API accepts the same parameters and request body as the synchronous query API, along with additional async related properties.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `read`
-         */
-        post: operations["esql-async-query"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Run an ES|QL query
+     * @description Get search results for an ES|QL (Elasticsearch query language) query.
+     */
+    post: operations["esql-query"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/_query/async": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/_query/async/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get async ES|QL query results
-         * @description Get the current status and available results or stored results for an ES|QL asynchronous query.
-         *     If the Elasticsearch security features are enabled, only the user who first submitted the ES|QL query can retrieve the results using this API.
-         */
-        get: operations["esql-async-query-get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete an async ES|QL query
-         * @description If the query is still running, it is cancelled.
-         *     Otherwise, the stored results are deleted.
-         *
-         *     If the Elasticsearch security features are enabled, only the following users can use this API to delete a query:
-         *
-         *     * The authenticated user that submitted the original query request
-         *     * Users with the `cancel_task` cluster privilege
-         */
-        delete: operations["esql-async-query-delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Run an async ES|QL query
+     * @description Asynchronously run an ES|QL (Elasticsearch query language) query, monitor its progress, and retrieve results when they become available.
+     *
+     *     The API accepts the same parameters and request body as the synchronous query API, along with additional async related properties.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `read`
+     */
+    post: operations["esql-async-query"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/_query/async/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/_query/async/{id}/stop": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Stop async ES|QL query
-         * @description This API interrupts the query execution and returns the results so far.
-         *     If the Elasticsearch security features are enabled, only the user who first submitted the ES|QL query can stop it.
-         */
-        post: operations["esql-async-query-stop"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get async ES|QL query results
+     * @description Get the current status and available results or stored results for an ES|QL asynchronous query.
+     *     If the Elasticsearch security features are enabled, only the user who first submitted the ES|QL query can retrieve the results using this API.
+     */
+    get: operations["esql-async-query-get"];
+    put?: never;
+    post?: never;
+    /**
+     * Delete an async ES|QL query
+     * @description If the query is still running, it is cancelled.
+     *     Otherwise, the stored results are deleted.
+     *
+     *     If the Elasticsearch security features are enabled, only the following users can use this API to delete a query:
+     *
+     *     * The authenticated user that submitted the original query request
+     *     * Users with the `cancel_task` cluster privilege
+     */
+    delete: operations["esql-async-query-delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/_query/async/{id}/stop": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/_resolve/index/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Resolve indices
-         * @description Resolve the names and/or index patterns for indices, aliases, and data streams.
-         *     Multiple patterns and remote clusters are supported.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`
-         */
-        get: operations["indices-resolve-index"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Stop async ES|QL query
+     * @description This API interrupts the query execution and returns the results so far.
+     *     If the Elasticsearch security features are enabled, only the user who first submitted the ES|QL query can stop it.
+     */
+    post: operations["esql-async-query-stop"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/_resolve/index/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/{index}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get index information
-         * @description Get information about one or more indices. For data streams, the API returns information about the
-         *     stream’s backing indices.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`,`manage`
-         */
-        get: operations["indices-get"];
-        /**
-         * Create an index
-         * @description You can use the create index API to add a new index to an Elasticsearch cluster.
-         *     When creating an index, you can specify the following:
-         *
-         *     * Settings for the index.
-         *     * Mappings for fields in the index.
-         *     * Index aliases
-         *
-         *     **Wait for active shards**
-         *
-         *     By default, index creation will only return a response to the client when the primary copies of each shard have been started, or the request times out.
-         *     The index creation response will indicate what happened.
-         *     For example, `acknowledged` indicates whether the index was successfully created in the cluster, `while shards_acknowledged` indicates whether the requisite number of shard copies were started for each shard in the index before timing out.
-         *     Note that it is still possible for either `acknowledged` or `shards_acknowledged` to be `false`, but for the index creation to be successful.
-         *     These values simply indicate whether the operation completed before the timeout.
-         *     If `acknowledged` is false, the request timed out before the cluster state was updated with the newly created index, but it probably will be created sometime soon.
-         *     If `shards_acknowledged` is false, then the request timed out before the requisite number of shards were started (by default just the primaries), even if the cluster state was successfully updated to reflect the newly created index (that is to say, `acknowledged` is `true`).
-         *
-         *     You can change the default of only waiting for the primary shards to start through the index setting `index.write.wait_for_active_shards`.
-         *     Note that changing this setting will also affect the `wait_for_active_shards` value on all subsequent write operations.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `create_index`,`manage`
-         */
-        put: operations["indices-create"];
-        post?: never;
-        /**
-         * Delete indices
-         * @description Deleting an index deletes its documents, shards, and metadata.
-         *     It does not delete related Kibana components, such as data views, visualizations, or dashboards.
-         *
-         *     You cannot delete the current write index of a data stream.
-         *     To delete the index, you must roll over the data stream so a new write index is created.
-         *     You can then use the delete index API to delete the previous write index.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `delete_index`
-         */
-        delete: operations["indices-delete"];
-        options?: never;
-        /**
-         * Check indices
-         * @description Check if one or more indices, index aliases, or data streams exist.
-         */
-        head: operations["indices-exists"];
-        patch?: never;
-        trace?: never;
+    /**
+     * Resolve indices
+     * @description Resolve the names and/or index patterns for indices, aliases, and data streams.
+     *     Multiple patterns and remote clusters are supported.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`
+     */
+    get: operations["indices-resolve-index"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/{index}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/{index}/_mapping": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get mapping definitions
-         * @description For data streams, the API retrieves mappings for the stream’s backing indices.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`
-         */
-        get: operations["indices-get-mapping-1"];
-        /**
-         * Update field mappings
-         * @description Add new fields to an existing data stream or index.
-         *     You can use the update mapping API to:
-         *
-         *     - Add a new field to an existing index
-         *     - Update mappings for multiple indices in a single request
-         *     - Add new properties to an object field
-         *     - Enable multi-fields for an existing field
-         *     - Update supported mapping parameters
-         *     - Change a field's mapping using reindexing
-         *     - Rename a field using a field alias
-         *
-         *     Learn how to use the update mapping API with practical examples in the [Update mapping API examples](https://www.elastic.co/docs/manage-data/data-store/mapping/update-mappings-examples) guide.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `manage`
-         */
-        put: operations["indices-put-mapping"];
-        /**
-         * Update field mappings
-         * @description Add new fields to an existing data stream or index.
-         *     You can use the update mapping API to:
-         *
-         *     - Add a new field to an existing index
-         *     - Update mappings for multiple indices in a single request
-         *     - Add new properties to an object field
-         *     - Enable multi-fields for an existing field
-         *     - Update supported mapping parameters
-         *     - Change a field's mapping using reindexing
-         *     - Rename a field using a field alias
-         *
-         *     Learn how to use the update mapping API with practical examples in the [Update mapping API examples](https://www.elastic.co/docs/manage-data/data-store/mapping/update-mappings-examples) guide.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `manage`
-         */
-        post: operations["indices-put-mapping-1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get index information
+     * @description Get information about one or more indices. For data streams, the API returns information about the
+     *     stream’s backing indices.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`,`manage`
+     */
+    get: operations["indices-get"];
+    /**
+     * Create an index
+     * @description You can use the create index API to add a new index to an Elasticsearch cluster.
+     *     When creating an index, you can specify the following:
+     *
+     *     * Settings for the index.
+     *     * Mappings for fields in the index.
+     *     * Index aliases
+     *
+     *     **Wait for active shards**
+     *
+     *     By default, index creation will only return a response to the client when the primary copies of each shard have been started, or the request times out.
+     *     The index creation response will indicate what happened.
+     *     For example, `acknowledged` indicates whether the index was successfully created in the cluster, `while shards_acknowledged` indicates whether the requisite number of shard copies were started for each shard in the index before timing out.
+     *     Note that it is still possible for either `acknowledged` or `shards_acknowledged` to be `false`, but for the index creation to be successful.
+     *     These values simply indicate whether the operation completed before the timeout.
+     *     If `acknowledged` is false, the request timed out before the cluster state was updated with the newly created index, but it probably will be created sometime soon.
+     *     If `shards_acknowledged` is false, then the request timed out before the requisite number of shards were started (by default just the primaries), even if the cluster state was successfully updated to reflect the newly created index (that is to say, `acknowledged` is `true`).
+     *
+     *     You can change the default of only waiting for the primary shards to start through the index setting `index.write.wait_for_active_shards`.
+     *     Note that changing this setting will also affect the `wait_for_active_shards` value on all subsequent write operations.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `create_index`,`manage`
+     */
+    put: operations["indices-create"];
+    post?: never;
+    /**
+     * Delete indices
+     * @description Deleting an index deletes its documents, shards, and metadata.
+     *     It does not delete related Kibana components, such as data views, visualizations, or dashboards.
+     *
+     *     You cannot delete the current write index of a data stream.
+     *     To delete the index, you must roll over the data stream so a new write index is created.
+     *     You can then use the delete index API to delete the previous write index.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `delete_index`
+     */
+    delete: operations["indices-delete"];
+    options?: never;
+    /**
+     * Check indices
+     * @description Check if one or more indices, index aliases, or data streams exist.
+     */
+    head: operations["indices-exists"];
+    patch?: never;
+    trace?: never;
+  };
+  "/{index}/_mapping": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/_data_stream": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get data streams
-         * @description Get information about one or more data streams.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`
-         */
-        get: operations["indices-get-data-stream"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get mapping definitions
+     * @description For data streams, the API retrieves mappings for the stream’s backing indices.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`
+     */
+    get: operations["indices-get-mapping-1"];
+    /**
+     * Update field mappings
+     * @description Add new fields to an existing data stream or index.
+     *     You can use the update mapping API to:
+     *
+     *     - Add a new field to an existing index
+     *     - Update mappings for multiple indices in a single request
+     *     - Add new properties to an object field
+     *     - Enable multi-fields for an existing field
+     *     - Update supported mapping parameters
+     *     - Change a field's mapping using reindexing
+     *     - Rename a field using a field alias
+     *
+     *     Learn how to use the update mapping API with practical examples in the [Update mapping API examples](https://www.elastic.co/docs/manage-data/data-store/mapping/update-mappings-examples) guide.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `manage`
+     */
+    put: operations["indices-put-mapping"];
+    /**
+     * Update field mappings
+     * @description Add new fields to an existing data stream or index.
+     *     You can use the update mapping API to:
+     *
+     *     - Add a new field to an existing index
+     *     - Update mappings for multiple indices in a single request
+     *     - Add new properties to an object field
+     *     - Enable multi-fields for an existing field
+     *     - Update supported mapping parameters
+     *     - Change a field's mapping using reindexing
+     *     - Rename a field using a field alias
+     *
+     *     Learn how to use the update mapping API with practical examples in the [Update mapping API examples](https://www.elastic.co/docs/manage-data/data-store/mapping/update-mappings-examples) guide.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `manage`
+     */
+    post: operations["indices-put-mapping-1"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/_data_stream": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/_data_stream/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get data streams
-         * @description Get information about one or more data streams.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`
-         */
-        get: operations["indices-get-data-stream-1"];
-        /**
-         * Create a data stream
-         * @description You must have a matching index template with data stream enabled.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `create_index`
-         */
-        put: operations["indices-create-data-stream"];
-        post?: never;
-        /**
-         * Delete data streams
-         * @description Deletes one or more data streams and their backing indices.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `delete_index`
-         */
-        delete: operations["indices-delete-data-stream"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get data streams
+     * @description Get information about one or more data streams.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`
+     */
+    get: operations["indices-get-data-stream"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/_data_stream/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/{index}/_field_caps": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get the field capabilities
-         * @description Get information about the capabilities of fields among multiple indices.
-         *
-         *     For data streams, the API returns field capabilities among the stream’s backing indices.
-         *     It returns runtime fields like any other field.
-         *     For example, a runtime field with a type of keyword is returned the same as any other field that belongs to the `keyword` family.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`,`read`
-         */
-        get: operations["field-caps-2"];
-        put?: never;
-        /**
-         * Get the field capabilities
-         * @description Get information about the capabilities of fields among multiple indices.
-         *
-         *     For data streams, the API returns field capabilities among the stream’s backing indices.
-         *     It returns runtime fields like any other field.
-         *     For example, a runtime field with a type of keyword is returned the same as any other field that belongs to the `keyword` family.
-         *
-         *     ## Required authorization
-         *
-         *     * Index privileges: `view_index_metadata`,`read`
-         */
-        post: operations["field-caps-3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get data streams
+     * @description Get information about one or more data streams.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`
+     */
+    get: operations["indices-get-data-stream-1"];
+    /**
+     * Create a data stream
+     * @description You must have a matching index template with data stream enabled.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `create_index`
+     */
+    put: operations["indices-create-data-stream"];
+    post?: never;
+    /**
+     * Delete data streams
+     * @description Deletes one or more data streams and their backing indices.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `delete_index`
+     */
+    delete: operations["indices-delete-data-stream"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/{index}/_field_caps": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get cluster info
-         * @description Get basic build, version, and cluster information.
-         *     ::: In Serverless, this API is retained for backward compatibility only. Some response fields, such as the version number, should be ignored.
-         *
-         *     ## Required authorization
-         *
-         *     * Cluster privileges: `monitor`
-         */
-        get: operations["info"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        /**
-         * Ping the cluster
-         * @description Get information about whether the cluster is running.
-         */
-        head: operations["ping"];
-        patch?: never;
-        trace?: never;
+    /**
+     * Get the field capabilities
+     * @description Get information about the capabilities of fields among multiple indices.
+     *
+     *     For data streams, the API returns field capabilities among the stream’s backing indices.
+     *     It returns runtime fields like any other field.
+     *     For example, a runtime field with a type of keyword is returned the same as any other field that belongs to the `keyword` family.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`,`read`
+     */
+    get: operations["field-caps-2"];
+    put?: never;
+    /**
+     * Get the field capabilities
+     * @description Get information about the capabilities of fields among multiple indices.
+     *
+     *     For data streams, the API returns field capabilities among the stream’s backing indices.
+     *     It returns runtime fields like any other field.
+     *     For example, a runtime field with a type of keyword is returned the same as any other field that belongs to the `keyword` family.
+     *
+     *     ## Required authorization
+     *
+     *     * Index privileges: `view_index_metadata`,`read`
+     */
+    post: operations["field-caps-3"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /**
+     * Get cluster info
+     * @description Get basic build, version, and cluster information.
+     *     ::: In Serverless, this API is retained for backward compatibility only. Some response fields, such as the version number, should be ignored.
+     *
+     *     ## Required authorization
+     *
+     *     * Cluster privileges: `monitor`
+     */
+    get: operations["info"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    /**
+     * Ping the cluster
+     * @description Get information about whether the cluster is running.
+     */
+    head: operations["ping"];
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        "_types.Id": string;
-        "_types.AcknowledgedResponseBase": {
-            /** @description For a successful response, this value is always true. On failure, an exception is returned instead. */
-            acknowledged: boolean;
-        };
+  schemas: {
+    "_types.Id": string;
+    "_types.AcknowledgedResponseBase": {
+      /** @description For a successful response, this value is always true. On failure, an exception is returned instead. */
+      acknowledged: boolean;
+    };
+    /**
+     * @description A duration. Units can be `nanos`, `micros`, `ms` (milliseconds), `s` (seconds), `m` (minutes), `h` (hours) and
+     *     `d` (days). Also accepts "0" without a unit and "-1" to indicate an unspecified value.
+     */
+    "_types.Duration": string | "-1" | "0";
+    "_types.Metadata": {
+      [key: string]: Record<string, never>;
+    };
+    /** @description A field value. */
+    "_types.FieldValue": number | string | boolean | (string | null);
+    "_types.TopLeftBottomRightGeoBounds": {
+      top_left: components["schemas"]["_types.GeoLocation"];
+      bottom_right: components["schemas"]["_types.GeoLocation"];
+    };
+    /**
+     * @description A latitude/longitude as a 2 dimensional point. It can be represented in various ways:
+     *     - as a `{lat, long}` object
+     *     - as a geo hash value
+     *     - as a `[lon, lat]` array
+     *     - as a string in `"<lat>, <lon>"` or WKT point formats
+     */
+    "_types.GeoLocation":
+      | components["schemas"]["_types.LatLonGeoLocation"]
+      | components["schemas"]["_types.GeoHashLocation"]
+      | number[]
+      | string;
+    "_types.LatLonGeoLocation": {
+      /** @description Latitude */
+      lat: number;
+      /** @description Longitude */
+      lon: number;
+    };
+    "_types.GeoHashLocation": {
+      geohash: components["schemas"]["_types.GeoHash"];
+    };
+    "_types.GeoHash": string;
+    /**
+     * @description A geo bounding box. It can be represented in various ways:
+     *     - as 4 top/bottom/left/right coordinates
+     *     - as 2 top_left / bottom_right points
+     *     - as 2 top_right / bottom_left points
+     *     - as a WKT bounding box
+     */
+    "_types.GeoBounds":
+      | components["schemas"]["_types.CoordsGeoBounds"]
+      | components["schemas"]["_types.TopLeftBottomRightGeoBounds"]
+      | components["schemas"]["_types.TopRightBottomLeftGeoBounds"]
+      | components["schemas"]["_types.WktGeoBounds"];
+    "_types.CoordsGeoBounds": {
+      top: number;
+      bottom: number;
+      left: number;
+      right: number;
+    };
+    "_types.TopRightBottomLeftGeoBounds": {
+      top_right: components["schemas"]["_types.GeoLocation"];
+      bottom_left: components["schemas"]["_types.GeoLocation"];
+    };
+    "_types.WktGeoBounds": {
+      wkt: string;
+    };
+    "_types.EpochTimeUnitMillis": components["schemas"]["_types.UnitMillis"];
+    /** @description Time unit for milliseconds */
+    "_types.UnitMillis": number;
+    /**
+     * @description A date histogram interval. Similar to `Duration` with additional units: `w` (week), `M` (month), `q` (quarter) and
+     *     `y` (year)
+     */
+    "_types.DurationLarge": string;
+    /** @description A map tile reference, represented as `{zoom}/{x}/{y}` */
+    "_types.GeoTile": string;
+    /** @description A map hex cell (H3) reference */
+    "_types.GeoHexCell": string;
+    "_types.aggregations.CompositeAggregateKey": {
+      [key: string]: components["schemas"]["_types.FieldValue"];
+    };
+    "_types.IndexName": string;
+    /** @description Path to field or array of paths. Some API's support wildcards in the path to select multiple fields. */
+    "_types.Field": string;
+    "_types.VersionNumber": number;
+    "_types.SortResults": components["schemas"]["_types.FieldValue"][];
+    "_types.DurationValueUnitMillis": components["schemas"]["_types.UnitMillis"];
+    "_types.ShardStatistics": {
+      failed: components["schemas"]["_types.uint"];
+      successful: components["schemas"]["_types.uint"];
+      total: components["schemas"]["_types.uint"];
+      failures?: components["schemas"]["_types.ShardFailure"][];
+      skipped?: components["schemas"]["_types.uint"];
+    };
+    "_types.uint": number;
+    "_types.ShardFailure": {
+      index?: components["schemas"]["_types.IndexName"];
+      node?: string;
+      reason: components["schemas"]["_types.ErrorCause"];
+      shard?: number;
+      status?: string;
+      primary?: boolean;
+    };
+    /**
+     * @description Cause and details about a request failure. This class defines the properties common to all error types.
+     *     Additional details are also provided, that depend on the error type.
+     */
+    "_types.ErrorCause": {
+      /** @description The type of error */
+      type: string;
+      /** @description A human-readable explanation of the error, in English. */
+      reason?: string | (string | null);
+      /** @description The server stack trace. Present only if the `error_trace=true` parameter was sent with the request. */
+      stack_trace?: string;
+      caused_by?: components["schemas"]["_types.ErrorCause"];
+      root_cause?: components["schemas"]["_types.ErrorCause"][];
+      suppressed?: components["schemas"]["_types.ErrorCause"][];
+    };
+    "_types.NodeId": string;
+    "_types.Routing": string;
+    /**
+     * @description A date and time, either as a string whose format can depend on the context (defaulting to ISO 8601), or a
+     *     number of milliseconds since the Epoch. Elasticsearch accepts both as input, but will generally output a string
+     *     representation.
+     */
+    "_types.DateTime": string | components["schemas"]["_types.EpochTimeUnitMillis"];
+    "_types.Indices":
+      | components["schemas"]["_types.IndexName"]
+      | components["schemas"]["_types.IndexName"][];
+    /** @enum {string} */
+    "_types.query_dsl.Operator": "and" | "AND" | "or" | "OR";
+    "_types.Fields":
+      | components["schemas"]["_types.Field"]
+      | components["schemas"]["_types.Field"][];
+    "_types.ExpandWildcards":
+      | components["schemas"]["_types.ExpandWildcard"]
+      | components["schemas"]["_types.ExpandWildcard"][];
+    /** @enum {string} */
+    "_types.ExpandWildcard": "all" | "open" | "closed" | "hidden" | "none";
+    /**
+     * @description Number of hits matching the query to count accurately. If true, the exact
+     *     number of hits is returned at the cost of some performance. If false, the
+     *     response does not include the total number of hits matching the query.
+     *     Defaults to 10,000 hits.
+     */
+    "_global.search._types.TrackHits": boolean | number;
+    "_types.aggregations.AggregationContainer": {
+      /**
+       * @description Sub-aggregations for this aggregation.
+       *     Only applies to bucket aggregations.
+       */
+      aggregations?: {
+        [key: string]: components["schemas"]["_types.aggregations.AggregationContainer"];
+      };
+      meta?: components["schemas"]["_types.Metadata"];
+    } & {
+      adjacency_matrix?: components["schemas"]["_types.aggregations.AdjacencyMatrixAggregation"];
+      auto_date_histogram?: components["schemas"]["_types.aggregations.AutoDateHistogramAggregation"];
+      avg?: components["schemas"]["_types.aggregations.AverageAggregation"];
+      avg_bucket?: components["schemas"]["_types.aggregations.AverageBucketAggregation"];
+      boxplot?: components["schemas"]["_types.aggregations.BoxplotAggregation"];
+      bucket_script?: components["schemas"]["_types.aggregations.BucketScriptAggregation"];
+      bucket_selector?: components["schemas"]["_types.aggregations.BucketSelectorAggregation"];
+      bucket_sort?: components["schemas"]["_types.aggregations.BucketSortAggregation"];
+      bucket_count_ks_test?: components["schemas"]["_types.aggregations.BucketKsAggregation"];
+      bucket_correlation?: components["schemas"]["_types.aggregations.BucketCorrelationAggregation"];
+      cardinality?: components["schemas"]["_types.aggregations.CardinalityAggregation"];
+      cartesian_bounds?: components["schemas"]["_types.aggregations.CartesianBoundsAggregation"];
+      cartesian_centroid?: components["schemas"]["_types.aggregations.CartesianCentroidAggregation"];
+      categorize_text?: components["schemas"]["_types.aggregations.CategorizeTextAggregation"];
+      change_point?: components["schemas"]["_types.aggregations.ChangePointAggregation"];
+      children?: components["schemas"]["_types.aggregations.ChildrenAggregation"];
+      composite?: components["schemas"]["_types.aggregations.CompositeAggregation"];
+      cumulative_cardinality?: components["schemas"]["_types.aggregations.CumulativeCardinalityAggregation"];
+      cumulative_sum?: components["schemas"]["_types.aggregations.CumulativeSumAggregation"];
+      date_histogram?: components["schemas"]["_types.aggregations.DateHistogramAggregation"];
+      date_range?: components["schemas"]["_types.aggregations.DateRangeAggregation"];
+      derivative?: components["schemas"]["_types.aggregations.DerivativeAggregation"];
+      diversified_sampler?: components["schemas"]["_types.aggregations.DiversifiedSamplerAggregation"];
+      extended_stats?: components["schemas"]["_types.aggregations.ExtendedStatsAggregation"];
+      extended_stats_bucket?: components["schemas"]["_types.aggregations.ExtendedStatsBucketAggregation"];
+      frequent_item_sets?: components["schemas"]["_types.aggregations.FrequentItemSetsAggregation"];
+      filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      filters?: components["schemas"]["_types.aggregations.FiltersAggregation"];
+      geo_bounds?: components["schemas"]["_types.aggregations.GeoBoundsAggregation"];
+      geo_centroid?: components["schemas"]["_types.aggregations.GeoCentroidAggregation"];
+      geo_distance?: components["schemas"]["_types.aggregations.GeoDistanceAggregation"];
+      geohash_grid?: components["schemas"]["_types.aggregations.GeoHashGridAggregation"];
+      geo_line?: components["schemas"]["_types.aggregations.GeoLineAggregation"];
+      geotile_grid?: components["schemas"]["_types.aggregations.GeoTileGridAggregation"];
+      geohex_grid?: components["schemas"]["_types.aggregations.GeohexGridAggregation"];
+      global?: components["schemas"]["_types.aggregations.GlobalAggregation"];
+      histogram?: components["schemas"]["_types.aggregations.HistogramAggregation"];
+      ip_range?: components["schemas"]["_types.aggregations.IpRangeAggregation"];
+      ip_prefix?: components["schemas"]["_types.aggregations.IpPrefixAggregation"];
+      inference?: components["schemas"]["_types.aggregations.InferenceAggregation"];
+      line?: components["schemas"]["_types.aggregations.GeoLineAggregation"];
+      matrix_stats?: components["schemas"]["_types.aggregations.MatrixStatsAggregation"];
+      max?: components["schemas"]["_types.aggregations.MaxAggregation"];
+      max_bucket?: components["schemas"]["_types.aggregations.MaxBucketAggregation"];
+      median_absolute_deviation?: components["schemas"]["_types.aggregations.MedianAbsoluteDeviationAggregation"];
+      min?: components["schemas"]["_types.aggregations.MinAggregation"];
+      min_bucket?: components["schemas"]["_types.aggregations.MinBucketAggregation"];
+      missing?: components["schemas"]["_types.aggregations.MissingAggregation"];
+      moving_avg?: components["schemas"]["_types.aggregations.MovingAverageAggregation"];
+      moving_percentiles?: components["schemas"]["_types.aggregations.MovingPercentilesAggregation"];
+      moving_fn?: components["schemas"]["_types.aggregations.MovingFunctionAggregation"];
+      multi_terms?: components["schemas"]["_types.aggregations.MultiTermsAggregation"];
+      nested?: components["schemas"]["_types.aggregations.NestedAggregation"];
+      normalize?: components["schemas"]["_types.aggregations.NormalizeAggregation"];
+      parent?: components["schemas"]["_types.aggregations.ParentAggregation"];
+      percentile_ranks?: components["schemas"]["_types.aggregations.PercentileRanksAggregation"];
+      percentiles?: components["schemas"]["_types.aggregations.PercentilesAggregation"];
+      percentiles_bucket?: components["schemas"]["_types.aggregations.PercentilesBucketAggregation"];
+      range?: components["schemas"]["_types.aggregations.RangeAggregation"];
+      rare_terms?: components["schemas"]["_types.aggregations.RareTermsAggregation"];
+      rate?: components["schemas"]["_types.aggregations.RateAggregation"];
+      reverse_nested?: components["schemas"]["_types.aggregations.ReverseNestedAggregation"];
+      random_sampler?: components["schemas"]["_types.aggregations.RandomSamplerAggregation"];
+      sampler?: components["schemas"]["_types.aggregations.SamplerAggregation"];
+      scripted_metric?: components["schemas"]["_types.aggregations.ScriptedMetricAggregation"];
+      serial_diff?: components["schemas"]["_types.aggregations.SerialDifferencingAggregation"];
+      significant_terms?: components["schemas"]["_types.aggregations.SignificantTermsAggregation"];
+      significant_text?: components["schemas"]["_types.aggregations.SignificantTextAggregation"];
+      stats?: components["schemas"]["_types.aggregations.StatsAggregation"];
+      stats_bucket?: components["schemas"]["_types.aggregations.StatsBucketAggregation"];
+      string_stats?: components["schemas"]["_types.aggregations.StringStatsAggregation"];
+      sum?: components["schemas"]["_types.aggregations.SumAggregation"];
+      sum_bucket?: components["schemas"]["_types.aggregations.SumBucketAggregation"];
+      terms?: components["schemas"]["_types.aggregations.TermsAggregation"];
+      time_series?: components["schemas"]["_types.aggregations.TimeSeriesAggregation"];
+      top_hits?: components["schemas"]["_types.aggregations.TopHitsAggregation"];
+      t_test?: components["schemas"]["_types.aggregations.TTestAggregation"];
+      top_metrics?: components["schemas"]["_types.aggregations.TopMetricsAggregation"];
+      value_count?: components["schemas"]["_types.aggregations.ValueCountAggregation"];
+      weighted_avg?: components["schemas"]["_types.aggregations.WeightedAverageAggregation"];
+      variable_width_histogram?: components["schemas"]["_types.aggregations.VariableWidthHistogramAggregation"];
+    };
+    "_types.aggregations.AdjacencyMatrixAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      /**
+       * @description Filters used to create buckets.
+       *     At least one filter is required.
+       */
+      filters?: {
+        [key: string]: components["schemas"]["_types.query_dsl.QueryContainer"];
+      };
+      /** @description Separator used to concatenate filter names. Defaults to &. */
+      separator?: string;
+    };
+    /** @description An Elasticsearch Query DSL (Domain Specific Language) object that defines a query. */
+    "_types.query_dsl.QueryContainer": {
+      bool?: components["schemas"]["_types.query_dsl.BoolQuery"];
+      boosting?: components["schemas"]["_types.query_dsl.BoostingQuery"];
+      /** @deprecated */
+      common?: {
+        [key: string]: components["schemas"]["_types.query_dsl.CommonTermsQuery"];
+      };
+      combined_fields?: components["schemas"]["_types.query_dsl.CombinedFieldsQuery"];
+      constant_score?: components["schemas"]["_types.query_dsl.ConstantScoreQuery"];
+      dis_max?: components["schemas"]["_types.query_dsl.DisMaxQuery"];
+      distance_feature?: components["schemas"]["_types.query_dsl.DistanceFeatureQuery"];
+      exists?: components["schemas"]["_types.query_dsl.ExistsQuery"];
+      function_score?: components["schemas"]["_types.query_dsl.FunctionScoreQuery"];
+      /** @description Returns documents that contain terms similar to the search term, as measured by a Levenshtein edit distance. */
+      fuzzy?: {
+        [key: string]: components["schemas"]["_types.query_dsl.FuzzyQuery"];
+      };
+      geo_bounding_box?: components["schemas"]["_types.query_dsl.GeoBoundingBoxQuery"];
+      geo_distance?: components["schemas"]["_types.query_dsl.GeoDistanceQuery"];
+      /** @description Matches `geo_point` and `geo_shape` values that intersect a grid cell from a GeoGrid aggregation. */
+      geo_grid?: {
+        [key: string]: components["schemas"]["_types.query_dsl.GeoGridQuery"];
+      };
+      geo_polygon?: components["schemas"]["_types.query_dsl.GeoPolygonQuery"];
+      geo_shape?: components["schemas"]["_types.query_dsl.GeoShapeQuery"];
+      has_child?: components["schemas"]["_types.query_dsl.HasChildQuery"];
+      has_parent?: components["schemas"]["_types.query_dsl.HasParentQuery"];
+      ids?: components["schemas"]["_types.query_dsl.IdsQuery"];
+      /** @description Returns documents based on the order and proximity of matching terms. */
+      intervals?: {
+        [key: string]: components["schemas"]["_types.query_dsl.IntervalsQuery"];
+      };
+      knn?: components["schemas"]["_types.KnnQuery"];
+      /**
+       * @description Returns documents that match a provided text, number, date or boolean value.
+       *     The provided text is analyzed before matching.
+       */
+      match?: {
+        [key: string]: components["schemas"]["_types.query_dsl.MatchQuery"];
+      };
+      match_all?: components["schemas"]["_types.query_dsl.MatchAllQuery"];
+      /**
+       * @description Analyzes its input and constructs a `bool` query from the terms.
+       *     Each term except the last is used in a `term` query.
+       *     The last term is used in a prefix query.
+       */
+      match_bool_prefix?: {
+        [key: string]: components["schemas"]["_types.query_dsl.MatchBoolPrefixQuery"];
+      };
+      match_none?: components["schemas"]["_types.query_dsl.MatchNoneQuery"];
+      /** @description Analyzes the text and creates a phrase query out of the analyzed text. */
+      match_phrase?: {
+        [key: string]: components["schemas"]["_types.query_dsl.MatchPhraseQuery"];
+      };
+      /**
+       * @description Returns documents that contain the words of a provided text, in the same order as provided.
+       *     The last term of the provided text is treated as a prefix, matching any words that begin with that term.
+       */
+      match_phrase_prefix?: {
+        [key: string]: components["schemas"]["_types.query_dsl.MatchPhrasePrefixQuery"];
+      };
+      more_like_this?: components["schemas"]["_types.query_dsl.MoreLikeThisQuery"];
+      multi_match?: components["schemas"]["_types.query_dsl.MultiMatchQuery"];
+      nested?: components["schemas"]["_types.query_dsl.NestedQuery"];
+      parent_id?: components["schemas"]["_types.query_dsl.ParentIdQuery"];
+      percolate?: components["schemas"]["_types.query_dsl.PercolateQuery"];
+      pinned?: components["schemas"]["_types.query_dsl.PinnedQuery"];
+      /** @description Returns documents that contain a specific prefix in a provided field. */
+      prefix?: {
+        [key: string]: components["schemas"]["_types.query_dsl.PrefixQuery"];
+      };
+      query_string?: components["schemas"]["_types.query_dsl.QueryStringQuery"];
+      /** @description Returns documents that contain terms within a provided range. */
+      range?: {
+        [key: string]: components["schemas"]["_types.query_dsl.RangeQuery"];
+      };
+      rank_feature?: components["schemas"]["_types.query_dsl.RankFeatureQuery"];
+      /** @description Returns documents that contain terms matching a regular expression. */
+      regexp?: {
+        [key: string]: components["schemas"]["_types.query_dsl.RegexpQuery"];
+      };
+      rule?: components["schemas"]["_types.query_dsl.RuleQuery"];
+      script?: components["schemas"]["_types.query_dsl.ScriptQuery"];
+      script_score?: components["schemas"]["_types.query_dsl.ScriptScoreQuery"];
+      semantic?: components["schemas"]["_types.query_dsl.SemanticQuery"];
+      shape?: components["schemas"]["_types.query_dsl.ShapeQuery"];
+      simple_query_string?: components["schemas"]["_types.query_dsl.SimpleQueryStringQuery"];
+      span_containing?: components["schemas"]["_types.query_dsl.SpanContainingQuery"];
+      span_field_masking?: components["schemas"]["_types.query_dsl.SpanFieldMaskingQuery"];
+      span_first?: components["schemas"]["_types.query_dsl.SpanFirstQuery"];
+      span_multi?: components["schemas"]["_types.query_dsl.SpanMultiTermQuery"];
+      span_near?: components["schemas"]["_types.query_dsl.SpanNearQuery"];
+      span_not?: components["schemas"]["_types.query_dsl.SpanNotQuery"];
+      span_or?: components["schemas"]["_types.query_dsl.SpanOrQuery"];
+      /** @description Matches spans containing a term. */
+      span_term?: {
+        [key: string]: components["schemas"]["_types.query_dsl.SpanTermQuery"];
+      };
+      span_within?: components["schemas"]["_types.query_dsl.SpanWithinQuery"];
+      sparse_vector?: components["schemas"]["_types.query_dsl.SparseVectorQuery"];
+      /**
+       * @description Returns documents that contain an exact term in a provided field.
+       *     To return a document, the query term must exactly match the queried field's value, including whitespace and capitalization.
+       */
+      term?: {
+        [key: string]: components["schemas"]["_types.query_dsl.TermQuery"];
+      };
+      terms?: components["schemas"]["_types.query_dsl.TermsQuery"];
+      /**
+       * @description Returns documents that contain a minimum number of exact terms in a provided field.
+       *     To return a document, a required number of terms must exactly match the field values, including whitespace and capitalization.
+       */
+      terms_set?: {
+        [key: string]: components["schemas"]["_types.query_dsl.TermsSetQuery"];
+      };
+      /**
+       * @deprecated
+       * @description Uses a natural language processing model to convert the query text into a list of token-weight pairs which are then used in a query against a sparse vector or rank features field.
+       */
+      text_expansion?: {
+        [key: string]: components["schemas"]["_types.query_dsl.TextExpansionQuery"];
+      };
+      /**
+       * @deprecated
+       * @description Supports returning text_expansion query results by sending in precomputed tokens with the query.
+       */
+      weighted_tokens?: {
+        [key: string]: components["schemas"]["_types.query_dsl.WeightedTokensQuery"];
+      };
+      /** @description Returns documents that contain terms matching a wildcard pattern. */
+      wildcard?: {
+        [key: string]: components["schemas"]["_types.query_dsl.WildcardQuery"];
+      };
+      wrapper?: components["schemas"]["_types.query_dsl.WrapperQuery"];
+      type?: components["schemas"]["_types.query_dsl.TypeQuery"];
+    };
+    "_types.query_dsl.BoolQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description The clause (query) must appear in matching documents.
+       *     However, unlike `must`, the score of the query will be ignored.
+       */
+      filter?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      /** @description The clause (query) must appear in matching documents and will contribute to the score. */
+      must?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+      /**
+       * @description The clause (query) must not appear in the matching documents.
+       *     Because scoring is ignored, a score of `0` is returned for all documents.
+       */
+      must_not?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+      /** @description The clause (query) should appear in the matching document. */
+      should?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+    };
+    /** @description The minimum number of terms that should match as integer, percentage or range */
+    "_types.MinimumShouldMatch": number | string;
+    "_types.query_dsl.QueryBase": {
+      /**
+       * @description Floating point number used to decrease or increase the relevance scores of the query.
+       *     Boost values are relative to the default value of 1.0.
+       *     A boost value between 0 and 1.0 decreases the relevance score.
+       *     A value greater than 1.0 increases the relevance score.
+       * @default 1
+       */
+      boost: number;
+      _name?: string;
+    };
+    "_types.query_dsl.BoostingQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Floating point number between 0 and 1.0 used to decrease the relevance scores of documents matching the `negative` query. */
+      negative_boost: number;
+      negative: components["schemas"]["_types.query_dsl.QueryContainer"];
+      positive: components["schemas"]["_types.query_dsl.QueryContainer"];
+    };
+    "_types.query_dsl.CommonTermsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      analyzer?: string;
+      cutoff_frequency?: number;
+      high_freq_operator?: components["schemas"]["_types.query_dsl.Operator"];
+      low_freq_operator?: components["schemas"]["_types.query_dsl.Operator"];
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      query: string;
+    };
+    "_types.query_dsl.CombinedFieldsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description List of fields to search. Field wildcard patterns are allowed. Only `text` fields are supported, and they must all have the same search `analyzer`. */
+      fields: components["schemas"]["_types.Field"][];
+      /**
+       * @description Text to search for in the provided `fields`.
+       *     The `combined_fields` query analyzes the provided text before performing a search.
+       */
+      query: string;
+      /**
+       * @description If true, match phrase queries are automatically created for multi-term synonyms.
+       * @default true
+       */
+      auto_generate_synonyms_phrase_query: boolean;
+      operator?: components["schemas"]["_types.query_dsl.CombinedFieldsOperator"];
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      zero_terms_query?: components["schemas"]["_types.query_dsl.CombinedFieldsZeroTerms"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.CombinedFieldsOperator": "or" | "and";
+    /** @enum {string} */
+    "_types.query_dsl.CombinedFieldsZeroTerms": "none" | "all";
+    "_types.query_dsl.ConstantScoreQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      filter: components["schemas"]["_types.query_dsl.QueryContainer"];
+    };
+    "_types.query_dsl.DisMaxQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description One or more query clauses.
+       *     Returned documents must match one or more of these queries.
+       *     If a document matches multiple queries, Elasticsearch uses the highest relevance score.
+       */
+      queries: components["schemas"]["_types.query_dsl.QueryContainer"][];
+      /**
+       * @description Floating point number between 0 and 1.0 used to increase the relevance scores of documents matching multiple query clauses.
+       * @default 0
+       */
+      tie_breaker: number;
+    };
+    "_types.query_dsl.DistanceFeatureQuery":
+      | components["schemas"]["_types.query_dsl.UntypedDistanceFeatureQuery"]
+      | components["schemas"]["_types.query_dsl.GeoDistanceFeatureQuery"]
+      | components["schemas"]["_types.query_dsl.DateDistanceFeatureQuery"];
+    "_types.query_dsl.UntypedDistanceFeatureQuery": components["schemas"]["_types.query_dsl.DistanceFeatureQueryBase"] &
+      Record<string, never>;
+    "_types.query_dsl.DistanceFeatureQueryBase": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Date or point of origin used to calculate distances.
+       *     If the `field` value is a `date` or `date_nanos` field, the `origin` value must be a date.
+       *     Date Math, such as `now-1h`, is supported.
+       *     If the field value is a `geo_point` field, the `origin` value must be a geopoint.
+       */
+      origin: Record<string, never>;
+      /**
+       * @description Distance from the `origin` at which relevance scores receive half of the `boost` value.
+       *     If the `field` value is a `date` or `date_nanos` field, the `pivot` value must be a time unit, such as `1h` or `10d`. If the `field` value is a `geo_point` field, the `pivot` value must be a distance unit, such as `1km` or `12m`.
+       */
+      pivot: Record<string, never>;
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.query_dsl.GeoDistanceFeatureQuery": components["schemas"]["_types.query_dsl.DistanceFeatureQueryBaseGeoLocationDistance"] &
+      Record<string, never>;
+    "_types.query_dsl.DistanceFeatureQueryBaseGeoLocationDistance": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      origin: components["schemas"]["_types.GeoLocation"];
+      pivot: components["schemas"]["_types.Distance"];
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.Distance": string;
+    "_types.query_dsl.DateDistanceFeatureQuery": components["schemas"]["_types.query_dsl.DistanceFeatureQueryBaseDateMathDuration"] &
+      Record<string, never>;
+    "_types.query_dsl.DistanceFeatureQueryBaseDateMathDuration": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      origin: components["schemas"]["_types.DateMath"];
+      pivot: components["schemas"]["_types.Duration"];
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.DateMath": string;
+    "_types.query_dsl.ExistsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.query_dsl.FunctionScoreQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      boost_mode?: components["schemas"]["_types.query_dsl.FunctionBoostMode"];
+      /** @description One or more functions that compute a new score for each document returned by the query. */
+      functions?: components["schemas"]["_types.query_dsl.FunctionScoreContainer"][];
+      /** @description Restricts the new score to not exceed the provided limit. */
+      max_boost?: number;
+      /** @description Excludes documents that do not meet the provided score threshold. */
+      min_score?: number;
+      query?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      score_mode?: components["schemas"]["_types.query_dsl.FunctionScoreMode"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.FunctionBoostMode": "multiply" | "replace" | "sum" | "avg" | "max" | "min";
+    "_types.query_dsl.FunctionScoreContainer": {
+      filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      weight?: number;
+    } & {
+      exp?: components["schemas"]["_types.query_dsl.DecayFunction"];
+      gauss?: components["schemas"]["_types.query_dsl.DecayFunction"];
+      linear?: components["schemas"]["_types.query_dsl.DecayFunction"];
+      field_value_factor?: components["schemas"]["_types.query_dsl.FieldValueFactorScoreFunction"];
+      random_score?: components["schemas"]["_types.query_dsl.RandomScoreFunction"];
+      script_score?: components["schemas"]["_types.query_dsl.ScriptScoreFunction"];
+    };
+    "_types.query_dsl.DecayFunction":
+      | components["schemas"]["_types.query_dsl.UntypedDecayFunction"]
+      | components["schemas"]["_types.query_dsl.DateDecayFunction"]
+      | components["schemas"]["_types.query_dsl.NumericDecayFunction"]
+      | components["schemas"]["_types.query_dsl.GeoDecayFunction"];
+    "_types.query_dsl.UntypedDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBase"] &
+      Record<string, never>;
+    "_types.query_dsl.DecayFunctionBase": {
+      multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.MultiValueMode": "min" | "max" | "avg" | "sum";
+    "_types.query_dsl.DateDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBaseDateMathDuration"] &
+      Record<string, never>;
+    "_types.query_dsl.DecayFunctionBaseDateMathDuration": {
+      multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
+    };
+    "_types.query_dsl.NumericDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBasedoubledouble"] &
+      Record<string, never>;
+    "_types.query_dsl.DecayFunctionBasedoubledouble": {
+      multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
+    };
+    "_types.query_dsl.GeoDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBaseGeoLocationDistance"] &
+      Record<string, never>;
+    "_types.query_dsl.DecayFunctionBaseGeoLocationDistance": {
+      multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
+    };
+    "_types.query_dsl.FieldValueFactorScoreFunction": {
+      field: components["schemas"]["_types.Field"];
+      /**
+       * @description Optional factor to multiply the field value with.
+       * @default 1
+       */
+      factor: number;
+      /**
+       * @description Value used if the document doesn’t have that field.
+       *     The modifier and factor are still applied to it as though it were read from the document.
+       */
+      missing?: number;
+      modifier?: components["schemas"]["_types.query_dsl.FieldValueFactorModifier"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.FieldValueFactorModifier":
+      | "none"
+      | "log"
+      | "log1p"
+      | "log2p"
+      | "ln"
+      | "ln1p"
+      | "ln2p"
+      | "square"
+      | "sqrt"
+      | "reciprocal";
+    "_types.query_dsl.RandomScoreFunction": {
+      field?: components["schemas"]["_types.Field"];
+      seed?: number | string;
+    };
+    "_types.query_dsl.ScriptScoreFunction": {
+      script: components["schemas"]["_types.Script"];
+    };
+    "_types.Script": {
+      source?: components["schemas"]["_types.ScriptSource"];
+      id?: components["schemas"]["_types.Id"];
+      /**
+       * @description Specifies any named parameters that are passed into the script as variables.
+       *     Use parameters instead of hard-coded values to decrease compile time.
+       */
+      params?: {
+        [key: string]: Record<string, never>;
+      };
+      lang?: components["schemas"]["_types.ScriptLanguage"];
+      options?: {
+        [key: string]: string;
+      };
+    };
+    "_types.ScriptSource":
+      | string
+      | components["schemas"]["_global.search._types.SearchRequestBody"];
+    "_global.search._types.SearchRequestBody": {
+      /** @description Defines the aggregations that are run as part of the search request. */
+      aggregations?: {
+        [key: string]: components["schemas"]["_types.aggregations.AggregationContainer"];
+      };
+      collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
+      /**
+       * @description If `true`, the request returns detailed information about score computation as part of a hit.
+       * @default false
+       */
+      explain: boolean;
+      /** @description Configuration of search extensions defined by Elasticsearch plugins. */
+      ext?: {
+        [key: string]: Record<string, never>;
+      };
+      /**
+       * @description The starting document offset, which must be non-negative.
+       *     By default, you cannot page through more than 10,000 hits using the `from` and `size` parameters.
+       *     To page through more hits, use the `search_after` parameter.
+       * @default 0
+       */
+      from: number;
+      highlight?: components["schemas"]["_global.search._types.Highlight"];
+      track_total_hits?: components["schemas"]["_global.search._types.TrackHits"];
+      /**
+       * @description Boost the `_score` of documents from specified indices.
+       *     The boost value is the factor by which scores are multiplied.
+       *     A boost value greater than `1.0` increases the score.
+       *     A boost value between `0` and `1.0` decreases the score.
+       */
+      indices_boost?: {
+        [key: string]: number;
+      }[];
+      /**
+       * @description An array of wildcard (`*`) field patterns.
+       *     The request returns doc values for field names matching these patterns in the `hits.fields` property of the response.
+       */
+      docvalue_fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
+      /** @description The approximate kNN search to run. */
+      knn?: components["schemas"]["_types.KnnSearch"] | components["schemas"]["_types.KnnSearch"][];
+      rank?: components["schemas"]["_types.RankContainer"];
+      /**
+       * @description The minimum `_score` for matching documents.
+       *     Documents with a lower `_score` are not included in search results or results collected by aggregations.
+       */
+      min_score?: number;
+      post_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      /**
+       * @description Set to `true` to return detailed timing information about the execution of individual components in a search request.
+       *     NOTE: This is a debugging tool and adds significant overhead to search execution.
+       * @default false
+       */
+      profile: boolean;
+      query?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      /** @description Can be used to improve precision by reordering just the top (for example 100 - 500) documents returned by the `query` and `post_filter` phases. */
+      rescore?:
+        | components["schemas"]["_global.search._types.Rescore"]
+        | components["schemas"]["_global.search._types.Rescore"][];
+      retriever?: components["schemas"]["_types.RetrieverContainer"];
+      /** @description Retrieve a script evaluation (based on different fields) for each hit. */
+      script_fields?: {
+        [key: string]: components["schemas"]["_types.ScriptField"];
+      };
+      search_after?: components["schemas"]["_types.SortResults"];
+      /**
+       * @description The number of hits to return, which must not be negative.
+       *     By default, you cannot page through more than 10,000 hits using the `from` and `size` parameters.
+       *     To page through more hits, use the `search_after` property.
+       * @default 10
+       */
+      size: number;
+      slice?: components["schemas"]["_types.SlicedScroll"];
+      sort?: components["schemas"]["_types.Sort"];
+      _source?: components["schemas"]["_global.search._types.SourceConfig"];
+      /**
+       * @description An array of wildcard (`*`) field patterns.
+       *     The request returns values for field names matching these patterns in the `hits.fields` property of the response.
+       */
+      fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
+      suggest?: components["schemas"]["_global.search._types.Suggester"];
+      /**
+       * @description The maximum number of documents to collect for each shard.
+       *     If a query reaches this limit, Elasticsearch terminates the query early.
+       *     Elasticsearch collects documents before sorting.
+       *
+       *     IMPORTANT: Use with caution.
+       *     Elasticsearch applies this property to each shard handling the request.
+       *     When possible, let Elasticsearch perform early termination automatically.
+       *     Avoid specifying this property for requests that target data streams with backing indices across multiple data tiers.
+       *
+       *     If set to `0` (default), the query does not terminate early.
+       * @default 0
+       */
+      terminate_after: number;
+      /**
+       * @description The period of time to wait for a response from each shard.
+       *     If no response is received before the timeout expires, the request fails and returns an error.
+       *     Defaults to no timeout.
+       */
+      timeout?: string;
+      /**
+       * @description If `true`, calculate and return document scores, even if the scores are not used for sorting.
+       * @default false
+       */
+      track_scores: boolean;
+      /**
+       * @description If `true`, the request returns the document version as part of a hit.
+       * @default false
+       */
+      version: boolean;
+      /** @description If `true`, the request returns sequence number and primary term of the last modification of each hit. */
+      seq_no_primary_term?: boolean;
+      stored_fields?: components["schemas"]["_types.Fields"];
+      pit?: components["schemas"]["_global.search._types.PointInTimeReference"];
+      runtime_mappings?: components["schemas"]["_types.mapping.RuntimeFields"];
+      /**
+       * @description The stats groups to associate with the search.
+       *     Each group maintains a statistics aggregation for its associated searches.
+       *     You can retrieve these stats using the indices stats API.
+       */
+      stats?: string[];
+    };
+    "_global.search._types.FieldCollapse": {
+      field: components["schemas"]["_types.Field"];
+      /** @description The number of inner hits and their sort order */
+      inner_hits?:
+        | components["schemas"]["_global.search._types.InnerHits"]
+        | components["schemas"]["_global.search._types.InnerHits"][];
+      /** @description The number of concurrent requests allowed to retrieve the inner_hits per group */
+      max_concurrent_group_searches?: number;
+      collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
+    };
+    "_global.search._types.InnerHits": {
+      name?: components["schemas"]["_types.Name"];
+      /**
+       * @description The maximum number of hits to return per `inner_hits`.
+       * @default 3
+       */
+      size: number;
+      /**
+       * @description Inner hit starting document offset.
+       * @default 0
+       */
+      from: number;
+      collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
+      docvalue_fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
+      explain?: boolean;
+      highlight?: components["schemas"]["_global.search._types.Highlight"];
+      ignore_unmapped?: boolean;
+      script_fields?: {
+        [key: string]: components["schemas"]["_types.ScriptField"];
+      };
+      seq_no_primary_term?: boolean;
+      fields?: components["schemas"]["_types.Field"][];
+      sort?: components["schemas"]["_types.Sort"];
+      _source?: components["schemas"]["_global.search._types.SourceConfig"];
+      stored_fields?: components["schemas"]["_types.Fields"];
+      /** @default false */
+      track_scores: boolean;
+      version?: boolean;
+    };
+    "_types.Name": string;
+    /** @description A reference to a field with formatting instructions on how to return the value */
+    "_types.query_dsl.FieldAndFormat": {
+      field: components["schemas"]["_types.Field"];
+      /** @description The format in which the values are returned. */
+      format?: string;
+      include_unmapped?: boolean;
+    };
+    "_global.search._types.Highlight": components["schemas"]["_global.search._types.HighlightBase"] & {
+      encoder?: components["schemas"]["_global.search._types.HighlighterEncoder"];
+      fields: {
+        [key: string]: components["schemas"]["_global.search._types.HighlightField"];
+      };
+    };
+    /** @enum {string} */
+    "_global.search._types.HighlighterEncoder": "default" | "html";
+    "_global.search._types.HighlightField": components["schemas"]["_global.search._types.HighlightBase"] & {
+      fragment_offset?: number;
+      matched_fields?: components["schemas"]["_types.Fields"];
+    };
+    "_global.search._types.HighlightBase": {
+      type?: components["schemas"]["_global.search._types.HighlighterType"];
+      /**
+       * @description A string that contains each boundary character.
+       * @default .,!? \t\n
+       */
+      boundary_chars: string;
+      /**
+       * @description How far to scan for boundary characters.
+       * @default 20
+       */
+      boundary_max_scan: number;
+      boundary_scanner?: components["schemas"]["_global.search._types.BoundaryScanner"];
+      /**
+       * @description Controls which locale is used to search for sentence and word boundaries.
+       *     This parameter takes a form of a language tag, for example: `"en-US"`, `"fr-FR"`, `"ja-JP"`.
+       * @default Locale.ROOT
+       */
+      boundary_scanner_locale: string;
+      /** @deprecated */
+      force_source?: boolean;
+      fragmenter?: components["schemas"]["_global.search._types.HighlighterFragmenter"];
+      /**
+       * @description The size of the highlighted fragment in characters.
+       * @default 100
+       */
+      fragment_size: number;
+      highlight_filter?: boolean;
+      highlight_query?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      max_fragment_length?: number;
+      /**
+       * @description If set to a non-negative value, highlighting stops at this defined maximum limit.
+       *     The rest of the text is not processed, thus not highlighted and no error is returned
+       *     The `max_analyzed_offset` query setting does not override the `index.highlight.max_analyzed_offset` setting, which prevails when it’s set to lower value than the query setting.
+       */
+      max_analyzed_offset?: number;
+      /**
+       * @description The amount of text you want to return from the beginning of the field if there are no matching fragments to highlight.
+       * @default 0
+       */
+      no_match_size: number;
+      /**
+       * @description The maximum number of fragments to return.
+       *     If the number of fragments is set to `0`, no fragments are returned.
+       *     Instead, the entire field contents are highlighted and returned.
+       *     This can be handy when you need to highlight short texts such as a title or address, but fragmentation is not required.
+       *     If `number_of_fragments` is `0`, `fragment_size` is ignored.
+       * @default 5
+       */
+      number_of_fragments: number;
+      options?: {
+        [key: string]: Record<string, never>;
+      };
+      order?: components["schemas"]["_global.search._types.HighlighterOrder"];
+      /**
+       * @description Controls the number of matching phrases in a document that are considered.
+       *     Prevents the `fvh` highlighter from analyzing too many phrases and consuming too much memory.
+       *     When using `matched_fields`, `phrase_limit` phrases per matched field are considered. Raising the limit increases query time and consumes more memory.
+       *     Only supported by the `fvh` highlighter.
+       * @default 256
+       */
+      phrase_limit: number;
+      /**
+       * @description Use in conjunction with `pre_tags` to define the HTML tags to use for the highlighted text.
+       *     By default, highlighted text is wrapped in `<em>` and `</em>` tags.
+       */
+      post_tags?: string[];
+      /**
+       * @description Use in conjunction with `post_tags` to define the HTML tags to use for the highlighted text.
+       *     By default, highlighted text is wrapped in `<em>` and `</em>` tags.
+       */
+      pre_tags?: string[];
+      /**
+       * @description By default, only fields that contains a query match are highlighted.
+       *     Set to `false` to highlight all fields.
+       * @default true
+       */
+      require_field_match: boolean;
+      tags_schema?: components["schemas"]["_global.search._types.HighlighterTagsSchema"];
+    };
+    "_global.search._types.HighlighterType": ("plain" | "fvh" | "unified") | string;
+    /** @enum {string} */
+    "_global.search._types.BoundaryScanner": "chars" | "sentence" | "word";
+    /** @enum {string} */
+    "_global.search._types.HighlighterFragmenter": "simple" | "span";
+    /** @enum {string} */
+    "_global.search._types.HighlighterOrder": "score";
+    /** @enum {string} */
+    "_global.search._types.HighlighterTagsSchema": "styled";
+    "_types.ScriptField": {
+      script: components["schemas"]["_types.Script"];
+      ignore_failure?: boolean;
+    };
+    "_types.Sort":
+      | components["schemas"]["_types.SortCombinations"]
+      | components["schemas"]["_types.SortCombinations"][];
+    "_types.SortCombinations":
+      | components["schemas"]["_types.Field"]
+      | components["schemas"]["_types.SortOptions"];
+    "_types.SortOptions": {
+      _score?: components["schemas"]["_types.ScoreSort"];
+      _doc?: components["schemas"]["_types.ScoreSort"];
+      _geo_distance?: components["schemas"]["_types.GeoDistanceSort"];
+      _script?: components["schemas"]["_types.ScriptSort"];
+    };
+    "_types.ScoreSort": {
+      order?: components["schemas"]["_types.SortOrder"];
+    };
+    /** @enum {string} */
+    "_types.SortOrder": "asc" | "desc";
+    "_types.GeoDistanceSort": {
+      mode?: components["schemas"]["_types.SortMode"];
+      distance_type?: components["schemas"]["_types.GeoDistanceType"];
+      ignore_unmapped?: boolean;
+      order?: components["schemas"]["_types.SortOrder"];
+      unit?: components["schemas"]["_types.DistanceUnit"];
+      nested?: components["schemas"]["_types.NestedSortValue"];
+    };
+    /** @enum {string} */
+    "_types.SortMode": "min" | "max" | "sum" | "avg" | "median";
+    /** @enum {string} */
+    "_types.GeoDistanceType": "arc" | "plane";
+    /** @enum {string} */
+    "_types.DistanceUnit": "in" | "ft" | "yd" | "mi" | "nmi" | "km" | "m" | "cm" | "mm";
+    "_types.NestedSortValue": {
+      filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      max_children?: number;
+      nested?: components["schemas"]["_types.NestedSortValue"];
+      path: components["schemas"]["_types.Field"];
+    };
+    "_types.ScriptSort": {
+      order?: components["schemas"]["_types.SortOrder"];
+      script: components["schemas"]["_types.Script"];
+      type?: components["schemas"]["_types.ScriptSortType"];
+      mode?: components["schemas"]["_types.SortMode"];
+      nested?: components["schemas"]["_types.NestedSortValue"];
+    };
+    /** @enum {string} */
+    "_types.ScriptSortType": "string" | "number" | "version";
+    /** @description Defines how to fetch a source. Fetching can be disabled entirely, or the source can be filtered. */
+    "_global.search._types.SourceConfig":
+      | boolean
+      | components["schemas"]["_global.search._types.SourceFilter"];
+    "_global.search._types.SourceFilter": {
+      excludes?: components["schemas"]["_types.Fields"];
+      includes?: components["schemas"]["_types.Fields"];
+    };
+    "_types.KnnSearch": {
+      field: components["schemas"]["_types.Field"];
+      query_vector?: components["schemas"]["_types.QueryVector"];
+      query_vector_builder?: components["schemas"]["_types.QueryVectorBuilder"];
+      /** @description The final number of nearest neighbors to return as top hits */
+      k?: number;
+      /** @description The number of nearest neighbor candidates to consider per shard */
+      num_candidates?: number;
+      /** @description Boost value to apply to kNN scores */
+      boost?: number;
+      /** @description Filters for the kNN search query */
+      filter?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+      /** @description The minimum similarity for a vector to be considered a match */
+      similarity?: number;
+      inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
+      rescore_vector?: components["schemas"]["_types.RescoreVector"];
+    };
+    "_types.QueryVector": number[];
+    "_types.QueryVectorBuilder": {
+      text_embedding?: components["schemas"]["_types.TextEmbedding"];
+    };
+    "_types.TextEmbedding": {
+      /**
+       * @description Model ID is required for all dense_vector fields but
+       *     may be inferred for semantic_text fields
+       */
+      model_id?: string;
+      model_text: string;
+    };
+    "_types.RescoreVector": {
+      /** @description Applies the specified oversample factor to k on the approximate kNN search */
+      oversample: number;
+    };
+    "_types.RankContainer": {
+      rrf?: components["schemas"]["_types.RrfRank"];
+    };
+    "_types.RrfRank": components["schemas"]["_types.RankBase"] & {
+      /** @description How much influence documents in individual result sets per query have over the final ranked result set */
+      rank_constant?: number;
+      /** @description Size of the individual result sets per query */
+      rank_window_size?: number;
+    };
+    "_types.RankBase": Record<string, never>;
+    "_global.search._types.Rescore": {
+      window_size?: number;
+    } & {
+      query?: components["schemas"]["_global.search._types.RescoreQuery"];
+      learning_to_rank?: components["schemas"]["_global.search._types.LearningToRank"];
+    };
+    "_global.search._types.RescoreQuery": {
+      rescore_query: components["schemas"]["_types.query_dsl.QueryContainer"];
+      /**
+       * @description Relative importance of the original query versus the rescore query.
+       * @default 1
+       */
+      query_weight: number;
+      /**
+       * @description Relative importance of the rescore query versus the original query.
+       * @default 1
+       */
+      rescore_query_weight: number;
+      score_mode?: components["schemas"]["_global.search._types.ScoreMode"];
+    };
+    /** @enum {string} */
+    "_global.search._types.ScoreMode": "avg" | "max" | "min" | "multiply" | "total";
+    "_global.search._types.LearningToRank": {
+      /** @description The unique identifier of the trained model uploaded to Elasticsearch */
+      model_id: string;
+      /** @description Named parameters to be passed to the query templates used for feature */
+      params?: {
+        [key: string]: Record<string, never>;
+      };
+    };
+    "_types.RetrieverContainer": {
+      standard?: components["schemas"]["_types.StandardRetriever"];
+      knn?: components["schemas"]["_types.KnnRetriever"];
+      rrf?: components["schemas"]["_types.RRFRetriever"];
+      text_similarity_reranker?: components["schemas"]["_types.TextSimilarityReranker"];
+      rule?: components["schemas"]["_types.RuleRetriever"];
+      rescorer?: components["schemas"]["_types.RescorerRetriever"];
+      linear?: components["schemas"]["_types.LinearRetriever"];
+      pinned?: components["schemas"]["_types.PinnedRetriever"];
+    };
+    "_types.StandardRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      query?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      search_after?: components["schemas"]["_types.SortResults"];
+      /** @description Maximum number of documents to collect for each shard. */
+      terminate_after?: number;
+      sort?: components["schemas"]["_types.Sort"];
+      collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
+    };
+    "_types.RetrieverBase": {
+      /** @description Query to filter the documents that can match. */
+      filter?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+      /** @description Minimum _score for matching documents. Documents with a lower _score are not included in the top documents. */
+      min_score?: number;
+      /** @description Retriever name. */
+      _name?: string;
+    };
+    "_types.KnnRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      /** @description The name of the vector field to search against. */
+      field: string;
+      query_vector?: components["schemas"]["_types.QueryVector"];
+      query_vector_builder?: components["schemas"]["_types.QueryVectorBuilder"];
+      /** @description Number of nearest neighbors to return as top hits. */
+      k: number;
+      /** @description Number of nearest neighbor candidates to consider per shard. */
+      num_candidates: number;
+      /** @description The minimum similarity required for a document to be considered a match. */
+      similarity?: number;
+      rescore_vector?: components["schemas"]["_types.RescoreVector"];
+    };
+    "_types.RRFRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      /** @description A list of child retrievers to specify which sets of returned top documents will have the RRF formula applied to them. */
+      retrievers: components["schemas"]["_types.RetrieverContainer"][];
+      /** @description This value determines how much influence documents in individual result sets per query have over the final ranked result set. */
+      rank_constant?: number;
+      /** @description This value determines the size of the individual result sets per query. */
+      rank_window_size?: number;
+    };
+    "_types.TextSimilarityReranker": components["schemas"]["_types.RetrieverBase"] & {
+      retriever: components["schemas"]["_types.RetrieverContainer"];
+      /** @description This value determines how many documents we will consider from the nested retriever. */
+      rank_window_size?: number;
+      /** @description Unique identifier of the inference endpoint created using the inference API. */
+      inference_id?: string;
+      /** @description The text snippet used as the basis for similarity comparison */
+      inference_text: string;
+      /** @description The document field to be used for text similarity comparisons. This field should contain the text that will be evaluated against the inference_text */
+      field: string;
+    };
+    "_types.RuleRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      /** @description The ruleset IDs containing the rules this retriever is evaluating against. */
+      ruleset_ids: components["schemas"]["_types.Id"] | components["schemas"]["_types.Id"][];
+      /** @description The match criteria that will determine if a rule in the provided rulesets should be applied. */
+      match_criteria: Record<string, never>;
+      retriever: components["schemas"]["_types.RetrieverContainer"];
+      /** @description This value determines the size of the individual result set. */
+      rank_window_size?: number;
+    };
+    "_types.RescorerRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      retriever: components["schemas"]["_types.RetrieverContainer"];
+      rescore:
+        | components["schemas"]["_global.search._types.Rescore"]
+        | components["schemas"]["_global.search._types.Rescore"][];
+    };
+    "_types.LinearRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      /** @description Inner retrievers. */
+      retrievers?: components["schemas"]["_types.InnerRetriever"][];
+      rank_window_size?: number;
+    };
+    "_types.InnerRetriever": {
+      retriever: components["schemas"]["_types.RetrieverContainer"];
+      weight: number;
+      normalizer: components["schemas"]["_types.ScoreNormalizer"];
+    };
+    /** @enum {string} */
+    "_types.ScoreNormalizer": "none" | "minmax";
+    "_types.PinnedRetriever": components["schemas"]["_types.RetrieverBase"] & {
+      retriever: components["schemas"]["_types.RetrieverContainer"];
+      ids?: string[];
+      docs?: components["schemas"]["_types.SpecifiedDocument"][];
+      rank_window_size?: number;
+    };
+    "_types.SpecifiedDocument": {
+      index?: components["schemas"]["_types.IndexName"];
+      id: components["schemas"]["_types.Id"];
+    };
+    "_types.SlicedScroll": {
+      field?: components["schemas"]["_types.Field"];
+      id: components["schemas"]["_types.Id"];
+      max: number;
+    };
+    "_global.search._types.Suggester": {
+      /** @description Global suggest text, to avoid repetition when the same text is used in several suggesters */
+      text?: string;
+    };
+    "_global.search._types.PointInTimeReference": {
+      id: components["schemas"]["_types.Id"];
+      keep_alive?: components["schemas"]["_types.Duration"];
+    };
+    "_types.mapping.RuntimeFields": {
+      [key: string]: components["schemas"]["_types.mapping.RuntimeField"];
+    };
+    "_types.mapping.RuntimeField": {
+      /** @description For type `composite` */
+      fields?: {
+        [key: string]: components["schemas"]["_types.mapping.CompositeSubField"];
+      };
+      /** @description For type `lookup` */
+      fetch_fields?: components["schemas"]["_types.mapping.RuntimeFieldFetchFields"][];
+      /** @description A custom format for `date` type runtime fields. */
+      format?: string;
+      input_field?: components["schemas"]["_types.Field"];
+      target_field?: components["schemas"]["_types.Field"];
+      target_index?: components["schemas"]["_types.IndexName"];
+      script?: components["schemas"]["_types.Script"];
+      type: components["schemas"]["_types.mapping.RuntimeFieldType"];
+    };
+    "_types.mapping.CompositeSubField": {
+      type: components["schemas"]["_types.mapping.RuntimeFieldType"];
+    };
+    /** @enum {string} */
+    "_types.mapping.RuntimeFieldType":
+      | "boolean"
+      | "composite"
+      | "date"
+      | "double"
+      | "geo_point"
+      | "geo_shape"
+      | "ip"
+      | "keyword"
+      | "long"
+      | "lookup";
+    "_types.mapping.RuntimeFieldFetchFields": {
+      field: components["schemas"]["_types.Field"];
+      format?: string;
+    };
+    "_types.ScriptLanguage": ("painless" | "expression" | "mustache" | "java") | string;
+    /** @enum {string} */
+    "_types.query_dsl.FunctionScoreMode": "multiply" | "sum" | "avg" | "first" | "max" | "min";
+    "_types.query_dsl.FuzzyQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Maximum number of variations created.
+       * @default 50
+       */
+      max_expansions: number;
+      /**
+       * @description Number of beginning characters left unchanged when creating expansions.
+       * @default 0
+       */
+      prefix_length: number;
+      rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /**
+       * @description Indicates whether edits include transpositions of two adjacent characters (for example `ab` to `ba`).
+       * @default true
+       */
+      transpositions: boolean;
+      fuzziness?: components["schemas"]["_types.Fuzziness"];
+      /** @description Term you wish to find in the provided field. */
+      value: string | number | boolean;
+    };
+    "_types.MultiTermQueryRewrite": string;
+    "_types.Fuzziness": string | number;
+    "_types.query_dsl.GeoBoundingBoxQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      type?: components["schemas"]["_types.query_dsl.GeoExecution"];
+      validation_method?: components["schemas"]["_types.query_dsl.GeoValidationMethod"];
+      /**
+       * @description Set to `true` to ignore an unmapped field and not match any documents for this query.
+       *     Set to `false` to throw an exception if the field is not mapped.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+    };
+    /** @enum {string} */
+    "_types.query_dsl.GeoExecution": "memory" | "indexed";
+    /** @enum {string} */
+    "_types.query_dsl.GeoValidationMethod": "coerce" | "ignore_malformed" | "strict";
+    "_types.query_dsl.GeoDistanceQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      distance: components["schemas"]["_types.Distance"];
+      distance_type?: components["schemas"]["_types.GeoDistanceType"];
+      validation_method?: components["schemas"]["_types.query_dsl.GeoValidationMethod"];
+      /**
+       * @description Set to `true` to ignore an unmapped field and not match any documents for this query.
+       *     Set to `false` to throw an exception if the field is not mapped.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+    };
+    "_types.query_dsl.GeoGridQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      geotile?: components["schemas"]["_types.GeoTile"];
+      geohash?: components["schemas"]["_types.GeoHash"];
+      geohex?: components["schemas"]["_types.GeoHexCell"];
+    };
+    "_types.query_dsl.GeoPolygonQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      validation_method?: components["schemas"]["_types.query_dsl.GeoValidationMethod"];
+      ignore_unmapped?: boolean;
+    };
+    "_types.query_dsl.GeoShapeQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Set to `true` to ignore an unmapped field and not match any documents for this query.
+       *     Set to `false` to throw an exception if the field is not mapped.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+    };
+    "_types.query_dsl.HasChildQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Indicates whether to ignore an unmapped `type` and not return any documents instead of an error.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+      inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
+      /**
+       * @description Maximum number of child documents that match the query allowed for a returned parent document.
+       *     If the parent document exceeds this limit, it is excluded from the search results.
+       */
+      max_children?: number;
+      /**
+       * @description Minimum number of child documents that match the query required to match the query for a returned parent document.
+       *     If the parent document does not meet this limit, it is excluded from the search results.
+       */
+      min_children?: number;
+      query: components["schemas"]["_types.query_dsl.QueryContainer"];
+      score_mode?: components["schemas"]["_types.query_dsl.ChildScoreMode"];
+      type: components["schemas"]["_types.RelationName"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.ChildScoreMode": "none" | "avg" | "sum" | "max" | "min";
+    "_types.RelationName": string;
+    "_types.query_dsl.HasParentQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Indicates whether to ignore an unmapped `parent_type` and not return any documents instead of an error.
+       *     You can use this parameter to query multiple indices that may not contain the `parent_type`.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+      inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
+      parent_type: components["schemas"]["_types.RelationName"];
+      query: components["schemas"]["_types.query_dsl.QueryContainer"];
+      /**
+       * @description Indicates whether the relevance score of a matching parent document is aggregated into its child documents.
+       * @default false
+       */
+      score: boolean;
+    };
+    "_types.query_dsl.IdsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      values?: components["schemas"]["_types.Ids"];
+    };
+    "_types.Ids": components["schemas"]["_types.Id"] | components["schemas"]["_types.Id"][];
+    "_types.query_dsl.IntervalsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      all_of?: components["schemas"]["_types.query_dsl.IntervalsAllOf"];
+      any_of?: components["schemas"]["_types.query_dsl.IntervalsAnyOf"];
+      fuzzy?: components["schemas"]["_types.query_dsl.IntervalsFuzzy"];
+      match?: components["schemas"]["_types.query_dsl.IntervalsMatch"];
+      prefix?: components["schemas"]["_types.query_dsl.IntervalsPrefix"];
+      range?: components["schemas"]["_types.query_dsl.IntervalsRange"];
+      regexp?: components["schemas"]["_types.query_dsl.IntervalsRegexp"];
+      wildcard?: components["schemas"]["_types.query_dsl.IntervalsWildcard"];
+    };
+    "_types.query_dsl.IntervalsAllOf": {
+      /** @description An array of rules to combine. All rules must produce a match in a document for the overall source to match. */
+      intervals: components["schemas"]["_types.query_dsl.IntervalsContainer"][];
+      /**
+       * @description Maximum number of positions between the matching terms.
+       *     Intervals produced by the rules further apart than this are not considered matches.
+       * @default -1
+       */
+      max_gaps: number;
+      /**
+       * @description If `true`, intervals produced by the rules should appear in the order in which they are specified.
+       * @default false
+       */
+      ordered: boolean;
+      filter?: components["schemas"]["_types.query_dsl.IntervalsFilter"];
+    };
+    "_types.query_dsl.IntervalsContainer": {
+      all_of?: components["schemas"]["_types.query_dsl.IntervalsAllOf"];
+      any_of?: components["schemas"]["_types.query_dsl.IntervalsAnyOf"];
+      fuzzy?: components["schemas"]["_types.query_dsl.IntervalsFuzzy"];
+      match?: components["schemas"]["_types.query_dsl.IntervalsMatch"];
+      prefix?: components["schemas"]["_types.query_dsl.IntervalsPrefix"];
+      range?: components["schemas"]["_types.query_dsl.IntervalsRange"];
+      regexp?: components["schemas"]["_types.query_dsl.IntervalsRegexp"];
+      wildcard?: components["schemas"]["_types.query_dsl.IntervalsWildcard"];
+    };
+    "_types.query_dsl.IntervalsAnyOf": {
+      /** @description An array of rules to match. */
+      intervals: components["schemas"]["_types.query_dsl.IntervalsContainer"][];
+      filter?: components["schemas"]["_types.query_dsl.IntervalsFilter"];
+    };
+    "_types.query_dsl.IntervalsFilter": {
+      after?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      before?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      contained_by?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      containing?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      not_contained_by?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      not_containing?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      not_overlapping?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      overlapping?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
+      script?: components["schemas"]["_types.Script"];
+    };
+    "_types.query_dsl.IntervalsFuzzy": {
+      /** @description Analyzer used to normalize the term. */
+      analyzer?: string;
+      fuzziness?: components["schemas"]["_types.Fuzziness"];
+      /**
+       * @description Number of beginning characters left unchanged when creating expansions.
+       * @default 0
+       */
+      prefix_length: number;
+      /** @description The term to match. */
+      term: string;
+      /**
+       * @description Indicates whether edits include transpositions of two adjacent characters (for example, `ab` to `ba`).
+       * @default true
+       */
+      transpositions: boolean;
+      use_field?: components["schemas"]["_types.Field"];
+    };
+    "_types.query_dsl.IntervalsMatch": {
+      /** @description Analyzer used to analyze terms in the query. */
+      analyzer?: string;
+      /**
+       * @description Maximum number of positions between the matching terms.
+       *     Terms further apart than this are not considered matches.
+       * @default -1
+       */
+      max_gaps: number;
+      /**
+       * @description If `true`, matching terms must appear in their specified order.
+       * @default false
+       */
+      ordered: boolean;
+      /** @description Text you wish to find in the provided field. */
+      query: string;
+      use_field?: components["schemas"]["_types.Field"];
+      filter?: components["schemas"]["_types.query_dsl.IntervalsFilter"];
+    };
+    "_types.query_dsl.IntervalsPrefix": {
+      /** @description Analyzer used to analyze the `prefix`. */
+      analyzer?: string;
+      /** @description Beginning characters of terms you wish to find in the top-level field. */
+      prefix: string;
+      use_field?: components["schemas"]["_types.Field"];
+    };
+    "_types.query_dsl.IntervalsRange": {
+      /** @description Analyzer used to analyze the `prefix`. */
+      analyzer?: string;
+      /** @description Lower term, either gte or gt must be provided. */
+      gte?: string;
+      /** @description Lower term, either gte or gt must be provided. */
+      gt?: string;
+      /** @description Upper term, either lte or lt must be provided. */
+      lte?: string;
+      /** @description Upper term, either lte or lt must be provided. */
+      lt?: string;
+      use_field?: components["schemas"]["_types.Field"];
+    };
+    "_types.query_dsl.IntervalsRegexp": {
+      /** @description Analyzer used to analyze the `prefix`. */
+      analyzer?: string;
+      /** @description Regex pattern. */
+      pattern: string;
+      use_field?: components["schemas"]["_types.Field"];
+    };
+    "_types.query_dsl.IntervalsWildcard": {
+      /**
+       * @description Analyzer used to analyze the `pattern`.
+       *     Defaults to the top-level field's analyzer.
+       */
+      analyzer?: string;
+      /** @description Wildcard pattern used to find matching terms. */
+      pattern: string;
+      use_field?: components["schemas"]["_types.Field"];
+    };
+    "_types.KnnQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      field: components["schemas"]["_types.Field"];
+      query_vector?: components["schemas"]["_types.QueryVector"];
+      query_vector_builder?: components["schemas"]["_types.QueryVectorBuilder"];
+      /** @description The number of nearest neighbor candidates to consider per shard */
+      num_candidates?: number;
+      /** @description The final number of nearest neighbors to return as top hits */
+      k?: number;
+      /** @description Filters for the kNN search query */
+      filter?:
+        | components["schemas"]["_types.query_dsl.QueryContainer"]
+        | components["schemas"]["_types.query_dsl.QueryContainer"][];
+      /** @description The minimum similarity for a vector to be considered a match */
+      similarity?: number;
+      rescore_vector?: components["schemas"]["_types.RescoreVector"];
+    };
+    "_types.query_dsl.MatchQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Analyzer used to convert the text in the query value into tokens. */
+      analyzer?: string;
+      /**
+       * @description If `true`, match phrase queries are automatically created for multi-term synonyms.
+       * @default true
+       */
+      auto_generate_synonyms_phrase_query: boolean;
+      /** @deprecated */
+      cutoff_frequency?: number;
+      fuzziness?: components["schemas"]["_types.Fuzziness"];
+      fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /**
+       * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
+       * @default true
+       */
+      fuzzy_transpositions: boolean;
+      /**
+       * @description If `true`, format-based errors, such as providing a text query value for a numeric field, are ignored.
+       * @default false
+       */
+      lenient: boolean;
+      /**
+       * @description Maximum number of terms to which the query will expand.
+       * @default 50
+       */
+      max_expansions: number;
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      operator?: components["schemas"]["_types.query_dsl.Operator"];
+      /**
+       * @description Number of beginning characters left unchanged for fuzzy matching.
+       * @default 0
+       */
+      prefix_length: number;
+      /** @description Text, number, boolean value or date you wish to find in the provided field. */
+      query: string | number | boolean;
+      zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.ZeroTermsQuery": "all" | "none";
+    "_types.query_dsl.MatchAllQuery": components["schemas"]["_types.query_dsl.QueryBase"] &
+      Record<string, never>;
+    "_types.query_dsl.MatchBoolPrefixQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Analyzer used to convert the text in the query value into tokens. */
+      analyzer?: string;
+      fuzziness?: components["schemas"]["_types.Fuzziness"];
+      fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /**
+       * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
+       *     Can be applied to the term subqueries constructed for all terms but the final term.
+       * @default true
+       */
+      fuzzy_transpositions: boolean;
+      /**
+       * @description Maximum number of terms to which the query will expand.
+       *     Can be applied to the term subqueries constructed for all terms but the final term.
+       * @default 50
+       */
+      max_expansions: number;
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      operator?: components["schemas"]["_types.query_dsl.Operator"];
+      /**
+       * @description Number of beginning characters left unchanged for fuzzy matching.
+       *     Can be applied to the term subqueries constructed for all terms but the final term.
+       * @default 0
+       */
+      prefix_length: number;
+      /**
+       * @description Terms you wish to find in the provided field.
+       *     The last term is used in a prefix query.
+       */
+      query: string;
+    };
+    "_types.query_dsl.MatchNoneQuery": components["schemas"]["_types.query_dsl.QueryBase"] &
+      Record<string, never>;
+    "_types.query_dsl.MatchPhraseQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Analyzer used to convert the text in the query value into tokens. */
+      analyzer?: string;
+      /** @description Query terms that are analyzed and turned into a phrase query. */
+      query: string;
+      /**
+       * @description Maximum number of positions allowed between matching tokens.
+       * @default 0
+       */
+      slop: number;
+      zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
+    };
+    "_types.query_dsl.MatchPhrasePrefixQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Analyzer used to convert text in the query value into tokens. */
+      analyzer?: string;
+      /**
+       * @description Maximum number of terms to which the last provided term of the query value will expand.
+       * @default 50
+       */
+      max_expansions: number;
+      /** @description Text you wish to find in the provided field. */
+      query: string;
+      /**
+       * @description Maximum number of positions allowed between matching tokens.
+       * @default 0
+       */
+      slop: number;
+      zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
+    };
+    "_types.query_dsl.MoreLikeThisQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description The analyzer that is used to analyze the free form text.
+       *     Defaults to the analyzer associated with the first field in fields.
+       */
+      analyzer?: string;
+      /**
+       * @description Each term in the formed query could be further boosted by their tf-idf score.
+       *     This sets the boost factor to use when using this feature.
+       *     Defaults to deactivated (0).
+       * @default 0
+       */
+      boost_terms: number;
+      /**
+       * @description Controls whether the query should fail (throw an exception) if any of the specified fields are not of the supported types (`text` or `keyword`).
+       * @default true
+       */
+      fail_on_unsupported_field: boolean;
+      /**
+       * @description A list of fields to fetch and analyze the text from.
+       *     Defaults to the `index.query.default_field` index setting, which has a default value of `*`.
+       */
+      fields?: components["schemas"]["_types.Field"][];
+      /**
+       * @description Specifies whether the input documents should also be included in the search results returned.
+       * @default false
+       */
+      include: boolean;
+      /** @description Specifies free form text and/or a single or multiple documents for which you want to find similar documents. */
+      like:
+        | components["schemas"]["_types.query_dsl.Like"]
+        | components["schemas"]["_types.query_dsl.Like"][];
+      /** @description The maximum document frequency above which the terms are ignored from the input document. */
+      max_doc_freq?: number;
+      /**
+       * @description The maximum number of query terms that can be selected.
+       * @default 25
+       */
+      max_query_terms: number;
+      /**
+       * @description The maximum word length above which the terms are ignored.
+       *     Defaults to unbounded (`0`).
+       * @default 0
+       */
+      max_word_length: number;
+      /**
+       * @description The minimum document frequency below which the terms are ignored from the input document.
+       * @default 5
+       */
+      min_doc_freq: number;
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      /**
+       * @description The minimum term frequency below which the terms are ignored from the input document.
+       * @default 2
+       */
+      min_term_freq: number;
+      /**
+       * @description The minimum word length below which the terms are ignored.
+       * @default 0
+       */
+      min_word_length: number;
+      routing?: components["schemas"]["_types.Routing"];
+      stop_words?: components["schemas"]["_types.analysis.StopWords"];
+      /** @description Used in combination with `like` to exclude documents that match a set of terms. */
+      unlike?:
+        | components["schemas"]["_types.query_dsl.Like"]
+        | components["schemas"]["_types.query_dsl.Like"][];
+      version?: components["schemas"]["_types.VersionNumber"];
+      version_type?: components["schemas"]["_types.VersionType"];
+    };
+    /** @description Text that we want similar documents for or a lookup to a document's field for the text. */
+    "_types.query_dsl.Like": string | components["schemas"]["_types.query_dsl.LikeDocument"];
+    "_types.query_dsl.LikeDocument": {
+      /** @description A document not present in the index. */
+      doc?: Record<string, never>;
+      fields?: components["schemas"]["_types.Field"][];
+      _id?: components["schemas"]["_types.Id"];
+      _index?: components["schemas"]["_types.IndexName"];
+      /** @description Overrides the default analyzer. */
+      per_field_analyzer?: {
+        [key: string]: string;
+      };
+      routing?: components["schemas"]["_types.Routing"];
+      version?: components["schemas"]["_types.VersionNumber"];
+      version_type?: components["schemas"]["_types.VersionType"];
+    };
+    /** @enum {string} */
+    "_types.VersionType": "internal" | "external" | "external_gte" | "force";
+    /**
+     * @description Language value, such as _arabic_ or _thai_. Defaults to _english_.
+     *     Each language value corresponds to a predefined list of stop words in Lucene. See Stop words by language for supported language values and their stop words.
+     *     Also accepts an array of stop words.
+     */
+    "_types.analysis.StopWords":
+      | components["schemas"]["_types.analysis.StopWordLanguage"]
+      | string[];
+    /** @enum {string} */
+    "_types.analysis.StopWordLanguage":
+      | "_arabic_"
+      | "_armenian_"
+      | "_basque_"
+      | "_bengali_"
+      | "_brazilian_"
+      | "_bulgarian_"
+      | "_catalan_"
+      | "_cjk_"
+      | "_czech_"
+      | "_danish_"
+      | "_dutch_"
+      | "_english_"
+      | "_estonian_"
+      | "_finnish_"
+      | "_french_"
+      | "_galician_"
+      | "_german_"
+      | "_greek_"
+      | "_hindi_"
+      | "_hungarian_"
+      | "_indonesian_"
+      | "_irish_"
+      | "_italian_"
+      | "_latvian_"
+      | "_lithuanian_"
+      | "_norwegian_"
+      | "_persian_"
+      | "_portuguese_"
+      | "_romanian_"
+      | "_russian_"
+      | "_serbian_"
+      | "_sorani_"
+      | "_spanish_"
+      | "_swedish_"
+      | "_thai_"
+      | "_turkish_"
+      | "_none_";
+    "_types.query_dsl.MultiMatchQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Analyzer used to convert the text in the query value into tokens. */
+      analyzer?: string;
+      /**
+       * @description If `true`, match phrase queries are automatically created for multi-term synonyms.
+       * @default true
+       */
+      auto_generate_synonyms_phrase_query: boolean;
+      /** @deprecated */
+      cutoff_frequency?: number;
+      fields?: components["schemas"]["_types.Fields"];
+      fuzziness?: components["schemas"]["_types.Fuzziness"];
+      fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /**
+       * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
+       *     Can be applied to the term subqueries constructed for all terms but the final term.
+       * @default true
+       */
+      fuzzy_transpositions: boolean;
+      /**
+       * @description If `true`, format-based errors, such as providing a text query value for a numeric field, are ignored.
+       * @default false
+       */
+      lenient: boolean;
+      /**
+       * @description Maximum number of terms to which the query will expand.
+       * @default 50
+       */
+      max_expansions: number;
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      operator?: components["schemas"]["_types.query_dsl.Operator"];
+      /**
+       * @description Number of beginning characters left unchanged for fuzzy matching.
+       * @default 0
+       */
+      prefix_length: number;
+      /** @description Text, number, boolean value or date you wish to find in the provided field. */
+      query: string;
+      /**
+       * @description Maximum number of positions allowed between matching tokens.
+       * @default 0
+       */
+      slop: number;
+      /**
+       * @description Determines how scores for each per-term blended query and scores across groups are combined.
+       * @default 0
+       */
+      tie_breaker: number;
+      type?: components["schemas"]["_types.query_dsl.TextQueryType"];
+      zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
+    };
+    /** @enum {string} */
+    "_types.query_dsl.TextQueryType":
+      | "best_fields"
+      | "most_fields"
+      | "cross_fields"
+      | "phrase"
+      | "phrase_prefix"
+      | "bool_prefix";
+    "_types.query_dsl.NestedQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Indicates whether to ignore an unmapped path and not return any documents instead of an error.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+      inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
+      path: components["schemas"]["_types.Field"];
+      query: components["schemas"]["_types.query_dsl.QueryContainer"];
+      score_mode?: components["schemas"]["_types.query_dsl.ChildScoreMode"];
+    };
+    "_types.query_dsl.ParentIdQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      id?: components["schemas"]["_types.Id"];
+      /**
+       * @description Indicates whether to ignore an unmapped `type` and not return any documents instead of an error.
+       * @default false
+       */
+      ignore_unmapped: boolean;
+      type?: components["schemas"]["_types.RelationName"];
+    };
+    "_types.query_dsl.PercolateQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description The source of the document being percolated. */
+      document?: Record<string, never>;
+      /** @description An array of sources of the documents being percolated. */
+      documents?: Record<string, never>[];
+      field: components["schemas"]["_types.Field"];
+      id?: components["schemas"]["_types.Id"];
+      index?: components["schemas"]["_types.IndexName"];
+      /** @description The suffix used for the `_percolator_document_slot` field when multiple `percolate` queries are specified. */
+      name?: string;
+      /** @description Preference used to fetch document to percolate. */
+      preference?: string;
+      routing?: components["schemas"]["_types.Routing"];
+      version?: components["schemas"]["_types.VersionNumber"];
+    };
+    "_types.query_dsl.PinnedQuery": components["schemas"]["_types.query_dsl.QueryBase"] &
+      ({
+        organic: components["schemas"]["_types.query_dsl.QueryContainer"];
+      } & {
         /**
-         * @description A duration. Units can be `nanos`, `micros`, `ms` (milliseconds), `s` (seconds), `m` (minutes), `h` (hours) and
-         *     `d` (days). Also accepts "0" without a unit and "-1" to indicate an unspecified value.
+         * @description Document IDs listed in the order they are to appear in results.
+         *     Required if `docs` is not specified.
          */
-        "_types.Duration": string | "-1" | "0";
-        "_types.Metadata": {
-            [key: string]: Record<string, never>;
-        };
-        /** @description A field value. */
-        "_types.FieldValue": number | string | boolean | (string | null);
-        "_types.TopLeftBottomRightGeoBounds": {
-            top_left: components["schemas"]["_types.GeoLocation"];
-            bottom_right: components["schemas"]["_types.GeoLocation"];
-        };
+        ids?: components["schemas"]["_types.Id"][];
         /**
-         * @description A latitude/longitude as a 2 dimensional point. It can be represented in various ways:
-         *     - as a `{lat, long}` object
-         *     - as a geo hash value
-         *     - as a `[lon, lat]` array
-         *     - as a string in `"<lat>, <lon>"` or WKT point formats
+         * @description Documents listed in the order they are to appear in results.
+         *     Required if `ids` is not specified.
          */
-        "_types.GeoLocation": components["schemas"]["_types.LatLonGeoLocation"] | components["schemas"]["_types.GeoHashLocation"] | number[] | string;
-        "_types.LatLonGeoLocation": {
-            /** @description Latitude */
-            lat: number;
-            /** @description Longitude */
-            lon: number;
-        };
-        "_types.GeoHashLocation": {
-            geohash: components["schemas"]["_types.GeoHash"];
-        };
-        "_types.GeoHash": string;
+        docs?: components["schemas"]["_types.query_dsl.PinnedDoc"][];
+      });
+    "_types.query_dsl.PinnedDoc": {
+      _id: components["schemas"]["_types.Id"];
+      _index?: components["schemas"]["_types.IndexName"];
+    };
+    "_types.query_dsl.PrefixQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /** @description Beginning characters of terms you wish to find in the provided field. */
+      value: string;
+      /**
+       * @description Allows ASCII case insensitive matching of the value with the indexed field values when set to `true`.
+       *     Default is `false` which means the case sensitivity of matching depends on the underlying field’s mapping.
+       * @default false
+       */
+      case_insensitive: boolean;
+    };
+    "_types.query_dsl.QueryStringQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description If `true`, the wildcard characters `*` and `?` are allowed as the first character of the query string.
+       * @default true
+       */
+      allow_leading_wildcard: boolean;
+      /** @description Analyzer used to convert text in the query string into tokens. */
+      analyzer?: string;
+      /**
+       * @description If `true`, the query attempts to analyze wildcard terms in the query string.
+       * @default false
+       */
+      analyze_wildcard: boolean;
+      /**
+       * @description If `true`, match phrase queries are automatically created for multi-term synonyms.
+       * @default true
+       */
+      auto_generate_synonyms_phrase_query: boolean;
+      default_field?: components["schemas"]["_types.Field"];
+      default_operator?: components["schemas"]["_types.query_dsl.Operator"];
+      /**
+       * @description If `true`, enable position increments in queries constructed from a `query_string` search.
+       * @default true
+       */
+      enable_position_increments: boolean;
+      /** @default false */
+      escape: boolean;
+      /** @description Array of fields to search. Supports wildcards (`*`). */
+      fields?: components["schemas"]["_types.Field"][];
+      fuzziness?: components["schemas"]["_types.Fuzziness"];
+      /**
+       * @description Maximum number of terms to which the query expands for fuzzy matching.
+       * @default 50
+       */
+      fuzzy_max_expansions: number;
+      /**
+       * @description Number of beginning characters left unchanged for fuzzy matching.
+       * @default 0
+       */
+      fuzzy_prefix_length: number;
+      fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /**
+       * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
+       * @default true
+       */
+      fuzzy_transpositions: boolean;
+      /**
+       * @description If `true`, format-based errors, such as providing a text value for a numeric field, are ignored.
+       * @default false
+       */
+      lenient: boolean;
+      /**
+       * @description Maximum number of automaton states required for the query.
+       * @default 10000
+       */
+      max_determinized_states: number;
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      /**
+       * @description Maximum number of positions allowed between matching tokens for phrases.
+       * @default 0
+       */
+      phrase_slop: number;
+      /** @description Query string you wish to parse and use for search. */
+      query: string;
+      /**
+       * @description Analyzer used to convert quoted text in the query string into tokens.
+       *     For quoted text, this parameter overrides the analyzer specified in the `analyzer` parameter.
+       */
+      quote_analyzer?: string;
+      /**
+       * @description Suffix appended to quoted text in the query string.
+       *     You can use this suffix to use a different analysis method for exact matches.
+       */
+      quote_field_suffix?: string;
+      rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /** @description How to combine the queries generated from the individual search terms in the resulting `dis_max` query. */
+      tie_breaker?: number;
+      time_zone?: components["schemas"]["_types.TimeZone"];
+      type?: components["schemas"]["_types.query_dsl.TextQueryType"];
+    };
+    "_types.TimeZone": string;
+    "_types.query_dsl.RangeQuery":
+      | components["schemas"]["_types.query_dsl.UntypedRangeQuery"]
+      | components["schemas"]["_types.query_dsl.DateRangeQuery"]
+      | components["schemas"]["_types.query_dsl.NumberRangeQuery"]
+      | components["schemas"]["_types.query_dsl.TermRangeQuery"];
+    "_types.query_dsl.UntypedRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBase"] & {
+      format?: components["schemas"]["_types.DateFormat"];
+      time_zone?: components["schemas"]["_types.TimeZone"];
+    };
+    "_types.DateFormat": string;
+    "_types.query_dsl.RangeQueryBase": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
+      /** @description Greater than. */
+      gt?: Record<string, never>;
+      /** @description Greater than or equal to. */
+      gte?: Record<string, never>;
+      /** @description Less than. */
+      lt?: Record<string, never>;
+      /** @description Less than or equal to. */
+      lte?: Record<string, never>;
+    };
+    /** @enum {string} */
+    "_types.query_dsl.RangeRelation": "within" | "contains" | "intersects";
+    "_types.query_dsl.DateRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBaseDateMath"] & {
+      format?: components["schemas"]["_types.DateFormat"];
+      time_zone?: components["schemas"]["_types.TimeZone"];
+    };
+    "_types.query_dsl.RangeQueryBaseDateMath": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
+      gt?: components["schemas"]["_types.DateMath"];
+      gte?: components["schemas"]["_types.DateMath"];
+      lt?: components["schemas"]["_types.DateMath"];
+      lte?: components["schemas"]["_types.DateMath"];
+    };
+    "_types.query_dsl.NumberRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBasedouble"] &
+      Record<string, never>;
+    "_types.query_dsl.RangeQueryBasedouble": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
+      /** @description Greater than. */
+      gt?: number;
+      /** @description Greater than or equal to. */
+      gte?: number;
+      /** @description Less than. */
+      lt?: number;
+      /** @description Less than or equal to. */
+      lte?: number;
+    };
+    "_types.query_dsl.TermRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBasestring"] &
+      Record<string, never>;
+    "_types.query_dsl.RangeQueryBasestring": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
+      /** @description Greater than. */
+      gt?: string;
+      /** @description Greater than or equal to. */
+      gte?: string;
+      /** @description Less than. */
+      lt?: string;
+      /** @description Less than or equal to. */
+      lte?: string;
+    };
+    "_types.query_dsl.RankFeatureQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      field: components["schemas"]["_types.Field"];
+      saturation?: components["schemas"]["_types.query_dsl.RankFeatureFunctionSaturation"];
+      log?: components["schemas"]["_types.query_dsl.RankFeatureFunctionLogarithm"];
+      linear?: components["schemas"]["_types.query_dsl.RankFeatureFunctionLinear"];
+      sigmoid?: components["schemas"]["_types.query_dsl.RankFeatureFunctionSigmoid"];
+    };
+    "_types.query_dsl.RankFeatureFunctionSaturation": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & {
+      /** @description Configurable pivot value so that the result will be less than 0.5. */
+      pivot?: number;
+    };
+    "_types.query_dsl.RankFeatureFunction": Record<string, never>;
+    "_types.query_dsl.RankFeatureFunctionLogarithm": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & {
+      /** @description Configurable scaling factor. */
+      scaling_factor: number;
+    };
+    "_types.query_dsl.RankFeatureFunctionLinear": components["schemas"]["_types.query_dsl.RankFeatureFunction"] &
+      Record<string, never>;
+    "_types.query_dsl.RankFeatureFunctionSigmoid": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & {
+      /** @description Configurable pivot value so that the result will be less than 0.5. */
+      pivot: number;
+      /** @description Configurable Exponent. */
+      exponent: number;
+    };
+    "_types.query_dsl.RegexpQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description Allows case insensitive matching of the regular expression value with the indexed field values when set to `true`.
+       *     When `false`, case sensitivity of matching depends on the underlying field’s mapping.
+       * @default false
+       */
+      case_insensitive: boolean;
+      /** @description Enables optional operators for the regular expression. */
+      flags?: string;
+      /**
+       * @description Maximum number of automaton states required for the query.
+       * @default 10000
+       */
+      max_determinized_states: number;
+      rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /** @description Regular expression for terms you wish to find in the provided field. */
+      value: string;
+    };
+    "_types.query_dsl.RuleQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      organic: components["schemas"]["_types.query_dsl.QueryContainer"];
+      ruleset_ids?: components["schemas"]["_types.Id"] | components["schemas"]["_types.Id"][];
+      ruleset_id?: string;
+      match_criteria: Record<string, never>;
+    };
+    "_types.query_dsl.ScriptQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      script: components["schemas"]["_types.Script"];
+    };
+    "_types.query_dsl.ScriptScoreQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Documents with a score lower than this floating point number are excluded from the search results. */
+      min_score?: number;
+      query: components["schemas"]["_types.query_dsl.QueryContainer"];
+      script: components["schemas"]["_types.Script"];
+    };
+    "_types.query_dsl.SemanticQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description The field to query, which must be a semantic_text field type */
+      field: string;
+      /** @description The query text */
+      query: string;
+    };
+    "_types.query_dsl.ShapeQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description When set to `true` the query ignores an unmapped field and will not match any documents. */
+      ignore_unmapped?: boolean;
+    };
+    "_types.query_dsl.SimpleQueryStringQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Analyzer used to convert text in the query string into tokens. */
+      analyzer?: string;
+      /**
+       * @description If `true`, the query attempts to analyze wildcard terms in the query string.
+       * @default false
+       */
+      analyze_wildcard: boolean;
+      /**
+       * @description If `true`, the parser creates a match_phrase query for each multi-position token.
+       * @default true
+       */
+      auto_generate_synonyms_phrase_query: boolean;
+      default_operator?: components["schemas"]["_types.query_dsl.Operator"];
+      /**
+       * @description Array of fields you wish to search.
+       *     Accepts wildcard expressions.
+       *     You also can boost relevance scores for matches to particular fields using a caret (`^`) notation.
+       *     Defaults to the `index.query.default_field index` setting, which has a default value of `*`.
+       */
+      fields?: components["schemas"]["_types.Field"][];
+      flags?: components["schemas"]["_types.query_dsl.SimpleQueryStringFlags"];
+      /**
+       * @description Maximum number of terms to which the query expands for fuzzy matching.
+       * @default 50
+       */
+      fuzzy_max_expansions: number;
+      /**
+       * @description Number of beginning characters left unchanged for fuzzy matching.
+       * @default 0
+       */
+      fuzzy_prefix_length: number;
+      /** @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`). */
+      fuzzy_transpositions?: boolean;
+      /**
+       * @description If `true`, format-based errors, such as providing a text value for a numeric field, are ignored.
+       * @default false
+       */
+      lenient: boolean;
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      /** @description Query string in the simple query string syntax you wish to parse and use for search. */
+      query: string;
+      /** @description Suffix appended to quoted text in the query string. */
+      quote_field_suffix?: string;
+    };
+    /** @description Query flags can be either a single flag or a combination of flags, e.g. `OR|AND|PREFIX` */
+    "_types.query_dsl.SimpleQueryStringFlags": components["schemas"]["_spec_utils.PipeSeparatedFlagsSimpleQueryStringFlag"];
+    /**
+     * @description A set of flags that can be represented as a single enum value or a set of values that are encoded
+     *     as a pipe-separated string
+     *
+     *     Depending on the target language, code generators can use this hint to generate language specific
+     *     flags enum constructs and the corresponding (de-)serialization code.
+     */
+    "_spec_utils.PipeSeparatedFlagsSimpleQueryStringFlag":
+      | components["schemas"]["_types.query_dsl.SimpleQueryStringFlag"]
+      | string;
+    /** @enum {string} */
+    "_types.query_dsl.SimpleQueryStringFlag":
+      | "NONE"
+      | "AND"
+      | "NOT"
+      | "OR"
+      | "PREFIX"
+      | "PHRASE"
+      | "PRECEDENCE"
+      | "ESCAPE"
+      | "WHITESPACE"
+      | "FUZZY"
+      | "NEAR"
+      | "SLOP"
+      | "ALL";
+    "_types.query_dsl.SpanContainingQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      big: components["schemas"]["_types.query_dsl.SpanQuery"];
+      little: components["schemas"]["_types.query_dsl.SpanQuery"];
+    };
+    "_types.query_dsl.SpanQuery": {
+      span_containing?: components["schemas"]["_types.query_dsl.SpanContainingQuery"];
+      span_field_masking?: components["schemas"]["_types.query_dsl.SpanFieldMaskingQuery"];
+      span_first?: components["schemas"]["_types.query_dsl.SpanFirstQuery"];
+      span_gap?: components["schemas"]["_types.query_dsl.SpanGapQuery"];
+      span_multi?: components["schemas"]["_types.query_dsl.SpanMultiTermQuery"];
+      span_near?: components["schemas"]["_types.query_dsl.SpanNearQuery"];
+      span_not?: components["schemas"]["_types.query_dsl.SpanNotQuery"];
+      span_or?: components["schemas"]["_types.query_dsl.SpanOrQuery"];
+      /** @description The equivalent of the `term` query but for use with other span queries. */
+      span_term?: {
+        [key: string]: components["schemas"]["_types.query_dsl.SpanTermQuery"];
+      };
+      span_within?: components["schemas"]["_types.query_dsl.SpanWithinQuery"];
+    };
+    "_types.query_dsl.SpanFieldMaskingQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      field: components["schemas"]["_types.Field"];
+      query: components["schemas"]["_types.query_dsl.SpanQuery"];
+    };
+    "_types.query_dsl.SpanFirstQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Controls the maximum end position permitted in a match. */
+      end: number;
+      match: components["schemas"]["_types.query_dsl.SpanQuery"];
+    };
+    /** @description Can only be used as a clause in a span_near query. */
+    "_types.query_dsl.SpanGapQuery": {
+      [key: string]: number;
+    };
+    "_types.query_dsl.SpanMultiTermQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      match: components["schemas"]["_types.query_dsl.QueryContainer"];
+    };
+    "_types.query_dsl.SpanNearQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Array of one or more other span type queries. */
+      clauses: components["schemas"]["_types.query_dsl.SpanQuery"][];
+      /** @description Controls whether matches are required to be in-order. */
+      in_order?: boolean;
+      /** @description Controls the maximum number of intervening unmatched positions permitted. */
+      slop?: number;
+    };
+    "_types.query_dsl.SpanNotQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description The number of tokens from within the include span that can’t have overlap with the exclude span.
+       *     Equivalent to setting both `pre` and `post`.
+       */
+      dist?: number;
+      exclude: components["schemas"]["_types.query_dsl.SpanQuery"];
+      include: components["schemas"]["_types.query_dsl.SpanQuery"];
+      /**
+       * @description The number of tokens after the include span that can’t have overlap with the exclude span.
+       * @default 0
+       */
+      post: number;
+      /**
+       * @description The number of tokens before the include span that can’t have overlap with the exclude span.
+       * @default 0
+       */
+      pre: number;
+    };
+    "_types.query_dsl.SpanOrQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Array of one or more other span type queries. */
+      clauses: components["schemas"]["_types.query_dsl.SpanQuery"][];
+    };
+    "_types.query_dsl.SpanTermQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      value: components["schemas"]["_types.FieldValue"];
+    };
+    "_types.query_dsl.SpanWithinQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      big: components["schemas"]["_types.query_dsl.SpanQuery"];
+      little: components["schemas"]["_types.query_dsl.SpanQuery"];
+    };
+    "_types.query_dsl.SparseVectorQuery": components["schemas"]["_types.query_dsl.QueryBase"] &
+      ({
+        field: components["schemas"]["_types.Field"];
         /**
-         * @description A geo bounding box. It can be represented in various ways:
-         *     - as 4 top/bottom/left/right coordinates
-         *     - as 2 top_left / bottom_right points
-         *     - as 2 top_right / bottom_left points
-         *     - as a WKT bounding box
+         * @description The query text you want to use for search.
+         *     If inference_id is specified, query must also be specified.
          */
-        "_types.GeoBounds": components["schemas"]["_types.CoordsGeoBounds"] | components["schemas"]["_types.TopLeftBottomRightGeoBounds"] | components["schemas"]["_types.TopRightBottomLeftGeoBounds"] | components["schemas"]["_types.WktGeoBounds"];
-        "_types.CoordsGeoBounds": {
-            top: number;
-            bottom: number;
-            left: number;
-            right: number;
-        };
-        "_types.TopRightBottomLeftGeoBounds": {
-            top_right: components["schemas"]["_types.GeoLocation"];
-            bottom_left: components["schemas"]["_types.GeoLocation"];
-        };
-        "_types.WktGeoBounds": {
-            wkt: string;
-        };
-        "_types.EpochTimeUnitMillis": components["schemas"]["_types.UnitMillis"];
-        /** @description Time unit for milliseconds */
-        "_types.UnitMillis": number;
+        query?: string;
         /**
-         * @description A date histogram interval. Similar to `Duration` with additional units: `w` (week), `M` (month), `q` (quarter) and
-         *     `y` (year)
+         * @description Whether to perform pruning, omitting the non-significant tokens from the query to improve query performance.
+         *     If prune is true but the pruning_config is not specified, pruning will occur but default values will be used.
+         *     Default: false
          */
-        "_types.DurationLarge": string;
-        /** @description A map tile reference, represented as `{zoom}/{x}/{y}` */
-        "_types.GeoTile": string;
-        /** @description A map hex cell (H3) reference */
-        "_types.GeoHexCell": string;
-        "_types.aggregations.CompositeAggregateKey": {
-            [key: string]: components["schemas"]["_types.FieldValue"];
-        };
-        "_types.IndexName": string;
-        /** @description Path to field or array of paths. Some API's support wildcards in the path to select multiple fields. */
-        "_types.Field": string;
-        "_types.VersionNumber": number;
-        "_types.SortResults": components["schemas"]["_types.FieldValue"][];
-        "_types.DurationValueUnitMillis": components["schemas"]["_types.UnitMillis"];
-        "_types.ShardStatistics": {
-            failed: components["schemas"]["_types.uint"];
-            successful: components["schemas"]["_types.uint"];
-            total: components["schemas"]["_types.uint"];
-            failures?: components["schemas"]["_types.ShardFailure"][];
-            skipped?: components["schemas"]["_types.uint"];
-        };
-        "_types.uint": number;
-        "_types.ShardFailure": {
-            index?: components["schemas"]["_types.IndexName"];
-            node?: string;
-            reason: components["schemas"]["_types.ErrorCause"];
-            shard?: number;
-            status?: string;
-            primary?: boolean;
-        };
+        prune?: boolean;
+        pruning_config?: components["schemas"]["_types.query_dsl.TokenPruningConfig"];
+      } & {
         /**
-         * @description Cause and details about a request failure. This class defines the properties common to all error types.
-         *     Additional details are also provided, that depend on the error type.
+         * @description Dictionary of precomputed sparse vectors and their associated weights.
+         *     Only one of inference_id or query_vector may be supplied in a request.
          */
-        "_types.ErrorCause": {
-            /** @description The type of error */
-            type: string;
-            /** @description A human-readable explanation of the error, in English. */
-            reason?: string | (string | null);
-            /** @description The server stack trace. Present only if the `error_trace=true` parameter was sent with the request. */
-            stack_trace?: string;
-            caused_by?: components["schemas"]["_types.ErrorCause"];
-            root_cause?: components["schemas"]["_types.ErrorCause"][];
-            suppressed?: components["schemas"]["_types.ErrorCause"][];
-        };
-        "_types.NodeId": string;
-        "_types.Routing": string;
-        /**
-         * @description A date and time, either as a string whose format can depend on the context (defaulting to ISO 8601), or a
-         *     number of milliseconds since the Epoch. Elasticsearch accepts both as input, but will generally output a string
-         *     representation.
-         */
-        "_types.DateTime": string | components["schemas"]["_types.EpochTimeUnitMillis"];
-        "_types.Indices": components["schemas"]["_types.IndexName"] | components["schemas"]["_types.IndexName"][];
-        /** @enum {string} */
-        "_types.query_dsl.Operator": "and" | "AND" | "or" | "OR";
-        "_types.Fields": components["schemas"]["_types.Field"] | components["schemas"]["_types.Field"][];
-        "_types.ExpandWildcards": components["schemas"]["_types.ExpandWildcard"] | components["schemas"]["_types.ExpandWildcard"][];
-        /** @enum {string} */
-        "_types.ExpandWildcard": "all" | "open" | "closed" | "hidden" | "none";
-        /**
-         * @description Number of hits matching the query to count accurately. If true, the exact
-         *     number of hits is returned at the cost of some performance. If false, the
-         *     response does not include the total number of hits matching the query.
-         *     Defaults to 10,000 hits.
-         */
-        "_global.search._types.TrackHits": boolean | number;
-        "_types.aggregations.AggregationContainer": {
-            /**
-             * @description Sub-aggregations for this aggregation.
-             *     Only applies to bucket aggregations.
-             */
-            aggregations?: {
-                [key: string]: components["schemas"]["_types.aggregations.AggregationContainer"];
-            };
-            meta?: components["schemas"]["_types.Metadata"];
-        } & {
-            adjacency_matrix?: components["schemas"]["_types.aggregations.AdjacencyMatrixAggregation"];
-            auto_date_histogram?: components["schemas"]["_types.aggregations.AutoDateHistogramAggregation"];
-            avg?: components["schemas"]["_types.aggregations.AverageAggregation"];
-            avg_bucket?: components["schemas"]["_types.aggregations.AverageBucketAggregation"];
-            boxplot?: components["schemas"]["_types.aggregations.BoxplotAggregation"];
-            bucket_script?: components["schemas"]["_types.aggregations.BucketScriptAggregation"];
-            bucket_selector?: components["schemas"]["_types.aggregations.BucketSelectorAggregation"];
-            bucket_sort?: components["schemas"]["_types.aggregations.BucketSortAggregation"];
-            bucket_count_ks_test?: components["schemas"]["_types.aggregations.BucketKsAggregation"];
-            bucket_correlation?: components["schemas"]["_types.aggregations.BucketCorrelationAggregation"];
-            cardinality?: components["schemas"]["_types.aggregations.CardinalityAggregation"];
-            cartesian_bounds?: components["schemas"]["_types.aggregations.CartesianBoundsAggregation"];
-            cartesian_centroid?: components["schemas"]["_types.aggregations.CartesianCentroidAggregation"];
-            categorize_text?: components["schemas"]["_types.aggregations.CategorizeTextAggregation"];
-            change_point?: components["schemas"]["_types.aggregations.ChangePointAggregation"];
-            children?: components["schemas"]["_types.aggregations.ChildrenAggregation"];
-            composite?: components["schemas"]["_types.aggregations.CompositeAggregation"];
-            cumulative_cardinality?: components["schemas"]["_types.aggregations.CumulativeCardinalityAggregation"];
-            cumulative_sum?: components["schemas"]["_types.aggregations.CumulativeSumAggregation"];
-            date_histogram?: components["schemas"]["_types.aggregations.DateHistogramAggregation"];
-            date_range?: components["schemas"]["_types.aggregations.DateRangeAggregation"];
-            derivative?: components["schemas"]["_types.aggregations.DerivativeAggregation"];
-            diversified_sampler?: components["schemas"]["_types.aggregations.DiversifiedSamplerAggregation"];
-            extended_stats?: components["schemas"]["_types.aggregations.ExtendedStatsAggregation"];
-            extended_stats_bucket?: components["schemas"]["_types.aggregations.ExtendedStatsBucketAggregation"];
-            frequent_item_sets?: components["schemas"]["_types.aggregations.FrequentItemSetsAggregation"];
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            filters?: components["schemas"]["_types.aggregations.FiltersAggregation"];
-            geo_bounds?: components["schemas"]["_types.aggregations.GeoBoundsAggregation"];
-            geo_centroid?: components["schemas"]["_types.aggregations.GeoCentroidAggregation"];
-            geo_distance?: components["schemas"]["_types.aggregations.GeoDistanceAggregation"];
-            geohash_grid?: components["schemas"]["_types.aggregations.GeoHashGridAggregation"];
-            geo_line?: components["schemas"]["_types.aggregations.GeoLineAggregation"];
-            geotile_grid?: components["schemas"]["_types.aggregations.GeoTileGridAggregation"];
-            geohex_grid?: components["schemas"]["_types.aggregations.GeohexGridAggregation"];
-            global?: components["schemas"]["_types.aggregations.GlobalAggregation"];
-            histogram?: components["schemas"]["_types.aggregations.HistogramAggregation"];
-            ip_range?: components["schemas"]["_types.aggregations.IpRangeAggregation"];
-            ip_prefix?: components["schemas"]["_types.aggregations.IpPrefixAggregation"];
-            inference?: components["schemas"]["_types.aggregations.InferenceAggregation"];
-            line?: components["schemas"]["_types.aggregations.GeoLineAggregation"];
-            matrix_stats?: components["schemas"]["_types.aggregations.MatrixStatsAggregation"];
-            max?: components["schemas"]["_types.aggregations.MaxAggregation"];
-            max_bucket?: components["schemas"]["_types.aggregations.MaxBucketAggregation"];
-            median_absolute_deviation?: components["schemas"]["_types.aggregations.MedianAbsoluteDeviationAggregation"];
-            min?: components["schemas"]["_types.aggregations.MinAggregation"];
-            min_bucket?: components["schemas"]["_types.aggregations.MinBucketAggregation"];
-            missing?: components["schemas"]["_types.aggregations.MissingAggregation"];
-            moving_avg?: components["schemas"]["_types.aggregations.MovingAverageAggregation"];
-            moving_percentiles?: components["schemas"]["_types.aggregations.MovingPercentilesAggregation"];
-            moving_fn?: components["schemas"]["_types.aggregations.MovingFunctionAggregation"];
-            multi_terms?: components["schemas"]["_types.aggregations.MultiTermsAggregation"];
-            nested?: components["schemas"]["_types.aggregations.NestedAggregation"];
-            normalize?: components["schemas"]["_types.aggregations.NormalizeAggregation"];
-            parent?: components["schemas"]["_types.aggregations.ParentAggregation"];
-            percentile_ranks?: components["schemas"]["_types.aggregations.PercentileRanksAggregation"];
-            percentiles?: components["schemas"]["_types.aggregations.PercentilesAggregation"];
-            percentiles_bucket?: components["schemas"]["_types.aggregations.PercentilesBucketAggregation"];
-            range?: components["schemas"]["_types.aggregations.RangeAggregation"];
-            rare_terms?: components["schemas"]["_types.aggregations.RareTermsAggregation"];
-            rate?: components["schemas"]["_types.aggregations.RateAggregation"];
-            reverse_nested?: components["schemas"]["_types.aggregations.ReverseNestedAggregation"];
-            random_sampler?: components["schemas"]["_types.aggregations.RandomSamplerAggregation"];
-            sampler?: components["schemas"]["_types.aggregations.SamplerAggregation"];
-            scripted_metric?: components["schemas"]["_types.aggregations.ScriptedMetricAggregation"];
-            serial_diff?: components["schemas"]["_types.aggregations.SerialDifferencingAggregation"];
-            significant_terms?: components["schemas"]["_types.aggregations.SignificantTermsAggregation"];
-            significant_text?: components["schemas"]["_types.aggregations.SignificantTextAggregation"];
-            stats?: components["schemas"]["_types.aggregations.StatsAggregation"];
-            stats_bucket?: components["schemas"]["_types.aggregations.StatsBucketAggregation"];
-            string_stats?: components["schemas"]["_types.aggregations.StringStatsAggregation"];
-            sum?: components["schemas"]["_types.aggregations.SumAggregation"];
-            sum_bucket?: components["schemas"]["_types.aggregations.SumBucketAggregation"];
-            terms?: components["schemas"]["_types.aggregations.TermsAggregation"];
-            time_series?: components["schemas"]["_types.aggregations.TimeSeriesAggregation"];
-            top_hits?: components["schemas"]["_types.aggregations.TopHitsAggregation"];
-            t_test?: components["schemas"]["_types.aggregations.TTestAggregation"];
-            top_metrics?: components["schemas"]["_types.aggregations.TopMetricsAggregation"];
-            value_count?: components["schemas"]["_types.aggregations.ValueCountAggregation"];
-            weighted_avg?: components["schemas"]["_types.aggregations.WeightedAverageAggregation"];
-            variable_width_histogram?: components["schemas"]["_types.aggregations.VariableWidthHistogramAggregation"];
-        };
-        "_types.aggregations.AdjacencyMatrixAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            /**
-             * @description Filters used to create buckets.
-             *     At least one filter is required.
-             */
-            filters?: {
-                [key: string]: components["schemas"]["_types.query_dsl.QueryContainer"];
-            };
-            /** @description Separator used to concatenate filter names. Defaults to &. */
-            separator?: string;
-        };
-        /** @description An Elasticsearch Query DSL (Domain Specific Language) object that defines a query. */
-        "_types.query_dsl.QueryContainer": {
-            bool?: components["schemas"]["_types.query_dsl.BoolQuery"];
-            boosting?: components["schemas"]["_types.query_dsl.BoostingQuery"];
-            /** @deprecated */
-            common?: {
-                [key: string]: components["schemas"]["_types.query_dsl.CommonTermsQuery"];
-            };
-            combined_fields?: components["schemas"]["_types.query_dsl.CombinedFieldsQuery"];
-            constant_score?: components["schemas"]["_types.query_dsl.ConstantScoreQuery"];
-            dis_max?: components["schemas"]["_types.query_dsl.DisMaxQuery"];
-            distance_feature?: components["schemas"]["_types.query_dsl.DistanceFeatureQuery"];
-            exists?: components["schemas"]["_types.query_dsl.ExistsQuery"];
-            function_score?: components["schemas"]["_types.query_dsl.FunctionScoreQuery"];
-            /** @description Returns documents that contain terms similar to the search term, as measured by a Levenshtein edit distance. */
-            fuzzy?: {
-                [key: string]: components["schemas"]["_types.query_dsl.FuzzyQuery"];
-            };
-            geo_bounding_box?: components["schemas"]["_types.query_dsl.GeoBoundingBoxQuery"];
-            geo_distance?: components["schemas"]["_types.query_dsl.GeoDistanceQuery"];
-            /** @description Matches `geo_point` and `geo_shape` values that intersect a grid cell from a GeoGrid aggregation. */
-            geo_grid?: {
-                [key: string]: components["schemas"]["_types.query_dsl.GeoGridQuery"];
-            };
-            geo_polygon?: components["schemas"]["_types.query_dsl.GeoPolygonQuery"];
-            geo_shape?: components["schemas"]["_types.query_dsl.GeoShapeQuery"];
-            has_child?: components["schemas"]["_types.query_dsl.HasChildQuery"];
-            has_parent?: components["schemas"]["_types.query_dsl.HasParentQuery"];
-            ids?: components["schemas"]["_types.query_dsl.IdsQuery"];
-            /** @description Returns documents based on the order and proximity of matching terms. */
-            intervals?: {
-                [key: string]: components["schemas"]["_types.query_dsl.IntervalsQuery"];
-            };
-            knn?: components["schemas"]["_types.KnnQuery"];
-            /**
-             * @description Returns documents that match a provided text, number, date or boolean value.
-             *     The provided text is analyzed before matching.
-             */
-            match?: {
-                [key: string]: components["schemas"]["_types.query_dsl.MatchQuery"];
-            };
-            match_all?: components["schemas"]["_types.query_dsl.MatchAllQuery"];
-            /**
-             * @description Analyzes its input and constructs a `bool` query from the terms.
-             *     Each term except the last is used in a `term` query.
-             *     The last term is used in a prefix query.
-             */
-            match_bool_prefix?: {
-                [key: string]: components["schemas"]["_types.query_dsl.MatchBoolPrefixQuery"];
-            };
-            match_none?: components["schemas"]["_types.query_dsl.MatchNoneQuery"];
-            /** @description Analyzes the text and creates a phrase query out of the analyzed text. */
-            match_phrase?: {
-                [key: string]: components["schemas"]["_types.query_dsl.MatchPhraseQuery"];
-            };
-            /**
-             * @description Returns documents that contain the words of a provided text, in the same order as provided.
-             *     The last term of the provided text is treated as a prefix, matching any words that begin with that term.
-             */
-            match_phrase_prefix?: {
-                [key: string]: components["schemas"]["_types.query_dsl.MatchPhrasePrefixQuery"];
-            };
-            more_like_this?: components["schemas"]["_types.query_dsl.MoreLikeThisQuery"];
-            multi_match?: components["schemas"]["_types.query_dsl.MultiMatchQuery"];
-            nested?: components["schemas"]["_types.query_dsl.NestedQuery"];
-            parent_id?: components["schemas"]["_types.query_dsl.ParentIdQuery"];
-            percolate?: components["schemas"]["_types.query_dsl.PercolateQuery"];
-            pinned?: components["schemas"]["_types.query_dsl.PinnedQuery"];
-            /** @description Returns documents that contain a specific prefix in a provided field. */
-            prefix?: {
-                [key: string]: components["schemas"]["_types.query_dsl.PrefixQuery"];
-            };
-            query_string?: components["schemas"]["_types.query_dsl.QueryStringQuery"];
-            /** @description Returns documents that contain terms within a provided range. */
-            range?: {
-                [key: string]: components["schemas"]["_types.query_dsl.RangeQuery"];
-            };
-            rank_feature?: components["schemas"]["_types.query_dsl.RankFeatureQuery"];
-            /** @description Returns documents that contain terms matching a regular expression. */
-            regexp?: {
-                [key: string]: components["schemas"]["_types.query_dsl.RegexpQuery"];
-            };
-            rule?: components["schemas"]["_types.query_dsl.RuleQuery"];
-            script?: components["schemas"]["_types.query_dsl.ScriptQuery"];
-            script_score?: components["schemas"]["_types.query_dsl.ScriptScoreQuery"];
-            semantic?: components["schemas"]["_types.query_dsl.SemanticQuery"];
-            shape?: components["schemas"]["_types.query_dsl.ShapeQuery"];
-            simple_query_string?: components["schemas"]["_types.query_dsl.SimpleQueryStringQuery"];
-            span_containing?: components["schemas"]["_types.query_dsl.SpanContainingQuery"];
-            span_field_masking?: components["schemas"]["_types.query_dsl.SpanFieldMaskingQuery"];
-            span_first?: components["schemas"]["_types.query_dsl.SpanFirstQuery"];
-            span_multi?: components["schemas"]["_types.query_dsl.SpanMultiTermQuery"];
-            span_near?: components["schemas"]["_types.query_dsl.SpanNearQuery"];
-            span_not?: components["schemas"]["_types.query_dsl.SpanNotQuery"];
-            span_or?: components["schemas"]["_types.query_dsl.SpanOrQuery"];
-            /** @description Matches spans containing a term. */
-            span_term?: {
-                [key: string]: components["schemas"]["_types.query_dsl.SpanTermQuery"];
-            };
-            span_within?: components["schemas"]["_types.query_dsl.SpanWithinQuery"];
-            sparse_vector?: components["schemas"]["_types.query_dsl.SparseVectorQuery"];
-            /**
-             * @description Returns documents that contain an exact term in a provided field.
-             *     To return a document, the query term must exactly match the queried field's value, including whitespace and capitalization.
-             */
-            term?: {
-                [key: string]: components["schemas"]["_types.query_dsl.TermQuery"];
-            };
-            terms?: components["schemas"]["_types.query_dsl.TermsQuery"];
-            /**
-             * @description Returns documents that contain a minimum number of exact terms in a provided field.
-             *     To return a document, a required number of terms must exactly match the field values, including whitespace and capitalization.
-             */
-            terms_set?: {
-                [key: string]: components["schemas"]["_types.query_dsl.TermsSetQuery"];
-            };
-            /**
-             * @deprecated
-             * @description Uses a natural language processing model to convert the query text into a list of token-weight pairs which are then used in a query against a sparse vector or rank features field.
-             */
-            text_expansion?: {
-                [key: string]: components["schemas"]["_types.query_dsl.TextExpansionQuery"];
-            };
-            /**
-             * @deprecated
-             * @description Supports returning text_expansion query results by sending in precomputed tokens with the query.
-             */
-            weighted_tokens?: {
-                [key: string]: components["schemas"]["_types.query_dsl.WeightedTokensQuery"];
-            };
-            /** @description Returns documents that contain terms matching a wildcard pattern. */
-            wildcard?: {
-                [key: string]: components["schemas"]["_types.query_dsl.WildcardQuery"];
-            };
-            wrapper?: components["schemas"]["_types.query_dsl.WrapperQuery"];
-            type?: components["schemas"]["_types.query_dsl.TypeQuery"];
-        };
-        "_types.query_dsl.BoolQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description The clause (query) must appear in matching documents.
-             *     However, unlike `must`, the score of the query will be ignored.
-             */
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            /** @description The clause (query) must appear in matching documents and will contribute to the score. */
-            must?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-            /**
-             * @description The clause (query) must not appear in the matching documents.
-             *     Because scoring is ignored, a score of `0` is returned for all documents.
-             */
-            must_not?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-            /** @description The clause (query) should appear in the matching document. */
-            should?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-        };
-        /** @description The minimum number of terms that should match as integer, percentage or range */
-        "_types.MinimumShouldMatch": number | string;
-        "_types.query_dsl.QueryBase": {
-            /**
-             * @description Floating point number used to decrease or increase the relevance scores of the query.
-             *     Boost values are relative to the default value of 1.0.
-             *     A boost value between 0 and 1.0 decreases the relevance score.
-             *     A value greater than 1.0 increases the relevance score.
-             * @default 1
-             */
-            boost: number;
-            _name?: string;
-        };
-        "_types.query_dsl.BoostingQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Floating point number between 0 and 1.0 used to decrease the relevance scores of documents matching the `negative` query. */
-            negative_boost: number;
-            negative: components["schemas"]["_types.query_dsl.QueryContainer"];
-            positive: components["schemas"]["_types.query_dsl.QueryContainer"];
-        };
-        "_types.query_dsl.CommonTermsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            analyzer?: string;
-            cutoff_frequency?: number;
-            high_freq_operator?: components["schemas"]["_types.query_dsl.Operator"];
-            low_freq_operator?: components["schemas"]["_types.query_dsl.Operator"];
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            query: string;
-        };
-        "_types.query_dsl.CombinedFieldsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description List of fields to search. Field wildcard patterns are allowed. Only `text` fields are supported, and they must all have the same search `analyzer`. */
-            fields: components["schemas"]["_types.Field"][];
-            /**
-             * @description Text to search for in the provided `fields`.
-             *     The `combined_fields` query analyzes the provided text before performing a search.
-             */
-            query: string;
-            /**
-             * @description If true, match phrase queries are automatically created for multi-term synonyms.
-             * @default true
-             */
-            auto_generate_synonyms_phrase_query: boolean;
-            operator?: components["schemas"]["_types.query_dsl.CombinedFieldsOperator"];
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            zero_terms_query?: components["schemas"]["_types.query_dsl.CombinedFieldsZeroTerms"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.CombinedFieldsOperator": "or" | "and";
-        /** @enum {string} */
-        "_types.query_dsl.CombinedFieldsZeroTerms": "none" | "all";
-        "_types.query_dsl.ConstantScoreQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            filter: components["schemas"]["_types.query_dsl.QueryContainer"];
-        };
-        "_types.query_dsl.DisMaxQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description One or more query clauses.
-             *     Returned documents must match one or more of these queries.
-             *     If a document matches multiple queries, Elasticsearch uses the highest relevance score.
-             */
-            queries: components["schemas"]["_types.query_dsl.QueryContainer"][];
-            /**
-             * @description Floating point number between 0 and 1.0 used to increase the relevance scores of documents matching multiple query clauses.
-             * @default 0
-             */
-            tie_breaker: number;
-        };
-        "_types.query_dsl.DistanceFeatureQuery": components["schemas"]["_types.query_dsl.UntypedDistanceFeatureQuery"] | components["schemas"]["_types.query_dsl.GeoDistanceFeatureQuery"] | components["schemas"]["_types.query_dsl.DateDistanceFeatureQuery"];
-        "_types.query_dsl.UntypedDistanceFeatureQuery": components["schemas"]["_types.query_dsl.DistanceFeatureQueryBase"] & Record<string, never>;
-        "_types.query_dsl.DistanceFeatureQueryBase": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Date or point of origin used to calculate distances.
-             *     If the `field` value is a `date` or `date_nanos` field, the `origin` value must be a date.
-             *     Date Math, such as `now-1h`, is supported.
-             *     If the field value is a `geo_point` field, the `origin` value must be a geopoint.
-             */
-            origin: Record<string, never>;
-            /**
-             * @description Distance from the `origin` at which relevance scores receive half of the `boost` value.
-             *     If the `field` value is a `date` or `date_nanos` field, the `pivot` value must be a time unit, such as `1h` or `10d`. If the `field` value is a `geo_point` field, the `pivot` value must be a distance unit, such as `1km` or `12m`.
-             */
-            pivot: Record<string, never>;
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.query_dsl.GeoDistanceFeatureQuery": components["schemas"]["_types.query_dsl.DistanceFeatureQueryBaseGeoLocationDistance"] & Record<string, never>;
-        "_types.query_dsl.DistanceFeatureQueryBaseGeoLocationDistance": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            origin: components["schemas"]["_types.GeoLocation"];
-            pivot: components["schemas"]["_types.Distance"];
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.Distance": string;
-        "_types.query_dsl.DateDistanceFeatureQuery": components["schemas"]["_types.query_dsl.DistanceFeatureQueryBaseDateMathDuration"] & Record<string, never>;
-        "_types.query_dsl.DistanceFeatureQueryBaseDateMathDuration": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            origin: components["schemas"]["_types.DateMath"];
-            pivot: components["schemas"]["_types.Duration"];
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.DateMath": string;
-        "_types.query_dsl.ExistsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.query_dsl.FunctionScoreQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            boost_mode?: components["schemas"]["_types.query_dsl.FunctionBoostMode"];
-            /** @description One or more functions that compute a new score for each document returned by the query. */
-            functions?: components["schemas"]["_types.query_dsl.FunctionScoreContainer"][];
-            /** @description Restricts the new score to not exceed the provided limit. */
-            max_boost?: number;
-            /** @description Excludes documents that do not meet the provided score threshold. */
-            min_score?: number;
-            query?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            score_mode?: components["schemas"]["_types.query_dsl.FunctionScoreMode"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.FunctionBoostMode": "multiply" | "replace" | "sum" | "avg" | "max" | "min";
-        "_types.query_dsl.FunctionScoreContainer": {
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            weight?: number;
-        } & {
-            exp?: components["schemas"]["_types.query_dsl.DecayFunction"];
-            gauss?: components["schemas"]["_types.query_dsl.DecayFunction"];
-            linear?: components["schemas"]["_types.query_dsl.DecayFunction"];
-            field_value_factor?: components["schemas"]["_types.query_dsl.FieldValueFactorScoreFunction"];
-            random_score?: components["schemas"]["_types.query_dsl.RandomScoreFunction"];
-            script_score?: components["schemas"]["_types.query_dsl.ScriptScoreFunction"];
-        };
-        "_types.query_dsl.DecayFunction": components["schemas"]["_types.query_dsl.UntypedDecayFunction"] | components["schemas"]["_types.query_dsl.DateDecayFunction"] | components["schemas"]["_types.query_dsl.NumericDecayFunction"] | components["schemas"]["_types.query_dsl.GeoDecayFunction"];
-        "_types.query_dsl.UntypedDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBase"] & Record<string, never>;
-        "_types.query_dsl.DecayFunctionBase": {
-            multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.MultiValueMode": "min" | "max" | "avg" | "sum";
-        "_types.query_dsl.DateDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBaseDateMathDuration"] & Record<string, never>;
-        "_types.query_dsl.DecayFunctionBaseDateMathDuration": {
-            multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
-        };
-        "_types.query_dsl.NumericDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBasedoubledouble"] & Record<string, never>;
-        "_types.query_dsl.DecayFunctionBasedoubledouble": {
-            multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
-        };
-        "_types.query_dsl.GeoDecayFunction": components["schemas"]["_types.query_dsl.DecayFunctionBaseGeoLocationDistance"] & Record<string, never>;
-        "_types.query_dsl.DecayFunctionBaseGeoLocationDistance": {
-            multi_value_mode?: components["schemas"]["_types.query_dsl.MultiValueMode"];
-        };
-        "_types.query_dsl.FieldValueFactorScoreFunction": {
-            field: components["schemas"]["_types.Field"];
-            /**
-             * @description Optional factor to multiply the field value with.
-             * @default 1
-             */
-            factor: number;
-            /**
-             * @description Value used if the document doesn’t have that field.
-             *     The modifier and factor are still applied to it as though it were read from the document.
-             */
-            missing?: number;
-            modifier?: components["schemas"]["_types.query_dsl.FieldValueFactorModifier"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.FieldValueFactorModifier": "none" | "log" | "log1p" | "log2p" | "ln" | "ln1p" | "ln2p" | "square" | "sqrt" | "reciprocal";
-        "_types.query_dsl.RandomScoreFunction": {
-            field?: components["schemas"]["_types.Field"];
-            seed?: number | string;
-        };
-        "_types.query_dsl.ScriptScoreFunction": {
-            script: components["schemas"]["_types.Script"];
-        };
-        "_types.Script": {
-            source?: components["schemas"]["_types.ScriptSource"];
-            id?: components["schemas"]["_types.Id"];
-            /**
-             * @description Specifies any named parameters that are passed into the script as variables.
-             *     Use parameters instead of hard-coded values to decrease compile time.
-             */
-            params?: {
-                [key: string]: Record<string, never>;
-            };
-            lang?: components["schemas"]["_types.ScriptLanguage"];
-            options?: {
-                [key: string]: string;
-            };
-        };
-        "_types.ScriptSource": string | components["schemas"]["_global.search._types.SearchRequestBody"];
-        "_global.search._types.SearchRequestBody": {
-            /** @description Defines the aggregations that are run as part of the search request. */
-            aggregations?: {
-                [key: string]: components["schemas"]["_types.aggregations.AggregationContainer"];
-            };
-            collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
-            /**
-             * @description If `true`, the request returns detailed information about score computation as part of a hit.
-             * @default false
-             */
-            explain: boolean;
-            /** @description Configuration of search extensions defined by Elasticsearch plugins. */
-            ext?: {
-                [key: string]: Record<string, never>;
-            };
-            /**
-             * @description The starting document offset, which must be non-negative.
-             *     By default, you cannot page through more than 10,000 hits using the `from` and `size` parameters.
-             *     To page through more hits, use the `search_after` parameter.
-             * @default 0
-             */
-            from: number;
-            highlight?: components["schemas"]["_global.search._types.Highlight"];
-            track_total_hits?: components["schemas"]["_global.search._types.TrackHits"];
-            /**
-             * @description Boost the `_score` of documents from specified indices.
-             *     The boost value is the factor by which scores are multiplied.
-             *     A boost value greater than `1.0` increases the score.
-             *     A boost value between `0` and `1.0` decreases the score.
-             */
-            indices_boost?: {
-                [key: string]: number;
-            }[];
-            /**
-             * @description An array of wildcard (`*`) field patterns.
-             *     The request returns doc values for field names matching these patterns in the `hits.fields` property of the response.
-             */
-            docvalue_fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
-            /** @description The approximate kNN search to run. */
-            knn?: components["schemas"]["_types.KnnSearch"] | components["schemas"]["_types.KnnSearch"][];
-            rank?: components["schemas"]["_types.RankContainer"];
-            /**
-             * @description The minimum `_score` for matching documents.
-             *     Documents with a lower `_score` are not included in search results or results collected by aggregations.
-             */
-            min_score?: number;
-            post_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            /**
-             * @description Set to `true` to return detailed timing information about the execution of individual components in a search request.
-             *     NOTE: This is a debugging tool and adds significant overhead to search execution.
-             * @default false
-             */
-            profile: boolean;
-            query?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            /** @description Can be used to improve precision by reordering just the top (for example 100 - 500) documents returned by the `query` and `post_filter` phases. */
-            rescore?: components["schemas"]["_global.search._types.Rescore"] | components["schemas"]["_global.search._types.Rescore"][];
-            retriever?: components["schemas"]["_types.RetrieverContainer"];
-            /** @description Retrieve a script evaluation (based on different fields) for each hit. */
-            script_fields?: {
-                [key: string]: components["schemas"]["_types.ScriptField"];
-            };
-            search_after?: components["schemas"]["_types.SortResults"];
-            /**
-             * @description The number of hits to return, which must not be negative.
-             *     By default, you cannot page through more than 10,000 hits using the `from` and `size` parameters.
-             *     To page through more hits, use the `search_after` property.
-             * @default 10
-             */
-            size: number;
-            slice?: components["schemas"]["_types.SlicedScroll"];
-            sort?: components["schemas"]["_types.Sort"];
-            _source?: components["schemas"]["_global.search._types.SourceConfig"];
-            /**
-             * @description An array of wildcard (`*`) field patterns.
-             *     The request returns values for field names matching these patterns in the `hits.fields` property of the response.
-             */
-            fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
-            suggest?: components["schemas"]["_global.search._types.Suggester"];
-            /**
-             * @description The maximum number of documents to collect for each shard.
-             *     If a query reaches this limit, Elasticsearch terminates the query early.
-             *     Elasticsearch collects documents before sorting.
-             *
-             *     IMPORTANT: Use with caution.
-             *     Elasticsearch applies this property to each shard handling the request.
-             *     When possible, let Elasticsearch perform early termination automatically.
-             *     Avoid specifying this property for requests that target data streams with backing indices across multiple data tiers.
-             *
-             *     If set to `0` (default), the query does not terminate early.
-             * @default 0
-             */
-            terminate_after: number;
-            /**
-             * @description The period of time to wait for a response from each shard.
-             *     If no response is received before the timeout expires, the request fails and returns an error.
-             *     Defaults to no timeout.
-             */
-            timeout?: string;
-            /**
-             * @description If `true`, calculate and return document scores, even if the scores are not used for sorting.
-             * @default false
-             */
-            track_scores: boolean;
-            /**
-             * @description If `true`, the request returns the document version as part of a hit.
-             * @default false
-             */
-            version: boolean;
-            /** @description If `true`, the request returns sequence number and primary term of the last modification of each hit. */
-            seq_no_primary_term?: boolean;
-            stored_fields?: components["schemas"]["_types.Fields"];
-            pit?: components["schemas"]["_global.search._types.PointInTimeReference"];
-            runtime_mappings?: components["schemas"]["_types.mapping.RuntimeFields"];
-            /**
-             * @description The stats groups to associate with the search.
-             *     Each group maintains a statistics aggregation for its associated searches.
-             *     You can retrieve these stats using the indices stats API.
-             */
-            stats?: string[];
-        };
-        "_global.search._types.FieldCollapse": {
-            field: components["schemas"]["_types.Field"];
-            /** @description The number of inner hits and their sort order */
-            inner_hits?: components["schemas"]["_global.search._types.InnerHits"] | components["schemas"]["_global.search._types.InnerHits"][];
-            /** @description The number of concurrent requests allowed to retrieve the inner_hits per group */
-            max_concurrent_group_searches?: number;
-            collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
-        };
-        "_global.search._types.InnerHits": {
-            name?: components["schemas"]["_types.Name"];
-            /**
-             * @description The maximum number of hits to return per `inner_hits`.
-             * @default 3
-             */
-            size: number;
-            /**
-             * @description Inner hit starting document offset.
-             * @default 0
-             */
-            from: number;
-            collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
-            docvalue_fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
-            explain?: boolean;
-            highlight?: components["schemas"]["_global.search._types.Highlight"];
-            ignore_unmapped?: boolean;
-            script_fields?: {
-                [key: string]: components["schemas"]["_types.ScriptField"];
-            };
-            seq_no_primary_term?: boolean;
-            fields?: components["schemas"]["_types.Field"][];
-            sort?: components["schemas"]["_types.Sort"];
-            _source?: components["schemas"]["_global.search._types.SourceConfig"];
-            stored_fields?: components["schemas"]["_types.Fields"];
-            /** @default false */
-            track_scores: boolean;
-            version?: boolean;
-        };
-        "_types.Name": string;
-        /** @description A reference to a field with formatting instructions on how to return the value */
-        "_types.query_dsl.FieldAndFormat": {
-            field: components["schemas"]["_types.Field"];
-            /** @description The format in which the values are returned. */
-            format?: string;
-            include_unmapped?: boolean;
-        };
-        "_global.search._types.Highlight": components["schemas"]["_global.search._types.HighlightBase"] & {
-            encoder?: components["schemas"]["_global.search._types.HighlighterEncoder"];
-            fields: {
-                [key: string]: components["schemas"]["_global.search._types.HighlightField"];
-            };
-        };
-        /** @enum {string} */
-        "_global.search._types.HighlighterEncoder": "default" | "html";
-        "_global.search._types.HighlightField": components["schemas"]["_global.search._types.HighlightBase"] & {
-            fragment_offset?: number;
-            matched_fields?: components["schemas"]["_types.Fields"];
-        };
-        "_global.search._types.HighlightBase": {
-            type?: components["schemas"]["_global.search._types.HighlighterType"];
-            /**
-             * @description A string that contains each boundary character.
-             * @default .,!? \t\n
-             */
-            boundary_chars: string;
-            /**
-             * @description How far to scan for boundary characters.
-             * @default 20
-             */
-            boundary_max_scan: number;
-            boundary_scanner?: components["schemas"]["_global.search._types.BoundaryScanner"];
-            /**
-             * @description Controls which locale is used to search for sentence and word boundaries.
-             *     This parameter takes a form of a language tag, for example: `"en-US"`, `"fr-FR"`, `"ja-JP"`.
-             * @default Locale.ROOT
-             */
-            boundary_scanner_locale: string;
-            /** @deprecated */
-            force_source?: boolean;
-            fragmenter?: components["schemas"]["_global.search._types.HighlighterFragmenter"];
-            /**
-             * @description The size of the highlighted fragment in characters.
-             * @default 100
-             */
-            fragment_size: number;
-            highlight_filter?: boolean;
-            highlight_query?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            max_fragment_length?: number;
-            /**
-             * @description If set to a non-negative value, highlighting stops at this defined maximum limit.
-             *     The rest of the text is not processed, thus not highlighted and no error is returned
-             *     The `max_analyzed_offset` query setting does not override the `index.highlight.max_analyzed_offset` setting, which prevails when it’s set to lower value than the query setting.
-             */
-            max_analyzed_offset?: number;
-            /**
-             * @description The amount of text you want to return from the beginning of the field if there are no matching fragments to highlight.
-             * @default 0
-             */
-            no_match_size: number;
-            /**
-             * @description The maximum number of fragments to return.
-             *     If the number of fragments is set to `0`, no fragments are returned.
-             *     Instead, the entire field contents are highlighted and returned.
-             *     This can be handy when you need to highlight short texts such as a title or address, but fragmentation is not required.
-             *     If `number_of_fragments` is `0`, `fragment_size` is ignored.
-             * @default 5
-             */
-            number_of_fragments: number;
-            options?: {
-                [key: string]: Record<string, never>;
-            };
-            order?: components["schemas"]["_global.search._types.HighlighterOrder"];
-            /**
-             * @description Controls the number of matching phrases in a document that are considered.
-             *     Prevents the `fvh` highlighter from analyzing too many phrases and consuming too much memory.
-             *     When using `matched_fields`, `phrase_limit` phrases per matched field are considered. Raising the limit increases query time and consumes more memory.
-             *     Only supported by the `fvh` highlighter.
-             * @default 256
-             */
-            phrase_limit: number;
-            /**
-             * @description Use in conjunction with `pre_tags` to define the HTML tags to use for the highlighted text.
-             *     By default, highlighted text is wrapped in `<em>` and `</em>` tags.
-             */
-            post_tags?: string[];
-            /**
-             * @description Use in conjunction with `post_tags` to define the HTML tags to use for the highlighted text.
-             *     By default, highlighted text is wrapped in `<em>` and `</em>` tags.
-             */
-            pre_tags?: string[];
-            /**
-             * @description By default, only fields that contains a query match are highlighted.
-             *     Set to `false` to highlight all fields.
-             * @default true
-             */
-            require_field_match: boolean;
-            tags_schema?: components["schemas"]["_global.search._types.HighlighterTagsSchema"];
-        };
-        "_global.search._types.HighlighterType": ("plain" | "fvh" | "unified") | string;
-        /** @enum {string} */
-        "_global.search._types.BoundaryScanner": "chars" | "sentence" | "word";
-        /** @enum {string} */
-        "_global.search._types.HighlighterFragmenter": "simple" | "span";
-        /** @enum {string} */
-        "_global.search._types.HighlighterOrder": "score";
-        /** @enum {string} */
-        "_global.search._types.HighlighterTagsSchema": "styled";
-        "_types.ScriptField": {
-            script: components["schemas"]["_types.Script"];
-            ignore_failure?: boolean;
-        };
-        "_types.Sort": components["schemas"]["_types.SortCombinations"] | components["schemas"]["_types.SortCombinations"][];
-        "_types.SortCombinations": components["schemas"]["_types.Field"] | components["schemas"]["_types.SortOptions"];
-        "_types.SortOptions": {
-            _score?: components["schemas"]["_types.ScoreSort"];
-            _doc?: components["schemas"]["_types.ScoreSort"];
-            _geo_distance?: components["schemas"]["_types.GeoDistanceSort"];
-            _script?: components["schemas"]["_types.ScriptSort"];
-        };
-        "_types.ScoreSort": {
-            order?: components["schemas"]["_types.SortOrder"];
-        };
-        /** @enum {string} */
-        "_types.SortOrder": "asc" | "desc";
-        "_types.GeoDistanceSort": {
-            mode?: components["schemas"]["_types.SortMode"];
-            distance_type?: components["schemas"]["_types.GeoDistanceType"];
-            ignore_unmapped?: boolean;
-            order?: components["schemas"]["_types.SortOrder"];
-            unit?: components["schemas"]["_types.DistanceUnit"];
-            nested?: components["schemas"]["_types.NestedSortValue"];
-        };
-        /** @enum {string} */
-        "_types.SortMode": "min" | "max" | "sum" | "avg" | "median";
-        /** @enum {string} */
-        "_types.GeoDistanceType": "arc" | "plane";
-        /** @enum {string} */
-        "_types.DistanceUnit": "in" | "ft" | "yd" | "mi" | "nmi" | "km" | "m" | "cm" | "mm";
-        "_types.NestedSortValue": {
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            max_children?: number;
-            nested?: components["schemas"]["_types.NestedSortValue"];
-            path: components["schemas"]["_types.Field"];
-        };
-        "_types.ScriptSort": {
-            order?: components["schemas"]["_types.SortOrder"];
-            script: components["schemas"]["_types.Script"];
-            type?: components["schemas"]["_types.ScriptSortType"];
-            mode?: components["schemas"]["_types.SortMode"];
-            nested?: components["schemas"]["_types.NestedSortValue"];
-        };
-        /** @enum {string} */
-        "_types.ScriptSortType": "string" | "number" | "version";
-        /** @description Defines how to fetch a source. Fetching can be disabled entirely, or the source can be filtered. */
-        "_global.search._types.SourceConfig": boolean | components["schemas"]["_global.search._types.SourceFilter"];
-        "_global.search._types.SourceFilter": {
-            excludes?: components["schemas"]["_types.Fields"];
-            includes?: components["schemas"]["_types.Fields"];
-        };
-        "_types.KnnSearch": {
-            field: components["schemas"]["_types.Field"];
-            query_vector?: components["schemas"]["_types.QueryVector"];
-            query_vector_builder?: components["schemas"]["_types.QueryVectorBuilder"];
-            /** @description The final number of nearest neighbors to return as top hits */
-            k?: number;
-            /** @description The number of nearest neighbor candidates to consider per shard */
-            num_candidates?: number;
-            /** @description Boost value to apply to kNN scores */
-            boost?: number;
-            /** @description Filters for the kNN search query */
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-            /** @description The minimum similarity for a vector to be considered a match */
-            similarity?: number;
-            inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
-            rescore_vector?: components["schemas"]["_types.RescoreVector"];
-        };
-        "_types.QueryVector": number[];
-        "_types.QueryVectorBuilder": {
-            text_embedding?: components["schemas"]["_types.TextEmbedding"];
-        };
-        "_types.TextEmbedding": {
-            /**
-             * @description Model ID is required for all dense_vector fields but
-             *     may be inferred for semantic_text fields
-             */
-            model_id?: string;
-            model_text: string;
-        };
-        "_types.RescoreVector": {
-            /** @description Applies the specified oversample factor to k on the approximate kNN search */
-            oversample: number;
-        };
-        "_types.RankContainer": {
-            rrf?: components["schemas"]["_types.RrfRank"];
-        };
-        "_types.RrfRank": components["schemas"]["_types.RankBase"] & {
-            /** @description How much influence documents in individual result sets per query have over the final ranked result set */
-            rank_constant?: number;
-            /** @description Size of the individual result sets per query */
-            rank_window_size?: number;
-        };
-        "_types.RankBase": Record<string, never>;
-        "_global.search._types.Rescore": {
-            window_size?: number;
-        } & {
-            query?: components["schemas"]["_global.search._types.RescoreQuery"];
-            learning_to_rank?: components["schemas"]["_global.search._types.LearningToRank"];
-        };
-        "_global.search._types.RescoreQuery": {
-            rescore_query: components["schemas"]["_types.query_dsl.QueryContainer"];
-            /**
-             * @description Relative importance of the original query versus the rescore query.
-             * @default 1
-             */
-            query_weight: number;
-            /**
-             * @description Relative importance of the rescore query versus the original query.
-             * @default 1
-             */
-            rescore_query_weight: number;
-            score_mode?: components["schemas"]["_global.search._types.ScoreMode"];
-        };
-        /** @enum {string} */
-        "_global.search._types.ScoreMode": "avg" | "max" | "min" | "multiply" | "total";
-        "_global.search._types.LearningToRank": {
-            /** @description The unique identifier of the trained model uploaded to Elasticsearch */
-            model_id: string;
-            /** @description Named parameters to be passed to the query templates used for feature */
-            params?: {
-                [key: string]: Record<string, never>;
-            };
-        };
-        "_types.RetrieverContainer": {
-            standard?: components["schemas"]["_types.StandardRetriever"];
-            knn?: components["schemas"]["_types.KnnRetriever"];
-            rrf?: components["schemas"]["_types.RRFRetriever"];
-            text_similarity_reranker?: components["schemas"]["_types.TextSimilarityReranker"];
-            rule?: components["schemas"]["_types.RuleRetriever"];
-            rescorer?: components["schemas"]["_types.RescorerRetriever"];
-            linear?: components["schemas"]["_types.LinearRetriever"];
-            pinned?: components["schemas"]["_types.PinnedRetriever"];
-        };
-        "_types.StandardRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            query?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            search_after?: components["schemas"]["_types.SortResults"];
-            /** @description Maximum number of documents to collect for each shard. */
-            terminate_after?: number;
-            sort?: components["schemas"]["_types.Sort"];
-            collapse?: components["schemas"]["_global.search._types.FieldCollapse"];
-        };
-        "_types.RetrieverBase": {
-            /** @description Query to filter the documents that can match. */
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-            /** @description Minimum _score for matching documents. Documents with a lower _score are not included in the top documents. */
-            min_score?: number;
-            /** @description Retriever name. */
-            _name?: string;
-        };
-        "_types.KnnRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            /** @description The name of the vector field to search against. */
-            field: string;
-            query_vector?: components["schemas"]["_types.QueryVector"];
-            query_vector_builder?: components["schemas"]["_types.QueryVectorBuilder"];
-            /** @description Number of nearest neighbors to return as top hits. */
-            k: number;
-            /** @description Number of nearest neighbor candidates to consider per shard. */
-            num_candidates: number;
-            /** @description The minimum similarity required for a document to be considered a match. */
-            similarity?: number;
-            rescore_vector?: components["schemas"]["_types.RescoreVector"];
-        };
-        "_types.RRFRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            /** @description A list of child retrievers to specify which sets of returned top documents will have the RRF formula applied to them. */
-            retrievers: components["schemas"]["_types.RetrieverContainer"][];
-            /** @description This value determines how much influence documents in individual result sets per query have over the final ranked result set. */
-            rank_constant?: number;
-            /** @description This value determines the size of the individual result sets per query. */
-            rank_window_size?: number;
-        };
-        "_types.TextSimilarityReranker": components["schemas"]["_types.RetrieverBase"] & {
-            retriever: components["schemas"]["_types.RetrieverContainer"];
-            /** @description This value determines how many documents we will consider from the nested retriever. */
-            rank_window_size?: number;
-            /** @description Unique identifier of the inference endpoint created using the inference API. */
-            inference_id?: string;
-            /** @description The text snippet used as the basis for similarity comparison */
-            inference_text: string;
-            /** @description The document field to be used for text similarity comparisons. This field should contain the text that will be evaluated against the inference_text */
-            field: string;
-        };
-        "_types.RuleRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            /** @description The ruleset IDs containing the rules this retriever is evaluating against. */
-            ruleset_ids: components["schemas"]["_types.Id"] | components["schemas"]["_types.Id"][];
-            /** @description The match criteria that will determine if a rule in the provided rulesets should be applied. */
-            match_criteria: Record<string, never>;
-            retriever: components["schemas"]["_types.RetrieverContainer"];
-            /** @description This value determines the size of the individual result set. */
-            rank_window_size?: number;
-        };
-        "_types.RescorerRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            retriever: components["schemas"]["_types.RetrieverContainer"];
-            rescore: components["schemas"]["_global.search._types.Rescore"] | components["schemas"]["_global.search._types.Rescore"][];
-        };
-        "_types.LinearRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            /** @description Inner retrievers. */
-            retrievers?: components["schemas"]["_types.InnerRetriever"][];
-            rank_window_size?: number;
-        };
-        "_types.InnerRetriever": {
-            retriever: components["schemas"]["_types.RetrieverContainer"];
-            weight: number;
-            normalizer: components["schemas"]["_types.ScoreNormalizer"];
-        };
-        /** @enum {string} */
-        "_types.ScoreNormalizer": "none" | "minmax";
-        "_types.PinnedRetriever": components["schemas"]["_types.RetrieverBase"] & {
-            retriever: components["schemas"]["_types.RetrieverContainer"];
-            ids?: string[];
-            docs?: components["schemas"]["_types.SpecifiedDocument"][];
-            rank_window_size?: number;
-        };
-        "_types.SpecifiedDocument": {
-            index?: components["schemas"]["_types.IndexName"];
-            id: components["schemas"]["_types.Id"];
-        };
-        "_types.SlicedScroll": {
-            field?: components["schemas"]["_types.Field"];
-            id: components["schemas"]["_types.Id"];
-            max: number;
-        };
-        "_global.search._types.Suggester": {
-            /** @description Global suggest text, to avoid repetition when the same text is used in several suggesters */
-            text?: string;
-        };
-        "_global.search._types.PointInTimeReference": {
-            id: components["schemas"]["_types.Id"];
-            keep_alive?: components["schemas"]["_types.Duration"];
-        };
-        "_types.mapping.RuntimeFields": {
-            [key: string]: components["schemas"]["_types.mapping.RuntimeField"];
-        };
-        "_types.mapping.RuntimeField": {
-            /** @description For type `composite` */
-            fields?: {
-                [key: string]: components["schemas"]["_types.mapping.CompositeSubField"];
-            };
-            /** @description For type `lookup` */
-            fetch_fields?: components["schemas"]["_types.mapping.RuntimeFieldFetchFields"][];
-            /** @description A custom format for `date` type runtime fields. */
-            format?: string;
-            input_field?: components["schemas"]["_types.Field"];
-            target_field?: components["schemas"]["_types.Field"];
-            target_index?: components["schemas"]["_types.IndexName"];
-            script?: components["schemas"]["_types.Script"];
-            type: components["schemas"]["_types.mapping.RuntimeFieldType"];
-        };
-        "_types.mapping.CompositeSubField": {
-            type: components["schemas"]["_types.mapping.RuntimeFieldType"];
-        };
-        /** @enum {string} */
-        "_types.mapping.RuntimeFieldType": "boolean" | "composite" | "date" | "double" | "geo_point" | "geo_shape" | "ip" | "keyword" | "long" | "lookup";
-        "_types.mapping.RuntimeFieldFetchFields": {
-            field: components["schemas"]["_types.Field"];
-            format?: string;
-        };
-        "_types.ScriptLanguage": ("painless" | "expression" | "mustache" | "java") | string;
-        /** @enum {string} */
-        "_types.query_dsl.FunctionScoreMode": "multiply" | "sum" | "avg" | "first" | "max" | "min";
-        "_types.query_dsl.FuzzyQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Maximum number of variations created.
-             * @default 50
-             */
-            max_expansions: number;
-            /**
-             * @description Number of beginning characters left unchanged when creating expansions.
-             * @default 0
-             */
-            prefix_length: number;
-            rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /**
-             * @description Indicates whether edits include transpositions of two adjacent characters (for example `ab` to `ba`).
-             * @default true
-             */
-            transpositions: boolean;
-            fuzziness?: components["schemas"]["_types.Fuzziness"];
-            /** @description Term you wish to find in the provided field. */
-            value: string | number | boolean;
-        };
-        "_types.MultiTermQueryRewrite": string;
-        "_types.Fuzziness": string | number;
-        "_types.query_dsl.GeoBoundingBoxQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            type?: components["schemas"]["_types.query_dsl.GeoExecution"];
-            validation_method?: components["schemas"]["_types.query_dsl.GeoValidationMethod"];
-            /**
-             * @description Set to `true` to ignore an unmapped field and not match any documents for this query.
-             *     Set to `false` to throw an exception if the field is not mapped.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-        };
-        /** @enum {string} */
-        "_types.query_dsl.GeoExecution": "memory" | "indexed";
-        /** @enum {string} */
-        "_types.query_dsl.GeoValidationMethod": "coerce" | "ignore_malformed" | "strict";
-        "_types.query_dsl.GeoDistanceQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            distance: components["schemas"]["_types.Distance"];
-            distance_type?: components["schemas"]["_types.GeoDistanceType"];
-            validation_method?: components["schemas"]["_types.query_dsl.GeoValidationMethod"];
-            /**
-             * @description Set to `true` to ignore an unmapped field and not match any documents for this query.
-             *     Set to `false` to throw an exception if the field is not mapped.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-        };
-        "_types.query_dsl.GeoGridQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            geotile?: components["schemas"]["_types.GeoTile"];
-            geohash?: components["schemas"]["_types.GeoHash"];
-            geohex?: components["schemas"]["_types.GeoHexCell"];
-        };
-        "_types.query_dsl.GeoPolygonQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            validation_method?: components["schemas"]["_types.query_dsl.GeoValidationMethod"];
-            ignore_unmapped?: boolean;
-        };
-        "_types.query_dsl.GeoShapeQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Set to `true` to ignore an unmapped field and not match any documents for this query.
-             *     Set to `false` to throw an exception if the field is not mapped.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-        };
-        "_types.query_dsl.HasChildQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Indicates whether to ignore an unmapped `type` and not return any documents instead of an error.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-            inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
-            /**
-             * @description Maximum number of child documents that match the query allowed for a returned parent document.
-             *     If the parent document exceeds this limit, it is excluded from the search results.
-             */
-            max_children?: number;
-            /**
-             * @description Minimum number of child documents that match the query required to match the query for a returned parent document.
-             *     If the parent document does not meet this limit, it is excluded from the search results.
-             */
-            min_children?: number;
-            query: components["schemas"]["_types.query_dsl.QueryContainer"];
-            score_mode?: components["schemas"]["_types.query_dsl.ChildScoreMode"];
-            type: components["schemas"]["_types.RelationName"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.ChildScoreMode": "none" | "avg" | "sum" | "max" | "min";
-        "_types.RelationName": string;
-        "_types.query_dsl.HasParentQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Indicates whether to ignore an unmapped `parent_type` and not return any documents instead of an error.
-             *     You can use this parameter to query multiple indices that may not contain the `parent_type`.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-            inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
-            parent_type: components["schemas"]["_types.RelationName"];
-            query: components["schemas"]["_types.query_dsl.QueryContainer"];
-            /**
-             * @description Indicates whether the relevance score of a matching parent document is aggregated into its child documents.
-             * @default false
-             */
-            score: boolean;
-        };
-        "_types.query_dsl.IdsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            values?: components["schemas"]["_types.Ids"];
-        };
-        "_types.Ids": components["schemas"]["_types.Id"] | components["schemas"]["_types.Id"][];
-        "_types.query_dsl.IntervalsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            all_of?: components["schemas"]["_types.query_dsl.IntervalsAllOf"];
-            any_of?: components["schemas"]["_types.query_dsl.IntervalsAnyOf"];
-            fuzzy?: components["schemas"]["_types.query_dsl.IntervalsFuzzy"];
-            match?: components["schemas"]["_types.query_dsl.IntervalsMatch"];
-            prefix?: components["schemas"]["_types.query_dsl.IntervalsPrefix"];
-            range?: components["schemas"]["_types.query_dsl.IntervalsRange"];
-            regexp?: components["schemas"]["_types.query_dsl.IntervalsRegexp"];
-            wildcard?: components["schemas"]["_types.query_dsl.IntervalsWildcard"];
-        };
-        "_types.query_dsl.IntervalsAllOf": {
-            /** @description An array of rules to combine. All rules must produce a match in a document for the overall source to match. */
-            intervals: components["schemas"]["_types.query_dsl.IntervalsContainer"][];
-            /**
-             * @description Maximum number of positions between the matching terms.
-             *     Intervals produced by the rules further apart than this are not considered matches.
-             * @default -1
-             */
-            max_gaps: number;
-            /**
-             * @description If `true`, intervals produced by the rules should appear in the order in which they are specified.
-             * @default false
-             */
-            ordered: boolean;
-            filter?: components["schemas"]["_types.query_dsl.IntervalsFilter"];
-        };
-        "_types.query_dsl.IntervalsContainer": {
-            all_of?: components["schemas"]["_types.query_dsl.IntervalsAllOf"];
-            any_of?: components["schemas"]["_types.query_dsl.IntervalsAnyOf"];
-            fuzzy?: components["schemas"]["_types.query_dsl.IntervalsFuzzy"];
-            match?: components["schemas"]["_types.query_dsl.IntervalsMatch"];
-            prefix?: components["schemas"]["_types.query_dsl.IntervalsPrefix"];
-            range?: components["schemas"]["_types.query_dsl.IntervalsRange"];
-            regexp?: components["schemas"]["_types.query_dsl.IntervalsRegexp"];
-            wildcard?: components["schemas"]["_types.query_dsl.IntervalsWildcard"];
-        };
-        "_types.query_dsl.IntervalsAnyOf": {
-            /** @description An array of rules to match. */
-            intervals: components["schemas"]["_types.query_dsl.IntervalsContainer"][];
-            filter?: components["schemas"]["_types.query_dsl.IntervalsFilter"];
-        };
-        "_types.query_dsl.IntervalsFilter": {
-            after?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            before?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            contained_by?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            containing?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            not_contained_by?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            not_containing?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            not_overlapping?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            overlapping?: components["schemas"]["_types.query_dsl.IntervalsContainer"];
-            script?: components["schemas"]["_types.Script"];
-        };
-        "_types.query_dsl.IntervalsFuzzy": {
-            /** @description Analyzer used to normalize the term. */
-            analyzer?: string;
-            fuzziness?: components["schemas"]["_types.Fuzziness"];
-            /**
-             * @description Number of beginning characters left unchanged when creating expansions.
-             * @default 0
-             */
-            prefix_length: number;
-            /** @description The term to match. */
-            term: string;
-            /**
-             * @description Indicates whether edits include transpositions of two adjacent characters (for example, `ab` to `ba`).
-             * @default true
-             */
-            transpositions: boolean;
-            use_field?: components["schemas"]["_types.Field"];
-        };
-        "_types.query_dsl.IntervalsMatch": {
-            /** @description Analyzer used to analyze terms in the query. */
-            analyzer?: string;
-            /**
-             * @description Maximum number of positions between the matching terms.
-             *     Terms further apart than this are not considered matches.
-             * @default -1
-             */
-            max_gaps: number;
-            /**
-             * @description If `true`, matching terms must appear in their specified order.
-             * @default false
-             */
-            ordered: boolean;
-            /** @description Text you wish to find in the provided field. */
-            query: string;
-            use_field?: components["schemas"]["_types.Field"];
-            filter?: components["schemas"]["_types.query_dsl.IntervalsFilter"];
-        };
-        "_types.query_dsl.IntervalsPrefix": {
-            /** @description Analyzer used to analyze the `prefix`. */
-            analyzer?: string;
-            /** @description Beginning characters of terms you wish to find in the top-level field. */
-            prefix: string;
-            use_field?: components["schemas"]["_types.Field"];
-        };
-        "_types.query_dsl.IntervalsRange": {
-            /** @description Analyzer used to analyze the `prefix`. */
-            analyzer?: string;
-            /** @description Lower term, either gte or gt must be provided. */
-            gte?: string;
-            /** @description Lower term, either gte or gt must be provided. */
-            gt?: string;
-            /** @description Upper term, either lte or lt must be provided. */
-            lte?: string;
-            /** @description Upper term, either lte or lt must be provided. */
-            lt?: string;
-            use_field?: components["schemas"]["_types.Field"];
-        };
-        "_types.query_dsl.IntervalsRegexp": {
-            /** @description Analyzer used to analyze the `prefix`. */
-            analyzer?: string;
-            /** @description Regex pattern. */
-            pattern: string;
-            use_field?: components["schemas"]["_types.Field"];
-        };
-        "_types.query_dsl.IntervalsWildcard": {
-            /**
-             * @description Analyzer used to analyze the `pattern`.
-             *     Defaults to the top-level field's analyzer.
-             */
-            analyzer?: string;
-            /** @description Wildcard pattern used to find matching terms. */
-            pattern: string;
-            use_field?: components["schemas"]["_types.Field"];
-        };
-        "_types.KnnQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            field: components["schemas"]["_types.Field"];
-            query_vector?: components["schemas"]["_types.QueryVector"];
-            query_vector_builder?: components["schemas"]["_types.QueryVectorBuilder"];
-            /** @description The number of nearest neighbor candidates to consider per shard */
-            num_candidates?: number;
-            /** @description The final number of nearest neighbors to return as top hits */
-            k?: number;
-            /** @description Filters for the kNN search query */
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"] | components["schemas"]["_types.query_dsl.QueryContainer"][];
-            /** @description The minimum similarity for a vector to be considered a match */
-            similarity?: number;
-            rescore_vector?: components["schemas"]["_types.RescoreVector"];
-        };
-        "_types.query_dsl.MatchQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Analyzer used to convert the text in the query value into tokens. */
-            analyzer?: string;
-            /**
-             * @description If `true`, match phrase queries are automatically created for multi-term synonyms.
-             * @default true
-             */
-            auto_generate_synonyms_phrase_query: boolean;
-            /** @deprecated */
-            cutoff_frequency?: number;
-            fuzziness?: components["schemas"]["_types.Fuzziness"];
-            fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /**
-             * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
-             * @default true
-             */
-            fuzzy_transpositions: boolean;
-            /**
-             * @description If `true`, format-based errors, such as providing a text query value for a numeric field, are ignored.
-             * @default false
-             */
-            lenient: boolean;
-            /**
-             * @description Maximum number of terms to which the query will expand.
-             * @default 50
-             */
-            max_expansions: number;
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            operator?: components["schemas"]["_types.query_dsl.Operator"];
-            /**
-             * @description Number of beginning characters left unchanged for fuzzy matching.
-             * @default 0
-             */
-            prefix_length: number;
-            /** @description Text, number, boolean value or date you wish to find in the provided field. */
-            query: string | number | boolean;
-            zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.ZeroTermsQuery": "all" | "none";
-        "_types.query_dsl.MatchAllQuery": components["schemas"]["_types.query_dsl.QueryBase"] & Record<string, never>;
-        "_types.query_dsl.MatchBoolPrefixQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Analyzer used to convert the text in the query value into tokens. */
-            analyzer?: string;
-            fuzziness?: components["schemas"]["_types.Fuzziness"];
-            fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /**
-             * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
-             *     Can be applied to the term subqueries constructed for all terms but the final term.
-             * @default true
-             */
-            fuzzy_transpositions: boolean;
-            /**
-             * @description Maximum number of terms to which the query will expand.
-             *     Can be applied to the term subqueries constructed for all terms but the final term.
-             * @default 50
-             */
-            max_expansions: number;
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            operator?: components["schemas"]["_types.query_dsl.Operator"];
-            /**
-             * @description Number of beginning characters left unchanged for fuzzy matching.
-             *     Can be applied to the term subqueries constructed for all terms but the final term.
-             * @default 0
-             */
-            prefix_length: number;
-            /**
-             * @description Terms you wish to find in the provided field.
-             *     The last term is used in a prefix query.
-             */
-            query: string;
-        };
-        "_types.query_dsl.MatchNoneQuery": components["schemas"]["_types.query_dsl.QueryBase"] & Record<string, never>;
-        "_types.query_dsl.MatchPhraseQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Analyzer used to convert the text in the query value into tokens. */
-            analyzer?: string;
-            /** @description Query terms that are analyzed and turned into a phrase query. */
-            query: string;
-            /**
-             * @description Maximum number of positions allowed between matching tokens.
-             * @default 0
-             */
-            slop: number;
-            zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
-        };
-        "_types.query_dsl.MatchPhrasePrefixQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Analyzer used to convert text in the query value into tokens. */
-            analyzer?: string;
-            /**
-             * @description Maximum number of terms to which the last provided term of the query value will expand.
-             * @default 50
-             */
-            max_expansions: number;
-            /** @description Text you wish to find in the provided field. */
-            query: string;
-            /**
-             * @description Maximum number of positions allowed between matching tokens.
-             * @default 0
-             */
-            slop: number;
-            zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
-        };
-        "_types.query_dsl.MoreLikeThisQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description The analyzer that is used to analyze the free form text.
-             *     Defaults to the analyzer associated with the first field in fields.
-             */
-            analyzer?: string;
-            /**
-             * @description Each term in the formed query could be further boosted by their tf-idf score.
-             *     This sets the boost factor to use when using this feature.
-             *     Defaults to deactivated (0).
-             * @default 0
-             */
-            boost_terms: number;
-            /**
-             * @description Controls whether the query should fail (throw an exception) if any of the specified fields are not of the supported types (`text` or `keyword`).
-             * @default true
-             */
-            fail_on_unsupported_field: boolean;
-            /**
-             * @description A list of fields to fetch and analyze the text from.
-             *     Defaults to the `index.query.default_field` index setting, which has a default value of `*`.
-             */
-            fields?: components["schemas"]["_types.Field"][];
-            /**
-             * @description Specifies whether the input documents should also be included in the search results returned.
-             * @default false
-             */
-            include: boolean;
-            /** @description Specifies free form text and/or a single or multiple documents for which you want to find similar documents. */
-            like: components["schemas"]["_types.query_dsl.Like"] | components["schemas"]["_types.query_dsl.Like"][];
-            /** @description The maximum document frequency above which the terms are ignored from the input document. */
-            max_doc_freq?: number;
-            /**
-             * @description The maximum number of query terms that can be selected.
-             * @default 25
-             */
-            max_query_terms: number;
-            /**
-             * @description The maximum word length above which the terms are ignored.
-             *     Defaults to unbounded (`0`).
-             * @default 0
-             */
-            max_word_length: number;
-            /**
-             * @description The minimum document frequency below which the terms are ignored from the input document.
-             * @default 5
-             */
-            min_doc_freq: number;
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            /**
-             * @description The minimum term frequency below which the terms are ignored from the input document.
-             * @default 2
-             */
-            min_term_freq: number;
-            /**
-             * @description The minimum word length below which the terms are ignored.
-             * @default 0
-             */
-            min_word_length: number;
-            routing?: components["schemas"]["_types.Routing"];
-            stop_words?: components["schemas"]["_types.analysis.StopWords"];
-            /** @description Used in combination with `like` to exclude documents that match a set of terms. */
-            unlike?: components["schemas"]["_types.query_dsl.Like"] | components["schemas"]["_types.query_dsl.Like"][];
-            version?: components["schemas"]["_types.VersionNumber"];
-            version_type?: components["schemas"]["_types.VersionType"];
-        };
-        /** @description Text that we want similar documents for or a lookup to a document's field for the text. */
-        "_types.query_dsl.Like": string | components["schemas"]["_types.query_dsl.LikeDocument"];
-        "_types.query_dsl.LikeDocument": {
-            /** @description A document not present in the index. */
-            doc?: Record<string, never>;
-            fields?: components["schemas"]["_types.Field"][];
-            _id?: components["schemas"]["_types.Id"];
-            _index?: components["schemas"]["_types.IndexName"];
-            /** @description Overrides the default analyzer. */
-            per_field_analyzer?: {
-                [key: string]: string;
-            };
-            routing?: components["schemas"]["_types.Routing"];
-            version?: components["schemas"]["_types.VersionNumber"];
-            version_type?: components["schemas"]["_types.VersionType"];
-        };
-        /** @enum {string} */
-        "_types.VersionType": "internal" | "external" | "external_gte" | "force";
-        /**
-         * @description Language value, such as _arabic_ or _thai_. Defaults to _english_.
-         *     Each language value corresponds to a predefined list of stop words in Lucene. See Stop words by language for supported language values and their stop words.
-         *     Also accepts an array of stop words.
-         */
-        "_types.analysis.StopWords": components["schemas"]["_types.analysis.StopWordLanguage"] | string[];
-        /** @enum {string} */
-        "_types.analysis.StopWordLanguage": "_arabic_" | "_armenian_" | "_basque_" | "_bengali_" | "_brazilian_" | "_bulgarian_" | "_catalan_" | "_cjk_" | "_czech_" | "_danish_" | "_dutch_" | "_english_" | "_estonian_" | "_finnish_" | "_french_" | "_galician_" | "_german_" | "_greek_" | "_hindi_" | "_hungarian_" | "_indonesian_" | "_irish_" | "_italian_" | "_latvian_" | "_lithuanian_" | "_norwegian_" | "_persian_" | "_portuguese_" | "_romanian_" | "_russian_" | "_serbian_" | "_sorani_" | "_spanish_" | "_swedish_" | "_thai_" | "_turkish_" | "_none_";
-        "_types.query_dsl.MultiMatchQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Analyzer used to convert the text in the query value into tokens. */
-            analyzer?: string;
-            /**
-             * @description If `true`, match phrase queries are automatically created for multi-term synonyms.
-             * @default true
-             */
-            auto_generate_synonyms_phrase_query: boolean;
-            /** @deprecated */
-            cutoff_frequency?: number;
-            fields?: components["schemas"]["_types.Fields"];
-            fuzziness?: components["schemas"]["_types.Fuzziness"];
-            fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /**
-             * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
-             *     Can be applied to the term subqueries constructed for all terms but the final term.
-             * @default true
-             */
-            fuzzy_transpositions: boolean;
-            /**
-             * @description If `true`, format-based errors, such as providing a text query value for a numeric field, are ignored.
-             * @default false
-             */
-            lenient: boolean;
-            /**
-             * @description Maximum number of terms to which the query will expand.
-             * @default 50
-             */
-            max_expansions: number;
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            operator?: components["schemas"]["_types.query_dsl.Operator"];
-            /**
-             * @description Number of beginning characters left unchanged for fuzzy matching.
-             * @default 0
-             */
-            prefix_length: number;
-            /** @description Text, number, boolean value or date you wish to find in the provided field. */
-            query: string;
-            /**
-             * @description Maximum number of positions allowed between matching tokens.
-             * @default 0
-             */
-            slop: number;
-            /**
-             * @description Determines how scores for each per-term blended query and scores across groups are combined.
-             * @default 0
-             */
-            tie_breaker: number;
-            type?: components["schemas"]["_types.query_dsl.TextQueryType"];
-            zero_terms_query?: components["schemas"]["_types.query_dsl.ZeroTermsQuery"];
-        };
-        /** @enum {string} */
-        "_types.query_dsl.TextQueryType": "best_fields" | "most_fields" | "cross_fields" | "phrase" | "phrase_prefix" | "bool_prefix";
-        "_types.query_dsl.NestedQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Indicates whether to ignore an unmapped path and not return any documents instead of an error.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-            inner_hits?: components["schemas"]["_global.search._types.InnerHits"];
-            path: components["schemas"]["_types.Field"];
-            query: components["schemas"]["_types.query_dsl.QueryContainer"];
-            score_mode?: components["schemas"]["_types.query_dsl.ChildScoreMode"];
-        };
-        "_types.query_dsl.ParentIdQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            id?: components["schemas"]["_types.Id"];
-            /**
-             * @description Indicates whether to ignore an unmapped `type` and not return any documents instead of an error.
-             * @default false
-             */
-            ignore_unmapped: boolean;
-            type?: components["schemas"]["_types.RelationName"];
-        };
-        "_types.query_dsl.PercolateQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description The source of the document being percolated. */
-            document?: Record<string, never>;
-            /** @description An array of sources of the documents being percolated. */
-            documents?: Record<string, never>[];
-            field: components["schemas"]["_types.Field"];
-            id?: components["schemas"]["_types.Id"];
-            index?: components["schemas"]["_types.IndexName"];
-            /** @description The suffix used for the `_percolator_document_slot` field when multiple `percolate` queries are specified. */
-            name?: string;
-            /** @description Preference used to fetch document to percolate. */
-            preference?: string;
-            routing?: components["schemas"]["_types.Routing"];
-            version?: components["schemas"]["_types.VersionNumber"];
-        };
-        "_types.query_dsl.PinnedQuery": components["schemas"]["_types.query_dsl.QueryBase"] & ({
-            organic: components["schemas"]["_types.query_dsl.QueryContainer"];
-        } & {
-            /**
-             * @description Document IDs listed in the order they are to appear in results.
-             *     Required if `docs` is not specified.
-             */
-            ids?: components["schemas"]["_types.Id"][];
-            /**
-             * @description Documents listed in the order they are to appear in results.
-             *     Required if `ids` is not specified.
-             */
-            docs?: components["schemas"]["_types.query_dsl.PinnedDoc"][];
-        });
-        "_types.query_dsl.PinnedDoc": {
-            _id: components["schemas"]["_types.Id"];
-            _index?: components["schemas"]["_types.IndexName"];
-        };
-        "_types.query_dsl.PrefixQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /** @description Beginning characters of terms you wish to find in the provided field. */
-            value: string;
-            /**
-             * @description Allows ASCII case insensitive matching of the value with the indexed field values when set to `true`.
-             *     Default is `false` which means the case sensitivity of matching depends on the underlying field’s mapping.
-             * @default false
-             */
-            case_insensitive: boolean;
-        };
-        "_types.query_dsl.QueryStringQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description If `true`, the wildcard characters `*` and `?` are allowed as the first character of the query string.
-             * @default true
-             */
-            allow_leading_wildcard: boolean;
-            /** @description Analyzer used to convert text in the query string into tokens. */
-            analyzer?: string;
-            /**
-             * @description If `true`, the query attempts to analyze wildcard terms in the query string.
-             * @default false
-             */
-            analyze_wildcard: boolean;
-            /**
-             * @description If `true`, match phrase queries are automatically created for multi-term synonyms.
-             * @default true
-             */
-            auto_generate_synonyms_phrase_query: boolean;
-            default_field?: components["schemas"]["_types.Field"];
-            default_operator?: components["schemas"]["_types.query_dsl.Operator"];
-            /**
-             * @description If `true`, enable position increments in queries constructed from a `query_string` search.
-             * @default true
-             */
-            enable_position_increments: boolean;
-            /** @default false */
-            escape: boolean;
-            /** @description Array of fields to search. Supports wildcards (`*`). */
-            fields?: components["schemas"]["_types.Field"][];
-            fuzziness?: components["schemas"]["_types.Fuzziness"];
-            /**
-             * @description Maximum number of terms to which the query expands for fuzzy matching.
-             * @default 50
-             */
-            fuzzy_max_expansions: number;
-            /**
-             * @description Number of beginning characters left unchanged for fuzzy matching.
-             * @default 0
-             */
-            fuzzy_prefix_length: number;
-            fuzzy_rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /**
-             * @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`).
-             * @default true
-             */
-            fuzzy_transpositions: boolean;
-            /**
-             * @description If `true`, format-based errors, such as providing a text value for a numeric field, are ignored.
-             * @default false
-             */
-            lenient: boolean;
-            /**
-             * @description Maximum number of automaton states required for the query.
-             * @default 10000
-             */
-            max_determinized_states: number;
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            /**
-             * @description Maximum number of positions allowed between matching tokens for phrases.
-             * @default 0
-             */
-            phrase_slop: number;
-            /** @description Query string you wish to parse and use for search. */
-            query: string;
-            /**
-             * @description Analyzer used to convert quoted text in the query string into tokens.
-             *     For quoted text, this parameter overrides the analyzer specified in the `analyzer` parameter.
-             */
-            quote_analyzer?: string;
-            /**
-             * @description Suffix appended to quoted text in the query string.
-             *     You can use this suffix to use a different analysis method for exact matches.
-             */
-            quote_field_suffix?: string;
-            rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /** @description How to combine the queries generated from the individual search terms in the resulting `dis_max` query. */
-            tie_breaker?: number;
-            time_zone?: components["schemas"]["_types.TimeZone"];
-            type?: components["schemas"]["_types.query_dsl.TextQueryType"];
-        };
-        "_types.TimeZone": string;
-        "_types.query_dsl.RangeQuery": components["schemas"]["_types.query_dsl.UntypedRangeQuery"] | components["schemas"]["_types.query_dsl.DateRangeQuery"] | components["schemas"]["_types.query_dsl.NumberRangeQuery"] | components["schemas"]["_types.query_dsl.TermRangeQuery"];
-        "_types.query_dsl.UntypedRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBase"] & {
-            format?: components["schemas"]["_types.DateFormat"];
-            time_zone?: components["schemas"]["_types.TimeZone"];
-        };
-        "_types.DateFormat": string;
-        "_types.query_dsl.RangeQueryBase": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
-            /** @description Greater than. */
-            gt?: Record<string, never>;
-            /** @description Greater than or equal to. */
-            gte?: Record<string, never>;
-            /** @description Less than. */
-            lt?: Record<string, never>;
-            /** @description Less than or equal to. */
-            lte?: Record<string, never>;
-        };
-        /** @enum {string} */
-        "_types.query_dsl.RangeRelation": "within" | "contains" | "intersects";
-        "_types.query_dsl.DateRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBaseDateMath"] & {
-            format?: components["schemas"]["_types.DateFormat"];
-            time_zone?: components["schemas"]["_types.TimeZone"];
-        };
-        "_types.query_dsl.RangeQueryBaseDateMath": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
-            gt?: components["schemas"]["_types.DateMath"];
-            gte?: components["schemas"]["_types.DateMath"];
-            lt?: components["schemas"]["_types.DateMath"];
-            lte?: components["schemas"]["_types.DateMath"];
-        };
-        "_types.query_dsl.NumberRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBasedouble"] & Record<string, never>;
-        "_types.query_dsl.RangeQueryBasedouble": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
-            /** @description Greater than. */
-            gt?: number;
-            /** @description Greater than or equal to. */
-            gte?: number;
-            /** @description Less than. */
-            lt?: number;
-            /** @description Less than or equal to. */
-            lte?: number;
-        };
-        "_types.query_dsl.TermRangeQuery": components["schemas"]["_types.query_dsl.RangeQueryBasestring"] & Record<string, never>;
-        "_types.query_dsl.RangeQueryBasestring": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            relation?: components["schemas"]["_types.query_dsl.RangeRelation"];
-            /** @description Greater than. */
-            gt?: string;
-            /** @description Greater than or equal to. */
-            gte?: string;
-            /** @description Less than. */
-            lt?: string;
-            /** @description Less than or equal to. */
-            lte?: string;
-        };
-        "_types.query_dsl.RankFeatureQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            field: components["schemas"]["_types.Field"];
-            saturation?: components["schemas"]["_types.query_dsl.RankFeatureFunctionSaturation"];
-            log?: components["schemas"]["_types.query_dsl.RankFeatureFunctionLogarithm"];
-            linear?: components["schemas"]["_types.query_dsl.RankFeatureFunctionLinear"];
-            sigmoid?: components["schemas"]["_types.query_dsl.RankFeatureFunctionSigmoid"];
-        };
-        "_types.query_dsl.RankFeatureFunctionSaturation": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & {
-            /** @description Configurable pivot value so that the result will be less than 0.5. */
-            pivot?: number;
-        };
-        "_types.query_dsl.RankFeatureFunction": Record<string, never>;
-        "_types.query_dsl.RankFeatureFunctionLogarithm": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & {
-            /** @description Configurable scaling factor. */
-            scaling_factor: number;
-        };
-        "_types.query_dsl.RankFeatureFunctionLinear": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & Record<string, never>;
-        "_types.query_dsl.RankFeatureFunctionSigmoid": components["schemas"]["_types.query_dsl.RankFeatureFunction"] & {
-            /** @description Configurable pivot value so that the result will be less than 0.5. */
-            pivot: number;
-            /** @description Configurable Exponent. */
-            exponent: number;
-        };
-        "_types.query_dsl.RegexpQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description Allows case insensitive matching of the regular expression value with the indexed field values when set to `true`.
-             *     When `false`, case sensitivity of matching depends on the underlying field’s mapping.
-             * @default false
-             */
-            case_insensitive: boolean;
-            /** @description Enables optional operators for the regular expression. */
-            flags?: string;
-            /**
-             * @description Maximum number of automaton states required for the query.
-             * @default 10000
-             */
-            max_determinized_states: number;
-            rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /** @description Regular expression for terms you wish to find in the provided field. */
-            value: string;
-        };
-        "_types.query_dsl.RuleQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            organic: components["schemas"]["_types.query_dsl.QueryContainer"];
-            ruleset_ids?: components["schemas"]["_types.Id"] | components["schemas"]["_types.Id"][];
-            ruleset_id?: string;
-            match_criteria: Record<string, never>;
-        };
-        "_types.query_dsl.ScriptQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            script: components["schemas"]["_types.Script"];
-        };
-        "_types.query_dsl.ScriptScoreQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Documents with a score lower than this floating point number are excluded from the search results. */
-            min_score?: number;
-            query: components["schemas"]["_types.query_dsl.QueryContainer"];
-            script: components["schemas"]["_types.Script"];
-        };
-        "_types.query_dsl.SemanticQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description The field to query, which must be a semantic_text field type */
-            field: string;
-            /** @description The query text */
-            query: string;
-        };
-        "_types.query_dsl.ShapeQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description When set to `true` the query ignores an unmapped field and will not match any documents. */
-            ignore_unmapped?: boolean;
-        };
-        "_types.query_dsl.SimpleQueryStringQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Analyzer used to convert text in the query string into tokens. */
-            analyzer?: string;
-            /**
-             * @description If `true`, the query attempts to analyze wildcard terms in the query string.
-             * @default false
-             */
-            analyze_wildcard: boolean;
-            /**
-             * @description If `true`, the parser creates a match_phrase query for each multi-position token.
-             * @default true
-             */
-            auto_generate_synonyms_phrase_query: boolean;
-            default_operator?: components["schemas"]["_types.query_dsl.Operator"];
-            /**
-             * @description Array of fields you wish to search.
-             *     Accepts wildcard expressions.
-             *     You also can boost relevance scores for matches to particular fields using a caret (`^`) notation.
-             *     Defaults to the `index.query.default_field index` setting, which has a default value of `*`.
-             */
-            fields?: components["schemas"]["_types.Field"][];
-            flags?: components["schemas"]["_types.query_dsl.SimpleQueryStringFlags"];
-            /**
-             * @description Maximum number of terms to which the query expands for fuzzy matching.
-             * @default 50
-             */
-            fuzzy_max_expansions: number;
-            /**
-             * @description Number of beginning characters left unchanged for fuzzy matching.
-             * @default 0
-             */
-            fuzzy_prefix_length: number;
-            /** @description If `true`, edits for fuzzy matching include transpositions of two adjacent characters (for example, `ab` to `ba`). */
-            fuzzy_transpositions?: boolean;
-            /**
-             * @description If `true`, format-based errors, such as providing a text value for a numeric field, are ignored.
-             * @default false
-             */
-            lenient: boolean;
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            /** @description Query string in the simple query string syntax you wish to parse and use for search. */
-            query: string;
-            /** @description Suffix appended to quoted text in the query string. */
-            quote_field_suffix?: string;
-        };
-        /** @description Query flags can be either a single flag or a combination of flags, e.g. `OR|AND|PREFIX` */
-        "_types.query_dsl.SimpleQueryStringFlags": components["schemas"]["_spec_utils.PipeSeparatedFlagsSimpleQueryStringFlag"];
-        /**
-         * @description A set of flags that can be represented as a single enum value or a set of values that are encoded
-         *     as a pipe-separated string
-         *
-         *     Depending on the target language, code generators can use this hint to generate language specific
-         *     flags enum constructs and the corresponding (de-)serialization code.
-         */
-        "_spec_utils.PipeSeparatedFlagsSimpleQueryStringFlag": components["schemas"]["_types.query_dsl.SimpleQueryStringFlag"] | string;
-        /** @enum {string} */
-        "_types.query_dsl.SimpleQueryStringFlag": "NONE" | "AND" | "NOT" | "OR" | "PREFIX" | "PHRASE" | "PRECEDENCE" | "ESCAPE" | "WHITESPACE" | "FUZZY" | "NEAR" | "SLOP" | "ALL";
-        "_types.query_dsl.SpanContainingQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            big: components["schemas"]["_types.query_dsl.SpanQuery"];
-            little: components["schemas"]["_types.query_dsl.SpanQuery"];
-        };
-        "_types.query_dsl.SpanQuery": {
-            span_containing?: components["schemas"]["_types.query_dsl.SpanContainingQuery"];
-            span_field_masking?: components["schemas"]["_types.query_dsl.SpanFieldMaskingQuery"];
-            span_first?: components["schemas"]["_types.query_dsl.SpanFirstQuery"];
-            span_gap?: components["schemas"]["_types.query_dsl.SpanGapQuery"];
-            span_multi?: components["schemas"]["_types.query_dsl.SpanMultiTermQuery"];
-            span_near?: components["schemas"]["_types.query_dsl.SpanNearQuery"];
-            span_not?: components["schemas"]["_types.query_dsl.SpanNotQuery"];
-            span_or?: components["schemas"]["_types.query_dsl.SpanOrQuery"];
-            /** @description The equivalent of the `term` query but for use with other span queries. */
-            span_term?: {
-                [key: string]: components["schemas"]["_types.query_dsl.SpanTermQuery"];
-            };
-            span_within?: components["schemas"]["_types.query_dsl.SpanWithinQuery"];
-        };
-        "_types.query_dsl.SpanFieldMaskingQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            field: components["schemas"]["_types.Field"];
-            query: components["schemas"]["_types.query_dsl.SpanQuery"];
-        };
-        "_types.query_dsl.SpanFirstQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Controls the maximum end position permitted in a match. */
-            end: number;
-            match: components["schemas"]["_types.query_dsl.SpanQuery"];
-        };
-        /** @description Can only be used as a clause in a span_near query. */
-        "_types.query_dsl.SpanGapQuery": {
-            [key: string]: number;
-        };
-        "_types.query_dsl.SpanMultiTermQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            match: components["schemas"]["_types.query_dsl.QueryContainer"];
-        };
-        "_types.query_dsl.SpanNearQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Array of one or more other span type queries. */
-            clauses: components["schemas"]["_types.query_dsl.SpanQuery"][];
-            /** @description Controls whether matches are required to be in-order. */
-            in_order?: boolean;
-            /** @description Controls the maximum number of intervening unmatched positions permitted. */
-            slop?: number;
-        };
-        "_types.query_dsl.SpanNotQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description The number of tokens from within the include span that can’t have overlap with the exclude span.
-             *     Equivalent to setting both `pre` and `post`.
-             */
-            dist?: number;
-            exclude: components["schemas"]["_types.query_dsl.SpanQuery"];
-            include: components["schemas"]["_types.query_dsl.SpanQuery"];
-            /**
-             * @description The number of tokens after the include span that can’t have overlap with the exclude span.
-             * @default 0
-             */
-            post: number;
-            /**
-             * @description The number of tokens before the include span that can’t have overlap with the exclude span.
-             * @default 0
-             */
-            pre: number;
-        };
-        "_types.query_dsl.SpanOrQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Array of one or more other span type queries. */
-            clauses: components["schemas"]["_types.query_dsl.SpanQuery"][];
-        };
-        "_types.query_dsl.SpanTermQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            value: components["schemas"]["_types.FieldValue"];
-        };
-        "_types.query_dsl.SpanWithinQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            big: components["schemas"]["_types.query_dsl.SpanQuery"];
-            little: components["schemas"]["_types.query_dsl.SpanQuery"];
-        };
-        "_types.query_dsl.SparseVectorQuery": components["schemas"]["_types.query_dsl.QueryBase"] & ({
-            field: components["schemas"]["_types.Field"];
-            /**
-             * @description The query text you want to use for search.
-             *     If inference_id is specified, query must also be specified.
-             */
-            query?: string;
-            /**
-             * @description Whether to perform pruning, omitting the non-significant tokens from the query to improve query performance.
-             *     If prune is true but the pruning_config is not specified, pruning will occur but default values will be used.
-             *     Default: false
-             */
-            prune?: boolean;
-            pruning_config?: components["schemas"]["_types.query_dsl.TokenPruningConfig"];
-        } & {
-            /**
-             * @description Dictionary of precomputed sparse vectors and their associated weights.
-             *     Only one of inference_id or query_vector may be supplied in a request.
-             */
-            query_vector?: {
-                [key: string]: number;
-            };
-            inference_id?: components["schemas"]["_types.Id"];
-        });
-        "_types.query_dsl.TokenPruningConfig": {
-            /**
-             * @description Tokens whose frequency is more than this threshold times the average frequency of all tokens in the specified field are considered outliers and pruned.
-             * @default 5
-             */
-            tokens_freq_ratio_threshold: number;
-            /**
-             * @description Tokens whose weight is less than this threshold are considered nonsignificant and pruned.
-             * @default 0.4
-             */
-            tokens_weight_threshold: number;
-            /**
-             * @description Whether to only score pruned tokens, vs only scoring kept tokens.
-             * @default false
-             */
-            only_score_pruned_tokens: boolean;
-        };
-        "_types.query_dsl.TermQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            value: components["schemas"]["_types.FieldValue"];
-            /**
-             * @description Allows ASCII case insensitive matching of the value with the indexed field values when set to `true`.
-             *     When `false`, the case sensitivity of matching depends on the underlying field’s mapping.
-             * @default false
-             */
-            case_insensitive: boolean;
-        };
-        "_types.query_dsl.TermsQuery": components["schemas"]["_types.query_dsl.QueryBase"] & Record<string, never>;
-        "_types.query_dsl.TermsSetQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
-            minimum_should_match_field?: components["schemas"]["_types.Field"];
-            minimum_should_match_script?: components["schemas"]["_types.Script"];
-            /** @description Array of terms you wish to find in the provided field. */
-            terms: components["schemas"]["_types.FieldValue"][];
-        };
-        "_types.query_dsl.TextExpansionQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description The text expansion NLP model to use */
-            model_id: string;
-            /** @description The query text */
-            model_text: string;
-            pruning_config?: components["schemas"]["_types.query_dsl.TokenPruningConfig"];
-        };
-        "_types.query_dsl.WeightedTokensQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description The tokens representing this query */
-            tokens: {
-                [key: string]: number;
-            };
-            pruning_config?: components["schemas"]["_types.query_dsl.TokenPruningConfig"];
-        };
-        "_types.query_dsl.WildcardQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /** @description Allows case insensitive matching of the pattern with the indexed field values when set to true. Default is false which means the case sensitivity of matching depends on the underlying field’s mapping. */
-            case_insensitive?: boolean;
-            rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
-            /** @description Wildcard pattern for terms you wish to find in the provided field. Required, when wildcard is not set. */
-            value?: string;
-            /** @description Wildcard pattern for terms you wish to find in the provided field. Required, when value is not set. */
-            wildcard?: string;
-        };
-        "_types.query_dsl.WrapperQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            /**
-             * @description A base64 encoded query.
-             *     The binary data format can be any of JSON, YAML, CBOR or SMILE encodings
-             */
-            query: string;
-        };
-        "_types.query_dsl.TypeQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
-            value: string;
-        };
-        /** @description Base type for bucket aggregations. These aggregations also accept sub-aggregations. */
-        "_types.aggregations.BucketAggregationBase": components["schemas"]["_types.aggregations.Aggregation"] & Record<string, never>;
-        "_types.aggregations.Aggregation": Record<string, never>;
-        "_types.aggregations.AutoDateHistogramAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            /**
-             * @description The target number of buckets.
-             * @default 10
-             */
-            buckets: number;
-            field?: components["schemas"]["_types.Field"];
-            /**
-             * @description The date format used to format `key_as_string` in the response.
-             *     If no `format` is specified, the first date format specified in the field mapping is used.
-             */
-            format?: string;
-            minimum_interval?: components["schemas"]["_types.aggregations.MinimumInterval"];
-            missing?: components["schemas"]["_types.DateTime"];
-            /** @description Time zone specified as a ISO 8601 UTC offset. */
-            offset?: string;
-            params?: {
-                [key: string]: Record<string, never>;
-            };
-            script?: components["schemas"]["_types.Script"];
-            time_zone?: components["schemas"]["_types.TimeZone"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.MinimumInterval": "second" | "minute" | "hour" | "day" | "month" | "year";
-        "_types.aggregations.AverageAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & Record<string, never>;
-        "_types.aggregations.FormatMetricAggregationBase": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            format?: string;
-        };
-        "_types.aggregations.MetricAggregationBase": {
-            field?: components["schemas"]["_types.Field"];
-            missing?: components["schemas"]["_types.aggregations.Missing"];
-            script?: components["schemas"]["_types.Script"];
-        };
-        "_types.aggregations.Missing": string | number | boolean;
-        "_types.aggregations.AverageBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.PipelineAggregationBase": components["schemas"]["_types.aggregations.BucketPathAggregation"] & {
-            /**
-             * @description `DecimalFormat` pattern for the output value.
-             *     If specified, the formatted value is returned in the aggregation’s `value_as_string` property.
-             */
-            format?: string;
-            gap_policy?: components["schemas"]["_types.aggregations.GapPolicy"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.GapPolicy": "skip" | "insert_zeros" | "keep_values";
-        "_types.aggregations.BucketPathAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
-            buckets_path?: components["schemas"]["_types.aggregations.BucketsPath"];
-        };
-        /**
-         * @description Buckets path can be expressed in different ways, and an aggregation may accept some or all of these
-         *     forms depending on its type. Please refer to each aggregation's documentation to know what buckets
-         *     path forms they accept.
-         */
-        "_types.aggregations.BucketsPath": string | string[] | {
-            [key: string]: string;
-        };
-        "_types.aggregations.BoxplotAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            /** @description Limits the maximum number of nodes used by the underlying TDigest algorithm to `20 * compression`, enabling control of memory usage and approximation error. */
-            compression?: number;
-        };
-        "_types.aggregations.BucketScriptAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            script?: components["schemas"]["_types.Script"];
-        };
-        "_types.aggregations.BucketSelectorAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            script?: components["schemas"]["_types.Script"];
-        };
-        "_types.aggregations.BucketSortAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
-            /** @description Buckets in positions prior to `from` will be truncated. */
-            from?: number;
-            gap_policy?: components["schemas"]["_types.aggregations.GapPolicy"];
-            /**
-             * @description The number of buckets to return.
-             *     Defaults to all buckets of the parent aggregation.
-             */
-            size?: number;
-            sort?: components["schemas"]["_types.Sort"];
-        };
-        /**
-         * @description A sibling pipeline aggregation which executes a two sample Kolmogorov–Smirnov test (referred
-         *     to as a "K-S test" from now on) against a provided distribution, and the distribution implied
-         *     by the documents counts in the configured sibling aggregation. Specifically, for some metric,
-         *     assuming that the percentile intervals of the metric are known beforehand or have been computed
-         *     by an aggregation, then one would use range aggregation for the sibling to compute the p-value
-         *     of the distribution difference between the metric and the restriction of that metric to a subset
-         *     of the documents. A natural use case is if the sibling aggregation range aggregation nested in a
-         *     terms aggregation, in which case one compares the overall distribution of metric to its restriction
-         *     to each term.
-         */
-        "_types.aggregations.BucketKsAggregation": components["schemas"]["_types.aggregations.BucketPathAggregation"] & {
-            /**
-             * @description A list of string values indicating which K-S test alternative to calculate. The valid values
-             *     are: "greater", "less", "two_sided". This parameter is key for determining the K-S statistic used
-             *     when calculating the K-S test. Default value is all possible alternative hypotheses.
-             */
-            alternative?: string[];
-            /**
-             * @description A list of doubles indicating the distribution of the samples with which to compare to the `buckets_path` results.
-             *     In typical usage this is the overall proportion of documents in each bucket, which is compared with the actual
-             *     document proportions in each bucket from the sibling aggregation counts. The default is to assume that overall
-             *     documents are uniformly distributed on these buckets, which they would be if one used equal percentiles of a
-             *     metric to define the bucket end points.
-             */
-            fractions?: number[];
-            /**
-             * @description Indicates the sampling methodology when calculating the K-S test. Note, this is sampling of the returned values.
-             *     This determines the cumulative distribution function (CDF) points used comparing the two samples. Default is
-             *     `upper_tail`, which emphasizes the upper end of the CDF points. Valid options are: `upper_tail`, `uniform`,
-             *     and `lower_tail`.
-             */
-            sampling_method?: string;
-        };
-        /** @description A sibling pipeline aggregation which executes a correlation function on the configured sibling multi-bucket aggregation. */
-        "_types.aggregations.BucketCorrelationAggregation": components["schemas"]["_types.aggregations.BucketPathAggregation"] & {
-            function: components["schemas"]["_types.aggregations.BucketCorrelationFunction"];
-        };
-        "_types.aggregations.BucketCorrelationFunction": {
-            count_correlation: components["schemas"]["_types.aggregations.BucketCorrelationFunctionCountCorrelation"];
-        };
-        "_types.aggregations.BucketCorrelationFunctionCountCorrelation": {
-            indicator: components["schemas"]["_types.aggregations.BucketCorrelationFunctionCountCorrelationIndicator"];
-        };
-        "_types.aggregations.BucketCorrelationFunctionCountCorrelationIndicator": {
-            /**
-             * @description The total number of documents that initially created the expectations. It’s required to be greater
-             *     than or equal to the sum of all values in the buckets_path as this is the originating superset of data
-             *     to which the term values are correlated.
-             */
-            doc_count: number;
-            /**
-             * @description An array of numbers with which to correlate the configured `bucket_path` values.
-             *     The length of this value must always equal the number of buckets returned by the `bucket_path`.
-             */
-            expectations: number[];
-            /**
-             * @description An array of fractions to use when averaging and calculating variance. This should be used if
-             *     the pre-calculated data and the buckets_path have known gaps. The length of fractions, if provided,
-             *     must equal expectations.
-             */
-            fractions?: number[];
-        };
-        "_types.aggregations.CardinalityAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            /**
-             * @description A unique count below which counts are expected to be close to accurate.
-             *     This allows to trade memory for accuracy.
-             * @default 3000
-             */
-            precision_threshold: number;
-            rehash?: boolean;
-            execution_hint?: components["schemas"]["_types.aggregations.CardinalityExecutionMode"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.CardinalityExecutionMode": "global_ordinals" | "segment_ordinals" | "direct" | "save_memory_heuristic" | "save_time_heuristic";
-        "_types.aggregations.CartesianBoundsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & Record<string, never>;
-        "_types.aggregations.CartesianCentroidAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & Record<string, never>;
-        /**
-         * @description A multi-bucket aggregation that groups semi-structured text into buckets. Each text
-         *     field is re-analyzed using a custom analyzer. The resulting tokens are then categorized
-         *     creating buckets of similarly formatted text values. This aggregation works best with machine
-         *     generated text like system logs. Only the first 100 analyzed tokens are used to categorize the text.
-         */
-        "_types.aggregations.CategorizeTextAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
-            field: components["schemas"]["_types.Field"];
-            /**
-             * @description The maximum number of unique tokens at any position up to max_matched_tokens. Must be larger than 1.
-             *     Smaller values use less memory and create fewer categories. Larger values will use more memory and
-             *     create narrower categories. Max allowed value is 100.
-             * @default 50
-             */
-            max_unique_tokens: number;
-            /**
-             * @description The maximum number of token positions to match on before attempting to merge categories. Larger
-             *     values will use more memory and create narrower categories. Max allowed value is 100.
-             * @default 5
-             */
-            max_matched_tokens: number;
-            /**
-             * @description The minimum percentage of tokens that must match for text to be added to the category bucket. Must
-             *     be between 1 and 100. The larger the value the narrower the categories. Larger values will increase memory
-             *     usage and create narrower categories.
-             * @default 50
-             */
-            similarity_threshold: number;
-            /**
-             * @description This property expects an array of regular expressions. The expressions are used to filter out matching
-             *     sequences from the categorization field values. You can use this functionality to fine tune the categorization
-             *     by excluding sequences from consideration when categories are defined. For example, you can exclude SQL
-             *     statements that appear in your log files. This property cannot be used at the same time as categorization_analyzer.
-             *     If you only want to define simple regular expression filters that are applied prior to tokenization, setting
-             *     this property is the easiest method. If you also want to customize the tokenizer or post-tokenization filtering,
-             *     use the categorization_analyzer property instead and include the filters as pattern_replace character filters.
-             */
-            categorization_filters?: string[];
-            categorization_analyzer?: components["schemas"]["_types.aggregations.CategorizeTextAnalyzer"];
-            /** @description The number of categorization buckets to return from each shard before merging all the results. */
-            shard_size?: number;
-            /**
-             * @description The number of buckets to return.
-             * @default 10
-             */
-            size: number;
-            /** @description The minimum number of documents in a bucket to be returned to the results. */
-            min_doc_count?: number;
-            /** @description The minimum number of documents in a bucket to be returned from the shard before merging. */
-            shard_min_doc_count?: number;
-        };
-        "_types.aggregations.CategorizeTextAnalyzer": string | components["schemas"]["_types.aggregations.CustomCategorizeTextAnalyzer"];
-        "_types.aggregations.CustomCategorizeTextAnalyzer": {
-            char_filter?: string[];
-            tokenizer?: string;
-            filter?: string[];
-        };
-        "_types.aggregations.ChangePointAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.ChildrenAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            type?: components["schemas"]["_types.RelationName"];
-        };
-        "_types.aggregations.CompositeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            after?: components["schemas"]["_types.aggregations.CompositeAggregateKey"];
-            /**
-             * @description The number of composite buckets that should be returned.
-             * @default 10
-             */
-            size: number;
-            /**
-             * @description The value sources used to build composite buckets.
-             *     Keys are returned in the order of the `sources` definition.
-             */
-            sources?: {
-                [key: string]: components["schemas"]["_types.aggregations.CompositeAggregationSource"];
-            }[];
-        };
-        "_types.aggregations.CompositeAggregationSource": {
-            terms?: components["schemas"]["_types.aggregations.CompositeTermsAggregation"];
-            histogram?: components["schemas"]["_types.aggregations.CompositeHistogramAggregation"];
-            date_histogram?: components["schemas"]["_types.aggregations.CompositeDateHistogramAggregation"];
-            geotile_grid?: components["schemas"]["_types.aggregations.CompositeGeoTileGridAggregation"];
-        };
-        "_types.aggregations.CompositeTermsAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & Record<string, never>;
-        "_types.aggregations.CompositeAggregationBase": {
-            field?: components["schemas"]["_types.Field"];
-            missing_bucket?: boolean;
-            missing_order?: components["schemas"]["_types.aggregations.MissingOrder"];
-            script?: components["schemas"]["_types.Script"];
-            value_type?: components["schemas"]["_types.aggregations.ValueType"];
-            order?: components["schemas"]["_types.SortOrder"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.MissingOrder": "first" | "last" | "default";
-        /** @enum {string} */
-        "_types.aggregations.ValueType": "string" | "long" | "double" | "number" | "date" | "date_nanos" | "ip" | "numeric" | "geo_point" | "boolean";
-        "_types.aggregations.CompositeHistogramAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & {
-            interval: number;
-        };
-        "_types.aggregations.CompositeDateHistogramAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & {
-            format?: string;
-            calendar_interval?: components["schemas"]["_types.DurationLarge"];
-            fixed_interval?: components["schemas"]["_types.DurationLarge"];
-            offset?: components["schemas"]["_types.Duration"];
-            time_zone?: components["schemas"]["_types.TimeZone"];
-        };
-        "_types.aggregations.CompositeGeoTileGridAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & {
-            precision?: number;
-            bounds?: components["schemas"]["_types.GeoBounds"];
-        };
-        "_types.aggregations.CumulativeCardinalityAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.CumulativeSumAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.DateHistogramAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            calendar_interval?: components["schemas"]["_types.aggregations.CalendarInterval"];
-            extended_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsFieldDateMath"];
-            hard_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsFieldDateMath"];
-            field?: components["schemas"]["_types.Field"];
-            fixed_interval?: components["schemas"]["_types.Duration"];
-            /**
-             * @description The date format used to format `key_as_string` in the response.
-             *     If no `format` is specified, the first date format specified in the field mapping is used.
-             */
-            format?: string;
-            interval?: components["schemas"]["_types.Duration"];
-            /**
-             * @description Only returns buckets that have `min_doc_count` number of documents.
-             *     By default, all buckets between the first bucket that matches documents and the last one are returned.
-             */
-            min_doc_count?: number;
-            missing?: components["schemas"]["_types.DateTime"];
-            offset?: components["schemas"]["_types.Duration"];
-            order?: components["schemas"]["_types.aggregations.AggregateOrder"];
-            params?: {
-                [key: string]: Record<string, never>;
-            };
-            script?: components["schemas"]["_types.Script"];
-            time_zone?: components["schemas"]["_types.TimeZone"];
-            /** @description Set to `true` to associate a unique string key with each bucket and return the ranges as a hash rather than an array. */
-            keyed?: boolean;
-        };
-        /** @enum {string} */
-        "_types.aggregations.CalendarInterval": "second" | "1s" | "minute" | "1m" | "hour" | "1h" | "day" | "1d" | "week" | "1w" | "month" | "1M" | "quarter" | "1q" | "year" | "1y";
-        "_types.aggregations.ExtendedBoundsFieldDateMath": {
-            max?: components["schemas"]["_types.aggregations.FieldDateMath"];
-            min?: components["schemas"]["_types.aggregations.FieldDateMath"];
-        };
-        /**
-         * @description A date range limit, represented either as a DateMath expression or a number expressed
-         *     according to the target field's precision.
-         */
-        "_types.aggregations.FieldDateMath": components["schemas"]["_types.DateMath"] | number;
-        "_types.aggregations.AggregateOrder": {
-            [key: string]: components["schemas"]["_types.SortOrder"];
-        } | {
-            [key: string]: components["schemas"]["_types.SortOrder"];
+        query_vector?: {
+          [key: string]: number;
+        };
+        inference_id?: components["schemas"]["_types.Id"];
+      });
+    "_types.query_dsl.TokenPruningConfig": {
+      /**
+       * @description Tokens whose frequency is more than this threshold times the average frequency of all tokens in the specified field are considered outliers and pruned.
+       * @default 5
+       */
+      tokens_freq_ratio_threshold: number;
+      /**
+       * @description Tokens whose weight is less than this threshold are considered nonsignificant and pruned.
+       * @default 0.4
+       */
+      tokens_weight_threshold: number;
+      /**
+       * @description Whether to only score pruned tokens, vs only scoring kept tokens.
+       * @default false
+       */
+      only_score_pruned_tokens: boolean;
+    };
+    "_types.query_dsl.TermQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      value: components["schemas"]["_types.FieldValue"];
+      /**
+       * @description Allows ASCII case insensitive matching of the value with the indexed field values when set to `true`.
+       *     When `false`, the case sensitivity of matching depends on the underlying field’s mapping.
+       * @default false
+       */
+      case_insensitive: boolean;
+    };
+    "_types.query_dsl.TermsQuery": components["schemas"]["_types.query_dsl.QueryBase"] &
+      Record<string, never>;
+    "_types.query_dsl.TermsSetQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      minimum_should_match?: components["schemas"]["_types.MinimumShouldMatch"];
+      minimum_should_match_field?: components["schemas"]["_types.Field"];
+      minimum_should_match_script?: components["schemas"]["_types.Script"];
+      /** @description Array of terms you wish to find in the provided field. */
+      terms: components["schemas"]["_types.FieldValue"][];
+    };
+    "_types.query_dsl.TextExpansionQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description The text expansion NLP model to use */
+      model_id: string;
+      /** @description The query text */
+      model_text: string;
+      pruning_config?: components["schemas"]["_types.query_dsl.TokenPruningConfig"];
+    };
+    "_types.query_dsl.WeightedTokensQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description The tokens representing this query */
+      tokens: {
+        [key: string]: number;
+      };
+      pruning_config?: components["schemas"]["_types.query_dsl.TokenPruningConfig"];
+    };
+    "_types.query_dsl.WildcardQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /** @description Allows case insensitive matching of the pattern with the indexed field values when set to true. Default is false which means the case sensitivity of matching depends on the underlying field’s mapping. */
+      case_insensitive?: boolean;
+      rewrite?: components["schemas"]["_types.MultiTermQueryRewrite"];
+      /** @description Wildcard pattern for terms you wish to find in the provided field. Required, when wildcard is not set. */
+      value?: string;
+      /** @description Wildcard pattern for terms you wish to find in the provided field. Required, when value is not set. */
+      wildcard?: string;
+    };
+    "_types.query_dsl.WrapperQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      /**
+       * @description A base64 encoded query.
+       *     The binary data format can be any of JSON, YAML, CBOR or SMILE encodings
+       */
+      query: string;
+    };
+    "_types.query_dsl.TypeQuery": components["schemas"]["_types.query_dsl.QueryBase"] & {
+      value: string;
+    };
+    /** @description Base type for bucket aggregations. These aggregations also accept sub-aggregations. */
+    "_types.aggregations.BucketAggregationBase": components["schemas"]["_types.aggregations.Aggregation"] &
+      Record<string, never>;
+    "_types.aggregations.Aggregation": Record<string, never>;
+    "_types.aggregations.AutoDateHistogramAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      /**
+       * @description The target number of buckets.
+       * @default 10
+       */
+      buckets: number;
+      field?: components["schemas"]["_types.Field"];
+      /**
+       * @description The date format used to format `key_as_string` in the response.
+       *     If no `format` is specified, the first date format specified in the field mapping is used.
+       */
+      format?: string;
+      minimum_interval?: components["schemas"]["_types.aggregations.MinimumInterval"];
+      missing?: components["schemas"]["_types.DateTime"];
+      /** @description Time zone specified as a ISO 8601 UTC offset. */
+      offset?: string;
+      params?: {
+        [key: string]: Record<string, never>;
+      };
+      script?: components["schemas"]["_types.Script"];
+      time_zone?: components["schemas"]["_types.TimeZone"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.MinimumInterval": "second" | "minute" | "hour" | "day" | "month" | "year";
+    "_types.aggregations.AverageAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.FormatMetricAggregationBase": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      format?: string;
+    };
+    "_types.aggregations.MetricAggregationBase": {
+      field?: components["schemas"]["_types.Field"];
+      missing?: components["schemas"]["_types.aggregations.Missing"];
+      script?: components["schemas"]["_types.Script"];
+    };
+    "_types.aggregations.Missing": string | number | boolean;
+    "_types.aggregations.AverageBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.PipelineAggregationBase": components["schemas"]["_types.aggregations.BucketPathAggregation"] & {
+      /**
+       * @description `DecimalFormat` pattern for the output value.
+       *     If specified, the formatted value is returned in the aggregation’s `value_as_string` property.
+       */
+      format?: string;
+      gap_policy?: components["schemas"]["_types.aggregations.GapPolicy"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.GapPolicy": "skip" | "insert_zeros" | "keep_values";
+    "_types.aggregations.BucketPathAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
+      buckets_path?: components["schemas"]["_types.aggregations.BucketsPath"];
+    };
+    /**
+     * @description Buckets path can be expressed in different ways, and an aggregation may accept some or all of these
+     *     forms depending on its type. Please refer to each aggregation's documentation to know what buckets
+     *     path forms they accept.
+     */
+    "_types.aggregations.BucketsPath":
+      | string
+      | string[]
+      | {
+          [key: string]: string;
+        };
+    "_types.aggregations.BoxplotAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      /** @description Limits the maximum number of nodes used by the underlying TDigest algorithm to `20 * compression`, enabling control of memory usage and approximation error. */
+      compression?: number;
+    };
+    "_types.aggregations.BucketScriptAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      script?: components["schemas"]["_types.Script"];
+    };
+    "_types.aggregations.BucketSelectorAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      script?: components["schemas"]["_types.Script"];
+    };
+    "_types.aggregations.BucketSortAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
+      /** @description Buckets in positions prior to `from` will be truncated. */
+      from?: number;
+      gap_policy?: components["schemas"]["_types.aggregations.GapPolicy"];
+      /**
+       * @description The number of buckets to return.
+       *     Defaults to all buckets of the parent aggregation.
+       */
+      size?: number;
+      sort?: components["schemas"]["_types.Sort"];
+    };
+    /**
+     * @description A sibling pipeline aggregation which executes a two sample Kolmogorov–Smirnov test (referred
+     *     to as a "K-S test" from now on) against a provided distribution, and the distribution implied
+     *     by the documents counts in the configured sibling aggregation. Specifically, for some metric,
+     *     assuming that the percentile intervals of the metric are known beforehand or have been computed
+     *     by an aggregation, then one would use range aggregation for the sibling to compute the p-value
+     *     of the distribution difference between the metric and the restriction of that metric to a subset
+     *     of the documents. A natural use case is if the sibling aggregation range aggregation nested in a
+     *     terms aggregation, in which case one compares the overall distribution of metric to its restriction
+     *     to each term.
+     */
+    "_types.aggregations.BucketKsAggregation": components["schemas"]["_types.aggregations.BucketPathAggregation"] & {
+      /**
+       * @description A list of string values indicating which K-S test alternative to calculate. The valid values
+       *     are: "greater", "less", "two_sided". This parameter is key for determining the K-S statistic used
+       *     when calculating the K-S test. Default value is all possible alternative hypotheses.
+       */
+      alternative?: string[];
+      /**
+       * @description A list of doubles indicating the distribution of the samples with which to compare to the `buckets_path` results.
+       *     In typical usage this is the overall proportion of documents in each bucket, which is compared with the actual
+       *     document proportions in each bucket from the sibling aggregation counts. The default is to assume that overall
+       *     documents are uniformly distributed on these buckets, which they would be if one used equal percentiles of a
+       *     metric to define the bucket end points.
+       */
+      fractions?: number[];
+      /**
+       * @description Indicates the sampling methodology when calculating the K-S test. Note, this is sampling of the returned values.
+       *     This determines the cumulative distribution function (CDF) points used comparing the two samples. Default is
+       *     `upper_tail`, which emphasizes the upper end of the CDF points. Valid options are: `upper_tail`, `uniform`,
+       *     and `lower_tail`.
+       */
+      sampling_method?: string;
+    };
+    /** @description A sibling pipeline aggregation which executes a correlation function on the configured sibling multi-bucket aggregation. */
+    "_types.aggregations.BucketCorrelationAggregation": components["schemas"]["_types.aggregations.BucketPathAggregation"] & {
+      function: components["schemas"]["_types.aggregations.BucketCorrelationFunction"];
+    };
+    "_types.aggregations.BucketCorrelationFunction": {
+      count_correlation: components["schemas"]["_types.aggregations.BucketCorrelationFunctionCountCorrelation"];
+    };
+    "_types.aggregations.BucketCorrelationFunctionCountCorrelation": {
+      indicator: components["schemas"]["_types.aggregations.BucketCorrelationFunctionCountCorrelationIndicator"];
+    };
+    "_types.aggregations.BucketCorrelationFunctionCountCorrelationIndicator": {
+      /**
+       * @description The total number of documents that initially created the expectations. It’s required to be greater
+       *     than or equal to the sum of all values in the buckets_path as this is the originating superset of data
+       *     to which the term values are correlated.
+       */
+      doc_count: number;
+      /**
+       * @description An array of numbers with which to correlate the configured `bucket_path` values.
+       *     The length of this value must always equal the number of buckets returned by the `bucket_path`.
+       */
+      expectations: number[];
+      /**
+       * @description An array of fractions to use when averaging and calculating variance. This should be used if
+       *     the pre-calculated data and the buckets_path have known gaps. The length of fractions, if provided,
+       *     must equal expectations.
+       */
+      fractions?: number[];
+    };
+    "_types.aggregations.CardinalityAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      /**
+       * @description A unique count below which counts are expected to be close to accurate.
+       *     This allows to trade memory for accuracy.
+       * @default 3000
+       */
+      precision_threshold: number;
+      rehash?: boolean;
+      execution_hint?: components["schemas"]["_types.aggregations.CardinalityExecutionMode"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.CardinalityExecutionMode":
+      | "global_ordinals"
+      | "segment_ordinals"
+      | "direct"
+      | "save_memory_heuristic"
+      | "save_time_heuristic";
+    "_types.aggregations.CartesianBoundsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.CartesianCentroidAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] &
+      Record<string, never>;
+    /**
+     * @description A multi-bucket aggregation that groups semi-structured text into buckets. Each text
+     *     field is re-analyzed using a custom analyzer. The resulting tokens are then categorized
+     *     creating buckets of similarly formatted text values. This aggregation works best with machine
+     *     generated text like system logs. Only the first 100 analyzed tokens are used to categorize the text.
+     */
+    "_types.aggregations.CategorizeTextAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
+      field: components["schemas"]["_types.Field"];
+      /**
+       * @description The maximum number of unique tokens at any position up to max_matched_tokens. Must be larger than 1.
+       *     Smaller values use less memory and create fewer categories. Larger values will use more memory and
+       *     create narrower categories. Max allowed value is 100.
+       * @default 50
+       */
+      max_unique_tokens: number;
+      /**
+       * @description The maximum number of token positions to match on before attempting to merge categories. Larger
+       *     values will use more memory and create narrower categories. Max allowed value is 100.
+       * @default 5
+       */
+      max_matched_tokens: number;
+      /**
+       * @description The minimum percentage of tokens that must match for text to be added to the category bucket. Must
+       *     be between 1 and 100. The larger the value the narrower the categories. Larger values will increase memory
+       *     usage and create narrower categories.
+       * @default 50
+       */
+      similarity_threshold: number;
+      /**
+       * @description This property expects an array of regular expressions. The expressions are used to filter out matching
+       *     sequences from the categorization field values. You can use this functionality to fine tune the categorization
+       *     by excluding sequences from consideration when categories are defined. For example, you can exclude SQL
+       *     statements that appear in your log files. This property cannot be used at the same time as categorization_analyzer.
+       *     If you only want to define simple regular expression filters that are applied prior to tokenization, setting
+       *     this property is the easiest method. If you also want to customize the tokenizer or post-tokenization filtering,
+       *     use the categorization_analyzer property instead and include the filters as pattern_replace character filters.
+       */
+      categorization_filters?: string[];
+      categorization_analyzer?: components["schemas"]["_types.aggregations.CategorizeTextAnalyzer"];
+      /** @description The number of categorization buckets to return from each shard before merging all the results. */
+      shard_size?: number;
+      /**
+       * @description The number of buckets to return.
+       * @default 10
+       */
+      size: number;
+      /** @description The minimum number of documents in a bucket to be returned to the results. */
+      min_doc_count?: number;
+      /** @description The minimum number of documents in a bucket to be returned from the shard before merging. */
+      shard_min_doc_count?: number;
+    };
+    "_types.aggregations.CategorizeTextAnalyzer":
+      | string
+      | components["schemas"]["_types.aggregations.CustomCategorizeTextAnalyzer"];
+    "_types.aggregations.CustomCategorizeTextAnalyzer": {
+      char_filter?: string[];
+      tokenizer?: string;
+      filter?: string[];
+    };
+    "_types.aggregations.ChangePointAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.ChildrenAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      type?: components["schemas"]["_types.RelationName"];
+    };
+    "_types.aggregations.CompositeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      after?: components["schemas"]["_types.aggregations.CompositeAggregateKey"];
+      /**
+       * @description The number of composite buckets that should be returned.
+       * @default 10
+       */
+      size: number;
+      /**
+       * @description The value sources used to build composite buckets.
+       *     Keys are returned in the order of the `sources` definition.
+       */
+      sources?: {
+        [key: string]: components["schemas"]["_types.aggregations.CompositeAggregationSource"];
+      }[];
+    };
+    "_types.aggregations.CompositeAggregationSource": {
+      terms?: components["schemas"]["_types.aggregations.CompositeTermsAggregation"];
+      histogram?: components["schemas"]["_types.aggregations.CompositeHistogramAggregation"];
+      date_histogram?: components["schemas"]["_types.aggregations.CompositeDateHistogramAggregation"];
+      geotile_grid?: components["schemas"]["_types.aggregations.CompositeGeoTileGridAggregation"];
+    };
+    "_types.aggregations.CompositeTermsAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.CompositeAggregationBase": {
+      field?: components["schemas"]["_types.Field"];
+      missing_bucket?: boolean;
+      missing_order?: components["schemas"]["_types.aggregations.MissingOrder"];
+      script?: components["schemas"]["_types.Script"];
+      value_type?: components["schemas"]["_types.aggregations.ValueType"];
+      order?: components["schemas"]["_types.SortOrder"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.MissingOrder": "first" | "last" | "default";
+    /** @enum {string} */
+    "_types.aggregations.ValueType":
+      | "string"
+      | "long"
+      | "double"
+      | "number"
+      | "date"
+      | "date_nanos"
+      | "ip"
+      | "numeric"
+      | "geo_point"
+      | "boolean";
+    "_types.aggregations.CompositeHistogramAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & {
+      interval: number;
+    };
+    "_types.aggregations.CompositeDateHistogramAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & {
+      format?: string;
+      calendar_interval?: components["schemas"]["_types.DurationLarge"];
+      fixed_interval?: components["schemas"]["_types.DurationLarge"];
+      offset?: components["schemas"]["_types.Duration"];
+      time_zone?: components["schemas"]["_types.TimeZone"];
+    };
+    "_types.aggregations.CompositeGeoTileGridAggregation": components["schemas"]["_types.aggregations.CompositeAggregationBase"] & {
+      precision?: number;
+      bounds?: components["schemas"]["_types.GeoBounds"];
+    };
+    "_types.aggregations.CumulativeCardinalityAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.CumulativeSumAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.DateHistogramAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      calendar_interval?: components["schemas"]["_types.aggregations.CalendarInterval"];
+      extended_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsFieldDateMath"];
+      hard_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsFieldDateMath"];
+      field?: components["schemas"]["_types.Field"];
+      fixed_interval?: components["schemas"]["_types.Duration"];
+      /**
+       * @description The date format used to format `key_as_string` in the response.
+       *     If no `format` is specified, the first date format specified in the field mapping is used.
+       */
+      format?: string;
+      interval?: components["schemas"]["_types.Duration"];
+      /**
+       * @description Only returns buckets that have `min_doc_count` number of documents.
+       *     By default, all buckets between the first bucket that matches documents and the last one are returned.
+       */
+      min_doc_count?: number;
+      missing?: components["schemas"]["_types.DateTime"];
+      offset?: components["schemas"]["_types.Duration"];
+      order?: components["schemas"]["_types.aggregations.AggregateOrder"];
+      params?: {
+        [key: string]: Record<string, never>;
+      };
+      script?: components["schemas"]["_types.Script"];
+      time_zone?: components["schemas"]["_types.TimeZone"];
+      /** @description Set to `true` to associate a unique string key with each bucket and return the ranges as a hash rather than an array. */
+      keyed?: boolean;
+    };
+    /** @enum {string} */
+    "_types.aggregations.CalendarInterval":
+      | "second"
+      | "1s"
+      | "minute"
+      | "1m"
+      | "hour"
+      | "1h"
+      | "day"
+      | "1d"
+      | "week"
+      | "1w"
+      | "month"
+      | "1M"
+      | "quarter"
+      | "1q"
+      | "year"
+      | "1y";
+    "_types.aggregations.ExtendedBoundsFieldDateMath": {
+      max?: components["schemas"]["_types.aggregations.FieldDateMath"];
+      min?: components["schemas"]["_types.aggregations.FieldDateMath"];
+    };
+    /**
+     * @description A date range limit, represented either as a DateMath expression or a number expressed
+     *     according to the target field's precision.
+     */
+    "_types.aggregations.FieldDateMath": components["schemas"]["_types.DateMath"] | number;
+    "_types.aggregations.AggregateOrder":
+      | {
+          [key: string]: components["schemas"]["_types.SortOrder"];
+        }
+      | {
+          [key: string]: components["schemas"]["_types.SortOrder"];
         }[];
-        "_types.aggregations.DateRangeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field?: components["schemas"]["_types.Field"];
-            /** @description The date format used to format `from` and `to` in the response. */
-            format?: string;
-            missing?: components["schemas"]["_types.aggregations.Missing"];
-            /** @description Array of date ranges. */
-            ranges?: components["schemas"]["_types.aggregations.DateRangeExpression"][];
-            time_zone?: components["schemas"]["_types.TimeZone"];
-            /** @description Set to `true` to associate a unique string key with each bucket and returns the ranges as a hash rather than an array. */
-            keyed?: boolean;
+    "_types.aggregations.DateRangeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field?: components["schemas"]["_types.Field"];
+      /** @description The date format used to format `from` and `to` in the response. */
+      format?: string;
+      missing?: components["schemas"]["_types.aggregations.Missing"];
+      /** @description Array of date ranges. */
+      ranges?: components["schemas"]["_types.aggregations.DateRangeExpression"][];
+      time_zone?: components["schemas"]["_types.TimeZone"];
+      /** @description Set to `true` to associate a unique string key with each bucket and returns the ranges as a hash rather than an array. */
+      keyed?: boolean;
+    };
+    "_types.aggregations.DateRangeExpression": {
+      from?: components["schemas"]["_types.aggregations.FieldDateMath"];
+      /** @description Custom key to return the range with. */
+      key?: string;
+      to?: components["schemas"]["_types.aggregations.FieldDateMath"];
+    };
+    "_types.aggregations.DerivativeAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.DiversifiedSamplerAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      execution_hint?: components["schemas"]["_types.aggregations.SamplerAggregationExecutionHint"];
+      /**
+       * @description Limits how many documents are permitted per choice of de-duplicating value.
+       * @default 1
+       */
+      max_docs_per_value: number;
+      script?: components["schemas"]["_types.Script"];
+      /**
+       * @description Limits how many top-scoring documents are collected in the sample processed on each shard.
+       * @default 100
+       */
+      shard_size: number;
+      field?: components["schemas"]["_types.Field"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.SamplerAggregationExecutionHint": "map" | "global_ordinals" | "bytes_hash";
+    "_types.aggregations.ExtendedStatsAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
+      /** @description The number of standard deviations above/below the mean to display. */
+      sigma?: number;
+    };
+    "_types.aggregations.ExtendedStatsBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      /** @description The number of standard deviations above/below the mean to display. */
+      sigma?: number;
+    };
+    "_types.aggregations.FrequentItemSetsAggregation": {
+      /** @description Fields to analyze. */
+      fields: components["schemas"]["_types.aggregations.FrequentItemSetsField"][];
+      /**
+       * @description The minimum size of one item set.
+       * @default 1
+       */
+      minimum_set_size: number;
+      /**
+       * @description The minimum support of one item set.
+       * @default 0.1
+       */
+      minimum_support: number;
+      /**
+       * @description The number of top item sets to return.
+       * @default 10
+       */
+      size: number;
+      filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+    };
+    "_types.aggregations.FrequentItemSetsField": {
+      field: components["schemas"]["_types.Field"];
+      exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
+      include?: components["schemas"]["_types.aggregations.TermsInclude"];
+    };
+    "_types.aggregations.TermsExclude": string | string[];
+    "_types.aggregations.TermsInclude":
+      | string
+      | string[]
+      | components["schemas"]["_types.aggregations.TermsPartition"];
+    "_types.aggregations.TermsPartition": {
+      /** @description The number of partitions. */
+      num_partitions: number;
+      /** @description The partition number for this request. */
+      partition: number;
+    };
+    "_types.aggregations.FiltersAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      filters?: components["schemas"]["_types.aggregations.BucketsQueryContainer"];
+      /** @description Set to `true` to add a bucket to the response which will contain all documents that do not match any of the given filters. */
+      other_bucket?: boolean;
+      /**
+       * @description The key with which the other bucket is returned.
+       * @default _other_
+       */
+      other_bucket_key: string;
+      /**
+       * @description By default, the named filters aggregation returns the buckets as an object.
+       *     Set to `false` to return the buckets as an array of objects.
+       * @default true
+       */
+      keyed: boolean;
+    };
+    /**
+     * @description Aggregation buckets. By default they are returned as an array, but if the aggregation has keys configured for
+     *     the different buckets, the result is a dictionary.
+     */
+    "_types.aggregations.BucketsQueryContainer":
+      | {
+          [key: string]: components["schemas"]["_types.query_dsl.QueryContainer"];
+        }
+      | components["schemas"]["_types.query_dsl.QueryContainer"][];
+    "_types.aggregations.GeoBoundsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      /**
+       * @description Specifies whether the bounding box should be allowed to overlap the international date line.
+       * @default true
+       */
+      wrap_longitude: boolean;
+    };
+    "_types.aggregations.GeoCentroidAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      count?: number;
+      location?: components["schemas"]["_types.GeoLocation"];
+    };
+    "_types.aggregations.GeoDistanceAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      distance_type?: components["schemas"]["_types.GeoDistanceType"];
+      field?: components["schemas"]["_types.Field"];
+      origin?: components["schemas"]["_types.GeoLocation"];
+      /** @description An array of ranges used to bucket documents. */
+      ranges?: components["schemas"]["_types.aggregations.AggregationRange"][];
+      unit?: components["schemas"]["_types.DistanceUnit"];
+    };
+    "_types.aggregations.AggregationRange": {
+      /** @description Start of the range (inclusive). */
+      from?: number | (string | null);
+      /** @description Custom key to return the range with. */
+      key?: string;
+      /** @description End of the range (exclusive). */
+      to?: number | (string | null);
+    };
+    "_types.aggregations.GeoHashGridAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      bounds?: components["schemas"]["_types.GeoBounds"];
+      field?: components["schemas"]["_types.Field"];
+      precision?: components["schemas"]["_types.GeoHashPrecision"];
+      /**
+       * @description Allows for more accurate counting of the top cells returned in the final result the aggregation.
+       *     Defaults to returning `max(10,(size x number-of-shards))` buckets from each shard.
+       */
+      shard_size?: number;
+      /**
+       * @description The maximum number of geohash buckets to return.
+       * @default 10000
+       */
+      size: number;
+    };
+    /** @description A precision that can be expressed as a geohash length between 1 and 12, or a distance measure like "1km", "10m". */
+    "_types.GeoHashPrecision": number | string;
+    "_types.aggregations.GeoLineAggregation": {
+      point: components["schemas"]["_types.aggregations.GeoLinePoint"];
+      sort: components["schemas"]["_types.aggregations.GeoLineSort"];
+      /** @description When `true`, returns an additional array of the sort values in the feature properties. */
+      include_sort?: boolean;
+      sort_order?: components["schemas"]["_types.SortOrder"];
+      /**
+       * @description The maximum length of the line represented in the aggregation.
+       *     Valid sizes are between 1 and 10000.
+       * @default 10000
+       */
+      size: number;
+    };
+    "_types.aggregations.GeoLinePoint": {
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.aggregations.GeoLineSort": {
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.aggregations.GeoTileGridAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field?: components["schemas"]["_types.Field"];
+      precision?: components["schemas"]["_types.GeoTilePrecision"];
+      /**
+       * @description Allows for more accurate counting of the top cells returned in the final result the aggregation.
+       *     Defaults to returning `max(10,(size x number-of-shards))` buckets from each shard.
+       */
+      shard_size?: number;
+      /**
+       * @description The maximum number of buckets to return.
+       * @default 10000
+       */
+      size: number;
+      bounds?: components["schemas"]["_types.GeoBounds"];
+    };
+    "_types.GeoTilePrecision": number;
+    "_types.aggregations.GeohexGridAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field: components["schemas"]["_types.Field"];
+      /**
+       * @description Integer zoom of the key used to defined cells or buckets
+       *     in the results. Value should be between 0-15.
+       * @default 6
+       */
+      precision: number;
+      bounds?: components["schemas"]["_types.GeoBounds"];
+      /**
+       * @description Maximum number of buckets to return.
+       * @default 10000
+       */
+      size: number;
+      /** @description Number of buckets returned from each shard. */
+      shard_size?: number;
+    };
+    "_types.aggregations.GlobalAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.HistogramAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      extended_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsdouble"];
+      hard_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsdouble"];
+      field?: components["schemas"]["_types.Field"];
+      /**
+       * @description The interval for the buckets.
+       *     Must be a positive decimal.
+       */
+      interval?: number;
+      /**
+       * @description Only returns buckets that have `min_doc_count` number of documents.
+       *     By default, the response will fill gaps in the histogram with empty buckets.
+       */
+      min_doc_count?: number;
+      /**
+       * @description The value to apply to documents that do not have a value.
+       *     By default, documents without a value are ignored.
+       */
+      missing?: number;
+      /**
+       * @description By default, the bucket keys start with 0 and then continue in even spaced steps of `interval`.
+       *     The bucket boundaries can be shifted by using the `offset` option.
+       */
+      offset?: number;
+      order?: components["schemas"]["_types.aggregations.AggregateOrder"];
+      script?: components["schemas"]["_types.Script"];
+      format?: string;
+      /**
+       * @description If `true`, returns buckets as a hash instead of an array, keyed by the bucket keys.
+       * @default false
+       */
+      keyed: boolean;
+    };
+    "_types.aggregations.ExtendedBoundsdouble": {
+      /** @description Maximum value for the bound. */
+      max?: number;
+      /** @description Minimum value for the bound. */
+      min?: number;
+    };
+    "_types.aggregations.IpRangeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field?: components["schemas"]["_types.Field"];
+      /** @description Array of IP ranges. */
+      ranges?: components["schemas"]["_types.aggregations.IpRangeAggregationRange"][];
+    };
+    "_types.aggregations.IpRangeAggregationRange": {
+      /** @description Start of the range. */
+      from?: string | (string | null);
+      /** @description IP range defined as a CIDR mask. */
+      mask?: string;
+      /** @description End of the range. */
+      to?: string | (string | null);
+    };
+    "_types.aggregations.IpPrefixAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field: components["schemas"]["_types.Field"];
+      /**
+       * @description Length of the network prefix. For IPv4 addresses the accepted range is [0, 32].
+       *     For IPv6 addresses the accepted range is [0, 128].
+       */
+      prefix_length: number;
+      /**
+       * @description Defines whether the prefix applies to IPv6 addresses.
+       * @default false
+       */
+      is_ipv6: boolean;
+      /**
+       * @description Defines whether the prefix length is appended to IP address keys in the response.
+       * @default false
+       */
+      append_prefix_length: boolean;
+      /** @description Defines whether buckets are returned as a hash rather than an array in the response. */
+      keyed?: boolean;
+      /**
+       * @description Minimum number of documents in a bucket for it to be included in the response.
+       * @default 1
+       */
+      min_doc_count: number;
+    };
+    "_types.aggregations.InferenceAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      model_id: components["schemas"]["_types.Name"];
+      inference_config?: components["schemas"]["_types.aggregations.InferenceConfigContainer"];
+    };
+    "_types.aggregations.InferenceConfigContainer": {
+      regression?: components["schemas"]["ml._types.RegressionInferenceOptions"];
+      classification?: components["schemas"]["ml._types.ClassificationInferenceOptions"];
+    };
+    "ml._types.RegressionInferenceOptions": {
+      results_field?: components["schemas"]["_types.Field"];
+      /**
+       * @description Specifies the maximum number of feature importance values per document.
+       * @default 0
+       */
+      num_top_feature_importance_values: number;
+    };
+    "ml._types.ClassificationInferenceOptions": {
+      /** @description Specifies the number of top class predictions to return. Defaults to 0. */
+      num_top_classes?: number;
+      /**
+       * @description Specifies the maximum number of feature importance values per document.
+       * @default 0
+       */
+      num_top_feature_importance_values: number;
+      /** @description Specifies the type of the predicted field to write. Acceptable values are: string, number, boolean. When boolean is provided 1.0 is transformed to true and 0.0 to false. */
+      prediction_field_type?: string;
+      /** @description The field that is added to incoming documents to contain the inference prediction. Defaults to predicted_value. */
+      results_field?: string;
+      /** @description Specifies the field to which the top classes are written. Defaults to top_classes. */
+      top_classes_results_field?: string;
+    };
+    "_types.aggregations.MatrixStatsAggregation": components["schemas"]["_types.aggregations.MatrixAggregation"] & {
+      mode?: components["schemas"]["_types.SortMode"];
+    };
+    "_types.aggregations.MatrixAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
+      fields?: components["schemas"]["_types.Fields"];
+      /**
+       * @description The value to apply to documents that do not have a value.
+       *     By default, documents without a value are ignored.
+       */
+      missing?: {
+        [key: string]: number;
+      };
+    };
+    "_types.aggregations.MaxAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.MaxBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.MedianAbsoluteDeviationAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
+      /**
+       * @description Limits the maximum number of nodes used by the underlying TDigest algorithm to `20 * compression`, enabling control of memory usage and approximation error.
+       * @default 1000
+       */
+      compression: number;
+    };
+    "_types.aggregations.MinAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.MinBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.MissingAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field?: components["schemas"]["_types.Field"];
+      missing?: components["schemas"]["_types.aggregations.Missing"];
+    };
+    "_types.aggregations.MovingAverageAggregation":
+      | components["schemas"]["_types.aggregations.LinearMovingAverageAggregation"]
+      | components["schemas"]["_types.aggregations.SimpleMovingAverageAggregation"]
+      | components["schemas"]["_types.aggregations.EwmaMovingAverageAggregation"]
+      | components["schemas"]["_types.aggregations.HoltMovingAverageAggregation"]
+      | components["schemas"]["_types.aggregations.HoltWintersMovingAverageAggregation"];
+    "_types.aggregations.LinearMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
+      /** @enum {string} */
+      model: "linear";
+      settings: components["schemas"]["_types.EmptyObject"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      model: "_types.aggregations.LinearMovingAverageAggregation";
+    };
+    /** @description For empty Class assignments */
+    "_types.EmptyObject": Record<string, never>;
+    "_types.aggregations.MovingAverageAggregationBase": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      minimize?: boolean;
+      predict?: number;
+      window?: number;
+    };
+    "_types.aggregations.SimpleMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
+      /** @enum {string} */
+      model: "simple";
+      settings: components["schemas"]["_types.EmptyObject"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      model: "_types.aggregations.SimpleMovingAverageAggregation";
+    };
+    "_types.aggregations.EwmaMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
+      /** @enum {string} */
+      model: "ewma";
+      settings: components["schemas"]["_types.aggregations.EwmaModelSettings"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      model: "_types.aggregations.EwmaMovingAverageAggregation";
+    };
+    "_types.aggregations.EwmaModelSettings": {
+      alpha?: number;
+    };
+    "_types.aggregations.HoltMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
+      /** @enum {string} */
+      model: "holt";
+      settings: components["schemas"]["_types.aggregations.HoltLinearModelSettings"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      model: "_types.aggregations.HoltMovingAverageAggregation";
+    };
+    "_types.aggregations.HoltLinearModelSettings": {
+      alpha?: number;
+      beta?: number;
+    };
+    "_types.aggregations.HoltWintersMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
+      /** @enum {string} */
+      model: "holt_winters";
+      settings: components["schemas"]["_types.aggregations.HoltWintersModelSettings"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      model: "_types.aggregations.HoltWintersMovingAverageAggregation";
+    };
+    "_types.aggregations.HoltWintersModelSettings": {
+      alpha?: number;
+      beta?: number;
+      gamma?: number;
+      pad?: boolean;
+      period?: number;
+      type?: components["schemas"]["_types.aggregations.HoltWintersType"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.HoltWintersType": "add" | "mult";
+    "_types.aggregations.MovingPercentilesAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      /** @description The size of window to "slide" across the histogram. */
+      window?: number;
+      /**
+       * @description By default, the window consists of the last n values excluding the current bucket.
+       *     Increasing `shift` by 1, moves the starting window position by 1 to the right.
+       * @default 0
+       */
+      shift: number;
+      keyed?: boolean;
+    };
+    "_types.aggregations.MovingFunctionAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      /** @description The script that should be executed on each window of data. */
+      script?: string;
+      /**
+       * @description By default, the window consists of the last n values excluding the current bucket.
+       *     Increasing `shift` by 1, moves the starting window position by 1 to the right.
+       * @default 0
+       */
+      shift: number;
+      /** @description The size of window to "slide" across the histogram. */
+      window?: number;
+    };
+    "_types.aggregations.MultiTermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      collect_mode?: components["schemas"]["_types.aggregations.TermsAggregationCollectMode"];
+      order?: components["schemas"]["_types.aggregations.AggregateOrder"];
+      /**
+       * @description The minimum number of documents in a bucket for it to be returned.
+       * @default 1
+       */
+      min_doc_count: number;
+      /**
+       * @description The minimum number of documents in a bucket on each shard for it to be returned.
+       * @default 1
+       */
+      shard_min_doc_count: number;
+      /**
+       * @description The number of candidate terms produced by each shard.
+       *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
+       */
+      shard_size?: number;
+      /**
+       * @description Calculates the doc count error on per term basis.
+       * @default false
+       */
+      show_term_doc_count_error: boolean;
+      /**
+       * @description The number of term buckets should be returned out of the overall terms list.
+       * @default 10
+       */
+      size: number;
+      /** @description The field from which to generate sets of terms. */
+      terms: components["schemas"]["_types.aggregations.MultiTermLookup"][];
+    };
+    /** @enum {string} */
+    "_types.aggregations.TermsAggregationCollectMode": "depth_first" | "breadth_first";
+    "_types.aggregations.MultiTermLookup": {
+      field: components["schemas"]["_types.Field"];
+      missing?: components["schemas"]["_types.aggregations.Missing"];
+    };
+    "_types.aggregations.NestedAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      path?: components["schemas"]["_types.Field"];
+    };
+    "_types.aggregations.NormalizeAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      method?: components["schemas"]["_types.aggregations.NormalizeMethod"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.NormalizeMethod":
+      | "rescale_0_1"
+      | "rescale_0_100"
+      | "percent_of_sum"
+      | "mean"
+      | "z-score"
+      | "softmax";
+    "_types.aggregations.ParentAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      type?: components["schemas"]["_types.RelationName"];
+    };
+    "_types.aggregations.PercentileRanksAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
+      /**
+       * @description By default, the aggregation associates a unique string key with each bucket and returns the ranges as a hash rather than an array.
+       *     Set to `false` to disable this behavior.
+       * @default true
+       */
+      keyed: boolean;
+      /** @description An array of values for which to calculate the percentile ranks. */
+      values?: number[] | (string | null);
+      hdr?: components["schemas"]["_types.aggregations.HdrMethod"];
+      tdigest?: components["schemas"]["_types.aggregations.TDigest"];
+    };
+    "_types.aggregations.HdrMethod": {
+      /** @description Specifies the resolution of values for the histogram in number of significant digits. */
+      number_of_significant_value_digits?: number;
+    };
+    "_types.aggregations.TDigest": {
+      /** @description Limits the maximum number of nodes used by the underlying TDigest algorithm to `20 * compression`, enabling control of memory usage and approximation error. */
+      compression?: number;
+    };
+    "_types.aggregations.PercentilesAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
+      /**
+       * @description By default, the aggregation associates a unique string key with each bucket and returns the ranges as a hash rather than an array.
+       *     Set to `false` to disable this behavior.
+       * @default true
+       */
+      keyed: boolean;
+      /** @description The percentiles to calculate. */
+      percents?: number[];
+      hdr?: components["schemas"]["_types.aggregations.HdrMethod"];
+      tdigest?: components["schemas"]["_types.aggregations.TDigest"];
+    };
+    "_types.aggregations.PercentilesBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      /** @description The list of percentiles to calculate. */
+      percents?: number[];
+    };
+    "_types.aggregations.RangeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      field?: components["schemas"]["_types.Field"];
+      /**
+       * @description The value to apply to documents that do not have a value.
+       *     By default, documents without a value are ignored.
+       */
+      missing?: number;
+      /** @description An array of ranges used to bucket documents. */
+      ranges?: components["schemas"]["_types.aggregations.AggregationRange"][];
+      script?: components["schemas"]["_types.Script"];
+      /** @description Set to `true` to associate a unique string key with each bucket and return the ranges as a hash rather than an array. */
+      keyed?: boolean;
+      format?: string;
+    };
+    "_types.aggregations.RareTermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
+      field?: components["schemas"]["_types.Field"];
+      include?: components["schemas"]["_types.aggregations.TermsInclude"];
+      /**
+       * @description The maximum number of documents a term should appear in.
+       * @default 1
+       */
+      max_doc_count: number;
+      missing?: components["schemas"]["_types.aggregations.Missing"];
+      /**
+       * @description The precision of the internal CuckooFilters.
+       *     Smaller precision leads to better approximation, but higher memory usage.
+       * @default 0.001
+       */
+      precision: number;
+      value_type?: string;
+    };
+    "_types.aggregations.RateAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
+      unit?: components["schemas"]["_types.aggregations.CalendarInterval"];
+      mode?: components["schemas"]["_types.aggregations.RateMode"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.RateMode": "sum" | "value_count";
+    "_types.aggregations.ReverseNestedAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      path?: components["schemas"]["_types.Field"];
+    };
+    "_types.aggregations.RandomSamplerAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      /**
+       * @description The probability that a document will be included in the aggregated data.
+       *     Must be greater than 0, less than 0.5, or exactly 1.
+       *     The lower the probability, the fewer documents are matched.
+       */
+      probability: number;
+      /**
+       * @description The seed to generate the random sampling of documents.
+       *     When a seed is provided, the random subset of documents is the same between calls.
+       */
+      seed?: number;
+      /** @description When combined with seed, setting shard_seed ensures 100% consistent sampling over shards where data is exactly the same. */
+      shard_seed?: number;
+    };
+    "_types.aggregations.SamplerAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      /**
+       * @description Limits how many top-scoring documents are collected in the sample processed on each shard.
+       * @default 100
+       */
+      shard_size: number;
+    };
+    "_types.aggregations.ScriptedMetricAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      combine_script?: components["schemas"]["_types.Script"];
+      init_script?: components["schemas"]["_types.Script"];
+      map_script?: components["schemas"]["_types.Script"];
+      /**
+       * @description A global object with script parameters for `init`, `map` and `combine` scripts.
+       *     It is shared between the scripts.
+       */
+      params?: {
+        [key: string]: Record<string, never>;
+      };
+      reduce_script?: components["schemas"]["_types.Script"];
+    };
+    "_types.aggregations.SerialDifferencingAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
+      /**
+       * @description The historical bucket to subtract from the current value.
+       *     Must be a positive, non-zero integer.
+       */
+      lag?: number;
+    };
+    "_types.aggregations.SignificantTermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      background_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      chi_square?: components["schemas"]["_types.aggregations.ChiSquareHeuristic"];
+      exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
+      execution_hint?: components["schemas"]["_types.aggregations.TermsAggregationExecutionHint"];
+      field?: components["schemas"]["_types.Field"];
+      gnd?: components["schemas"]["_types.aggregations.GoogleNormalizedDistanceHeuristic"];
+      include?: components["schemas"]["_types.aggregations.TermsInclude"];
+      jlh?: components["schemas"]["_types.EmptyObject"];
+      /**
+       * @description Only return terms that are found in more than `min_doc_count` hits.
+       * @default 3
+       */
+      min_doc_count: number;
+      mutual_information?: components["schemas"]["_types.aggregations.MutualInformationHeuristic"];
+      percentage?: components["schemas"]["_types.aggregations.PercentageScoreHeuristic"];
+      script_heuristic?: components["schemas"]["_types.aggregations.ScriptedHeuristic"];
+      p_value?: components["schemas"]["_types.aggregations.PValueHeuristic"];
+      /**
+       * @description Regulates the certainty a shard has if the term should actually be added to the candidate list or not with respect to the `min_doc_count`.
+       *     Terms will only be considered if their local shard frequency within the set is higher than the `shard_min_doc_count`.
+       */
+      shard_min_doc_count?: number;
+      /**
+       * @description Can be used to control the volumes of candidate terms produced by each shard.
+       *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
+       */
+      shard_size?: number;
+      /** @description The number of buckets returned out of the overall terms list. */
+      size?: number;
+    };
+    "_types.aggregations.ChiSquareHeuristic": {
+      /** @description Set to `false` if you defined a custom background filter that represents a different set of documents that you want to compare to. */
+      background_is_superset: boolean;
+      /** @description Set to `false` to filter out the terms that appear less often in the subset than in documents outside the subset. */
+      include_negatives: boolean;
+    };
+    /** @enum {string} */
+    "_types.aggregations.TermsAggregationExecutionHint":
+      | "map"
+      | "global_ordinals"
+      | "global_ordinals_hash"
+      | "global_ordinals_low_cardinality";
+    "_types.aggregations.GoogleNormalizedDistanceHeuristic": {
+      /** @description Set to `false` if you defined a custom background filter that represents a different set of documents that you want to compare to. */
+      background_is_superset?: boolean;
+    };
+    "_types.aggregations.MutualInformationHeuristic": {
+      /** @description Set to `false` if you defined a custom background filter that represents a different set of documents that you want to compare to. */
+      background_is_superset?: boolean;
+      /** @description Set to `false` to filter out the terms that appear less often in the subset than in documents outside the subset. */
+      include_negatives?: boolean;
+    };
+    "_types.aggregations.PercentageScoreHeuristic": Record<string, never>;
+    "_types.aggregations.ScriptedHeuristic": {
+      script: components["schemas"]["_types.Script"];
+    };
+    "_types.aggregations.PValueHeuristic": {
+      background_is_superset?: boolean;
+      /**
+       * @description Should the results be normalized when above the given value.
+       *     Allows for consistent significance results at various scales.
+       *     Note: `0` is a special value which means no normalization
+       * @default 0
+       */
+      normalize_above: number;
+    };
+    "_types.aggregations.SignificantTextAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      background_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      chi_square?: components["schemas"]["_types.aggregations.ChiSquareHeuristic"];
+      exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
+      execution_hint?: components["schemas"]["_types.aggregations.TermsAggregationExecutionHint"];
+      field?: components["schemas"]["_types.Field"];
+      /** @description Whether to out duplicate text to deal with noisy data. */
+      filter_duplicate_text?: boolean;
+      gnd?: components["schemas"]["_types.aggregations.GoogleNormalizedDistanceHeuristic"];
+      include?: components["schemas"]["_types.aggregations.TermsInclude"];
+      jlh?: components["schemas"]["_types.EmptyObject"];
+      /**
+       * @description Only return values that are found in more than `min_doc_count` hits.
+       * @default 3
+       */
+      min_doc_count: number;
+      mutual_information?: components["schemas"]["_types.aggregations.MutualInformationHeuristic"];
+      percentage?: components["schemas"]["_types.aggregations.PercentageScoreHeuristic"];
+      script_heuristic?: components["schemas"]["_types.aggregations.ScriptedHeuristic"];
+      /**
+       * @description Regulates the certainty a shard has if the values should actually be added to the candidate list or not with respect to the min_doc_count.
+       *     Values will only be considered if their local shard frequency within the set is higher than the `shard_min_doc_count`.
+       */
+      shard_min_doc_count?: number;
+      /**
+       * @description The number of candidate terms produced by each shard.
+       *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
+       */
+      shard_size?: number;
+      /** @description The number of buckets returned out of the overall terms list. */
+      size?: number;
+      source_fields?: components["schemas"]["_types.Fields"];
+    };
+    "_types.aggregations.StatsAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.StatsBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.StringStatsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      /**
+       * @description Shows the probability distribution for all characters.
+       * @default false
+       */
+      show_distribution: boolean;
+    };
+    "_types.aggregations.SumAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.SumBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] &
+      Record<string, never>;
+    "_types.aggregations.TermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      collect_mode?: components["schemas"]["_types.aggregations.TermsAggregationCollectMode"];
+      exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
+      execution_hint?: components["schemas"]["_types.aggregations.TermsAggregationExecutionHint"];
+      field?: components["schemas"]["_types.Field"];
+      include?: components["schemas"]["_types.aggregations.TermsInclude"];
+      /**
+       * @description Only return values that are found in more than `min_doc_count` hits.
+       * @default 1
+       */
+      min_doc_count: number;
+      missing?: components["schemas"]["_types.aggregations.Missing"];
+      missing_order?: components["schemas"]["_types.aggregations.MissingOrder"];
+      missing_bucket?: boolean;
+      /** @description Coerced unmapped fields into the specified type. */
+      value_type?: string;
+      order?: components["schemas"]["_types.aggregations.AggregateOrder"];
+      script?: components["schemas"]["_types.Script"];
+      /**
+       * @description Regulates the certainty a shard has if the term should actually be added to the candidate list or not with respect to the `min_doc_count`.
+       *     Terms will only be considered if their local shard frequency within the set is higher than the `shard_min_doc_count`.
+       */
+      shard_min_doc_count?: number;
+      /**
+       * @description The number of candidate terms produced by each shard.
+       *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
+       */
+      shard_size?: number;
+      /** @description Set to `true` to return the `doc_count_error_upper_bound`, which is an upper bound to the error on the `doc_count` returned by each shard. */
+      show_term_doc_count_error?: boolean;
+      /**
+       * @description The number of buckets returned out of the overall terms list.
+       * @default 10
+       */
+      size: number;
+      format?: string;
+    };
+    "_types.aggregations.TimeSeriesAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
+      /**
+       * @description The maximum number of results to return.
+       * @default 10000
+       */
+      size: number;
+      /** @description Set to `true` to associate a unique string key with each bucket and returns the ranges as a hash rather than an array. */
+      keyed?: boolean;
+    };
+    "_types.aggregations.TopHitsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      /** @description Fields for which to return doc values. */
+      docvalue_fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
+      /**
+       * @description If `true`, returns detailed information about score computation as part of a hit.
+       * @default false
+       */
+      explain: boolean;
+      /**
+       * @description Array of wildcard (*) patterns. The request returns values for field names
+       *     matching these patterns in the hits.fields property of the response.
+       */
+      fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
+      /**
+       * @description Starting document offset.
+       * @default 0
+       */
+      from: number;
+      highlight?: components["schemas"]["_global.search._types.Highlight"];
+      /** @description Returns the result of one or more script evaluations for each hit. */
+      script_fields?: {
+        [key: string]: components["schemas"]["_types.ScriptField"];
+      };
+      /**
+       * @description The maximum number of top matching hits to return per bucket.
+       * @default 3
+       */
+      size: number;
+      sort?: components["schemas"]["_types.Sort"];
+      _source?: components["schemas"]["_global.search._types.SourceConfig"];
+      stored_fields?: components["schemas"]["_types.Fields"];
+      /**
+       * @description If `true`, calculates and returns document scores, even if the scores are not used for sorting.
+       * @default false
+       */
+      track_scores: boolean;
+      /**
+       * @description If `true`, returns document version as part of a hit.
+       * @default false
+       */
+      version: boolean;
+      /** @description If `true`, returns sequence number and primary term of the last modification of each hit. */
+      seq_no_primary_term?: boolean;
+    };
+    "_types.aggregations.TTestAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
+      a?: components["schemas"]["_types.aggregations.TestPopulation"];
+      b?: components["schemas"]["_types.aggregations.TestPopulation"];
+      type?: components["schemas"]["_types.aggregations.TTestType"];
+    };
+    "_types.aggregations.TestPopulation": {
+      field: components["schemas"]["_types.Field"];
+      script?: components["schemas"]["_types.Script"];
+      filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+    };
+    /** @enum {string} */
+    "_types.aggregations.TTestType": "paired" | "homoscedastic" | "heteroscedastic";
+    "_types.aggregations.TopMetricsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      /** @description The fields of the top document to return. */
+      metrics?:
+        | components["schemas"]["_types.aggregations.TopMetricsValue"]
+        | components["schemas"]["_types.aggregations.TopMetricsValue"][];
+      /**
+       * @description The number of top documents from which to return metrics.
+       * @default 1
+       */
+      size: number;
+      sort?: components["schemas"]["_types.Sort"];
+    };
+    "_types.aggregations.TopMetricsValue": {
+      field: components["schemas"]["_types.Field"];
+    };
+    "_types.aggregations.ValueCountAggregation": components["schemas"]["_types.aggregations.FormattableMetricAggregation"] &
+      Record<string, never>;
+    "_types.aggregations.FormattableMetricAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
+      format?: string;
+    };
+    "_types.aggregations.WeightedAverageAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
+      /** @description A numeric response formatter. */
+      format?: string;
+      value?: components["schemas"]["_types.aggregations.WeightedAverageValue"];
+      value_type?: components["schemas"]["_types.aggregations.ValueType"];
+      weight?: components["schemas"]["_types.aggregations.WeightedAverageValue"];
+    };
+    "_types.aggregations.WeightedAverageValue": {
+      field?: components["schemas"]["_types.Field"];
+      /** @description A value or weight to use if the field is missing. */
+      missing?: number;
+      script?: components["schemas"]["_types.Script"];
+    };
+    "_types.aggregations.VariableWidthHistogramAggregation": {
+      field?: components["schemas"]["_types.Field"];
+      /**
+       * @description The target number of buckets.
+       * @default 10
+       */
+      buckets: number;
+      /**
+       * @description The number of buckets that the coordinating node will request from each shard.
+       *     Defaults to `buckets * 50`.
+       */
+      shard_size?: number;
+      /**
+       * @description Specifies the number of individual documents that will be stored in memory on a shard before the initial bucketing algorithm is run.
+       *     Defaults to `min(10 * shard_size, 50000)`.
+       */
+      initial_buffer?: number;
+      script?: components["schemas"]["_types.Script"];
+    };
+    "_types.WaitForActiveShards":
+      | number
+      | components["schemas"]["_types.WaitForActiveShardOptions"];
+    /** @enum {string} */
+    "_types.WaitForActiveShardOptions": "all" | "index-setting";
+    "_types.Names": components["schemas"]["_types.Name"] | components["schemas"]["_types.Name"][];
+    "_types.ByteSize": number | string;
+    /** @enum {string} */
+    "_types.HealthStatus":
+      | "green"
+      | "GREEN"
+      | "yellow"
+      | "YELLOW"
+      | "red"
+      | "RED"
+      | "unknown"
+      | "unavailable";
+    "_types.VersionString": string;
+    "indices._types.IndexSettings": {
+      index?: components["schemas"]["indices._types.IndexSettings"];
+      mode?: string;
+      routing_path?: string | string[];
+      soft_deletes?: components["schemas"]["indices._types.SoftDeletes"];
+      sort?: components["schemas"]["indices._types.IndexSegmentSort"];
+      /** @default 1 */
+      number_of_shards: number | string;
+      /** @default 0 */
+      number_of_replicas: number | string;
+      number_of_routing_shards?: number;
+      check_on_startup?: components["schemas"]["indices._types.IndexCheckOnStartup"];
+      /** @default LZ4 */
+      codec: string;
+      routing_partition_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+      /** @default true */
+      load_fixed_bitset_filters_eagerly: boolean;
+      /** @default false */
+      hidden: boolean | string;
+      /** @default false */
+      auto_expand_replicas: string | components["schemas"]["_spec_utils.NullValue"];
+      merge?: components["schemas"]["indices._types.Merge"];
+      search?: components["schemas"]["indices._types.SettingsSearch"];
+      refresh_interval?: components["schemas"]["_types.Duration"];
+      /** @default 10000 */
+      max_result_window: number;
+      /** @default 100 */
+      max_inner_result_window: number;
+      /** @default 10000 */
+      max_rescore_window: number;
+      /** @default 100 */
+      max_docvalue_fields_search: number;
+      /** @default 32 */
+      max_script_fields: number;
+      /** @default 1 */
+      max_ngram_diff: number;
+      /** @default 3 */
+      max_shingle_diff: number;
+      blocks?: components["schemas"]["indices._types.IndexSettingBlocks"];
+      max_refresh_listeners?: number;
+      analyze?: components["schemas"]["indices._types.SettingsAnalyze"];
+      highlight?: components["schemas"]["indices._types.SettingsHighlight"];
+      /** @default 65536 */
+      max_terms_count: number;
+      /** @default 1000 */
+      max_regex_length: number;
+      routing?: components["schemas"]["indices._types.IndexRouting"];
+      gc_deletes?: components["schemas"]["_types.Duration"];
+      default_pipeline?: components["schemas"]["_types.PipelineName"];
+      final_pipeline?: components["schemas"]["_types.PipelineName"];
+      lifecycle?: components["schemas"]["indices._types.IndexSettingsLifecycle"];
+      provided_name?: components["schemas"]["_types.Name"];
+      creation_date?: components["schemas"]["_spec_utils.StringifiedEpochTimeUnitMillis"];
+      creation_date_string?: components["schemas"]["_types.DateTime"];
+      uuid?: components["schemas"]["_types.Uuid"];
+      version?: components["schemas"]["indices._types.IndexVersioning"];
+      verified_before_close?: boolean | string;
+      format?: string | number;
+      max_slices_per_scroll?: number;
+      translog?: components["schemas"]["indices._types.Translog"];
+      query_string?: components["schemas"]["indices._types.SettingsQueryString"];
+      priority?: number | string;
+      top_metrics_max_size?: number;
+      analysis?: components["schemas"]["indices._types.IndexSettingsAnalysis"];
+      settings?: components["schemas"]["indices._types.IndexSettings"];
+      time_series?: components["schemas"]["indices._types.IndexSettingsTimeSeries"];
+      queries?: components["schemas"]["indices._types.Queries"];
+      /** @description Configure custom similarity settings to customize how search results are scored. */
+      similarity?: {
+        [key: string]: components["schemas"]["indices._types.SettingsSimilarity"];
+      };
+      mapping?: components["schemas"]["indices._types.MappingLimitSettings"];
+      "indexing.slowlog"?: components["schemas"]["indices._types.IndexingSlowlogSettings"];
+      indexing_pressure?: components["schemas"]["indices._types.IndexingPressure"];
+      store?: components["schemas"]["indices._types.Storage"];
+    };
+    "indices._types.SoftDeletes": {
+      /**
+       * @description Indicates whether soft deletes are enabled on the index.
+       * @default true
+       */
+      enabled: boolean;
+      retention_lease?: components["schemas"]["indices._types.RetentionLease"];
+    };
+    "indices._types.RetentionLease": {
+      period: components["schemas"]["_types.Duration"];
+    };
+    "indices._types.IndexSegmentSort": {
+      field?: components["schemas"]["_types.Fields"];
+      order?:
+        | components["schemas"]["indices._types.SegmentSortOrder"]
+        | components["schemas"]["indices._types.SegmentSortOrder"][];
+      mode?:
+        | components["schemas"]["indices._types.SegmentSortMode"]
+        | components["schemas"]["indices._types.SegmentSortMode"][];
+      missing?:
+        | components["schemas"]["indices._types.SegmentSortMissing"]
+        | components["schemas"]["indices._types.SegmentSortMissing"][];
+    };
+    /** @enum {string} */
+    "indices._types.SegmentSortOrder": "asc" | "ASC" | "desc" | "DESC";
+    /** @enum {string} */
+    "indices._types.SegmentSortMode": "min" | "MIN" | "max" | "MAX";
+    /** @enum {string} */
+    "indices._types.SegmentSortMissing": "_last" | "_first";
+    /** @enum {string} */
+    "indices._types.IndexCheckOnStartup": "true" | "false" | "checksum";
+    /**
+     * @description Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior
+     *     is used to capture this behavior while keeping the semantics of the field type.
+     *
+     *     Depending on the target language, code generators can keep the union or remove it and leniently parse
+     *     strings to the target type.
+     */
+    "_spec_utils.Stringifiedinteger": number | string;
+    /**
+     * @description A `null` value that is to be interpreted as an actual value, unless other uses of `null` that are equivalent
+     *     to a missing value. It is used for exemple in settings, where using the `NullValue` for a setting will reset
+     *     it to its default value.
+     */
+    "_spec_utils.NullValue": string | null;
+    "indices._types.Merge": {
+      scheduler?: components["schemas"]["indices._types.MergeScheduler"];
+    };
+    "indices._types.MergeScheduler": {
+      max_thread_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+      max_merge_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+    };
+    "indices._types.SettingsSearch": {
+      idle?: components["schemas"]["indices._types.SearchIdle"];
+      slowlog?: components["schemas"]["indices._types.SlowlogSettings"];
+    };
+    "indices._types.SearchIdle": {
+      after?: components["schemas"]["_types.Duration"];
+    };
+    "indices._types.SlowlogSettings": {
+      level?: string;
+      source?: number;
+      reformat?: boolean;
+      threshold?: components["schemas"]["indices._types.SlowlogTresholds"];
+    };
+    "indices._types.SlowlogTresholds": {
+      query?: components["schemas"]["indices._types.SlowlogTresholdLevels"];
+      fetch?: components["schemas"]["indices._types.SlowlogTresholdLevels"];
+    };
+    "indices._types.SlowlogTresholdLevels": {
+      warn?: components["schemas"]["_types.Duration"];
+      info?: components["schemas"]["_types.Duration"];
+      debug?: components["schemas"]["_types.Duration"];
+      trace?: components["schemas"]["_types.Duration"];
+    };
+    "indices._types.IndexSettingBlocks": {
+      read_only?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      read_only_allow_delete?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      read?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      write?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      metadata?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    };
+    /**
+     * @description Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior
+     *     is used to capture this behavior while keeping the semantics of the field type.
+     *
+     *     Depending on the target language, code generators can keep the union or remove it and leniently parse
+     *     strings to the target type.
+     */
+    "_spec_utils.Stringifiedboolean": boolean | string;
+    "indices._types.SettingsAnalyze": {
+      max_token_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+    };
+    "indices._types.SettingsHighlight": {
+      /** @default 1000000 */
+      max_analyzed_offset: number;
+    };
+    "indices._types.IndexRouting": {
+      allocation?: components["schemas"]["indices._types.IndexRoutingAllocation"];
+      rebalance?: components["schemas"]["indices._types.IndexRoutingRebalance"];
+    };
+    "indices._types.IndexRoutingAllocation": {
+      enable?: components["schemas"]["indices._types.IndexRoutingAllocationOptions"];
+      include?: components["schemas"]["indices._types.IndexRoutingAllocationInclude"];
+      initial_recovery?: components["schemas"]["indices._types.IndexRoutingAllocationInitialRecovery"];
+      disk?: components["schemas"]["indices._types.IndexRoutingAllocationDisk"];
+    };
+    /** @enum {string} */
+    "indices._types.IndexRoutingAllocationOptions": "all" | "primaries" | "new_primaries" | "none";
+    "indices._types.IndexRoutingAllocationInclude": {
+      _tier_preference?: string;
+      _id?: components["schemas"]["_types.Id"];
+    };
+    "indices._types.IndexRoutingAllocationInitialRecovery": {
+      _id?: components["schemas"]["_types.Id"];
+    };
+    "indices._types.IndexRoutingAllocationDisk": {
+      threshold_enabled?: boolean | string;
+    };
+    "indices._types.IndexRoutingRebalance": {
+      enable: components["schemas"]["indices._types.IndexRoutingRebalanceOptions"];
+    };
+    /** @enum {string} */
+    "indices._types.IndexRoutingRebalanceOptions": "all" | "primaries" | "replicas" | "none";
+    "_types.PipelineName": string;
+    "indices._types.IndexSettingsLifecycle": {
+      name?: components["schemas"]["_types.Name"];
+      indexing_complete?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      /**
+       * @description If specified, this is the timestamp used to calculate the index age for its phase transitions. Use this setting
+       *     if you create a new index that contains old data and want to use the original creation date to calculate the index
+       *     age. Specified as a Unix epoch value in milliseconds.
+       * @default 0
+       */
+      origination_date: number;
+      /**
+       * @description Set to true to parse the origination date from the index name. This origination date is used to calculate the index age
+       *     for its phase transitions. The index name must match the pattern ^.*-{date_format}-\\d+, where the date_format is
+       *     yyyy.MM.dd and the trailing digits are optional. An index that was rolled over would normally match the full format,
+       *     for example logs-2016.10.31-000002). If the index name doesn’t match the pattern, index creation fails.
+       */
+      parse_origination_date?: boolean;
+      step?: components["schemas"]["indices._types.IndexSettingsLifecycleStep"];
+      /**
+       * @description The index alias to update when the index rolls over. Specify when using a policy that contains a rollover action.
+       *     When the index rolls over, the alias is updated to reflect that the index is no longer the write index. For more
+       *     information about rolling indices, see Rollover.
+       * @default
+       */
+      rollover_alias: string;
+      /**
+       * @description Preference for the system that manages a data stream backing index (preferring ILM when both ILM and DLM are
+       *     applicable for an index).
+       * @default true
+       */
+      prefer_ilm: boolean | string;
+    };
+    "indices._types.IndexSettingsLifecycleStep": {
+      wait_time_threshold?: components["schemas"]["_types.Duration"];
+    };
+    /**
+     * @description Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior
+     *     is used to capture this behavior while keeping the semantics of the field type.
+     *
+     *     Depending on the target language, code generators can keep the union or remove it and leniently parse
+     *     strings to the target type.
+     */
+    "_spec_utils.StringifiedEpochTimeUnitMillis":
+      | components["schemas"]["_types.EpochTimeUnitMillis"]
+      | string;
+    "_types.Uuid": string;
+    "indices._types.IndexVersioning": {
+      created?: components["schemas"]["_types.VersionString"];
+      created_string?: string;
+    };
+    "indices._types.Translog": {
+      sync_interval?: components["schemas"]["_types.Duration"];
+      durability?: components["schemas"]["indices._types.TranslogDurability"];
+      flush_threshold_size?: components["schemas"]["_types.ByteSize"];
+      retention?: components["schemas"]["indices._types.TranslogRetention"];
+    };
+    /** @enum {string} */
+    "indices._types.TranslogDurability": "request" | "REQUEST" | "async" | "ASYNC";
+    "indices._types.TranslogRetention": {
+      size?: components["schemas"]["_types.ByteSize"];
+      age?: components["schemas"]["_types.Duration"];
+    };
+    "indices._types.SettingsQueryString": {
+      lenient: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    };
+    "indices._types.IndexSettingsAnalysis": {
+      analyzer?: {
+        [key: string]: components["schemas"]["_types.analysis.Analyzer"];
+      };
+      char_filter?: {
+        [key: string]: components["schemas"]["_types.analysis.CharFilter"];
+      };
+      filter?: {
+        [key: string]: components["schemas"]["_types.analysis.TokenFilter"];
+      };
+      normalizer?: {
+        [key: string]: components["schemas"]["_types.analysis.Normalizer"];
+      };
+      tokenizer?: {
+        [key: string]: components["schemas"]["_types.analysis.Tokenizer"];
+      };
+    };
+    "_types.analysis.Analyzer":
+      | components["schemas"]["_types.analysis.CustomAnalyzer"]
+      | components["schemas"]["_types.analysis.FingerprintAnalyzer"]
+      | components["schemas"]["_types.analysis.KeywordAnalyzer"]
+      | components["schemas"]["_types.analysis.NoriAnalyzer"]
+      | components["schemas"]["_types.analysis.PatternAnalyzer"]
+      | components["schemas"]["_types.analysis.SimpleAnalyzer"]
+      | components["schemas"]["_types.analysis.StandardAnalyzer"]
+      | components["schemas"]["_types.analysis.StopAnalyzer"]
+      | components["schemas"]["_types.analysis.WhitespaceAnalyzer"]
+      | components["schemas"]["_types.analysis.IcuAnalyzer"]
+      | components["schemas"]["_types.analysis.KuromojiAnalyzer"]
+      | components["schemas"]["_types.analysis.SnowballAnalyzer"]
+      | components["schemas"]["_types.analysis.ArabicAnalyzer"]
+      | components["schemas"]["_types.analysis.ArmenianAnalyzer"]
+      | components["schemas"]["_types.analysis.BasqueAnalyzer"]
+      | components["schemas"]["_types.analysis.BengaliAnalyzer"]
+      | components["schemas"]["_types.analysis.BrazilianAnalyzer"]
+      | components["schemas"]["_types.analysis.BulgarianAnalyzer"]
+      | components["schemas"]["_types.analysis.CatalanAnalyzer"]
+      | components["schemas"]["_types.analysis.ChineseAnalyzer"]
+      | components["schemas"]["_types.analysis.CjkAnalyzer"]
+      | components["schemas"]["_types.analysis.CzechAnalyzer"]
+      | components["schemas"]["_types.analysis.DanishAnalyzer"]
+      | components["schemas"]["_types.analysis.DutchAnalyzer"]
+      | components["schemas"]["_types.analysis.EnglishAnalyzer"]
+      | components["schemas"]["_types.analysis.EstonianAnalyzer"]
+      | components["schemas"]["_types.analysis.FinnishAnalyzer"]
+      | components["schemas"]["_types.analysis.FrenchAnalyzer"]
+      | components["schemas"]["_types.analysis.GalicianAnalyzer"]
+      | components["schemas"]["_types.analysis.GermanAnalyzer"]
+      | components["schemas"]["_types.analysis.GreekAnalyzer"]
+      | components["schemas"]["_types.analysis.HindiAnalyzer"]
+      | components["schemas"]["_types.analysis.HungarianAnalyzer"]
+      | components["schemas"]["_types.analysis.IndonesianAnalyzer"]
+      | components["schemas"]["_types.analysis.IrishAnalyzer"]
+      | components["schemas"]["_types.analysis.ItalianAnalyzer"]
+      | components["schemas"]["_types.analysis.LatvianAnalyzer"]
+      | components["schemas"]["_types.analysis.LithuanianAnalyzer"]
+      | components["schemas"]["_types.analysis.NorwegianAnalyzer"]
+      | components["schemas"]["_types.analysis.PersianAnalyzer"]
+      | components["schemas"]["_types.analysis.PortugueseAnalyzer"]
+      | components["schemas"]["_types.analysis.RomanianAnalyzer"]
+      | components["schemas"]["_types.analysis.RussianAnalyzer"]
+      | components["schemas"]["_types.analysis.SerbianAnalyzer"]
+      | components["schemas"]["_types.analysis.SoraniAnalyzer"]
+      | components["schemas"]["_types.analysis.SpanishAnalyzer"]
+      | components["schemas"]["_types.analysis.SwedishAnalyzer"]
+      | components["schemas"]["_types.analysis.TurkishAnalyzer"]
+      | components["schemas"]["_types.analysis.ThaiAnalyzer"];
+    "_types.analysis.CustomAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CustomAnalyzer";
+      char_filter?: string | string[];
+      filter?: string | string[];
+      position_increment_gap?: number;
+      position_offset_gap?: number;
+      tokenizer: string;
+    };
+    "_types.analysis.FingerprintAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.FingerprintAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+      /**
+       * @description The maximum token size to emit. Tokens larger than this size will be discarded.
+       *     Defaults to `255`
+       * @default 255
+       */
+      max_output_size: number;
+      /**
+       * @description The character to use to concatenate the terms.
+       *     Defaults to a space.
+       */
+      separator?: string;
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      /** @description The path to a file containing stop words. */
+      stopwords_path?: string;
+    };
+    "_types.analysis.KeywordAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KeywordAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+    };
+    "_types.analysis.NoriAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.NoriAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+      decompound_mode?: components["schemas"]["_types.analysis.NoriDecompoundMode"];
+      stoptags?: string[];
+      user_dictionary?: string;
+    };
+    /** @enum {string} */
+    "_types.analysis.NoriDecompoundMode": "discard" | "none" | "mixed";
+    "_types.analysis.PatternAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PatternAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+      /** @description Java regular expression flags. Flags should be pipe-separated, eg "CASE_INSENSITIVE|COMMENTS". */
+      flags?: string;
+      /**
+       * @description Should terms be lowercased or not.
+       *     Defaults to `true`.
+       * @default true
+       */
+      lowercase: boolean;
+      /**
+       * @description A Java regular expression.
+       *     Defaults to `\W+`.
+       * @default \W+
+       */
+      pattern: string;
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      /** @description The path to a file containing stop words. */
+      stopwords_path?: string;
+    };
+    "_types.analysis.SimpleAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SimpleAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+    };
+    "_types.analysis.StandardAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.StandardAnalyzer";
+      /**
+       * @description The maximum token length. If a token is seen that exceeds this length then it is split at `max_token_length` intervals.
+       *     Defaults to `255`.
+       * @default 255
+       */
+      max_token_length: number;
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      /** @description The path to a file containing stop words. */
+      stopwords_path?: string;
+    };
+    "_types.analysis.StopAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.StopAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      /** @description The path to a file containing stop words. */
+      stopwords_path?: string;
+    };
+    "_types.analysis.WhitespaceAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.WhitespaceAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+    };
+    "_types.analysis.IcuAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuAnalyzer";
+      method: components["schemas"]["_types.analysis.IcuNormalizationType"];
+      mode: components["schemas"]["_types.analysis.IcuNormalizationMode"];
+    };
+    /** @enum {string} */
+    "_types.analysis.IcuNormalizationType": "nfc" | "nfkc" | "nfkc_cf";
+    /** @enum {string} */
+    "_types.analysis.IcuNormalizationMode": "decompose" | "compose";
+    "_types.analysis.KuromojiAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KuromojiAnalyzer";
+      mode?: components["schemas"]["_types.analysis.KuromojiTokenizationMode"];
+      user_dictionary?: string;
+    };
+    /** @enum {string} */
+    "_types.analysis.KuromojiTokenizationMode": "normal" | "search" | "extended";
+    "_types.analysis.SnowballAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SnowballAnalyzer";
+      version?: components["schemas"]["_types.VersionString"];
+      language: components["schemas"]["_types.analysis.SnowballLanguage"];
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+    };
+    /** @enum {string} */
+    "_types.analysis.SnowballLanguage":
+      | "Arabic"
+      | "Armenian"
+      | "Basque"
+      | "Catalan"
+      | "Danish"
+      | "Dutch"
+      | "English"
+      | "Estonian"
+      | "Finnish"
+      | "French"
+      | "German"
+      | "German2"
+      | "Hungarian"
+      | "Italian"
+      | "Irish"
+      | "Kp"
+      | "Lithuanian"
+      | "Lovins"
+      | "Norwegian"
+      | "Porter"
+      | "Portuguese"
+      | "Romanian"
+      | "Russian"
+      | "Serbian"
+      | "Spanish"
+      | "Swedish"
+      | "Turkish";
+    "_types.analysis.ArabicAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ArabicAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.ArmenianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ArmenianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.BasqueAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.BasqueAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.BengaliAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.BengaliAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.BrazilianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.BrazilianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.BulgarianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.BulgarianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.CatalanAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CatalanAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.ChineseAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ChineseAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.CjkAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CjkAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.CzechAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CzechAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.DanishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.DanishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.DutchAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.DutchAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.EnglishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.EnglishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.EstonianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.EstonianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.FinnishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.FinnishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.FrenchAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.FrenchAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.GalicianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.GalicianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.GermanAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.GermanAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.GreekAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.GreekAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.HindiAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.HindiAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.HungarianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.HungarianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.IndonesianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IndonesianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.IrishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IrishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.ItalianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ItalianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.LatvianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LatvianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.LithuanianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LithuanianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.NorwegianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.NorwegianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.PersianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PersianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.PortugueseAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PortugueseAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.RomanianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.RomanianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.RussianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.RussianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.SerbianAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SerbianAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.SoraniAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SoraniAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.SpanishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SpanishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.SwedishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SwedishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.TurkishAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.TurkishAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+      stem_exclusion?: string[];
+    };
+    "_types.analysis.ThaiAnalyzer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ThaiAnalyzer";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      stopwords_path?: string;
+    };
+    "_types.analysis.CharFilter":
+      | string
+      | components["schemas"]["_types.analysis.CharFilterDefinition"];
+    "_types.analysis.CharFilterDefinition":
+      | components["schemas"]["_types.analysis.HtmlStripCharFilter"]
+      | components["schemas"]["_types.analysis.MappingCharFilter"]
+      | components["schemas"]["_types.analysis.PatternReplaceCharFilter"]
+      | components["schemas"]["_types.analysis.IcuNormalizationCharFilter"]
+      | components["schemas"]["_types.analysis.KuromojiIterationMarkCharFilter"];
+    "_types.analysis.HtmlStripCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
+      /** @enum {string} */
+      type: "html_strip";
+      escaped_tags?: string[];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.HtmlStripCharFilter";
+    };
+    "_types.analysis.CharFilterBase": {
+      version?: components["schemas"]["_types.VersionString"];
+    };
+    "_types.analysis.MappingCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
+      /** @enum {string} */
+      type: "mapping";
+      mappings?: string[];
+      mappings_path?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.MappingCharFilter";
+    };
+    "_types.analysis.PatternReplaceCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
+      /** @enum {string} */
+      type: "pattern_replace";
+      flags?: string;
+      pattern: string;
+      replacement?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PatternReplaceCharFilter";
+    };
+    "_types.analysis.IcuNormalizationCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
+      /** @enum {string} */
+      type: "icu_normalizer";
+      mode?: components["schemas"]["_types.analysis.IcuNormalizationMode"];
+      name?: components["schemas"]["_types.analysis.IcuNormalizationType"];
+      unicode_set_filter?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuNormalizationCharFilter";
+    };
+    "_types.analysis.KuromojiIterationMarkCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
+      /** @enum {string} */
+      type: "kuromoji_iteration_mark";
+      normalize_kana: boolean;
+      normalize_kanji: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KuromojiIterationMarkCharFilter";
+    };
+    "_types.analysis.TokenFilter":
+      | string
+      | components["schemas"]["_types.analysis.TokenFilterDefinition"];
+    "_types.analysis.TokenFilterDefinition":
+      | components["schemas"]["_types.analysis.ApostropheTokenFilter"]
+      | components["schemas"]["_types.analysis.ArabicStemTokenFilter"]
+      | components["schemas"]["_types.analysis.ArabicNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.AsciiFoldingTokenFilter"]
+      | components["schemas"]["_types.analysis.BengaliNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.BrazilianStemTokenFilter"]
+      | components["schemas"]["_types.analysis.CjkBigramTokenFilter"]
+      | components["schemas"]["_types.analysis.CjkWidthTokenFilter"]
+      | components["schemas"]["_types.analysis.ClassicTokenFilter"]
+      | components["schemas"]["_types.analysis.CommonGramsTokenFilter"]
+      | components["schemas"]["_types.analysis.ConditionTokenFilter"]
+      | components["schemas"]["_types.analysis.CzechStemTokenFilter"]
+      | components["schemas"]["_types.analysis.DecimalDigitTokenFilter"]
+      | components["schemas"]["_types.analysis.DelimitedPayloadTokenFilter"]
+      | components["schemas"]["_types.analysis.DutchStemTokenFilter"]
+      | components["schemas"]["_types.analysis.EdgeNGramTokenFilter"]
+      | components["schemas"]["_types.analysis.ElisionTokenFilter"]
+      | components["schemas"]["_types.analysis.FingerprintTokenFilter"]
+      | components["schemas"]["_types.analysis.FlattenGraphTokenFilter"]
+      | components["schemas"]["_types.analysis.FrenchStemTokenFilter"]
+      | components["schemas"]["_types.analysis.GermanNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.GermanStemTokenFilter"]
+      | components["schemas"]["_types.analysis.HindiNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.HunspellTokenFilter"]
+      | components["schemas"]["_types.analysis.HyphenationDecompounderTokenFilter"]
+      | components["schemas"]["_types.analysis.IndicNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.KeepTypesTokenFilter"]
+      | components["schemas"]["_types.analysis.KeepWordsTokenFilter"]
+      | components["schemas"]["_types.analysis.KeywordMarkerTokenFilter"]
+      | components["schemas"]["_types.analysis.KeywordRepeatTokenFilter"]
+      | components["schemas"]["_types.analysis.KStemTokenFilter"]
+      | components["schemas"]["_types.analysis.LengthTokenFilter"]
+      | components["schemas"]["_types.analysis.LimitTokenCountTokenFilter"]
+      | components["schemas"]["_types.analysis.LowercaseTokenFilter"]
+      | components["schemas"]["_types.analysis.MinHashTokenFilter"]
+      | components["schemas"]["_types.analysis.MultiplexerTokenFilter"]
+      | components["schemas"]["_types.analysis.NGramTokenFilter"]
+      | components["schemas"]["_types.analysis.NoriPartOfSpeechTokenFilter"]
+      | components["schemas"]["_types.analysis.PatternCaptureTokenFilter"]
+      | components["schemas"]["_types.analysis.PatternReplaceTokenFilter"]
+      | components["schemas"]["_types.analysis.PersianNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.PersianStemTokenFilter"]
+      | components["schemas"]["_types.analysis.PorterStemTokenFilter"]
+      | components["schemas"]["_types.analysis.PredicateTokenFilter"]
+      | components["schemas"]["_types.analysis.RemoveDuplicatesTokenFilter"]
+      | components["schemas"]["_types.analysis.ReverseTokenFilter"]
+      | components["schemas"]["_types.analysis.RussianStemTokenFilter"]
+      | components["schemas"]["_types.analysis.ScandinavianFoldingTokenFilter"]
+      | components["schemas"]["_types.analysis.ScandinavianNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.SerbianNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.ShingleTokenFilter"]
+      | components["schemas"]["_types.analysis.SnowballTokenFilter"]
+      | components["schemas"]["_types.analysis.SoraniNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.StemmerOverrideTokenFilter"]
+      | components["schemas"]["_types.analysis.StemmerTokenFilter"]
+      | components["schemas"]["_types.analysis.StopTokenFilter"]
+      | components["schemas"]["_types.analysis.SynonymGraphTokenFilter"]
+      | components["schemas"]["_types.analysis.SynonymTokenFilter"]
+      | components["schemas"]["_types.analysis.TrimTokenFilter"]
+      | components["schemas"]["_types.analysis.TruncateTokenFilter"]
+      | components["schemas"]["_types.analysis.UniqueTokenFilter"]
+      | components["schemas"]["_types.analysis.UppercaseTokenFilter"]
+      | components["schemas"]["_types.analysis.WordDelimiterGraphTokenFilter"]
+      | components["schemas"]["_types.analysis.WordDelimiterTokenFilter"]
+      | components["schemas"]["_types.analysis.JaStopTokenFilter"]
+      | components["schemas"]["_types.analysis.KuromojiStemmerTokenFilter"]
+      | components["schemas"]["_types.analysis.KuromojiReadingFormTokenFilter"]
+      | components["schemas"]["_types.analysis.KuromojiPartOfSpeechTokenFilter"]
+      | components["schemas"]["_types.analysis.IcuCollationTokenFilter"]
+      | components["schemas"]["_types.analysis.IcuFoldingTokenFilter"]
+      | components["schemas"]["_types.analysis.IcuNormalizationTokenFilter"]
+      | components["schemas"]["_types.analysis.IcuTransformTokenFilter"]
+      | components["schemas"]["_types.analysis.PhoneticTokenFilter"]
+      | components["schemas"]["_types.analysis.DictionaryDecompounderTokenFilter"];
+    "_types.analysis.ApostropheTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "apostrophe";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ApostropheTokenFilter";
+    };
+    "_types.analysis.TokenFilterBase": {
+      version?: components["schemas"]["_types.VersionString"];
+    };
+    "_types.analysis.ArabicStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "arabic_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ArabicStemTokenFilter";
+    };
+    "_types.analysis.ArabicNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "arabic_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ArabicNormalizationTokenFilter";
+    };
+    "_types.analysis.AsciiFoldingTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "asciifolding";
+      preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.AsciiFoldingTokenFilter";
+    };
+    "_types.analysis.BengaliNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "bengali_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.BengaliNormalizationTokenFilter";
+    };
+    "_types.analysis.BrazilianStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "brazilian_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.BrazilianStemTokenFilter";
+    };
+    "_types.analysis.CjkBigramTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "cjk_bigram";
+      /** @description Array of character scripts for which to disable bigrams. */
+      ignored_scripts?: components["schemas"]["_types.analysis.CjkBigramIgnoredScript"][];
+      /** @description If `true`, emit tokens in both bigram and unigram form. If `false`, a CJK character is output in unigram form when it has no adjacent characters. Defaults to `false`. */
+      output_unigrams?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CjkBigramTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.CjkBigramIgnoredScript": "han" | "hangul" | "hiragana" | "katakana";
+    "_types.analysis.CjkWidthTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "cjk_width";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CjkWidthTokenFilter";
+    };
+    "_types.analysis.ClassicTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "classic";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ClassicTokenFilter";
+    };
+    "_types.analysis.CommonGramsTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "common_grams";
+      /**
+       * @description A list of tokens. The filter generates bigrams for these tokens.
+       *     Either this or the `common_words_path` parameter is required.
+       */
+      common_words?: string[];
+      /**
+       * @description Path to a file containing a list of tokens. The filter generates bigrams for these tokens.
+       *     This path must be absolute or relative to the `config` location. The file must be UTF-8 encoded. Each token in the file must be separated by a line break.
+       *     Either this or the `common_words` parameter is required.
+       */
+      common_words_path?: string;
+      /** @description If `true`, matches for common words matching are case-insensitive. Defaults to `false`. */
+      ignore_case?: boolean;
+      /**
+       * @description If `true`, the filter excludes the following tokens from the output:
+       *     - Unigrams for common words
+       *     - Unigrams for terms followed by common words
+       *     Defaults to `false`. We recommend enabling this parameter for search analyzers.
+       */
+      query_mode?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CommonGramsTokenFilter";
+    };
+    "_types.analysis.ConditionTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "condition";
+      /** @description Array of token filters. If a token matches the predicate script in the `script` parameter, these filters are applied to the token in the order provided. */
+      filter: string[];
+      script: components["schemas"]["_types.Script"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ConditionTokenFilter";
+    };
+    "_types.analysis.CzechStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "czech_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CzechStemTokenFilter";
+    };
+    "_types.analysis.DecimalDigitTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "decimal_digit";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.DecimalDigitTokenFilter";
+    };
+    "_types.analysis.DelimitedPayloadTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "delimited_payload";
+      /** @description Character used to separate tokens from payloads. Defaults to `|`. */
+      delimiter?: string;
+      encoding?: components["schemas"]["_types.analysis.DelimitedPayloadEncoding"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.DelimitedPayloadTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.DelimitedPayloadEncoding": "int" | "float" | "identity";
+    "_types.analysis.DutchStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "dutch_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.DutchStemTokenFilter";
+    };
+    "_types.analysis.EdgeNGramTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "edge_ngram";
+      /** @description Maximum character length of a gram. For custom token filters, defaults to `2`. For the built-in edge_ngram filter, defaults to `1`. */
+      max_gram?: number;
+      /** @description Minimum character length of a gram. Defaults to `1`. */
+      min_gram?: number;
+      side?: components["schemas"]["_types.analysis.EdgeNGramSide"];
+      preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.EdgeNGramTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.EdgeNGramSide": "front" | "back";
+    "_types.analysis.ElisionTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "elision";
+      /**
+       * @description List of elisions to remove.
+       *     To be removed, the elision must be at the beginning of a token and be immediately followed by an apostrophe. Both the elision and apostrophe are removed.
+       *     For custom `elision` filters, either this parameter or `articles_path` must be specified.
+       */
+      articles?: string[];
+      /**
+       * @description Path to a file that contains a list of elisions to remove.
+       *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each elision in the file must be separated by a line break.
+       *     To be removed, the elision must be at the beginning of a token and be immediately followed by an apostrophe. Both the elision and apostrophe are removed.
+       *     For custom `elision` filters, either this parameter or `articles` must be specified.
+       */
+      articles_path?: string;
+      articles_case?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ElisionTokenFilter";
+    };
+    "_types.analysis.FingerprintTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "fingerprint";
+      /** @description Maximum character length, including whitespace, of the output token. Defaults to `255`. Concatenated tokens longer than this will result in no token output. */
+      max_output_size?: number;
+      /** @description Character to use to concatenate the token stream input. Defaults to a space. */
+      separator?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.FingerprintTokenFilter";
+    };
+    "_types.analysis.FlattenGraphTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "flatten_graph";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.FlattenGraphTokenFilter";
+    };
+    "_types.analysis.FrenchStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "french_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.FrenchStemTokenFilter";
+    };
+    "_types.analysis.GermanNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "german_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.GermanNormalizationTokenFilter";
+    };
+    "_types.analysis.GermanStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "german_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.GermanStemTokenFilter";
+    };
+    "_types.analysis.HindiNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "hindi_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.HindiNormalizationTokenFilter";
+    };
+    "_types.analysis.HunspellTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "hunspell";
+      /** @description If `true`, duplicate tokens are removed from the filter’s output. Defaults to `true`. */
+      dedup?: boolean;
+      /**
+       * @description One or more `.dic` files (e.g, `en_US.dic`, my_custom.dic) to use for the Hunspell dictionary.
+       *     By default, the `hunspell` filter uses all `.dic` files in the `<$ES_PATH_CONF>/hunspell/<locale>` directory specified using the `lang`, `language`, or `locale` parameter.
+       */
+      dictionary?: string;
+      /** @description Locale directory used to specify the `.aff` and `.dic` files for a Hunspell dictionary. */
+      locale: string;
+      /** @description If `true`, only the longest stemmed version of each token is included in the output. If `false`, all stemmed versions of the token are included. Defaults to `false`. */
+      longest_only?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.HunspellTokenFilter";
+    };
+    "_types.analysis.HyphenationDecompounderTokenFilter": components["schemas"]["_types.analysis.CompoundWordTokenFilterBase"] & {
+      /** @enum {string} */
+      type: "hyphenation_decompounder";
+      /**
+       * @description Path to an Apache FOP (Formatting Objects Processor) XML hyphenation pattern file.
+       *     This path must be absolute or relative to the `config` location. Only FOP v1.2 compatible files are supported.
+       */
+      hyphenation_patterns_path: string;
+      /** @description If `true`, do not match sub tokens in tokens that are in the word list. Defaults to `false`. */
+      no_sub_matches?: boolean;
+      /** @description If `true`, do not allow overlapping tokens. Defaults to `false`. */
+      no_overlapping_matches?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.HyphenationDecompounderTokenFilter";
+    };
+    "_types.analysis.CompoundWordTokenFilterBase": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @description Maximum subword character length. Longer subword tokens are excluded from the output. Defaults to `15`. */
+      max_subword_size?: number;
+      /** @description Minimum subword character length. Shorter subword tokens are excluded from the output. Defaults to `2`. */
+      min_subword_size?: number;
+      /** @description Minimum word character length. Shorter word tokens are excluded from the output. Defaults to `5`. */
+      min_word_size?: number;
+      /** @description If `true`, only include the longest matching subword. Defaults to `false`. */
+      only_longest_match?: boolean;
+      /**
+       * @description A list of subwords to look for in the token stream. If found, the subword is included in the token output.
+       *     Either this parameter or `word_list_path` must be specified.
+       */
+      word_list?: string[];
+      /**
+       * @description Path to a file that contains a list of subwords to find in the token stream. If found, the subword is included in the token output.
+       *     This path must be absolute or relative to the config location, and the file must be UTF-8 encoded. Each token in the file must be separated by a line break.
+       *     Either this parameter or `word_list` must be specified.
+       */
+      word_list_path?: string;
+    };
+    "_types.analysis.IndicNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "indic_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IndicNormalizationTokenFilter";
+    };
+    "_types.analysis.KeepTypesTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "keep_types";
+      mode?: components["schemas"]["_types.analysis.KeepTypesMode"];
+      /** @description List of token types to keep or remove. */
+      types: string[];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KeepTypesTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.KeepTypesMode": "include" | "exclude";
+    "_types.analysis.KeepWordsTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "keep";
+      /**
+       * @description List of words to keep. Only tokens that match words in this list are included in the output.
+       *     Either this parameter or `keep_words_path` must be specified.
+       */
+      keep_words?: string[];
+      /** @description If `true`, lowercase all keep words. Defaults to `false`. */
+      keep_words_case?: boolean;
+      /**
+       * @description Path to a file that contains a list of words to keep. Only tokens that match words in this list are included in the output.
+       *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each word in the file must be separated by a line break.
+       *     Either this parameter or `keep_words` must be specified.
+       */
+      keep_words_path?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KeepWordsTokenFilter";
+    };
+    "_types.analysis.KeywordMarkerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "keyword_marker";
+      /** @description If `true`, matching for the `keywords` and `keywords_path` parameters ignores letter case. Defaults to `false`. */
+      ignore_case?: boolean;
+      /**
+       * @description Array of keywords. Tokens that match these keywords are not stemmed.
+       *     This parameter, `keywords_path`, or `keywords_pattern` must be specified. You cannot specify this parameter and `keywords_pattern`.
+       */
+      keywords?: string | string[];
+      /**
+       * @description Path to a file that contains a list of keywords. Tokens that match these keywords are not stemmed.
+       *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each word in the file must be separated by a line break.
+       *     This parameter, `keywords`, or `keywords_pattern` must be specified. You cannot specify this parameter and `keywords_pattern`.
+       */
+      keywords_path?: string;
+      /**
+       * @description Java regular expression used to match tokens. Tokens that match this expression are marked as keywords and not stemmed.
+       *     This parameter, `keywords`, or `keywords_path` must be specified. You cannot specify this parameter and `keywords` or `keywords_pattern`.
+       */
+      keywords_pattern?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KeywordMarkerTokenFilter";
+    };
+    "_types.analysis.KeywordRepeatTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "keyword_repeat";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KeywordRepeatTokenFilter";
+    };
+    "_types.analysis.KStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "kstem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KStemTokenFilter";
+    };
+    "_types.analysis.LengthTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "length";
+      /** @description Maximum character length of a token. Longer tokens are excluded from the output. Defaults to `Integer.MAX_VALUE`, which is `2^31-1` or `2147483647`. */
+      max?: number;
+      /** @description Minimum character length of a token. Shorter tokens are excluded from the output. Defaults to `0`. */
+      min?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LengthTokenFilter";
+    };
+    "_types.analysis.LimitTokenCountTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "limit";
+      /** @description If `true`, the limit filter exhausts the token stream, even if the `max_token_count` has already been reached. Defaults to `false`. */
+      consume_all_tokens?: boolean;
+      max_token_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LimitTokenCountTokenFilter";
+    };
+    "_types.analysis.LowercaseTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "lowercase";
+      language?: components["schemas"]["_types.analysis.LowercaseTokenFilterLanguages"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LowercaseTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.LowercaseTokenFilterLanguages": "greek" | "irish" | "turkish";
+    "_types.analysis.MinHashTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "min_hash";
+      /** @description Number of buckets to which hashes are assigned. Defaults to `512`. */
+      bucket_count?: number;
+      /** @description Number of ways to hash each token in the stream. Defaults to `1`. */
+      hash_count?: number;
+      /**
+       * @description Number of hashes to keep from each bucket. Defaults to `1`.
+       *     Hashes are retained by ascending size, starting with the bucket’s smallest hash first.
+       */
+      hash_set_size?: number;
+      /** @description If `true`, the filter fills empty buckets with the value of the first non-empty bucket to its circular right if the `hash_set_size` is `1`. If the `bucket_count` argument is greater than 1, this parameter defaults to `true`. Otherwise, this parameter defaults to `false`. */
+      with_rotation?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.MinHashTokenFilter";
+    };
+    "_types.analysis.MultiplexerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "multiplexer";
+      /** @description A list of token filters to apply to incoming tokens. */
+      filters: string[];
+      preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.MultiplexerTokenFilter";
+    };
+    "_types.analysis.NGramTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "ngram";
+      /** @description Maximum length of characters in a gram. Defaults to `2`. */
+      max_gram?: number;
+      /** @description Minimum length of characters in a gram. Defaults to `1`. */
+      min_gram?: number;
+      preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.NGramTokenFilter";
+    };
+    "_types.analysis.NoriPartOfSpeechTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "nori_part_of_speech";
+      /** @description An array of part-of-speech tags that should be removed. */
+      stoptags?: string[];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.NoriPartOfSpeechTokenFilter";
+    };
+    "_types.analysis.PatternCaptureTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "pattern_capture";
+      /** @description A list of regular expressions to match. */
+      patterns: string[];
+      preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PatternCaptureTokenFilter";
+    };
+    "_types.analysis.PatternReplaceTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "pattern_replace";
+      /** @description If `true`, all substrings matching the pattern parameter’s regular expression are replaced. If `false`, the filter replaces only the first matching substring in each token. Defaults to `true`. */
+      all?: boolean;
+      flags?: string;
+      /** @description Regular expression, written in Java’s regular expression syntax. The filter replaces token substrings matching this pattern with the substring in the `replacement` parameter. */
+      pattern: string;
+      /** @description Replacement substring. Defaults to an empty substring (`""`). */
+      replacement?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PatternReplaceTokenFilter";
+    };
+    "_types.analysis.PersianNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "persian_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PersianNormalizationTokenFilter";
+    };
+    "_types.analysis.PersianStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "persian_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PersianStemTokenFilter";
+    };
+    "_types.analysis.PorterStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "porter_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PorterStemTokenFilter";
+    };
+    "_types.analysis.PredicateTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "predicate_token_filter";
+      script: components["schemas"]["_types.Script"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PredicateTokenFilter";
+    };
+    "_types.analysis.RemoveDuplicatesTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "remove_duplicates";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.RemoveDuplicatesTokenFilter";
+    };
+    "_types.analysis.ReverseTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "reverse";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ReverseTokenFilter";
+    };
+    "_types.analysis.RussianStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "russian_stem";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.RussianStemTokenFilter";
+    };
+    "_types.analysis.ScandinavianFoldingTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "scandinavian_folding";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ScandinavianFoldingTokenFilter";
+    };
+    "_types.analysis.ScandinavianNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "scandinavian_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ScandinavianNormalizationTokenFilter";
+    };
+    "_types.analysis.SerbianNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "serbian_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SerbianNormalizationTokenFilter";
+    };
+    "_types.analysis.ShingleTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "shingle";
+      /** @description String used in shingles as a replacement for empty positions that do not contain a token. This filler token is only used in shingles, not original unigrams. Defaults to an underscore (`_`). */
+      filler_token?: string;
+      max_shingle_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+      min_shingle_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+      /** @description If `true`, the output includes the original input tokens. If `false`, the output only includes shingles; the original input tokens are removed. Defaults to `true`. */
+      output_unigrams?: boolean;
+      /** @description If `true`, the output includes the original input tokens only if no shingles are produced; if shingles are produced, the output only includes shingles. Defaults to `false`. */
+      output_unigrams_if_no_shingles?: boolean;
+      /** @description Separator used to concatenate adjacent tokens to form a shingle. Defaults to a space (`" "`). */
+      token_separator?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ShingleTokenFilter";
+    };
+    "_types.analysis.SnowballTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "snowball";
+      language?: components["schemas"]["_types.analysis.SnowballLanguage"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SnowballTokenFilter";
+    };
+    "_types.analysis.SoraniNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "sorani_normalization";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SoraniNormalizationTokenFilter";
+    };
+    "_types.analysis.StemmerOverrideTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "stemmer_override";
+      /** @description A list of mapping rules to use. */
+      rules?: string[];
+      /** @description A path (either relative to `config` location, or absolute) to a list of mappings. */
+      rules_path?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.StemmerOverrideTokenFilter";
+    };
+    "_types.analysis.StemmerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "stemmer";
+      language?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.StemmerTokenFilter";
+    };
+    "_types.analysis.StopTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "stop";
+      /** @description If `true`, stop word matching is case insensitive. For example, if `true`, a stop word of the matches and removes `The`, `THE`, or `the`. Defaults to `false`. */
+      ignore_case?: boolean;
+      /** @description If `true`, the last token of a stream is removed if it’s a stop word. Defaults to `true`. */
+      remove_trailing?: boolean;
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+      /**
+       * @description Path to a file that contains a list of stop words to remove.
+       *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each stop word in the file must be separated by a line break.
+       */
+      stopwords_path?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.StopTokenFilter";
+    };
+    "_types.analysis.SynonymGraphTokenFilter": components["schemas"]["_types.analysis.SynonymTokenFilterBase"] & {
+      /** @enum {string} */
+      type: "synonym_graph";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SynonymGraphTokenFilter";
+    };
+    "_types.analysis.SynonymTokenFilterBase": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @description Expands definitions for equivalent synonym rules. Defaults to `true`. */
+      expand?: boolean;
+      format?: components["schemas"]["_types.analysis.SynonymFormat"];
+      /** @description If `true` ignores errors while parsing the synonym rules. It is important to note that only those synonym rules which cannot get parsed are ignored. Defaults to the value of the `updateable` setting. */
+      lenient?: boolean;
+      /** @description Used to define inline synonyms. */
+      synonyms?: string[];
+      /** @description Used to provide a synonym file. This path must be absolute or relative to the `config` location. */
+      synonyms_path?: string;
+      /** @description Provide a synonym set created via Synonyms Management APIs. */
+      synonyms_set?: string;
+      /**
+       * @deprecated
+       * @description Controls the tokenizers that will be used to tokenize the synonym, this parameter is for backwards compatibility for indices that created before 6.0.
+       */
+      tokenizer?: string;
+      /** @description If `true` allows reloading search analyzers to pick up changes to synonym files. Only to be used for search analyzers. Defaults to `false`. */
+      updateable?: boolean;
+    };
+    /** @enum {string} */
+    "_types.analysis.SynonymFormat": "solr" | "wordnet";
+    "_types.analysis.SynonymTokenFilter": components["schemas"]["_types.analysis.SynonymTokenFilterBase"] & {
+      /** @enum {string} */
+      type: "synonym";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SynonymTokenFilter";
+    };
+    "_types.analysis.TrimTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "trim";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.TrimTokenFilter";
+    };
+    "_types.analysis.TruncateTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "truncate";
+      /** @description Character limit for each token. Tokens exceeding this limit are truncated. Defaults to `10`. */
+      length?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.TruncateTokenFilter";
+    };
+    "_types.analysis.UniqueTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "unique";
+      /** @description If `true`, only remove duplicate tokens in the same position. Defaults to `false`. */
+      only_on_same_position?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.UniqueTokenFilter";
+    };
+    "_types.analysis.UppercaseTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "uppercase";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.UppercaseTokenFilter";
+    };
+    "_types.analysis.WordDelimiterGraphTokenFilter": components["schemas"]["_types.analysis.WordDelimiterTokenFilterBase"] & {
+      /** @enum {string} */
+      type: "word_delimiter_graph";
+      /** @description If `true`, the filter adjusts the offsets of split or catenated tokens to better reflect their actual position in the token stream. Defaults to `true`. */
+      adjust_offsets?: boolean;
+      /** @description If `true`, the filter skips tokens with a keyword attribute of true. Defaults to `false`. */
+      ignore_keywords?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.WordDelimiterGraphTokenFilter";
+    };
+    "_types.analysis.WordDelimiterTokenFilterBase": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @description If `true`, the filter produces catenated tokens for chains of alphanumeric characters separated by non-alphabetic delimiters. Defaults to `false`. */
+      catenate_all?: boolean;
+      /** @description If `true`, the filter produces catenated tokens for chains of numeric characters separated by non-alphabetic delimiters. Defaults to `false`. */
+      catenate_numbers?: boolean;
+      /** @description If `true`, the filter produces catenated tokens for chains of alphabetical characters separated by non-alphabetic delimiters. Defaults to `false`. */
+      catenate_words?: boolean;
+      /** @description If `true`, the filter includes tokens consisting of only numeric characters in the output. If `false`, the filter excludes these tokens from the output. Defaults to `true`. */
+      generate_number_parts?: boolean;
+      /** @description If `true`, the filter includes tokens consisting of only alphabetical characters in the output. If `false`, the filter excludes these tokens from the output. Defaults to `true`. */
+      generate_word_parts?: boolean;
+      preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      /** @description Array of tokens the filter won’t split. */
+      protected_words?: string[];
+      /**
+       * @description Path to a file that contains a list of tokens the filter won’t split.
+       *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each token in the file must be separated by a line break.
+       */
+      protected_words_path?: string;
+      /** @description If `true`, the filter splits tokens at letter case transitions. For example: camelCase -> [ camel, Case ]. Defaults to `true`. */
+      split_on_case_change?: boolean;
+      /** @description If `true`, the filter splits tokens at letter-number transitions. For example: j2se -> [ j, 2, se ]. Defaults to `true`. */
+      split_on_numerics?: boolean;
+      /** @description If `true`, the filter removes the English possessive (`'s`) from the end of each token. For example: O'Neil's -> [ O, Neil ]. Defaults to `true`. */
+      stem_english_possessive?: boolean;
+      /** @description Array of custom type mappings for characters. This allows you to map non-alphanumeric characters as numeric or alphanumeric to avoid splitting on those characters. */
+      type_table?: string[];
+      /** @description Path to a file that contains custom type mappings for characters. This allows you to map non-alphanumeric characters as numeric or alphanumeric to avoid splitting on those characters. */
+      type_table_path?: string;
+    };
+    "_types.analysis.WordDelimiterTokenFilter": components["schemas"]["_types.analysis.WordDelimiterTokenFilterBase"] & {
+      /** @enum {string} */
+      type: "word_delimiter";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.WordDelimiterTokenFilter";
+    };
+    "_types.analysis.JaStopTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "ja_stop";
+      stopwords?: components["schemas"]["_types.analysis.StopWords"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.JaStopTokenFilter";
+    };
+    "_types.analysis.KuromojiStemmerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "kuromoji_stemmer";
+      minimum_length: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KuromojiStemmerTokenFilter";
+    };
+    "_types.analysis.KuromojiReadingFormTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "kuromoji_readingform";
+      use_romaji: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KuromojiReadingFormTokenFilter";
+    };
+    "_types.analysis.KuromojiPartOfSpeechTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "kuromoji_part_of_speech";
+      stoptags: string[];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KuromojiPartOfSpeechTokenFilter";
+    };
+    "_types.analysis.IcuCollationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "icu_collation";
+      alternate?: components["schemas"]["_types.analysis.IcuCollationAlternate"];
+      caseFirst?: components["schemas"]["_types.analysis.IcuCollationCaseFirst"];
+      caseLevel?: boolean;
+      country?: string;
+      decomposition?: components["schemas"]["_types.analysis.IcuCollationDecomposition"];
+      hiraganaQuaternaryMode?: boolean;
+      language?: string;
+      numeric?: boolean;
+      rules?: string;
+      strength?: components["schemas"]["_types.analysis.IcuCollationStrength"];
+      variableTop?: string;
+      variant?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuCollationTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.IcuCollationAlternate": "shifted" | "non-ignorable";
+    /** @enum {string} */
+    "_types.analysis.IcuCollationCaseFirst": "lower" | "upper";
+    /** @enum {string} */
+    "_types.analysis.IcuCollationDecomposition": "no" | "identical";
+    /** @enum {string} */
+    "_types.analysis.IcuCollationStrength":
+      | "primary"
+      | "secondary"
+      | "tertiary"
+      | "quaternary"
+      | "identical";
+    "_types.analysis.IcuFoldingTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "icu_folding";
+      unicode_set_filter: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuFoldingTokenFilter";
+    };
+    "_types.analysis.IcuNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "icu_normalizer";
+      name: components["schemas"]["_types.analysis.IcuNormalizationType"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuNormalizationTokenFilter";
+    };
+    "_types.analysis.IcuTransformTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "icu_transform";
+      dir?: components["schemas"]["_types.analysis.IcuTransformDirection"];
+      id: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuTransformTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.IcuTransformDirection": "forward" | "reverse";
+    "_types.analysis.PhoneticTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
+      /** @enum {string} */
+      type: "phonetic";
+      encoder: components["schemas"]["_types.analysis.PhoneticEncoder"];
+      languageset?:
+        | components["schemas"]["_types.analysis.PhoneticLanguage"]
+        | components["schemas"]["_types.analysis.PhoneticLanguage"][];
+      max_code_len?: number;
+      name_type?: components["schemas"]["_types.analysis.PhoneticNameType"];
+      replace?: boolean;
+      rule_type?: components["schemas"]["_types.analysis.PhoneticRuleType"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PhoneticTokenFilter";
+    };
+    /** @enum {string} */
+    "_types.analysis.PhoneticEncoder":
+      | "metaphone"
+      | "double_metaphone"
+      | "soundex"
+      | "refined_soundex"
+      | "caverphone1"
+      | "caverphone2"
+      | "cologne"
+      | "nysiis"
+      | "koelnerphonetik"
+      | "haasephonetik"
+      | "beider_morse"
+      | "daitch_mokotoff";
+    /** @enum {string} */
+    "_types.analysis.PhoneticLanguage":
+      | "any"
+      | "common"
+      | "cyrillic"
+      | "english"
+      | "french"
+      | "german"
+      | "hebrew"
+      | "hungarian"
+      | "polish"
+      | "romanian"
+      | "russian"
+      | "spanish";
+    /** @enum {string} */
+    "_types.analysis.PhoneticNameType": "generic" | "ashkenazi" | "sephardic";
+    /** @enum {string} */
+    "_types.analysis.PhoneticRuleType": "approx" | "exact";
+    "_types.analysis.DictionaryDecompounderTokenFilter": components["schemas"]["_types.analysis.CompoundWordTokenFilterBase"] & {
+      /** @enum {string} */
+      type: "dictionary_decompounder";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.DictionaryDecompounderTokenFilter";
+    };
+    "_types.analysis.Normalizer":
+      | components["schemas"]["_types.analysis.LowercaseNormalizer"]
+      | components["schemas"]["_types.analysis.CustomNormalizer"];
+    "_types.analysis.LowercaseNormalizer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LowercaseNormalizer";
+    };
+    "_types.analysis.CustomNormalizer": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CustomNormalizer";
+      char_filter?: string[];
+      filter?: string[];
+    };
+    "_types.analysis.Tokenizer":
+      | string
+      | components["schemas"]["_types.analysis.TokenizerDefinition"];
+    "_types.analysis.TokenizerDefinition":
+      | components["schemas"]["_types.analysis.CharGroupTokenizer"]
+      | components["schemas"]["_types.analysis.ClassicTokenizer"]
+      | components["schemas"]["_types.analysis.EdgeNGramTokenizer"]
+      | components["schemas"]["_types.analysis.KeywordTokenizer"]
+      | components["schemas"]["_types.analysis.LetterTokenizer"]
+      | components["schemas"]["_types.analysis.LowercaseTokenizer"]
+      | components["schemas"]["_types.analysis.NGramTokenizer"]
+      | components["schemas"]["_types.analysis.PathHierarchyTokenizer"]
+      | components["schemas"]["_types.analysis.PatternTokenizer"]
+      | components["schemas"]["_types.analysis.SimplePatternTokenizer"]
+      | components["schemas"]["_types.analysis.SimplePatternSplitTokenizer"]
+      | components["schemas"]["_types.analysis.StandardTokenizer"]
+      | components["schemas"]["_types.analysis.ThaiTokenizer"]
+      | components["schemas"]["_types.analysis.UaxEmailUrlTokenizer"]
+      | components["schemas"]["_types.analysis.WhitespaceTokenizer"]
+      | components["schemas"]["_types.analysis.IcuTokenizer"]
+      | components["schemas"]["_types.analysis.KuromojiTokenizer"]
+      | components["schemas"]["_types.analysis.NoriTokenizer"];
+    "_types.analysis.CharGroupTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "char_group";
+      tokenize_on_chars: string[];
+      max_token_length?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.CharGroupTokenizer";
+    };
+    "_types.analysis.TokenizerBase": {
+      version?: components["schemas"]["_types.VersionString"];
+    };
+    "_types.analysis.ClassicTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "classic";
+      max_token_length?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ClassicTokenizer";
+    };
+    "_types.analysis.EdgeNGramTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "edge_ngram";
+      custom_token_chars?: string;
+      max_gram?: number;
+      min_gram?: number;
+      /** @default [] */
+      token_chars: components["schemas"]["_types.analysis.TokenChar"][];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.EdgeNGramTokenizer";
+    };
+    /** @enum {string} */
+    "_types.analysis.TokenChar":
+      | "letter"
+      | "digit"
+      | "whitespace"
+      | "punctuation"
+      | "symbol"
+      | "custom";
+    "_types.analysis.KeywordTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "keyword";
+      /** @default 256 */
+      buffer_size: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KeywordTokenizer";
+    };
+    "_types.analysis.LetterTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "letter";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LetterTokenizer";
+    };
+    "_types.analysis.LowercaseTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "lowercase";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.LowercaseTokenizer";
+    };
+    "_types.analysis.NGramTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "ngram";
+      custom_token_chars?: string;
+      max_gram?: number;
+      min_gram?: number;
+      /** @default [] */
+      token_chars: components["schemas"]["_types.analysis.TokenChar"][];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.NGramTokenizer";
+    };
+    "_types.analysis.PathHierarchyTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "path_hierarchy";
+      buffer_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+      delimiter?: string;
+      replacement?: string;
+      reverse?: components["schemas"]["_spec_utils.Stringifiedboolean"];
+      skip?: components["schemas"]["_spec_utils.Stringifiedinteger"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PathHierarchyTokenizer";
+    };
+    "_types.analysis.PatternTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "pattern";
+      flags?: string;
+      group?: number;
+      pattern?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.PatternTokenizer";
+    };
+    "_types.analysis.SimplePatternTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "simple_pattern";
+      pattern?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SimplePatternTokenizer";
+    };
+    "_types.analysis.SimplePatternSplitTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "simple_pattern_split";
+      pattern?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.SimplePatternSplitTokenizer";
+    };
+    "_types.analysis.StandardTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "standard";
+      max_token_length?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.StandardTokenizer";
+    };
+    "_types.analysis.ThaiTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "thai";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.ThaiTokenizer";
+    };
+    "_types.analysis.UaxEmailUrlTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "uax_url_email";
+      max_token_length?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.UaxEmailUrlTokenizer";
+    };
+    "_types.analysis.WhitespaceTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "whitespace";
+      max_token_length?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.WhitespaceTokenizer";
+    };
+    "_types.analysis.IcuTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "icu_tokenizer";
+      rule_files: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.IcuTokenizer";
+    };
+    "_types.analysis.KuromojiTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "kuromoji_tokenizer";
+      discard_punctuation?: boolean;
+      mode: components["schemas"]["_types.analysis.KuromojiTokenizationMode"];
+      nbest_cost?: number;
+      nbest_examples?: string;
+      user_dictionary?: string;
+      user_dictionary_rules?: string[];
+      discard_compound_token?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.KuromojiTokenizer";
+    };
+    "_types.analysis.NoriTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
+      /** @enum {string} */
+      type: "nori_tokenizer";
+      decompound_mode?: components["schemas"]["_types.analysis.NoriDecompoundMode"];
+      discard_punctuation?: boolean;
+      user_dictionary?: string;
+      user_dictionary_rules?: string[];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.analysis.NoriTokenizer";
+    };
+    "indices._types.IndexSettingsTimeSeries": {
+      end_time?: components["schemas"]["_types.DateTime"];
+      start_time?: components["schemas"]["_types.DateTime"];
+    };
+    "indices._types.Queries": {
+      cache?: components["schemas"]["indices._types.CacheQueries"];
+    };
+    "indices._types.CacheQueries": {
+      enabled: boolean;
+    };
+    "indices._types.SettingsSimilarity":
+      | components["schemas"]["indices._types.SettingsSimilarityBm25"]
+      | components["schemas"]["indices._types.SettingsSimilarityBoolean"]
+      | components["schemas"]["indices._types.SettingsSimilarityDfi"]
+      | components["schemas"]["indices._types.SettingsSimilarityDfr"]
+      | components["schemas"]["indices._types.SettingsSimilarityIb"]
+      | components["schemas"]["indices._types.SettingsSimilarityLmd"]
+      | components["schemas"]["indices._types.SettingsSimilarityLmj"]
+      | components["schemas"]["indices._types.SettingsSimilarityScripted"];
+    "indices._types.SettingsSimilarityBm25": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityBm25";
+      b?: number;
+      discount_overlaps?: boolean;
+      k1?: number;
+    };
+    "indices._types.SettingsSimilarityBoolean": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityBoolean";
+    };
+    "indices._types.SettingsSimilarityDfi": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityDfi";
+      independence_measure: components["schemas"]["_types.DFIIndependenceMeasure"];
+    };
+    /** @enum {string} */
+    "_types.DFIIndependenceMeasure": "standardized" | "saturated" | "chisquared";
+    "indices._types.SettingsSimilarityDfr": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityDfr";
+      after_effect: components["schemas"]["_types.DFRAfterEffect"];
+      basic_model: components["schemas"]["_types.DFRBasicModel"];
+      normalization: components["schemas"]["_types.Normalization"];
+    };
+    /** @enum {string} */
+    "_types.DFRAfterEffect": "no" | "b" | "l";
+    /** @enum {string} */
+    "_types.DFRBasicModel": "be" | "d" | "g" | "if" | "in" | "ine" | "p";
+    /** @enum {string} */
+    "_types.Normalization": "no" | "h1" | "h2" | "h3" | "z";
+    "indices._types.SettingsSimilarityIb": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityIb";
+      distribution: components["schemas"]["_types.IBDistribution"];
+      lambda: components["schemas"]["_types.IBLambda"];
+      normalization: components["schemas"]["_types.Normalization"];
+    };
+    /** @enum {string} */
+    "_types.IBDistribution": "ll" | "spl";
+    /** @enum {string} */
+    "_types.IBLambda": "df" | "ttf";
+    "indices._types.SettingsSimilarityLmd": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityLmd";
+      mu?: number;
+    };
+    "indices._types.SettingsSimilarityLmj": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityLmj";
+      lambda?: number;
+    };
+    "indices._types.SettingsSimilarityScripted": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "indices._types.SettingsSimilarityScripted";
+      script: components["schemas"]["_types.Script"];
+      weight_script?: components["schemas"]["_types.Script"];
+    };
+    /** @description Mapping Limit Settings */
+    "indices._types.MappingLimitSettings": {
+      coerce?: boolean;
+      total_fields?: components["schemas"]["indices._types.MappingLimitSettingsTotalFields"];
+      depth?: components["schemas"]["indices._types.MappingLimitSettingsDepth"];
+      nested_fields?: components["schemas"]["indices._types.MappingLimitSettingsNestedFields"];
+      nested_objects?: components["schemas"]["indices._types.MappingLimitSettingsNestedObjects"];
+      field_name_length?: components["schemas"]["indices._types.MappingLimitSettingsFieldNameLength"];
+      dimension_fields?: components["schemas"]["indices._types.MappingLimitSettingsDimensionFields"];
+      source?: components["schemas"]["indices._types.MappingLimitSettingsSourceFields"];
+      ignore_malformed?: boolean | string;
+    };
+    "indices._types.MappingLimitSettingsTotalFields": {
+      /**
+       * @description The maximum number of fields in an index. Field and object mappings, as well as field aliases count towards this limit.
+       *     The limit is in place to prevent mappings and searches from becoming too large. Higher values can lead to performance
+       *     degradations and memory issues, especially in clusters with a high load or few resources.
+       * @default 1000
+       */
+      limit: number | string;
+      /**
+       * @description This setting determines what happens when a dynamically mapped field would exceed the total fields limit. When set
+       *     to false (the default), the index request of the document that tries to add a dynamic field to the mapping will fail
+       *     with the message Limit of total fields [X] has been exceeded. When set to true, the index request will not fail.
+       *     Instead, fields that would exceed the limit are not added to the mapping, similar to dynamic: false.
+       *     The fields that were not added to the mapping will be added to the _ignored field.
+       * @default false
+       */
+      ignore_dynamic_beyond_limit: boolean | string;
+    };
+    "indices._types.MappingLimitSettingsDepth": {
+      /**
+       * @description The maximum depth for a field, which is measured as the number of inner objects. For instance, if all fields are defined
+       *     at the root object level, then the depth is 1. If there is one object mapping, then the depth is 2, etc.
+       * @default 20
+       */
+      limit: number;
+    };
+    "indices._types.MappingLimitSettingsNestedFields": {
+      /**
+       * @description The maximum number of distinct nested mappings in an index. The nested type should only be used in special cases, when
+       *     arrays of objects need to be queried independently of each other. To safeguard against poorly designed mappings, this
+       *     setting limits the number of unique nested types per index.
+       * @default 50
+       */
+      limit: number;
+    };
+    "indices._types.MappingLimitSettingsNestedObjects": {
+      /**
+       * @description The maximum number of nested JSON objects that a single document can contain across all nested types. This limit helps
+       *     to prevent out of memory errors when a document contains too many nested objects.
+       * @default 10000
+       */
+      limit: number;
+    };
+    "indices._types.MappingLimitSettingsFieldNameLength": {
+      /**
+       * @description Setting for the maximum length of a field name. This setting isn’t really something that addresses mappings explosion but
+       *     might still be useful if you want to limit the field length. It usually shouldn’t be necessary to set this setting. The
+       *     default is okay unless a user starts to add a huge number of fields with really long names. Default is `Long.MAX_VALUE` (no limit).
+       */
+      limit?: number;
+    };
+    "indices._types.MappingLimitSettingsDimensionFields": {
+      /**
+       * @description [preview] This functionality is in technical preview and may be changed or removed in a future release.
+       *     Elastic will work to fix any issues, but features in technical preview are not subject to the support SLA of official GA features.
+       */
+      limit?: number;
+    };
+    "indices._types.MappingLimitSettingsSourceFields": {
+      mode: components["schemas"]["indices._types.SourceMode"];
+    };
+    /** @enum {string} */
+    "indices._types.SourceMode": "disabled" | "stored" | "synthetic";
+    "indices._types.IndexingSlowlogSettings": {
+      level?: string;
+      source?: number;
+      reformat?: boolean;
+      threshold?: components["schemas"]["indices._types.IndexingSlowlogTresholds"];
+    };
+    "indices._types.IndexingSlowlogTresholds": {
+      index?: components["schemas"]["indices._types.SlowlogTresholdLevels"];
+    };
+    "indices._types.IndexingPressure": {
+      memory: components["schemas"]["indices._types.IndexingPressureMemory"];
+    };
+    "indices._types.IndexingPressureMemory": {
+      /**
+       * @description Number of outstanding bytes that may be consumed by indexing requests. When this limit is reached or exceeded,
+       *     the node will reject new coordinating and primary operations. When replica operations consume 1.5x this limit,
+       *     the node will reject new replica operations. Defaults to 10% of the heap.
+       */
+      limit?: number;
+    };
+    "indices._types.Storage": {
+      type: components["schemas"]["indices._types.StorageType"];
+      /**
+       * @description You can restrict the use of the mmapfs and the related hybridfs store type via the setting node.store.allow_mmap.
+       *     This is a boolean setting indicating whether or not memory-mapping is allowed. The default is to allow it. This
+       *     setting is useful, for example, if you are in an environment where you can not control the ability to create a lot
+       *     of memory maps so you need disable the ability to use memory-mapping.
+       */
+      allow_mmap?: boolean;
+      stats_refresh_interval?: components["schemas"]["_types.Duration"];
+    };
+    "indices._types.StorageType": ("fs" | "niofs" | "mmapfs" | "hybridfs") | string;
+    "_types.mapping.TypeMapping": {
+      all_field?: components["schemas"]["_types.mapping.AllField"];
+      date_detection?: boolean;
+      dynamic?: components["schemas"]["_types.mapping.DynamicMapping"];
+      dynamic_date_formats?: string[];
+      dynamic_templates?: {
+        [key: string]: components["schemas"]["_types.mapping.DynamicTemplate"];
+      }[];
+      _field_names?: components["schemas"]["_types.mapping.FieldNamesField"];
+      index_field?: components["schemas"]["_types.mapping.IndexField"];
+      _meta?: components["schemas"]["_types.Metadata"];
+      numeric_detection?: boolean;
+      properties?: {
+        [key: string]: components["schemas"]["_types.mapping.Property"];
+      };
+      _routing?: components["schemas"]["_types.mapping.RoutingField"];
+      _size?: components["schemas"]["_types.mapping.SizeField"];
+      _source?: components["schemas"]["_types.mapping.SourceField"];
+      runtime?: {
+        [key: string]: components["schemas"]["_types.mapping.RuntimeField"];
+      };
+      enabled?: boolean;
+      subobjects?: components["schemas"]["_types.mapping.Subobjects"];
+      _data_stream_timestamp?: components["schemas"]["_types.mapping.DataStreamTimestamp"];
+    };
+    "_types.mapping.AllField": {
+      analyzer: string;
+      enabled: boolean;
+      omit_norms: boolean;
+      search_analyzer: string;
+      similarity: string;
+      store: boolean;
+      store_term_vector_offsets: boolean;
+      store_term_vector_payloads: boolean;
+      store_term_vector_positions: boolean;
+      store_term_vectors: boolean;
+    };
+    /** @enum {string} */
+    "_types.mapping.DynamicMapping": "strict" | "runtime" | "true" | "false";
+    "_types.mapping.DynamicTemplate": {
+      match?: string | string[];
+      path_match?: string | string[];
+      unmatch?: string | string[];
+      path_unmatch?: string | string[];
+      match_mapping_type?: string | string[];
+      unmatch_mapping_type?: string | string[];
+      match_pattern?: components["schemas"]["_types.mapping.MatchType"];
+    } & {
+      mapping?: components["schemas"]["_types.mapping.Property"];
+      runtime?: components["schemas"]["_types.mapping.RuntimeField"];
+    };
+    "_types.mapping.Property":
+      | components["schemas"]["_types.mapping.BinaryProperty"]
+      | components["schemas"]["_types.mapping.BooleanProperty"]
+      | components["schemas"]["_types.mapping.DynamicProperty"]
+      | components["schemas"]["_types.mapping.JoinProperty"]
+      | components["schemas"]["_types.mapping.KeywordProperty"]
+      | components["schemas"]["_types.mapping.MatchOnlyTextProperty"]
+      | components["schemas"]["_types.mapping.PercolatorProperty"]
+      | components["schemas"]["_types.mapping.RankFeatureProperty"]
+      | components["schemas"]["_types.mapping.RankFeaturesProperty"]
+      | components["schemas"]["_types.mapping.SearchAsYouTypeProperty"]
+      | components["schemas"]["_types.mapping.TextProperty"]
+      | components["schemas"]["_types.mapping.VersionProperty"]
+      | components["schemas"]["_types.mapping.WildcardProperty"]
+      | components["schemas"]["_types.mapping.DateNanosProperty"]
+      | components["schemas"]["_types.mapping.DateProperty"]
+      | components["schemas"]["_types.mapping.AggregateMetricDoubleProperty"]
+      | components["schemas"]["_types.mapping.DenseVectorProperty"]
+      | components["schemas"]["_types.mapping.FlattenedProperty"]
+      | components["schemas"]["_types.mapping.NestedProperty"]
+      | components["schemas"]["_types.mapping.ObjectProperty"]
+      | components["schemas"]["_types.mapping.PassthroughObjectProperty"]
+      | components["schemas"]["_types.mapping.RankVectorProperty"]
+      | components["schemas"]["_types.mapping.SemanticTextProperty"]
+      | components["schemas"]["_types.mapping.SparseVectorProperty"]
+      | components["schemas"]["_types.mapping.CompletionProperty"]
+      | components["schemas"]["_types.mapping.ConstantKeywordProperty"]
+      | components["schemas"]["_types.mapping.CountedKeywordProperty"]
+      | components["schemas"]["_types.mapping.FieldAliasProperty"]
+      | components["schemas"]["_types.mapping.HistogramProperty"]
+      | components["schemas"]["_types.mapping.IpProperty"]
+      | components["schemas"]["_types.mapping.Murmur3HashProperty"]
+      | components["schemas"]["_types.mapping.TokenCountProperty"]
+      | components["schemas"]["_types.mapping.GeoPointProperty"]
+      | components["schemas"]["_types.mapping.GeoShapeProperty"]
+      | components["schemas"]["_types.mapping.PointProperty"]
+      | components["schemas"]["_types.mapping.ShapeProperty"]
+      | components["schemas"]["_types.mapping.ByteNumberProperty"]
+      | components["schemas"]["_types.mapping.DoubleNumberProperty"]
+      | components["schemas"]["_types.mapping.FloatNumberProperty"]
+      | components["schemas"]["_types.mapping.HalfFloatNumberProperty"]
+      | components["schemas"]["_types.mapping.IntegerNumberProperty"]
+      | components["schemas"]["_types.mapping.LongNumberProperty"]
+      | components["schemas"]["_types.mapping.ScaledFloatNumberProperty"]
+      | components["schemas"]["_types.mapping.ShortNumberProperty"]
+      | components["schemas"]["_types.mapping.UnsignedLongNumberProperty"]
+      | components["schemas"]["_types.mapping.DateRangeProperty"]
+      | components["schemas"]["_types.mapping.DoubleRangeProperty"]
+      | components["schemas"]["_types.mapping.FloatRangeProperty"]
+      | components["schemas"]["_types.mapping.IntegerRangeProperty"]
+      | components["schemas"]["_types.mapping.IpRangeProperty"]
+      | components["schemas"]["_types.mapping.LongRangeProperty"]
+      | components["schemas"]["_types.mapping.IcuCollationProperty"];
+    "_types.mapping.BinaryProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      /** @enum {string} */
+      type: "binary";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.BinaryProperty";
+    };
+    "_types.mapping.DocValuesPropertyBase": components["schemas"]["_types.mapping.CorePropertyBase"] & {
+      doc_values?: boolean;
+    };
+    "_types.mapping.CorePropertyBase": components["schemas"]["_types.mapping.PropertyBase"] & {
+      copy_to?: components["schemas"]["_types.Fields"];
+      store?: boolean;
+    };
+    "_types.mapping.PropertyBase": {
+      /** @description Metadata about the field. */
+      meta?: {
+        [key: string]: string;
+      };
+      properties?: {
+        [key: string]: components["schemas"]["_types.mapping.Property"];
+      };
+      ignore_above?: number;
+      dynamic?: components["schemas"]["_types.mapping.DynamicMapping"];
+      fields?: {
+        [key: string]: components["schemas"]["_types.mapping.Property"];
+      };
+      synthetic_source_keep?: components["schemas"]["_types.mapping.SyntheticSourceKeepEnum"];
+    };
+    /** @enum {string} */
+    "_types.mapping.SyntheticSourceKeepEnum": "none" | "arrays" | "all";
+    "_types.mapping.BooleanProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      fielddata?: components["schemas"]["indices._types.NumericFielddata"];
+      index?: boolean;
+      null_value?: boolean;
+      ignore_malformed?: boolean;
+      script?: components["schemas"]["_types.Script"];
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      /** @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false. */
+      time_series_dimension?: boolean;
+      /** @enum {string} */
+      type: "boolean";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.BooleanProperty";
+    };
+    "indices._types.NumericFielddata": {
+      format: components["schemas"]["indices._types.NumericFielddataFormat"];
+    };
+    /** @enum {string} */
+    "indices._types.NumericFielddataFormat": "array" | "disabled";
+    /** @enum {string} */
+    "_types.mapping.OnScriptError": "fail" | "continue";
+    "_types.mapping.DynamicProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      /** @enum {string} */
+      type: "{dynamic_type}";
+      enabled?: boolean;
+      null_value?: components["schemas"]["_types.FieldValue"];
+      boost?: number;
+      coerce?: boolean;
+      script?: components["schemas"]["_types.Script"];
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      ignore_malformed?: boolean;
+      time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
+      analyzer?: string;
+      eager_global_ordinals?: boolean;
+      index?: boolean;
+      index_options?: components["schemas"]["_types.mapping.IndexOptions"];
+      index_phrases?: boolean;
+      index_prefixes?: components["schemas"]["_types.mapping.TextIndexPrefixes"] | (string | null);
+      norms?: boolean;
+      position_increment_gap?: number;
+      search_analyzer?: string;
+      search_quote_analyzer?: string;
+      term_vector?: components["schemas"]["_types.mapping.TermVectorOption"];
+      format?: string;
+      precision_step?: number;
+      locale?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DynamicProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.TimeSeriesMetricType":
+      | "gauge"
+      | "counter"
+      | "summary"
+      | "histogram"
+      | "position";
+    /** @enum {string} */
+    "_types.mapping.IndexOptions": "docs" | "freqs" | "positions" | "offsets";
+    "_types.mapping.TextIndexPrefixes": {
+      max_chars: number;
+      min_chars: number;
+    };
+    /** @enum {string} */
+    "_types.mapping.TermVectorOption":
+      | "no"
+      | "yes"
+      | "with_offsets"
+      | "with_positions"
+      | "with_positions_offsets"
+      | "with_positions_offsets_payloads"
+      | "with_positions_payloads";
+    "_types.mapping.JoinProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      relations?: {
+        [key: string]:
+          | components["schemas"]["_types.RelationName"]
+          | components["schemas"]["_types.RelationName"][];
+      };
+      eager_global_ordinals?: boolean;
+      /** @enum {string} */
+      type: "join";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.JoinProperty";
+    };
+    "_types.mapping.KeywordProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      eager_global_ordinals?: boolean;
+      index?: boolean;
+      index_options?: components["schemas"]["_types.mapping.IndexOptions"];
+      script?: components["schemas"]["_types.Script"];
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      normalizer?: string;
+      norms?: boolean;
+      null_value?: string;
+      similarity?: string | (string | null);
+      split_queries_on_whitespace?: boolean;
+      /** @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false. */
+      time_series_dimension?: boolean;
+      /** @enum {string} */
+      type: "keyword";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.KeywordProperty";
+    };
+    /**
+     * @description A variant of text that trades scoring and efficiency of positional queries for space efficiency. This field
+     *     effectively stores data the same way as a text field that only indexes documents (index_options: docs) and
+     *     disables norms (norms: false). Term queries perform as fast if not faster as on text fields, however queries
+     *     that need positions such as the match_phrase query perform slower as they need to look at the _source document
+     *     to verify whether a phrase matches. All queries return constant scores that are equal to 1.0.
+     */
+    "_types.mapping.MatchOnlyTextProperty": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.MatchOnlyTextProperty";
+      /**
+       * @description Multi-fields allow the same string value to be indexed in multiple ways for different purposes, such as one
+       *     field for search and a multi-field for sorting and aggregations, or the same string value analyzed by different analyzers.
+       */
+      fields?: {
+        [key: string]: components["schemas"]["_types.mapping.Property"];
+      };
+      /** @description Metadata about the field. */
+      meta?: {
+        [key: string]: string;
+      };
+      copy_to?: components["schemas"]["_types.Fields"];
+    };
+    "_types.mapping.PercolatorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      /** @enum {string} */
+      type: "percolator";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.PercolatorProperty";
+    };
+    "_types.mapping.RankFeatureProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      positive_score_impact?: boolean;
+      /** @enum {string} */
+      type: "rank_feature";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.RankFeatureProperty";
+    };
+    "_types.mapping.RankFeaturesProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      positive_score_impact?: boolean;
+      /** @enum {string} */
+      type: "rank_features";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.RankFeaturesProperty";
+    };
+    "_types.mapping.SearchAsYouTypeProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
+      analyzer?: string;
+      index?: boolean;
+      index_options?: components["schemas"]["_types.mapping.IndexOptions"];
+      max_shingle_size?: number;
+      norms?: boolean;
+      search_analyzer?: string;
+      search_quote_analyzer?: string;
+      similarity?: string | (string | null);
+      term_vector?: components["schemas"]["_types.mapping.TermVectorOption"];
+      /** @enum {string} */
+      type: "search_as_you_type";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.SearchAsYouTypeProperty";
+    };
+    "_types.mapping.TextProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
+      analyzer?: string;
+      boost?: number;
+      eager_global_ordinals?: boolean;
+      fielddata?: boolean;
+      fielddata_frequency_filter?: components["schemas"]["indices._types.FielddataFrequencyFilter"];
+      index?: boolean;
+      index_options?: components["schemas"]["_types.mapping.IndexOptions"];
+      index_phrases?: boolean;
+      index_prefixes?: components["schemas"]["_types.mapping.TextIndexPrefixes"] | (string | null);
+      norms?: boolean;
+      position_increment_gap?: number;
+      search_analyzer?: string;
+      search_quote_analyzer?: string;
+      similarity?: string | (string | null);
+      term_vector?: components["schemas"]["_types.mapping.TermVectorOption"];
+      /** @enum {string} */
+      type: "text";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.TextProperty";
+    };
+    "indices._types.FielddataFrequencyFilter": {
+      max: number;
+      min: number;
+      min_segment_size: number;
+    };
+    "_types.mapping.VersionProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      /** @enum {string} */
+      type: "version";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.VersionProperty";
+    };
+    "_types.mapping.WildcardProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      /** @enum {string} */
+      type: "wildcard";
+      null_value?: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.WildcardProperty";
+    };
+    "_types.mapping.DateNanosProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      format?: string;
+      ignore_malformed?: boolean;
+      index?: boolean;
+      script?: components["schemas"]["_types.Script"];
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      null_value?: components["schemas"]["_types.DateTime"];
+      precision_step?: number;
+      /** @enum {string} */
+      type: "date_nanos";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DateNanosProperty";
+    };
+    "_types.mapping.DateProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      fielddata?: components["schemas"]["indices._types.NumericFielddata"];
+      format?: string;
+      ignore_malformed?: boolean;
+      index?: boolean;
+      script?: components["schemas"]["_types.Script"];
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      null_value?: components["schemas"]["_types.DateTime"];
+      precision_step?: number;
+      locale?: string;
+      /** @enum {string} */
+      type: "date";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DateProperty";
+    };
+    "_types.mapping.AggregateMetricDoubleProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      /** @enum {string} */
+      type: "aggregate_metric_double";
+      default_metric: string;
+      ignore_malformed?: boolean;
+      metrics: string[];
+      time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.AggregateMetricDoubleProperty";
+    };
+    "_types.mapping.DenseVectorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      /** @enum {string} */
+      type: "dense_vector";
+      /**
+       * @description Number of vector dimensions. Can't exceed `4096`. If `dims` is not specified, it will be set to the length of
+       *     the first vector added to the field.
+       */
+      dims?: number;
+      element_type?: components["schemas"]["_types.mapping.DenseVectorElementType"];
+      /**
+       * @description If `true`, you can search this field using the kNN search API.
+       * @default true
+       */
+      index: boolean;
+      index_options?: components["schemas"]["_types.mapping.DenseVectorIndexOptions"];
+      similarity?: components["schemas"]["_types.mapping.DenseVectorSimilarity"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DenseVectorProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.DenseVectorElementType": "bit" | "byte" | "float";
+    "_types.mapping.DenseVectorIndexOptions": {
+      /**
+       * @description The confidence interval to use when quantizing the vectors. Can be any value between and including `0.90` and
+       *     `1.0` or exactly `0`. When the value is `0`, this indicates that dynamic quantiles should be calculated for
+       *     optimized quantization. When between `0.90` and `1.0`, this value restricts the values used when calculating
+       *     the quantization thresholds.
+       *
+       *     For example, a value of `0.95` will only use the middle `95%` of the values when calculating the quantization
+       *     thresholds (e.g. the highest and lowest `2.5%` of values will be ignored).
+       *
+       *     Defaults to `1/(dims + 1)` for `int8` quantized vectors and `0` for `int4` for dynamic quantile calculation.
+       *
+       *     Only applicable to `int8_hnsw`, `int4_hnsw`, `int8_flat`, and `int4_flat` index types.
+       */
+      confidence_interval?: number;
+      /**
+       * @description The number of candidates to track while assembling the list of nearest neighbors for each new node.
+       *
+       *     Only applicable to `hnsw`, `int8_hnsw`, `bbq_hnsw`, and `int4_hnsw` index types.
+       * @default 100
+       */
+      ef_construction: number;
+      /**
+       * @description The number of neighbors each node will be connected to in the HNSW graph.
+       *
+       *     Only applicable to `hnsw`, `int8_hnsw`, `bbq_hnsw`, and `int4_hnsw` index types.
+       * @default 16
+       */
+      m: number;
+      type: components["schemas"]["_types.mapping.DenseVectorIndexOptionsType"];
+    };
+    /** @enum {string} */
+    "_types.mapping.DenseVectorIndexOptionsType":
+      | "bbq_flat"
+      | "bbq_hnsw"
+      | "flat"
+      | "hnsw"
+      | "int4_flat"
+      | "int4_hnsw"
+      | "int8_flat"
+      | "int8_hnsw";
+    /** @enum {string} */
+    "_types.mapping.DenseVectorSimilarity":
+      | "cosine"
+      | "dot_product"
+      | "l2_norm"
+      | "max_inner_product";
+    "_types.mapping.FlattenedProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      boost?: number;
+      depth_limit?: number;
+      doc_values?: boolean;
+      eager_global_ordinals?: boolean;
+      index?: boolean;
+      index_options?: components["schemas"]["_types.mapping.IndexOptions"];
+      null_value?: string;
+      similarity?: string;
+      split_queries_on_whitespace?: boolean;
+      time_series_dimensions?: string[];
+      /** @enum {string} */
+      type: "flattened";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.FlattenedProperty";
+    };
+    "_types.mapping.NestedProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
+      enabled?: boolean;
+      include_in_parent?: boolean;
+      include_in_root?: boolean;
+      /** @enum {string} */
+      type: "nested";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.NestedProperty";
+    };
+    "_types.mapping.ObjectProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
+      enabled?: boolean;
+      subobjects?: components["schemas"]["_types.mapping.Subobjects"];
+      /** @enum {string} */
+      type?: "object";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.ObjectProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.Subobjects": "true" | "false";
+    "_types.mapping.PassthroughObjectProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
+      /** @enum {string} */
+      type?: "passthrough";
+      enabled?: boolean;
+      priority?: number;
+      time_series_dimension?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.PassthroughObjectProperty";
+    };
+    /** @description Technical preview */
+    "_types.mapping.RankVectorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      /** @enum {string} */
+      type: "rank_vectors";
+      element_type?: components["schemas"]["_types.mapping.RankVectorElementType"];
+      dims?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.RankVectorProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.RankVectorElementType": "byte" | "float" | "bit";
+    "_types.mapping.SemanticTextProperty": {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.SemanticTextProperty";
+      meta?: {
+        [key: string]: string;
+      };
+      inference_id?: components["schemas"]["_types.Id"];
+      search_inference_id?: components["schemas"]["_types.Id"];
+    };
+    "_types.mapping.SparseVectorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      store?: boolean;
+      /** @enum {string} */
+      type: "sparse_vector";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.SparseVectorProperty";
+    };
+    "_types.mapping.CompletionProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      analyzer?: string;
+      contexts?: components["schemas"]["_types.mapping.SuggestContext"][];
+      max_input_length?: number;
+      preserve_position_increments?: boolean;
+      preserve_separators?: boolean;
+      search_analyzer?: string;
+      /** @enum {string} */
+      type: "completion";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.CompletionProperty";
+    };
+    "_types.mapping.SuggestContext": {
+      name: components["schemas"]["_types.Name"];
+      path?: components["schemas"]["_types.Field"];
+      type: string;
+      precision?: number | string;
+    };
+    "_types.mapping.ConstantKeywordProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      value?: Record<string, never>;
+      /** @enum {string} */
+      type: "constant_keyword";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.ConstantKeywordProperty";
+    };
+    "_types.mapping.CountedKeywordProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      /** @enum {string} */
+      type: "counted_keyword";
+      index?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.CountedKeywordProperty";
+    };
+    "_types.mapping.FieldAliasProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      path?: components["schemas"]["_types.Field"];
+      /** @enum {string} */
+      type: "alias";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.FieldAliasProperty";
+    };
+    "_types.mapping.HistogramProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
+      ignore_malformed?: boolean;
+      /** @enum {string} */
+      type: "histogram";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.HistogramProperty";
+    };
+    "_types.mapping.IpProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      index?: boolean;
+      ignore_malformed?: boolean;
+      null_value?: string;
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      script?: components["schemas"]["_types.Script"];
+      /** @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false. */
+      time_series_dimension?: boolean;
+      /** @enum {string} */
+      type: "ip";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.IpProperty";
+    };
+    "_types.mapping.Murmur3HashProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      /** @enum {string} */
+      type: "murmur3";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.Murmur3HashProperty";
+    };
+    "_types.mapping.TokenCountProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      analyzer?: string;
+      boost?: number;
+      index?: boolean;
+      null_value?: number;
+      enable_position_increments?: boolean;
+      /** @enum {string} */
+      type: "token_count";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.TokenCountProperty";
+    };
+    "_types.mapping.GeoPointProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      ignore_malformed?: boolean;
+      ignore_z_value?: boolean;
+      null_value?: components["schemas"]["_types.GeoLocation"];
+      index?: boolean;
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      script?: components["schemas"]["_types.Script"];
+      /** @enum {string} */
+      type: "geo_point";
+      time_series_metric?: components["schemas"]["_types.mapping.GeoPointMetricType"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.GeoPointProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.GeoPointMetricType": "gauge" | "counter" | "position";
+    /**
+     * @description The `geo_shape` data type facilitates the indexing of and searching with arbitrary geo shapes such as rectangles
+     *     and polygons.
+     */
+    "_types.mapping.GeoShapeProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      coerce?: boolean;
+      ignore_malformed?: boolean;
+      ignore_z_value?: boolean;
+      index?: boolean;
+      orientation?: components["schemas"]["_types.mapping.GeoOrientation"];
+      strategy?: components["schemas"]["_types.mapping.GeoStrategy"];
+      /** @enum {string} */
+      type: "geo_shape";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.GeoShapeProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.GeoOrientation":
+      | "right"
+      | "RIGHT"
+      | "counterclockwise"
+      | "ccw"
+      | "left"
+      | "LEFT"
+      | "clockwise"
+      | "cw";
+    /** @enum {string} */
+    "_types.mapping.GeoStrategy": "recursive" | "term";
+    "_types.mapping.PointProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      ignore_malformed?: boolean;
+      ignore_z_value?: boolean;
+      null_value?: string;
+      /** @enum {string} */
+      type: "point";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.PointProperty";
+    };
+    /**
+     * @description The `shape` data type facilitates the indexing of and searching with arbitrary `x, y` cartesian shapes such as
+     *     rectangles and polygons.
+     */
+    "_types.mapping.ShapeProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      coerce?: boolean;
+      ignore_malformed?: boolean;
+      ignore_z_value?: boolean;
+      orientation?: components["schemas"]["_types.mapping.GeoOrientation"];
+      /** @enum {string} */
+      type: "shape";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.ShapeProperty";
+    };
+    "_types.mapping.ByteNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "byte";
+      null_value?: components["schemas"]["_types.byte"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.ByteNumberProperty";
+    };
+    "_types.byte": number;
+    "_types.mapping.NumberPropertyBase": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      coerce?: boolean;
+      ignore_malformed?: boolean;
+      index?: boolean;
+      on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
+      script?: components["schemas"]["_types.Script"];
+      time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
+      /**
+       * @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false.
+       * @default false
+       */
+      time_series_dimension: boolean;
+    };
+    "_types.mapping.DoubleNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "double";
+      null_value?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DoubleNumberProperty";
+    };
+    "_types.mapping.FloatNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "float";
+      null_value?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.FloatNumberProperty";
+    };
+    "_types.mapping.HalfFloatNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "half_float";
+      null_value?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.HalfFloatNumberProperty";
+    };
+    "_types.mapping.IntegerNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "integer";
+      null_value?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.IntegerNumberProperty";
+    };
+    "_types.mapping.LongNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "long";
+      null_value?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.LongNumberProperty";
+    };
+    "_types.mapping.ScaledFloatNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "scaled_float";
+      null_value?: number;
+      scaling_factor?: number;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.ScaledFloatNumberProperty";
+    };
+    "_types.mapping.ShortNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "short";
+      null_value?: components["schemas"]["_types.short"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.ShortNumberProperty";
+    };
+    "_types.short": number;
+    "_types.mapping.UnsignedLongNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
+      /** @enum {string} */
+      type: "unsigned_long";
+      null_value?: components["schemas"]["_types.ulong"];
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.UnsignedLongNumberProperty";
+    };
+    "_types.ulong": number;
+    "_types.mapping.DateRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
+      format?: string;
+      /** @enum {string} */
+      type: "date_range";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DateRangeProperty";
+    };
+    "_types.mapping.RangePropertyBase": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      boost?: number;
+      coerce?: boolean;
+      index?: boolean;
+    };
+    "_types.mapping.DoubleRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
+      /** @enum {string} */
+      type: "double_range";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.DoubleRangeProperty";
+    };
+    "_types.mapping.FloatRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
+      /** @enum {string} */
+      type: "float_range";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.FloatRangeProperty";
+    };
+    "_types.mapping.IntegerRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
+      /** @enum {string} */
+      type: "integer_range";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.IntegerRangeProperty";
+    };
+    "_types.mapping.IpRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
+      /** @enum {string} */
+      type: "ip_range";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.IpRangeProperty";
+    };
+    "_types.mapping.LongRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
+      /** @enum {string} */
+      type: "long_range";
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.LongRangeProperty";
+    };
+    "_types.mapping.IcuCollationProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
+      /** @enum {string} */
+      type: "icu_collation_keyword";
+      norms?: boolean;
+      index_options?: components["schemas"]["_types.mapping.IndexOptions"];
+      /** @description Should the field be searchable? */
+      index?: boolean;
+      /** @description Accepts a string value which is substituted for any explicit null values. Defaults to null, which means the field is treated as missing. */
+      null_value?: string;
+      rules?: string;
+      language?: string;
+      country?: string;
+      variant?: string;
+      strength?: components["schemas"]["_types.analysis.IcuCollationStrength"];
+      decomposition?: components["schemas"]["_types.analysis.IcuCollationDecomposition"];
+      alternate?: components["schemas"]["_types.analysis.IcuCollationAlternate"];
+      case_level?: boolean;
+      case_first?: components["schemas"]["_types.analysis.IcuCollationCaseFirst"];
+      numeric?: boolean;
+      variable_top?: string;
+      hiragana_quaternary_mode?: boolean;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "_types.mapping.IcuCollationProperty";
+    };
+    /** @enum {string} */
+    "_types.mapping.MatchType": "simple" | "regex";
+    "_types.mapping.FieldNamesField": {
+      enabled: boolean;
+    };
+    "_types.mapping.IndexField": {
+      enabled: boolean;
+    };
+    "_types.mapping.RoutingField": {
+      required: boolean;
+    };
+    "_types.mapping.SizeField": {
+      enabled: boolean;
+    };
+    "_types.mapping.SourceField": {
+      compress?: boolean;
+      compress_threshold?: string;
+      enabled?: boolean;
+      excludes?: string[];
+      includes?: string[];
+      mode?: components["schemas"]["_types.mapping.SourceFieldMode"];
+    };
+    /** @enum {string} */
+    "_types.mapping.SourceFieldMode": "disabled" | "stored" | "synthetic";
+    "_types.mapping.DataStreamTimestamp": {
+      enabled: boolean;
+    };
+    /**
+     * @description Data stream lifecycle with rollover can be used to display the configuration including the default rollover conditions,
+     *     if asked.
+     */
+    "indices._types.DataStreamLifecycleWithRollover": components["schemas"]["indices._types.DataStreamLifecycle"] & {
+      rollover?: components["schemas"]["indices._types.DataStreamLifecycleRolloverConditions"];
+    };
+    "indices._types.DataStreamLifecycleRolloverConditions": {
+      min_age?: components["schemas"]["_types.Duration"];
+      max_age?: string;
+      min_docs?: number;
+      max_docs?: number;
+      min_size?: components["schemas"]["_types.ByteSize"];
+      max_size?: components["schemas"]["_types.ByteSize"];
+      min_primary_shard_size?: components["schemas"]["_types.ByteSize"];
+      max_primary_shard_size?: components["schemas"]["_types.ByteSize"];
+      min_primary_shard_docs?: number;
+      max_primary_shard_docs?: number;
+    };
+    /** @description Data stream lifecycle denotes that a data stream is managed by the data stream lifecycle and contains the configuration. */
+    "indices._types.DataStreamLifecycle": {
+      data_retention?: components["schemas"]["_types.Duration"];
+      downsampling?: components["schemas"]["indices._types.DataStreamLifecycleDownsampling"];
+      /**
+       * @description If defined, it turns data stream lifecycle on/off (`true`/`false`) for this data stream. A data stream lifecycle
+       *     that's disabled (enabled: `false`) will have no effect on the data stream.
+       * @default true
+       */
+      enabled: boolean;
+    };
+    "indices._types.DataStreamLifecycleDownsampling": {
+      /** @description The list of downsampling rounds to execute as part of this downsampling configuration */
+      rounds: components["schemas"]["indices._types.DownsamplingRound"][];
+    };
+    "indices._types.DownsamplingRound": {
+      after: components["schemas"]["_types.Duration"];
+      config: components["schemas"]["indices._types.DownsampleConfig"];
+    };
+    "indices._types.DownsampleConfig": {
+      fixed_interval: components["schemas"]["_types.DurationLarge"];
+    };
+    "indices._types.IndexState": {
+      aliases?: {
+        [key: string]: components["schemas"]["indices._types.Alias"];
+      };
+      mappings?: components["schemas"]["_types.mapping.TypeMapping"];
+      settings?: components["schemas"]["indices._types.IndexSettings"];
+      defaults?: components["schemas"]["indices._types.IndexSettings"];
+      data_stream?: components["schemas"]["_types.DataStreamName"];
+      lifecycle?: components["schemas"]["indices._types.DataStreamLifecycle"];
+    };
+    "indices._types.Alias": {
+      filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+      index_routing?: components["schemas"]["_types.Routing"];
+      /**
+       * @description If `true`, the alias is hidden.
+       *     All indices for the alias must have the same `is_hidden` value.
+       * @default false
+       */
+      is_hidden: boolean;
+      /**
+       * @description If `true`, the index is the write index for the alias.
+       * @default false
+       */
+      is_write_index: boolean;
+      routing?: components["schemas"]["_types.Routing"];
+      search_routing?: components["schemas"]["_types.Routing"];
+    };
+    "_types.DataStreamName": string;
+    /** @enum {string} */
+    "esql._types.EsqlFormat": "csv" | "json" | "tsv" | "txt" | "yaml" | "cbor" | "smile" | "arrow";
+    "esql._types.TableValuesContainer": {
+      integer?: components["schemas"]["esql._types.TableValuesIntegerValue"][];
+      keyword?: components["schemas"]["esql._types.TableValuesKeywordValue"][];
+      long?: components["schemas"]["esql._types.TableValuesLongValue"][];
+      double?: components["schemas"]["esql._types.TableValuesLongDouble"][];
+    };
+    "esql._types.TableValuesIntegerValue": number | number[];
+    "esql._types.TableValuesKeywordValue": string | string[];
+    "esql._types.TableValuesLongValue": number | number[];
+    "esql._types.TableValuesLongDouble": number | number[];
+    "esql._types.AsyncEsqlResult": components["schemas"]["esql._types.EsqlResult"] & {
+      /**
+       * @description The ID of the async query, to be used in subsequent requests to check the status or retrieve results.
+       *
+       *     Also available in the `X-Elasticsearch-Async-Id` HTTP header.
+       */
+      id?: string;
+      /**
+       * @description Indicates whether the async query is still running or has completed.
+       *
+       *     Also available in the `X-Elasticsearch-Async-Is-Running` HTTP header.
+       */
+      is_running: boolean;
+    };
+    "esql._types.EsqlResult": {
+      took?: components["schemas"]["_types.DurationValueUnitMillis"];
+      is_partial?: boolean;
+      all_columns?: components["schemas"]["esql._types.EsqlColumnInfo"][];
+      columns: components["schemas"]["esql._types.EsqlColumnInfo"][];
+      values: components["schemas"]["_types.FieldValue"][][];
+      _clusters?: components["schemas"]["esql._types.EsqlClusterInfo"];
+      /**
+       * @description Profiling information. Present if `profile` was `true` in the request.
+       *     The contents of this field are currently unstable.
+       */
+      profile?: Record<string, never>;
+    };
+    "esql._types.EsqlColumnInfo": {
+      name: string;
+      type: string;
+    };
+    "esql._types.EsqlClusterInfo": {
+      total: number;
+      successful: number;
+      running: number;
+      skipped: number;
+      partial: number;
+      failed: number;
+      details: {
+        [key: string]: components["schemas"]["esql._types.EsqlClusterDetails"];
+      };
+    };
+    "esql._types.EsqlClusterDetails": {
+      status: components["schemas"]["esql._types.EsqlClusterStatus"];
+      indices: string;
+      took?: components["schemas"]["_types.DurationValueUnitMillis"];
+      _shards?: components["schemas"]["esql._types.EsqlShardInfo"];
+      failures?: components["schemas"]["esql._types.EsqlShardFailure"][];
+    };
+    /** @enum {string} */
+    "esql._types.EsqlClusterStatus": "running" | "successful" | "partial" | "skipped" | "failed";
+    "esql._types.EsqlShardInfo": {
+      total: number;
+      successful?: number;
+      skipped?: number;
+      failed?: number;
+    };
+    "esql._types.EsqlShardFailure": {
+      shard: number;
+      index: components["schemas"]["_types.IndexName"] | (string | null);
+      node?: components["schemas"]["_types.NodeId"];
+      reason: components["schemas"]["_types.ErrorCause"];
+    };
+    "_global.field_caps.FieldCapability": {
+      /** @description Whether this field can be aggregated on all indices. */
+      aggregatable: boolean;
+      indices?: components["schemas"]["_types.Indices"];
+      meta?: components["schemas"]["_types.Metadata"];
+      non_aggregatable_indices?: components["schemas"]["_types.Indices"];
+      non_searchable_indices?: components["schemas"]["_types.Indices"];
+      /** @description Whether this field is indexed for search on all indices. */
+      searchable: boolean;
+      type: string;
+      /** @description Whether this field is registered as a metadata field. */
+      metadata_field?: boolean;
+      /** @description Whether this field is used as a time series dimension. */
+      time_series_dimension?: boolean;
+      time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
+      /**
+       * @description If this list is present in response then some indices have the
+       *     field marked as a dimension and other indices, the ones in this list, do not.
+       */
+      non_dimension_indices?: components["schemas"]["_types.IndexName"][];
+      /**
+       * @description The list of indices where this field is present if these indices
+       *     don’t have the same `time_series_metric` value for this field.
+       */
+      metric_conflicts_indices?: components["schemas"]["_types.IndexName"][];
+    };
+    "_types.IndicesResponseBase": components["schemas"]["_types.AcknowledgedResponseBase"] & {
+      _shards?: components["schemas"]["_types.ShardStatistics"];
+    };
+    "_types.DataStreamNames":
+      | components["schemas"]["_types.DataStreamName"]
+      | components["schemas"]["_types.DataStreamName"][];
+    "indices.get.Features":
+      | components["schemas"]["indices.get.Feature"]
+      | components["schemas"]["indices.get.Feature"][];
+    /** @enum {string} */
+    "indices.get.Feature": "aliases" | "mappings" | "settings";
+    "indices._types.DataStream": {
+      _meta?: components["schemas"]["_types.Metadata"];
+      /** @description If `true`, the data stream allows custom routing on write request. */
+      allow_custom_routing?: boolean;
+      failure_store?: components["schemas"]["indices._types.FailureStore"];
+      /** @description Current generation for the data stream. This number acts as a cumulative count of the stream’s rollovers, starting at 1. */
+      generation: number;
+      /** @description If `true`, the data stream is hidden. */
+      hidden: boolean;
+      ilm_policy?: components["schemas"]["_types.Name"];
+      next_generation_managed_by: components["schemas"]["indices._types.ManagedBy"];
+      /** @description Indicates if ILM should take precedence over DSL in case both are configured to managed this data stream. */
+      prefer_ilm: boolean;
+      /**
+       * @description Array of objects containing information about the data stream’s backing indices.
+       *     The last item in this array contains information about the stream’s current write index.
+       */
+      indices: components["schemas"]["indices._types.DataStreamIndex"][];
+      lifecycle?: components["schemas"]["indices._types.DataStreamLifecycleWithRollover"];
+      name: components["schemas"]["_types.DataStreamName"];
+      /** @description If `true`, the data stream is created and managed by cross-cluster replication and the local cluster can not write into this data stream or change its mappings. */
+      replicated?: boolean;
+      /** @description If `true`, the next write to this data stream will trigger a rollover first and the document will be indexed in the new backing index. If the rollover fails the indexing request will fail too. */
+      rollover_on_write: boolean;
+      status: components["schemas"]["_types.HealthStatus"];
+      /** @description If `true`, the data stream is created and managed by an Elastic stack component and cannot be modified through normal user interaction. */
+      system?: boolean;
+      template: components["schemas"]["_types.Name"];
+      timestamp_field: components["schemas"]["indices._types.DataStreamTimestampField"];
+    };
+    "indices._types.FailureStore": {
+      enabled: boolean;
+      indices: components["schemas"]["indices._types.DataStreamIndex"][];
+      rollover_on_write: boolean;
+    };
+    "indices._types.DataStreamIndex": {
+      index_name: components["schemas"]["_types.IndexName"];
+      index_uuid: components["schemas"]["_types.Uuid"];
+      ilm_policy?: components["schemas"]["_types.Name"];
+      managed_by?: components["schemas"]["indices._types.ManagedBy"];
+      /** @description Indicates if ILM should take precedence over DSL in case both are configured to manage this index. */
+      prefer_ilm?: boolean;
+    };
+    /** @enum {string} */
+    "indices._types.ManagedBy":
+      | "Index Lifecycle Management"
+      | "Data stream lifecycle"
+      | "Unmanaged";
+    "indices._types.DataStreamTimestampField": {
+      name: components["schemas"]["_types.Field"];
+    };
+    "indices.get_mapping.IndexMappingRecord": {
+      item?: components["schemas"]["_types.mapping.TypeMapping"];
+      mappings: components["schemas"]["_types.mapping.TypeMapping"];
+    };
+    "indices.resolve_index.ResolveIndexItem": {
+      name: components["schemas"]["_types.Name"];
+      aliases?: string[];
+      attributes: string[];
+      data_stream?: components["schemas"]["_types.DataStreamName"];
+    };
+    "indices.resolve_index.ResolveIndexAliasItem": {
+      name: components["schemas"]["_types.Name"];
+      indices: components["schemas"]["_types.Indices"];
+    };
+    "indices.resolve_index.ResolveIndexDataStreamsItem": {
+      name: components["schemas"]["_types.DataStreamName"];
+      timestamp_field: components["schemas"]["_types.Field"];
+      backing_indices: components["schemas"]["_types.Indices"];
+    };
+    "_types.ElasticsearchVersionInfo": {
+      build_date: components["schemas"]["_types.DateTime"];
+      /** @description The build flavor. For example, `default`. */
+      build_flavor: string;
+      /** @description The Elasticsearch Git commit's SHA hash. */
+      build_hash: string;
+      /** @description Indicates whether the Elasticsearch build was a snapshot. */
+      build_snapshot: boolean;
+      /**
+       * @description The build type that corresponds to how Elasticsearch was installed.
+       *     For example, `docker`, `rpm`, or `tar`.
+       */
+      build_type: string;
+      lucene_version: components["schemas"]["_types.VersionString"];
+      minimum_index_compatibility_version: components["schemas"]["_types.VersionString"];
+      minimum_wire_compatibility_version: components["schemas"]["_types.VersionString"];
+      /**
+       * @description The Elasticsearch version number.
+       *
+       *     ::: IMPORTANT: For Serverless deployments, this static value is always `8.11.0` and is used solely for backward compatibility with legacy clients.
+       *      Serverless environments are versionless and automatically upgraded, so this value can be safely ignored.
+       */
+      number: string;
+    };
+  };
+  responses: {
+    "field_caps-200": {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": {
+          indices: components["schemas"]["_types.Indices"];
+          fields: {
+            [key: string]: {
+              [key: string]: components["schemas"]["_global.field_caps.FieldCapability"];
+            };
+          };
         };
-        "_types.aggregations.DateRangeExpression": {
-            from?: components["schemas"]["_types.aggregations.FieldDateMath"];
-            /** @description Custom key to return the range with. */
-            key?: string;
-            to?: components["schemas"]["_types.aggregations.FieldDateMath"];
+      };
+    };
+    "indices.get_data_stream-200": {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": {
+          data_streams: components["schemas"]["indices._types.DataStream"][];
         };
-        "_types.aggregations.DerivativeAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.DiversifiedSamplerAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            execution_hint?: components["schemas"]["_types.aggregations.SamplerAggregationExecutionHint"];
-            /**
-             * @description Limits how many documents are permitted per choice of de-duplicating value.
-             * @default 1
-             */
-            max_docs_per_value: number;
-            script?: components["schemas"]["_types.Script"];
-            /**
-             * @description Limits how many top-scoring documents are collected in the sample processed on each shard.
-             * @default 100
-             */
-            shard_size: number;
-            field?: components["schemas"]["_types.Field"];
+      };
+    };
+    "indices.get_mapping-200": {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": {
+          [key: string]: components["schemas"]["indices.get_mapping.IndexMappingRecord"];
         };
-        /** @enum {string} */
-        "_types.aggregations.SamplerAggregationExecutionHint": "map" | "global_ordinals" | "bytes_hash";
-        "_types.aggregations.ExtendedStatsAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
-            /** @description The number of standard deviations above/below the mean to display. */
-            sigma?: number;
+      };
+    };
+    "indices.put_mapping-200": {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": components["schemas"]["_types.IndicesResponseBase"];
+      };
+    };
+  };
+  parameters: {
+    /** @description A comma-separated list of data streams, indices, and aliases used to limit the request. Supports wildcards (*). To target all data streams and indices, omit this parameter or use * or _all. */
+    "field_caps-index": components["schemas"]["_types.Indices"];
+    /**
+     * @description If false, the request returns an error if any wildcard expression, index alias,
+     *     or `_all` value targets only missing or closed indices. This behavior applies even if the request targets other open indices. For example, a request
+     *     targeting `foo*,bar*` returns an error if an index starts with foo but no index starts with bar.
+     */
+    "field_caps-allow_no_indices": boolean;
+    /** @description The type of index that wildcard patterns can match. If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams. Supports comma-separated values, such as `open,hidden`. */
+    "field_caps-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
+    /** @description A comma-separated list of fields to retrieve capabilities for. Wildcard (`*`) expressions are supported. */
+    "field_caps-fields": components["schemas"]["_types.Fields"];
+    /** @description If `true`, missing or closed indices are not included in the response. */
+    "field_caps-ignore_unavailable": boolean;
+    /** @description If true, unmapped fields are included in the response. */
+    "field_caps-include_unmapped": boolean;
+    /** @description A comma-separated list of filters to apply to the response. */
+    "field_caps-filters": string;
+    /**
+     * @description A comma-separated list of field types to include.
+     *     Any fields that do not match one of these types will be excluded from the results.
+     *     It defaults to empty, meaning that all field types are returned.
+     */
+    "field_caps-types": string[];
+    /** @description If false, empty fields are not included in the response. */
+    "field_caps-include_empty_fields": boolean;
+    /**
+     * @description Comma-separated list of data stream names used to limit the request.
+     *     Wildcard (`*`) expressions are supported. If omitted, all data streams are returned.
+     */
+    "indices.get_data_stream-name": components["schemas"]["_types.DataStreamNames"];
+    /**
+     * @description Type of data stream that wildcard patterns can match.
+     *     Supports comma-separated values, such as `open,hidden`.
+     */
+    "indices.get_data_stream-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
+    /** @description If true, returns all relevant default configurations for the index template. */
+    "indices.get_data_stream-include_defaults": boolean;
+    /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
+    "indices.get_data_stream-master_timeout": components["schemas"]["_types.Duration"];
+    /** @description Whether the maximum timestamp for each data stream should be calculated and returned. */
+    "indices.get_data_stream-verbose": boolean;
+    /**
+     * @description Comma-separated list of data streams, indices, and aliases used to limit the request.
+     *     Supports wildcards (`*`).
+     *     To target all data streams and indices, omit this parameter or use `*` or `_all`.
+     */
+    "indices.get_mapping-index": components["schemas"]["_types.Indices"];
+    /**
+     * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+     *     This behavior applies even if the request targets other open indices.
+     */
+    "indices.get_mapping-allow_no_indices": boolean;
+    /**
+     * @description Type of index that wildcard patterns can match.
+     *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
+     *     Supports comma-separated values, such as `open,hidden`.
+     */
+    "indices.get_mapping-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
+    /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+    "indices.get_mapping-ignore_unavailable": boolean;
+    /**
+     * @deprecated
+     * @description If `true`, the request retrieves information from the local node only.
+     */
+    "indices.get_mapping-local": boolean;
+    /**
+     * @description Period to wait for a connection to the master node.
+     *     If no response is received before the timeout expires, the request fails and returns an error.
+     */
+    "indices.get_mapping-master_timeout": components["schemas"]["_types.Duration"];
+    /** @description A comma-separated list of index names the mapping should be added to (supports wildcards); use `_all` or omit to add the mapping on all indices. */
+    "indices.put_mapping-index": components["schemas"]["_types.Indices"];
+    /**
+     * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+     *     This behavior applies even if the request targets other open indices.
+     */
+    "indices.put_mapping-allow_no_indices": boolean;
+    /**
+     * @description Type of index that wildcard patterns can match.
+     *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
+     *     Supports comma-separated values, such as `open,hidden`.
+     */
+    "indices.put_mapping-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
+    /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+    "indices.put_mapping-ignore_unavailable": boolean;
+    /**
+     * @description Period to wait for a connection to the master node.
+     *     If no response is received before the timeout expires, the request fails and returns an error.
+     */
+    "indices.put_mapping-master_timeout": components["schemas"]["_types.Duration"];
+    /**
+     * @description Period to wait for a response.
+     *     If no response is received before the timeout expires, the request fails and returns an error.
+     */
+    "indices.put_mapping-timeout": components["schemas"]["_types.Duration"];
+    /** @description If `true`, the mappings are applied only to the current write index for the target. */
+    "indices.put_mapping-write_index_only": boolean;
+  };
+  requestBodies: {
+    field_caps: {
+      content: {
+        "application/json": {
+          fields?: components["schemas"]["_types.Fields"];
+          index_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+          runtime_mappings?: components["schemas"]["_types.mapping.RuntimeFields"];
         };
-        "_types.aggregations.ExtendedStatsBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            /** @description The number of standard deviations above/below the mean to display. */
-            sigma?: number;
+      };
+    };
+    "indices.put_mapping": {
+      content: {
+        "application/json": {
+          /** @description Controls whether dynamic date detection is enabled. */
+          date_detection?: boolean;
+          dynamic?: components["schemas"]["_types.mapping.DynamicMapping"];
+          /**
+           * @description If date detection is enabled then new string fields are checked
+           *     against 'dynamic_date_formats' and if the value matches then
+           *     a new date field is added instead of string.
+           */
+          dynamic_date_formats?: string[];
+          /** @description Specify dynamic templates for the mapping. */
+          dynamic_templates?: {
+            [key: string]: components["schemas"]["_types.mapping.DynamicTemplate"];
+          }[];
+          _field_names?: components["schemas"]["_types.mapping.FieldNamesField"];
+          _meta?: components["schemas"]["_types.Metadata"];
+          /**
+           * @description Automatically map strings into numeric data types for all fields.
+           * @default false
+           */
+          numeric_detection?: boolean;
+          /**
+           * @description Mapping for a field. For new fields, this mapping can include:
+           *
+           *     - Field name
+           *     - Field data type
+           *     - Mapping parameters
+           */
+          properties?: {
+            [key: string]: components["schemas"]["_types.mapping.Property"];
+          };
+          _routing?: components["schemas"]["_types.mapping.RoutingField"];
+          _source?: components["schemas"]["_types.mapping.SourceField"];
+          runtime?: components["schemas"]["_types.mapping.RuntimeFields"];
         };
-        "_types.aggregations.FrequentItemSetsAggregation": {
-            /** @description Fields to analyze. */
-            fields: components["schemas"]["_types.aggregations.FrequentItemSetsField"][];
-            /**
-             * @description The minimum size of one item set.
-             * @default 1
-             */
-            minimum_set_size: number;
-            /**
-             * @description The minimum support of one item set.
-             * @default 0.1
-             */
-            minimum_support: number;
-            /**
-             * @description The number of top item sets to return.
-             * @default 10
-             */
-            size: number;
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-        };
-        "_types.aggregations.FrequentItemSetsField": {
-            field: components["schemas"]["_types.Field"];
-            exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
-            include?: components["schemas"]["_types.aggregations.TermsInclude"];
-        };
-        "_types.aggregations.TermsExclude": string | string[];
-        "_types.aggregations.TermsInclude": string | string[] | components["schemas"]["_types.aggregations.TermsPartition"];
-        "_types.aggregations.TermsPartition": {
-            /** @description The number of partitions. */
-            num_partitions: number;
-            /** @description The partition number for this request. */
-            partition: number;
-        };
-        "_types.aggregations.FiltersAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            filters?: components["schemas"]["_types.aggregations.BucketsQueryContainer"];
-            /** @description Set to `true` to add a bucket to the response which will contain all documents that do not match any of the given filters. */
-            other_bucket?: boolean;
-            /**
-             * @description The key with which the other bucket is returned.
-             * @default _other_
-             */
-            other_bucket_key: string;
-            /**
-             * @description By default, the named filters aggregation returns the buckets as an object.
-             *     Set to `false` to return the buckets as an array of objects.
-             * @default true
-             */
-            keyed: boolean;
-        };
+      };
+    };
+  };
+  headers: never;
+  pathItems: never;
+}
+export type $defs = Record<string, never>;
+export interface operations {
+  "esql-query": {
+    parameters: {
+      query?: {
         /**
-         * @description Aggregation buckets. By default they are returned as an array, but if the aggregation has keys configured for
-         *     the different buckets, the result is a dictionary.
-         */
-        "_types.aggregations.BucketsQueryContainer": {
-            [key: string]: components["schemas"]["_types.query_dsl.QueryContainer"];
-        } | components["schemas"]["_types.query_dsl.QueryContainer"][];
-        "_types.aggregations.GeoBoundsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            /**
-             * @description Specifies whether the bounding box should be allowed to overlap the international date line.
-             * @default true
-             */
-            wrap_longitude: boolean;
-        };
-        "_types.aggregations.GeoCentroidAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            count?: number;
-            location?: components["schemas"]["_types.GeoLocation"];
-        };
-        "_types.aggregations.GeoDistanceAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            distance_type?: components["schemas"]["_types.GeoDistanceType"];
-            field?: components["schemas"]["_types.Field"];
-            origin?: components["schemas"]["_types.GeoLocation"];
-            /** @description An array of ranges used to bucket documents. */
-            ranges?: components["schemas"]["_types.aggregations.AggregationRange"][];
-            unit?: components["schemas"]["_types.DistanceUnit"];
-        };
-        "_types.aggregations.AggregationRange": {
-            /** @description Start of the range (inclusive). */
-            from?: number | (string | null);
-            /** @description Custom key to return the range with. */
-            key?: string;
-            /** @description End of the range (exclusive). */
-            to?: number | (string | null);
-        };
-        "_types.aggregations.GeoHashGridAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            bounds?: components["schemas"]["_types.GeoBounds"];
-            field?: components["schemas"]["_types.Field"];
-            precision?: components["schemas"]["_types.GeoHashPrecision"];
-            /**
-             * @description Allows for more accurate counting of the top cells returned in the final result the aggregation.
-             *     Defaults to returning `max(10,(size x number-of-shards))` buckets from each shard.
-             */
-            shard_size?: number;
-            /**
-             * @description The maximum number of geohash buckets to return.
-             * @default 10000
-             */
-            size: number;
-        };
-        /** @description A precision that can be expressed as a geohash length between 1 and 12, or a distance measure like "1km", "10m". */
-        "_types.GeoHashPrecision": number | string;
-        "_types.aggregations.GeoLineAggregation": {
-            point: components["schemas"]["_types.aggregations.GeoLinePoint"];
-            sort: components["schemas"]["_types.aggregations.GeoLineSort"];
-            /** @description When `true`, returns an additional array of the sort values in the feature properties. */
-            include_sort?: boolean;
-            sort_order?: components["schemas"]["_types.SortOrder"];
-            /**
-             * @description The maximum length of the line represented in the aggregation.
-             *     Valid sizes are between 1 and 10000.
-             * @default 10000
-             */
-            size: number;
-        };
-        "_types.aggregations.GeoLinePoint": {
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.aggregations.GeoLineSort": {
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.aggregations.GeoTileGridAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field?: components["schemas"]["_types.Field"];
-            precision?: components["schemas"]["_types.GeoTilePrecision"];
-            /**
-             * @description Allows for more accurate counting of the top cells returned in the final result the aggregation.
-             *     Defaults to returning `max(10,(size x number-of-shards))` buckets from each shard.
-             */
-            shard_size?: number;
-            /**
-             * @description The maximum number of buckets to return.
-             * @default 10000
-             */
-            size: number;
-            bounds?: components["schemas"]["_types.GeoBounds"];
-        };
-        "_types.GeoTilePrecision": number;
-        "_types.aggregations.GeohexGridAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field: components["schemas"]["_types.Field"];
-            /**
-             * @description Integer zoom of the key used to defined cells or buckets
-             *     in the results. Value should be between 0-15.
-             * @default 6
-             */
-            precision: number;
-            bounds?: components["schemas"]["_types.GeoBounds"];
-            /**
-             * @description Maximum number of buckets to return.
-             * @default 10000
-             */
-            size: number;
-            /** @description Number of buckets returned from each shard. */
-            shard_size?: number;
-        };
-        "_types.aggregations.GlobalAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & Record<string, never>;
-        "_types.aggregations.HistogramAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            extended_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsdouble"];
-            hard_bounds?: components["schemas"]["_types.aggregations.ExtendedBoundsdouble"];
-            field?: components["schemas"]["_types.Field"];
-            /**
-             * @description The interval for the buckets.
-             *     Must be a positive decimal.
-             */
-            interval?: number;
-            /**
-             * @description Only returns buckets that have `min_doc_count` number of documents.
-             *     By default, the response will fill gaps in the histogram with empty buckets.
-             */
-            min_doc_count?: number;
-            /**
-             * @description The value to apply to documents that do not have a value.
-             *     By default, documents without a value are ignored.
-             */
-            missing?: number;
-            /**
-             * @description By default, the bucket keys start with 0 and then continue in even spaced steps of `interval`.
-             *     The bucket boundaries can be shifted by using the `offset` option.
-             */
-            offset?: number;
-            order?: components["schemas"]["_types.aggregations.AggregateOrder"];
-            script?: components["schemas"]["_types.Script"];
-            format?: string;
-            /**
-             * @description If `true`, returns buckets as a hash instead of an array, keyed by the bucket keys.
-             * @default false
-             */
-            keyed: boolean;
-        };
-        "_types.aggregations.ExtendedBoundsdouble": {
-            /** @description Maximum value for the bound. */
-            max?: number;
-            /** @description Minimum value for the bound. */
-            min?: number;
-        };
-        "_types.aggregations.IpRangeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field?: components["schemas"]["_types.Field"];
-            /** @description Array of IP ranges. */
-            ranges?: components["schemas"]["_types.aggregations.IpRangeAggregationRange"][];
-        };
-        "_types.aggregations.IpRangeAggregationRange": {
-            /** @description Start of the range. */
-            from?: string | (string | null);
-            /** @description IP range defined as a CIDR mask. */
-            mask?: string;
-            /** @description End of the range. */
-            to?: string | (string | null);
-        };
-        "_types.aggregations.IpPrefixAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field: components["schemas"]["_types.Field"];
-            /**
-             * @description Length of the network prefix. For IPv4 addresses the accepted range is [0, 32].
-             *     For IPv6 addresses the accepted range is [0, 128].
-             */
-            prefix_length: number;
-            /**
-             * @description Defines whether the prefix applies to IPv6 addresses.
-             * @default false
-             */
-            is_ipv6: boolean;
-            /**
-             * @description Defines whether the prefix length is appended to IP address keys in the response.
-             * @default false
-             */
-            append_prefix_length: boolean;
-            /** @description Defines whether buckets are returned as a hash rather than an array in the response. */
-            keyed?: boolean;
-            /**
-             * @description Minimum number of documents in a bucket for it to be included in the response.
-             * @default 1
-             */
-            min_doc_count: number;
-        };
-        "_types.aggregations.InferenceAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            model_id: components["schemas"]["_types.Name"];
-            inference_config?: components["schemas"]["_types.aggregations.InferenceConfigContainer"];
-        };
-        "_types.aggregations.InferenceConfigContainer": {
-            regression?: components["schemas"]["ml._types.RegressionInferenceOptions"];
-            classification?: components["schemas"]["ml._types.ClassificationInferenceOptions"];
-        };
-        "ml._types.RegressionInferenceOptions": {
-            results_field?: components["schemas"]["_types.Field"];
-            /**
-             * @description Specifies the maximum number of feature importance values per document.
-             * @default 0
-             */
-            num_top_feature_importance_values: number;
-        };
-        "ml._types.ClassificationInferenceOptions": {
-            /** @description Specifies the number of top class predictions to return. Defaults to 0. */
-            num_top_classes?: number;
-            /**
-             * @description Specifies the maximum number of feature importance values per document.
-             * @default 0
-             */
-            num_top_feature_importance_values: number;
-            /** @description Specifies the type of the predicted field to write. Acceptable values are: string, number, boolean. When boolean is provided 1.0 is transformed to true and 0.0 to false. */
-            prediction_field_type?: string;
-            /** @description The field that is added to incoming documents to contain the inference prediction. Defaults to predicted_value. */
-            results_field?: string;
-            /** @description Specifies the field to which the top classes are written. Defaults to top_classes. */
-            top_classes_results_field?: string;
-        };
-        "_types.aggregations.MatrixStatsAggregation": components["schemas"]["_types.aggregations.MatrixAggregation"] & {
-            mode?: components["schemas"]["_types.SortMode"];
-        };
-        "_types.aggregations.MatrixAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
-            fields?: components["schemas"]["_types.Fields"];
-            /**
-             * @description The value to apply to documents that do not have a value.
-             *     By default, documents without a value are ignored.
-             */
-            missing?: {
-                [key: string]: number;
-            };
-        };
-        "_types.aggregations.MaxAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & Record<string, never>;
-        "_types.aggregations.MaxBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.MedianAbsoluteDeviationAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
-            /**
-             * @description Limits the maximum number of nodes used by the underlying TDigest algorithm to `20 * compression`, enabling control of memory usage and approximation error.
-             * @default 1000
-             */
-            compression: number;
-        };
-        "_types.aggregations.MinAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & Record<string, never>;
-        "_types.aggregations.MinBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.MissingAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field?: components["schemas"]["_types.Field"];
-            missing?: components["schemas"]["_types.aggregations.Missing"];
-        };
-        "_types.aggregations.MovingAverageAggregation": components["schemas"]["_types.aggregations.LinearMovingAverageAggregation"] | components["schemas"]["_types.aggregations.SimpleMovingAverageAggregation"] | components["schemas"]["_types.aggregations.EwmaMovingAverageAggregation"] | components["schemas"]["_types.aggregations.HoltMovingAverageAggregation"] | components["schemas"]["_types.aggregations.HoltWintersMovingAverageAggregation"];
-        "_types.aggregations.LinearMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
-            /** @enum {string} */
-            model: "linear";
-            settings: components["schemas"]["_types.EmptyObject"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            model: "_types.aggregations.LinearMovingAverageAggregation";
-        };
-        /** @description For empty Class assignments */
-        "_types.EmptyObject": Record<string, never>;
-        "_types.aggregations.MovingAverageAggregationBase": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            minimize?: boolean;
-            predict?: number;
-            window?: number;
-        };
-        "_types.aggregations.SimpleMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
-            /** @enum {string} */
-            model: "simple";
-            settings: components["schemas"]["_types.EmptyObject"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            model: "_types.aggregations.SimpleMovingAverageAggregation";
-        };
-        "_types.aggregations.EwmaMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
-            /** @enum {string} */
-            model: "ewma";
-            settings: components["schemas"]["_types.aggregations.EwmaModelSettings"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            model: "_types.aggregations.EwmaMovingAverageAggregation";
-        };
-        "_types.aggregations.EwmaModelSettings": {
-            alpha?: number;
-        };
-        "_types.aggregations.HoltMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
-            /** @enum {string} */
-            model: "holt";
-            settings: components["schemas"]["_types.aggregations.HoltLinearModelSettings"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            model: "_types.aggregations.HoltMovingAverageAggregation";
-        };
-        "_types.aggregations.HoltLinearModelSettings": {
-            alpha?: number;
-            beta?: number;
-        };
-        "_types.aggregations.HoltWintersMovingAverageAggregation": components["schemas"]["_types.aggregations.MovingAverageAggregationBase"] & {
-            /** @enum {string} */
-            model: "holt_winters";
-            settings: components["schemas"]["_types.aggregations.HoltWintersModelSettings"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            model: "_types.aggregations.HoltWintersMovingAverageAggregation";
-        };
-        "_types.aggregations.HoltWintersModelSettings": {
-            alpha?: number;
-            beta?: number;
-            gamma?: number;
-            pad?: boolean;
-            period?: number;
-            type?: components["schemas"]["_types.aggregations.HoltWintersType"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.HoltWintersType": "add" | "mult";
-        "_types.aggregations.MovingPercentilesAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            /** @description The size of window to "slide" across the histogram. */
-            window?: number;
-            /**
-             * @description By default, the window consists of the last n values excluding the current bucket.
-             *     Increasing `shift` by 1, moves the starting window position by 1 to the right.
-             * @default 0
-             */
-            shift: number;
-            keyed?: boolean;
-        };
-        "_types.aggregations.MovingFunctionAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            /** @description The script that should be executed on each window of data. */
-            script?: string;
-            /**
-             * @description By default, the window consists of the last n values excluding the current bucket.
-             *     Increasing `shift` by 1, moves the starting window position by 1 to the right.
-             * @default 0
-             */
-            shift: number;
-            /** @description The size of window to "slide" across the histogram. */
-            window?: number;
-        };
-        "_types.aggregations.MultiTermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            collect_mode?: components["schemas"]["_types.aggregations.TermsAggregationCollectMode"];
-            order?: components["schemas"]["_types.aggregations.AggregateOrder"];
-            /**
-             * @description The minimum number of documents in a bucket for it to be returned.
-             * @default 1
-             */
-            min_doc_count: number;
-            /**
-             * @description The minimum number of documents in a bucket on each shard for it to be returned.
-             * @default 1
-             */
-            shard_min_doc_count: number;
-            /**
-             * @description The number of candidate terms produced by each shard.
-             *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
-             */
-            shard_size?: number;
-            /**
-             * @description Calculates the doc count error on per term basis.
-             * @default false
-             */
-            show_term_doc_count_error: boolean;
-            /**
-             * @description The number of term buckets should be returned out of the overall terms list.
-             * @default 10
-             */
-            size: number;
-            /** @description The field from which to generate sets of terms. */
-            terms: components["schemas"]["_types.aggregations.MultiTermLookup"][];
-        };
-        /** @enum {string} */
-        "_types.aggregations.TermsAggregationCollectMode": "depth_first" | "breadth_first";
-        "_types.aggregations.MultiTermLookup": {
-            field: components["schemas"]["_types.Field"];
-            missing?: components["schemas"]["_types.aggregations.Missing"];
-        };
-        "_types.aggregations.NestedAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            path?: components["schemas"]["_types.Field"];
-        };
-        "_types.aggregations.NormalizeAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            method?: components["schemas"]["_types.aggregations.NormalizeMethod"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.NormalizeMethod": "rescale_0_1" | "rescale_0_100" | "percent_of_sum" | "mean" | "z-score" | "softmax";
-        "_types.aggregations.ParentAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            type?: components["schemas"]["_types.RelationName"];
-        };
-        "_types.aggregations.PercentileRanksAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
-            /**
-             * @description By default, the aggregation associates a unique string key with each bucket and returns the ranges as a hash rather than an array.
-             *     Set to `false` to disable this behavior.
-             * @default true
-             */
-            keyed: boolean;
-            /** @description An array of values for which to calculate the percentile ranks. */
-            values?: number[] | (string | null);
-            hdr?: components["schemas"]["_types.aggregations.HdrMethod"];
-            tdigest?: components["schemas"]["_types.aggregations.TDigest"];
-        };
-        "_types.aggregations.HdrMethod": {
-            /** @description Specifies the resolution of values for the histogram in number of significant digits. */
-            number_of_significant_value_digits?: number;
-        };
-        "_types.aggregations.TDigest": {
-            /** @description Limits the maximum number of nodes used by the underlying TDigest algorithm to `20 * compression`, enabling control of memory usage and approximation error. */
-            compression?: number;
-        };
-        "_types.aggregations.PercentilesAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
-            /**
-             * @description By default, the aggregation associates a unique string key with each bucket and returns the ranges as a hash rather than an array.
-             *     Set to `false` to disable this behavior.
-             * @default true
-             */
-            keyed: boolean;
-            /** @description The percentiles to calculate. */
-            percents?: number[];
-            hdr?: components["schemas"]["_types.aggregations.HdrMethod"];
-            tdigest?: components["schemas"]["_types.aggregations.TDigest"];
-        };
-        "_types.aggregations.PercentilesBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            /** @description The list of percentiles to calculate. */
-            percents?: number[];
-        };
-        "_types.aggregations.RangeAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            field?: components["schemas"]["_types.Field"];
-            /**
-             * @description The value to apply to documents that do not have a value.
-             *     By default, documents without a value are ignored.
-             */
-            missing?: number;
-            /** @description An array of ranges used to bucket documents. */
-            ranges?: components["schemas"]["_types.aggregations.AggregationRange"][];
-            script?: components["schemas"]["_types.Script"];
-            /** @description Set to `true` to associate a unique string key with each bucket and return the ranges as a hash rather than an array. */
-            keyed?: boolean;
-            format?: string;
-        };
-        "_types.aggregations.RareTermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
-            field?: components["schemas"]["_types.Field"];
-            include?: components["schemas"]["_types.aggregations.TermsInclude"];
-            /**
-             * @description The maximum number of documents a term should appear in.
-             * @default 1
-             */
-            max_doc_count: number;
-            missing?: components["schemas"]["_types.aggregations.Missing"];
-            /**
-             * @description The precision of the internal CuckooFilters.
-             *     Smaller precision leads to better approximation, but higher memory usage.
-             * @default 0.001
-             */
-            precision: number;
-            value_type?: string;
-        };
-        "_types.aggregations.RateAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & {
-            unit?: components["schemas"]["_types.aggregations.CalendarInterval"];
-            mode?: components["schemas"]["_types.aggregations.RateMode"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.RateMode": "sum" | "value_count";
-        "_types.aggregations.ReverseNestedAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            path?: components["schemas"]["_types.Field"];
-        };
-        "_types.aggregations.RandomSamplerAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            /**
-             * @description The probability that a document will be included in the aggregated data.
-             *     Must be greater than 0, less than 0.5, or exactly 1.
-             *     The lower the probability, the fewer documents are matched.
-             */
-            probability: number;
-            /**
-             * @description The seed to generate the random sampling of documents.
-             *     When a seed is provided, the random subset of documents is the same between calls.
-             */
-            seed?: number;
-            /** @description When combined with seed, setting shard_seed ensures 100% consistent sampling over shards where data is exactly the same. */
-            shard_seed?: number;
-        };
-        "_types.aggregations.SamplerAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            /**
-             * @description Limits how many top-scoring documents are collected in the sample processed on each shard.
-             * @default 100
-             */
-            shard_size: number;
-        };
-        "_types.aggregations.ScriptedMetricAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            combine_script?: components["schemas"]["_types.Script"];
-            init_script?: components["schemas"]["_types.Script"];
-            map_script?: components["schemas"]["_types.Script"];
-            /**
-             * @description A global object with script parameters for `init`, `map` and `combine` scripts.
-             *     It is shared between the scripts.
-             */
-            params?: {
-                [key: string]: Record<string, never>;
-            };
-            reduce_script?: components["schemas"]["_types.Script"];
-        };
-        "_types.aggregations.SerialDifferencingAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & {
-            /**
-             * @description The historical bucket to subtract from the current value.
-             *     Must be a positive, non-zero integer.
-             */
-            lag?: number;
-        };
-        "_types.aggregations.SignificantTermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            background_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            chi_square?: components["schemas"]["_types.aggregations.ChiSquareHeuristic"];
-            exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
-            execution_hint?: components["schemas"]["_types.aggregations.TermsAggregationExecutionHint"];
-            field?: components["schemas"]["_types.Field"];
-            gnd?: components["schemas"]["_types.aggregations.GoogleNormalizedDistanceHeuristic"];
-            include?: components["schemas"]["_types.aggregations.TermsInclude"];
-            jlh?: components["schemas"]["_types.EmptyObject"];
-            /**
-             * @description Only return terms that are found in more than `min_doc_count` hits.
-             * @default 3
-             */
-            min_doc_count: number;
-            mutual_information?: components["schemas"]["_types.aggregations.MutualInformationHeuristic"];
-            percentage?: components["schemas"]["_types.aggregations.PercentageScoreHeuristic"];
-            script_heuristic?: components["schemas"]["_types.aggregations.ScriptedHeuristic"];
-            p_value?: components["schemas"]["_types.aggregations.PValueHeuristic"];
-            /**
-             * @description Regulates the certainty a shard has if the term should actually be added to the candidate list or not with respect to the `min_doc_count`.
-             *     Terms will only be considered if their local shard frequency within the set is higher than the `shard_min_doc_count`.
-             */
-            shard_min_doc_count?: number;
-            /**
-             * @description Can be used to control the volumes of candidate terms produced by each shard.
-             *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
-             */
-            shard_size?: number;
-            /** @description The number of buckets returned out of the overall terms list. */
-            size?: number;
-        };
-        "_types.aggregations.ChiSquareHeuristic": {
-            /** @description Set to `false` if you defined a custom background filter that represents a different set of documents that you want to compare to. */
-            background_is_superset: boolean;
-            /** @description Set to `false` to filter out the terms that appear less often in the subset than in documents outside the subset. */
-            include_negatives: boolean;
-        };
-        /** @enum {string} */
-        "_types.aggregations.TermsAggregationExecutionHint": "map" | "global_ordinals" | "global_ordinals_hash" | "global_ordinals_low_cardinality";
-        "_types.aggregations.GoogleNormalizedDistanceHeuristic": {
-            /** @description Set to `false` if you defined a custom background filter that represents a different set of documents that you want to compare to. */
-            background_is_superset?: boolean;
-        };
-        "_types.aggregations.MutualInformationHeuristic": {
-            /** @description Set to `false` if you defined a custom background filter that represents a different set of documents that you want to compare to. */
-            background_is_superset?: boolean;
-            /** @description Set to `false` to filter out the terms that appear less often in the subset than in documents outside the subset. */
-            include_negatives?: boolean;
-        };
-        "_types.aggregations.PercentageScoreHeuristic": Record<string, never>;
-        "_types.aggregations.ScriptedHeuristic": {
-            script: components["schemas"]["_types.Script"];
-        };
-        "_types.aggregations.PValueHeuristic": {
-            background_is_superset?: boolean;
-            /**
-             * @description Should the results be normalized when above the given value.
-             *     Allows for consistent significance results at various scales.
-             *     Note: `0` is a special value which means no normalization
-             * @default 0
-             */
-            normalize_above: number;
-        };
-        "_types.aggregations.SignificantTextAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            background_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            chi_square?: components["schemas"]["_types.aggregations.ChiSquareHeuristic"];
-            exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
-            execution_hint?: components["schemas"]["_types.aggregations.TermsAggregationExecutionHint"];
-            field?: components["schemas"]["_types.Field"];
-            /** @description Whether to out duplicate text to deal with noisy data. */
-            filter_duplicate_text?: boolean;
-            gnd?: components["schemas"]["_types.aggregations.GoogleNormalizedDistanceHeuristic"];
-            include?: components["schemas"]["_types.aggregations.TermsInclude"];
-            jlh?: components["schemas"]["_types.EmptyObject"];
-            /**
-             * @description Only return values that are found in more than `min_doc_count` hits.
-             * @default 3
-             */
-            min_doc_count: number;
-            mutual_information?: components["schemas"]["_types.aggregations.MutualInformationHeuristic"];
-            percentage?: components["schemas"]["_types.aggregations.PercentageScoreHeuristic"];
-            script_heuristic?: components["schemas"]["_types.aggregations.ScriptedHeuristic"];
-            /**
-             * @description Regulates the certainty a shard has if the values should actually be added to the candidate list or not with respect to the min_doc_count.
-             *     Values will only be considered if their local shard frequency within the set is higher than the `shard_min_doc_count`.
-             */
-            shard_min_doc_count?: number;
-            /**
-             * @description The number of candidate terms produced by each shard.
-             *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
-             */
-            shard_size?: number;
-            /** @description The number of buckets returned out of the overall terms list. */
-            size?: number;
-            source_fields?: components["schemas"]["_types.Fields"];
-        };
-        "_types.aggregations.StatsAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & Record<string, never>;
-        "_types.aggregations.StatsBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.StringStatsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            /**
-             * @description Shows the probability distribution for all characters.
-             * @default false
-             */
-            show_distribution: boolean;
-        };
-        "_types.aggregations.SumAggregation": components["schemas"]["_types.aggregations.FormatMetricAggregationBase"] & Record<string, never>;
-        "_types.aggregations.SumBucketAggregation": components["schemas"]["_types.aggregations.PipelineAggregationBase"] & Record<string, never>;
-        "_types.aggregations.TermsAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            collect_mode?: components["schemas"]["_types.aggregations.TermsAggregationCollectMode"];
-            exclude?: components["schemas"]["_types.aggregations.TermsExclude"];
-            execution_hint?: components["schemas"]["_types.aggregations.TermsAggregationExecutionHint"];
-            field?: components["schemas"]["_types.Field"];
-            include?: components["schemas"]["_types.aggregations.TermsInclude"];
-            /**
-             * @description Only return values that are found in more than `min_doc_count` hits.
-             * @default 1
-             */
-            min_doc_count: number;
-            missing?: components["schemas"]["_types.aggregations.Missing"];
-            missing_order?: components["schemas"]["_types.aggregations.MissingOrder"];
-            missing_bucket?: boolean;
-            /** @description Coerced unmapped fields into the specified type. */
-            value_type?: string;
-            order?: components["schemas"]["_types.aggregations.AggregateOrder"];
-            script?: components["schemas"]["_types.Script"];
-            /**
-             * @description Regulates the certainty a shard has if the term should actually be added to the candidate list or not with respect to the `min_doc_count`.
-             *     Terms will only be considered if their local shard frequency within the set is higher than the `shard_min_doc_count`.
-             */
-            shard_min_doc_count?: number;
-            /**
-             * @description The number of candidate terms produced by each shard.
-             *     By default, `shard_size` will be automatically estimated based on the number of shards and the `size` parameter.
-             */
-            shard_size?: number;
-            /** @description Set to `true` to return the `doc_count_error_upper_bound`, which is an upper bound to the error on the `doc_count` returned by each shard. */
-            show_term_doc_count_error?: boolean;
-            /**
-             * @description The number of buckets returned out of the overall terms list.
-             * @default 10
-             */
-            size: number;
-            format?: string;
-        };
-        "_types.aggregations.TimeSeriesAggregation": components["schemas"]["_types.aggregations.BucketAggregationBase"] & {
-            /**
-             * @description The maximum number of results to return.
-             * @default 10000
-             */
-            size: number;
-            /** @description Set to `true` to associate a unique string key with each bucket and returns the ranges as a hash rather than an array. */
-            keyed?: boolean;
-        };
-        "_types.aggregations.TopHitsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            /** @description Fields for which to return doc values. */
-            docvalue_fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
-            /**
-             * @description If `true`, returns detailed information about score computation as part of a hit.
-             * @default false
-             */
-            explain: boolean;
-            /**
-             * @description Array of wildcard (*) patterns. The request returns values for field names
-             *     matching these patterns in the hits.fields property of the response.
-             */
-            fields?: components["schemas"]["_types.query_dsl.FieldAndFormat"][];
-            /**
-             * @description Starting document offset.
-             * @default 0
-             */
-            from: number;
-            highlight?: components["schemas"]["_global.search._types.Highlight"];
-            /** @description Returns the result of one or more script evaluations for each hit. */
-            script_fields?: {
-                [key: string]: components["schemas"]["_types.ScriptField"];
-            };
-            /**
-             * @description The maximum number of top matching hits to return per bucket.
-             * @default 3
-             */
-            size: number;
-            sort?: components["schemas"]["_types.Sort"];
-            _source?: components["schemas"]["_global.search._types.SourceConfig"];
-            stored_fields?: components["schemas"]["_types.Fields"];
-            /**
-             * @description If `true`, calculates and returns document scores, even if the scores are not used for sorting.
-             * @default false
-             */
-            track_scores: boolean;
-            /**
-             * @description If `true`, returns document version as part of a hit.
-             * @default false
-             */
-            version: boolean;
-            /** @description If `true`, returns sequence number and primary term of the last modification of each hit. */
-            seq_no_primary_term?: boolean;
-        };
-        "_types.aggregations.TTestAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
-            a?: components["schemas"]["_types.aggregations.TestPopulation"];
-            b?: components["schemas"]["_types.aggregations.TestPopulation"];
-            type?: components["schemas"]["_types.aggregations.TTestType"];
-        };
-        "_types.aggregations.TestPopulation": {
-            field: components["schemas"]["_types.Field"];
-            script?: components["schemas"]["_types.Script"];
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-        };
-        /** @enum {string} */
-        "_types.aggregations.TTestType": "paired" | "homoscedastic" | "heteroscedastic";
-        "_types.aggregations.TopMetricsAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            /** @description The fields of the top document to return. */
-            metrics?: components["schemas"]["_types.aggregations.TopMetricsValue"] | components["schemas"]["_types.aggregations.TopMetricsValue"][];
-            /**
-             * @description The number of top documents from which to return metrics.
-             * @default 1
-             */
-            size: number;
-            sort?: components["schemas"]["_types.Sort"];
-        };
-        "_types.aggregations.TopMetricsValue": {
-            field: components["schemas"]["_types.Field"];
-        };
-        "_types.aggregations.ValueCountAggregation": components["schemas"]["_types.aggregations.FormattableMetricAggregation"] & Record<string, never>;
-        "_types.aggregations.FormattableMetricAggregation": components["schemas"]["_types.aggregations.MetricAggregationBase"] & {
-            format?: string;
-        };
-        "_types.aggregations.WeightedAverageAggregation": components["schemas"]["_types.aggregations.Aggregation"] & {
-            /** @description A numeric response formatter. */
-            format?: string;
-            value?: components["schemas"]["_types.aggregations.WeightedAverageValue"];
-            value_type?: components["schemas"]["_types.aggregations.ValueType"];
-            weight?: components["schemas"]["_types.aggregations.WeightedAverageValue"];
-        };
-        "_types.aggregations.WeightedAverageValue": {
-            field?: components["schemas"]["_types.Field"];
-            /** @description A value or weight to use if the field is missing. */
-            missing?: number;
-            script?: components["schemas"]["_types.Script"];
-        };
-        "_types.aggregations.VariableWidthHistogramAggregation": {
-            field?: components["schemas"]["_types.Field"];
-            /**
-             * @description The target number of buckets.
-             * @default 10
-             */
-            buckets: number;
-            /**
-             * @description The number of buckets that the coordinating node will request from each shard.
-             *     Defaults to `buckets * 50`.
-             */
-            shard_size?: number;
-            /**
-             * @description Specifies the number of individual documents that will be stored in memory on a shard before the initial bucketing algorithm is run.
-             *     Defaults to `min(10 * shard_size, 50000)`.
-             */
-            initial_buffer?: number;
-            script?: components["schemas"]["_types.Script"];
-        };
-        "_types.WaitForActiveShards": number | components["schemas"]["_types.WaitForActiveShardOptions"];
-        /** @enum {string} */
-        "_types.WaitForActiveShardOptions": "all" | "index-setting";
-        "_types.Names": components["schemas"]["_types.Name"] | components["schemas"]["_types.Name"][];
-        "_types.ByteSize": number | string;
-        /** @enum {string} */
-        "_types.HealthStatus": "green" | "GREEN" | "yellow" | "YELLOW" | "red" | "RED" | "unknown" | "unavailable";
-        "_types.VersionString": string;
-        "indices._types.IndexSettings": {
-            index?: components["schemas"]["indices._types.IndexSettings"];
-            mode?: string;
-            routing_path?: string | string[];
-            soft_deletes?: components["schemas"]["indices._types.SoftDeletes"];
-            sort?: components["schemas"]["indices._types.IndexSegmentSort"];
-            /** @default 1 */
-            number_of_shards: number | string;
-            /** @default 0 */
-            number_of_replicas: number | string;
-            number_of_routing_shards?: number;
-            check_on_startup?: components["schemas"]["indices._types.IndexCheckOnStartup"];
-            /** @default LZ4 */
-            codec: string;
-            routing_partition_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-            /** @default true */
-            load_fixed_bitset_filters_eagerly: boolean;
-            /** @default false */
-            hidden: boolean | string;
-            /** @default false */
-            auto_expand_replicas: string | components["schemas"]["_spec_utils.NullValue"];
-            merge?: components["schemas"]["indices._types.Merge"];
-            search?: components["schemas"]["indices._types.SettingsSearch"];
-            refresh_interval?: components["schemas"]["_types.Duration"];
-            /** @default 10000 */
-            max_result_window: number;
-            /** @default 100 */
-            max_inner_result_window: number;
-            /** @default 10000 */
-            max_rescore_window: number;
-            /** @default 100 */
-            max_docvalue_fields_search: number;
-            /** @default 32 */
-            max_script_fields: number;
-            /** @default 1 */
-            max_ngram_diff: number;
-            /** @default 3 */
-            max_shingle_diff: number;
-            blocks?: components["schemas"]["indices._types.IndexSettingBlocks"];
-            max_refresh_listeners?: number;
-            analyze?: components["schemas"]["indices._types.SettingsAnalyze"];
-            highlight?: components["schemas"]["indices._types.SettingsHighlight"];
-            /** @default 65536 */
-            max_terms_count: number;
-            /** @default 1000 */
-            max_regex_length: number;
-            routing?: components["schemas"]["indices._types.IndexRouting"];
-            gc_deletes?: components["schemas"]["_types.Duration"];
-            default_pipeline?: components["schemas"]["_types.PipelineName"];
-            final_pipeline?: components["schemas"]["_types.PipelineName"];
-            lifecycle?: components["schemas"]["indices._types.IndexSettingsLifecycle"];
-            provided_name?: components["schemas"]["_types.Name"];
-            creation_date?: components["schemas"]["_spec_utils.StringifiedEpochTimeUnitMillis"];
-            creation_date_string?: components["schemas"]["_types.DateTime"];
-            uuid?: components["schemas"]["_types.Uuid"];
-            version?: components["schemas"]["indices._types.IndexVersioning"];
-            verified_before_close?: boolean | string;
-            format?: string | number;
-            max_slices_per_scroll?: number;
-            translog?: components["schemas"]["indices._types.Translog"];
-            query_string?: components["schemas"]["indices._types.SettingsQueryString"];
-            priority?: number | string;
-            top_metrics_max_size?: number;
-            analysis?: components["schemas"]["indices._types.IndexSettingsAnalysis"];
-            settings?: components["schemas"]["indices._types.IndexSettings"];
-            time_series?: components["schemas"]["indices._types.IndexSettingsTimeSeries"];
-            queries?: components["schemas"]["indices._types.Queries"];
-            /** @description Configure custom similarity settings to customize how search results are scored. */
-            similarity?: {
-                [key: string]: components["schemas"]["indices._types.SettingsSimilarity"];
-            };
-            mapping?: components["schemas"]["indices._types.MappingLimitSettings"];
-            "indexing.slowlog"?: components["schemas"]["indices._types.IndexingSlowlogSettings"];
-            indexing_pressure?: components["schemas"]["indices._types.IndexingPressure"];
-            store?: components["schemas"]["indices._types.Storage"];
-        };
-        "indices._types.SoftDeletes": {
-            /**
-             * @description Indicates whether soft deletes are enabled on the index.
-             * @default true
-             */
-            enabled: boolean;
-            retention_lease?: components["schemas"]["indices._types.RetentionLease"];
-        };
-        "indices._types.RetentionLease": {
-            period: components["schemas"]["_types.Duration"];
-        };
-        "indices._types.IndexSegmentSort": {
-            field?: components["schemas"]["_types.Fields"];
-            order?: components["schemas"]["indices._types.SegmentSortOrder"] | components["schemas"]["indices._types.SegmentSortOrder"][];
-            mode?: components["schemas"]["indices._types.SegmentSortMode"] | components["schemas"]["indices._types.SegmentSortMode"][];
-            missing?: components["schemas"]["indices._types.SegmentSortMissing"] | components["schemas"]["indices._types.SegmentSortMissing"][];
-        };
-        /** @enum {string} */
-        "indices._types.SegmentSortOrder": "asc" | "ASC" | "desc" | "DESC";
-        /** @enum {string} */
-        "indices._types.SegmentSortMode": "min" | "MIN" | "max" | "MAX";
-        /** @enum {string} */
-        "indices._types.SegmentSortMissing": "_last" | "_first";
-        /** @enum {string} */
-        "indices._types.IndexCheckOnStartup": "true" | "false" | "checksum";
-        /**
-         * @description Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior
-         *     is used to capture this behavior while keeping the semantics of the field type.
+         * @description A short version of the Accept header, e.g. json, yaml.
          *
-         *     Depending on the target language, code generators can keep the union or remove it and leniently parse
-         *     strings to the target type.
+         *     `csv`, `tsv`, and `txt` formats will return results in a tabular format, excluding other metadata fields from the response.
          */
-        "_spec_utils.Stringifiedinteger": number | string;
+        format?: components["schemas"]["esql._types.EsqlFormat"];
+        /** @description The character to use between values within a CSV row. Only valid for the CSV format. */
+        delimiter?: string;
         /**
-         * @description A `null` value that is to be interpreted as an actual value, unless other uses of `null` that are equivalent
-         *     to a missing value. It is used for exemple in settings, where using the `NullValue` for a setting will reset
-         *     it to its default value.
+         * @description Should columns that are entirely `null` be removed from the `columns` and `values` portion of the results?
+         *     Defaults to `false`. If `true` then the response will include an extra section under the name `all_columns` which has the name of all columns.
          */
-        "_spec_utils.NullValue": string | null;
-        "indices._types.Merge": {
-            scheduler?: components["schemas"]["indices._types.MergeScheduler"];
-        };
-        "indices._types.MergeScheduler": {
-            max_thread_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-            max_merge_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-        };
-        "indices._types.SettingsSearch": {
-            idle?: components["schemas"]["indices._types.SearchIdle"];
-            slowlog?: components["schemas"]["indices._types.SlowlogSettings"];
-        };
-        "indices._types.SearchIdle": {
-            after?: components["schemas"]["_types.Duration"];
-        };
-        "indices._types.SlowlogSettings": {
-            level?: string;
-            source?: number;
-            reformat?: boolean;
-            threshold?: components["schemas"]["indices._types.SlowlogTresholds"];
-        };
-        "indices._types.SlowlogTresholds": {
-            query?: components["schemas"]["indices._types.SlowlogTresholdLevels"];
-            fetch?: components["schemas"]["indices._types.SlowlogTresholdLevels"];
-        };
-        "indices._types.SlowlogTresholdLevels": {
-            warn?: components["schemas"]["_types.Duration"];
-            info?: components["schemas"]["_types.Duration"];
-            debug?: components["schemas"]["_types.Duration"];
-            trace?: components["schemas"]["_types.Duration"];
-        };
-        "indices._types.IndexSettingBlocks": {
-            read_only?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            read_only_allow_delete?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            read?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            write?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            metadata?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        };
-        /**
-         * @description Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior
-         *     is used to capture this behavior while keeping the semantics of the field type.
-         *
-         *     Depending on the target language, code generators can keep the union or remove it and leniently parse
-         *     strings to the target type.
-         */
-        "_spec_utils.Stringifiedboolean": boolean | string;
-        "indices._types.SettingsAnalyze": {
-            max_token_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-        };
-        "indices._types.SettingsHighlight": {
-            /** @default 1000000 */
-            max_analyzed_offset: number;
-        };
-        "indices._types.IndexRouting": {
-            allocation?: components["schemas"]["indices._types.IndexRoutingAllocation"];
-            rebalance?: components["schemas"]["indices._types.IndexRoutingRebalance"];
-        };
-        "indices._types.IndexRoutingAllocation": {
-            enable?: components["schemas"]["indices._types.IndexRoutingAllocationOptions"];
-            include?: components["schemas"]["indices._types.IndexRoutingAllocationInclude"];
-            initial_recovery?: components["schemas"]["indices._types.IndexRoutingAllocationInitialRecovery"];
-            disk?: components["schemas"]["indices._types.IndexRoutingAllocationDisk"];
-        };
-        /** @enum {string} */
-        "indices._types.IndexRoutingAllocationOptions": "all" | "primaries" | "new_primaries" | "none";
-        "indices._types.IndexRoutingAllocationInclude": {
-            _tier_preference?: string;
-            _id?: components["schemas"]["_types.Id"];
-        };
-        "indices._types.IndexRoutingAllocationInitialRecovery": {
-            _id?: components["schemas"]["_types.Id"];
-        };
-        "indices._types.IndexRoutingAllocationDisk": {
-            threshold_enabled?: boolean | string;
-        };
-        "indices._types.IndexRoutingRebalance": {
-            enable: components["schemas"]["indices._types.IndexRoutingRebalanceOptions"];
-        };
-        /** @enum {string} */
-        "indices._types.IndexRoutingRebalanceOptions": "all" | "primaries" | "replicas" | "none";
-        "_types.PipelineName": string;
-        "indices._types.IndexSettingsLifecycle": {
-            name?: components["schemas"]["_types.Name"];
-            indexing_complete?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            /**
-             * @description If specified, this is the timestamp used to calculate the index age for its phase transitions. Use this setting
-             *     if you create a new index that contains old data and want to use the original creation date to calculate the index
-             *     age. Specified as a Unix epoch value in milliseconds.
-             * @default 0
-             */
-            origination_date: number;
-            /**
-             * @description Set to true to parse the origination date from the index name. This origination date is used to calculate the index age
-             *     for its phase transitions. The index name must match the pattern ^.*-{date_format}-\\d+, where the date_format is
-             *     yyyy.MM.dd and the trailing digits are optional. An index that was rolled over would normally match the full format,
-             *     for example logs-2016.10.31-000002). If the index name doesn’t match the pattern, index creation fails.
-             */
-            parse_origination_date?: boolean;
-            step?: components["schemas"]["indices._types.IndexSettingsLifecycleStep"];
-            /**
-             * @description The index alias to update when the index rolls over. Specify when using a policy that contains a rollover action.
-             *     When the index rolls over, the alias is updated to reflect that the index is no longer the write index. For more
-             *     information about rolling indices, see Rollover.
-             * @default
-             */
-            rollover_alias: string;
-            /**
-             * @description Preference for the system that manages a data stream backing index (preferring ILM when both ILM and DLM are
-             *     applicable for an index).
-             * @default true
-             */
-            prefer_ilm: boolean | string;
-        };
-        "indices._types.IndexSettingsLifecycleStep": {
-            wait_time_threshold?: components["schemas"]["_types.Duration"];
-        };
-        /**
-         * @description Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior
-         *     is used to capture this behavior while keeping the semantics of the field type.
-         *
-         *     Depending on the target language, code generators can keep the union or remove it and leniently parse
-         *     strings to the target type.
-         */
-        "_spec_utils.StringifiedEpochTimeUnitMillis": components["schemas"]["_types.EpochTimeUnitMillis"] | string;
-        "_types.Uuid": string;
-        "indices._types.IndexVersioning": {
-            created?: components["schemas"]["_types.VersionString"];
-            created_string?: string;
-        };
-        "indices._types.Translog": {
-            sync_interval?: components["schemas"]["_types.Duration"];
-            durability?: components["schemas"]["indices._types.TranslogDurability"];
-            flush_threshold_size?: components["schemas"]["_types.ByteSize"];
-            retention?: components["schemas"]["indices._types.TranslogRetention"];
-        };
-        /** @enum {string} */
-        "indices._types.TranslogDurability": "request" | "REQUEST" | "async" | "ASYNC";
-        "indices._types.TranslogRetention": {
-            size?: components["schemas"]["_types.ByteSize"];
-            age?: components["schemas"]["_types.Duration"];
-        };
-        "indices._types.SettingsQueryString": {
-            lenient: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        };
-        "indices._types.IndexSettingsAnalysis": {
-            analyzer?: {
-                [key: string]: components["schemas"]["_types.analysis.Analyzer"];
+        drop_null_columns?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description By default, ES|QL returns results as rows. For example, FROM returns each individual document as one row. For the JSON, YAML, CBOR and smile formats, ES|QL can return the results in a columnar fashion where one row represents all the values of a certain column in the results. */
+          columnar?: boolean;
+          filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+          locale?: string;
+          /** @description To avoid any attempts of hacking or code injection, extract the values in a separate list of parameters. Use question mark placeholders (?) in the query string for each of the parameters. */
+          params?: components["schemas"]["_types.FieldValue"][];
+          /**
+           * @description If provided and `true` the response will include an extra `profile` object
+           *     with information on how the query was executed. This information is for human debugging
+           *     and its format can change at any time but it can give some insight into the performance
+           *     of each part of the query.
+           */
+          profile?: boolean;
+          /** @description The ES|QL query API accepts an ES|QL query string in the query parameter, runs it, and returns the results. */
+          query: string;
+          /**
+           * @description Tables to use with the LOOKUP operation. The top level key is the table
+           *     name and the next level key is the column name.
+           */
+          tables?: {
+            [key: string]: {
+              [key: string]: components["schemas"]["esql._types.TableValuesContainer"];
             };
-            char_filter?: {
-                [key: string]: components["schemas"]["_types.analysis.CharFilter"];
-            };
-            filter?: {
-                [key: string]: components["schemas"]["_types.analysis.TokenFilter"];
-            };
-            normalizer?: {
-                [key: string]: components["schemas"]["_types.analysis.Normalizer"];
-            };
-            tokenizer?: {
-                [key: string]: components["schemas"]["_types.analysis.Tokenizer"];
-            };
-        };
-        "_types.analysis.Analyzer": components["schemas"]["_types.analysis.CustomAnalyzer"] | components["schemas"]["_types.analysis.FingerprintAnalyzer"] | components["schemas"]["_types.analysis.KeywordAnalyzer"] | components["schemas"]["_types.analysis.NoriAnalyzer"] | components["schemas"]["_types.analysis.PatternAnalyzer"] | components["schemas"]["_types.analysis.SimpleAnalyzer"] | components["schemas"]["_types.analysis.StandardAnalyzer"] | components["schemas"]["_types.analysis.StopAnalyzer"] | components["schemas"]["_types.analysis.WhitespaceAnalyzer"] | components["schemas"]["_types.analysis.IcuAnalyzer"] | components["schemas"]["_types.analysis.KuromojiAnalyzer"] | components["schemas"]["_types.analysis.SnowballAnalyzer"] | components["schemas"]["_types.analysis.ArabicAnalyzer"] | components["schemas"]["_types.analysis.ArmenianAnalyzer"] | components["schemas"]["_types.analysis.BasqueAnalyzer"] | components["schemas"]["_types.analysis.BengaliAnalyzer"] | components["schemas"]["_types.analysis.BrazilianAnalyzer"] | components["schemas"]["_types.analysis.BulgarianAnalyzer"] | components["schemas"]["_types.analysis.CatalanAnalyzer"] | components["schemas"]["_types.analysis.ChineseAnalyzer"] | components["schemas"]["_types.analysis.CjkAnalyzer"] | components["schemas"]["_types.analysis.CzechAnalyzer"] | components["schemas"]["_types.analysis.DanishAnalyzer"] | components["schemas"]["_types.analysis.DutchAnalyzer"] | components["schemas"]["_types.analysis.EnglishAnalyzer"] | components["schemas"]["_types.analysis.EstonianAnalyzer"] | components["schemas"]["_types.analysis.FinnishAnalyzer"] | components["schemas"]["_types.analysis.FrenchAnalyzer"] | components["schemas"]["_types.analysis.GalicianAnalyzer"] | components["schemas"]["_types.analysis.GermanAnalyzer"] | components["schemas"]["_types.analysis.GreekAnalyzer"] | components["schemas"]["_types.analysis.HindiAnalyzer"] | components["schemas"]["_types.analysis.HungarianAnalyzer"] | components["schemas"]["_types.analysis.IndonesianAnalyzer"] | components["schemas"]["_types.analysis.IrishAnalyzer"] | components["schemas"]["_types.analysis.ItalianAnalyzer"] | components["schemas"]["_types.analysis.LatvianAnalyzer"] | components["schemas"]["_types.analysis.LithuanianAnalyzer"] | components["schemas"]["_types.analysis.NorwegianAnalyzer"] | components["schemas"]["_types.analysis.PersianAnalyzer"] | components["schemas"]["_types.analysis.PortugueseAnalyzer"] | components["schemas"]["_types.analysis.RomanianAnalyzer"] | components["schemas"]["_types.analysis.RussianAnalyzer"] | components["schemas"]["_types.analysis.SerbianAnalyzer"] | components["schemas"]["_types.analysis.SoraniAnalyzer"] | components["schemas"]["_types.analysis.SpanishAnalyzer"] | components["schemas"]["_types.analysis.SwedishAnalyzer"] | components["schemas"]["_types.analysis.TurkishAnalyzer"] | components["schemas"]["_types.analysis.ThaiAnalyzer"];
-        "_types.analysis.CustomAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CustomAnalyzer";
-            char_filter?: string | string[];
-            filter?: string | string[];
-            position_increment_gap?: number;
-            position_offset_gap?: number;
-            tokenizer: string;
-        };
-        "_types.analysis.FingerprintAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.FingerprintAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-            /**
-             * @description The maximum token size to emit. Tokens larger than this size will be discarded.
-             *     Defaults to `255`
-             * @default 255
-             */
-            max_output_size: number;
-            /**
-             * @description The character to use to concatenate the terms.
-             *     Defaults to a space.
-             */
-            separator?: string;
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            /** @description The path to a file containing stop words. */
-            stopwords_path?: string;
-        };
-        "_types.analysis.KeywordAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KeywordAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-        };
-        "_types.analysis.NoriAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.NoriAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-            decompound_mode?: components["schemas"]["_types.analysis.NoriDecompoundMode"];
-            stoptags?: string[];
-            user_dictionary?: string;
-        };
-        /** @enum {string} */
-        "_types.analysis.NoriDecompoundMode": "discard" | "none" | "mixed";
-        "_types.analysis.PatternAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PatternAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-            /** @description Java regular expression flags. Flags should be pipe-separated, eg "CASE_INSENSITIVE|COMMENTS". */
-            flags?: string;
-            /**
-             * @description Should terms be lowercased or not.
-             *     Defaults to `true`.
-             * @default true
-             */
-            lowercase: boolean;
-            /**
-             * @description A Java regular expression.
-             *     Defaults to `\W+`.
-             * @default \W+
-             */
-            pattern: string;
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            /** @description The path to a file containing stop words. */
-            stopwords_path?: string;
-        };
-        "_types.analysis.SimpleAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SimpleAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-        };
-        "_types.analysis.StandardAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.StandardAnalyzer";
-            /**
-             * @description The maximum token length. If a token is seen that exceeds this length then it is split at `max_token_length` intervals.
-             *     Defaults to `255`.
-             * @default 255
-             */
-            max_token_length: number;
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            /** @description The path to a file containing stop words. */
-            stopwords_path?: string;
-        };
-        "_types.analysis.StopAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.StopAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            /** @description The path to a file containing stop words. */
-            stopwords_path?: string;
-        };
-        "_types.analysis.WhitespaceAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.WhitespaceAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-        };
-        "_types.analysis.IcuAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuAnalyzer";
-            method: components["schemas"]["_types.analysis.IcuNormalizationType"];
-            mode: components["schemas"]["_types.analysis.IcuNormalizationMode"];
-        };
-        /** @enum {string} */
-        "_types.analysis.IcuNormalizationType": "nfc" | "nfkc" | "nfkc_cf";
-        /** @enum {string} */
-        "_types.analysis.IcuNormalizationMode": "decompose" | "compose";
-        "_types.analysis.KuromojiAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KuromojiAnalyzer";
-            mode?: components["schemas"]["_types.analysis.KuromojiTokenizationMode"];
-            user_dictionary?: string;
-        };
-        /** @enum {string} */
-        "_types.analysis.KuromojiTokenizationMode": "normal" | "search" | "extended";
-        "_types.analysis.SnowballAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SnowballAnalyzer";
-            version?: components["schemas"]["_types.VersionString"];
-            language: components["schemas"]["_types.analysis.SnowballLanguage"];
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-        };
-        /** @enum {string} */
-        "_types.analysis.SnowballLanguage": "Arabic" | "Armenian" | "Basque" | "Catalan" | "Danish" | "Dutch" | "English" | "Estonian" | "Finnish" | "French" | "German" | "German2" | "Hungarian" | "Italian" | "Irish" | "Kp" | "Lithuanian" | "Lovins" | "Norwegian" | "Porter" | "Portuguese" | "Romanian" | "Russian" | "Serbian" | "Spanish" | "Swedish" | "Turkish";
-        "_types.analysis.ArabicAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ArabicAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.ArmenianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ArmenianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.BasqueAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.BasqueAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.BengaliAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.BengaliAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.BrazilianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.BrazilianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.BulgarianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.BulgarianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.CatalanAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CatalanAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.ChineseAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ChineseAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.CjkAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CjkAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.CzechAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CzechAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.DanishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.DanishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.DutchAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.DutchAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.EnglishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.EnglishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.EstonianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.EstonianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.FinnishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.FinnishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.FrenchAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.FrenchAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.GalicianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.GalicianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.GermanAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.GermanAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.GreekAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.GreekAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.HindiAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.HindiAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.HungarianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.HungarianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.IndonesianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IndonesianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.IrishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IrishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.ItalianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ItalianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.LatvianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LatvianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.LithuanianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LithuanianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.NorwegianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.NorwegianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.PersianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PersianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.PortugueseAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PortugueseAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.RomanianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.RomanianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.RussianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.RussianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.SerbianAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SerbianAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.SoraniAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SoraniAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.SpanishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SpanishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.SwedishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SwedishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.TurkishAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.TurkishAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-            stem_exclusion?: string[];
-        };
-        "_types.analysis.ThaiAnalyzer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ThaiAnalyzer";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            stopwords_path?: string;
-        };
-        "_types.analysis.CharFilter": string | components["schemas"]["_types.analysis.CharFilterDefinition"];
-        "_types.analysis.CharFilterDefinition": components["schemas"]["_types.analysis.HtmlStripCharFilter"] | components["schemas"]["_types.analysis.MappingCharFilter"] | components["schemas"]["_types.analysis.PatternReplaceCharFilter"] | components["schemas"]["_types.analysis.IcuNormalizationCharFilter"] | components["schemas"]["_types.analysis.KuromojiIterationMarkCharFilter"];
-        "_types.analysis.HtmlStripCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
-            /** @enum {string} */
-            type: "html_strip";
-            escaped_tags?: string[];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.HtmlStripCharFilter";
-        };
-        "_types.analysis.CharFilterBase": {
-            version?: components["schemas"]["_types.VersionString"];
-        };
-        "_types.analysis.MappingCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
-            /** @enum {string} */
-            type: "mapping";
-            mappings?: string[];
-            mappings_path?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.MappingCharFilter";
-        };
-        "_types.analysis.PatternReplaceCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
-            /** @enum {string} */
-            type: "pattern_replace";
-            flags?: string;
-            pattern: string;
-            replacement?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PatternReplaceCharFilter";
-        };
-        "_types.analysis.IcuNormalizationCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
-            /** @enum {string} */
-            type: "icu_normalizer";
-            mode?: components["schemas"]["_types.analysis.IcuNormalizationMode"];
-            name?: components["schemas"]["_types.analysis.IcuNormalizationType"];
-            unicode_set_filter?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuNormalizationCharFilter";
-        };
-        "_types.analysis.KuromojiIterationMarkCharFilter": components["schemas"]["_types.analysis.CharFilterBase"] & {
-            /** @enum {string} */
-            type: "kuromoji_iteration_mark";
-            normalize_kana: boolean;
-            normalize_kanji: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KuromojiIterationMarkCharFilter";
-        };
-        "_types.analysis.TokenFilter": string | components["schemas"]["_types.analysis.TokenFilterDefinition"];
-        "_types.analysis.TokenFilterDefinition": components["schemas"]["_types.analysis.ApostropheTokenFilter"] | components["schemas"]["_types.analysis.ArabicStemTokenFilter"] | components["schemas"]["_types.analysis.ArabicNormalizationTokenFilter"] | components["schemas"]["_types.analysis.AsciiFoldingTokenFilter"] | components["schemas"]["_types.analysis.BengaliNormalizationTokenFilter"] | components["schemas"]["_types.analysis.BrazilianStemTokenFilter"] | components["schemas"]["_types.analysis.CjkBigramTokenFilter"] | components["schemas"]["_types.analysis.CjkWidthTokenFilter"] | components["schemas"]["_types.analysis.ClassicTokenFilter"] | components["schemas"]["_types.analysis.CommonGramsTokenFilter"] | components["schemas"]["_types.analysis.ConditionTokenFilter"] | components["schemas"]["_types.analysis.CzechStemTokenFilter"] | components["schemas"]["_types.analysis.DecimalDigitTokenFilter"] | components["schemas"]["_types.analysis.DelimitedPayloadTokenFilter"] | components["schemas"]["_types.analysis.DutchStemTokenFilter"] | components["schemas"]["_types.analysis.EdgeNGramTokenFilter"] | components["schemas"]["_types.analysis.ElisionTokenFilter"] | components["schemas"]["_types.analysis.FingerprintTokenFilter"] | components["schemas"]["_types.analysis.FlattenGraphTokenFilter"] | components["schemas"]["_types.analysis.FrenchStemTokenFilter"] | components["schemas"]["_types.analysis.GermanNormalizationTokenFilter"] | components["schemas"]["_types.analysis.GermanStemTokenFilter"] | components["schemas"]["_types.analysis.HindiNormalizationTokenFilter"] | components["schemas"]["_types.analysis.HunspellTokenFilter"] | components["schemas"]["_types.analysis.HyphenationDecompounderTokenFilter"] | components["schemas"]["_types.analysis.IndicNormalizationTokenFilter"] | components["schemas"]["_types.analysis.KeepTypesTokenFilter"] | components["schemas"]["_types.analysis.KeepWordsTokenFilter"] | components["schemas"]["_types.analysis.KeywordMarkerTokenFilter"] | components["schemas"]["_types.analysis.KeywordRepeatTokenFilter"] | components["schemas"]["_types.analysis.KStemTokenFilter"] | components["schemas"]["_types.analysis.LengthTokenFilter"] | components["schemas"]["_types.analysis.LimitTokenCountTokenFilter"] | components["schemas"]["_types.analysis.LowercaseTokenFilter"] | components["schemas"]["_types.analysis.MinHashTokenFilter"] | components["schemas"]["_types.analysis.MultiplexerTokenFilter"] | components["schemas"]["_types.analysis.NGramTokenFilter"] | components["schemas"]["_types.analysis.NoriPartOfSpeechTokenFilter"] | components["schemas"]["_types.analysis.PatternCaptureTokenFilter"] | components["schemas"]["_types.analysis.PatternReplaceTokenFilter"] | components["schemas"]["_types.analysis.PersianNormalizationTokenFilter"] | components["schemas"]["_types.analysis.PersianStemTokenFilter"] | components["schemas"]["_types.analysis.PorterStemTokenFilter"] | components["schemas"]["_types.analysis.PredicateTokenFilter"] | components["schemas"]["_types.analysis.RemoveDuplicatesTokenFilter"] | components["schemas"]["_types.analysis.ReverseTokenFilter"] | components["schemas"]["_types.analysis.RussianStemTokenFilter"] | components["schemas"]["_types.analysis.ScandinavianFoldingTokenFilter"] | components["schemas"]["_types.analysis.ScandinavianNormalizationTokenFilter"] | components["schemas"]["_types.analysis.SerbianNormalizationTokenFilter"] | components["schemas"]["_types.analysis.ShingleTokenFilter"] | components["schemas"]["_types.analysis.SnowballTokenFilter"] | components["schemas"]["_types.analysis.SoraniNormalizationTokenFilter"] | components["schemas"]["_types.analysis.StemmerOverrideTokenFilter"] | components["schemas"]["_types.analysis.StemmerTokenFilter"] | components["schemas"]["_types.analysis.StopTokenFilter"] | components["schemas"]["_types.analysis.SynonymGraphTokenFilter"] | components["schemas"]["_types.analysis.SynonymTokenFilter"] | components["schemas"]["_types.analysis.TrimTokenFilter"] | components["schemas"]["_types.analysis.TruncateTokenFilter"] | components["schemas"]["_types.analysis.UniqueTokenFilter"] | components["schemas"]["_types.analysis.UppercaseTokenFilter"] | components["schemas"]["_types.analysis.WordDelimiterGraphTokenFilter"] | components["schemas"]["_types.analysis.WordDelimiterTokenFilter"] | components["schemas"]["_types.analysis.JaStopTokenFilter"] | components["schemas"]["_types.analysis.KuromojiStemmerTokenFilter"] | components["schemas"]["_types.analysis.KuromojiReadingFormTokenFilter"] | components["schemas"]["_types.analysis.KuromojiPartOfSpeechTokenFilter"] | components["schemas"]["_types.analysis.IcuCollationTokenFilter"] | components["schemas"]["_types.analysis.IcuFoldingTokenFilter"] | components["schemas"]["_types.analysis.IcuNormalizationTokenFilter"] | components["schemas"]["_types.analysis.IcuTransformTokenFilter"] | components["schemas"]["_types.analysis.PhoneticTokenFilter"] | components["schemas"]["_types.analysis.DictionaryDecompounderTokenFilter"];
-        "_types.analysis.ApostropheTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "apostrophe";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ApostropheTokenFilter";
-        };
-        "_types.analysis.TokenFilterBase": {
-            version?: components["schemas"]["_types.VersionString"];
-        };
-        "_types.analysis.ArabicStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "arabic_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ArabicStemTokenFilter";
-        };
-        "_types.analysis.ArabicNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "arabic_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ArabicNormalizationTokenFilter";
-        };
-        "_types.analysis.AsciiFoldingTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "asciifolding";
-            preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.AsciiFoldingTokenFilter";
-        };
-        "_types.analysis.BengaliNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "bengali_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.BengaliNormalizationTokenFilter";
-        };
-        "_types.analysis.BrazilianStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "brazilian_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.BrazilianStemTokenFilter";
-        };
-        "_types.analysis.CjkBigramTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "cjk_bigram";
-            /** @description Array of character scripts for which to disable bigrams. */
-            ignored_scripts?: components["schemas"]["_types.analysis.CjkBigramIgnoredScript"][];
-            /** @description If `true`, emit tokens in both bigram and unigram form. If `false`, a CJK character is output in unigram form when it has no adjacent characters. Defaults to `false`. */
-            output_unigrams?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CjkBigramTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.CjkBigramIgnoredScript": "han" | "hangul" | "hiragana" | "katakana";
-        "_types.analysis.CjkWidthTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "cjk_width";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CjkWidthTokenFilter";
-        };
-        "_types.analysis.ClassicTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "classic";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ClassicTokenFilter";
-        };
-        "_types.analysis.CommonGramsTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "common_grams";
-            /**
-             * @description A list of tokens. The filter generates bigrams for these tokens.
-             *     Either this or the `common_words_path` parameter is required.
-             */
-            common_words?: string[];
-            /**
-             * @description Path to a file containing a list of tokens. The filter generates bigrams for these tokens.
-             *     This path must be absolute or relative to the `config` location. The file must be UTF-8 encoded. Each token in the file must be separated by a line break.
-             *     Either this or the `common_words` parameter is required.
-             */
-            common_words_path?: string;
-            /** @description If `true`, matches for common words matching are case-insensitive. Defaults to `false`. */
-            ignore_case?: boolean;
-            /**
-             * @description If `true`, the filter excludes the following tokens from the output:
-             *     - Unigrams for common words
-             *     - Unigrams for terms followed by common words
-             *     Defaults to `false`. We recommend enabling this parameter for search analyzers.
-             */
-            query_mode?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CommonGramsTokenFilter";
-        };
-        "_types.analysis.ConditionTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "condition";
-            /** @description Array of token filters. If a token matches the predicate script in the `script` parameter, these filters are applied to the token in the order provided. */
-            filter: string[];
-            script: components["schemas"]["_types.Script"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ConditionTokenFilter";
-        };
-        "_types.analysis.CzechStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "czech_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CzechStemTokenFilter";
-        };
-        "_types.analysis.DecimalDigitTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "decimal_digit";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.DecimalDigitTokenFilter";
-        };
-        "_types.analysis.DelimitedPayloadTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "delimited_payload";
-            /** @description Character used to separate tokens from payloads. Defaults to `|`. */
-            delimiter?: string;
-            encoding?: components["schemas"]["_types.analysis.DelimitedPayloadEncoding"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.DelimitedPayloadTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.DelimitedPayloadEncoding": "int" | "float" | "identity";
-        "_types.analysis.DutchStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "dutch_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.DutchStemTokenFilter";
-        };
-        "_types.analysis.EdgeNGramTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "edge_ngram";
-            /** @description Maximum character length of a gram. For custom token filters, defaults to `2`. For the built-in edge_ngram filter, defaults to `1`. */
-            max_gram?: number;
-            /** @description Minimum character length of a gram. Defaults to `1`. */
-            min_gram?: number;
-            side?: components["schemas"]["_types.analysis.EdgeNGramSide"];
-            preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.EdgeNGramTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.EdgeNGramSide": "front" | "back";
-        "_types.analysis.ElisionTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "elision";
-            /**
-             * @description List of elisions to remove.
-             *     To be removed, the elision must be at the beginning of a token and be immediately followed by an apostrophe. Both the elision and apostrophe are removed.
-             *     For custom `elision` filters, either this parameter or `articles_path` must be specified.
-             */
-            articles?: string[];
-            /**
-             * @description Path to a file that contains a list of elisions to remove.
-             *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each elision in the file must be separated by a line break.
-             *     To be removed, the elision must be at the beginning of a token and be immediately followed by an apostrophe. Both the elision and apostrophe are removed.
-             *     For custom `elision` filters, either this parameter or `articles` must be specified.
-             */
-            articles_path?: string;
-            articles_case?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ElisionTokenFilter";
-        };
-        "_types.analysis.FingerprintTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "fingerprint";
-            /** @description Maximum character length, including whitespace, of the output token. Defaults to `255`. Concatenated tokens longer than this will result in no token output. */
-            max_output_size?: number;
-            /** @description Character to use to concatenate the token stream input. Defaults to a space. */
-            separator?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.FingerprintTokenFilter";
-        };
-        "_types.analysis.FlattenGraphTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "flatten_graph";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.FlattenGraphTokenFilter";
-        };
-        "_types.analysis.FrenchStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "french_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.FrenchStemTokenFilter";
-        };
-        "_types.analysis.GermanNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "german_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.GermanNormalizationTokenFilter";
-        };
-        "_types.analysis.GermanStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "german_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.GermanStemTokenFilter";
-        };
-        "_types.analysis.HindiNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "hindi_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.HindiNormalizationTokenFilter";
-        };
-        "_types.analysis.HunspellTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "hunspell";
-            /** @description If `true`, duplicate tokens are removed from the filter’s output. Defaults to `true`. */
-            dedup?: boolean;
-            /**
-             * @description One or more `.dic` files (e.g, `en_US.dic`, my_custom.dic) to use for the Hunspell dictionary.
-             *     By default, the `hunspell` filter uses all `.dic` files in the `<$ES_PATH_CONF>/hunspell/<locale>` directory specified using the `lang`, `language`, or `locale` parameter.
-             */
-            dictionary?: string;
-            /** @description Locale directory used to specify the `.aff` and `.dic` files for a Hunspell dictionary. */
-            locale: string;
-            /** @description If `true`, only the longest stemmed version of each token is included in the output. If `false`, all stemmed versions of the token are included. Defaults to `false`. */
-            longest_only?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.HunspellTokenFilter";
-        };
-        "_types.analysis.HyphenationDecompounderTokenFilter": components["schemas"]["_types.analysis.CompoundWordTokenFilterBase"] & {
-            /** @enum {string} */
-            type: "hyphenation_decompounder";
-            /**
-             * @description Path to an Apache FOP (Formatting Objects Processor) XML hyphenation pattern file.
-             *     This path must be absolute or relative to the `config` location. Only FOP v1.2 compatible files are supported.
-             */
-            hyphenation_patterns_path: string;
-            /** @description If `true`, do not match sub tokens in tokens that are in the word list. Defaults to `false`. */
-            no_sub_matches?: boolean;
-            /** @description If `true`, do not allow overlapping tokens. Defaults to `false`. */
-            no_overlapping_matches?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.HyphenationDecompounderTokenFilter";
-        };
-        "_types.analysis.CompoundWordTokenFilterBase": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @description Maximum subword character length. Longer subword tokens are excluded from the output. Defaults to `15`. */
-            max_subword_size?: number;
-            /** @description Minimum subword character length. Shorter subword tokens are excluded from the output. Defaults to `2`. */
-            min_subword_size?: number;
-            /** @description Minimum word character length. Shorter word tokens are excluded from the output. Defaults to `5`. */
-            min_word_size?: number;
-            /** @description If `true`, only include the longest matching subword. Defaults to `false`. */
-            only_longest_match?: boolean;
-            /**
-             * @description A list of subwords to look for in the token stream. If found, the subword is included in the token output.
-             *     Either this parameter or `word_list_path` must be specified.
-             */
-            word_list?: string[];
-            /**
-             * @description Path to a file that contains a list of subwords to find in the token stream. If found, the subword is included in the token output.
-             *     This path must be absolute or relative to the config location, and the file must be UTF-8 encoded. Each token in the file must be separated by a line break.
-             *     Either this parameter or `word_list` must be specified.
-             */
-            word_list_path?: string;
-        };
-        "_types.analysis.IndicNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "indic_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IndicNormalizationTokenFilter";
-        };
-        "_types.analysis.KeepTypesTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "keep_types";
-            mode?: components["schemas"]["_types.analysis.KeepTypesMode"];
-            /** @description List of token types to keep or remove. */
-            types: string[];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KeepTypesTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.KeepTypesMode": "include" | "exclude";
-        "_types.analysis.KeepWordsTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "keep";
-            /**
-             * @description List of words to keep. Only tokens that match words in this list are included in the output.
-             *     Either this parameter or `keep_words_path` must be specified.
-             */
-            keep_words?: string[];
-            /** @description If `true`, lowercase all keep words. Defaults to `false`. */
-            keep_words_case?: boolean;
-            /**
-             * @description Path to a file that contains a list of words to keep. Only tokens that match words in this list are included in the output.
-             *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each word in the file must be separated by a line break.
-             *     Either this parameter or `keep_words` must be specified.
-             */
-            keep_words_path?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KeepWordsTokenFilter";
-        };
-        "_types.analysis.KeywordMarkerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "keyword_marker";
-            /** @description If `true`, matching for the `keywords` and `keywords_path` parameters ignores letter case. Defaults to `false`. */
-            ignore_case?: boolean;
-            /**
-             * @description Array of keywords. Tokens that match these keywords are not stemmed.
-             *     This parameter, `keywords_path`, or `keywords_pattern` must be specified. You cannot specify this parameter and `keywords_pattern`.
-             */
-            keywords?: string | string[];
-            /**
-             * @description Path to a file that contains a list of keywords. Tokens that match these keywords are not stemmed.
-             *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each word in the file must be separated by a line break.
-             *     This parameter, `keywords`, or `keywords_pattern` must be specified. You cannot specify this parameter and `keywords_pattern`.
-             */
-            keywords_path?: string;
-            /**
-             * @description Java regular expression used to match tokens. Tokens that match this expression are marked as keywords and not stemmed.
-             *     This parameter, `keywords`, or `keywords_path` must be specified. You cannot specify this parameter and `keywords` or `keywords_pattern`.
-             */
-            keywords_pattern?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KeywordMarkerTokenFilter";
-        };
-        "_types.analysis.KeywordRepeatTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "keyword_repeat";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KeywordRepeatTokenFilter";
-        };
-        "_types.analysis.KStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "kstem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KStemTokenFilter";
-        };
-        "_types.analysis.LengthTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "length";
-            /** @description Maximum character length of a token. Longer tokens are excluded from the output. Defaults to `Integer.MAX_VALUE`, which is `2^31-1` or `2147483647`. */
-            max?: number;
-            /** @description Minimum character length of a token. Shorter tokens are excluded from the output. Defaults to `0`. */
-            min?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LengthTokenFilter";
-        };
-        "_types.analysis.LimitTokenCountTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "limit";
-            /** @description If `true`, the limit filter exhausts the token stream, even if the `max_token_count` has already been reached. Defaults to `false`. */
-            consume_all_tokens?: boolean;
-            max_token_count?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LimitTokenCountTokenFilter";
-        };
-        "_types.analysis.LowercaseTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "lowercase";
-            language?: components["schemas"]["_types.analysis.LowercaseTokenFilterLanguages"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LowercaseTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.LowercaseTokenFilterLanguages": "greek" | "irish" | "turkish";
-        "_types.analysis.MinHashTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "min_hash";
-            /** @description Number of buckets to which hashes are assigned. Defaults to `512`. */
-            bucket_count?: number;
-            /** @description Number of ways to hash each token in the stream. Defaults to `1`. */
-            hash_count?: number;
-            /**
-             * @description Number of hashes to keep from each bucket. Defaults to `1`.
-             *     Hashes are retained by ascending size, starting with the bucket’s smallest hash first.
-             */
-            hash_set_size?: number;
-            /** @description If `true`, the filter fills empty buckets with the value of the first non-empty bucket to its circular right if the `hash_set_size` is `1`. If the `bucket_count` argument is greater than 1, this parameter defaults to `true`. Otherwise, this parameter defaults to `false`. */
-            with_rotation?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.MinHashTokenFilter";
-        };
-        "_types.analysis.MultiplexerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "multiplexer";
-            /** @description A list of token filters to apply to incoming tokens. */
-            filters: string[];
-            preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.MultiplexerTokenFilter";
-        };
-        "_types.analysis.NGramTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "ngram";
-            /** @description Maximum length of characters in a gram. Defaults to `2`. */
-            max_gram?: number;
-            /** @description Minimum length of characters in a gram. Defaults to `1`. */
-            min_gram?: number;
-            preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.NGramTokenFilter";
-        };
-        "_types.analysis.NoriPartOfSpeechTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "nori_part_of_speech";
-            /** @description An array of part-of-speech tags that should be removed. */
-            stoptags?: string[];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.NoriPartOfSpeechTokenFilter";
-        };
-        "_types.analysis.PatternCaptureTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "pattern_capture";
-            /** @description A list of regular expressions to match. */
-            patterns: string[];
-            preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PatternCaptureTokenFilter";
-        };
-        "_types.analysis.PatternReplaceTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "pattern_replace";
-            /** @description If `true`, all substrings matching the pattern parameter’s regular expression are replaced. If `false`, the filter replaces only the first matching substring in each token. Defaults to `true`. */
-            all?: boolean;
-            flags?: string;
-            /** @description Regular expression, written in Java’s regular expression syntax. The filter replaces token substrings matching this pattern with the substring in the `replacement` parameter. */
-            pattern: string;
-            /** @description Replacement substring. Defaults to an empty substring (`""`). */
-            replacement?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PatternReplaceTokenFilter";
-        };
-        "_types.analysis.PersianNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "persian_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PersianNormalizationTokenFilter";
-        };
-        "_types.analysis.PersianStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "persian_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PersianStemTokenFilter";
-        };
-        "_types.analysis.PorterStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "porter_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PorterStemTokenFilter";
-        };
-        "_types.analysis.PredicateTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "predicate_token_filter";
-            script: components["schemas"]["_types.Script"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PredicateTokenFilter";
-        };
-        "_types.analysis.RemoveDuplicatesTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "remove_duplicates";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.RemoveDuplicatesTokenFilter";
-        };
-        "_types.analysis.ReverseTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "reverse";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ReverseTokenFilter";
-        };
-        "_types.analysis.RussianStemTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "russian_stem";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.RussianStemTokenFilter";
-        };
-        "_types.analysis.ScandinavianFoldingTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "scandinavian_folding";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ScandinavianFoldingTokenFilter";
-        };
-        "_types.analysis.ScandinavianNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "scandinavian_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ScandinavianNormalizationTokenFilter";
-        };
-        "_types.analysis.SerbianNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "serbian_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SerbianNormalizationTokenFilter";
-        };
-        "_types.analysis.ShingleTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "shingle";
-            /** @description String used in shingles as a replacement for empty positions that do not contain a token. This filler token is only used in shingles, not original unigrams. Defaults to an underscore (`_`). */
-            filler_token?: string;
-            max_shingle_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-            min_shingle_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-            /** @description If `true`, the output includes the original input tokens. If `false`, the output only includes shingles; the original input tokens are removed. Defaults to `true`. */
-            output_unigrams?: boolean;
-            /** @description If `true`, the output includes the original input tokens only if no shingles are produced; if shingles are produced, the output only includes shingles. Defaults to `false`. */
-            output_unigrams_if_no_shingles?: boolean;
-            /** @description Separator used to concatenate adjacent tokens to form a shingle. Defaults to a space (`" "`). */
-            token_separator?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ShingleTokenFilter";
-        };
-        "_types.analysis.SnowballTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "snowball";
-            language?: components["schemas"]["_types.analysis.SnowballLanguage"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SnowballTokenFilter";
-        };
-        "_types.analysis.SoraniNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "sorani_normalization";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SoraniNormalizationTokenFilter";
-        };
-        "_types.analysis.StemmerOverrideTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "stemmer_override";
-            /** @description A list of mapping rules to use. */
-            rules?: string[];
-            /** @description A path (either relative to `config` location, or absolute) to a list of mappings. */
-            rules_path?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.StemmerOverrideTokenFilter";
-        };
-        "_types.analysis.StemmerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "stemmer";
-            language?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.StemmerTokenFilter";
-        };
-        "_types.analysis.StopTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "stop";
-            /** @description If `true`, stop word matching is case insensitive. For example, if `true`, a stop word of the matches and removes `The`, `THE`, or `the`. Defaults to `false`. */
-            ignore_case?: boolean;
-            /** @description If `true`, the last token of a stream is removed if it’s a stop word. Defaults to `true`. */
-            remove_trailing?: boolean;
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-            /**
-             * @description Path to a file that contains a list of stop words to remove.
-             *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each stop word in the file must be separated by a line break.
-             */
-            stopwords_path?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.StopTokenFilter";
-        };
-        "_types.analysis.SynonymGraphTokenFilter": components["schemas"]["_types.analysis.SynonymTokenFilterBase"] & {
-            /** @enum {string} */
-            type: "synonym_graph";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SynonymGraphTokenFilter";
-        };
-        "_types.analysis.SynonymTokenFilterBase": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @description Expands definitions for equivalent synonym rules. Defaults to `true`. */
-            expand?: boolean;
-            format?: components["schemas"]["_types.analysis.SynonymFormat"];
-            /** @description If `true` ignores errors while parsing the synonym rules. It is important to note that only those synonym rules which cannot get parsed are ignored. Defaults to the value of the `updateable` setting. */
-            lenient?: boolean;
-            /** @description Used to define inline synonyms. */
-            synonyms?: string[];
-            /** @description Used to provide a synonym file. This path must be absolute or relative to the `config` location. */
-            synonyms_path?: string;
-            /** @description Provide a synonym set created via Synonyms Management APIs. */
-            synonyms_set?: string;
-            /**
-             * @deprecated
-             * @description Controls the tokenizers that will be used to tokenize the synonym, this parameter is for backwards compatibility for indices that created before 6.0.
-             */
-            tokenizer?: string;
-            /** @description If `true` allows reloading search analyzers to pick up changes to synonym files. Only to be used for search analyzers. Defaults to `false`. */
-            updateable?: boolean;
-        };
-        /** @enum {string} */
-        "_types.analysis.SynonymFormat": "solr" | "wordnet";
-        "_types.analysis.SynonymTokenFilter": components["schemas"]["_types.analysis.SynonymTokenFilterBase"] & {
-            /** @enum {string} */
-            type: "synonym";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SynonymTokenFilter";
-        };
-        "_types.analysis.TrimTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "trim";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.TrimTokenFilter";
-        };
-        "_types.analysis.TruncateTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "truncate";
-            /** @description Character limit for each token. Tokens exceeding this limit are truncated. Defaults to `10`. */
-            length?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.TruncateTokenFilter";
-        };
-        "_types.analysis.UniqueTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "unique";
-            /** @description If `true`, only remove duplicate tokens in the same position. Defaults to `false`. */
-            only_on_same_position?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.UniqueTokenFilter";
-        };
-        "_types.analysis.UppercaseTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "uppercase";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.UppercaseTokenFilter";
-        };
-        "_types.analysis.WordDelimiterGraphTokenFilter": components["schemas"]["_types.analysis.WordDelimiterTokenFilterBase"] & {
-            /** @enum {string} */
-            type: "word_delimiter_graph";
-            /** @description If `true`, the filter adjusts the offsets of split or catenated tokens to better reflect their actual position in the token stream. Defaults to `true`. */
-            adjust_offsets?: boolean;
-            /** @description If `true`, the filter skips tokens with a keyword attribute of true. Defaults to `false`. */
-            ignore_keywords?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.WordDelimiterGraphTokenFilter";
-        };
-        "_types.analysis.WordDelimiterTokenFilterBase": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @description If `true`, the filter produces catenated tokens for chains of alphanumeric characters separated by non-alphabetic delimiters. Defaults to `false`. */
-            catenate_all?: boolean;
-            /** @description If `true`, the filter produces catenated tokens for chains of numeric characters separated by non-alphabetic delimiters. Defaults to `false`. */
-            catenate_numbers?: boolean;
-            /** @description If `true`, the filter produces catenated tokens for chains of alphabetical characters separated by non-alphabetic delimiters. Defaults to `false`. */
-            catenate_words?: boolean;
-            /** @description If `true`, the filter includes tokens consisting of only numeric characters in the output. If `false`, the filter excludes these tokens from the output. Defaults to `true`. */
-            generate_number_parts?: boolean;
-            /** @description If `true`, the filter includes tokens consisting of only alphabetical characters in the output. If `false`, the filter excludes these tokens from the output. Defaults to `true`. */
-            generate_word_parts?: boolean;
-            preserve_original?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            /** @description Array of tokens the filter won’t split. */
-            protected_words?: string[];
-            /**
-             * @description Path to a file that contains a list of tokens the filter won’t split.
-             *     This path must be absolute or relative to the `config` location, and the file must be UTF-8 encoded. Each token in the file must be separated by a line break.
-             */
-            protected_words_path?: string;
-            /** @description If `true`, the filter splits tokens at letter case transitions. For example: camelCase -> [ camel, Case ]. Defaults to `true`. */
-            split_on_case_change?: boolean;
-            /** @description If `true`, the filter splits tokens at letter-number transitions. For example: j2se -> [ j, 2, se ]. Defaults to `true`. */
-            split_on_numerics?: boolean;
-            /** @description If `true`, the filter removes the English possessive (`'s`) from the end of each token. For example: O'Neil's -> [ O, Neil ]. Defaults to `true`. */
-            stem_english_possessive?: boolean;
-            /** @description Array of custom type mappings for characters. This allows you to map non-alphanumeric characters as numeric or alphanumeric to avoid splitting on those characters. */
-            type_table?: string[];
-            /** @description Path to a file that contains custom type mappings for characters. This allows you to map non-alphanumeric characters as numeric or alphanumeric to avoid splitting on those characters. */
-            type_table_path?: string;
-        };
-        "_types.analysis.WordDelimiterTokenFilter": components["schemas"]["_types.analysis.WordDelimiterTokenFilterBase"] & {
-            /** @enum {string} */
-            type: "word_delimiter";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.WordDelimiterTokenFilter";
-        };
-        "_types.analysis.JaStopTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "ja_stop";
-            stopwords?: components["schemas"]["_types.analysis.StopWords"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.JaStopTokenFilter";
-        };
-        "_types.analysis.KuromojiStemmerTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "kuromoji_stemmer";
-            minimum_length: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KuromojiStemmerTokenFilter";
-        };
-        "_types.analysis.KuromojiReadingFormTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "kuromoji_readingform";
-            use_romaji: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KuromojiReadingFormTokenFilter";
-        };
-        "_types.analysis.KuromojiPartOfSpeechTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "kuromoji_part_of_speech";
-            stoptags: string[];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KuromojiPartOfSpeechTokenFilter";
-        };
-        "_types.analysis.IcuCollationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "icu_collation";
-            alternate?: components["schemas"]["_types.analysis.IcuCollationAlternate"];
-            caseFirst?: components["schemas"]["_types.analysis.IcuCollationCaseFirst"];
-            caseLevel?: boolean;
-            country?: string;
-            decomposition?: components["schemas"]["_types.analysis.IcuCollationDecomposition"];
-            hiraganaQuaternaryMode?: boolean;
-            language?: string;
-            numeric?: boolean;
-            rules?: string;
-            strength?: components["schemas"]["_types.analysis.IcuCollationStrength"];
-            variableTop?: string;
-            variant?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuCollationTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.IcuCollationAlternate": "shifted" | "non-ignorable";
-        /** @enum {string} */
-        "_types.analysis.IcuCollationCaseFirst": "lower" | "upper";
-        /** @enum {string} */
-        "_types.analysis.IcuCollationDecomposition": "no" | "identical";
-        /** @enum {string} */
-        "_types.analysis.IcuCollationStrength": "primary" | "secondary" | "tertiary" | "quaternary" | "identical";
-        "_types.analysis.IcuFoldingTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "icu_folding";
-            unicode_set_filter: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuFoldingTokenFilter";
-        };
-        "_types.analysis.IcuNormalizationTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "icu_normalizer";
-            name: components["schemas"]["_types.analysis.IcuNormalizationType"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuNormalizationTokenFilter";
-        };
-        "_types.analysis.IcuTransformTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "icu_transform";
-            dir?: components["schemas"]["_types.analysis.IcuTransformDirection"];
-            id: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuTransformTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.IcuTransformDirection": "forward" | "reverse";
-        "_types.analysis.PhoneticTokenFilter": components["schemas"]["_types.analysis.TokenFilterBase"] & {
-            /** @enum {string} */
-            type: "phonetic";
-            encoder: components["schemas"]["_types.analysis.PhoneticEncoder"];
-            languageset?: components["schemas"]["_types.analysis.PhoneticLanguage"] | components["schemas"]["_types.analysis.PhoneticLanguage"][];
-            max_code_len?: number;
-            name_type?: components["schemas"]["_types.analysis.PhoneticNameType"];
-            replace?: boolean;
-            rule_type?: components["schemas"]["_types.analysis.PhoneticRuleType"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PhoneticTokenFilter";
-        };
-        /** @enum {string} */
-        "_types.analysis.PhoneticEncoder": "metaphone" | "double_metaphone" | "soundex" | "refined_soundex" | "caverphone1" | "caverphone2" | "cologne" | "nysiis" | "koelnerphonetik" | "haasephonetik" | "beider_morse" | "daitch_mokotoff";
-        /** @enum {string} */
-        "_types.analysis.PhoneticLanguage": "any" | "common" | "cyrillic" | "english" | "french" | "german" | "hebrew" | "hungarian" | "polish" | "romanian" | "russian" | "spanish";
-        /** @enum {string} */
-        "_types.analysis.PhoneticNameType": "generic" | "ashkenazi" | "sephardic";
-        /** @enum {string} */
-        "_types.analysis.PhoneticRuleType": "approx" | "exact";
-        "_types.analysis.DictionaryDecompounderTokenFilter": components["schemas"]["_types.analysis.CompoundWordTokenFilterBase"] & {
-            /** @enum {string} */
-            type: "dictionary_decompounder";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.DictionaryDecompounderTokenFilter";
-        };
-        "_types.analysis.Normalizer": components["schemas"]["_types.analysis.LowercaseNormalizer"] | components["schemas"]["_types.analysis.CustomNormalizer"];
-        "_types.analysis.LowercaseNormalizer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LowercaseNormalizer";
-        };
-        "_types.analysis.CustomNormalizer": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CustomNormalizer";
-            char_filter?: string[];
-            filter?: string[];
-        };
-        "_types.analysis.Tokenizer": string | components["schemas"]["_types.analysis.TokenizerDefinition"];
-        "_types.analysis.TokenizerDefinition": components["schemas"]["_types.analysis.CharGroupTokenizer"] | components["schemas"]["_types.analysis.ClassicTokenizer"] | components["schemas"]["_types.analysis.EdgeNGramTokenizer"] | components["schemas"]["_types.analysis.KeywordTokenizer"] | components["schemas"]["_types.analysis.LetterTokenizer"] | components["schemas"]["_types.analysis.LowercaseTokenizer"] | components["schemas"]["_types.analysis.NGramTokenizer"] | components["schemas"]["_types.analysis.PathHierarchyTokenizer"] | components["schemas"]["_types.analysis.PatternTokenizer"] | components["schemas"]["_types.analysis.SimplePatternTokenizer"] | components["schemas"]["_types.analysis.SimplePatternSplitTokenizer"] | components["schemas"]["_types.analysis.StandardTokenizer"] | components["schemas"]["_types.analysis.ThaiTokenizer"] | components["schemas"]["_types.analysis.UaxEmailUrlTokenizer"] | components["schemas"]["_types.analysis.WhitespaceTokenizer"] | components["schemas"]["_types.analysis.IcuTokenizer"] | components["schemas"]["_types.analysis.KuromojiTokenizer"] | components["schemas"]["_types.analysis.NoriTokenizer"];
-        "_types.analysis.CharGroupTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "char_group";
-            tokenize_on_chars: string[];
-            max_token_length?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.CharGroupTokenizer";
-        };
-        "_types.analysis.TokenizerBase": {
-            version?: components["schemas"]["_types.VersionString"];
-        };
-        "_types.analysis.ClassicTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "classic";
-            max_token_length?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ClassicTokenizer";
-        };
-        "_types.analysis.EdgeNGramTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "edge_ngram";
-            custom_token_chars?: string;
-            max_gram?: number;
-            min_gram?: number;
-            /** @default [] */
-            token_chars: components["schemas"]["_types.analysis.TokenChar"][];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.EdgeNGramTokenizer";
-        };
-        /** @enum {string} */
-        "_types.analysis.TokenChar": "letter" | "digit" | "whitespace" | "punctuation" | "symbol" | "custom";
-        "_types.analysis.KeywordTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "keyword";
-            /** @default 256 */
-            buffer_size: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KeywordTokenizer";
-        };
-        "_types.analysis.LetterTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "letter";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LetterTokenizer";
-        };
-        "_types.analysis.LowercaseTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "lowercase";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.LowercaseTokenizer";
-        };
-        "_types.analysis.NGramTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "ngram";
-            custom_token_chars?: string;
-            max_gram?: number;
-            min_gram?: number;
-            /** @default [] */
-            token_chars: components["schemas"]["_types.analysis.TokenChar"][];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.NGramTokenizer";
-        };
-        "_types.analysis.PathHierarchyTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "path_hierarchy";
-            buffer_size?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-            delimiter?: string;
-            replacement?: string;
-            reverse?: components["schemas"]["_spec_utils.Stringifiedboolean"];
-            skip?: components["schemas"]["_spec_utils.Stringifiedinteger"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PathHierarchyTokenizer";
-        };
-        "_types.analysis.PatternTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "pattern";
-            flags?: string;
-            group?: number;
-            pattern?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.PatternTokenizer";
-        };
-        "_types.analysis.SimplePatternTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "simple_pattern";
-            pattern?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SimplePatternTokenizer";
-        };
-        "_types.analysis.SimplePatternSplitTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "simple_pattern_split";
-            pattern?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.SimplePatternSplitTokenizer";
-        };
-        "_types.analysis.StandardTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "standard";
-            max_token_length?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.StandardTokenizer";
-        };
-        "_types.analysis.ThaiTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "thai";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.ThaiTokenizer";
-        };
-        "_types.analysis.UaxEmailUrlTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "uax_url_email";
-            max_token_length?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.UaxEmailUrlTokenizer";
-        };
-        "_types.analysis.WhitespaceTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "whitespace";
-            max_token_length?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.WhitespaceTokenizer";
-        };
-        "_types.analysis.IcuTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "icu_tokenizer";
-            rule_files: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.IcuTokenizer";
-        };
-        "_types.analysis.KuromojiTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "kuromoji_tokenizer";
-            discard_punctuation?: boolean;
-            mode: components["schemas"]["_types.analysis.KuromojiTokenizationMode"];
-            nbest_cost?: number;
-            nbest_examples?: string;
-            user_dictionary?: string;
-            user_dictionary_rules?: string[];
-            discard_compound_token?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.KuromojiTokenizer";
-        };
-        "_types.analysis.NoriTokenizer": components["schemas"]["_types.analysis.TokenizerBase"] & {
-            /** @enum {string} */
-            type: "nori_tokenizer";
-            decompound_mode?: components["schemas"]["_types.analysis.NoriDecompoundMode"];
-            discard_punctuation?: boolean;
-            user_dictionary?: string;
-            user_dictionary_rules?: string[];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.analysis.NoriTokenizer";
-        };
-        "indices._types.IndexSettingsTimeSeries": {
-            end_time?: components["schemas"]["_types.DateTime"];
-            start_time?: components["schemas"]["_types.DateTime"];
-        };
-        "indices._types.Queries": {
-            cache?: components["schemas"]["indices._types.CacheQueries"];
-        };
-        "indices._types.CacheQueries": {
-            enabled: boolean;
-        };
-        "indices._types.SettingsSimilarity": components["schemas"]["indices._types.SettingsSimilarityBm25"] | components["schemas"]["indices._types.SettingsSimilarityBoolean"] | components["schemas"]["indices._types.SettingsSimilarityDfi"] | components["schemas"]["indices._types.SettingsSimilarityDfr"] | components["schemas"]["indices._types.SettingsSimilarityIb"] | components["schemas"]["indices._types.SettingsSimilarityLmd"] | components["schemas"]["indices._types.SettingsSimilarityLmj"] | components["schemas"]["indices._types.SettingsSimilarityScripted"];
-        "indices._types.SettingsSimilarityBm25": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityBm25";
-            b?: number;
-            discount_overlaps?: boolean;
-            k1?: number;
-        };
-        "indices._types.SettingsSimilarityBoolean": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityBoolean";
-        };
-        "indices._types.SettingsSimilarityDfi": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityDfi";
-            independence_measure: components["schemas"]["_types.DFIIndependenceMeasure"];
-        };
-        /** @enum {string} */
-        "_types.DFIIndependenceMeasure": "standardized" | "saturated" | "chisquared";
-        "indices._types.SettingsSimilarityDfr": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityDfr";
-            after_effect: components["schemas"]["_types.DFRAfterEffect"];
-            basic_model: components["schemas"]["_types.DFRBasicModel"];
-            normalization: components["schemas"]["_types.Normalization"];
-        };
-        /** @enum {string} */
-        "_types.DFRAfterEffect": "no" | "b" | "l";
-        /** @enum {string} */
-        "_types.DFRBasicModel": "be" | "d" | "g" | "if" | "in" | "ine" | "p";
-        /** @enum {string} */
-        "_types.Normalization": "no" | "h1" | "h2" | "h3" | "z";
-        "indices._types.SettingsSimilarityIb": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityIb";
-            distribution: components["schemas"]["_types.IBDistribution"];
-            lambda: components["schemas"]["_types.IBLambda"];
-            normalization: components["schemas"]["_types.Normalization"];
-        };
-        /** @enum {string} */
-        "_types.IBDistribution": "ll" | "spl";
-        /** @enum {string} */
-        "_types.IBLambda": "df" | "ttf";
-        "indices._types.SettingsSimilarityLmd": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityLmd";
-            mu?: number;
-        };
-        "indices._types.SettingsSimilarityLmj": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityLmj";
-            lambda?: number;
-        };
-        "indices._types.SettingsSimilarityScripted": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "indices._types.SettingsSimilarityScripted";
-            script: components["schemas"]["_types.Script"];
-            weight_script?: components["schemas"]["_types.Script"];
-        };
-        /** @description Mapping Limit Settings */
-        "indices._types.MappingLimitSettings": {
-            coerce?: boolean;
-            total_fields?: components["schemas"]["indices._types.MappingLimitSettingsTotalFields"];
-            depth?: components["schemas"]["indices._types.MappingLimitSettingsDepth"];
-            nested_fields?: components["schemas"]["indices._types.MappingLimitSettingsNestedFields"];
-            nested_objects?: components["schemas"]["indices._types.MappingLimitSettingsNestedObjects"];
-            field_name_length?: components["schemas"]["indices._types.MappingLimitSettingsFieldNameLength"];
-            dimension_fields?: components["schemas"]["indices._types.MappingLimitSettingsDimensionFields"];
-            source?: components["schemas"]["indices._types.MappingLimitSettingsSourceFields"];
-            ignore_malformed?: boolean | string;
-        };
-        "indices._types.MappingLimitSettingsTotalFields": {
-            /**
-             * @description The maximum number of fields in an index. Field and object mappings, as well as field aliases count towards this limit.
-             *     The limit is in place to prevent mappings and searches from becoming too large. Higher values can lead to performance
-             *     degradations and memory issues, especially in clusters with a high load or few resources.
-             * @default 1000
-             */
-            limit: number | string;
-            /**
-             * @description This setting determines what happens when a dynamically mapped field would exceed the total fields limit. When set
-             *     to false (the default), the index request of the document that tries to add a dynamic field to the mapping will fail
-             *     with the message Limit of total fields [X] has been exceeded. When set to true, the index request will not fail.
-             *     Instead, fields that would exceed the limit are not added to the mapping, similar to dynamic: false.
-             *     The fields that were not added to the mapping will be added to the _ignored field.
-             * @default false
-             */
-            ignore_dynamic_beyond_limit: boolean | string;
-        };
-        "indices._types.MappingLimitSettingsDepth": {
-            /**
-             * @description The maximum depth for a field, which is measured as the number of inner objects. For instance, if all fields are defined
-             *     at the root object level, then the depth is 1. If there is one object mapping, then the depth is 2, etc.
-             * @default 20
-             */
-            limit: number;
-        };
-        "indices._types.MappingLimitSettingsNestedFields": {
-            /**
-             * @description The maximum number of distinct nested mappings in an index. The nested type should only be used in special cases, when
-             *     arrays of objects need to be queried independently of each other. To safeguard against poorly designed mappings, this
-             *     setting limits the number of unique nested types per index.
-             * @default 50
-             */
-            limit: number;
-        };
-        "indices._types.MappingLimitSettingsNestedObjects": {
-            /**
-             * @description The maximum number of nested JSON objects that a single document can contain across all nested types. This limit helps
-             *     to prevent out of memory errors when a document contains too many nested objects.
-             * @default 10000
-             */
-            limit: number;
-        };
-        "indices._types.MappingLimitSettingsFieldNameLength": {
-            /**
-             * @description Setting for the maximum length of a field name. This setting isn’t really something that addresses mappings explosion but
-             *     might still be useful if you want to limit the field length. It usually shouldn’t be necessary to set this setting. The
-             *     default is okay unless a user starts to add a huge number of fields with really long names. Default is `Long.MAX_VALUE` (no limit).
-             */
-            limit?: number;
-        };
-        "indices._types.MappingLimitSettingsDimensionFields": {
-            /**
-             * @description [preview] This functionality is in technical preview and may be changed or removed in a future release.
-             *     Elastic will work to fix any issues, but features in technical preview are not subject to the support SLA of official GA features.
-             */
-            limit?: number;
-        };
-        "indices._types.MappingLimitSettingsSourceFields": {
-            mode: components["schemas"]["indices._types.SourceMode"];
-        };
-        /** @enum {string} */
-        "indices._types.SourceMode": "disabled" | "stored" | "synthetic";
-        "indices._types.IndexingSlowlogSettings": {
-            level?: string;
-            source?: number;
-            reformat?: boolean;
-            threshold?: components["schemas"]["indices._types.IndexingSlowlogTresholds"];
-        };
-        "indices._types.IndexingSlowlogTresholds": {
-            index?: components["schemas"]["indices._types.SlowlogTresholdLevels"];
-        };
-        "indices._types.IndexingPressure": {
-            memory: components["schemas"]["indices._types.IndexingPressureMemory"];
-        };
-        "indices._types.IndexingPressureMemory": {
-            /**
-             * @description Number of outstanding bytes that may be consumed by indexing requests. When this limit is reached or exceeded,
-             *     the node will reject new coordinating and primary operations. When replica operations consume 1.5x this limit,
-             *     the node will reject new replica operations. Defaults to 10% of the heap.
-             */
-            limit?: number;
-        };
-        "indices._types.Storage": {
-            type: components["schemas"]["indices._types.StorageType"];
-            /**
-             * @description You can restrict the use of the mmapfs and the related hybridfs store type via the setting node.store.allow_mmap.
-             *     This is a boolean setting indicating whether or not memory-mapping is allowed. The default is to allow it. This
-             *     setting is useful, for example, if you are in an environment where you can not control the ability to create a lot
-             *     of memory maps so you need disable the ability to use memory-mapping.
-             */
-            allow_mmap?: boolean;
-            stats_refresh_interval?: components["schemas"]["_types.Duration"];
-        };
-        "indices._types.StorageType": ("fs" | "niofs" | "mmapfs" | "hybridfs") | string;
-        "_types.mapping.TypeMapping": {
-            all_field?: components["schemas"]["_types.mapping.AllField"];
-            date_detection?: boolean;
-            dynamic?: components["schemas"]["_types.mapping.DynamicMapping"];
-            dynamic_date_formats?: string[];
-            dynamic_templates?: {
-                [key: string]: components["schemas"]["_types.mapping.DynamicTemplate"];
-            }[];
-            _field_names?: components["schemas"]["_types.mapping.FieldNamesField"];
-            index_field?: components["schemas"]["_types.mapping.IndexField"];
-            _meta?: components["schemas"]["_types.Metadata"];
-            numeric_detection?: boolean;
-            properties?: {
-                [key: string]: components["schemas"]["_types.mapping.Property"];
-            };
-            _routing?: components["schemas"]["_types.mapping.RoutingField"];
-            _size?: components["schemas"]["_types.mapping.SizeField"];
-            _source?: components["schemas"]["_types.mapping.SourceField"];
-            runtime?: {
-                [key: string]: components["schemas"]["_types.mapping.RuntimeField"];
-            };
-            enabled?: boolean;
-            subobjects?: components["schemas"]["_types.mapping.Subobjects"];
-            _data_stream_timestamp?: components["schemas"]["_types.mapping.DataStreamTimestamp"];
-        };
-        "_types.mapping.AllField": {
-            analyzer: string;
-            enabled: boolean;
-            omit_norms: boolean;
-            search_analyzer: string;
-            similarity: string;
-            store: boolean;
-            store_term_vector_offsets: boolean;
-            store_term_vector_payloads: boolean;
-            store_term_vector_positions: boolean;
-            store_term_vectors: boolean;
-        };
-        /** @enum {string} */
-        "_types.mapping.DynamicMapping": "strict" | "runtime" | "true" | "false";
-        "_types.mapping.DynamicTemplate": {
-            match?: string | string[];
-            path_match?: string | string[];
-            unmatch?: string | string[];
-            path_unmatch?: string | string[];
-            match_mapping_type?: string | string[];
-            unmatch_mapping_type?: string | string[];
-            match_pattern?: components["schemas"]["_types.mapping.MatchType"];
-        } & {
-            mapping?: components["schemas"]["_types.mapping.Property"];
-            runtime?: components["schemas"]["_types.mapping.RuntimeField"];
-        };
-        "_types.mapping.Property": components["schemas"]["_types.mapping.BinaryProperty"] | components["schemas"]["_types.mapping.BooleanProperty"] | components["schemas"]["_types.mapping.DynamicProperty"] | components["schemas"]["_types.mapping.JoinProperty"] | components["schemas"]["_types.mapping.KeywordProperty"] | components["schemas"]["_types.mapping.MatchOnlyTextProperty"] | components["schemas"]["_types.mapping.PercolatorProperty"] | components["schemas"]["_types.mapping.RankFeatureProperty"] | components["schemas"]["_types.mapping.RankFeaturesProperty"] | components["schemas"]["_types.mapping.SearchAsYouTypeProperty"] | components["schemas"]["_types.mapping.TextProperty"] | components["schemas"]["_types.mapping.VersionProperty"] | components["schemas"]["_types.mapping.WildcardProperty"] | components["schemas"]["_types.mapping.DateNanosProperty"] | components["schemas"]["_types.mapping.DateProperty"] | components["schemas"]["_types.mapping.AggregateMetricDoubleProperty"] | components["schemas"]["_types.mapping.DenseVectorProperty"] | components["schemas"]["_types.mapping.FlattenedProperty"] | components["schemas"]["_types.mapping.NestedProperty"] | components["schemas"]["_types.mapping.ObjectProperty"] | components["schemas"]["_types.mapping.PassthroughObjectProperty"] | components["schemas"]["_types.mapping.RankVectorProperty"] | components["schemas"]["_types.mapping.SemanticTextProperty"] | components["schemas"]["_types.mapping.SparseVectorProperty"] | components["schemas"]["_types.mapping.CompletionProperty"] | components["schemas"]["_types.mapping.ConstantKeywordProperty"] | components["schemas"]["_types.mapping.CountedKeywordProperty"] | components["schemas"]["_types.mapping.FieldAliasProperty"] | components["schemas"]["_types.mapping.HistogramProperty"] | components["schemas"]["_types.mapping.IpProperty"] | components["schemas"]["_types.mapping.Murmur3HashProperty"] | components["schemas"]["_types.mapping.TokenCountProperty"] | components["schemas"]["_types.mapping.GeoPointProperty"] | components["schemas"]["_types.mapping.GeoShapeProperty"] | components["schemas"]["_types.mapping.PointProperty"] | components["schemas"]["_types.mapping.ShapeProperty"] | components["schemas"]["_types.mapping.ByteNumberProperty"] | components["schemas"]["_types.mapping.DoubleNumberProperty"] | components["schemas"]["_types.mapping.FloatNumberProperty"] | components["schemas"]["_types.mapping.HalfFloatNumberProperty"] | components["schemas"]["_types.mapping.IntegerNumberProperty"] | components["schemas"]["_types.mapping.LongNumberProperty"] | components["schemas"]["_types.mapping.ScaledFloatNumberProperty"] | components["schemas"]["_types.mapping.ShortNumberProperty"] | components["schemas"]["_types.mapping.UnsignedLongNumberProperty"] | components["schemas"]["_types.mapping.DateRangeProperty"] | components["schemas"]["_types.mapping.DoubleRangeProperty"] | components["schemas"]["_types.mapping.FloatRangeProperty"] | components["schemas"]["_types.mapping.IntegerRangeProperty"] | components["schemas"]["_types.mapping.IpRangeProperty"] | components["schemas"]["_types.mapping.LongRangeProperty"] | components["schemas"]["_types.mapping.IcuCollationProperty"];
-        "_types.mapping.BinaryProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            /** @enum {string} */
-            type: "binary";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.BinaryProperty";
-        };
-        "_types.mapping.DocValuesPropertyBase": components["schemas"]["_types.mapping.CorePropertyBase"] & {
-            doc_values?: boolean;
-        };
-        "_types.mapping.CorePropertyBase": components["schemas"]["_types.mapping.PropertyBase"] & {
-            copy_to?: components["schemas"]["_types.Fields"];
-            store?: boolean;
-        };
-        "_types.mapping.PropertyBase": {
-            /** @description Metadata about the field. */
-            meta?: {
-                [key: string]: string;
-            };
-            properties?: {
-                [key: string]: components["schemas"]["_types.mapping.Property"];
-            };
-            ignore_above?: number;
-            dynamic?: components["schemas"]["_types.mapping.DynamicMapping"];
-            fields?: {
-                [key: string]: components["schemas"]["_types.mapping.Property"];
-            };
-            synthetic_source_keep?: components["schemas"]["_types.mapping.SyntheticSourceKeepEnum"];
-        };
-        /** @enum {string} */
-        "_types.mapping.SyntheticSourceKeepEnum": "none" | "arrays" | "all";
-        "_types.mapping.BooleanProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            fielddata?: components["schemas"]["indices._types.NumericFielddata"];
-            index?: boolean;
-            null_value?: boolean;
-            ignore_malformed?: boolean;
-            script?: components["schemas"]["_types.Script"];
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            /** @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false. */
-            time_series_dimension?: boolean;
-            /** @enum {string} */
-            type: "boolean";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.BooleanProperty";
-        };
-        "indices._types.NumericFielddata": {
-            format: components["schemas"]["indices._types.NumericFielddataFormat"];
-        };
-        /** @enum {string} */
-        "indices._types.NumericFielddataFormat": "array" | "disabled";
-        /** @enum {string} */
-        "_types.mapping.OnScriptError": "fail" | "continue";
-        "_types.mapping.DynamicProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            /** @enum {string} */
-            type: "{dynamic_type}";
-            enabled?: boolean;
-            null_value?: components["schemas"]["_types.FieldValue"];
-            boost?: number;
-            coerce?: boolean;
-            script?: components["schemas"]["_types.Script"];
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            ignore_malformed?: boolean;
-            time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
-            analyzer?: string;
-            eager_global_ordinals?: boolean;
-            index?: boolean;
-            index_options?: components["schemas"]["_types.mapping.IndexOptions"];
-            index_phrases?: boolean;
-            index_prefixes?: components["schemas"]["_types.mapping.TextIndexPrefixes"] | (string | null);
-            norms?: boolean;
-            position_increment_gap?: number;
-            search_analyzer?: string;
-            search_quote_analyzer?: string;
-            term_vector?: components["schemas"]["_types.mapping.TermVectorOption"];
-            format?: string;
-            precision_step?: number;
-            locale?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DynamicProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.TimeSeriesMetricType": "gauge" | "counter" | "summary" | "histogram" | "position";
-        /** @enum {string} */
-        "_types.mapping.IndexOptions": "docs" | "freqs" | "positions" | "offsets";
-        "_types.mapping.TextIndexPrefixes": {
-            max_chars: number;
-            min_chars: number;
-        };
-        /** @enum {string} */
-        "_types.mapping.TermVectorOption": "no" | "yes" | "with_offsets" | "with_positions" | "with_positions_offsets" | "with_positions_offsets_payloads" | "with_positions_payloads";
-        "_types.mapping.JoinProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            relations?: {
-                [key: string]: components["schemas"]["_types.RelationName"] | components["schemas"]["_types.RelationName"][];
-            };
-            eager_global_ordinals?: boolean;
-            /** @enum {string} */
-            type: "join";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.JoinProperty";
-        };
-        "_types.mapping.KeywordProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            eager_global_ordinals?: boolean;
-            index?: boolean;
-            index_options?: components["schemas"]["_types.mapping.IndexOptions"];
-            script?: components["schemas"]["_types.Script"];
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            normalizer?: string;
-            norms?: boolean;
-            null_value?: string;
-            similarity?: string | (string | null);
-            split_queries_on_whitespace?: boolean;
-            /** @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false. */
-            time_series_dimension?: boolean;
-            /** @enum {string} */
-            type: "keyword";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.KeywordProperty";
-        };
-        /**
-         * @description A variant of text that trades scoring and efficiency of positional queries for space efficiency. This field
-         *     effectively stores data the same way as a text field that only indexes documents (index_options: docs) and
-         *     disables norms (norms: false). Term queries perform as fast if not faster as on text fields, however queries
-         *     that need positions such as the match_phrase query perform slower as they need to look at the _source document
-         *     to verify whether a phrase matches. All queries return constant scores that are equal to 1.0.
-         */
-        "_types.mapping.MatchOnlyTextProperty": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.MatchOnlyTextProperty";
-            /**
-             * @description Multi-fields allow the same string value to be indexed in multiple ways for different purposes, such as one
-             *     field for search and a multi-field for sorting and aggregations, or the same string value analyzed by different analyzers.
-             */
-            fields?: {
-                [key: string]: components["schemas"]["_types.mapping.Property"];
-            };
-            /** @description Metadata about the field. */
-            meta?: {
-                [key: string]: string;
-            };
-            copy_to?: components["schemas"]["_types.Fields"];
-        };
-        "_types.mapping.PercolatorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            /** @enum {string} */
-            type: "percolator";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.PercolatorProperty";
-        };
-        "_types.mapping.RankFeatureProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            positive_score_impact?: boolean;
-            /** @enum {string} */
-            type: "rank_feature";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.RankFeatureProperty";
-        };
-        "_types.mapping.RankFeaturesProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            positive_score_impact?: boolean;
-            /** @enum {string} */
-            type: "rank_features";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.RankFeaturesProperty";
-        };
-        "_types.mapping.SearchAsYouTypeProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
-            analyzer?: string;
-            index?: boolean;
-            index_options?: components["schemas"]["_types.mapping.IndexOptions"];
-            max_shingle_size?: number;
-            norms?: boolean;
-            search_analyzer?: string;
-            search_quote_analyzer?: string;
-            similarity?: string | (string | null);
-            term_vector?: components["schemas"]["_types.mapping.TermVectorOption"];
-            /** @enum {string} */
-            type: "search_as_you_type";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.SearchAsYouTypeProperty";
-        };
-        "_types.mapping.TextProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
-            analyzer?: string;
-            boost?: number;
-            eager_global_ordinals?: boolean;
-            fielddata?: boolean;
-            fielddata_frequency_filter?: components["schemas"]["indices._types.FielddataFrequencyFilter"];
-            index?: boolean;
-            index_options?: components["schemas"]["_types.mapping.IndexOptions"];
-            index_phrases?: boolean;
-            index_prefixes?: components["schemas"]["_types.mapping.TextIndexPrefixes"] | (string | null);
-            norms?: boolean;
-            position_increment_gap?: number;
-            search_analyzer?: string;
-            search_quote_analyzer?: string;
-            similarity?: string | (string | null);
-            term_vector?: components["schemas"]["_types.mapping.TermVectorOption"];
-            /** @enum {string} */
-            type: "text";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.TextProperty";
-        };
-        "indices._types.FielddataFrequencyFilter": {
-            max: number;
-            min: number;
-            min_segment_size: number;
-        };
-        "_types.mapping.VersionProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            /** @enum {string} */
-            type: "version";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.VersionProperty";
-        };
-        "_types.mapping.WildcardProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            /** @enum {string} */
-            type: "wildcard";
-            null_value?: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.WildcardProperty";
-        };
-        "_types.mapping.DateNanosProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            format?: string;
-            ignore_malformed?: boolean;
-            index?: boolean;
-            script?: components["schemas"]["_types.Script"];
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            null_value?: components["schemas"]["_types.DateTime"];
-            precision_step?: number;
-            /** @enum {string} */
-            type: "date_nanos";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DateNanosProperty";
-        };
-        "_types.mapping.DateProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            fielddata?: components["schemas"]["indices._types.NumericFielddata"];
-            format?: string;
-            ignore_malformed?: boolean;
-            index?: boolean;
-            script?: components["schemas"]["_types.Script"];
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            null_value?: components["schemas"]["_types.DateTime"];
-            precision_step?: number;
-            locale?: string;
-            /** @enum {string} */
-            type: "date";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DateProperty";
-        };
-        "_types.mapping.AggregateMetricDoubleProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            /** @enum {string} */
-            type: "aggregate_metric_double";
-            default_metric: string;
-            ignore_malformed?: boolean;
-            metrics: string[];
-            time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.AggregateMetricDoubleProperty";
-        };
-        "_types.mapping.DenseVectorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            /** @enum {string} */
-            type: "dense_vector";
-            /**
-             * @description Number of vector dimensions. Can't exceed `4096`. If `dims` is not specified, it will be set to the length of
-             *     the first vector added to the field.
-             */
-            dims?: number;
-            element_type?: components["schemas"]["_types.mapping.DenseVectorElementType"];
-            /**
-             * @description If `true`, you can search this field using the kNN search API.
-             * @default true
-             */
-            index: boolean;
-            index_options?: components["schemas"]["_types.mapping.DenseVectorIndexOptions"];
-            similarity?: components["schemas"]["_types.mapping.DenseVectorSimilarity"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DenseVectorProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.DenseVectorElementType": "bit" | "byte" | "float";
-        "_types.mapping.DenseVectorIndexOptions": {
-            /**
-             * @description The confidence interval to use when quantizing the vectors. Can be any value between and including `0.90` and
-             *     `1.0` or exactly `0`. When the value is `0`, this indicates that dynamic quantiles should be calculated for
-             *     optimized quantization. When between `0.90` and `1.0`, this value restricts the values used when calculating
-             *     the quantization thresholds.
-             *
-             *     For example, a value of `0.95` will only use the middle `95%` of the values when calculating the quantization
-             *     thresholds (e.g. the highest and lowest `2.5%` of values will be ignored).
-             *
-             *     Defaults to `1/(dims + 1)` for `int8` quantized vectors and `0` for `int4` for dynamic quantile calculation.
-             *
-             *     Only applicable to `int8_hnsw`, `int4_hnsw`, `int8_flat`, and `int4_flat` index types.
-             */
-            confidence_interval?: number;
-            /**
-             * @description The number of candidates to track while assembling the list of nearest neighbors for each new node.
-             *
-             *     Only applicable to `hnsw`, `int8_hnsw`, `bbq_hnsw`, and `int4_hnsw` index types.
-             * @default 100
-             */
-            ef_construction: number;
-            /**
-             * @description The number of neighbors each node will be connected to in the HNSW graph.
-             *
-             *     Only applicable to `hnsw`, `int8_hnsw`, `bbq_hnsw`, and `int4_hnsw` index types.
-             * @default 16
-             */
-            m: number;
-            type: components["schemas"]["_types.mapping.DenseVectorIndexOptionsType"];
-        };
-        /** @enum {string} */
-        "_types.mapping.DenseVectorIndexOptionsType": "bbq_flat" | "bbq_hnsw" | "flat" | "hnsw" | "int4_flat" | "int4_hnsw" | "int8_flat" | "int8_hnsw";
-        /** @enum {string} */
-        "_types.mapping.DenseVectorSimilarity": "cosine" | "dot_product" | "l2_norm" | "max_inner_product";
-        "_types.mapping.FlattenedProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            boost?: number;
-            depth_limit?: number;
-            doc_values?: boolean;
-            eager_global_ordinals?: boolean;
-            index?: boolean;
-            index_options?: components["schemas"]["_types.mapping.IndexOptions"];
-            null_value?: string;
-            similarity?: string;
-            split_queries_on_whitespace?: boolean;
-            time_series_dimensions?: string[];
-            /** @enum {string} */
-            type: "flattened";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.FlattenedProperty";
-        };
-        "_types.mapping.NestedProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
-            enabled?: boolean;
-            include_in_parent?: boolean;
-            include_in_root?: boolean;
-            /** @enum {string} */
-            type: "nested";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.NestedProperty";
-        };
-        "_types.mapping.ObjectProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
-            enabled?: boolean;
-            subobjects?: components["schemas"]["_types.mapping.Subobjects"];
-            /** @enum {string} */
-            type?: "object";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.ObjectProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.Subobjects": "true" | "false";
-        "_types.mapping.PassthroughObjectProperty": components["schemas"]["_types.mapping.CorePropertyBase"] & {
-            /** @enum {string} */
-            type?: "passthrough";
-            enabled?: boolean;
-            priority?: number;
-            time_series_dimension?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.PassthroughObjectProperty";
-        };
-        /** @description Technical preview */
-        "_types.mapping.RankVectorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            /** @enum {string} */
-            type: "rank_vectors";
-            element_type?: components["schemas"]["_types.mapping.RankVectorElementType"];
-            dims?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.RankVectorProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.RankVectorElementType": "byte" | "float" | "bit";
-        "_types.mapping.SemanticTextProperty": {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.SemanticTextProperty";
-            meta?: {
-                [key: string]: string;
-            };
-            inference_id?: components["schemas"]["_types.Id"];
-            search_inference_id?: components["schemas"]["_types.Id"];
-        };
-        "_types.mapping.SparseVectorProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            store?: boolean;
-            /** @enum {string} */
-            type: "sparse_vector";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.SparseVectorProperty";
-        };
-        "_types.mapping.CompletionProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            analyzer?: string;
-            contexts?: components["schemas"]["_types.mapping.SuggestContext"][];
-            max_input_length?: number;
-            preserve_position_increments?: boolean;
-            preserve_separators?: boolean;
-            search_analyzer?: string;
-            /** @enum {string} */
-            type: "completion";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.CompletionProperty";
-        };
-        "_types.mapping.SuggestContext": {
-            name: components["schemas"]["_types.Name"];
-            path?: components["schemas"]["_types.Field"];
-            type: string;
-            precision?: number | string;
-        };
-        "_types.mapping.ConstantKeywordProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            value?: Record<string, never>;
-            /** @enum {string} */
-            type: "constant_keyword";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.ConstantKeywordProperty";
-        };
-        "_types.mapping.CountedKeywordProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            /** @enum {string} */
-            type: "counted_keyword";
-            index?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.CountedKeywordProperty";
-        };
-        "_types.mapping.FieldAliasProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            path?: components["schemas"]["_types.Field"];
-            /** @enum {string} */
-            type: "alias";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.FieldAliasProperty";
-        };
-        "_types.mapping.HistogramProperty": components["schemas"]["_types.mapping.PropertyBase"] & {
-            ignore_malformed?: boolean;
-            /** @enum {string} */
-            type: "histogram";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.HistogramProperty";
-        };
-        "_types.mapping.IpProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            index?: boolean;
-            ignore_malformed?: boolean;
-            null_value?: string;
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            script?: components["schemas"]["_types.Script"];
-            /** @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false. */
-            time_series_dimension?: boolean;
-            /** @enum {string} */
-            type: "ip";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.IpProperty";
-        };
-        "_types.mapping.Murmur3HashProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            /** @enum {string} */
-            type: "murmur3";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.Murmur3HashProperty";
-        };
-        "_types.mapping.TokenCountProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            analyzer?: string;
-            boost?: number;
-            index?: boolean;
-            null_value?: number;
-            enable_position_increments?: boolean;
-            /** @enum {string} */
-            type: "token_count";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.TokenCountProperty";
-        };
-        "_types.mapping.GeoPointProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            ignore_malformed?: boolean;
-            ignore_z_value?: boolean;
-            null_value?: components["schemas"]["_types.GeoLocation"];
-            index?: boolean;
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            script?: components["schemas"]["_types.Script"];
-            /** @enum {string} */
-            type: "geo_point";
-            time_series_metric?: components["schemas"]["_types.mapping.GeoPointMetricType"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.GeoPointProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.GeoPointMetricType": "gauge" | "counter" | "position";
-        /**
-         * @description The `geo_shape` data type facilitates the indexing of and searching with arbitrary geo shapes such as rectangles
-         *     and polygons.
-         */
-        "_types.mapping.GeoShapeProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            coerce?: boolean;
-            ignore_malformed?: boolean;
-            ignore_z_value?: boolean;
-            index?: boolean;
-            orientation?: components["schemas"]["_types.mapping.GeoOrientation"];
-            strategy?: components["schemas"]["_types.mapping.GeoStrategy"];
-            /** @enum {string} */
-            type: "geo_shape";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.GeoShapeProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.GeoOrientation": "right" | "RIGHT" | "counterclockwise" | "ccw" | "left" | "LEFT" | "clockwise" | "cw";
-        /** @enum {string} */
-        "_types.mapping.GeoStrategy": "recursive" | "term";
-        "_types.mapping.PointProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            ignore_malformed?: boolean;
-            ignore_z_value?: boolean;
-            null_value?: string;
-            /** @enum {string} */
-            type: "point";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.PointProperty";
-        };
-        /**
-         * @description The `shape` data type facilitates the indexing of and searching with arbitrary `x, y` cartesian shapes such as
-         *     rectangles and polygons.
-         */
-        "_types.mapping.ShapeProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            coerce?: boolean;
-            ignore_malformed?: boolean;
-            ignore_z_value?: boolean;
-            orientation?: components["schemas"]["_types.mapping.GeoOrientation"];
-            /** @enum {string} */
-            type: "shape";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.ShapeProperty";
-        };
-        "_types.mapping.ByteNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "byte";
-            null_value?: components["schemas"]["_types.byte"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.ByteNumberProperty";
-        };
-        "_types.byte": number;
-        "_types.mapping.NumberPropertyBase": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            coerce?: boolean;
-            ignore_malformed?: boolean;
-            index?: boolean;
-            on_script_error?: components["schemas"]["_types.mapping.OnScriptError"];
-            script?: components["schemas"]["_types.Script"];
-            time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
-            /**
-             * @description For internal use by Elastic only. Marks the field as a time series dimension. Defaults to false.
-             * @default false
-             */
-            time_series_dimension: boolean;
-        };
-        "_types.mapping.DoubleNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "double";
-            null_value?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DoubleNumberProperty";
-        };
-        "_types.mapping.FloatNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "float";
-            null_value?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.FloatNumberProperty";
-        };
-        "_types.mapping.HalfFloatNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "half_float";
-            null_value?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.HalfFloatNumberProperty";
-        };
-        "_types.mapping.IntegerNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "integer";
-            null_value?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.IntegerNumberProperty";
-        };
-        "_types.mapping.LongNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "long";
-            null_value?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.LongNumberProperty";
-        };
-        "_types.mapping.ScaledFloatNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "scaled_float";
-            null_value?: number;
-            scaling_factor?: number;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.ScaledFloatNumberProperty";
-        };
-        "_types.mapping.ShortNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "short";
-            null_value?: components["schemas"]["_types.short"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.ShortNumberProperty";
-        };
-        "_types.short": number;
-        "_types.mapping.UnsignedLongNumberProperty": components["schemas"]["_types.mapping.NumberPropertyBase"] & {
-            /** @enum {string} */
-            type: "unsigned_long";
-            null_value?: components["schemas"]["_types.ulong"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.UnsignedLongNumberProperty";
-        };
-        "_types.ulong": number;
-        "_types.mapping.DateRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
-            format?: string;
-            /** @enum {string} */
-            type: "date_range";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DateRangeProperty";
-        };
-        "_types.mapping.RangePropertyBase": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            boost?: number;
-            coerce?: boolean;
-            index?: boolean;
-        };
-        "_types.mapping.DoubleRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
-            /** @enum {string} */
-            type: "double_range";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.DoubleRangeProperty";
-        };
-        "_types.mapping.FloatRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
-            /** @enum {string} */
-            type: "float_range";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.FloatRangeProperty";
-        };
-        "_types.mapping.IntegerRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
-            /** @enum {string} */
-            type: "integer_range";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.IntegerRangeProperty";
-        };
-        "_types.mapping.IpRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
-            /** @enum {string} */
-            type: "ip_range";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.IpRangeProperty";
-        };
-        "_types.mapping.LongRangeProperty": components["schemas"]["_types.mapping.RangePropertyBase"] & {
-            /** @enum {string} */
-            type: "long_range";
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.LongRangeProperty";
-        };
-        "_types.mapping.IcuCollationProperty": components["schemas"]["_types.mapping.DocValuesPropertyBase"] & {
-            /** @enum {string} */
-            type: "icu_collation_keyword";
-            norms?: boolean;
-            index_options?: components["schemas"]["_types.mapping.IndexOptions"];
-            /** @description Should the field be searchable? */
-            index?: boolean;
-            /** @description Accepts a string value which is substituted for any explicit null values. Defaults to null, which means the field is treated as missing. */
-            null_value?: string;
-            rules?: string;
-            language?: string;
-            country?: string;
-            variant?: string;
-            strength?: components["schemas"]["_types.analysis.IcuCollationStrength"];
-            decomposition?: components["schemas"]["_types.analysis.IcuCollationDecomposition"];
-            alternate?: components["schemas"]["_types.analysis.IcuCollationAlternate"];
-            case_level?: boolean;
-            case_first?: components["schemas"]["_types.analysis.IcuCollationCaseFirst"];
-            numeric?: boolean;
-            variable_top?: string;
-            hiragana_quaternary_mode?: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "_types.mapping.IcuCollationProperty";
-        };
-        /** @enum {string} */
-        "_types.mapping.MatchType": "simple" | "regex";
-        "_types.mapping.FieldNamesField": {
-            enabled: boolean;
-        };
-        "_types.mapping.IndexField": {
-            enabled: boolean;
-        };
-        "_types.mapping.RoutingField": {
-            required: boolean;
-        };
-        "_types.mapping.SizeField": {
-            enabled: boolean;
-        };
-        "_types.mapping.SourceField": {
-            compress?: boolean;
-            compress_threshold?: string;
-            enabled?: boolean;
-            excludes?: string[];
-            includes?: string[];
-            mode?: components["schemas"]["_types.mapping.SourceFieldMode"];
-        };
-        /** @enum {string} */
-        "_types.mapping.SourceFieldMode": "disabled" | "stored" | "synthetic";
-        "_types.mapping.DataStreamTimestamp": {
-            enabled: boolean;
-        };
-        /**
-         * @description Data stream lifecycle with rollover can be used to display the configuration including the default rollover conditions,
-         *     if asked.
-         */
-        "indices._types.DataStreamLifecycleWithRollover": components["schemas"]["indices._types.DataStreamLifecycle"] & {
-            rollover?: components["schemas"]["indices._types.DataStreamLifecycleRolloverConditions"];
-        };
-        "indices._types.DataStreamLifecycleRolloverConditions": {
-            min_age?: components["schemas"]["_types.Duration"];
-            max_age?: string;
-            min_docs?: number;
-            max_docs?: number;
-            min_size?: components["schemas"]["_types.ByteSize"];
-            max_size?: components["schemas"]["_types.ByteSize"];
-            min_primary_shard_size?: components["schemas"]["_types.ByteSize"];
-            max_primary_shard_size?: components["schemas"]["_types.ByteSize"];
-            min_primary_shard_docs?: number;
-            max_primary_shard_docs?: number;
-        };
-        /** @description Data stream lifecycle denotes that a data stream is managed by the data stream lifecycle and contains the configuration. */
-        "indices._types.DataStreamLifecycle": {
-            data_retention?: components["schemas"]["_types.Duration"];
-            downsampling?: components["schemas"]["indices._types.DataStreamLifecycleDownsampling"];
-            /**
-             * @description If defined, it turns data stream lifecycle on/off (`true`/`false`) for this data stream. A data stream lifecycle
-             *     that's disabled (enabled: `false`) will have no effect on the data stream.
-             * @default true
-             */
-            enabled: boolean;
-        };
-        "indices._types.DataStreamLifecycleDownsampling": {
-            /** @description The list of downsampling rounds to execute as part of this downsampling configuration */
-            rounds: components["schemas"]["indices._types.DownsamplingRound"][];
-        };
-        "indices._types.DownsamplingRound": {
-            after: components["schemas"]["_types.Duration"];
-            config: components["schemas"]["indices._types.DownsampleConfig"];
-        };
-        "indices._types.DownsampleConfig": {
-            fixed_interval: components["schemas"]["_types.DurationLarge"];
-        };
-        "indices._types.IndexState": {
-            aliases?: {
-                [key: string]: components["schemas"]["indices._types.Alias"];
-            };
-            mappings?: components["schemas"]["_types.mapping.TypeMapping"];
-            settings?: components["schemas"]["indices._types.IndexSettings"];
-            defaults?: components["schemas"]["indices._types.IndexSettings"];
-            data_stream?: components["schemas"]["_types.DataStreamName"];
-            lifecycle?: components["schemas"]["indices._types.DataStreamLifecycle"];
-        };
-        "indices._types.Alias": {
-            filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-            index_routing?: components["schemas"]["_types.Routing"];
-            /**
-             * @description If `true`, the alias is hidden.
-             *     All indices for the alias must have the same `is_hidden` value.
-             * @default false
-             */
-            is_hidden: boolean;
-            /**
-             * @description If `true`, the index is the write index for the alias.
-             * @default false
-             */
-            is_write_index: boolean;
-            routing?: components["schemas"]["_types.Routing"];
-            search_routing?: components["schemas"]["_types.Routing"];
-        };
-        "_types.DataStreamName": string;
-        /** @enum {string} */
-        "esql._types.EsqlFormat": "csv" | "json" | "tsv" | "txt" | "yaml" | "cbor" | "smile" | "arrow";
-        "esql._types.TableValuesContainer": {
-            integer?: components["schemas"]["esql._types.TableValuesIntegerValue"][];
-            keyword?: components["schemas"]["esql._types.TableValuesKeywordValue"][];
-            long?: components["schemas"]["esql._types.TableValuesLongValue"][];
-            double?: components["schemas"]["esql._types.TableValuesLongDouble"][];
-        };
-        "esql._types.TableValuesIntegerValue": number | number[];
-        "esql._types.TableValuesKeywordValue": string | string[];
-        "esql._types.TableValuesLongValue": number | number[];
-        "esql._types.TableValuesLongDouble": number | number[];
-        "esql._types.AsyncEsqlResult": components["schemas"]["esql._types.EsqlResult"] & {
-            /**
-             * @description The ID of the async query, to be used in subsequent requests to check the status or retrieve results.
-             *
-             *     Also available in the `X-Elasticsearch-Async-Id` HTTP header.
-             */
-            id?: string;
-            /**
-             * @description Indicates whether the async query is still running or has completed.
-             *
-             *     Also available in the `X-Elasticsearch-Async-Is-Running` HTTP header.
-             */
-            is_running: boolean;
-        };
-        "esql._types.EsqlResult": {
-            took?: components["schemas"]["_types.DurationValueUnitMillis"];
-            is_partial?: boolean;
-            all_columns?: components["schemas"]["esql._types.EsqlColumnInfo"][];
-            columns: components["schemas"]["esql._types.EsqlColumnInfo"][];
-            values: components["schemas"]["_types.FieldValue"][][];
-            _clusters?: components["schemas"]["esql._types.EsqlClusterInfo"];
-            /**
-             * @description Profiling information. Present if `profile` was `true` in the request.
-             *     The contents of this field are currently unstable.
-             */
-            profile?: Record<string, never>;
-        };
-        "esql._types.EsqlColumnInfo": {
-            name: string;
-            type: string;
-        };
-        "esql._types.EsqlClusterInfo": {
-            total: number;
-            successful: number;
-            running: number;
-            skipped: number;
-            partial: number;
-            failed: number;
-            details: {
-                [key: string]: components["schemas"]["esql._types.EsqlClusterDetails"];
-            };
-        };
-        "esql._types.EsqlClusterDetails": {
-            status: components["schemas"]["esql._types.EsqlClusterStatus"];
-            indices: string;
-            took?: components["schemas"]["_types.DurationValueUnitMillis"];
-            _shards?: components["schemas"]["esql._types.EsqlShardInfo"];
-            failures?: components["schemas"]["esql._types.EsqlShardFailure"][];
-        };
-        /** @enum {string} */
-        "esql._types.EsqlClusterStatus": "running" | "successful" | "partial" | "skipped" | "failed";
-        "esql._types.EsqlShardInfo": {
-            total: number;
-            successful?: number;
-            skipped?: number;
-            failed?: number;
-        };
-        "esql._types.EsqlShardFailure": {
-            shard: number;
-            index: components["schemas"]["_types.IndexName"] | (string | null);
-            node?: components["schemas"]["_types.NodeId"];
-            reason: components["schemas"]["_types.ErrorCause"];
-        };
-        "_global.field_caps.FieldCapability": {
-            /** @description Whether this field can be aggregated on all indices. */
-            aggregatable: boolean;
-            indices?: components["schemas"]["_types.Indices"];
-            meta?: components["schemas"]["_types.Metadata"];
-            non_aggregatable_indices?: components["schemas"]["_types.Indices"];
-            non_searchable_indices?: components["schemas"]["_types.Indices"];
-            /** @description Whether this field is indexed for search on all indices. */
-            searchable: boolean;
-            type: string;
-            /** @description Whether this field is registered as a metadata field. */
-            metadata_field?: boolean;
-            /** @description Whether this field is used as a time series dimension. */
-            time_series_dimension?: boolean;
-            time_series_metric?: components["schemas"]["_types.mapping.TimeSeriesMetricType"];
-            /**
-             * @description If this list is present in response then some indices have the
-             *     field marked as a dimension and other indices, the ones in this list, do not.
-             */
-            non_dimension_indices?: components["schemas"]["_types.IndexName"][];
-            /**
-             * @description The list of indices where this field is present if these indices
-             *     don’t have the same `time_series_metric` value for this field.
-             */
-            metric_conflicts_indices?: components["schemas"]["_types.IndexName"][];
-        };
-        "_types.IndicesResponseBase": components["schemas"]["_types.AcknowledgedResponseBase"] & {
-            _shards?: components["schemas"]["_types.ShardStatistics"];
-        };
-        "_types.DataStreamNames": components["schemas"]["_types.DataStreamName"] | components["schemas"]["_types.DataStreamName"][];
-        "indices.get.Features": components["schemas"]["indices.get.Feature"] | components["schemas"]["indices.get.Feature"][];
-        /** @enum {string} */
-        "indices.get.Feature": "aliases" | "mappings" | "settings";
-        "indices._types.DataStream": {
-            _meta?: components["schemas"]["_types.Metadata"];
-            /** @description If `true`, the data stream allows custom routing on write request. */
-            allow_custom_routing?: boolean;
-            failure_store?: components["schemas"]["indices._types.FailureStore"];
-            /** @description Current generation for the data stream. This number acts as a cumulative count of the stream’s rollovers, starting at 1. */
-            generation: number;
-            /** @description If `true`, the data stream is hidden. */
-            hidden: boolean;
-            ilm_policy?: components["schemas"]["_types.Name"];
-            next_generation_managed_by: components["schemas"]["indices._types.ManagedBy"];
-            /** @description Indicates if ILM should take precedence over DSL in case both are configured to managed this data stream. */
-            prefer_ilm: boolean;
-            /**
-             * @description Array of objects containing information about the data stream’s backing indices.
-             *     The last item in this array contains information about the stream’s current write index.
-             */
-            indices: components["schemas"]["indices._types.DataStreamIndex"][];
-            lifecycle?: components["schemas"]["indices._types.DataStreamLifecycleWithRollover"];
-            name: components["schemas"]["_types.DataStreamName"];
-            /** @description If `true`, the data stream is created and managed by cross-cluster replication and the local cluster can not write into this data stream or change its mappings. */
-            replicated?: boolean;
-            /** @description If `true`, the next write to this data stream will trigger a rollover first and the document will be indexed in the new backing index. If the rollover fails the indexing request will fail too. */
-            rollover_on_write: boolean;
-            status: components["schemas"]["_types.HealthStatus"];
-            /** @description If `true`, the data stream is created and managed by an Elastic stack component and cannot be modified through normal user interaction. */
-            system?: boolean;
-            template: components["schemas"]["_types.Name"];
-            timestamp_field: components["schemas"]["indices._types.DataStreamTimestampField"];
-        };
-        "indices._types.FailureStore": {
-            enabled: boolean;
-            indices: components["schemas"]["indices._types.DataStreamIndex"][];
-            rollover_on_write: boolean;
-        };
-        "indices._types.DataStreamIndex": {
-            index_name: components["schemas"]["_types.IndexName"];
-            index_uuid: components["schemas"]["_types.Uuid"];
-            ilm_policy?: components["schemas"]["_types.Name"];
-            managed_by?: components["schemas"]["indices._types.ManagedBy"];
-            /** @description Indicates if ILM should take precedence over DSL in case both are configured to manage this index. */
-            prefer_ilm?: boolean;
-        };
-        /** @enum {string} */
-        "indices._types.ManagedBy": "Index Lifecycle Management" | "Data stream lifecycle" | "Unmanaged";
-        "indices._types.DataStreamTimestampField": {
-            name: components["schemas"]["_types.Field"];
-        };
-        "indices.get_mapping.IndexMappingRecord": {
-            item?: components["schemas"]["_types.mapping.TypeMapping"];
-            mappings: components["schemas"]["_types.mapping.TypeMapping"];
-        };
-        "indices.resolve_index.ResolveIndexItem": {
-            name: components["schemas"]["_types.Name"];
-            aliases?: string[];
-            attributes: string[];
-            data_stream?: components["schemas"]["_types.DataStreamName"];
-        };
-        "indices.resolve_index.ResolveIndexAliasItem": {
-            name: components["schemas"]["_types.Name"];
-            indices: components["schemas"]["_types.Indices"];
-        };
-        "indices.resolve_index.ResolveIndexDataStreamsItem": {
-            name: components["schemas"]["_types.DataStreamName"];
-            timestamp_field: components["schemas"]["_types.Field"];
-            backing_indices: components["schemas"]["_types.Indices"];
-        };
-        "_types.ElasticsearchVersionInfo": {
-            build_date: components["schemas"]["_types.DateTime"];
-            /** @description The build flavor. For example, `default`. */
-            build_flavor: string;
-            /** @description The Elasticsearch Git commit's SHA hash. */
-            build_hash: string;
-            /** @description Indicates whether the Elasticsearch build was a snapshot. */
-            build_snapshot: boolean;
-            /**
-             * @description The build type that corresponds to how Elasticsearch was installed.
-             *     For example, `docker`, `rpm`, or `tar`.
-             */
-            build_type: string;
-            lucene_version: components["schemas"]["_types.VersionString"];
-            minimum_index_compatibility_version: components["schemas"]["_types.VersionString"];
-            minimum_wire_compatibility_version: components["schemas"]["_types.VersionString"];
-            /**
-             * @description The Elasticsearch version number.
-             *
-             *     ::: IMPORTANT: For Serverless deployments, this static value is always `8.11.0` and is used solely for backward compatibility with legacy clients.
-             *      Serverless environments are versionless and automatically upgraded, so this value can be safely ignored.
-             */
-            number: string;
-        };
+          };
+          /**
+           * @description When set to `true` and performing a cross-cluster query, the response will include an extra `_clusters`
+           *     object with information about the clusters that participated in the search along with info such as shards
+           *     count.
+           * @default false
+           */
+          include_ccs_metadata?: boolean;
+        };
+      };
     };
     responses: {
-        "field_caps-200": {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": {
-                    indices: components["schemas"]["_types.Indices"];
-                    fields: {
-                        [key: string]: {
-                            [key: string]: components["schemas"]["_global.field_caps.FieldCapability"];
-                        };
-                    };
-                };
-            };
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        "indices.get_data_stream-200": {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": {
-                    data_streams: components["schemas"]["indices._types.DataStream"][];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["esql._types.EsqlResult"];
         };
-        "indices.get_mapping-200": {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": {
-                    [key: string]: components["schemas"]["indices.get_mapping.IndexMappingRecord"];
-                };
-            };
-        };
-        "indices.put_mapping-200": {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["_types.IndicesResponseBase"];
-            };
-        };
+      };
     };
+  };
+  "esql-async-query": {
     parameters: {
-        /** @description A comma-separated list of data streams, indices, and aliases used to limit the request. Supports wildcards (*). To target all data streams and indices, omit this parameter or use * or _all. */
-        "field_caps-index": components["schemas"]["_types.Indices"];
+      query?: {
         /**
-         * @description If false, the request returns an error if any wildcard expression, index alias,
-         *     or `_all` value targets only missing or closed indices. This behavior applies even if the request targets other open indices. For example, a request
-         *     targeting `foo*,bar*` returns an error if an index starts with foo but no index starts with bar.
+         * @description The character to use between values within a CSV row.
+         *     It is valid only for the CSV format.
          */
-        "field_caps-allow_no_indices": boolean;
-        /** @description The type of index that wildcard patterns can match. If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams. Supports comma-separated values, such as `open,hidden`. */
-        "field_caps-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
-        /** @description A comma-separated list of fields to retrieve capabilities for. Wildcard (`*`) expressions are supported. */
-        "field_caps-fields": components["schemas"]["_types.Fields"];
-        /** @description If `true`, missing or closed indices are not included in the response. */
-        "field_caps-ignore_unavailable": boolean;
-        /** @description If true, unmapped fields are included in the response. */
-        "field_caps-include_unmapped": boolean;
-        /** @description A comma-separated list of filters to apply to the response. */
-        "field_caps-filters": string;
+        delimiter?: string;
         /**
-         * @description A comma-separated list of field types to include.
-         *     Any fields that do not match one of these types will be excluded from the results.
-         *     It defaults to empty, meaning that all field types are returned.
+         * @description Indicates whether columns that are entirely `null` will be removed from the `columns` and `values` portion of the results.
+         *     If `true`, the response will include an extra section under the name `all_columns` which has the name of all the columns.
          */
-        "field_caps-types": string[];
-        /** @description If false, empty fields are not included in the response. */
-        "field_caps-include_empty_fields": boolean;
+        drop_null_columns?: boolean;
         /**
-         * @description Comma-separated list of data stream names used to limit the request.
-         *     Wildcard (`*`) expressions are supported. If omitted, all data streams are returned.
+         * @description A short version of the Accept header, e.g. json, yaml.
+         *
+         *     `csv`, `tsv`, and `txt` formats will return results in a tabular format, excluding other metadata fields from the response.
+         *
+         *     For async requests, nothing will be returned if the async query doesn't finish within the timeout.
+         *     The query ID and running status are available in the `X-Elasticsearch-Async-Id` and `X-Elasticsearch-Async-Is-Running` HTTP headers of the response, respectively.
          */
-        "indices.get_data_stream-name": components["schemas"]["_types.DataStreamNames"];
+        format?: components["schemas"]["esql._types.EsqlFormat"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description By default, ES|QL returns results as rows. For example, FROM returns each individual document as one row. For the JSON, YAML, CBOR and smile formats, ES|QL can return the results in a columnar fashion where one row represents all the values of a certain column in the results. */
+          columnar?: boolean;
+          filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
+          locale?: string;
+          /** @description To avoid any attempts of hacking or code injection, extract the values in a separate list of parameters. Use question mark placeholders (?) in the query string for each of the parameters. */
+          params?: components["schemas"]["_types.FieldValue"][];
+          /**
+           * @description If provided and `true` the response will include an extra `profile` object
+           *     with information on how the query was executed. This information is for human debugging
+           *     and its format can change at any time but it can give some insight into the performance
+           *     of each part of the query.
+           */
+          profile?: boolean;
+          /** @description The ES|QL query API accepts an ES|QL query string in the query parameter, runs it, and returns the results. */
+          query: string;
+          /**
+           * @description Tables to use with the LOOKUP operation. The top level key is the table
+           *     name and the next level key is the column name.
+           */
+          tables?: {
+            [key: string]: {
+              [key: string]: components["schemas"]["esql._types.TableValuesContainer"];
+            };
+          };
+          /**
+           * @description When set to `true` and performing a cross-cluster query, the response will include an extra `_clusters`
+           *     object with information about the clusters that participated in the search along with info such as shards
+           *     count.
+           * @default false
+           */
+          include_ccs_metadata?: boolean;
+          wait_for_completion_timeout?: components["schemas"]["_types.Duration"];
+          keep_alive?: components["schemas"]["_types.Duration"];
+          /**
+           * @description Indicates whether the query and its results are stored in the cluster.
+           *     If false, the query and its results are stored in the cluster only if the request does not complete during the period set by the `wait_for_completion_timeout` parameter.
+           * @default false
+           */
+          keep_on_completion?: boolean;
+        };
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["esql._types.AsyncEsqlResult"];
+        };
+      };
+    };
+  };
+  "esql-async-query-get": {
+    parameters: {
+      query?: {
         /**
-         * @description Type of data stream that wildcard patterns can match.
+         * @description Indicates whether columns that are entirely `null` will be removed from the `columns` and `values` portion of the results.
+         *     If `true`, the response will include an extra section under the name `all_columns` which has the name of all the columns.
+         */
+        drop_null_columns?: boolean;
+        /** @description A short version of the Accept header, for example `json` or `yaml`. */
+        format?: components["schemas"]["esql._types.EsqlFormat"];
+        /**
+         * @description The period for which the query and its results are stored in the cluster.
+         *     When this period expires, the query and its results are deleted, even if the query is still ongoing.
+         */
+        keep_alive?: components["schemas"]["_types.Duration"];
+        /**
+         * @description The period to wait for the request to finish.
+         *     By default, the request waits for complete query results.
+         *     If the request completes during the period specified in this parameter, complete query results are returned.
+         *     Otherwise, the response returns an `is_running` value of `true` and no results.
+         */
+        wait_for_completion_timeout?: components["schemas"]["_types.Duration"];
+      };
+      header?: never;
+      path: {
+        /**
+         * @description The unique identifier of the query.
+         *     A query ID is provided in the ES|QL async query API response for a query that does not complete in the designated time.
+         *     A query ID is also provided when the request was submitted with the `keep_on_completion` parameter set to `true`.
+         */
+        id: components["schemas"]["_types.Id"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["esql._types.AsyncEsqlResult"];
+        };
+      };
+    };
+  };
+  "esql-async-query-delete": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /**
+         * @description The unique identifier of the query.
+         *     A query ID is provided in the ES|QL async query API response for a query that does not complete in the designated time.
+         *     A query ID is also provided when the request was submitted with the `keep_on_completion` parameter set to `true`.
+         */
+        id: components["schemas"]["_types.Id"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["_types.AcknowledgedResponseBase"];
+        };
+      };
+    };
+  };
+  "esql-async-query-stop": {
+    parameters: {
+      query?: {
+        /**
+         * @description Indicates whether columns that are entirely `null` will be removed from the `columns` and `values` portion of the results.
+         *     If `true`, the response will include an extra section under the name `all_columns` which has the name of all the columns.
+         */
+        drop_null_columns?: boolean;
+      };
+      header?: never;
+      path: {
+        /**
+         * @description The unique identifier of the query.
+         *     A query ID is provided in the ES|QL async query API response for a query that does not complete in the designated time.
+         *     A query ID is also provided when the request was submitted with the `keep_on_completion` parameter set to `true`.
+         */
+        id: components["schemas"]["_types.Id"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["esql._types.EsqlResult"];
+        };
+      };
+    };
+  };
+  "indices-resolve-index": {
+    parameters: {
+      query?: {
+        /**
+         * @description Type of index that wildcard patterns can match.
+         *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
          *     Supports comma-separated values, such as `open,hidden`.
          */
-        "indices.get_data_stream-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
-        /** @description If true, returns all relevant default configurations for the index template. */
-        "indices.get_data_stream-include_defaults": boolean;
+        expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
+        /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+        ignore_unavailable?: boolean;
+        /**
+         * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+         *     This behavior applies even if the request targets other open indices.
+         *     For example, a request targeting `foo*,bar*` returns an error if an index starts with `foo` but no index starts with `bar`.
+         */
+        allow_no_indices?: boolean;
+      };
+      header?: never;
+      path: {
+        /**
+         * @description Comma-separated name(s) or index pattern(s) of the indices, aliases, and data streams to resolve.
+         *     Resources on remote clusters can be specified using the `<cluster>`:`<name>` syntax.
+         */
+        name: components["schemas"]["_types.Names"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            indices: components["schemas"]["indices.resolve_index.ResolveIndexItem"][];
+            aliases: components["schemas"]["indices.resolve_index.ResolveIndexAliasItem"][];
+            data_streams: components["schemas"]["indices.resolve_index.ResolveIndexDataStreamsItem"][];
+          };
+        };
+      };
+    };
+  };
+  "indices-get": {
+    parameters: {
+      query?: {
+        /**
+         * @description If false, the request returns an error if any wildcard expression, index alias, or _all value targets only
+         *     missing or closed indices. This behavior applies even if the request targets other open indices. For example,
+         *     a request targeting foo*,bar* returns an error if an index starts with foo but no index starts with bar.
+         */
+        allow_no_indices?: boolean;
+        /**
+         * @description Type of index that wildcard expressions can match. If the request can target data streams, this argument
+         *     determines whether wildcard expressions match hidden data streams. Supports comma-separated values,
+         *     such as open,hidden.
+         */
+        expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
+        /** @description If true, returns settings in flat format. */
+        flat_settings?: boolean;
+        /** @description If false, requests that target a missing index return an error. */
+        ignore_unavailable?: boolean;
+        /** @description If true, return all default settings in the response. */
+        include_defaults?: boolean;
+        /** @description If true, the request retrieves information from the local node only. Defaults to false, which means information is retrieved from the master node. */
+        local?: boolean;
         /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
-        "indices.get_data_stream-master_timeout": components["schemas"]["_types.Duration"];
-        /** @description Whether the maximum timestamp for each data stream should be calculated and returned. */
-        "indices.get_data_stream-verbose": boolean;
+        master_timeout?: components["schemas"]["_types.Duration"];
+        /** @description Return only information on specified index features */
+        features?: components["schemas"]["indices.get.Features"];
+      };
+      header?: never;
+      path: {
+        /**
+         * @description Comma-separated list of data streams, indices, and index aliases used to limit the request.
+         *     Wildcard expressions (*) are supported.
+         */
+        index: components["schemas"]["_types.Indices"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            [key: string]: components["schemas"]["indices._types.IndexState"];
+          };
+        };
+      };
+    };
+  };
+  "indices-create": {
+    parameters: {
+      query?: {
+        /**
+         * @description Period to wait for a connection to the master node.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        master_timeout?: components["schemas"]["_types.Duration"];
+        /**
+         * @description Period to wait for a response.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        timeout?: components["schemas"]["_types.Duration"];
+        /**
+         * @description The number of shard copies that must be active before proceeding with the operation.
+         *     Set to `all` or any positive integer up to the total number of shards in the index (`number_of_replicas+1`).
+         */
+        wait_for_active_shards?: components["schemas"]["_types.WaitForActiveShards"];
+      };
+      header?: never;
+      path: {
+        /**
+         * @description Name of the index you wish to create.
+         *     Index names must meet the following criteria:
+         *
+         *     * Lowercase only
+         *     * Cannot include `\`, `/`, `*`, `?`, `"`, `<`, `>`, `|`, ` ` (space character), `,`, or `#`
+         *     * Indices prior to 7.0 could contain a colon (`:`), but that has been deprecated and will not be supported in later versions
+         *     * Cannot start with `-`, `_`, or `+`
+         *     * Cannot be `.` or `..`
+         *     * Cannot be longer than 255 bytes (note thtat it is bytes, so multi-byte characters will reach the limit faster)
+         *     * Names starting with `.` are deprecated, except for hidden indices and internal indices managed by plugins
+         */
+        index: components["schemas"]["_types.IndexName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        "application/json": {
+          /** @description Aliases for the index. */
+          aliases?: {
+            [key: string]: components["schemas"]["indices._types.Alias"];
+          };
+          mappings?: components["schemas"]["_types.mapping.TypeMapping"];
+          settings?: components["schemas"]["indices._types.IndexSettings"];
+        };
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            index: components["schemas"]["_types.IndexName"];
+            shards_acknowledged: boolean;
+            acknowledged: boolean;
+          };
+        };
+      };
+    };
+  };
+  "indices-delete": {
+    parameters: {
+      query?: {
+        /**
+         * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+         *     This behavior applies even if the request targets other open indices.
+         */
+        allow_no_indices?: boolean;
+        /**
+         * @description Type of index that wildcard patterns can match.
+         *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
+         *     Supports comma-separated values, such as `open,hidden`.
+         */
+        expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
+        /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+        ignore_unavailable?: boolean;
+        /**
+         * @description Period to wait for a connection to the master node.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        master_timeout?: components["schemas"]["_types.Duration"];
+        /**
+         * @description Period to wait for a response.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        timeout?: components["schemas"]["_types.Duration"];
+      };
+      header?: never;
+      path: {
+        /**
+         * @description Comma-separated list of indices to delete.
+         *     You cannot specify index aliases.
+         *     By default, this parameter does not support wildcards (`*`) or `_all`.
+         *     To use wildcards or `_all`, set the `action.destructive_requires_name` cluster setting to `false`.
+         */
+        index: components["schemas"]["_types.Indices"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["_types.IndicesResponseBase"];
+        };
+      };
+    };
+  };
+  "indices-exists": {
+    parameters: {
+      query?: {
+        /**
+         * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+         *     This behavior applies even if the request targets other open indices.
+         */
+        allow_no_indices?: boolean;
+        /**
+         * @description Type of index that wildcard patterns can match.
+         *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
+         *     Supports comma-separated values, such as `open,hidden`.
+         */
+        expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
+        /** @description If `true`, returns settings in flat format. */
+        flat_settings?: boolean;
+        /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+        ignore_unavailable?: boolean;
+        /** @description If `true`, return all default settings in the response. */
+        include_defaults?: boolean;
+        /** @description If `true`, the request retrieves information from the local node only. */
+        local?: boolean;
+      };
+      header?: never;
+      path: {
+        /** @description Comma-separated list of data streams, indices, and aliases. Supports wildcards (`*`). */
+        index: components["schemas"]["_types.Indices"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  "indices-get-mapping-1": {
+    parameters: {
+      query?: {
+        /**
+         * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+         *     This behavior applies even if the request targets other open indices.
+         */
+        allow_no_indices?: components["parameters"]["indices.get_mapping-allow_no_indices"];
+        /**
+         * @description Type of index that wildcard patterns can match.
+         *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
+         *     Supports comma-separated values, such as `open,hidden`.
+         */
+        expand_wildcards?: components["parameters"]["indices.get_mapping-expand_wildcards"];
+        /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+        ignore_unavailable?: components["parameters"]["indices.get_mapping-ignore_unavailable"];
+        /**
+         * @deprecated
+         * @description If `true`, the request retrieves information from the local node only.
+         */
+        local?: components["parameters"]["indices.get_mapping-local"];
+        /**
+         * @description Period to wait for a connection to the master node.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        master_timeout?: components["parameters"]["indices.get_mapping-master_timeout"];
+      };
+      header?: never;
+      path: {
         /**
          * @description Comma-separated list of data streams, indices, and aliases used to limit the request.
          *     Supports wildcards (`*`).
          *     To target all data streams and indices, omit this parameter or use `*` or `_all`.
          */
-        "indices.get_mapping-index": components["schemas"]["_types.Indices"];
+        index: components["parameters"]["indices.get_mapping-index"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["indices.get_mapping-200"];
+    };
+  };
+  "indices-put-mapping": {
+    parameters: {
+      query?: {
         /**
          * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
          *     This behavior applies even if the request targets other open indices.
          */
-        "indices.get_mapping-allow_no_indices": boolean;
+        allow_no_indices?: components["parameters"]["indices.put_mapping-allow_no_indices"];
         /**
          * @description Type of index that wildcard patterns can match.
          *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
          *     Supports comma-separated values, such as `open,hidden`.
          */
-        "indices.get_mapping-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
+        expand_wildcards?: components["parameters"]["indices.put_mapping-expand_wildcards"];
         /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-        "indices.get_mapping-ignore_unavailable": boolean;
-        /**
-         * @deprecated
-         * @description If `true`, the request retrieves information from the local node only.
-         */
-        "indices.get_mapping-local": boolean;
+        ignore_unavailable?: components["parameters"]["indices.put_mapping-ignore_unavailable"];
         /**
          * @description Period to wait for a connection to the master node.
          *     If no response is received before the timeout expires, the request fails and returns an error.
          */
-        "indices.get_mapping-master_timeout": components["schemas"]["_types.Duration"];
-        /** @description A comma-separated list of index names the mapping should be added to (supports wildcards); use `_all` or omit to add the mapping on all indices. */
-        "indices.put_mapping-index": components["schemas"]["_types.Indices"];
-        /**
-         * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-         *     This behavior applies even if the request targets other open indices.
-         */
-        "indices.put_mapping-allow_no_indices": boolean;
-        /**
-         * @description Type of index that wildcard patterns can match.
-         *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-         *     Supports comma-separated values, such as `open,hidden`.
-         */
-        "indices.put_mapping-expand_wildcards": components["schemas"]["_types.ExpandWildcards"];
-        /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-        "indices.put_mapping-ignore_unavailable": boolean;
-        /**
-         * @description Period to wait for a connection to the master node.
-         *     If no response is received before the timeout expires, the request fails and returns an error.
-         */
-        "indices.put_mapping-master_timeout": components["schemas"]["_types.Duration"];
+        master_timeout?: components["parameters"]["indices.put_mapping-master_timeout"];
         /**
          * @description Period to wait for a response.
          *     If no response is received before the timeout expires, the request fails and returns an error.
          */
-        "indices.put_mapping-timeout": components["schemas"]["_types.Duration"];
+        timeout?: components["parameters"]["indices.put_mapping-timeout"];
         /** @description If `true`, the mappings are applied only to the current write index for the target. */
-        "indices.put_mapping-write_index_only": boolean;
+        write_index_only?: components["parameters"]["indices.put_mapping-write_index_only"];
+      };
+      header?: never;
+      path: {
+        /** @description A comma-separated list of index names the mapping should be added to (supports wildcards); use `_all` or omit to add the mapping on all indices. */
+        index: components["parameters"]["indices.put_mapping-index"];
+      };
+      cookie?: never;
     };
-    requestBodies: {
-        field_caps: {
-            content: {
-                "application/json": {
-                    fields?: components["schemas"]["_types.Fields"];
-                    index_filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-                    runtime_mappings?: components["schemas"]["_types.mapping.RuntimeFields"];
-                };
-            };
-        };
-        "indices.put_mapping": {
-            content: {
-                "application/json": {
-                    /** @description Controls whether dynamic date detection is enabled. */
-                    date_detection?: boolean;
-                    dynamic?: components["schemas"]["_types.mapping.DynamicMapping"];
-                    /**
-                     * @description If date detection is enabled then new string fields are checked
-                     *     against 'dynamic_date_formats' and if the value matches then
-                     *     a new date field is added instead of string.
-                     */
-                    dynamic_date_formats?: string[];
-                    /** @description Specify dynamic templates for the mapping. */
-                    dynamic_templates?: {
-                        [key: string]: components["schemas"]["_types.mapping.DynamicTemplate"];
-                    }[];
-                    _field_names?: components["schemas"]["_types.mapping.FieldNamesField"];
-                    _meta?: components["schemas"]["_types.Metadata"];
-                    /**
-                     * @description Automatically map strings into numeric data types for all fields.
-                     * @default false
-                     */
-                    numeric_detection?: boolean;
-                    /**
-                     * @description Mapping for a field. For new fields, this mapping can include:
-                     *
-                     *     - Field name
-                     *     - Field data type
-                     *     - Mapping parameters
-                     */
-                    properties?: {
-                        [key: string]: components["schemas"]["_types.mapping.Property"];
-                    };
-                    _routing?: components["schemas"]["_types.mapping.RoutingField"];
-                    _source?: components["schemas"]["_types.mapping.SourceField"];
-                    runtime?: components["schemas"]["_types.mapping.RuntimeFields"];
-                };
-            };
-        };
+    requestBody: components["requestBodies"]["indices.put_mapping"];
+    responses: {
+      200: components["responses"]["indices.put_mapping-200"];
     };
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    "esql-query": {
-        parameters: {
-            query?: {
-                /**
-                 * @description A short version of the Accept header, e.g. json, yaml.
-                 *
-                 *     `csv`, `tsv`, and `txt` formats will return results in a tabular format, excluding other metadata fields from the response.
-                 */
-                format?: components["schemas"]["esql._types.EsqlFormat"];
-                /** @description The character to use between values within a CSV row. Only valid for the CSV format. */
-                delimiter?: string;
-                /**
-                 * @description Should columns that are entirely `null` be removed from the `columns` and `values` portion of the results?
-                 *     Defaults to `false`. If `true` then the response will include an extra section under the name `all_columns` which has the name of all columns.
-                 */
-                drop_null_columns?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description By default, ES|QL returns results as rows. For example, FROM returns each individual document as one row. For the JSON, YAML, CBOR and smile formats, ES|QL can return the results in a columnar fashion where one row represents all the values of a certain column in the results. */
-                    columnar?: boolean;
-                    filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-                    locale?: string;
-                    /** @description To avoid any attempts of hacking or code injection, extract the values in a separate list of parameters. Use question mark placeholders (?) in the query string for each of the parameters. */
-                    params?: components["schemas"]["_types.FieldValue"][];
-                    /**
-                     * @description If provided and `true` the response will include an extra `profile` object
-                     *     with information on how the query was executed. This information is for human debugging
-                     *     and its format can change at any time but it can give some insight into the performance
-                     *     of each part of the query.
-                     */
-                    profile?: boolean;
-                    /** @description The ES|QL query API accepts an ES|QL query string in the query parameter, runs it, and returns the results. */
-                    query: string;
-                    /**
-                     * @description Tables to use with the LOOKUP operation. The top level key is the table
-                     *     name and the next level key is the column name.
-                     */
-                    tables?: {
-                        [key: string]: {
-                            [key: string]: components["schemas"]["esql._types.TableValuesContainer"];
-                        };
-                    };
-                    /**
-                     * @description When set to `true` and performing a cross-cluster query, the response will include an extra `_clusters`
-                     *     object with information about the clusters that participated in the search along with info such as shards
-                     *     count.
-                     * @default false
-                     */
-                    include_ccs_metadata?: boolean;
-                };
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["esql._types.EsqlResult"];
-                };
-            };
-        };
+  };
+  "indices-put-mapping-1": {
+    parameters: {
+      query?: {
+        /**
+         * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
+         *     This behavior applies even if the request targets other open indices.
+         */
+        allow_no_indices?: components["parameters"]["indices.put_mapping-allow_no_indices"];
+        /**
+         * @description Type of index that wildcard patterns can match.
+         *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
+         *     Supports comma-separated values, such as `open,hidden`.
+         */
+        expand_wildcards?: components["parameters"]["indices.put_mapping-expand_wildcards"];
+        /** @description If `false`, the request returns an error if it targets a missing or closed index. */
+        ignore_unavailable?: components["parameters"]["indices.put_mapping-ignore_unavailable"];
+        /**
+         * @description Period to wait for a connection to the master node.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        master_timeout?: components["parameters"]["indices.put_mapping-master_timeout"];
+        /**
+         * @description Period to wait for a response.
+         *     If no response is received before the timeout expires, the request fails and returns an error.
+         */
+        timeout?: components["parameters"]["indices.put_mapping-timeout"];
+        /** @description If `true`, the mappings are applied only to the current write index for the target. */
+        write_index_only?: components["parameters"]["indices.put_mapping-write_index_only"];
+      };
+      header?: never;
+      path: {
+        /** @description A comma-separated list of index names the mapping should be added to (supports wildcards); use `_all` or omit to add the mapping on all indices. */
+        index: components["parameters"]["indices.put_mapping-index"];
+      };
+      cookie?: never;
     };
-    "esql-async-query": {
-        parameters: {
-            query?: {
-                /**
-                 * @description The character to use between values within a CSV row.
-                 *     It is valid only for the CSV format.
-                 */
-                delimiter?: string;
-                /**
-                 * @description Indicates whether columns that are entirely `null` will be removed from the `columns` and `values` portion of the results.
-                 *     If `true`, the response will include an extra section under the name `all_columns` which has the name of all the columns.
-                 */
-                drop_null_columns?: boolean;
-                /**
-                 * @description A short version of the Accept header, e.g. json, yaml.
-                 *
-                 *     `csv`, `tsv`, and `txt` formats will return results in a tabular format, excluding other metadata fields from the response.
-                 *
-                 *     For async requests, nothing will be returned if the async query doesn't finish within the timeout.
-                 *     The query ID and running status are available in the `X-Elasticsearch-Async-Id` and `X-Elasticsearch-Async-Is-Running` HTTP headers of the response, respectively.
-                 */
-                format?: components["schemas"]["esql._types.EsqlFormat"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description By default, ES|QL returns results as rows. For example, FROM returns each individual document as one row. For the JSON, YAML, CBOR and smile formats, ES|QL can return the results in a columnar fashion where one row represents all the values of a certain column in the results. */
-                    columnar?: boolean;
-                    filter?: components["schemas"]["_types.query_dsl.QueryContainer"];
-                    locale?: string;
-                    /** @description To avoid any attempts of hacking or code injection, extract the values in a separate list of parameters. Use question mark placeholders (?) in the query string for each of the parameters. */
-                    params?: components["schemas"]["_types.FieldValue"][];
-                    /**
-                     * @description If provided and `true` the response will include an extra `profile` object
-                     *     with information on how the query was executed. This information is for human debugging
-                     *     and its format can change at any time but it can give some insight into the performance
-                     *     of each part of the query.
-                     */
-                    profile?: boolean;
-                    /** @description The ES|QL query API accepts an ES|QL query string in the query parameter, runs it, and returns the results. */
-                    query: string;
-                    /**
-                     * @description Tables to use with the LOOKUP operation. The top level key is the table
-                     *     name and the next level key is the column name.
-                     */
-                    tables?: {
-                        [key: string]: {
-                            [key: string]: components["schemas"]["esql._types.TableValuesContainer"];
-                        };
-                    };
-                    /**
-                     * @description When set to `true` and performing a cross-cluster query, the response will include an extra `_clusters`
-                     *     object with information about the clusters that participated in the search along with info such as shards
-                     *     count.
-                     * @default false
-                     */
-                    include_ccs_metadata?: boolean;
-                    wait_for_completion_timeout?: components["schemas"]["_types.Duration"];
-                    keep_alive?: components["schemas"]["_types.Duration"];
-                    /**
-                     * @description Indicates whether the query and its results are stored in the cluster.
-                     *     If false, the query and its results are stored in the cluster only if the request does not complete during the period set by the `wait_for_completion_timeout` parameter.
-                     * @default false
-                     */
-                    keep_on_completion?: boolean;
-                };
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["esql._types.AsyncEsqlResult"];
-                };
-            };
-        };
+    requestBody: components["requestBodies"]["indices.put_mapping"];
+    responses: {
+      200: components["responses"]["indices.put_mapping-200"];
     };
-    "esql-async-query-get": {
-        parameters: {
-            query?: {
-                /**
-                 * @description Indicates whether columns that are entirely `null` will be removed from the `columns` and `values` portion of the results.
-                 *     If `true`, the response will include an extra section under the name `all_columns` which has the name of all the columns.
-                 */
-                drop_null_columns?: boolean;
-                /** @description A short version of the Accept header, for example `json` or `yaml`. */
-                format?: components["schemas"]["esql._types.EsqlFormat"];
-                /**
-                 * @description The period for which the query and its results are stored in the cluster.
-                 *     When this period expires, the query and its results are deleted, even if the query is still ongoing.
-                 */
-                keep_alive?: components["schemas"]["_types.Duration"];
-                /**
-                 * @description The period to wait for the request to finish.
-                 *     By default, the request waits for complete query results.
-                 *     If the request completes during the period specified in this parameter, complete query results are returned.
-                 *     Otherwise, the response returns an `is_running` value of `true` and no results.
-                 */
-                wait_for_completion_timeout?: components["schemas"]["_types.Duration"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description The unique identifier of the query.
-                 *     A query ID is provided in the ES|QL async query API response for a query that does not complete in the designated time.
-                 *     A query ID is also provided when the request was submitted with the `keep_on_completion` parameter set to `true`.
-                 */
-                id: components["schemas"]["_types.Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["esql._types.AsyncEsqlResult"];
-                };
-            };
-        };
+  };
+  "indices-get-data-stream": {
+    parameters: {
+      query?: {
+        /**
+         * @description Type of data stream that wildcard patterns can match.
+         *     Supports comma-separated values, such as `open,hidden`.
+         */
+        expand_wildcards?: components["parameters"]["indices.get_data_stream-expand_wildcards"];
+        /** @description If true, returns all relevant default configurations for the index template. */
+        include_defaults?: components["parameters"]["indices.get_data_stream-include_defaults"];
+        /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
+        master_timeout?: components["parameters"]["indices.get_data_stream-master_timeout"];
+        /** @description Whether the maximum timestamp for each data stream should be calculated and returned. */
+        verbose?: components["parameters"]["indices.get_data_stream-verbose"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "esql-async-query-delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description The unique identifier of the query.
-                 *     A query ID is provided in the ES|QL async query API response for a query that does not complete in the designated time.
-                 *     A query ID is also provided when the request was submitted with the `keep_on_completion` parameter set to `true`.
-                 */
-                id: components["schemas"]["_types.Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["_types.AcknowledgedResponseBase"];
-                };
-            };
-        };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["indices.get_data_stream-200"];
     };
-    "esql-async-query-stop": {
-        parameters: {
-            query?: {
-                /**
-                 * @description Indicates whether columns that are entirely `null` will be removed from the `columns` and `values` portion of the results.
-                 *     If `true`, the response will include an extra section under the name `all_columns` which has the name of all the columns.
-                 */
-                drop_null_columns?: boolean;
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description The unique identifier of the query.
-                 *     A query ID is provided in the ES|QL async query API response for a query that does not complete in the designated time.
-                 *     A query ID is also provided when the request was submitted with the `keep_on_completion` parameter set to `true`.
-                 */
-                id: components["schemas"]["_types.Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["esql._types.EsqlResult"];
-                };
-            };
-        };
+  };
+  "indices-get-data-stream-1": {
+    parameters: {
+      query?: {
+        /**
+         * @description Type of data stream that wildcard patterns can match.
+         *     Supports comma-separated values, such as `open,hidden`.
+         */
+        expand_wildcards?: components["parameters"]["indices.get_data_stream-expand_wildcards"];
+        /** @description If true, returns all relevant default configurations for the index template. */
+        include_defaults?: components["parameters"]["indices.get_data_stream-include_defaults"];
+        /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
+        master_timeout?: components["parameters"]["indices.get_data_stream-master_timeout"];
+        /** @description Whether the maximum timestamp for each data stream should be calculated and returned. */
+        verbose?: components["parameters"]["indices.get_data_stream-verbose"];
+      };
+      header?: never;
+      path: {
+        /**
+         * @description Comma-separated list of data stream names used to limit the request.
+         *     Wildcard (`*`) expressions are supported. If omitted, all data streams are returned.
+         */
+        name: components["parameters"]["indices.get_data_stream-name"];
+      };
+      cookie?: never;
     };
-    "indices-resolve-index": {
-        parameters: {
-            query?: {
-                /**
-                 * @description Type of index that wildcard patterns can match.
-                 *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
-                /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-                ignore_unavailable?: boolean;
-                /**
-                 * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-                 *     This behavior applies even if the request targets other open indices.
-                 *     For example, a request targeting `foo*,bar*` returns an error if an index starts with `foo` but no index starts with `bar`.
-                 */
-                allow_no_indices?: boolean;
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Comma-separated name(s) or index pattern(s) of the indices, aliases, and data streams to resolve.
-                 *     Resources on remote clusters can be specified using the `<cluster>`:`<name>` syntax.
-                 */
-                name: components["schemas"]["_types.Names"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        indices: components["schemas"]["indices.resolve_index.ResolveIndexItem"][];
-                        aliases: components["schemas"]["indices.resolve_index.ResolveIndexAliasItem"][];
-                        data_streams: components["schemas"]["indices.resolve_index.ResolveIndexDataStreamsItem"][];
-                    };
-                };
-            };
-        };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["indices.get_data_stream-200"];
     };
-    "indices-get": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If false, the request returns an error if any wildcard expression, index alias, or _all value targets only
-                 *     missing or closed indices. This behavior applies even if the request targets other open indices. For example,
-                 *     a request targeting foo*,bar* returns an error if an index starts with foo but no index starts with bar.
-                 */
-                allow_no_indices?: boolean;
-                /**
-                 * @description Type of index that wildcard expressions can match. If the request can target data streams, this argument
-                 *     determines whether wildcard expressions match hidden data streams. Supports comma-separated values,
-                 *     such as open,hidden.
-                 */
-                expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
-                /** @description If true, returns settings in flat format. */
-                flat_settings?: boolean;
-                /** @description If false, requests that target a missing index return an error. */
-                ignore_unavailable?: boolean;
-                /** @description If true, return all default settings in the response. */
-                include_defaults?: boolean;
-                /** @description If true, the request retrieves information from the local node only. Defaults to false, which means information is retrieved from the master node. */
-                local?: boolean;
-                /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
-                master_timeout?: components["schemas"]["_types.Duration"];
-                /** @description Return only information on specified index features */
-                features?: components["schemas"]["indices.get.Features"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Comma-separated list of data streams, indices, and index aliases used to limit the request.
-                 *     Wildcard expressions (*) are supported.
-                 */
-                index: components["schemas"]["_types.Indices"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: components["schemas"]["indices._types.IndexState"];
-                    };
-                };
-            };
-        };
+  };
+  "indices-create-data-stream": {
+    parameters: {
+      query?: {
+        /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
+        master_timeout?: components["schemas"]["_types.Duration"];
+        /** @description Period to wait for a response. If no response is received before the timeout expires, the request fails and returns an error. */
+        timeout?: components["schemas"]["_types.Duration"];
+      };
+      header?: never;
+      path: {
+        /**
+         * @description Name of the data stream, which must meet the following criteria:
+         *     Lowercase only;
+         *     Cannot include `\`, `/`, `*`, `?`, `"`, `<`, `>`, `|`, `,`, `#`, `:`, or a space character;
+         *     Cannot start with `-`, `_`, `+`, or `.ds-`;
+         *     Cannot be `.` or `..`;
+         *     Cannot be longer than 255 bytes. Multi-byte characters count towards this limit faster.
+         */
+        name: components["schemas"]["_types.DataStreamName"];
+      };
+      cookie?: never;
     };
-    "indices-create": {
-        parameters: {
-            query?: {
-                /**
-                 * @description Period to wait for a connection to the master node.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                master_timeout?: components["schemas"]["_types.Duration"];
-                /**
-                 * @description Period to wait for a response.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                timeout?: components["schemas"]["_types.Duration"];
-                /**
-                 * @description The number of shard copies that must be active before proceeding with the operation.
-                 *     Set to `all` or any positive integer up to the total number of shards in the index (`number_of_replicas+1`).
-                 */
-                wait_for_active_shards?: components["schemas"]["_types.WaitForActiveShards"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Name of the index you wish to create.
-                 *     Index names must meet the following criteria:
-                 *
-                 *     * Lowercase only
-                 *     * Cannot include `\`, `/`, `*`, `?`, `"`, `<`, `>`, `|`, ` ` (space character), `,`, or `#`
-                 *     * Indices prior to 7.0 could contain a colon (`:`), but that has been deprecated and will not be supported in later versions
-                 *     * Cannot start with `-`, `_`, or `+`
-                 *     * Cannot be `.` or `..`
-                 *     * Cannot be longer than 255 bytes (note thtat it is bytes, so multi-byte characters will reach the limit faster)
-                 *     * Names starting with `.` are deprecated, except for hidden indices and internal indices managed by plugins
-                 */
-                index: components["schemas"]["_types.IndexName"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    /** @description Aliases for the index. */
-                    aliases?: {
-                        [key: string]: components["schemas"]["indices._types.Alias"];
-                    };
-                    mappings?: components["schemas"]["_types.mapping.TypeMapping"];
-                    settings?: components["schemas"]["indices._types.IndexSettings"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["_types.AcknowledgedResponseBase"];
         };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        index: components["schemas"]["_types.IndexName"];
-                        shards_acknowledged: boolean;
-                        acknowledged: boolean;
-                    };
-                };
-            };
-        };
+      };
     };
-    "indices-delete": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-                 *     This behavior applies even if the request targets other open indices.
-                 */
-                allow_no_indices?: boolean;
-                /**
-                 * @description Type of index that wildcard patterns can match.
-                 *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
-                /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-                ignore_unavailable?: boolean;
-                /**
-                 * @description Period to wait for a connection to the master node.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                master_timeout?: components["schemas"]["_types.Duration"];
-                /**
-                 * @description Period to wait for a response.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                timeout?: components["schemas"]["_types.Duration"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Comma-separated list of indices to delete.
-                 *     You cannot specify index aliases.
-                 *     By default, this parameter does not support wildcards (`*`) or `_all`.
-                 *     To use wildcards or `_all`, set the `action.destructive_requires_name` cluster setting to `false`.
-                 */
-                index: components["schemas"]["_types.Indices"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["_types.IndicesResponseBase"];
-                };
-            };
-        };
+  };
+  "indices-delete-data-stream": {
+    parameters: {
+      query?: {
+        /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
+        master_timeout?: components["schemas"]["_types.Duration"];
+        /** @description Type of data stream that wildcard patterns can match. Supports comma-separated values,such as `open,hidden`. */
+        expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
+      };
+      header?: never;
+      path: {
+        /** @description Comma-separated list of data streams to delete. Wildcard (`*`) expressions are supported. */
+        name: components["schemas"]["_types.DataStreamNames"];
+      };
+      cookie?: never;
     };
-    "indices-exists": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-                 *     This behavior applies even if the request targets other open indices.
-                 */
-                allow_no_indices?: boolean;
-                /**
-                 * @description Type of index that wildcard patterns can match.
-                 *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
-                /** @description If `true`, returns settings in flat format. */
-                flat_settings?: boolean;
-                /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-                ignore_unavailable?: boolean;
-                /** @description If `true`, return all default settings in the response. */
-                include_defaults?: boolean;
-                /** @description If `true`, the request retrieves information from the local node only. */
-                local?: boolean;
-            };
-            header?: never;
-            path: {
-                /** @description Comma-separated list of data streams, indices, and aliases. Supports wildcards (`*`). */
-                index: components["schemas"]["_types.Indices"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["_types.AcknowledgedResponseBase"];
         };
+      };
     };
-    "indices-get-mapping-1": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-                 *     This behavior applies even if the request targets other open indices.
-                 */
-                allow_no_indices?: components["parameters"]["indices.get_mapping-allow_no_indices"];
-                /**
-                 * @description Type of index that wildcard patterns can match.
-                 *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["parameters"]["indices.get_mapping-expand_wildcards"];
-                /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-                ignore_unavailable?: components["parameters"]["indices.get_mapping-ignore_unavailable"];
-                /**
-                 * @deprecated
-                 * @description If `true`, the request retrieves information from the local node only.
-                 */
-                local?: components["parameters"]["indices.get_mapping-local"];
-                /**
-                 * @description Period to wait for a connection to the master node.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                master_timeout?: components["parameters"]["indices.get_mapping-master_timeout"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Comma-separated list of data streams, indices, and aliases used to limit the request.
-                 *     Supports wildcards (`*`).
-                 *     To target all data streams and indices, omit this parameter or use `*` or `_all`.
-                 */
-                index: components["parameters"]["indices.get_mapping-index"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: components["responses"]["indices.get_mapping-200"];
-        };
+  };
+  "field-caps-2": {
+    parameters: {
+      query?: {
+        /**
+         * @description If false, the request returns an error if any wildcard expression, index alias,
+         *     or `_all` value targets only missing or closed indices. This behavior applies even if the request targets other open indices. For example, a request
+         *     targeting `foo*,bar*` returns an error if an index starts with foo but no index starts with bar.
+         */
+        allow_no_indices?: components["parameters"]["field_caps-allow_no_indices"];
+        /** @description The type of index that wildcard patterns can match. If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams. Supports comma-separated values, such as `open,hidden`. */
+        expand_wildcards?: components["parameters"]["field_caps-expand_wildcards"];
+        /** @description A comma-separated list of fields to retrieve capabilities for. Wildcard (`*`) expressions are supported. */
+        fields?: components["parameters"]["field_caps-fields"];
+        /** @description If `true`, missing or closed indices are not included in the response. */
+        ignore_unavailable?: components["parameters"]["field_caps-ignore_unavailable"];
+        /** @description If true, unmapped fields are included in the response. */
+        include_unmapped?: components["parameters"]["field_caps-include_unmapped"];
+        /** @description A comma-separated list of filters to apply to the response. */
+        filters?: components["parameters"]["field_caps-filters"];
+        /**
+         * @description A comma-separated list of field types to include.
+         *     Any fields that do not match one of these types will be excluded from the results.
+         *     It defaults to empty, meaning that all field types are returned.
+         */
+        types?: components["parameters"]["field_caps-types"];
+        /** @description If false, empty fields are not included in the response. */
+        include_empty_fields?: components["parameters"]["field_caps-include_empty_fields"];
+      };
+      header?: never;
+      path: {
+        /** @description A comma-separated list of data streams, indices, and aliases used to limit the request. Supports wildcards (*). To target all data streams and indices, omit this parameter or use * or _all. */
+        index: components["parameters"]["field_caps-index"];
+      };
+      cookie?: never;
     };
-    "indices-put-mapping": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-                 *     This behavior applies even if the request targets other open indices.
-                 */
-                allow_no_indices?: components["parameters"]["indices.put_mapping-allow_no_indices"];
-                /**
-                 * @description Type of index that wildcard patterns can match.
-                 *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["parameters"]["indices.put_mapping-expand_wildcards"];
-                /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-                ignore_unavailable?: components["parameters"]["indices.put_mapping-ignore_unavailable"];
-                /**
-                 * @description Period to wait for a connection to the master node.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                master_timeout?: components["parameters"]["indices.put_mapping-master_timeout"];
-                /**
-                 * @description Period to wait for a response.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                timeout?: components["parameters"]["indices.put_mapping-timeout"];
-                /** @description If `true`, the mappings are applied only to the current write index for the target. */
-                write_index_only?: components["parameters"]["indices.put_mapping-write_index_only"];
-            };
-            header?: never;
-            path: {
-                /** @description A comma-separated list of index names the mapping should be added to (supports wildcards); use `_all` or omit to add the mapping on all indices. */
-                index: components["parameters"]["indices.put_mapping-index"];
-            };
-            cookie?: never;
-        };
-        requestBody: components["requestBodies"]["indices.put_mapping"];
-        responses: {
-            200: components["responses"]["indices.put_mapping-200"];
-        };
+    requestBody?: components["requestBodies"]["field_caps"];
+    responses: {
+      200: components["responses"]["field_caps-200"];
     };
-    "indices-put-mapping-1": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If `false`, the request returns an error if any wildcard expression, index alias, or `_all` value targets only missing or closed indices.
-                 *     This behavior applies even if the request targets other open indices.
-                 */
-                allow_no_indices?: components["parameters"]["indices.put_mapping-allow_no_indices"];
-                /**
-                 * @description Type of index that wildcard patterns can match.
-                 *     If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["parameters"]["indices.put_mapping-expand_wildcards"];
-                /** @description If `false`, the request returns an error if it targets a missing or closed index. */
-                ignore_unavailable?: components["parameters"]["indices.put_mapping-ignore_unavailable"];
-                /**
-                 * @description Period to wait for a connection to the master node.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                master_timeout?: components["parameters"]["indices.put_mapping-master_timeout"];
-                /**
-                 * @description Period to wait for a response.
-                 *     If no response is received before the timeout expires, the request fails and returns an error.
-                 */
-                timeout?: components["parameters"]["indices.put_mapping-timeout"];
-                /** @description If `true`, the mappings are applied only to the current write index for the target. */
-                write_index_only?: components["parameters"]["indices.put_mapping-write_index_only"];
-            };
-            header?: never;
-            path: {
-                /** @description A comma-separated list of index names the mapping should be added to (supports wildcards); use `_all` or omit to add the mapping on all indices. */
-                index: components["parameters"]["indices.put_mapping-index"];
-            };
-            cookie?: never;
-        };
-        requestBody: components["requestBodies"]["indices.put_mapping"];
-        responses: {
-            200: components["responses"]["indices.put_mapping-200"];
-        };
+  };
+  "field-caps-3": {
+    parameters: {
+      query?: {
+        /**
+         * @description If false, the request returns an error if any wildcard expression, index alias,
+         *     or `_all` value targets only missing or closed indices. This behavior applies even if the request targets other open indices. For example, a request
+         *     targeting `foo*,bar*` returns an error if an index starts with foo but no index starts with bar.
+         */
+        allow_no_indices?: components["parameters"]["field_caps-allow_no_indices"];
+        /** @description The type of index that wildcard patterns can match. If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams. Supports comma-separated values, such as `open,hidden`. */
+        expand_wildcards?: components["parameters"]["field_caps-expand_wildcards"];
+        /** @description A comma-separated list of fields to retrieve capabilities for. Wildcard (`*`) expressions are supported. */
+        fields?: components["parameters"]["field_caps-fields"];
+        /** @description If `true`, missing or closed indices are not included in the response. */
+        ignore_unavailable?: components["parameters"]["field_caps-ignore_unavailable"];
+        /** @description If true, unmapped fields are included in the response. */
+        include_unmapped?: components["parameters"]["field_caps-include_unmapped"];
+        /** @description A comma-separated list of filters to apply to the response. */
+        filters?: components["parameters"]["field_caps-filters"];
+        /**
+         * @description A comma-separated list of field types to include.
+         *     Any fields that do not match one of these types will be excluded from the results.
+         *     It defaults to empty, meaning that all field types are returned.
+         */
+        types?: components["parameters"]["field_caps-types"];
+        /** @description If false, empty fields are not included in the response. */
+        include_empty_fields?: components["parameters"]["field_caps-include_empty_fields"];
+      };
+      header?: never;
+      path: {
+        /** @description A comma-separated list of data streams, indices, and aliases used to limit the request. Supports wildcards (*). To target all data streams and indices, omit this parameter or use * or _all. */
+        index: components["parameters"]["field_caps-index"];
+      };
+      cookie?: never;
     };
-    "indices-get-data-stream": {
-        parameters: {
-            query?: {
-                /**
-                 * @description Type of data stream that wildcard patterns can match.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["parameters"]["indices.get_data_stream-expand_wildcards"];
-                /** @description If true, returns all relevant default configurations for the index template. */
-                include_defaults?: components["parameters"]["indices.get_data_stream-include_defaults"];
-                /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
-                master_timeout?: components["parameters"]["indices.get_data_stream-master_timeout"];
-                /** @description Whether the maximum timestamp for each data stream should be calculated and returned. */
-                verbose?: components["parameters"]["indices.get_data_stream-verbose"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: components["responses"]["indices.get_data_stream-200"];
-        };
+    requestBody?: components["requestBodies"]["field_caps"];
+    responses: {
+      200: components["responses"]["field_caps-200"];
     };
-    "indices-get-data-stream-1": {
-        parameters: {
-            query?: {
-                /**
-                 * @description Type of data stream that wildcard patterns can match.
-                 *     Supports comma-separated values, such as `open,hidden`.
-                 */
-                expand_wildcards?: components["parameters"]["indices.get_data_stream-expand_wildcards"];
-                /** @description If true, returns all relevant default configurations for the index template. */
-                include_defaults?: components["parameters"]["indices.get_data_stream-include_defaults"];
-                /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
-                master_timeout?: components["parameters"]["indices.get_data_stream-master_timeout"];
-                /** @description Whether the maximum timestamp for each data stream should be calculated and returned. */
-                verbose?: components["parameters"]["indices.get_data_stream-verbose"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Comma-separated list of data stream names used to limit the request.
-                 *     Wildcard (`*`) expressions are supported. If omitted, all data streams are returned.
-                 */
-                name: components["parameters"]["indices.get_data_stream-name"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: components["responses"]["indices.get_data_stream-200"];
-        };
+  };
+  info: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "indices-create-data-stream": {
-        parameters: {
-            query?: {
-                /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
-                master_timeout?: components["schemas"]["_types.Duration"];
-                /** @description Period to wait for a response. If no response is received before the timeout expires, the request fails and returns an error. */
-                timeout?: components["schemas"]["_types.Duration"];
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Name of the data stream, which must meet the following criteria:
-                 *     Lowercase only;
-                 *     Cannot include `\`, `/`, `*`, `?`, `"`, `<`, `>`, `|`, `,`, `#`, `:`, or a space character;
-                 *     Cannot start with `-`, `_`, `+`, or `.ds-`;
-                 *     Cannot be `.` or `..`;
-                 *     Cannot be longer than 255 bytes. Multi-byte characters count towards this limit faster.
-                 */
-                name: components["schemas"]["_types.DataStreamName"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["_types.AcknowledgedResponseBase"];
-                };
-            };
+        content: {
+          "application/json": {
+            cluster_name: components["schemas"]["_types.Name"];
+            cluster_uuid: components["schemas"]["_types.Uuid"];
+            name: components["schemas"]["_types.Name"];
+            tagline: string;
+            version: components["schemas"]["_types.ElasticsearchVersionInfo"];
+          };
         };
+      };
     };
-    "indices-delete-data-stream": {
-        parameters: {
-            query?: {
-                /** @description Period to wait for a connection to the master node. If no response is received before the timeout expires, the request fails and returns an error. */
-                master_timeout?: components["schemas"]["_types.Duration"];
-                /** @description Type of data stream that wildcard patterns can match. Supports comma-separated values,such as `open,hidden`. */
-                expand_wildcards?: components["schemas"]["_types.ExpandWildcards"];
-            };
-            header?: never;
-            path: {
-                /** @description Comma-separated list of data streams to delete. Wildcard (`*`) expressions are supported. */
-                name: components["schemas"]["_types.DataStreamNames"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["_types.AcknowledgedResponseBase"];
-                };
-            };
-        };
+  };
+  ping: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "field-caps-2": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If false, the request returns an error if any wildcard expression, index alias,
-                 *     or `_all` value targets only missing or closed indices. This behavior applies even if the request targets other open indices. For example, a request
-                 *     targeting `foo*,bar*` returns an error if an index starts with foo but no index starts with bar.
-                 */
-                allow_no_indices?: components["parameters"]["field_caps-allow_no_indices"];
-                /** @description The type of index that wildcard patterns can match. If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams. Supports comma-separated values, such as `open,hidden`. */
-                expand_wildcards?: components["parameters"]["field_caps-expand_wildcards"];
-                /** @description A comma-separated list of fields to retrieve capabilities for. Wildcard (`*`) expressions are supported. */
-                fields?: components["parameters"]["field_caps-fields"];
-                /** @description If `true`, missing or closed indices are not included in the response. */
-                ignore_unavailable?: components["parameters"]["field_caps-ignore_unavailable"];
-                /** @description If true, unmapped fields are included in the response. */
-                include_unmapped?: components["parameters"]["field_caps-include_unmapped"];
-                /** @description A comma-separated list of filters to apply to the response. */
-                filters?: components["parameters"]["field_caps-filters"];
-                /**
-                 * @description A comma-separated list of field types to include.
-                 *     Any fields that do not match one of these types will be excluded from the results.
-                 *     It defaults to empty, meaning that all field types are returned.
-                 */
-                types?: components["parameters"]["field_caps-types"];
-                /** @description If false, empty fields are not included in the response. */
-                include_empty_fields?: components["parameters"]["field_caps-include_empty_fields"];
-            };
-            header?: never;
-            path: {
-                /** @description A comma-separated list of data streams, indices, and aliases used to limit the request. Supports wildcards (*). To target all data streams and indices, omit this parameter or use * or _all. */
-                index: components["parameters"]["field_caps-index"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: components["requestBodies"]["field_caps"];
-        responses: {
-            200: components["responses"]["field_caps-200"];
+        content: {
+          "application/json": unknown;
         };
+      };
     };
-    "field-caps-3": {
-        parameters: {
-            query?: {
-                /**
-                 * @description If false, the request returns an error if any wildcard expression, index alias,
-                 *     or `_all` value targets only missing or closed indices. This behavior applies even if the request targets other open indices. For example, a request
-                 *     targeting `foo*,bar*` returns an error if an index starts with foo but no index starts with bar.
-                 */
-                allow_no_indices?: components["parameters"]["field_caps-allow_no_indices"];
-                /** @description The type of index that wildcard patterns can match. If the request can target data streams, this argument determines whether wildcard expressions match hidden data streams. Supports comma-separated values, such as `open,hidden`. */
-                expand_wildcards?: components["parameters"]["field_caps-expand_wildcards"];
-                /** @description A comma-separated list of fields to retrieve capabilities for. Wildcard (`*`) expressions are supported. */
-                fields?: components["parameters"]["field_caps-fields"];
-                /** @description If `true`, missing or closed indices are not included in the response. */
-                ignore_unavailable?: components["parameters"]["field_caps-ignore_unavailable"];
-                /** @description If true, unmapped fields are included in the response. */
-                include_unmapped?: components["parameters"]["field_caps-include_unmapped"];
-                /** @description A comma-separated list of filters to apply to the response. */
-                filters?: components["parameters"]["field_caps-filters"];
-                /**
-                 * @description A comma-separated list of field types to include.
-                 *     Any fields that do not match one of these types will be excluded from the results.
-                 *     It defaults to empty, meaning that all field types are returned.
-                 */
-                types?: components["parameters"]["field_caps-types"];
-                /** @description If false, empty fields are not included in the response. */
-                include_empty_fields?: components["parameters"]["field_caps-include_empty_fields"];
-            };
-            header?: never;
-            path: {
-                /** @description A comma-separated list of data streams, indices, and aliases used to limit the request. Supports wildcards (*). To target all data streams and indices, omit this parameter or use * or _all. */
-                index: components["parameters"]["field_caps-index"];
-            };
-            cookie?: never;
-        };
-        requestBody?: components["requestBodies"]["field_caps"];
-        responses: {
-            200: components["responses"]["field_caps-200"];
-        };
-    };
-    info: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        cluster_name: components["schemas"]["_types.Name"];
-                        cluster_uuid: components["schemas"]["_types.Uuid"];
-                        name: components["schemas"]["_types.Name"];
-                        tagline: string;
-                        version: components["schemas"]["_types.ElasticsearchVersionInfo"];
-                    };
-                };
-            };
-        };
-    };
-    ping: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
+  };
 }

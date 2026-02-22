@@ -11,9 +11,7 @@
   "paths": {
     "/_query": {
       "post": {
-        "tags": [
-          "esql"
-        ],
+        "tags": ["esql"],
         "summary": "Run an ES|QL query",
         "description": "Get search results for an ES|QL (Elasticsearch query language) query.",
         "externalDocs": {
@@ -99,9 +97,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "query"
-                ]
+                "required": ["query"]
               },
               "examples": {
                 "QueryRequestExample1": {
@@ -136,9 +132,7 @@
     },
     "/_query/async": {
       "post": {
-        "tags": [
-          "esql"
-        ],
+        "tags": ["esql"],
         "summary": "Run an async ES|QL query",
         "description": "Asynchronously run an ES|QL (Elasticsearch query language) query, monitor its progress, and retrieve results when they become available.\n\nThe API accepts the same parameters and request body as the synchronous query API, along with additional async related properties.\n\n## Required authorization\n\n* Index privileges: `read`\n",
         "externalDocs": {
@@ -236,9 +230,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "query"
-                ]
+                "required": ["query"]
               },
               "examples": {
                 "AsyncQueryRequestExample1": {
@@ -272,9 +264,7 @@
     },
     "/_query/async/{id}": {
       "get": {
-        "tags": [
-          "esql"
-        ],
+        "tags": ["esql"],
         "summary": "Get async ES|QL query results",
         "description": "Get the current status and available results or stored results for an ES|QL asynchronous query.\nIf the Elasticsearch security features are enabled, only the user who first submitted the ES|QL query can retrieve the results using this API.",
         "externalDocs": {
@@ -356,9 +346,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "esql"
-        ],
+        "tags": ["esql"],
         "summary": "Delete an async ES|QL query",
         "description": "If the query is still running, it is cancelled.\nOtherwise, the stored results are deleted.\n\nIf the Elasticsearch security features are enabled, only the following users can use this API to delete a query:\n\n* The authenticated user that submitted the original query request\n* Users with the `cancel_task` cluster privilege",
         "externalDocs": {
@@ -402,9 +390,7 @@
     },
     "/_query/async/{id}/stop": {
       "post": {
-        "tags": [
-          "esql"
-        ],
+        "tags": ["esql"],
         "summary": "Stop async ES|QL query",
         "description": "This API interrupts the query execution and returns the results so far.\nIf the Elasticsearch security features are enabled, only the user who first submitted the ES|QL query can stop it.",
         "externalDocs": {
@@ -457,9 +443,7 @@
     },
     "/_resolve/index/{name}": {
       "get": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Resolve indices",
         "description": "Resolve the names and/or index patterns for indices, aliases, and data streams.\nMultiple patterns and remote clusters are supported.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`\n",
         "operationId": "indices-resolve-index",
@@ -533,11 +517,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "indices",
-                    "aliases",
-                    "data_streams"
-                  ]
+                  "required": ["indices", "aliases", "data_streams"]
                 },
                 "examples": {
                   "ResolveIndexResponseExample1": {
@@ -560,9 +540,7 @@
     },
     "/{index}": {
       "get": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Get index information",
         "description": "Get information about one or more indices. For data streams, the API returns information about the\nstream’s backing indices.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`,`manage`\n",
         "operationId": "indices-get",
@@ -684,9 +662,7 @@
         ]
       },
       "put": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Create an index",
         "description": "You can use the create index API to add a new index to an Elasticsearch cluster.\nWhen creating an index, you can specify the following:\n\n* Settings for the index.\n* Mappings for fields in the index.\n* Index aliases\n\n**Wait for active shards**\n\nBy default, index creation will only return a response to the client when the primary copies of each shard have been started, or the request times out.\nThe index creation response will indicate what happened.\nFor example, `acknowledged` indicates whether the index was successfully created in the cluster, `while shards_acknowledged` indicates whether the requisite number of shard copies were started for each shard in the index before timing out.\nNote that it is still possible for either `acknowledged` or `shards_acknowledged` to be `false`, but for the index creation to be successful.\nThese values simply indicate whether the operation completed before the timeout.\nIf `acknowledged` is false, the request timed out before the cluster state was updated with the newly created index, but it probably will be created sometime soon.\nIf `shards_acknowledged` is false, then the request timed out before the requisite number of shards were started (by default just the primaries), even if the cluster state was successfully updated to reflect the newly created index (that is to say, `acknowledged` is `true`).\n\nYou can change the default of only waiting for the primary shards to start through the index setting `index.write.wait_for_active_shards`.\nNote that changing this setting will also affect the `wait_for_active_shards` value on all subsequent write operations.\n\n## Required authorization\n\n* Index privileges: `create_index`,`manage`\n",
         "operationId": "indices-create",
@@ -792,11 +768,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "index",
-                    "shards_acknowledged",
-                    "acknowledged"
-                  ]
+                  "required": ["index", "shards_acknowledged", "acknowledged"]
                 }
               }
             }
@@ -811,9 +783,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Delete indices",
         "description": "Deleting an index deletes its documents, shards, and metadata.\nIt does not delete related Kibana components, such as data views, visualizations, or dashboards.\n\nYou cannot delete the current write index of a data stream.\nTo delete the index, you must roll over the data stream so a new write index is created.\nYou can then use the delete index API to delete the previous write index.\n\n## Required authorization\n\n* Index privileges: `delete_index`\n",
         "operationId": "indices-delete",
@@ -901,9 +871,7 @@
         ]
       },
       "head": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Check indices",
         "description": "Check if one or more indices, index aliases, or data streams exist.",
         "operationId": "indices-exists",
@@ -999,9 +967,7 @@
     },
     "/{index}/_mapping": {
       "get": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Get mapping definitions",
         "description": "For data streams, the API retrieves mappings for the stream’s backing indices.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`\n",
         "operationId": "indices-get-mapping-1",
@@ -1039,9 +1005,7 @@
         ]
       },
       "put": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Update field mappings",
         "description": "Add new fields to an existing data stream or index.\nYou can use the update mapping API to:\n\n- Add a new field to an existing index\n- Update mappings for multiple indices in a single request\n- Add new properties to an object field\n- Enable multi-fields for an existing field\n- Update supported mapping parameters\n- Change a field's mapping using reindexing\n- Rename a field using a field alias\n\nLearn how to use the update mapping API with practical examples in the [Update mapping API examples](https://www.elastic.co/docs/manage-data/data-store/mapping/update-mappings-examples) guide.\n\n## Required authorization\n\n* Index privileges: `manage`\n",
         "externalDocs": {
@@ -1089,9 +1053,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "indices"
-        ],
+        "tags": ["indices"],
         "summary": "Update field mappings",
         "description": "Add new fields to an existing data stream or index.\nYou can use the update mapping API to:\n\n- Add a new field to an existing index\n- Update mappings for multiple indices in a single request\n- Add new properties to an object field\n- Enable multi-fields for an existing field\n- Update supported mapping parameters\n- Change a field's mapping using reindexing\n- Rename a field using a field alias\n\nLearn how to use the update mapping API with practical examples in the [Update mapping API examples](https://www.elastic.co/docs/manage-data/data-store/mapping/update-mappings-examples) guide.\n\n## Required authorization\n\n* Index privileges: `manage`\n",
         "externalDocs": {
@@ -1141,9 +1103,7 @@
     },
     "/_data_stream": {
       "get": {
-        "tags": [
-          "data stream"
-        ],
+        "tags": ["data stream"],
         "summary": "Get data streams",
         "description": "Get information about one or more data streams.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`\n",
         "operationId": "indices-get-data-stream",
@@ -1177,9 +1137,7 @@
     },
     "/_data_stream/{name}": {
       "get": {
-        "tags": [
-          "data stream"
-        ],
+        "tags": ["data stream"],
         "summary": "Get data streams",
         "description": "Get information about one or more data streams.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`\n",
         "operationId": "indices-get-data-stream-1",
@@ -1214,9 +1172,7 @@
         ]
       },
       "put": {
-        "tags": [
-          "data stream"
-        ],
+        "tags": ["data stream"],
         "summary": "Create a data stream",
         "description": "You must have a matching index template with data stream enabled.\n\n## Required authorization\n\n* Index privileges: `create_index`\n",
         "operationId": "indices-create-data-stream",
@@ -1274,9 +1230,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "data stream"
-        ],
+        "tags": ["data stream"],
         "summary": "Delete data streams",
         "description": "Deletes one or more data streams and their backing indices.\n\n## Required authorization\n\n* Index privileges: `delete_index`\n",
         "operationId": "indices-delete-data-stream",
@@ -1336,9 +1290,7 @@
     },
     "/{index}/_field_caps": {
       "get": {
-        "tags": [
-          "search"
-        ],
+        "tags": ["search"],
         "summary": "Get the field capabilities",
         "description": "Get information about the capabilities of fields among multiple indices.\n\nFor data streams, the API returns field capabilities among the stream’s backing indices.\nIt returns runtime fields like any other field.\nFor example, a runtime field with a type of keyword is returned the same as any other field that belongs to the `keyword` family.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`,`read`\n",
         "operationId": "field-caps-2",
@@ -1388,9 +1340,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "search"
-        ],
+        "tags": ["search"],
         "summary": "Get the field capabilities",
         "description": "Get information about the capabilities of fields among multiple indices.\n\nFor data streams, the API returns field capabilities among the stream’s backing indices.\nIt returns runtime fields like any other field.\nFor example, a runtime field with a type of keyword is returned the same as any other field that belongs to the `keyword` family.\n\n## Required authorization\n\n* Index privileges: `view_index_metadata`,`read`\n",
         "operationId": "field-caps-3",
@@ -1442,9 +1392,7 @@
     },
     "/": {
       "get": {
-        "tags": [
-          "info"
-        ],
+        "tags": ["info"],
         "summary": "Get cluster info",
         "description": "Get basic build, version, and cluster information.\n::: In Serverless, this API is retained for backward compatibility only. Some response fields, such as the version number, should be ignored.\n\n## Required authorization\n\n* Cluster privileges: `monitor`\n",
         "operationId": "info",
@@ -1472,13 +1420,7 @@
                       "$ref": "#/components/schemas/_types.ElasticsearchVersionInfo"
                     }
                   },
-                  "required": [
-                    "cluster_name",
-                    "cluster_uuid",
-                    "name",
-                    "tagline",
-                    "version"
-                  ]
+                  "required": ["cluster_name", "cluster_uuid", "name", "tagline", "version"]
                 },
                 "examples": {
                   "RootNodeInfoResponseExample1": {
@@ -1505,9 +1447,7 @@
         ]
       },
       "head": {
-        "tags": [
-          "cluster"
-        ],
+        "tags": ["cluster"],
         "summary": "Ping the cluster",
         "description": "Get information about whether the cluster is running.",
         "operationId": "ping",
@@ -1542,9 +1482,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "acknowledged"
-        ]
+        "required": ["acknowledged"]
       },
       "_types.Duration": {
         "externalDocs": {
@@ -1557,15 +1495,11 @@
           },
           {
             "type": "string",
-            "enum": [
-              "-1"
-            ]
+            "enum": ["-1"]
           },
           {
             "type": "string",
-            "enum": [
-              "0"
-            ]
+            "enum": ["0"]
           }
         ]
       },
@@ -1606,10 +1540,7 @@
             "$ref": "#/components/schemas/_types.GeoLocation"
           }
         },
-        "required": [
-          "top_left",
-          "bottom_right"
-        ]
+        "required": ["top_left", "bottom_right"]
       },
       "_types.GeoLocation": {
         "description": "A latitude/longitude as a 2 dimensional point. It can be represented in various ways:\n- as a `{lat, long}` object\n- as a geo hash value\n- as a `[lon, lat]` array\n- as a string in `\"<lat>, <lon>\"` or WKT point formats",
@@ -1643,10 +1574,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "lat",
-          "lon"
-        ]
+        "required": ["lat", "lon"]
       },
       "_types.GeoHashLocation": {
         "type": "object",
@@ -1655,9 +1583,7 @@
             "$ref": "#/components/schemas/_types.GeoHash"
           }
         },
-        "required": [
-          "geohash"
-        ]
+        "required": ["geohash"]
       },
       "_types.GeoHash": {
         "type": "string"
@@ -1695,12 +1621,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "top",
-          "bottom",
-          "left",
-          "right"
-        ]
+        "required": ["top", "bottom", "left", "right"]
       },
       "_types.TopRightBottomLeftGeoBounds": {
         "type": "object",
@@ -1712,10 +1633,7 @@
             "$ref": "#/components/schemas/_types.GeoLocation"
           }
         },
-        "required": [
-          "top_right",
-          "bottom_left"
-        ]
+        "required": ["top_right", "bottom_left"]
       },
       "_types.WktGeoBounds": {
         "type": "object",
@@ -1724,9 +1642,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "wkt"
-        ]
+        "required": ["wkt"]
       },
       "_types.EpochTimeUnitMillis": {
         "allOf": [
@@ -1802,11 +1718,7 @@
             "$ref": "#/components/schemas/_types.uint"
           }
         },
-        "required": [
-          "failed",
-          "successful",
-          "total"
-        ]
+        "required": ["failed", "successful", "total"]
       },
       "_types.uint": {
         "type": "number"
@@ -1833,9 +1745,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "_types.ErrorCause": {
         "description": "Cause and details about a request failure. This class defines the properties common to all error types.\nAdditional details are also provided, that depend on the error type.",
@@ -1877,9 +1787,7 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.NodeId": {
         "type": "string"
@@ -1913,12 +1821,7 @@
       },
       "_types.query_dsl.Operator": {
         "type": "string",
-        "enum": [
-          "and",
-          "AND",
-          "or",
-          "OR"
-        ]
+        "enum": ["and", "AND", "or", "OR"]
       },
       "_types.Fields": {
         "oneOf": [
@@ -1948,13 +1851,7 @@
       },
       "_types.ExpandWildcard": {
         "type": "string",
-        "enum": [
-          "all",
-          "open",
-          "closed",
-          "hidden",
-          "none"
-        ]
+        "enum": ["all", "open", "closed", "hidden", "none"]
       },
       "_global.search._types.TrackHits": {
         "description": "Number of hits matching the query to count accurately. If true, the exact\nnumber of hits is returned at the cost of some performance. If false, the\nresponse does not include the total number of hits matching the query.\nDefaults to 10,000 hits.",
@@ -2718,11 +2615,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.QueryContainer"
               }
             },
-            "required": [
-              "negative_boost",
-              "negative",
-              "positive"
-            ]
+            "required": ["negative_boost", "negative", "positive"]
           }
         ]
       },
@@ -2753,9 +2646,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -2793,26 +2684,17 @@
                 "$ref": "#/components/schemas/_types.query_dsl.CombinedFieldsZeroTerms"
               }
             },
-            "required": [
-              "fields",
-              "query"
-            ]
+            "required": ["fields", "query"]
           }
         ]
       },
       "_types.query_dsl.CombinedFieldsOperator": {
         "type": "string",
-        "enum": [
-          "or",
-          "and"
-        ]
+        "enum": ["or", "and"]
       },
       "_types.query_dsl.CombinedFieldsZeroTerms": {
         "type": "string",
-        "enum": [
-          "none",
-          "all"
-        ]
+        "enum": ["none", "all"]
       },
       "_types.query_dsl.ConstantScoreQuery": {
         "allOf": [
@@ -2826,9 +2708,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.QueryContainer"
               }
             },
-            "required": [
-              "filter"
-            ]
+            "required": ["filter"]
           }
         ]
       },
@@ -2853,9 +2733,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "queries"
-            ]
+            "required": ["queries"]
           }
         ]
       },
@@ -2905,11 +2783,7 @@
                 "$ref": "#/components/schemas/_types.Field"
               }
             },
-            "required": [
-              "origin",
-              "pivot",
-              "field"
-            ]
+            "required": ["origin", "pivot", "field"]
           }
         ]
       },
@@ -2941,11 +2815,7 @@
                 "$ref": "#/components/schemas/_types.Field"
               }
             },
-            "required": [
-              "origin",
-              "pivot",
-              "field"
-            ]
+            "required": ["origin", "pivot", "field"]
           }
         ]
       },
@@ -2980,11 +2850,7 @@
                 "$ref": "#/components/schemas/_types.Field"
               }
             },
-            "required": [
-              "origin",
-              "pivot",
-              "field"
-            ]
+            "required": ["origin", "pivot", "field"]
           }
         ]
       },
@@ -3003,9 +2869,7 @@
                 "$ref": "#/components/schemas/_types.Field"
               }
             },
-            "required": [
-              "field"
-            ]
+            "required": ["field"]
           }
         ]
       },
@@ -3047,14 +2911,7 @@
       },
       "_types.query_dsl.FunctionBoostMode": {
         "type": "string",
-        "enum": [
-          "multiply",
-          "replace",
-          "sum",
-          "avg",
-          "max",
-          "min"
-        ]
+        "enum": ["multiply", "replace", "sum", "avg", "max", "min"]
       },
       "_types.query_dsl.FunctionScoreContainer": {
         "allOf": [
@@ -3132,12 +2989,7 @@
       },
       "_types.query_dsl.MultiValueMode": {
         "type": "string",
-        "enum": [
-          "min",
-          "max",
-          "avg",
-          "sum"
-        ]
+        "enum": ["min", "max", "avg", "sum"]
       },
       "_types.query_dsl.DateDecayFunction": {
         "allOf": [
@@ -3212,9 +3064,7 @@
             "$ref": "#/components/schemas/_types.query_dsl.FieldValueFactorModifier"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.query_dsl.FieldValueFactorModifier": {
         "type": "string",
@@ -3256,9 +3106,7 @@
             "$ref": "#/components/schemas/_types.Script"
           }
         },
-        "required": [
-          "script"
-        ]
+        "required": ["script"]
       },
       "_types.Script": {
         "type": "object",
@@ -3520,9 +3368,7 @@
             "$ref": "#/components/schemas/_global.search._types.FieldCollapse"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_global.search._types.InnerHits": {
         "type": "object",
@@ -3609,9 +3455,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_global.search._types.Highlight": {
         "allOf": [
@@ -3631,18 +3475,13 @@
                 }
               }
             },
-            "required": [
-              "fields"
-            ]
+            "required": ["fields"]
           }
         ]
       },
       "_global.search._types.HighlighterEncoder": {
         "type": "string",
-        "enum": [
-          "default",
-          "html"
-        ]
+        "enum": ["default", "html"]
       },
       "_global.search._types.HighlightField": {
         "allOf": [
@@ -3763,11 +3602,7 @@
         "anyOf": [
           {
             "type": "string",
-            "enum": [
-              "plain",
-              "fvh",
-              "unified"
-            ]
+            "enum": ["plain", "fvh", "unified"]
           },
           {
             "type": "string"
@@ -3776,30 +3611,19 @@
       },
       "_global.search._types.BoundaryScanner": {
         "type": "string",
-        "enum": [
-          "chars",
-          "sentence",
-          "word"
-        ]
+        "enum": ["chars", "sentence", "word"]
       },
       "_global.search._types.HighlighterFragmenter": {
         "type": "string",
-        "enum": [
-          "simple",
-          "span"
-        ]
+        "enum": ["simple", "span"]
       },
       "_global.search._types.HighlighterOrder": {
         "type": "string",
-        "enum": [
-          "score"
-        ]
+        "enum": ["score"]
       },
       "_global.search._types.HighlighterTagsSchema": {
         "type": "string",
-        "enum": [
-          "styled"
-        ]
+        "enum": ["styled"]
       },
       "_types.ScriptField": {
         "type": "object",
@@ -3811,9 +3635,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "script"
-        ]
+        "required": ["script"]
       },
       "_types.Sort": {
         "oneOf": [
@@ -3867,10 +3689,7 @@
       },
       "_types.SortOrder": {
         "type": "string",
-        "enum": [
-          "asc",
-          "desc"
-        ]
+        "enum": ["asc", "desc"]
       },
       "_types.GeoDistanceSort": {
         "type": "object",
@@ -3897,34 +3716,15 @@
       },
       "_types.SortMode": {
         "type": "string",
-        "enum": [
-          "min",
-          "max",
-          "sum",
-          "avg",
-          "median"
-        ]
+        "enum": ["min", "max", "sum", "avg", "median"]
       },
       "_types.GeoDistanceType": {
         "type": "string",
-        "enum": [
-          "arc",
-          "plane"
-        ]
+        "enum": ["arc", "plane"]
       },
       "_types.DistanceUnit": {
         "type": "string",
-        "enum": [
-          "in",
-          "ft",
-          "yd",
-          "mi",
-          "nmi",
-          "km",
-          "m",
-          "cm",
-          "mm"
-        ]
+        "enum": ["in", "ft", "yd", "mi", "nmi", "km", "m", "cm", "mm"]
       },
       "_types.NestedSortValue": {
         "type": "object",
@@ -3942,9 +3742,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "path"
-        ]
+        "required": ["path"]
       },
       "_types.ScriptSort": {
         "type": "object",
@@ -3965,17 +3763,11 @@
             "$ref": "#/components/schemas/_types.NestedSortValue"
           }
         },
-        "required": [
-          "script"
-        ]
+        "required": ["script"]
       },
       "_types.ScriptSortType": {
         "type": "string",
-        "enum": [
-          "string",
-          "number",
-          "version"
-        ]
+        "enum": ["string", "number", "version"]
       },
       "_global.search._types.SourceConfig": {
         "description": "Defines how to fetch a source. Fetching can be disabled entirely, or the source can be filtered.",
@@ -4048,9 +3840,7 @@
             "$ref": "#/components/schemas/_types.RescoreVector"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.QueryVector": {
         "type": "array",
@@ -4080,9 +3870,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "model_text"
-        ]
+        "required": ["model_text"]
       },
       "_types.RescoreVector": {
         "type": "object",
@@ -4092,9 +3880,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "oversample"
-        ]
+        "required": ["oversample"]
       },
       "_types.RankContainer": {
         "type": "object",
@@ -4174,19 +3960,11 @@
             "$ref": "#/components/schemas/_global.search._types.ScoreMode"
           }
         },
-        "required": [
-          "rescore_query"
-        ]
+        "required": ["rescore_query"]
       },
       "_global.search._types.ScoreMode": {
         "type": "string",
-        "enum": [
-          "avg",
-          "max",
-          "min",
-          "multiply",
-          "total"
-        ]
+        "enum": ["avg", "max", "min", "multiply", "total"]
       },
       "_global.search._types.LearningToRank": {
         "type": "object",
@@ -4203,9 +3981,7 @@
             }
           }
         },
-        "required": [
-          "model_id"
-        ]
+        "required": ["model_id"]
       },
       "_types.RetrieverContainer": {
         "type": "object",
@@ -4327,11 +4103,7 @@
                 "$ref": "#/components/schemas/_types.RescoreVector"
               }
             },
-            "required": [
-              "field",
-              "k",
-              "num_candidates"
-            ]
+            "required": ["field", "k", "num_candidates"]
           }
         ]
       },
@@ -4359,9 +4131,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "retrievers"
-            ]
+            "required": ["retrievers"]
           }
         ]
       },
@@ -4393,11 +4163,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "retriever",
-              "inference_text",
-              "field"
-            ]
+            "required": ["retriever", "inference_text", "field"]
           }
         ]
       },
@@ -4435,11 +4201,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "ruleset_ids",
-              "match_criteria",
-              "retriever"
-            ]
+            "required": ["ruleset_ids", "match_criteria", "retriever"]
           }
         ]
       },
@@ -4468,10 +4230,7 @@
                 ]
               }
             },
-            "required": [
-              "retriever",
-              "rescore"
-            ]
+            "required": ["retriever", "rescore"]
           }
         ]
       },
@@ -4510,18 +4269,11 @@
             "$ref": "#/components/schemas/_types.ScoreNormalizer"
           }
         },
-        "required": [
-          "retriever",
-          "weight",
-          "normalizer"
-        ]
+        "required": ["retriever", "weight", "normalizer"]
       },
       "_types.ScoreNormalizer": {
         "type": "string",
-        "enum": [
-          "none",
-          "minmax"
-        ]
+        "enum": ["none", "minmax"]
       },
       "_types.PinnedRetriever": {
         "allOf": [
@@ -4550,9 +4302,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "retriever"
-            ]
+            "required": ["retriever"]
           }
         ]
       },
@@ -4566,9 +4316,7 @@
             "$ref": "#/components/schemas/_types.Id"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "_types.SlicedScroll": {
         "type": "object",
@@ -4583,10 +4331,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "id",
-          "max"
-        ]
+        "required": ["id", "max"]
       },
       "_global.search._types.Suggester": {
         "type": "object",
@@ -4607,9 +4352,7 @@
             "$ref": "#/components/schemas/_types.Duration"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "_types.mapping.RuntimeFields": {
         "type": "object",
@@ -4654,9 +4397,7 @@
             "$ref": "#/components/schemas/_types.mapping.RuntimeFieldType"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.mapping.CompositeSubField": {
         "type": "object",
@@ -4665,9 +4406,7 @@
             "$ref": "#/components/schemas/_types.mapping.RuntimeFieldType"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.mapping.RuntimeFieldType": {
         "type": "string",
@@ -4694,20 +4433,13 @@
             "type": "string"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.ScriptLanguage": {
         "anyOf": [
           {
             "type": "string",
-            "enum": [
-              "painless",
-              "expression",
-              "mustache",
-              "java"
-            ]
+            "enum": ["painless", "expression", "mustache", "java"]
           },
           {
             "type": "string"
@@ -4716,14 +4448,7 @@
       },
       "_types.query_dsl.FunctionScoreMode": {
         "type": "string",
-        "enum": [
-          "multiply",
-          "sum",
-          "avg",
-          "first",
-          "max",
-          "min"
-        ]
+        "enum": ["multiply", "sum", "avg", "first", "max", "min"]
       },
       "_types.query_dsl.FuzzyQuery": {
         "allOf": [
@@ -4769,9 +4494,7 @@
                 ]
               }
             },
-            "required": [
-              "value"
-            ]
+            "required": ["value"]
           }
         ]
       },
@@ -4813,18 +4536,11 @@
       },
       "_types.query_dsl.GeoExecution": {
         "type": "string",
-        "enum": [
-          "memory",
-          "indexed"
-        ]
+        "enum": ["memory", "indexed"]
       },
       "_types.query_dsl.GeoValidationMethod": {
         "type": "string",
-        "enum": [
-          "coerce",
-          "ignore_malformed",
-          "strict"
-        ]
+        "enum": ["coerce", "ignore_malformed", "strict"]
       },
       "_types.query_dsl.GeoDistanceQuery": {
         "allOf": [
@@ -4849,9 +4565,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "distance"
-            ]
+            "required": ["distance"]
           }
         ]
       },
@@ -4947,22 +4661,13 @@
                 "$ref": "#/components/schemas/_types.RelationName"
               }
             },
-            "required": [
-              "query",
-              "type"
-            ]
+            "required": ["query", "type"]
           }
         ]
       },
       "_types.query_dsl.ChildScoreMode": {
         "type": "string",
-        "enum": [
-          "none",
-          "avg",
-          "sum",
-          "max",
-          "min"
-        ]
+        "enum": ["none", "avg", "sum", "max", "min"]
       },
       "_types.RelationName": {
         "type": "string"
@@ -4995,10 +4700,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "parent_type",
-              "query"
-            ]
+            "required": ["parent_type", "query"]
           }
         ]
       },
@@ -5095,9 +4797,7 @@
             "$ref": "#/components/schemas/_types.query_dsl.IntervalsFilter"
           }
         },
-        "required": [
-          "intervals"
-        ]
+        "required": ["intervals"]
       },
       "_types.query_dsl.IntervalsContainer": {
         "type": "object",
@@ -5144,9 +4844,7 @@
             "$ref": "#/components/schemas/_types.query_dsl.IntervalsFilter"
           }
         },
-        "required": [
-          "intervals"
-        ]
+        "required": ["intervals"]
       },
       "_types.query_dsl.IntervalsFilter": {
         "type": "object",
@@ -5210,9 +4908,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "term"
-        ]
+        "required": ["term"]
       },
       "_types.query_dsl.IntervalsMatch": {
         "type": "object",
@@ -5242,9 +4938,7 @@
             "$ref": "#/components/schemas/_types.query_dsl.IntervalsFilter"
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       },
       "_types.query_dsl.IntervalsPrefix": {
         "type": "object",
@@ -5261,9 +4955,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "prefix"
-        ]
+        "required": ["prefix"]
       },
       "_types.query_dsl.IntervalsRange": {
         "type": "object",
@@ -5308,9 +5000,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "pattern"
-        ]
+        "required": ["pattern"]
       },
       "_types.query_dsl.IntervalsWildcard": {
         "type": "object",
@@ -5327,9 +5017,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "pattern"
-        ]
+        "required": ["pattern"]
       },
       "_types.KnnQuery": {
         "allOf": [
@@ -5378,9 +5066,7 @@
                 "$ref": "#/components/schemas/_types.RescoreVector"
               }
             },
-            "required": [
-              "field"
-            ]
+            "required": ["field"]
           }
         ]
       },
@@ -5455,18 +5141,13 @@
                 "$ref": "#/components/schemas/_types.query_dsl.ZeroTermsQuery"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
       "_types.query_dsl.ZeroTermsQuery": {
         "type": "string",
-        "enum": [
-          "all",
-          "none"
-        ]
+        "enum": ["all", "none"]
       },
       "_types.query_dsl.MatchAllQuery": {
         "allOf": [
@@ -5522,9 +5203,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -5563,9 +5242,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.ZeroTermsQuery"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -5599,9 +5276,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.ZeroTermsQuery"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -5715,9 +5390,7 @@
                 "$ref": "#/components/schemas/_types.VersionType"
               }
             },
-            "required": [
-              "like"
-            ]
+            "required": ["like"]
           }
         ]
       },
@@ -5771,12 +5444,7 @@
       },
       "_types.VersionType": {
         "type": "string",
-        "enum": [
-          "internal",
-          "external",
-          "external_gte",
-          "force"
-        ]
+        "enum": ["internal", "external", "external_gte", "force"]
       },
       "_types.analysis.StopWords": {
         "description": "Language value, such as _arabic_ or _thai_. Defaults to _english_.\nEach language value corresponds to a predefined list of stop words in Lucene. See Stop words by language for supported language values and their stop words.\nAlso accepts an array of stop words.",
@@ -5911,9 +5579,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.ZeroTermsQuery"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -5954,10 +5620,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.ChildScoreMode"
               }
             },
-            "required": [
-              "path",
-              "query"
-            ]
+            "required": ["path", "query"]
           }
         ]
       },
@@ -6027,9 +5690,7 @@
                 "$ref": "#/components/schemas/_types.VersionNumber"
               }
             },
-            "required": [
-              "field"
-            ]
+            "required": ["field"]
           }
         ]
       },
@@ -6050,9 +5711,7 @@
                     "$ref": "#/components/schemas/_types.query_dsl.QueryContainer"
                   }
                 },
-                "required": [
-                  "organic"
-                ]
+                "required": ["organic"]
               },
               {
                 "type": "object",
@@ -6089,9 +5748,7 @@
             "$ref": "#/components/schemas/_types.IndexName"
           }
         },
-        "required": [
-          "_id"
-        ]
+        "required": ["_id"]
       },
       "_types.query_dsl.PrefixQuery": {
         "allOf": [
@@ -6115,9 +5772,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "value"
-            ]
+            "required": ["value"]
           }
         ]
       },
@@ -6235,9 +5890,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.TextQueryType"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -6317,11 +5970,7 @@
       },
       "_types.query_dsl.RangeRelation": {
         "type": "string",
-        "enum": [
-          "within",
-          "contains",
-          "intersects"
-        ]
+        "enum": ["within", "contains", "intersects"]
       },
       "_types.query_dsl.DateRangeQuery": {
         "allOf": [
@@ -6474,9 +6123,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.RankFeatureFunctionSigmoid"
               }
             },
-            "required": [
-              "field"
-            ]
+            "required": ["field"]
           }
         ]
       },
@@ -6512,9 +6159,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "scaling_factor"
-            ]
+            "required": ["scaling_factor"]
           }
         ]
       },
@@ -6545,10 +6190,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "pivot",
-              "exponent"
-            ]
+            "required": ["pivot", "exponent"]
           }
         ]
       },
@@ -6583,9 +6225,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "value"
-            ]
+            "required": ["value"]
           }
         ]
       },
@@ -6620,10 +6260,7 @@
                 "type": "object"
               }
             },
-            "required": [
-              "organic",
-              "match_criteria"
-            ]
+            "required": ["organic", "match_criteria"]
           }
         ]
       },
@@ -6639,9 +6276,7 @@
                 "$ref": "#/components/schemas/_types.Script"
               }
             },
-            "required": [
-              "script"
-            ]
+            "required": ["script"]
           }
         ]
       },
@@ -6664,10 +6299,7 @@
                 "$ref": "#/components/schemas/_types.Script"
               }
             },
-            "required": [
-              "query",
-              "script"
-            ]
+            "required": ["query", "script"]
           }
         ]
       },
@@ -6688,10 +6320,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "field",
-              "query"
-            ]
+            "required": ["field", "query"]
           }
         ]
       },
@@ -6777,9 +6406,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -6835,10 +6462,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.SpanQuery"
               }
             },
-            "required": [
-              "big",
-              "little"
-            ]
+            "required": ["big", "little"]
           }
         ]
       },
@@ -6900,10 +6524,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.SpanQuery"
               }
             },
-            "required": [
-              "field",
-              "query"
-            ]
+            "required": ["field", "query"]
           }
         ]
       },
@@ -6923,10 +6544,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.SpanQuery"
               }
             },
-            "required": [
-              "end",
-              "match"
-            ]
+            "required": ["end", "match"]
           }
         ]
       },
@@ -6951,9 +6569,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.QueryContainer"
               }
             },
-            "required": [
-              "match"
-            ]
+            "required": ["match"]
           }
         ]
       },
@@ -6981,9 +6597,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "clauses"
-            ]
+            "required": ["clauses"]
           }
         ]
       },
@@ -7016,10 +6630,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "exclude",
-              "include"
-            ]
+            "required": ["exclude", "include"]
           }
         ]
       },
@@ -7039,9 +6650,7 @@
                 }
               }
             },
-            "required": [
-              "clauses"
-            ]
+            "required": ["clauses"]
           }
         ]
       },
@@ -7057,9 +6666,7 @@
                 "$ref": "#/components/schemas/_types.FieldValue"
               }
             },
-            "required": [
-              "value"
-            ]
+            "required": ["value"]
           }
         ]
       },
@@ -7078,10 +6685,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.SpanQuery"
               }
             },
-            "required": [
-              "big",
-              "little"
-            ]
+            "required": ["big", "little"]
           }
         ]
       },
@@ -7114,9 +6718,7 @@
                     "$ref": "#/components/schemas/_types.query_dsl.TokenPruningConfig"
                   }
                 },
-                "required": [
-                  "field"
-                ]
+                "required": ["field"]
               },
               {
                 "type": "object",
@@ -7177,9 +6779,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "value"
-            ]
+            "required": ["value"]
           }
         ]
       },
@@ -7218,9 +6818,7 @@
                 }
               }
             },
-            "required": [
-              "terms"
-            ]
+            "required": ["terms"]
           }
         ]
       },
@@ -7244,10 +6842,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.TokenPruningConfig"
               }
             },
-            "required": [
-              "model_id",
-              "model_text"
-            ]
+            "required": ["model_id", "model_text"]
           }
         ]
       },
@@ -7270,9 +6865,7 @@
                 "$ref": "#/components/schemas/_types.query_dsl.TokenPruningConfig"
               }
             },
-            "required": [
-              "tokens"
-            ]
+            "required": ["tokens"]
           }
         ]
       },
@@ -7317,9 +6910,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         ]
       },
@@ -7335,9 +6926,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "value"
-            ]
+            "required": ["value"]
           }
         ]
       },
@@ -7403,14 +6992,7 @@
       },
       "_types.aggregations.MinimumInterval": {
         "type": "string",
-        "enum": [
-          "second",
-          "minute",
-          "hour",
-          "day",
-          "month",
-          "year"
-        ]
+        "enum": ["second", "minute", "hour", "day", "month", "year"]
       },
       "_types.aggregations.AverageAggregation": {
         "allOf": [
@@ -7498,11 +7080,7 @@
       },
       "_types.aggregations.GapPolicy": {
         "type": "string",
-        "enum": [
-          "skip",
-          "insert_zeros",
-          "keep_values"
-        ]
+        "enum": ["skip", "insert_zeros", "keep_values"]
       },
       "_types.aggregations.BucketPathAggregation": {
         "allOf": [
@@ -7655,9 +7233,7 @@
                 "$ref": "#/components/schemas/_types.aggregations.BucketCorrelationFunction"
               }
             },
-            "required": [
-              "function"
-            ]
+            "required": ["function"]
           }
         ]
       },
@@ -7668,9 +7244,7 @@
             "$ref": "#/components/schemas/_types.aggregations.BucketCorrelationFunctionCountCorrelation"
           }
         },
-        "required": [
-          "count_correlation"
-        ]
+        "required": ["count_correlation"]
       },
       "_types.aggregations.BucketCorrelationFunctionCountCorrelation": {
         "type": "object",
@@ -7679,9 +7253,7 @@
             "$ref": "#/components/schemas/_types.aggregations.BucketCorrelationFunctionCountCorrelationIndicator"
           }
         },
-        "required": [
-          "indicator"
-        ]
+        "required": ["indicator"]
       },
       "_types.aggregations.BucketCorrelationFunctionCountCorrelationIndicator": {
         "type": "object",
@@ -7705,10 +7277,7 @@
             }
           }
         },
-        "required": [
-          "doc_count",
-          "expectations"
-        ]
+        "required": ["doc_count", "expectations"]
       },
       "_types.aggregations.CardinalityAggregation": {
         "allOf": [
@@ -7818,9 +7387,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "field"
-            ]
+            "required": ["field"]
           }
         ]
       },
@@ -7961,11 +7528,7 @@
       },
       "_types.aggregations.MissingOrder": {
         "type": "string",
-        "enum": [
-          "first",
-          "last",
-          "default"
-        ]
+        "enum": ["first", "last", "default"]
       },
       "_types.aggregations.ValueType": {
         "type": "string",
@@ -7994,9 +7557,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "interval"
-            ]
+            "required": ["interval"]
           }
         ]
       },
@@ -8288,11 +7849,7 @@
       },
       "_types.aggregations.SamplerAggregationExecutionHint": {
         "type": "string",
-        "enum": [
-          "map",
-          "global_ordinals",
-          "bytes_hash"
-        ]
+        "enum": ["map", "global_ordinals", "bytes_hash"]
       },
       "_types.aggregations.ExtendedStatsAggregation": {
         "allOf": [
@@ -8355,9 +7912,7 @@
             "$ref": "#/components/schemas/_types.query_dsl.QueryContainer"
           }
         },
-        "required": [
-          "fields"
-        ]
+        "required": ["fields"]
       },
       "_types.aggregations.FrequentItemSetsField": {
         "type": "object",
@@ -8372,9 +7927,7 @@
             "$ref": "#/components/schemas/_types.aggregations.TermsInclude"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.aggregations.TermsExclude": {
         "oneOf": [
@@ -8417,10 +7970,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "num_partitions",
-          "partition"
-        ]
+        "required": ["num_partitions", "partition"]
       },
       "_types.aggregations.FiltersAggregation": {
         "allOf": [
@@ -8630,10 +8180,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "point",
-          "sort"
-        ]
+        "required": ["point", "sort"]
       },
       "_types.aggregations.GeoLinePoint": {
         "type": "object",
@@ -8642,9 +8189,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.aggregations.GeoLineSort": {
         "type": "object",
@@ -8653,9 +8198,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.aggregations.GeoTileGridAggregation": {
         "allOf": [
@@ -8719,9 +8262,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "field"
-            ]
+            "required": ["field"]
           }
         ]
       },
@@ -8889,10 +8430,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "field",
-              "prefix_length"
-            ]
+            "required": ["field", "prefix_length"]
           }
         ]
       },
@@ -8911,9 +8449,7 @@
                 "$ref": "#/components/schemas/_types.aggregations.InferenceConfigContainer"
               }
             },
-            "required": [
-              "model_id"
-            ]
+            "required": ["model_id"]
           }
         ]
       },
@@ -9113,18 +8649,13 @@
             "properties": {
               "model": {
                 "type": "string",
-                "enum": [
-                  "linear"
-                ]
+                "enum": ["linear"]
               },
               "settings": {
                 "$ref": "#/components/schemas/_types.EmptyObject"
               }
             },
-            "required": [
-              "model",
-              "settings"
-            ]
+            "required": ["model", "settings"]
           }
         ]
       },
@@ -9163,18 +8694,13 @@
             "properties": {
               "model": {
                 "type": "string",
-                "enum": [
-                  "simple"
-                ]
+                "enum": ["simple"]
               },
               "settings": {
                 "$ref": "#/components/schemas/_types.EmptyObject"
               }
             },
-            "required": [
-              "model",
-              "settings"
-            ]
+            "required": ["model", "settings"]
           }
         ]
       },
@@ -9188,18 +8714,13 @@
             "properties": {
               "model": {
                 "type": "string",
-                "enum": [
-                  "ewma"
-                ]
+                "enum": ["ewma"]
               },
               "settings": {
                 "$ref": "#/components/schemas/_types.aggregations.EwmaModelSettings"
               }
             },
-            "required": [
-              "model",
-              "settings"
-            ]
+            "required": ["model", "settings"]
           }
         ]
       },
@@ -9221,18 +8742,13 @@
             "properties": {
               "model": {
                 "type": "string",
-                "enum": [
-                  "holt"
-                ]
+                "enum": ["holt"]
               },
               "settings": {
                 "$ref": "#/components/schemas/_types.aggregations.HoltLinearModelSettings"
               }
             },
-            "required": [
-              "model",
-              "settings"
-            ]
+            "required": ["model", "settings"]
           }
         ]
       },
@@ -9257,18 +8773,13 @@
             "properties": {
               "model": {
                 "type": "string",
-                "enum": [
-                  "holt_winters"
-                ]
+                "enum": ["holt_winters"]
               },
               "settings": {
                 "$ref": "#/components/schemas/_types.aggregations.HoltWintersModelSettings"
               }
             },
-            "required": [
-              "model",
-              "settings"
-            ]
+            "required": ["model", "settings"]
           }
         ]
       },
@@ -9297,10 +8808,7 @@
       },
       "_types.aggregations.HoltWintersType": {
         "type": "string",
-        "enum": [
-          "add",
-          "mult"
-        ]
+        "enum": ["add", "mult"]
       },
       "_types.aggregations.MovingPercentilesAggregation": {
         "allOf": [
@@ -9397,18 +8905,13 @@
                 }
               }
             },
-            "required": [
-              "terms"
-            ]
+            "required": ["terms"]
           }
         ]
       },
       "_types.aggregations.TermsAggregationCollectMode": {
         "type": "string",
-        "enum": [
-          "depth_first",
-          "breadth_first"
-        ]
+        "enum": ["depth_first", "breadth_first"]
       },
       "_types.aggregations.MultiTermLookup": {
         "type": "object",
@@ -9420,9 +8923,7 @@
             "$ref": "#/components/schemas/_types.aggregations.Missing"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.aggregations.NestedAggregation": {
         "allOf": [
@@ -9456,14 +8957,7 @@
       },
       "_types.aggregations.NormalizeMethod": {
         "type": "string",
-        "enum": [
-          "rescale_0_1",
-          "rescale_0_100",
-          "percent_of_sum",
-          "mean",
-          "z-score",
-          "softmax"
-        ]
+        "enum": ["rescale_0_1", "rescale_0_100", "percent_of_sum", "mean", "z-score", "softmax"]
       },
       "_types.aggregations.ParentAggregation": {
         "allOf": [
@@ -9678,10 +9172,7 @@
       },
       "_types.aggregations.RateMode": {
         "type": "string",
-        "enum": [
-          "sum",
-          "value_count"
-        ]
+        "enum": ["sum", "value_count"]
       },
       "_types.aggregations.ReverseNestedAggregation": {
         "allOf": [
@@ -9720,9 +9211,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "probability"
-            ]
+            "required": ["probability"]
           }
         ]
       },
@@ -9867,10 +9356,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "background_is_superset",
-          "include_negatives"
-        ]
+        "required": ["background_is_superset", "include_negatives"]
       },
       "_types.aggregations.TermsAggregationExecutionHint": {
         "type": "string",
@@ -9913,9 +9399,7 @@
             "$ref": "#/components/schemas/_types.Script"
           }
         },
-        "required": [
-          "script"
-        ]
+        "required": ["script"]
       },
       "_types.aggregations.PValueHeuristic": {
         "type": "object",
@@ -10256,17 +9740,11 @@
             "$ref": "#/components/schemas/_types.query_dsl.QueryContainer"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.aggregations.TTestType": {
         "type": "string",
-        "enum": [
-          "paired",
-          "homoscedastic",
-          "heteroscedastic"
-        ]
+        "enum": ["paired", "homoscedastic", "heteroscedastic"]
       },
       "_types.aggregations.TopMetricsAggregation": {
         "allOf": [
@@ -10309,9 +9787,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "field"
-        ]
+        "required": ["field"]
       },
       "_types.aggregations.ValueCountAggregation": {
         "allOf": [
@@ -10414,10 +9890,7 @@
       },
       "_types.WaitForActiveShardOptions": {
         "type": "string",
-        "enum": [
-          "all",
-          "index-setting"
-        ]
+        "enum": ["all", "index-setting"]
       },
       "_types.Names": {
         "oneOf": [
@@ -10444,16 +9917,7 @@
       },
       "_types.HealthStatus": {
         "type": "string",
-        "enum": [
-          "green",
-          "GREEN",
-          "yellow",
-          "YELLOW",
-          "red",
-          "RED",
-          "unknown",
-          "unavailable"
-        ]
+        "enum": ["green", "GREEN", "yellow", "YELLOW", "red", "RED", "unknown", "unavailable"]
       },
       "_types.VersionString": {
         "type": "string"
@@ -10731,9 +10195,7 @@
             "$ref": "#/components/schemas/_types.Duration"
           }
         },
-        "required": [
-          "period"
-        ]
+        "required": ["period"]
       },
       "indices._types.IndexSegmentSort": {
         "type": "object",
@@ -10784,36 +10246,19 @@
       },
       "indices._types.SegmentSortOrder": {
         "type": "string",
-        "enum": [
-          "asc",
-          "ASC",
-          "desc",
-          "DESC"
-        ]
+        "enum": ["asc", "ASC", "desc", "DESC"]
       },
       "indices._types.SegmentSortMode": {
         "type": "string",
-        "enum": [
-          "min",
-          "MIN",
-          "max",
-          "MAX"
-        ]
+        "enum": ["min", "MIN", "max", "MAX"]
       },
       "indices._types.SegmentSortMissing": {
         "type": "string",
-        "enum": [
-          "_last",
-          "_first"
-        ]
+        "enum": ["_last", "_first"]
       },
       "indices._types.IndexCheckOnStartup": {
         "type": "string",
-        "enum": [
-          "true",
-          "false",
-          "checksum"
-        ]
+        "enum": ["true", "false", "checksum"]
       },
       "_spec_utils.Stringifiedinteger": {
         "description": "Some APIs will return values such as numbers also as a string (notably epoch timestamps). This behavior\nis used to capture this behavior while keeping the semantics of the field type.\n\nDepending on the target language, code generators can keep the union or remove it and leniently parse\nstrings to the target type.",
@@ -10992,12 +10437,7 @@
       },
       "indices._types.IndexRoutingAllocationOptions": {
         "type": "string",
-        "enum": [
-          "all",
-          "primaries",
-          "new_primaries",
-          "none"
-        ]
+        "enum": ["all", "primaries", "new_primaries", "none"]
       },
       "indices._types.IndexRoutingAllocationInclude": {
         "type": "object",
@@ -11040,18 +10480,11 @@
             "$ref": "#/components/schemas/indices._types.IndexRoutingRebalanceOptions"
           }
         },
-        "required": [
-          "enable"
-        ]
+        "required": ["enable"]
       },
       "indices._types.IndexRoutingRebalanceOptions": {
         "type": "string",
-        "enum": [
-          "all",
-          "primaries",
-          "replicas",
-          "none"
-        ]
+        "enum": ["all", "primaries", "replicas", "none"]
       },
       "_types.PipelineName": {
         "type": "string"
@@ -11148,12 +10581,7 @@
       },
       "indices._types.TranslogDurability": {
         "type": "string",
-        "enum": [
-          "request",
-          "REQUEST",
-          "async",
-          "ASYNC"
-        ]
+        "enum": ["request", "REQUEST", "async", "ASYNC"]
       },
       "indices._types.TranslogRetention": {
         "type": "object",
@@ -11173,9 +10601,7 @@
             "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
           }
         },
-        "required": [
-          "lenient"
-        ]
+        "required": ["lenient"]
       },
       "indices._types.IndexSettingsAnalysis": {
         "type": "object",
@@ -11371,9 +10797,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "custom"
-            ]
+            "enum": ["custom"]
           },
           "char_filter": {
             "oneOf": [
@@ -11411,19 +10835,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "tokenizer"
-        ]
+        "required": ["type", "tokenizer"]
       },
       "_types.analysis.FingerprintAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "fingerprint"
-            ]
+            "enum": ["fingerprint"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
@@ -11445,35 +10864,27 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.KeywordAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "keyword"
-            ]
+            "enum": ["keyword"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.NoriAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "nori"
-            ]
+            "enum": ["nori"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
@@ -11491,26 +10902,18 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.NoriDecompoundMode": {
         "type": "string",
-        "enum": [
-          "discard",
-          "none",
-          "mixed"
-        ]
+        "enum": ["discard", "none", "mixed"]
       },
       "_types.analysis.PatternAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "pattern"
-            ]
+            "enum": ["pattern"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
@@ -11537,35 +10940,27 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.SimpleAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "simple"
-            ]
+            "enum": ["simple"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.StandardAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "standard"
-            ]
+            "enum": ["standard"]
           },
           "max_token_length": {
             "description": "The maximum token length. If a token is seen that exceeds this length then it is split at `max_token_length` intervals.\nDefaults to `255`.",
@@ -11580,18 +10975,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.StopAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "stop"
-            ]
+            "enum": ["stop"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
@@ -11604,35 +10995,27 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.WhitespaceAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "whitespace"
-            ]
+            "enum": ["whitespace"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.IcuAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "icu_analyzer"
-            ]
+            "enum": ["icu_analyzer"]
           },
           "method": {
             "$ref": "#/components/schemas/_types.analysis.IcuNormalizationType"
@@ -11641,35 +11024,22 @@
             "$ref": "#/components/schemas/_types.analysis.IcuNormalizationMode"
           }
         },
-        "required": [
-          "type",
-          "method",
-          "mode"
-        ]
+        "required": ["type", "method", "mode"]
       },
       "_types.analysis.IcuNormalizationType": {
         "type": "string",
-        "enum": [
-          "nfc",
-          "nfkc",
-          "nfkc_cf"
-        ]
+        "enum": ["nfc", "nfkc", "nfkc_cf"]
       },
       "_types.analysis.IcuNormalizationMode": {
         "type": "string",
-        "enum": [
-          "decompose",
-          "compose"
-        ]
+        "enum": ["decompose", "compose"]
       },
       "_types.analysis.KuromojiAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "kuromoji"
-            ]
+            "enum": ["kuromoji"]
           },
           "mode": {
             "$ref": "#/components/schemas/_types.analysis.KuromojiTokenizationMode"
@@ -11678,26 +11048,18 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.KuromojiTokenizationMode": {
         "type": "string",
-        "enum": [
-          "normal",
-          "search",
-          "extended"
-        ]
+        "enum": ["normal", "search", "extended"]
       },
       "_types.analysis.SnowballAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "snowball"
-            ]
+            "enum": ["snowball"]
           },
           "version": {
             "$ref": "#/components/schemas/_types.VersionString"
@@ -11709,10 +11071,7 @@
             "$ref": "#/components/schemas/_types.analysis.StopWords"
           }
         },
-        "required": [
-          "type",
-          "language"
-        ]
+        "required": ["type", "language"]
       },
       "_types.analysis.SnowballLanguage": {
         "type": "string",
@@ -11751,9 +11110,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "arabic"
-            ]
+            "enum": ["arabic"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11768,18 +11125,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.ArmenianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "armenian"
-            ]
+            "enum": ["armenian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11794,18 +11147,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.BasqueAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "basque"
-            ]
+            "enum": ["basque"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11820,18 +11169,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.BengaliAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "bengali"
-            ]
+            "enum": ["bengali"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11846,18 +11191,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.BrazilianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "brazilian"
-            ]
+            "enum": ["brazilian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11866,18 +11207,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.BulgarianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "bulgarian"
-            ]
+            "enum": ["bulgarian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11892,18 +11229,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.CatalanAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "catalan"
-            ]
+            "enum": ["catalan"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11918,18 +11251,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.ChineseAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "chinese"
-            ]
+            "enum": ["chinese"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11938,18 +11267,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.CjkAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "cjk"
-            ]
+            "enum": ["cjk"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11958,18 +11283,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.CzechAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "czech"
-            ]
+            "enum": ["czech"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -11984,18 +11305,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.DanishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "danish"
-            ]
+            "enum": ["danish"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12004,18 +11321,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.DutchAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "dutch"
-            ]
+            "enum": ["dutch"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12030,18 +11343,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.EnglishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "english"
-            ]
+            "enum": ["english"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12056,18 +11365,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.EstonianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "estonian"
-            ]
+            "enum": ["estonian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12076,18 +11381,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.FinnishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "finnish"
-            ]
+            "enum": ["finnish"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12102,18 +11403,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.FrenchAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "french"
-            ]
+            "enum": ["french"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12128,18 +11425,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.GalicianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "galician"
-            ]
+            "enum": ["galician"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12154,18 +11447,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.GermanAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "german"
-            ]
+            "enum": ["german"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12180,18 +11469,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.GreekAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "greek"
-            ]
+            "enum": ["greek"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12200,18 +11485,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.HindiAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "hindi"
-            ]
+            "enum": ["hindi"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12226,18 +11507,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.HungarianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "hungarian"
-            ]
+            "enum": ["hungarian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12252,18 +11529,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.IndonesianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "indonesian"
-            ]
+            "enum": ["indonesian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12278,18 +11551,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.IrishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "irish"
-            ]
+            "enum": ["irish"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12304,18 +11573,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.ItalianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "italian"
-            ]
+            "enum": ["italian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12330,18 +11595,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.LatvianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "latvian"
-            ]
+            "enum": ["latvian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12356,18 +11617,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.LithuanianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "lithuanian"
-            ]
+            "enum": ["lithuanian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12382,18 +11639,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.NorwegianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "norwegian"
-            ]
+            "enum": ["norwegian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12408,18 +11661,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.PersianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "persian"
-            ]
+            "enum": ["persian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12428,18 +11677,14 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.PortugueseAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "portuguese"
-            ]
+            "enum": ["portuguese"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12454,18 +11699,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.RomanianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "romanian"
-            ]
+            "enum": ["romanian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12480,18 +11721,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.RussianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "russian"
-            ]
+            "enum": ["russian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12506,18 +11743,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.SerbianAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "serbian"
-            ]
+            "enum": ["serbian"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12532,18 +11765,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.SoraniAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "sorani"
-            ]
+            "enum": ["sorani"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12558,18 +11787,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.SpanishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "spanish"
-            ]
+            "enum": ["spanish"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12584,18 +11809,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.SwedishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "swedish"
-            ]
+            "enum": ["swedish"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12610,18 +11831,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.TurkishAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "turkish"
-            ]
+            "enum": ["turkish"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12636,18 +11853,14 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.ThaiAnalyzer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "thai"
-            ]
+            "enum": ["thai"]
           },
           "stopwords": {
             "$ref": "#/components/schemas/_types.analysis.StopWords"
@@ -12656,9 +11869,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.CharFilter": {
         "externalDocs": {
@@ -12705,9 +11916,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "html_strip"
-                ]
+                "enum": ["html_strip"]
               },
               "escaped_tags": {
                 "type": "array",
@@ -12716,9 +11925,7 @@
                 }
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -12740,9 +11947,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "mapping"
-                ]
+                "enum": ["mapping"]
               },
               "mappings": {
                 "type": "array",
@@ -12754,9 +11959,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -12770,9 +11973,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "pattern_replace"
-                ]
+                "enum": ["pattern_replace"]
               },
               "flags": {
                 "type": "string"
@@ -12784,10 +11985,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type",
-              "pattern"
-            ]
+            "required": ["type", "pattern"]
           }
         ]
       },
@@ -12801,9 +11999,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_normalizer"
-                ]
+                "enum": ["icu_normalizer"]
               },
               "mode": {
                 "$ref": "#/components/schemas/_types.analysis.IcuNormalizationMode"
@@ -12815,9 +12011,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -12831,9 +12025,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "kuromoji_iteration_mark"
-                ]
+                "enum": ["kuromoji_iteration_mark"]
               },
               "normalize_kana": {
                 "type": "boolean"
@@ -12842,11 +12034,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type",
-              "normalize_kana",
-              "normalize_kanji"
-            ]
+            "required": ["type", "normalize_kana", "normalize_kanji"]
           }
         ]
       },
@@ -13102,14 +12290,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "apostrophe"
-                ]
+                "enum": ["apostrophe"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13131,14 +12315,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "arabic_stem"
-                ]
+                "enum": ["arabic_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13152,14 +12332,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "arabic_normalization"
-                ]
+                "enum": ["arabic_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13173,17 +12349,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "asciifolding"
-                ]
+                "enum": ["asciifolding"]
               },
               "preserve_original": {
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13197,14 +12369,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "bengali_normalization"
-                ]
+                "enum": ["bengali_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13218,14 +12386,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "brazilian_stem"
-                ]
+                "enum": ["brazilian_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13239,9 +12403,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "cjk_bigram"
-                ]
+                "enum": ["cjk_bigram"]
               },
               "ignored_scripts": {
                 "description": "Array of character scripts for which to disable bigrams.",
@@ -13255,20 +12417,13 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.analysis.CjkBigramIgnoredScript": {
         "type": "string",
-        "enum": [
-          "han",
-          "hangul",
-          "hiragana",
-          "katakana"
-        ]
+        "enum": ["han", "hangul", "hiragana", "katakana"]
       },
       "_types.analysis.CjkWidthTokenFilter": {
         "allOf": [
@@ -13280,14 +12435,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "cjk_width"
-                ]
+                "enum": ["cjk_width"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13301,14 +12452,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "classic"
-                ]
+                "enum": ["classic"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13322,9 +12469,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "common_grams"
-                ]
+                "enum": ["common_grams"]
               },
               "common_words": {
                 "description": "A list of tokens. The filter generates bigrams for these tokens.\nEither this or the `common_words_path` parameter is required.",
@@ -13346,9 +12491,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13362,9 +12505,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "condition"
-                ]
+                "enum": ["condition"]
               },
               "filter": {
                 "description": "Array of token filters. If a token matches the predicate script in the `script` parameter, these filters are applied to the token in the order provided.",
@@ -13377,11 +12518,7 @@
                 "$ref": "#/components/schemas/_types.Script"
               }
             },
-            "required": [
-              "type",
-              "filter",
-              "script"
-            ]
+            "required": ["type", "filter", "script"]
           }
         ]
       },
@@ -13395,14 +12532,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "czech_stem"
-                ]
+                "enum": ["czech_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13416,14 +12549,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "decimal_digit"
-                ]
+                "enum": ["decimal_digit"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13437,9 +12566,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "delimited_payload"
-                ]
+                "enum": ["delimited_payload"]
               },
               "delimiter": {
                 "description": "Character used to separate tokens from payloads. Defaults to `|`.",
@@ -13449,19 +12576,13 @@
                 "$ref": "#/components/schemas/_types.analysis.DelimitedPayloadEncoding"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.analysis.DelimitedPayloadEncoding": {
         "type": "string",
-        "enum": [
-          "int",
-          "float",
-          "identity"
-        ]
+        "enum": ["int", "float", "identity"]
       },
       "_types.analysis.DutchStemTokenFilter": {
         "allOf": [
@@ -13473,14 +12594,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "dutch_stem"
-                ]
+                "enum": ["dutch_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13494,9 +12611,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "edge_ngram"
-                ]
+                "enum": ["edge_ngram"]
               },
               "max_gram": {
                 "description": "Maximum character length of a gram. For custom token filters, defaults to `2`. For the built-in edge_ngram filter, defaults to `1`.",
@@ -13513,18 +12628,13 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.analysis.EdgeNGramSide": {
         "type": "string",
-        "enum": [
-          "front",
-          "back"
-        ]
+        "enum": ["front", "back"]
       },
       "_types.analysis.ElisionTokenFilter": {
         "allOf": [
@@ -13536,9 +12646,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "elision"
-                ]
+                "enum": ["elision"]
               },
               "articles": {
                 "description": "List of elisions to remove.\nTo be removed, the elision must be at the beginning of a token and be immediately followed by an apostrophe. Both the elision and apostrophe are removed.\nFor custom `elision` filters, either this parameter or `articles_path` must be specified.",
@@ -13555,9 +12663,7 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13571,9 +12677,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "fingerprint"
-                ]
+                "enum": ["fingerprint"]
               },
               "max_output_size": {
                 "description": "Maximum character length, including whitespace, of the output token. Defaults to `255`. Concatenated tokens longer than this will result in no token output.",
@@ -13584,9 +12688,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13600,14 +12702,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "flatten_graph"
-                ]
+                "enum": ["flatten_graph"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13621,14 +12719,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "french_stem"
-                ]
+                "enum": ["french_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13642,14 +12736,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "german_normalization"
-                ]
+                "enum": ["german_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13663,14 +12753,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "german_stem"
-                ]
+                "enum": ["german_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13684,14 +12770,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "hindi_normalization"
-                ]
+                "enum": ["hindi_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13705,9 +12787,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "hunspell"
-                ]
+                "enum": ["hunspell"]
               },
               "dedup": {
                 "description": "If `true`, duplicate tokens are removed from the filter’s output. Defaults to `true`.",
@@ -13726,10 +12806,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type",
-              "locale"
-            ]
+            "required": ["type", "locale"]
           }
         ]
       },
@@ -13743,9 +12820,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "hyphenation_decompounder"
-                ]
+                "enum": ["hyphenation_decompounder"]
               },
               "hyphenation_patterns_path": {
                 "description": "Path to an Apache FOP (Formatting Objects Processor) XML hyphenation pattern file.\nThis path must be absolute or relative to the `config` location. Only FOP v1.2 compatible files are supported.",
@@ -13760,10 +12835,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type",
-              "hyphenation_patterns_path"
-            ]
+            "required": ["type", "hyphenation_patterns_path"]
           }
         ]
       },
@@ -13816,14 +12888,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "indic_normalization"
-                ]
+                "enum": ["indic_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13837,9 +12905,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "keep_types"
-                ]
+                "enum": ["keep_types"]
               },
               "mode": {
                 "$ref": "#/components/schemas/_types.analysis.KeepTypesMode"
@@ -13852,19 +12918,13 @@
                 }
               }
             },
-            "required": [
-              "type",
-              "types"
-            ]
+            "required": ["type", "types"]
           }
         ]
       },
       "_types.analysis.KeepTypesMode": {
         "type": "string",
-        "enum": [
-          "include",
-          "exclude"
-        ]
+        "enum": ["include", "exclude"]
       },
       "_types.analysis.KeepWordsTokenFilter": {
         "allOf": [
@@ -13876,9 +12936,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "keep"
-                ]
+                "enum": ["keep"]
               },
               "keep_words": {
                 "description": "List of words to keep. Only tokens that match words in this list are included in the output.\nEither this parameter or `keep_words_path` must be specified.",
@@ -13896,9 +12954,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13912,9 +12968,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "keyword_marker"
-                ]
+                "enum": ["keyword_marker"]
               },
               "ignore_case": {
                 "description": "If `true`, matching for the `keywords` and `keywords_path` parameters ignores letter case. Defaults to `false`.",
@@ -13943,9 +12997,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13959,14 +13011,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "keyword_repeat"
-                ]
+                "enum": ["keyword_repeat"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -13980,14 +13028,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "kstem"
-                ]
+                "enum": ["kstem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14001,9 +13045,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "length"
-                ]
+                "enum": ["length"]
               },
               "max": {
                 "description": "Maximum character length of a token. Longer tokens are excluded from the output. Defaults to `Integer.MAX_VALUE`, which is `2^31-1` or `2147483647`.",
@@ -14014,9 +13056,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14030,9 +13070,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "limit"
-                ]
+                "enum": ["limit"]
               },
               "consume_all_tokens": {
                 "description": "If `true`, the limit filter exhausts the token stream, even if the `max_token_count` has already been reached. Defaults to `false`.",
@@ -14042,9 +13080,7 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedinteger"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14058,27 +13094,19 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "lowercase"
-                ]
+                "enum": ["lowercase"]
               },
               "language": {
                 "$ref": "#/components/schemas/_types.analysis.LowercaseTokenFilterLanguages"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.analysis.LowercaseTokenFilterLanguages": {
         "type": "string",
-        "enum": [
-          "greek",
-          "irish",
-          "turkish"
-        ]
+        "enum": ["greek", "irish", "turkish"]
       },
       "_types.analysis.MinHashTokenFilter": {
         "allOf": [
@@ -14090,9 +13118,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "min_hash"
-                ]
+                "enum": ["min_hash"]
               },
               "bucket_count": {
                 "description": "Number of buckets to which hashes are assigned. Defaults to `512`.",
@@ -14111,9 +13137,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14127,9 +13151,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "multiplexer"
-                ]
+                "enum": ["multiplexer"]
               },
               "filters": {
                 "description": "A list of token filters to apply to incoming tokens.",
@@ -14142,10 +13164,7 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
               }
             },
-            "required": [
-              "type",
-              "filters"
-            ]
+            "required": ["type", "filters"]
           }
         ]
       },
@@ -14159,9 +13178,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "ngram"
-                ]
+                "enum": ["ngram"]
               },
               "max_gram": {
                 "description": "Maximum length of characters in a gram. Defaults to `2`.",
@@ -14175,9 +13192,7 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14191,9 +13206,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "nori_part_of_speech"
-                ]
+                "enum": ["nori_part_of_speech"]
               },
               "stoptags": {
                 "description": "An array of part-of-speech tags that should be removed.",
@@ -14203,9 +13216,7 @@
                 }
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14219,9 +13230,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "pattern_capture"
-                ]
+                "enum": ["pattern_capture"]
               },
               "patterns": {
                 "description": "A list of regular expressions to match.",
@@ -14234,10 +13243,7 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedboolean"
               }
             },
-            "required": [
-              "type",
-              "patterns"
-            ]
+            "required": ["type", "patterns"]
           }
         ]
       },
@@ -14251,9 +13257,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "pattern_replace"
-                ]
+                "enum": ["pattern_replace"]
               },
               "all": {
                 "description": "If `true`, all substrings matching the pattern parameter’s regular expression are replaced. If `false`, the filter replaces only the first matching substring in each token. Defaults to `true`.",
@@ -14271,10 +13275,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type",
-              "pattern"
-            ]
+            "required": ["type", "pattern"]
           }
         ]
       },
@@ -14288,14 +13289,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "persian_normalization"
-                ]
+                "enum": ["persian_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14309,14 +13306,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "persian_stem"
-                ]
+                "enum": ["persian_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14330,14 +13323,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "porter_stem"
-                ]
+                "enum": ["porter_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14351,18 +13340,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "predicate_token_filter"
-                ]
+                "enum": ["predicate_token_filter"]
               },
               "script": {
                 "$ref": "#/components/schemas/_types.Script"
               }
             },
-            "required": [
-              "type",
-              "script"
-            ]
+            "required": ["type", "script"]
           }
         ]
       },
@@ -14376,14 +13360,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "remove_duplicates"
-                ]
+                "enum": ["remove_duplicates"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14397,14 +13377,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "reverse"
-                ]
+                "enum": ["reverse"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14418,14 +13394,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "russian_stem"
-                ]
+                "enum": ["russian_stem"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14439,14 +13411,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "scandinavian_folding"
-                ]
+                "enum": ["scandinavian_folding"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14460,14 +13428,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "scandinavian_normalization"
-                ]
+                "enum": ["scandinavian_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14481,14 +13445,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "serbian_normalization"
-                ]
+                "enum": ["serbian_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14502,9 +13462,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "shingle"
-                ]
+                "enum": ["shingle"]
               },
               "filler_token": {
                 "description": "String used in shingles as a replacement for empty positions that do not contain a token. This filler token is only used in shingles, not original unigrams. Defaults to an underscore (`_`).",
@@ -14529,9 +13487,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14545,17 +13501,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "snowball"
-                ]
+                "enum": ["snowball"]
               },
               "language": {
                 "$ref": "#/components/schemas/_types.analysis.SnowballLanguage"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14569,14 +13521,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "sorani_normalization"
-                ]
+                "enum": ["sorani_normalization"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14590,9 +13538,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "stemmer_override"
-                ]
+                "enum": ["stemmer_override"]
               },
               "rules": {
                 "description": "A list of mapping rules to use.",
@@ -14606,9 +13552,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14622,17 +13566,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "stemmer"
-                ]
+                "enum": ["stemmer"]
               },
               "language": {
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14646,9 +13586,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "stop"
-                ]
+                "enum": ["stop"]
               },
               "ignore_case": {
                 "description": "If `true`, stop word matching is case insensitive. For example, if `true`, a stop word of the matches and removes `The`, `THE`, or `the`. Defaults to `false`.",
@@ -14666,9 +13604,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14682,14 +13618,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "synonym_graph"
-                ]
+                "enum": ["synonym_graph"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14742,10 +13674,7 @@
       },
       "_types.analysis.SynonymFormat": {
         "type": "string",
-        "enum": [
-          "solr",
-          "wordnet"
-        ]
+        "enum": ["solr", "wordnet"]
       },
       "_types.analysis.SynonymTokenFilter": {
         "allOf": [
@@ -14757,14 +13686,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "synonym"
-                ]
+                "enum": ["synonym"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14778,14 +13703,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "trim"
-                ]
+                "enum": ["trim"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14799,18 +13720,14 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "truncate"
-                ]
+                "enum": ["truncate"]
               },
               "length": {
                 "description": "Character limit for each token. Tokens exceeding this limit are truncated. Defaults to `10`.",
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14824,18 +13741,14 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "unique"
-                ]
+                "enum": ["unique"]
               },
               "only_on_same_position": {
                 "description": "If `true`, only remove duplicate tokens in the same position. Defaults to `false`.",
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14849,14 +13762,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "uppercase"
-                ]
+                "enum": ["uppercase"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14870,9 +13779,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "word_delimiter_graph"
-                ]
+                "enum": ["word_delimiter_graph"]
               },
               "adjust_offsets": {
                 "description": "If `true`, the filter adjusts the offsets of split or catenated tokens to better reflect their actual position in the token stream. Defaults to `true`.",
@@ -14883,9 +13790,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14968,14 +13873,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "word_delimiter"
-                ]
+                "enum": ["word_delimiter"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -14989,17 +13890,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "ja_stop"
-                ]
+                "enum": ["ja_stop"]
               },
               "stopwords": {
                 "$ref": "#/components/schemas/_types.analysis.StopWords"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15013,18 +13910,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "kuromoji_stemmer"
-                ]
+                "enum": ["kuromoji_stemmer"]
               },
               "minimum_length": {
                 "type": "number"
               }
             },
-            "required": [
-              "type",
-              "minimum_length"
-            ]
+            "required": ["type", "minimum_length"]
           }
         ]
       },
@@ -15038,18 +13930,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "kuromoji_readingform"
-                ]
+                "enum": ["kuromoji_readingform"]
               },
               "use_romaji": {
                 "type": "boolean"
               }
             },
-            "required": [
-              "type",
-              "use_romaji"
-            ]
+            "required": ["type", "use_romaji"]
           }
         ]
       },
@@ -15063,9 +13950,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "kuromoji_part_of_speech"
-                ]
+                "enum": ["kuromoji_part_of_speech"]
               },
               "stoptags": {
                 "type": "array",
@@ -15074,10 +13959,7 @@
                 }
               }
             },
-            "required": [
-              "type",
-              "stoptags"
-            ]
+            "required": ["type", "stoptags"]
           }
         ]
       },
@@ -15091,9 +13973,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_collation"
-                ]
+                "enum": ["icu_collation"]
               },
               "alternate": {
                 "$ref": "#/components/schemas/_types.analysis.IcuCollationAlternate"
@@ -15132,42 +14012,25 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.analysis.IcuCollationAlternate": {
         "type": "string",
-        "enum": [
-          "shifted",
-          "non-ignorable"
-        ]
+        "enum": ["shifted", "non-ignorable"]
       },
       "_types.analysis.IcuCollationCaseFirst": {
         "type": "string",
-        "enum": [
-          "lower",
-          "upper"
-        ]
+        "enum": ["lower", "upper"]
       },
       "_types.analysis.IcuCollationDecomposition": {
         "type": "string",
-        "enum": [
-          "no",
-          "identical"
-        ]
+        "enum": ["no", "identical"]
       },
       "_types.analysis.IcuCollationStrength": {
         "type": "string",
-        "enum": [
-          "primary",
-          "secondary",
-          "tertiary",
-          "quaternary",
-          "identical"
-        ]
+        "enum": ["primary", "secondary", "tertiary", "quaternary", "identical"]
       },
       "_types.analysis.IcuFoldingTokenFilter": {
         "allOf": [
@@ -15179,18 +14042,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_folding"
-                ]
+                "enum": ["icu_folding"]
               },
               "unicode_set_filter": {
                 "type": "string"
               }
             },
-            "required": [
-              "type",
-              "unicode_set_filter"
-            ]
+            "required": ["type", "unicode_set_filter"]
           }
         ]
       },
@@ -15204,18 +14062,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_normalizer"
-                ]
+                "enum": ["icu_normalizer"]
               },
               "name": {
                 "$ref": "#/components/schemas/_types.analysis.IcuNormalizationType"
               }
             },
-            "required": [
-              "type",
-              "name"
-            ]
+            "required": ["type", "name"]
           }
         ]
       },
@@ -15229,9 +14082,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_transform"
-                ]
+                "enum": ["icu_transform"]
               },
               "dir": {
                 "$ref": "#/components/schemas/_types.analysis.IcuTransformDirection"
@@ -15240,19 +14091,13 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type",
-              "id"
-            ]
+            "required": ["type", "id"]
           }
         ]
       },
       "_types.analysis.IcuTransformDirection": {
         "type": "string",
-        "enum": [
-          "forward",
-          "reverse"
-        ]
+        "enum": ["forward", "reverse"]
       },
       "_types.analysis.PhoneticTokenFilter": {
         "allOf": [
@@ -15264,9 +14109,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "phonetic"
-                ]
+                "enum": ["phonetic"]
               },
               "encoder": {
                 "$ref": "#/components/schemas/_types.analysis.PhoneticEncoder"
@@ -15297,10 +14140,7 @@
                 "$ref": "#/components/schemas/_types.analysis.PhoneticRuleType"
               }
             },
-            "required": [
-              "type",
-              "encoder"
-            ]
+            "required": ["type", "encoder"]
           }
         ]
       },
@@ -15340,18 +14180,11 @@
       },
       "_types.analysis.PhoneticNameType": {
         "type": "string",
-        "enum": [
-          "generic",
-          "ashkenazi",
-          "sephardic"
-        ]
+        "enum": ["generic", "ashkenazi", "sephardic"]
       },
       "_types.analysis.PhoneticRuleType": {
         "type": "string",
-        "enum": [
-          "approx",
-          "exact"
-        ]
+        "enum": ["approx", "exact"]
       },
       "_types.analysis.DictionaryDecompounderTokenFilter": {
         "allOf": [
@@ -15363,14 +14196,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "dictionary_decompounder"
-                ]
+                "enum": ["dictionary_decompounder"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15392,23 +14221,17 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "lowercase"
-            ]
+            "enum": ["lowercase"]
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.CustomNormalizer": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "custom"
-            ]
+            "enum": ["custom"]
           },
           "char_filter": {
             "type": "array",
@@ -15423,9 +14246,7 @@
             }
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.analysis.Tokenizer": {
         "externalDocs": {
@@ -15511,9 +14332,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "char_group"
-                ]
+                "enum": ["char_group"]
               },
               "tokenize_on_chars": {
                 "type": "array",
@@ -15525,10 +14344,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "type",
-              "tokenize_on_chars"
-            ]
+            "required": ["type", "tokenize_on_chars"]
           }
         ]
       },
@@ -15550,17 +14366,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "classic"
-                ]
+                "enum": ["classic"]
               },
               "max_token_length": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15574,9 +14386,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "edge_ngram"
-                ]
+                "enum": ["edge_ngram"]
               },
               "custom_token_chars": {
                 "type": "string"
@@ -15595,22 +14405,13 @@
                 }
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.analysis.TokenChar": {
         "type": "string",
-        "enum": [
-          "letter",
-          "digit",
-          "whitespace",
-          "punctuation",
-          "symbol",
-          "custom"
-        ]
+        "enum": ["letter", "digit", "whitespace", "punctuation", "symbol", "custom"]
       },
       "_types.analysis.KeywordTokenizer": {
         "allOf": [
@@ -15622,18 +14423,14 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "keyword"
-                ]
+                "enum": ["keyword"]
               },
               "buffer_size": {
                 "default": 256,
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15647,14 +14444,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "letter"
-                ]
+                "enum": ["letter"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15668,14 +14461,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "lowercase"
-                ]
+                "enum": ["lowercase"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15689,9 +14478,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "ngram"
-                ]
+                "enum": ["ngram"]
               },
               "custom_token_chars": {
                 "type": "string"
@@ -15710,9 +14497,7 @@
                 }
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15726,9 +14511,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "path_hierarchy"
-                ]
+                "enum": ["path_hierarchy"]
               },
               "buffer_size": {
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedinteger"
@@ -15746,9 +14529,7 @@
                 "$ref": "#/components/schemas/_spec_utils.Stringifiedinteger"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15762,9 +14543,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "pattern"
-                ]
+                "enum": ["pattern"]
               },
               "flags": {
                 "type": "string"
@@ -15776,9 +14555,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15792,17 +14569,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "simple_pattern"
-                ]
+                "enum": ["simple_pattern"]
               },
               "pattern": {
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15816,17 +14589,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "simple_pattern_split"
-                ]
+                "enum": ["simple_pattern_split"]
               },
               "pattern": {
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15840,17 +14609,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "standard"
-                ]
+                "enum": ["standard"]
               },
               "max_token_length": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15864,14 +14629,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "thai"
-                ]
+                "enum": ["thai"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15885,17 +14646,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "uax_url_email"
-                ]
+                "enum": ["uax_url_email"]
               },
               "max_token_length": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15909,17 +14666,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "whitespace"
-                ]
+                "enum": ["whitespace"]
               },
               "max_token_length": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -15933,18 +14686,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_tokenizer"
-                ]
+                "enum": ["icu_tokenizer"]
               },
               "rule_files": {
                 "type": "string"
               }
             },
-            "required": [
-              "type",
-              "rule_files"
-            ]
+            "required": ["type", "rule_files"]
           }
         ]
       },
@@ -15958,9 +14706,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "kuromoji_tokenizer"
-                ]
+                "enum": ["kuromoji_tokenizer"]
               },
               "discard_punctuation": {
                 "type": "boolean"
@@ -15987,10 +14733,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type",
-              "mode"
-            ]
+            "required": ["type", "mode"]
           }
         ]
       },
@@ -16004,9 +14747,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "nori_tokenizer"
-                ]
+                "enum": ["nori_tokenizer"]
               },
               "decompound_mode": {
                 "$ref": "#/components/schemas/_types.analysis.NoriDecompoundMode"
@@ -16024,9 +14765,7 @@
                 }
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -16056,9 +14795,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "enabled"
-        ]
+        "required": ["enabled"]
       },
       "indices._types.SettingsSimilarity": {
         "discriminator": {
@@ -16096,9 +14833,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "BM25"
-            ]
+            "enum": ["BM25"]
           },
           "b": {
             "type": "number"
@@ -16110,58 +14845,41 @@
             "type": "number"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "indices._types.SettingsSimilarityBoolean": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "boolean"
-            ]
+            "enum": ["boolean"]
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "indices._types.SettingsSimilarityDfi": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "DFI"
-            ]
+            "enum": ["DFI"]
           },
           "independence_measure": {
             "$ref": "#/components/schemas/_types.DFIIndependenceMeasure"
           }
         },
-        "required": [
-          "type",
-          "independence_measure"
-        ]
+        "required": ["type", "independence_measure"]
       },
       "_types.DFIIndependenceMeasure": {
         "type": "string",
-        "enum": [
-          "standardized",
-          "saturated",
-          "chisquared"
-        ]
+        "enum": ["standardized", "saturated", "chisquared"]
       },
       "indices._types.SettingsSimilarityDfr": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "DFR"
-            ]
+            "enum": ["DFR"]
           },
           "after_effect": {
             "$ref": "#/components/schemas/_types.DFRAfterEffect"
@@ -16173,51 +14891,26 @@
             "$ref": "#/components/schemas/_types.Normalization"
           }
         },
-        "required": [
-          "type",
-          "after_effect",
-          "basic_model",
-          "normalization"
-        ]
+        "required": ["type", "after_effect", "basic_model", "normalization"]
       },
       "_types.DFRAfterEffect": {
         "type": "string",
-        "enum": [
-          "no",
-          "b",
-          "l"
-        ]
+        "enum": ["no", "b", "l"]
       },
       "_types.DFRBasicModel": {
         "type": "string",
-        "enum": [
-          "be",
-          "d",
-          "g",
-          "if",
-          "in",
-          "ine",
-          "p"
-        ]
+        "enum": ["be", "d", "g", "if", "in", "ine", "p"]
       },
       "_types.Normalization": {
         "type": "string",
-        "enum": [
-          "no",
-          "h1",
-          "h2",
-          "h3",
-          "z"
-        ]
+        "enum": ["no", "h1", "h2", "h3", "z"]
       },
       "indices._types.SettingsSimilarityIb": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "IB"
-            ]
+            "enum": ["IB"]
           },
           "distribution": {
             "$ref": "#/components/schemas/_types.IBDistribution"
@@ -16229,69 +14922,48 @@
             "$ref": "#/components/schemas/_types.Normalization"
           }
         },
-        "required": [
-          "type",
-          "distribution",
-          "lambda",
-          "normalization"
-        ]
+        "required": ["type", "distribution", "lambda", "normalization"]
       },
       "_types.IBDistribution": {
         "type": "string",
-        "enum": [
-          "ll",
-          "spl"
-        ]
+        "enum": ["ll", "spl"]
       },
       "_types.IBLambda": {
         "type": "string",
-        "enum": [
-          "df",
-          "ttf"
-        ]
+        "enum": ["df", "ttf"]
       },
       "indices._types.SettingsSimilarityLmd": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "LMDirichlet"
-            ]
+            "enum": ["LMDirichlet"]
           },
           "mu": {
             "type": "number"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "indices._types.SettingsSimilarityLmj": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "LMJelinekMercer"
-            ]
+            "enum": ["LMJelinekMercer"]
           },
           "lambda": {
             "type": "number"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "indices._types.SettingsSimilarityScripted": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "scripted"
-            ]
+            "enum": ["scripted"]
           },
           "script": {
             "$ref": "#/components/schemas/_types.Script"
@@ -16300,10 +14972,7 @@
             "$ref": "#/components/schemas/_types.Script"
           }
         },
-        "required": [
-          "type",
-          "script"
-        ]
+        "required": ["type", "script"]
       },
       "indices._types.MappingLimitSettings": {
         "description": "Mapping Limit Settings",
@@ -16429,17 +15098,11 @@
             "$ref": "#/components/schemas/indices._types.SourceMode"
           }
         },
-        "required": [
-          "mode"
-        ]
+        "required": ["mode"]
       },
       "indices._types.SourceMode": {
         "type": "string",
-        "enum": [
-          "disabled",
-          "stored",
-          "synthetic"
-        ]
+        "enum": ["disabled", "stored", "synthetic"]
       },
       "indices._types.IndexingSlowlogSettings": {
         "type": "object",
@@ -16473,9 +15136,7 @@
             "$ref": "#/components/schemas/indices._types.IndexingPressureMemory"
           }
         },
-        "required": [
-          "memory"
-        ]
+        "required": ["memory"]
       },
       "indices._types.IndexingPressureMemory": {
         "type": "object",
@@ -16500,20 +15161,13 @@
             "$ref": "#/components/schemas/_types.Duration"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "indices._types.StorageType": {
         "anyOf": [
           {
             "type": "string",
-            "enum": [
-              "fs",
-              "niofs",
-              "mmapfs",
-              "hybridfs"
-            ]
+            "enum": ["fs", "niofs", "mmapfs", "hybridfs"]
           },
           {
             "type": "string"
@@ -16642,12 +15296,7 @@
       },
       "_types.mapping.DynamicMapping": {
         "type": "string",
-        "enum": [
-          "strict",
-          "runtime",
-          "true",
-          "false"
-        ]
+        "enum": ["strict", "runtime", "true", "false"]
       },
       "_types.mapping.DynamicTemplate": {
         "allOf": [
@@ -16925,14 +15574,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "binary"
-                ]
+                "enum": ["binary"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17004,11 +15649,7 @@
       },
       "_types.mapping.SyntheticSourceKeepEnum": {
         "type": "string",
-        "enum": [
-          "none",
-          "arrays",
-          "all"
-        ]
+        "enum": ["none", "arrays", "all"]
       },
       "_types.mapping.BooleanProperty": {
         "allOf": [
@@ -17046,14 +15687,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "boolean"
-                ]
+                "enum": ["boolean"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17064,23 +15701,15 @@
             "$ref": "#/components/schemas/indices._types.NumericFielddataFormat"
           }
         },
-        "required": [
-          "format"
-        ]
+        "required": ["format"]
       },
       "indices._types.NumericFielddataFormat": {
         "type": "string",
-        "enum": [
-          "array",
-          "disabled"
-        ]
+        "enum": ["array", "disabled"]
       },
       "_types.mapping.OnScriptError": {
         "type": "string",
-        "enum": [
-          "fail",
-          "continue"
-        ]
+        "enum": ["fail", "continue"]
       },
       "_types.mapping.DynamicProperty": {
         "allOf": [
@@ -17092,9 +15721,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "{dynamic_type}"
-                ]
+                "enum": ["{dynamic_type}"]
               },
               "enabled": {
                 "type": "boolean"
@@ -17171,30 +15798,17 @@
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.mapping.TimeSeriesMetricType": {
         "type": "string",
-        "enum": [
-          "gauge",
-          "counter",
-          "summary",
-          "histogram",
-          "position"
-        ]
+        "enum": ["gauge", "counter", "summary", "histogram", "position"]
       },
       "_types.mapping.IndexOptions": {
         "type": "string",
-        "enum": [
-          "docs",
-          "freqs",
-          "positions",
-          "offsets"
-        ]
+        "enum": ["docs", "freqs", "positions", "offsets"]
       },
       "_types.mapping.TextIndexPrefixes": {
         "type": "object",
@@ -17206,10 +15820,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "max_chars",
-          "min_chars"
-        ]
+        "required": ["max_chars", "min_chars"]
       },
       "_types.mapping.TermVectorOption": {
         "type": "string",
@@ -17252,14 +15863,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "join"
-                ]
+                "enum": ["join"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17319,14 +15926,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "keyword"
-                ]
+                "enum": ["keyword"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17336,9 +15939,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "match_only_text"
-            ]
+            "enum": ["match_only_text"]
           },
           "fields": {
             "description": "Multi-fields allow the same string value to be indexed in multiple ways for different purposes, such as one\nfield for search and a multi-field for sorting and aggregations, or the same string value analyzed by different analyzers.",
@@ -17358,9 +15959,7 @@
             "$ref": "#/components/schemas/_types.Fields"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.mapping.PercolatorProperty": {
         "allOf": [
@@ -17372,14 +15971,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "percolator"
-                ]
+                "enum": ["percolator"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17396,14 +15991,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "rank_feature"
-                ]
+                "enum": ["rank_feature"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17420,14 +16011,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "rank_features"
-                ]
+                "enum": ["rank_features"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17476,14 +16063,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "search_as_you_type"
-                ]
+                "enum": ["search_as_you_type"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17558,14 +16141,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "text"
-                ]
+                "enum": ["text"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17582,11 +16161,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "max",
-          "min",
-          "min_segment_size"
-        ]
+        "required": ["max", "min", "min_segment_size"]
       },
       "_types.mapping.VersionProperty": {
         "allOf": [
@@ -17598,14 +16173,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "version"
-                ]
+                "enum": ["version"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17619,18 +16190,14 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "wildcard"
-                ]
+                "enum": ["wildcard"]
               },
               "null_value": {
                 "x-state": "Generally available; Added in 7.15.0",
                 "type": "string"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17668,14 +16235,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "date_nanos"
-                ]
+                "enum": ["date_nanos"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17719,14 +16282,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "date"
-                ]
+                "enum": ["date"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17740,9 +16299,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "aggregate_metric_double"
-                ]
+                "enum": ["aggregate_metric_double"]
               },
               "default_metric": {
                 "type": "string"
@@ -17760,11 +16317,7 @@
                 "$ref": "#/components/schemas/_types.mapping.TimeSeriesMetricType"
               }
             },
-            "required": [
-              "type",
-              "default_metric",
-              "metrics"
-            ]
+            "required": ["type", "default_metric", "metrics"]
           }
         ]
       },
@@ -17778,9 +16331,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "dense_vector"
-                ]
+                "enum": ["dense_vector"]
               },
               "dims": {
                 "description": "Number of vector dimensions. Can't exceed `4096`. If `dims` is not specified, it will be set to the length of\nthe first vector added to the field.",
@@ -17801,19 +16352,13 @@
                 "$ref": "#/components/schemas/_types.mapping.DenseVectorSimilarity"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.mapping.DenseVectorElementType": {
         "type": "string",
-        "enum": [
-          "bit",
-          "byte",
-          "float"
-        ]
+        "enum": ["bit", "byte", "float"]
       },
       "_types.mapping.DenseVectorIndexOptions": {
         "type": "object",
@@ -17836,9 +16381,7 @@
             "$ref": "#/components/schemas/_types.mapping.DenseVectorIndexOptionsType"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.mapping.DenseVectorIndexOptionsType": {
         "type": "string",
@@ -17855,12 +16398,7 @@
       },
       "_types.mapping.DenseVectorSimilarity": {
         "type": "string",
-        "enum": [
-          "cosine",
-          "dot_product",
-          "l2_norm",
-          "max_inner_product"
-        ]
+        "enum": ["cosine", "dot_product", "l2_norm", "max_inner_product"]
       },
       "_types.mapping.FlattenedProperty": {
         "allOf": [
@@ -17905,14 +16443,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "flattened"
-                ]
+                "enum": ["flattened"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17935,14 +16469,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "nested"
-                ]
+                "enum": ["nested"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -17962,9 +16492,7 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "object"
-                ]
+                "enum": ["object"]
               }
             }
           }
@@ -17972,10 +16500,7 @@
       },
       "_types.mapping.Subobjects": {
         "type": "string",
-        "enum": [
-          "true",
-          "false"
-        ]
+        "enum": ["true", "false"]
       },
       "_types.mapping.PassthroughObjectProperty": {
         "allOf": [
@@ -17987,9 +16512,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "passthrough"
-                ]
+                "enum": ["passthrough"]
               },
               "enabled": {
                 "type": "boolean"
@@ -18015,9 +16538,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "rank_vectors"
-                ]
+                "enum": ["rank_vectors"]
               },
               "element_type": {
                 "$ref": "#/components/schemas/_types.mapping.RankVectorElementType"
@@ -18026,28 +16547,20 @@
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.mapping.RankVectorElementType": {
         "type": "string",
-        "enum": [
-          "byte",
-          "float",
-          "bit"
-        ]
+        "enum": ["byte", "float", "bit"]
       },
       "_types.mapping.SemanticTextProperty": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "semantic_text"
-            ]
+            "enum": ["semantic_text"]
           },
           "meta": {
             "type": "object",
@@ -18062,9 +16575,7 @@
             "$ref": "#/components/schemas/_types.Id"
           }
         },
-        "required": [
-          "type"
-        ]
+        "required": ["type"]
       },
       "_types.mapping.SparseVectorProperty": {
         "allOf": [
@@ -18079,14 +16590,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "sparse_vector"
-                ]
+                "enum": ["sparse_vector"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18121,14 +16628,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "completion"
-                ]
+                "enum": ["completion"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18155,10 +16658,7 @@
             ]
           }
         },
-        "required": [
-          "name",
-          "type"
-        ]
+        "required": ["name", "type"]
       },
       "_types.mapping.ConstantKeywordProperty": {
         "allOf": [
@@ -18173,14 +16673,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "constant_keyword"
-                ]
+                "enum": ["constant_keyword"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18194,17 +16690,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "counted_keyword"
-                ]
+                "enum": ["counted_keyword"]
               },
               "index": {
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18221,14 +16713,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "alias"
-                ]
+                "enum": ["alias"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18245,14 +16733,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "histogram"
-                ]
+                "enum": ["histogram"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18289,14 +16773,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "ip"
-                ]
+                "enum": ["ip"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18310,14 +16790,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "murmur3"
-                ]
+                "enum": ["murmur3"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18346,14 +16822,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "token_count"
-                ]
+                "enum": ["token_count"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18385,27 +16857,19 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "geo_point"
-                ]
+                "enum": ["geo_point"]
               },
               "time_series_metric": {
                 "$ref": "#/components/schemas/_types.mapping.GeoPointMetricType"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.mapping.GeoPointMetricType": {
         "type": "string",
-        "enum": [
-          "gauge",
-          "counter",
-          "position"
-        ]
+        "enum": ["gauge", "counter", "position"]
       },
       "_types.mapping.GeoShapeProperty": {
         "description": "The `geo_shape` data type facilitates the indexing of and searching with arbitrary geo shapes such as rectangles\nand polygons.",
@@ -18436,36 +16900,20 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "geo_shape"
-                ]
+                "enum": ["geo_shape"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.mapping.GeoOrientation": {
         "type": "string",
-        "enum": [
-          "right",
-          "RIGHT",
-          "counterclockwise",
-          "ccw",
-          "left",
-          "LEFT",
-          "clockwise",
-          "cw"
-        ]
+        "enum": ["right", "RIGHT", "counterclockwise", "ccw", "left", "LEFT", "clockwise", "cw"]
       },
       "_types.mapping.GeoStrategy": {
         "type": "string",
-        "enum": [
-          "recursive",
-          "term"
-        ]
+        "enum": ["recursive", "term"]
       },
       "_types.mapping.PointProperty": {
         "allOf": [
@@ -18486,14 +16934,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "point"
-                ]
+                "enum": ["point"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18520,14 +16964,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "shape"
-                ]
+                "enum": ["shape"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18541,17 +16981,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "byte"
-                ]
+                "enum": ["byte"]
               },
               "null_value": {
                 "$ref": "#/components/schemas/_types.byte"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18607,17 +17043,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "double"
-                ]
+                "enum": ["double"]
               },
               "null_value": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18631,17 +17063,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "float"
-                ]
+                "enum": ["float"]
               },
               "null_value": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18655,17 +17083,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "half_float"
-                ]
+                "enum": ["half_float"]
               },
               "null_value": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18679,17 +17103,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "integer"
-                ]
+                "enum": ["integer"]
               },
               "null_value": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18703,17 +17123,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "long"
-                ]
+                "enum": ["long"]
               },
               "null_value": {
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18727,9 +17143,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "scaled_float"
-                ]
+                "enum": ["scaled_float"]
               },
               "null_value": {
                 "type": "number"
@@ -18738,9 +17152,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18754,17 +17166,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "short"
-                ]
+                "enum": ["short"]
               },
               "null_value": {
                 "$ref": "#/components/schemas/_types.short"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18781,17 +17189,13 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "unsigned_long"
-                ]
+                "enum": ["unsigned_long"]
               },
               "null_value": {
                 "$ref": "#/components/schemas/_types.ulong"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18811,14 +17215,10 @@
               },
               "type": {
                 "type": "string",
-                "enum": [
-                  "date_range"
-                ]
+                "enum": ["date_range"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18853,14 +17253,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "double_range"
-                ]
+                "enum": ["double_range"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18874,14 +17270,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "float_range"
-                ]
+                "enum": ["float_range"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18895,14 +17287,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "integer_range"
-                ]
+                "enum": ["integer_range"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18916,14 +17304,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "ip_range"
-                ]
+                "enum": ["ip_range"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18937,14 +17321,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "long_range"
-                ]
+                "enum": ["long_range"]
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
@@ -18958,9 +17338,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "icu_collation_keyword"
-                ]
+                "enum": ["icu_collation_keyword"]
               },
               "norms": {
                 "type": "boolean"
@@ -19013,18 +17391,13 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           }
         ]
       },
       "_types.mapping.MatchType": {
         "type": "string",
-        "enum": [
-          "simple",
-          "regex"
-        ]
+        "enum": ["simple", "regex"]
       },
       "_types.mapping.FieldNamesField": {
         "type": "object",
@@ -19033,9 +17406,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "enabled"
-        ]
+        "required": ["enabled"]
       },
       "_types.mapping.IndexField": {
         "type": "object",
@@ -19044,9 +17415,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "enabled"
-        ]
+        "required": ["enabled"]
       },
       "_types.mapping.RoutingField": {
         "type": "object",
@@ -19055,9 +17424,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "required"
-        ]
+        "required": ["required"]
       },
       "_types.mapping.SizeField": {
         "type": "object",
@@ -19066,9 +17433,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "enabled"
-        ]
+        "required": ["enabled"]
       },
       "_types.mapping.SourceField": {
         "type": "object",
@@ -19101,11 +17466,7 @@
       },
       "_types.mapping.SourceFieldMode": {
         "type": "string",
-        "enum": [
-          "disabled",
-          "stored",
-          "synthetic"
-        ]
+        "enum": ["disabled", "stored", "synthetic"]
       },
       "_types.mapping.DataStreamTimestamp": {
         "type": "object",
@@ -19114,9 +17475,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "enabled"
-        ]
+        "required": ["enabled"]
       },
       "indices._types.DataStreamLifecycleWithRollover": {
         "description": "Data stream lifecycle with rollover can be used to display the configuration including the default rollover conditions,\nif asked.",
@@ -19197,9 +17556,7 @@
             }
           }
         },
-        "required": [
-          "rounds"
-        ]
+        "required": ["rounds"]
       },
       "indices._types.DownsamplingRound": {
         "type": "object",
@@ -19211,10 +17568,7 @@
             "$ref": "#/components/schemas/indices._types.DownsampleConfig"
           }
         },
-        "required": [
-          "after",
-          "config"
-        ]
+        "required": ["after", "config"]
       },
       "indices._types.DownsampleConfig": {
         "type": "object",
@@ -19223,9 +17577,7 @@
             "$ref": "#/components/schemas/_types.DurationLarge"
           }
         },
-        "required": [
-          "fixed_interval"
-        ]
+        "required": ["fixed_interval"]
       },
       "indices._types.IndexState": {
         "type": "object",
@@ -19285,16 +17637,7 @@
       },
       "esql._types.EsqlFormat": {
         "type": "string",
-        "enum": [
-          "csv",
-          "json",
-          "tsv",
-          "txt",
-          "yaml",
-          "cbor",
-          "smile",
-          "arrow"
-        ]
+        "enum": ["csv", "json", "tsv", "txt", "yaml", "cbor", "smile", "arrow"]
       },
       "esql._types.TableValuesContainer": {
         "type": "object",
@@ -19396,9 +17739,7 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "is_running"
-            ]
+            "required": ["is_running"]
           }
         ]
       },
@@ -19440,10 +17781,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "columns",
-          "values"
-        ]
+        "required": ["columns", "values"]
       },
       "esql._types.EsqlColumnInfo": {
         "type": "object",
@@ -19455,10 +17793,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "type"
-        ]
+        "required": ["name", "type"]
       },
       "esql._types.EsqlClusterInfo": {
         "type": "object",
@@ -19488,15 +17823,7 @@
             }
           }
         },
-        "required": [
-          "total",
-          "successful",
-          "running",
-          "skipped",
-          "partial",
-          "failed",
-          "details"
-        ]
+        "required": ["total", "successful", "running", "skipped", "partial", "failed", "details"]
       },
       "esql._types.EsqlClusterDetails": {
         "type": "object",
@@ -19520,20 +17847,11 @@
             }
           }
         },
-        "required": [
-          "status",
-          "indices"
-        ]
+        "required": ["status", "indices"]
       },
       "esql._types.EsqlClusterStatus": {
         "type": "string",
-        "enum": [
-          "running",
-          "successful",
-          "partial",
-          "skipped",
-          "failed"
-        ]
+        "enum": ["running", "successful", "partial", "skipped", "failed"]
       },
       "esql._types.EsqlShardInfo": {
         "type": "object",
@@ -19551,9 +17869,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "total"
-        ]
+        "required": ["total"]
       },
       "esql._types.EsqlShardFailure": {
         "type": "object",
@@ -19579,11 +17895,7 @@
             "$ref": "#/components/schemas/_types.ErrorCause"
           }
         },
-        "required": [
-          "shard",
-          "index",
-          "reason"
-        ]
+        "required": ["shard", "index", "reason"]
       },
       "_global.field_caps.FieldCapability": {
         "type": "object",
@@ -19640,11 +17952,7 @@
             }
           }
         },
-        "required": [
-          "aggregatable",
-          "searchable",
-          "type"
-        ]
+        "required": ["aggregatable", "searchable", "type"]
       },
       "_types.IndicesResponseBase": {
         "allOf": [
@@ -19689,11 +17997,7 @@
       },
       "indices.get.Feature": {
         "type": "string",
-        "enum": [
-          "aliases",
-          "mappings",
-          "settings"
-        ]
+        "enum": ["aliases", "mappings", "settings"]
       },
       "indices._types.DataStream": {
         "type": "object",
@@ -19791,11 +18095,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "enabled",
-          "indices",
-          "rollover_on_write"
-        ]
+        "required": ["enabled", "indices", "rollover_on_write"]
       },
       "indices._types.DataStreamIndex": {
         "type": "object",
@@ -19817,18 +18117,11 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "index_name",
-          "index_uuid"
-        ]
+        "required": ["index_name", "index_uuid"]
       },
       "indices._types.ManagedBy": {
         "type": "string",
-        "enum": [
-          "Index Lifecycle Management",
-          "Data stream lifecycle",
-          "Unmanaged"
-        ]
+        "enum": ["Index Lifecycle Management", "Data stream lifecycle", "Unmanaged"]
       },
       "indices._types.DataStreamTimestampField": {
         "type": "object",
@@ -19837,9 +18130,7 @@
             "$ref": "#/components/schemas/_types.Field"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "indices.get_mapping.IndexMappingRecord": {
         "type": "object",
@@ -19851,9 +18142,7 @@
             "$ref": "#/components/schemas/_types.mapping.TypeMapping"
           }
         },
-        "required": [
-          "mappings"
-        ]
+        "required": ["mappings"]
       },
       "indices.resolve_index.ResolveIndexItem": {
         "type": "object",
@@ -19877,10 +18166,7 @@
             "$ref": "#/components/schemas/_types.DataStreamName"
           }
         },
-        "required": [
-          "name",
-          "attributes"
-        ]
+        "required": ["name", "attributes"]
       },
       "indices.resolve_index.ResolveIndexAliasItem": {
         "type": "object",
@@ -19892,10 +18178,7 @@
             "$ref": "#/components/schemas/_types.Indices"
           }
         },
-        "required": [
-          "name",
-          "indices"
-        ]
+        "required": ["name", "indices"]
       },
       "indices.resolve_index.ResolveIndexDataStreamsItem": {
         "type": "object",
@@ -19910,11 +18193,7 @@
             "$ref": "#/components/schemas/_types.Indices"
           }
         },
-        "required": [
-          "name",
-          "timestamp_field",
-          "backing_indices"
-        ]
+        "required": ["name", "timestamp_field", "backing_indices"]
       },
       "_types.ElasticsearchVersionInfo": {
         "type": "object",
@@ -19986,10 +18265,7 @@
                   }
                 }
               },
-              "required": [
-                "indices",
-                "fields"
-              ]
+              "required": ["indices", "fields"]
             },
             "examples": {
               "FieldCapabilitiesResponseExample1": {
@@ -20020,9 +18296,7 @@
                   }
                 }
               },
-              "required": [
-                "data_streams"
-              ]
+              "required": ["data_streams"]
             },
             "examples": {
               "indicesGetDataStreamResponseExample1": {
