@@ -119,27 +119,36 @@ export default function AppHeader() {
 
   return (
     <AppBar position="static" color="default" elevation={1} sx={{ zIndex: 1201 }}>
-      <Toolbar variant="dense" sx={{ gap: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mr: 2, flexShrink: 0 }}>
+      <Toolbar disableGutters variant="dense" sx={{ gap: 1, px: 0 }}>
+        <Box
+          sx={{
+            width: 68,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
           <Box
             component="img"
             src={logoUrl}
             alt="Peek"
             sx={{ width: 48, height: 48, objectFit: "contain" }}
           />
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              lineHeight: 1,
-            }}
-          >
-            Peek
-          </Typography>
         </Box>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            lineHeight: 1,
+            mr: 2,
+          }}
+        >
+          Peek
+        </Typography>
 
         <Box sx={{ flex: 1 }} />
 

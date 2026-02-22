@@ -12,6 +12,7 @@ import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -200,9 +201,16 @@ function RequestCard({
           <Divider />
           <Box sx={{ p: 1.5 }}>
             {entry.response.status === "error" ? (
-              <Typography variant="body2" color="error.main">
-                {entry.response.message}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body2" color="error.main" sx={{ flex: 1 }}>
+                  {entry.response.message}
+                </Typography>
+                <Tooltip title="Dismiss">
+                  <IconButton size="small" onClick={() => onUpdate(entry.id, { response: null })}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             ) : (
               <>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
@@ -219,6 +227,11 @@ function RequestCard({
                   <Tooltip title={copied ? "Copied!" : "Copy response"}>
                     <IconButton size="small" onClick={handleCopy}>
                       <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Dismiss">
+                    <IconButton size="small" onClick={() => onUpdate(entry.id, { response: null })}>
+                      <CloseIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -323,6 +336,12 @@ export default function ApiConsolePage() {
     [connection, updateEntry],
   );
 
+  const sendAll = useCallback(() => {
+    for (const entry of entriesRef.current) {
+      if (entry.path.trim()) void sendRequest(entry.id);
+    }
+  }, [sendRequest]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pb: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -335,6 +354,9 @@ export default function ApiConsolePage() {
         <Box sx={{ flex: 1 }} />
         <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addEntry}>
           Add Request
+        </Button>
+        <Button variant="outlined" size="small" startIcon={<PlayArrowIcon />} onClick={sendAll}>
+          Run All
         </Button>
       </Box>
 
