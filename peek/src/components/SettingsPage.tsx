@@ -154,7 +154,7 @@ export default function SettingsPage() {
                 onChange={(_, checked) => setTabAutocompleteEnabled(checked)}
               />
             }
-            label="Enable AI tab autocomplete for text boxes"
+            label="Enable AI inline completions for code editors"
           />
         </Box>
       </Paper>

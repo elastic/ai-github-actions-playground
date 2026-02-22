@@ -70,11 +70,11 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("option", { name: "OpenRouter" })).toBeInTheDocument();
   });
 
-  it("toggles AI tab autocomplete setting", async () => {
+  it("toggles AI inline completions setting", async () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     const toggle = screen.getByRole("checkbox", {
-      name: /enable ai tab autocomplete for text boxes/i,
+      name: /enable ai inline completions for code editors/i,
     });
     expect(toggle).not.toBeChecked();
     await user.click(toggle);

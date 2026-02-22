@@ -13,6 +13,7 @@ import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 
 import { useDashboardStore } from "../../store/useDashboardStore";
+import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import type { EsqlResponse } from "../../types";
@@ -166,7 +167,17 @@ export default function TracesPage() {
     [selectedTraceSpans, selectedSpanId],
   );
 
-  const queryEditorExtensions = useMemo(() => [sql(), EditorView.lineWrapping], []);
+  const queryEditorExtensions = useMemo(
+    () => [
+      sql(),
+      EditorView.lineWrapping,
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an ES|QL expert specializing in OpenTelemetry trace queries. Complete the ES|QL query at the cursor. Return only the completion text.",
+      }),
+    ],
+    [],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%", gap: 1 }}>

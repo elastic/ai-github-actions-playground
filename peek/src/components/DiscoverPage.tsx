@@ -27,6 +27,7 @@ import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
+import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
   if (type === "date" || type === "date_nanos") return "warning";
@@ -118,7 +119,14 @@ export default function DiscoverPage() {
     [setDiscoverQueryDraft, clearTimings],
   );
   const queryEditorExtensions = useMemo(
-    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    () => [
+      sql(),
+      runQueryShortcutExtension(() => void handleRunQuery()),
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an ES|QL expert. Complete the ES|QL query at the cursor. Return only the completion text.",
+      }),
+    ],
     [handleRunQuery],
   );
   useEffect(() => {

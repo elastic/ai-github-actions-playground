@@ -22,6 +22,8 @@ import { json } from "@codemirror/lang-json";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 
+import { makeLLMCompletionExtension } from "./llmCompletionExtension";
+
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD";
 
 interface RequestEntry {
@@ -187,7 +189,13 @@ function RequestCard({
             <CodeMirror
               value={entry.body}
               onChange={(v) => onUpdate(entry.id, { body: v, response: null })}
-              extensions={[json()]}
+              extensions={[
+                json(),
+                makeLLMCompletionExtension({
+                  prompt:
+                    "You are an Elasticsearch API expert. Complete the JSON request body at the cursor. Return only the completion text.",
+                }),
+              ]}
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}

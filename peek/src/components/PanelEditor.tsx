@@ -44,6 +44,7 @@ import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
+import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
   { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
@@ -140,7 +141,14 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setHistoryAnchor(null);
   }, []);
   const queryEditorExtensions = useMemo(
-    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    () => [
+      sql(),
+      runQueryShortcutExtension(() => void handleRunQuery()),
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an ES|QL expert. Complete the ES|QL query at the cursor. Return only the completion text.",
+      }),
+    ],
     [handleRunQuery],
   );
 
