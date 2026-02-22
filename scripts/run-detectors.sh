@@ -37,10 +37,15 @@ fi
 
 # Detector / Auditor workflows that support workflow_dispatch
 WORKFLOWS=(
+  "breaking-change-detector.yml"
+  "bug-hunter.yml"
+  "code-duplication-detector.yml"
   "docs-patrol.yml"
   "duplicate-issue-detector.yml"
+  "flaky-test-investigator.yml"
   "iterative-ideas-man.yml"
   "newbie-contributor-patrol.yml"
+  "performance-profiler.yml"
   "project-summary.yml"
   "stale-issues.yml"
   "text-auditor.yml"

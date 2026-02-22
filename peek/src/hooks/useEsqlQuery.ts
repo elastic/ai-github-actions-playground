@@ -5,7 +5,7 @@ import type { EsqlQueryParams } from "../services/es";
 
 interface UseEsqlQueryOptions {
   connection: ElasticsearchConnection | null;
-  onSuccess: (data: EsqlResponse) => void;
+  onSuccess: (data: EsqlResponse, executedQuery: string) => void;
   onFailure?: () => void;
   buildRequest?: (queryText: string) => EsqlQueryParams;
 }
@@ -46,7 +46,7 @@ export function useEsqlQuery({
         const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
         const data = await client.query(request, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
-          onSuccess(data);
+          onSuccess(data, trimmedQuery);
         }
       } catch (err) {
         if (
