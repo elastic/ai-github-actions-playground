@@ -21,6 +21,7 @@ import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
+import DashboardManagementPage from "./components/DashboardManagementPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -31,6 +32,15 @@ export default function App() {
   const resetState = useDashboardStore((s) => s.resetState);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
+  const requiresConnectionPage =
+    currentPage === "dashboard" ||
+    currentPage === "discover" ||
+    currentPage === "dataStreams" ||
+    currentPage === "explore" ||
+    currentPage === "console" ||
+    currentPage === "settings" ||
+    currentPage === "dashboardManagement";
+  const shouldShowWelcome = !connected && requiresConnectionPage;
 
   return (
     <ThemeProvider theme={theme}>
@@ -57,14 +67,16 @@ export default function App() {
                 flexDirection: "column",
               }}
             >
-              {currentPage === "docs" ? (
+              {shouldShowWelcome ? (
+                <WelcomeScreen />
+              ) : currentPage === "docs" ? (
                 <DocsPage />
               ) : currentPage === "settings" ? (
                 <SettingsPage />
+              ) : currentPage === "dashboardManagement" ? (
+                <DashboardManagementPage />
               ) : currentPage === "chat" ? (
                 <ChatPage />
-              ) : !connected ? (
-                <WelcomeScreen />
               ) : currentPage === "dataStreams" ? (
                 <DataStreamsPage />
               ) : currentPage === "explore" ? (

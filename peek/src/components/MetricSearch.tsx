@@ -102,6 +102,7 @@ export default function MetricSearch({
         </Select>
       </FormControl>
       <Autocomplete
+        size="small"
         options={scopedMetricFields}
         value={selectedField}
         onChange={(_, value) => onSelect(value)}

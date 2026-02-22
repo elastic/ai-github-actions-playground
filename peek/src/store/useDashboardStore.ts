@@ -29,7 +29,8 @@ interface DashboardState {
     | "docs"
     | "console"
     | "chat"
-    | "settings";
+    | "settings"
+    | "dashboardManagement";
   discoverQueryDraft: string | null;
   queryHistory: string[];
 
@@ -60,7 +61,8 @@ interface DashboardState {
       | "docs"
       | "console"
       | "chat"
-      | "settings",
+      | "settings"
+      | "dashboardManagement",
   ) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;

@@ -46,19 +46,10 @@ const GAUGE_AGGREGATIONS: AggregationType[] = [
   "p95",
   "p99",
 ];
-const COUNTER_AGGREGATIONS: AggregationType[] = [
-  "sum",
-  "avg",
-  "min",
-  "max",
-  "count",
-  "p50",
-  "p95",
-  "p99",
-];
+const COUNTER_AGGREGATIONS: AggregationType[] = ["count"];
 
 export function getDefaultAggregation(metricType: MetricType): AggregationType {
-  return metricType === "counter" ? "sum" : "avg";
+  return metricType === "counter" ? "count" : "avg";
 }
 
 export function getAggregationOptions(metricType: MetricType): AggregationType[] {

@@ -2,7 +2,7 @@
 # ready-prs-and-enable-workflows.sh
 #
 # Helper script to mark all open draft PRs as ready for review and
-# enable all disabled workflows in this repository via the GitHub CLI (gh).
+# approve PR workflow runs that require maintainer approval via the GitHub CLI (gh).
 #
 # Prerequisites:
 #   - gh CLI installed and authenticated (gh auth login)
@@ -41,12 +41,26 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
+# Verify gh authentication
+if ! gh auth status >/dev/null 2>&1; then
+  echo "Error: gh CLI is not authenticated. Run: gh auth login" >&2
+  exit 1
+fi
+
+# Resolve owner/repo for API calls
+if [[ -n "$REPO" ]]; then
+  REPO_SLUG="$REPO"
+else
+  REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+fi
+
 # ── Mark all open draft PRs as ready for review ─────────────────────────────
 
 echo "Marking draft PRs as ready for review..."
 echo ""
 
-DRAFT_PRS=$(gh pr list "${REPO_ARGS[@]+"${REPO_ARGS[@]}"}" --draft --json number,title --jq '.[] | "\(.number)\t\(.title)"')
+DRAFT_PRS=$(gh pr list "${REPO_ARGS[@]}" --draft --limit 200 --json number,title \
+  --jq '.[] | select((.title | ascii_downcase | contains("[wip]")) | not) | "\(.number)\t\(.title)"')
 
 if [[ -z "$DRAFT_PRS" ]]; then
   echo "  No open draft PRs found."
@@ -54,7 +68,7 @@ else
   FAILED_PRS=()
   while IFS=$'\t' read -r pr_number pr_title; do
     printf "  #%-5s %-50s" "$pr_number" "$pr_title"
-    if output=$(gh pr ready "$pr_number" "${REPO_ARGS[@]+"${REPO_ARGS[@]}"}" 2>&1); then
+    if output=$(gh pr ready "$pr_number" "${REPO_ARGS[@]}" 2>&1); then
       echo "✓ ready"
     else
       echo "✗ failed"
@@ -77,36 +91,59 @@ fi
 
 echo ""
 
-# ── Enable all disabled workflows ────────────────────────────────────────────
+# ── Approve PR workflow runs that require maintainer action ─────────────────
 
-echo "Enabling disabled workflows..."
+echo "Approving workflow runs that require maintainer approval..."
 echo ""
 
-DISABLED_WORKFLOWS=$(gh workflow list "${REPO_ARGS[@]+"${REPO_ARGS[@]}"}" --all --json name,state,id \
-  --jq '.[] | select(.state == "disabled_manually") | "\(.id)\t\(.name)"')
+OPEN_PRS=$(gh pr list "${REPO_ARGS[@]}" --state open --limit 200 --json number,title,headRefOid \
+  --jq '.[] | select((.title | ascii_downcase | contains("[wip]")) | not) | "\(.number)\t\(.title)\t\(.headRefOid)"')
 
-if [[ -z "$DISABLED_WORKFLOWS" ]]; then
-  echo "  No disabled workflows found."
+if [[ -z "$OPEN_PRS" ]]; then
+  echo "  No open PRs found."
 else
-  FAILED_WORKFLOWS=()
-  while IFS=$'\t' read -r workflow_id workflow_name; do
-    printf "  %-45s" "$workflow_name"
-    if output=$(gh workflow enable "$workflow_id" "${REPO_ARGS[@]+"${REPO_ARGS[@]}"}" 2>&1); then
-      echo "✓ enabled"
-    else
-      echo "✗ failed"
-      echo "    $output" >&2
-      FAILED_WORKFLOWS+=("$workflow_name")
-    fi
-  done <<< "$DISABLED_WORKFLOWS"
+  FAILED_APPROVALS=()
+  APPROVED_RUNS=0
 
-  echo ""
-  if [[ ${#FAILED_WORKFLOWS[@]} -eq 0 ]]; then
-    echo "All disabled workflows enabled."
+  while IFS=$'\t' read -r pr_number pr_title pr_sha; do
+    [[ -z "$pr_number" ]] && continue
+    echo "  PR #$pr_number: $pr_title"
+
+    ACTION_REQUIRED_RUNS=$(gh run list "${REPO_ARGS[@]}" --limit 200 --commit "$pr_sha" \
+      --json databaseId,status,workflowName,event \
+      --jq '.[] | select(.event == "pull_request" and .status == "action_required") | "\(.databaseId)\t\(.workflowName)"')
+
+    if [[ -z "$ACTION_REQUIRED_RUNS" ]]; then
+      echo "    No runs awaiting approval."
+      continue
+    fi
+
+    while IFS=$'\t' read -r run_id workflow_name; do
+      [[ -z "$run_id" ]] && continue
+      printf "    %-45s" "$workflow_name"
+      if output=$(gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/approve" 2>&1); then
+        echo "✓ approved"
+        APPROVED_RUNS=$((APPROVED_RUNS + 1))
+      else
+        echo "✗ failed"
+        echo "      $output" >&2
+        FAILED_APPROVALS+=("PR #$pr_number run $run_id ($workflow_name)")
+      fi
+    done <<< "$ACTION_REQUIRED_RUNS"
+
+    echo ""
+  done <<< "$OPEN_PRS"
+
+  if [[ ${#FAILED_APPROVALS[@]} -eq 0 ]]; then
+    if [[ $APPROVED_RUNS -eq 0 ]]; then
+      echo "No PR workflow runs required approval."
+    else
+      echo "Approved $APPROVED_RUNS workflow run(s)."
+    fi
   else
-    echo "The following workflows could not be enabled:" >&2
-    for w in "${FAILED_WORKFLOWS[@]}"; do
-      echo "  - $w" >&2
+    echo "The following workflow approvals failed:" >&2
+    for item in "${FAILED_APPROVALS[@]}"; do
+      echo "  - $item" >&2
     done
     exit 1
   fi

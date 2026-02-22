@@ -19,6 +19,31 @@ describe("App shell visibility", () => {
 
     expect(screen.queryByRole("navigation", { name: /main navigation/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /reset state/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+  });
+
+  it("shows welcome screen when disconnected and current page is settings", () => {
+    useDashboardStore.getState().setCurrentPage("settings");
+    render(<App />);
+
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+    expect(screen.queryByText(/llm settings/i)).not.toBeInTheDocument();
+  });
+
+  it("shows welcome screen when disconnected and current page is dashboard management", () => {
+    useDashboardStore.getState().setCurrentPage("dashboardManagement");
+    render(<App />);
+
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+    expect(screen.queryByText("Dashboard Management")).not.toBeInTheDocument();
+  });
+
+  it("shows welcome screen when disconnected and current page is console", () => {
+    useDashboardStore.getState().setCurrentPage("console");
+    render(<App />);
+
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+    expect(screen.queryByText(/api console/i)).not.toBeInTheDocument();
   });
 
   it("shows navigation and keeps footer reset when connected", () => {
