@@ -64,7 +64,8 @@ export default function ClusterOverviewPage() {
 
       const nextData: OverviewData = {
         clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
-        clusterHealth: clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
+        clusterHealth:
+          clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
         dataStreamCount:
           dataStreamsResult.status === "fulfilled"
             ? (dataStreamsResult.value.data_streams?.length ?? 0)
@@ -90,7 +91,8 @@ export default function ClusterOverviewPage() {
       }
 
       if (failedParts.length === 4) {
-        const firstError = clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
+        const firstError =
+          clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
         setError(
           isElasticsearchError(firstError)
             ? firstError.message
@@ -242,21 +244,15 @@ export default function ClusterOverviewPage() {
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Data Streams">
-                {renderCount(data.dataStreamCount)}
-              </InfoCard>
+              <InfoCard title="Data Streams">{renderCount(data.dataStreamCount)}</InfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Indices">
-                {renderCount(data.indexCount)}
-              </InfoCard>
+              <InfoCard title="Indices">{renderCount(data.indexCount)}</InfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Aliases">
-                {renderCount(data.aliasCount)}
-              </InfoCard>
+              <InfoCard title="Aliases">{renderCount(data.aliasCount)}</InfoCard>
             </Box>
           </Stack>
         </Stack>
