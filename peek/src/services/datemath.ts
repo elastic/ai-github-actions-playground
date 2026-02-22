@@ -59,3 +59,26 @@ export function buildTimeParams(
 
   return params;
 }
+
+/**
+ * Build the full ES|QL `params` array by merging time-range parameters with
+ * user-defined dashboard parameters.  Only parameters actually referenced in
+ * the query (via `?name`) are included.
+ */
+export function buildQueryParams(
+  query: string,
+  timeRange: TimeRange,
+  userParams?: Array<{ name: string; value: string }>,
+): Array<Record<string, string>> {
+  const params = buildTimeParams(query, timeRange);
+
+  if (userParams) {
+    for (const { name, value } of userParams) {
+      if (name && query.includes(`?${name}`)) {
+        params.push({ [name]: value });
+      }
+    }
+  }
+
+  return params;
+}

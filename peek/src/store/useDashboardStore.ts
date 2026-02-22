@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 import type {
   DashboardDefinition,
+  DashboardParameter,
   ElasticsearchConnection,
   PanelDefinition,
   TimeRange,
@@ -37,6 +38,11 @@ interface DashboardState {
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
   setCurrentPage: (page: "dashboard" | "discover" | "docs") => void;
+
+  addParameter: (param: DashboardParameter) => void;
+  updateParameter: (name: string, updates: Partial<DashboardParameter>) => void;
+  removeParameter: (name: string) => void;
+  setParameterValue: (name: string, value: string) => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => { success: boolean; error?: string };
@@ -165,6 +171,46 @@ export const useDashboardStore = create<DashboardState>()(
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCurrentPage: (page) => set({ currentPage: page }),
+
+      addParameter: (param) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            parameters: [...(s.dashboard.parameters ?? []), param],
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      updateParameter: (name, updates) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            parameters: (s.dashboard.parameters ?? []).map((p) =>
+              p.name === name ? { ...p, ...updates } : p,
+            ),
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      removeParameter: (name) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            parameters: (s.dashboard.parameters ?? []).filter((p) => p.name !== name),
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      setParameterValue: (name, value) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            parameters: (s.dashboard.parameters ?? []).map((p) =>
+              p.name === name ? { ...p, value } : p,
+            ),
+            updatedAt: new Date().toISOString(),
+          },
+        })),
 
       exportDashboard: () => {
         const { dashboard } = get();
