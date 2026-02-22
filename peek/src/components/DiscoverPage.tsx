@@ -10,8 +10,6 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -56,7 +54,6 @@ export default function DiscoverPage() {
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
-  const [liveTail, setLiveTail] = useState(false);
 
   const handleRunQuery = useCallback(async () => {
     if (!connection || !query.trim() || loading) return;
@@ -84,14 +81,14 @@ export default function DiscoverPage() {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
 
-  // Live Tail: auto-re-run query on the dashboard refresh interval.
+  // Discover follows the header's refresh interval without adding another toggle.
   useEffect(() => {
-    if (!liveTail || !connection || !refreshInterval || !query.trim()) return;
+    if (!connection || !refreshInterval || !query.trim()) return;
     const id = setInterval(() => {
       void handleRunQueryRef.current();
     }, refreshInterval * 1000);
     return () => clearInterval(id);
-  }, [liveTail, connection, refreshInterval, query]);
+  }, [connection, refreshInterval, query]);
 
   const queryEditorExtensions = useMemo(
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
@@ -207,36 +204,11 @@ export default function DiscoverPage() {
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
-          <Tooltip
-            title={
-              !connection
-                ? "Connect to Elasticsearch to use Live Tail"
-                : !refreshInterval
-                  ? "Set a refresh interval in the header to use Live Tail"
-                  : !query.trim()
-                    ? "Enter a query to use Live Tail"
-                    : `Auto-reruns query every ${refreshInterval}s`
-            }
-          >
-            <span>
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={liveTail}
-                    onChange={(e) => setLiveTail(e.target.checked)}
-                    disabled={!connection || !query.trim() || !refreshInterval}
-                  />
-                }
-                label={
-                  <Typography variant="caption">
-                    {`Live Tail${refreshInterval ? ` (${refreshInterval}s)` : ""}`}
-                  </Typography>
-                }
-                sx={{ ml: 0.5 }}
-              />
-            </span>
-          </Tooltip>
+          {refreshInterval > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              Auto refresh: {refreshInterval}s
+            </Typography>
+          )}
           {result && (
             <Typography variant="caption" color="text.secondary">
               {result.values.length} rows × {result.columns.length} columns
