@@ -21,6 +21,7 @@ import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
+import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
   if (type === "date" || type === "date_nanos") return "warning";
@@ -67,6 +68,10 @@ export default function DiscoverPage() {
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
+  );
+  const queryEditorExtensions = useMemo(
+    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    [handleRunQuery],
   );
 
   const toggleField = useCallback((name: string) => {
@@ -162,7 +167,7 @@ export default function DiscoverPage() {
           <CodeMirror
             value={query}
             onChange={setQuery}
-            extensions={[sql()]}
+            extensions={queryEditorExtensions}
             theme={themeMode}
             height="100px"
             basicSetup={{ lineNumbers: true, foldGutter: false }}
@@ -182,7 +187,7 @@ export default function DiscoverPage() {
             onClick={handleRunQuery}
             disabled={loading || !query.trim()}
           >
-            Run Query
+            Run Query (Ctrl/Cmd+Enter)
           </Button>
           {result && (
             <Typography variant="caption" color="text.secondary">

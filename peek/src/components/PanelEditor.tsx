@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -32,6 +32,7 @@ import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
 import QueryPipelineSteps from "./QueryPipelineSteps";
+import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
   { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
@@ -91,6 +92,10 @@ export default function PanelEditor() {
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
+  );
+  const queryEditorExtensions = useMemo(
+    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    [handleRunQuery],
   );
 
   const handleSave = useCallback(() => {
@@ -176,7 +181,7 @@ export default function PanelEditor() {
             <CodeMirror
               value={query}
               onChange={setQuery}
-              extensions={[sql()]}
+              extensions={queryEditorExtensions}
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}
@@ -199,7 +204,7 @@ export default function PanelEditor() {
             disabled={loading || !query.trim()}
           >
             {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
-            Run Query
+            Run Query (Ctrl/Cmd+Enter)
           </Button>
           {preview && (
             <Typography variant="caption" color="text.secondary">
