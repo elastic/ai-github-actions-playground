@@ -47,9 +47,16 @@ export default function QueryPipelineSteps({
           <Tooltip
             key={idx}
             title={
-              durationMs !== undefined
-                ? `${cumulativeQuery}\n\nDuration: ${formatDuration(durationMs)}`
-                : cumulativeQuery
+              durationMs !== undefined ? (
+                <>
+                  {cumulativeQuery}
+                  <br />
+                  <br />
+                  Duration: {formatDuration(durationMs)}
+                </>
+              ) : (
+                cumulativeQuery
+              )
             }
             placement="bottom-start"
           >

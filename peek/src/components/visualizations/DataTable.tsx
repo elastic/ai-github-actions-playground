@@ -184,7 +184,7 @@ export default function DataTable({ data, onExportCsv }: Props) {
           sx={{ flex: 1 }}
         />
         {onExportCsv && (
-          <Tooltip title="Export currently visible results as CSV">
+          <Tooltip title="Export all results with selected columns as CSV">
             <Button size="small" variant="text" startIcon={<DownloadIcon />} onClick={onExportCsv}>
               Export CSV
             </Button>
