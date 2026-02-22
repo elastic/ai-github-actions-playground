@@ -20,7 +20,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { useExplorerStore, serializeExplorerState } from "../store/useExplorerStore";
+import {
+  useExplorerStore,
+  serializeExplorerState,
+  deserializeExplorerState,
+} from "../store/useExplorerStore";
 import {
   ElasticsearchClient,
   isElasticsearchError,
@@ -51,6 +55,7 @@ export default function ExplorePage() {
     setCurrentPage,
     setEditingPanelId,
     setDiscoverQueryDraft,
+    setTimeRange,
   } = useDashboardStore(
     useShallow((s) => ({
       connection: s.connection,
@@ -59,6 +64,7 @@ export default function ExplorePage() {
       setCurrentPage: s.setCurrentPage,
       setEditingPanelId: s.setEditingPanelId,
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
+      setTimeRange: s.setTimeRange,
     })),
   );
 
@@ -111,6 +117,7 @@ export default function ExplorePage() {
   );
 
   const abortRef = useRef<AbortController | null>(null);
+  const hasHydratedFromUrlRef = useRef(false);
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -123,8 +130,43 @@ export default function ExplorePage() {
     return metricNamespaceOf(selectedMetric);
   }, [selectedMetric]);
 
+  // Restore explorer state from URL on first mount.
+  useEffect(() => {
+    const restored = deserializeExplorerState(window.location.search);
+    if (restored.indexPattern) {
+      setIndexPattern(restored.indexPattern);
+    }
+    if (restored.metric) {
+      setSelectedMetric(restored.metric);
+      setSelectedNamespace(metricNamespaceOf(restored.metric));
+    }
+    if (restored.aggregation) {
+      setAggregation(restored.aggregation);
+    }
+    if (restored.groupBy) {
+      setGroupBy(restored.groupBy);
+    }
+    clearFilters();
+    for (const filter of restored.filters) {
+      addFilter(filter);
+    }
+    if (restored.from && restored.to) {
+      setTimeRange({ from: restored.from, to: restored.to });
+    }
+    hasHydratedFromUrlRef.current = true;
+  }, [
+    addFilter,
+    clearFilters,
+    setAggregation,
+    setGroupBy,
+    setIndexPattern,
+    setSelectedMetric,
+    setTimeRange,
+  ]);
+
   // Sync URL state
   useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
     const state = { indexPattern, selectedMetric, aggregation, filters, groupBy };
     const qs = serializeExplorerState(state, dashboard.timeRange);
     const newUrl = `${window.location.pathname}?${qs}`;
