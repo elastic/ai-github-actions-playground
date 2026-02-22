@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DataTable from "../../src/components/visualizations/DataTable";
@@ -17,6 +17,10 @@ const mockData: EsqlResponse = {
 };
 
 describe("DataTable", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders column headers", () => {
     render(<DataTable data={mockData} />);
 
@@ -68,12 +72,63 @@ describe("DataTable", () => {
     );
   });
 
-  it("shows a copy JSON button in the row inspector", async () => {
+  it("copies selected row JSON from the inspector", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByText("hello world"));
+    await user.click(screen.getByRole("button", { name: /copy json/i }));
+
+    expect(writeText).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          "@timestamp": "2025-06-15T12:00:00.000Z",
+          message: "hello world",
+          count: 42,
+        },
+        null,
+        2,
+      ),
+    );
+  });
+
+  it("hides null inspector fields by default and allows showing them", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByText("foo bar"));
+    expect(screen.getByRole("button", { name: /show null fields \(1\)/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /show null fields \(1\)/i }));
+    expect(screen.getByRole("button", { name: /hide null fields/i })).toBeInTheDocument();
+  });
+
+  it("filters flyout fields using search input", async () => {
     const user = userEvent.setup();
     render(<DataTable data={mockData} />);
 
     await user.click(screen.getByText("hello world"));
-    expect(screen.getByRole("button", { name: /copy json/i })).toBeInTheDocument();
+    const searchInput = screen.getByLabelText("Search fields");
+
+    await user.type(searchInput, "nonexistent");
+    expect(screen.getByText("No matching fields")).toBeInTheDocument();
+  });
+
+  it("filters flyout fields by value text", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByText("hello world"));
+    const searchInput = screen.getByLabelText("Search fields");
+    await user.type(searchInput, "hello world");
+
+    expect(screen.getByTestId("row-inspector-field-message")).toBeInTheDocument();
+    expect(screen.queryByTestId("row-inspector-field-count")).not.toBeInTheDocument();
   });
 
   it("renders no data message when columns are empty", () => {

@@ -116,7 +116,18 @@ export default function DataTable({ data }: Props) {
                 placement="left"
                 enterDelay={600}
               >
-                <TableRow hover onClick={() => handleRowClick(row)} sx={{ cursor: "pointer" }}>
+                <TableRow
+                  hover
+                  tabIndex={0}
+                  onClick={() => handleRowClick(row)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleRowClick(row);
+                    }
+                  }}
+                  sx={{ cursor: "pointer" }}
+                >
                   {visibleColumnIndices.map((colIdx) => {
                     const col = data.columns[colIdx];
                     const cell = row[colIdx];
