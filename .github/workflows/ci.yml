@@ -22,7 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
+  lint:
+    name: Lint & Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,5 +34,29 @@ jobs:
           cache: "npm"
           cache-dependency-path: peek/package-lock.json
 
-      - name: Run CI checks
-        run: make ci
+      - name: Install dependencies
+        run: cd peek && npm ci
+
+      - name: Lint and typecheck
+        run: make lint
+
+      - name: Build
+        run: make build
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: peek/package-lock.json
+
+      - name: Install dependencies
+        run: cd peek && npm ci
+
+      - name: Unit tests with coverage
+        run: make test-unit-coverage
