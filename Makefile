@@ -1,6 +1,6 @@
 PEEK_DIR := peek
 
-.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-integration test-e2e docker-build docker-run
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -17,6 +17,7 @@ help:
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
 	@echo "  test-unit        - Run unit tests"
+	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
 	@echo "  clean            - Remove build artifacts and node_modules"
@@ -68,9 +69,9 @@ format:
 ci:
 	@echo "Installing dependencies (strict lockfile)..."
 	@cd $(PEEK_DIR) && npm ci
-	@$(MAKE) lint test-unit build
+	@$(MAKE) lint test-unit-coverage build
 	@echo ""
-	@echo "✓ CI passed: lint + unit tests + build all green."
+	@echo "✓ CI passed: lint + coverage gate + build all green."
 
 check: ci
 
@@ -79,6 +80,10 @@ test: test-unit test-integration test-e2e
 test-unit:
 	@echo "Running unit tests..."
 	@cd $(PEEK_DIR) && npm run test:unit
+
+test-unit-coverage:
+	@echo "Running unit/component tests with coverage..."
+	@cd $(PEEK_DIR) && npm run test:coverage
 
 test-integration:
 	@echo "Running integration tests..."
