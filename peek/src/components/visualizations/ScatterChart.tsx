@@ -42,7 +42,10 @@ export default function ScatterChart({ data, options }: Props) {
 
     for (let i = 0; i < data.values.length; i++) {
       const key = groups ? groups[i]! : uniqueGroups[0]!;
-      seriesMap.get(key)?.push([xValues[i] ?? 0, yValues[i] ?? 0]);
+      const x = xValues[i];
+      const y = yValues[i];
+      if (x == null || y == null) continue;
+      seriesMap.get(key)?.push([x, y]);
     }
 
     const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};

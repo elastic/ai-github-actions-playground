@@ -20,9 +20,15 @@ export default function HeatmapChart({ data }: Props) {
     }
 
     const valueIdx = numericIdxs[numericIdxs.length - 1]!;
-    const values = getColumnValues(data, valueIdx) as number[];
-    const min = Math.min(...values.filter((v) => v != null));
-    const max = Math.max(...values.filter((v) => v != null));
+    const rawValues = getColumnValues(data, valueIdx) as number[];
+    const values = rawValues.filter((v) => v != null);
+
+    if (values.length === 0) {
+      return { title: { text: "No numeric data to display", left: "center", top: "center" } };
+    }
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
 
     // Use first two string/category columns as x and y axes, or fall back to indices
     const xIdx = stringIdxs[0] ?? (numericIdxs.length >= 3 ? numericIdxs[0]! : -1);
@@ -37,7 +43,7 @@ export default function HeatmapChart({ data }: Props) {
     const heatmapData = data.values.map((row, i) => {
       const xVal = xIdx >= 0 ? String(row[xIdx]) : String(i);
       const yVal = yIdx >= 0 ? String(row[yIdx]) : "value";
-      return [xLabels.indexOf(xVal), yLabels.indexOf(yVal), values[i] ?? 0];
+      return [xLabels.indexOf(xVal), yLabels.indexOf(yVal), rawValues[i] ?? 0];
     });
 
     return {
