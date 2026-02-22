@@ -31,6 +31,7 @@ import type {
 } from "../types";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
+import QueryPipelineSteps from "./QueryPipelineSteps";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
   { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
@@ -59,6 +60,7 @@ export default function PanelEditor() {
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState<number | null>(null);
 
   useEffect(() => {
     if (panel) {
@@ -82,21 +84,33 @@ export default function PanelEditor() {
     [options],
   );
 
-  const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const data = await client.query({ query: query.trim() });
-      setPreview(data);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
-      setPreview(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, query]);
+  const runQuery = useCallback(
+    async (queryText: string, stepIndex: number | null = null) => {
+      if (!connection || !queryText.trim()) return;
+      setLoading(true);
+      setActiveStep(stepIndex);
+      setError(null);
+      try {
+        const client = new ElasticsearchClient(connection);
+        const data = await client.query({ query: queryText.trim() });
+        setPreview(data);
+      } catch (err) {
+        setError(isElasticsearchError(err) ? err.message : String(err));
+        setPreview(null);
+      } finally {
+        setLoading(false);
+        setActiveStep(null);
+      }
+    },
+    [connection],
+  );
+
+  const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
+
+  const handleRunStep = useCallback(
+    (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
+    [runQuery],
+  );
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
@@ -187,6 +201,12 @@ export default function PanelEditor() {
               basicSetup={{ lineNumbers: true, foldGutter: false }}
             />
           </Box>
+          <QueryPipelineSteps
+            query={query}
+            loading={loading}
+            activeStep={activeStep}
+            onRunStep={handleRunStep}
+          />
         </Box>
 
         {/* Query controls row */}

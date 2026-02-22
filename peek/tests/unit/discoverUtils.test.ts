@@ -4,6 +4,7 @@ import {
   filterColumnsByName,
   filterEsqlResult,
   paginateRows,
+  splitEsqlPipeline,
   toCsv,
 } from "../../src/components/discoverUtils";
 
@@ -17,6 +18,60 @@ function createLargeResult(rowCount = 1000, columnCount = 500): EsqlResponse {
   );
   return { columns, values };
 }
+
+describe("splitEsqlPipeline", () => {
+  it("splits a simple multi-stage query on pipes", () => {
+    expect(splitEsqlPipeline("FROM logs-* | SORT @timestamp | LIMIT 50")).toEqual([
+      "FROM logs-*",
+      "SORT @timestamp",
+      "LIMIT 50",
+    ]);
+  });
+
+  it("returns a single-element array for a query without pipes", () => {
+    expect(splitEsqlPipeline("FROM logs-*")).toEqual(["FROM logs-*"]);
+  });
+
+  it("returns an empty array for a blank query", () => {
+    expect(splitEsqlPipeline("")).toEqual([]);
+    expect(splitEsqlPipeline("   ")).toEqual([]);
+  });
+
+  it("does not split on pipes inside double-quoted strings", () => {
+    expect(splitEsqlPipeline('FROM logs-* | WHERE message == "foo|bar"')).toEqual([
+      "FROM logs-*",
+      'WHERE message == "foo|bar"',
+    ]);
+  });
+
+  it("does not split on pipes inside triple-quoted strings", () => {
+    expect(splitEsqlPipeline('FROM logs-* | WHERE message == """foo|bar"""')).toEqual([
+      "FROM logs-*",
+      'WHERE message == """foo|bar"""',
+    ]);
+  });
+
+  it("does not split on pipes inside backtick-quoted identifiers", () => {
+    expect(splitEsqlPipeline("FROM logs-* | RENAME `field|name` AS renamed")).toEqual([
+      "FROM logs-*",
+      "RENAME `field|name` AS renamed",
+    ]);
+  });
+
+  it("trims whitespace from each step", () => {
+    expect(splitEsqlPipeline("  FROM logs-*  |  LIMIT 10  ")).toEqual([
+      "FROM logs-*",
+      "LIMIT 10",
+    ]);
+  });
+
+  it("handles escaped double-quote sequences inside strings", () => {
+    expect(splitEsqlPipeline('FROM logs-* | WHERE msg == "it""s fine|here"')).toEqual([
+      "FROM logs-*",
+      'WHERE msg == "it""s fine|here"',
+    ]);
+  });
+});
 
 describe("filterEsqlResult", () => {
   it("filters columns and values using selected fields", () => {

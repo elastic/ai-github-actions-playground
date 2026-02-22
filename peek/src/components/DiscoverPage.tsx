@@ -19,6 +19,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
+import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -49,28 +50,41 @@ export default function DiscoverPage() {
   const [result, setResult] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState<number | null>(null);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
 
-  const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const data = await client.query({ query: query.trim() });
-      setResult(data);
-      // By default select all fields
-      setSelectedFields(new Set(data.columns.map((c) => c.name)));
-      setTableVersion((prev) => prev + 1);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
-      setResult(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, query]);
+  const runQuery = useCallback(
+    async (queryText: string, stepIndex: number | null = null) => {
+      if (!connection || !queryText.trim()) return;
+      setLoading(true);
+      setActiveStep(stepIndex);
+      setError(null);
+      try {
+        const client = new ElasticsearchClient(connection);
+        const data = await client.query({ query: queryText.trim() });
+        setResult(data);
+        // By default select all fields
+        setSelectedFields(new Set(data.columns.map((c) => c.name)));
+        setTableVersion((prev) => prev + 1);
+      } catch (err) {
+        setError(isElasticsearchError(err) ? err.message : String(err));
+        setResult(null);
+      } finally {
+        setLoading(false);
+        setActiveStep(null);
+      }
+    },
+    [connection],
+  );
+
+  const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
+
+  const handleRunStep = useCallback(
+    (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
+    [runQuery],
+  );
 
   const toggleField = useCallback((name: string) => {
     setSelectedFields((prev) => {
@@ -171,6 +185,12 @@ export default function DiscoverPage() {
             basicSetup={{ lineNumbers: true, foldGutter: false }}
           />
         </Box>
+        <QueryPipelineSteps
+          query={query}
+          loading={loading}
+          activeStep={activeStep}
+          onRunStep={handleRunStep}
+        />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Button
             variant="contained"

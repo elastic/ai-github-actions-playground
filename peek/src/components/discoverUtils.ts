@@ -47,6 +47,85 @@ function escapeCsvCell(value: unknown): string {
   return asString;
 }
 
+/**
+ * Splits an ES|QL query on top-level pipe characters, respecting double-quoted
+ * strings (`"..."` with `""` escaping), triple-quoted strings (`"""..."""`),
+ * and backtick-quoted identifiers (`` `...` ``).
+ *
+ * Returns an array of trimmed pipeline stage strings.  Returns an empty array
+ * for a blank query, and a single-element array when no pipes are present.
+ */
+export function splitEsqlPipeline(query: string): string[] {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const steps: string[] = [];
+  let current = "";
+  let i = 0;
+
+  while (i < trimmed.length) {
+    const ch = trimmed[i]!;
+
+    if (ch === '"') {
+      if (trimmed[i + 1] === '"' && trimmed[i + 2] === '"') {
+        // Triple-quoted string: """..."""
+        current += '"""';
+        i += 3;
+        while (i < trimmed.length) {
+          if (trimmed[i] === '"' && trimmed[i + 1] === '"' && trimmed[i + 2] === '"') {
+            current += '"""';
+            i += 3;
+            break;
+          }
+          current += trimmed[i++]!;
+        }
+      } else {
+        // Regular double-quoted string — "" is the escape sequence for a literal "
+        current += ch;
+        i++;
+        while (i < trimmed.length) {
+          const c = trimmed[i]!;
+          current += c;
+          i++;
+          if (c === '"') {
+            if (trimmed[i] === '"') {
+              current += '"';
+              i++;
+            } else {
+              break;
+            }
+          }
+        }
+      }
+    } else if (ch === "`") {
+      // Backtick-quoted identifier (e.g. `field name`).  ES|QL does not allow
+      // a literal backtick inside a backtick-quoted identifier, so no escape
+      // sequences need to be handled here.
+      current += ch;
+      i++;
+      while (i < trimmed.length) {
+        const c = trimmed[i]!;
+        current += c;
+        i++;
+        if (c === "`") break;
+      }
+    } else if (ch === "|") {
+      const step = current.trim();
+      if (step) steps.push(step);
+      current = "";
+      i++;
+    } else {
+      current += ch;
+      i++;
+    }
+  }
+
+  const last = current.trim();
+  if (last) steps.push(last);
+
+  return steps;
+}
+
 export function toCsv(data: EsqlResponse): string {
   const header = data.columns.map((column) => escapeCsvCell(column.name)).join(",");
   const rows = data.values.map((row) => row.map((cell) => escapeCsvCell(cell)).join(","));
