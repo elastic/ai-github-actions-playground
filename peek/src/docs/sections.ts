@@ -7,6 +7,12 @@ import discoverWorkflowRaw from "./discover-workflow.md?raw";
 import metricsWorkflowRaw from "./metrics-workflow.md?raw";
 import visualizationsRaw from "./visualizations.md?raw";
 import keyboardShortcutsRaw from "./keyboard-shortcuts.md?raw";
+import consoleRaw from "./console.md?raw";
+import dataStreamsRaw from "./data-streams.md?raw";
+import chatRaw from "./chat.md?raw";
+import llmSettingsRaw from "./llm-settings.md?raw";
+import clusterOverviewRaw from "./cluster-overview.md?raw";
+import dashboardManagementRaw from "./dashboard-management.md?raw";
 
 export interface DocSection {
   id: string;
@@ -48,6 +54,12 @@ const sections: DocSection[] = [
   parseDocSection("metrics-workflow", metricsWorkflowRaw),
   parseDocSection("visualizations", visualizationsRaw),
   parseDocSection("keyboard-shortcuts", keyboardShortcutsRaw),
+  parseDocSection("console", consoleRaw),
+  parseDocSection("data-streams", dataStreamsRaw),
+  parseDocSection("chat", chatRaw),
+  parseDocSection("llm-settings", llmSettingsRaw),
+  parseDocSection("cluster-overview", clusterOverviewRaw),
+  parseDocSection("dashboard-management", dashboardManagementRaw),
 ];
 
 export default sections;
