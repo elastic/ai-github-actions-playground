@@ -23,6 +23,7 @@ interface Props {
   fields: FieldInfo[];
   client: ElasticsearchClient | null;
   indexPattern: string;
+  metricNamespace: string | null;
   groupBy: string | null;
   onAddFilter: (filter: ExplorerFilter) => void;
   onSetGroupBy: (field: string | null) => void;
@@ -38,6 +39,7 @@ export default function DimensionSidebar({
   fields,
   client,
   indexPattern,
+  metricNamespace,
   groupBy,
   onAddFilter,
   onSetGroupBy,
@@ -47,13 +49,23 @@ export default function DimensionSidebar({
   const abortRef = useRef<AbortController | null>(null);
 
   // Filter to only non-metric, non-timestamp dimension fields
-  const dimensionFields = fields.filter(
+  const baseDimensionFields = fields.filter(
     (f) =>
       f.metricType === "unknown" &&
       f.type !== "date" &&
       f.type !== "date_nanos" &&
       f.name !== "@timestamp",
   );
+  const scopedDimensionFields =
+    metricNamespace === null
+      ? baseDimensionFields
+      : baseDimensionFields.filter(
+          (f) => f.name === metricNamespace || f.name.startsWith(`${metricNamespace}.`),
+        );
+  const dimensionFields =
+    metricNamespace !== null && scopedDimensionFields.length > 0
+      ? scopedDimensionFields
+      : baseDimensionFields;
 
   const filteredDimensions = filter
     ? dimensionFields.filter((f) => f.name.toLowerCase().includes(filter.toLowerCase()))
@@ -159,6 +171,11 @@ export default function DimensionSidebar({
     >
       <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
         <Typography variant="subtitle2">Dimensions</Typography>
+        {metricNamespace && (
+          <Typography variant="caption" color="text.secondary">
+            Scoped to {metricNamespace}
+          </Typography>
+        )}
         <Typography variant="caption" color="text.secondary">
           {dimensionFields.length} fields
         </Typography>

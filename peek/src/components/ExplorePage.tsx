@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -29,12 +29,21 @@ import {
   getAggregationOptions,
 } from "../services/es";
 import type { AggregationType, FieldInfo, ExplorerFilter } from "../services/es";
+import { buildTimeParams } from "../services/datemath";
 import MetricSearch from "./MetricSearch";
 import DimensionSidebar from "./DimensionSidebar";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
 import type { EsqlResponse } from "../types";
 
+function metricNamespaceOf(metricName: string): string {
+  const dot = metricName.indexOf(".");
+  if (dot > 0) return metricName.slice(0, dot);
+  const underscore = metricName.indexOf("_");
+  return underscore > 0 ? metricName.slice(0, underscore) : metricName;
+}
+
 export default function ExplorePage() {
+  const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const {
     connection,
     dashboard,
@@ -109,6 +118,10 @@ export default function ExplorePage() {
   );
 
   const aggOptions = useMemo(() => getAggregationOptions(metricType), [metricType]);
+  const selectedMetricNamespace = useMemo(() => {
+    if (!selectedMetric) return null;
+    return metricNamespaceOf(selectedMetric);
+  }, [selectedMetric]);
 
   // Sync URL state
   useEffect(() => {
@@ -162,7 +175,11 @@ export default function ExplorePage() {
       setQueryResult({ status: "loading", esql: queryDef.esql });
 
       try {
-        const result = await client.query({ query: queryDef.esql }, signal);
+        const params = buildTimeParams(queryDef.esql, dashboard.timeRange);
+        const result = await client.query(
+          params.length > 0 ? { query: queryDef.esql, params } : { query: queryDef.esql },
+          signal,
+        );
         setQueryResult({
           status: "success",
           esql: queryDef.esql,
@@ -200,6 +217,7 @@ export default function ExplorePage() {
       if (field) {
         const mt = field.metricType === "counter" ? "counter" : "gauge";
         setSelectedMetric(field.name, mt);
+        setSelectedNamespace(metricNamespaceOf(field.name));
       } else {
         setSelectedMetric(null);
       }
@@ -218,7 +236,7 @@ export default function ExplorePage() {
     if (!queryResult.esql) return;
     const newPanel = {
       id: crypto.randomUUID(),
-      title: selectedMetric ?? "Explorer Panel",
+      title: selectedMetric ?? "Metrics Panel",
       query: queryResult.esql,
       visualization: "timeseries" as const,
       layout: { x: 0, y: Infinity, w: 6, h: 4 },
@@ -260,6 +278,18 @@ export default function ExplorePage() {
               fields={fields}
               loading={fieldsLoading}
               selectedMetric={selectedMetric}
+              selectedNamespace={selectedNamespace}
+              onNamespaceChange={(namespace) => {
+                setSelectedNamespace(namespace);
+                if (
+                  selectedMetric &&
+                  namespace &&
+                  !selectedMetric.startsWith(`${namespace}.`) &&
+                  selectedMetric !== namespace
+                ) {
+                  setSelectedMetric(null);
+                }
+              }}
               onSelect={handleMetricSelect}
             />
           </Box>
@@ -332,14 +362,14 @@ export default function ExplorePage() {
 
           {queryResult.esql && (
             <>
-              <Tooltip title="Edit this query in Discover">
+              <Tooltip title="Edit this query in Query Lab">
                 <Button
                   size="small"
                   variant="outlined"
                   startIcon={<SearchIcon />}
                   onClick={handleEditInDiscover}
                 >
-                  Edit in Discover
+                  Edit in Query Lab
                 </Button>
               </Tooltip>
               <Tooltip title="Save as dashboard panel">
@@ -404,6 +434,7 @@ export default function ExplorePage() {
           fields={fields}
           client={client}
           indexPattern={indexPattern}
+          metricNamespace={selectedMetricNamespace}
           groupBy={groupBy}
           onAddFilter={handleAddFilter}
           onSetGroupBy={setGroupBy}

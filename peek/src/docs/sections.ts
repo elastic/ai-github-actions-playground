@@ -62,9 +62,9 @@ const sections: DocSection[] = [
   },
   {
     id: "discover-workflow",
-    title: "Discover",
+    title: "Query Lab",
     body: [
-      "Switch to the Discover tab to run ad-hoc ES|QL queries and explore results in a table.",
+      "Switch to the Query Lab tab to run ad-hoc ES|QL queries and explore results in a table.",
       "Use the field list on the left to select which columns are shown.",
       "Filter columns by name using the search box above the field list.",
       "When you find a useful query, click Create Panel to promote it directly into a dashboard panel.",
@@ -87,7 +87,7 @@ const sections: DocSection[] = [
     id: "keyboard-shortcuts",
     title: "Tips & Shortcuts",
     body: [
-      "Press Ctrl/Cmd+Enter in Discover or Panel Editor to run the current ES|QL query without leaving the keyboard.",
+      "Press Ctrl/Cmd+Enter in Query Lab or Panel Editor to run the current ES|QL query without leaving the keyboard.",
       "Click the dashboard title in the header to rename it inline.",
       "Use the theme toggle (sun/moon icon) to switch between light and dark mode.",
       "The Disconnect button in the connection dialog drops the active connection.",

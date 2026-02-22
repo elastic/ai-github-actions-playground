@@ -128,8 +128,8 @@ describe("buildExplorerQuery", () => {
       makeQuery({ timeRange: { from: "now-7d", to: "now" } }),
     );
 
-    expect(result.esql).toContain('@timestamp >= "now-7d"');
-    expect(result.esql).toContain('@timestamp <= "now"');
+    expect(result.esql).toContain("@timestamp >= ?_tstart");
+    expect(result.esql).toContain("@timestamp <= ?_tend");
   });
 
   it("handles filters with backslashes", () => {

@@ -112,7 +112,7 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
 
   // WHERE (filters + time range)
   const whereClauses: string[] = [];
-  whereClauses.push(`@timestamp >= "${q.timeRange.from}" AND @timestamp <= "${q.timeRange.to}"`);
+  whereClauses.push("@timestamp >= ?_tstart AND @timestamp <= ?_tend");
   const filterClause = buildFilterClause(q.filters);
   if (filterClause) {
     whereClauses.push(filterClause);
@@ -122,7 +122,7 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   // STATS ... BY BUCKET(...)
   const aggExpr = buildAggExpression(q.aggregation, q.metricField);
   const aggAlias = `metric`;
-  const bucketExpr = `BUCKET(@timestamp, ${buckets}, "${q.timeRange.from}", "${q.timeRange.to}")`;
+  const bucketExpr = `BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`;
 
   if (q.groupBy) {
     parts.push(`STATS ${aggAlias} = ${aggExpr} BY timestamp = ${bucketExpr}, ${q.groupBy}`);
