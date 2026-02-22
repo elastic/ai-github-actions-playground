@@ -27,6 +27,7 @@ export default function ConnectionDialog() {
   const savedConn = useDashboardStore((s) => s.connection);
   const setConnection = useDashboardStore((s) => s.setConnection);
   const setConnected = useDashboardStore((s) => s.setConnected);
+  const setCapabilities = useDashboardStore((s) => s.setCapabilities);
 
   const initialAuthType: AuthType = savedConn?.username ? "userpass" : "apiKey";
 
@@ -79,8 +80,10 @@ export default function ConnectionDialog() {
     try {
       const client = new ElasticsearchClient(conn);
       await client.getClusterInfo();
+      const caps = await client.getCapabilities();
       setConnection(conn);
       setConnected(true);
+      setCapabilities(caps);
       setOpen(false);
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
@@ -88,12 +91,13 @@ export default function ConnectionDialog() {
     } finally {
       setTesting(false);
     }
-  }, [buildConnection, setConnection, setConnected, setOpen]);
+  }, [buildConnection, setConnection, setConnected, setCapabilities, setOpen]);
 
   const handleDisconnect = useCallback(() => {
     setConnected(false);
+    setCapabilities(null);
     setResult(null);
-  }, [setConnected]);
+  }, [setConnected, setCapabilities]);
 
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
