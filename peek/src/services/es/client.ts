@@ -196,6 +196,46 @@ export class ElasticsearchClient {
   async getClusterInfo(signal?: AbortSignal): Promise<ClusterInfoResponse> {
     return this._fetch<ClusterInfoResponse>("/", { signal });
   }
+
+  // -------------------------------------------------------------------------
+  // Raw request (API console)
+  // -------------------------------------------------------------------------
+
+  /** Execute an arbitrary HTTP request against the connected Elasticsearch cluster. */
+  async rawRequest(
+    method: string,
+    path: string,
+    body?: string,
+    signal?: AbortSignal,
+  ): Promise<{ status: number; body: unknown }> {
+    const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const init: RequestInit = {
+      method,
+      headers: { ...this.headers },
+      signal: signal ?? undefined,
+    };
+    if (body && body.trim()) {
+      init.body = body;
+    }
+    let response: Response;
+    try {
+      response = await fetch(url, init);
+    } catch (err) {
+      throw {
+        status: 0,
+        message: err instanceof Error ? err.message : String(err),
+      } satisfies ElasticsearchError;
+    }
+    const contentType = response.headers.get("content-type") ?? "";
+    let responseBody: unknown;
+    if (contentType.includes("application/json")) {
+      responseBody = await response.json().catch(() => null);
+    } else {
+      const text = await response.text().catch(() => "");
+      responseBody = text || null;
+    }
+    return { status: response.status, body: responseBody };
+  }
 }
 
 // ---------------------------------------------------------------------------
