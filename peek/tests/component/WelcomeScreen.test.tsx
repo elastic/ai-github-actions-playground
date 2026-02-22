@@ -28,6 +28,8 @@ function mockDemoConfig(config: typeof DEMO_CONFIG | null) {
 
 describe("WelcomeScreen", () => {
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetState();
     fetchMock.mockReset();
   });
