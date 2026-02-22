@@ -11,7 +11,7 @@ permissions:
 jobs:
   run:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'skip-pr-body-update')
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-update-pr-body.lock.yml@v0
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-update-pr-body.lock.yml@main
     with:
       model: gpt-5.1-codex-mini
       additional-instructions: |
