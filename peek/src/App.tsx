@@ -40,13 +40,14 @@ export default function App() {
             flexDirection: "column",
           }}
         >
-          {!connected ? (
+          {currentPage === "docs" ? (
+            <DocsPage />
+          ) : !connected ? (
             <WelcomeScreen />
           ) : (
             <>
               {currentPage === "discover" && <DiscoverPage />}
               {currentPage === "dashboard" && <DashboardGrid />}
-              {currentPage === "docs" && <DocsPage />}
               {currentPage === "chat" && <ChatPage />}
               {currentPage === "settings" && <SettingsPage />}
             </>
