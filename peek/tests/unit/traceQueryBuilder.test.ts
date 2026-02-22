@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildTraceSearchQuery,
+  buildTraceSearchQueryParts,
   buildTraceDetailQuery,
   buildTraceTimeseriesQuery,
   buildServiceSuggestionsQuery,
@@ -52,8 +53,8 @@ describe("buildTraceSearchQuery", () => {
       maxDurationMs: 5000,
     };
     const query = buildTraceSearchQuery(filters);
-    expect(query).toContain("duration >= 100000");
-    expect(query).toContain("duration <= 5000000");
+    expect(query).toContain("attributes.span.duration.us >= 100000");
+    expect(query).toContain("attributes.span.duration.us <= 5000000");
   });
 
   it("includes tag filters", () => {
@@ -165,6 +166,71 @@ describe("ES|QL injection prevention", () => {
   it("escapes quotes in trace detail query", () => {
     const query = buildTraceDetailQuery('trace"id');
     expect(query).toContain('trace.id == "trace\\"id"');
+  });
+});
+
+describe("tag key validation (injection prevention)", () => {
+  it("accepts valid dotted field names", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: "http.request.method", value: "GET" }],
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain('http.request.method == "GET"');
+  });
+
+  it("accepts field names starting with @", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: "@timestamp", value: "2026-01-01" }],
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain('@timestamp == "2026-01-01"');
+  });
+
+  it("rejects field names with injection attempts", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: "service.name) OR (1==1 //", value: "x" }],
+    };
+    expect(() => buildTraceSearchQuery(filters)).toThrow("Invalid field name");
+  });
+
+  it("rejects field names with quotes", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: 'field"name', value: "x" }],
+    };
+    expect(() => buildTraceSearchQuery(filters)).toThrow("Invalid field name");
+  });
+
+  it("rejects empty field names", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: "", value: "x" }],
+    };
+    expect(() => buildTraceSearchQuery(filters)).toThrow("Invalid field name");
+  });
+
+  it("rejects field names starting with a digit", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: "123field", value: "x" }],
+    };
+    expect(() => buildTraceSearchQuery(filters)).toThrow("Invalid field name");
+  });
+});
+
+describe("buildTraceSearchQueryParts", () => {
+  it("returns structured body, sort, and limit parts", () => {
+    const parts = buildTraceSearchQueryParts(EMPTY_FILTERS);
+    expect(parts.body).toContain("FROM traces-*");
+    expect(parts.body).toContain("parent.id IS NULL");
+    expect(parts.sort).toBe("SORT @timestamp DESC");
+    expect(parts.limit).toBe("LIMIT 100");
+    // body should NOT contain SORT or LIMIT
+    expect(parts.body).not.toContain("SORT");
+    expect(parts.body).not.toContain("LIMIT");
   });
 });
 

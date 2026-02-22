@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import type { Span } from "../traces/traceUtils";
+import type { Span, SpanTreeNode } from "../traces/traceUtils";
 import {
   buildSpanTree,
   flattenSpanTree,
@@ -8,11 +8,11 @@ import {
 } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
 import { useEChartTheme } from "./useEChartTheme";
+import EChartWrapper from "./EChartWrapper";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-import EChartWrapper from "./EChartWrapper";
 
 interface WaterfallChartProps {
   spans: Span[];
@@ -20,16 +20,25 @@ interface WaterfallChartProps {
   selectedSpanId?: string | null;
 }
 
-export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: WaterfallChartProps) {
+export default function WaterfallChart({
+  spans,
+  onSpanClick,
+  selectedSpanId,
+}: WaterfallChartProps) {
   const theme = useEChartTheme();
 
+  // Single memoized computation of the span tree — shared by option and click handler
+  const flatNodes: SpanTreeNode[] = useMemo(() => {
+    if (spans.length === 0) return [];
+    const tree = buildSpanTree(spans);
+    return flattenSpanTree(tree);
+  }, [spans]);
+
   const option = useMemo(() => {
-    if (spans.length === 0) {
+    if (flatNodes.length === 0) {
       return { title: { text: "No spans to display", left: "center", top: "center" } };
     }
 
-    const tree = buildSpanTree(spans);
-    const flatNodes = flattenSpanTree(tree);
     const { startUs } = getTraceTimeBounds(spans);
 
     const categories = flatNodes.map(
@@ -38,8 +47,7 @@ export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: W
 
     // Base (invisible) bars for offset
     const baseData = flatNodes.map((node) => {
-      const spanStartMs = new Date(node.span.timestamp).getTime();
-      const spanStartUs = spanStartMs * 1000;
+      const spanStartUs = node.span.startTimeUs;
       const offsetMs = (spanStartUs - startUs) / 1000;
       return offsetMs;
     });
@@ -47,20 +55,20 @@ export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: W
     // Duration bars
     const durationData = flatNodes.map((node) => node.span.durationUs / 1000);
 
-    // Colors
+    // Colors — highlight selected span
     const itemColors = flatNodes.map((node) => {
       const isError = node.span.status === "Error" || node.span.status === "STATUS_CODE_ERROR";
+      const isSelected = selectedSpanId === node.span.spanId;
       return {
         color: getServiceColor(node.span.serviceName),
-        borderColor: isError ? "#BD271E" : "transparent",
-        borderWidth: isError ? 2 : 0,
+        borderColor: isSelected ? "#FFD700" : isError ? "#BD271E" : "transparent",
+        borderWidth: isSelected ? 2 : isError ? 2 : 0,
       };
     });
 
     const totalDurationMs = Math.max(
       ...flatNodes.map((node) => {
-        const spanStartMs = new Date(node.span.timestamp).getTime();
-        const spanStartUs = spanStartMs * 1000;
+        const spanStartUs = node.span.startTimeUs;
         return (spanStartUs - startUs + node.span.durationUs) / 1000;
       }),
       1,
@@ -68,6 +76,7 @@ export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: W
 
     return {
       ...theme,
+      legend: { show: false },
       grid: {
         left: Math.min(280, 60 + Math.max(...categories.map((c) => c.length)) * 5.5),
         right: 20,
@@ -79,7 +88,8 @@ export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: W
         trigger: "axis",
         axisPointer: { type: "shadow" },
         formatter: (params: Array<{ dataIndex: number }>) => {
-          const idx = params[0]?.dataIndex ?? 0;
+          const idx = params[0]?.dataIndex;
+          if (idx == null || idx < 0 || idx >= flatNodes.length) return "Unknown span";
           const node = flatNodes[idx]!;
           return `<strong>${escapeHtml(node.span.serviceName)}</strong>: ${escapeHtml(node.span.name)}<br/>Duration: ${escapeHtml(formatSpanDuration(node.span.durationUs))}`;
         },
@@ -135,23 +145,16 @@ export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: W
         },
       ],
     };
-  }, [spans, theme, selectedSpanId]);
-
-  // Keep flatNodes accessible to the click handler without recalculating
-  const flatNodesRef = useMemo(() => {
-    if (spans.length === 0) return [];
-    const tree = buildSpanTree(spans);
-    return flattenSpanTree(tree);
-  }, [spans]);
+  }, [spans, flatNodes, theme, selectedSpanId]);
 
   const handleClick = useCallback(
     (params: { dataIndex: number }) => {
-      const node = flatNodesRef[params.dataIndex];
+      const node = flatNodes[params.dataIndex];
       if (node && onSpanClick) {
         onSpanClick(node.span.spanId);
       }
     },
-    [flatNodesRef, onSpanClick],
+    [flatNodes, onSpanClick],
   );
 
   return <EChartWrapper option={option} onClick={onSpanClick ? handleClick : undefined} />;

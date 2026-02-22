@@ -16,10 +16,10 @@ services:
       start_period: 60s
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.146.1
-    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    image: docker.elastic.co/elastic-agent/elastic-agent:9.3.0
+    command: ["otel", "--config", "/etc/otelcol/config.yaml"]
     volumes:
-      - ./docker/otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
       - /:/hostfs:ro
     pid: host
     depends_on:

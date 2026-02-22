@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
@@ -11,7 +11,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-import { useState } from "react";
 import type { Span } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
 import { getServiceColor } from "./traceColors";
@@ -180,8 +179,8 @@ export default function SpanDetailDrawer({
           <Tab label="Overview" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Resource" sx={{ minHeight: 36, py: 0 }} />
-          <Tab label="Events" sx={{ minHeight: 36, py: 0 }} />
-          <Tab label="Links" sx={{ minHeight: 36, py: 0 }} />
+          {/* TODO: wire up Events tab when span event data is available */}
+          {/* TODO: wire up Links tab when span link data is available */}
         </Tabs>
 
         {/* Tab content */}
@@ -230,11 +229,16 @@ export default function SpanDetailDrawer({
                   onCopy={() => handleCopy(span.parentSpanId!)}
                 />
               )}
-              <KeyValueRow
-                label="Timestamp"
-                value={span.timestamp ? new Date(span.timestamp).toISOString() : "—"}
-                onCopy={() => handleCopy(span.timestamp)}
-              />
+              {(() => {
+                const tsDisplay = span.timestamp ? new Date(span.timestamp).toISOString() : "—";
+                return (
+                  <KeyValueRow
+                    label="Timestamp"
+                    value={tsDisplay}
+                    onCopy={span.timestamp ? () => handleCopy(tsDisplay) : undefined}
+                  />
+                );
+              })()}
             </Box>
           )}
 
@@ -277,22 +281,6 @@ export default function SpanDetailDrawer({
                   />
                 ))
               )}
-            </Box>
-          )}
-
-          {tabIndex === 3 && (
-            <Box sx={{ p: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                Span events will appear here when available in the trace data.
-              </Typography>
-            </Box>
-          )}
-
-          {tabIndex === 4 && (
-            <Box sx={{ p: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                Span links will appear here when available in the trace data.
-              </Typography>
             </Box>
           )}
         </Box>

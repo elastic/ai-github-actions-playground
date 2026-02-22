@@ -46,10 +46,13 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
       name: serviceName,
       type: "scatter",
       symbolSize: 6,
-      data: byService.get(serviceName)!.map((point) => ({
-        value: [new Date(point.timestamp).getTime(), point.durationUs / 1000],
-        traceId: point.traceId,
-      })),
+      data: byService
+        .get(serviceName)!
+        .filter((point) => point.durationUs > 0)
+        .map((point) => ({
+          value: [new Date(point.timestamp).getTime(), point.durationUs / 1000],
+          traceId: point.traceId,
+        })),
       itemStyle: {
         color: colorMap.get(serviceName) ?? getServiceColor(serviceName),
       },

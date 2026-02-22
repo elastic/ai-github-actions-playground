@@ -13,6 +13,7 @@ export interface Span {
   durationUs: number;
   status: string;
   timestamp: string;
+  startTimeUs: number;
   attributes: Record<string, unknown>;
 }
 
@@ -48,16 +49,14 @@ export function buildSpanTree(spans: Span[]): SpanTreeNode[] {
 
   // Sort children by timestamp (chronological order)
   function sortChildren(node: SpanTreeNode): void {
-    node.children.sort(
-      (a, b) => new Date(a.span.timestamp).getTime() - new Date(b.span.timestamp).getTime(),
-    );
+    node.children.sort((a, b) => a.span.startTimeUs - b.span.startTimeUs);
     for (const child of node.children) {
       sortChildren(child);
     }
   }
 
   // Sort roots by timestamp
-  roots.sort((a, b) => new Date(a.span.timestamp).getTime() - new Date(b.span.timestamp).getTime());
+  roots.sort((a, b) => a.span.startTimeUs - b.span.startTimeUs);
 
   for (const root of roots) {
     sortChildren(root);
@@ -114,8 +113,10 @@ export function parseSpansFromEsql(
     spanName: string;
     spanKind: string;
     durationUs: string;
+    durationNs: string;
     statusCode: string;
     timestamp: string;
+    timestampUs: string;
   },
 ): Span[] {
   const colIndex = new Map<string, number>();
@@ -139,18 +140,35 @@ export function parseSpansFromEsql(
       }
     }
 
+    const parsedTimestampUs = Number(get(row, fieldMapping.timestampUs) ?? NaN);
+    const parsedDurationUs = Number(get(row, fieldMapping.durationUs) ?? NaN);
+    const parsedDurationNs = Number(get(row, fieldMapping.durationNs) ?? NaN);
+    const fallbackStartTimeUs =
+      new Date(String(get(row, fieldMapping.timestamp) ?? "")).getTime() * 1000;
+    const startTimeUs =
+      Number.isFinite(parsedTimestampUs) && parsedTimestampUs > 0
+        ? parsedTimestampUs
+        : fallbackStartTimeUs;
+    const durationUs =
+      Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
+        ? parsedDurationUs
+        : Number.isFinite(parsedDurationNs) && parsedDurationNs > 0
+          ? parsedDurationNs / 1000
+          : 0;
+
+    const rawParentSpanId = get(row, fieldMapping.parentSpanId);
+
     return {
       traceId: String(get(row, fieldMapping.traceId) ?? ""),
       spanId: String(get(row, fieldMapping.spanId) ?? ""),
-      parentSpanId: get(row, fieldMapping.parentSpanId)
-        ? String(get(row, fieldMapping.parentSpanId))
-        : null,
+      parentSpanId: rawParentSpanId ? String(rawParentSpanId) : null,
       serviceName: String(get(row, fieldMapping.serviceName) ?? "unknown"),
       name: String(get(row, fieldMapping.spanName) ?? ""),
       kind: String(get(row, fieldMapping.spanKind) ?? ""),
-      durationUs: Number(get(row, fieldMapping.durationUs) ?? 0),
+      durationUs,
       status: String(get(row, fieldMapping.statusCode) ?? "OK"),
       timestamp: String(get(row, fieldMapping.timestamp) ?? ""),
+      startTimeUs,
       attributes,
     };
   });
@@ -175,8 +193,7 @@ export function getTraceTimeBounds(spans: Span[]): { startUs: number; endUs: num
   let minStart = Infinity;
   let maxEnd = -Infinity;
   for (const span of spans) {
-    const startMs = new Date(span.timestamp).getTime();
-    const startUs = startMs * 1000;
+    const startUs = span.startTimeUs;
     const endUs = startUs + span.durationUs;
     if (startUs < minStart) minStart = startUs;
     if (endUs > maxEnd) maxEnd = endUs;

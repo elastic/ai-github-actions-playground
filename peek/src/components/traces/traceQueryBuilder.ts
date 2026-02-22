@@ -11,8 +11,10 @@ export interface TraceFieldMapping {
   spanName: string;
   spanKind: string;
   durationUs: string;
+  durationNs: string;
   statusCode: string;
   timestamp: string;
+  timestampUs: string;
   index: string;
 }
 
@@ -24,15 +26,27 @@ export const DEFAULT_FIELD_MAPPING: TraceFieldMapping = {
   serviceName: "service.name",
   spanName: "name",
   spanKind: "kind",
-  durationUs: "duration",
+  // EDOT stores raw `duration` in ns and `attributes.span.duration.us` in microseconds.
+  durationUs: "attributes.span.duration.us",
+  durationNs: "duration",
   statusCode: "status",
   timestamp: "@timestamp",
+  timestampUs: "attributes.timestamp.us",
   index: "traces-*",
 };
 
 /** Escape a string value for use inside ES|QL double-quoted literals */
 function escapeEsqlString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+/** Validate an ES|QL identifier (field name) to prevent injection */
+const SAFE_IDENTIFIER_RE = /^[A-Za-z_@][A-Za-z0-9_.@-]*$/;
+function validateEsqlIdentifier(key: string): string {
+  if (!SAFE_IDENTIFIER_RE.test(key)) {
+    throw new Error(`Invalid field name: ${key}`);
+  }
+  return key;
 }
 
 /** Structured filters for trace search */
@@ -54,15 +68,22 @@ export const EMPTY_FILTERS: TraceFilters = {
   tags: [],
 };
 
+/** Structured query parts returned by buildTraceSearchQueryParts */
+export interface TraceSearchQueryParts {
+  body: string;
+  sort: string;
+  limit: string;
+}
+
 /**
- * Generates an ES|QL query from structured trace filters.
- * Targets root spans by default (parent.id IS NULL).
+ * Generates structured ES|QL query parts from trace filters.
+ * Callers can use `body` alone (e.g. for aggregation) or join all parts.
  */
-export function buildTraceSearchQuery(
+export function buildTraceSearchQueryParts(
   filters: TraceFilters,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
   options: { limit?: number; rootSpansOnly?: boolean } = {},
-): string {
+): TraceSearchQueryParts {
   const { limit = 100, rootSpansOnly = true } = options;
   const parts: string[] = [`FROM ${fields.index}`];
   const whereClauses: string[] = [];
@@ -95,10 +116,11 @@ export function buildTraceSearchQuery(
   }
 
   for (const tag of filters.tags) {
+    const validatedKey = validateEsqlIdentifier(tag.key);
     if (tag.exclude) {
-      whereClauses.push(`${tag.key} != "${escapeEsqlString(tag.value)}"`);
+      whereClauses.push(`${validatedKey} != "${escapeEsqlString(tag.value)}"`);
     } else {
-      whereClauses.push(`${tag.key} == "${escapeEsqlString(tag.value)}"`);
+      whereClauses.push(`${validatedKey} == "${escapeEsqlString(tag.value)}"`);
     }
   }
 
@@ -106,10 +128,24 @@ export function buildTraceSearchQuery(
     parts.push(`WHERE ${whereClauses.join(" AND ")}`);
   }
 
-  parts.push(`SORT ${fields.timestamp} DESC`);
-  parts.push(`LIMIT ${limit}`);
+  return {
+    body: parts.join(" | "),
+    sort: `SORT ${fields.timestamp} DESC`,
+    limit: `LIMIT ${limit}`,
+  };
+}
 
-  return parts.join(" | ");
+/**
+ * Generates an ES|QL query from structured trace filters.
+ * Targets root spans by default (parent.id IS NULL).
+ */
+export function buildTraceSearchQuery(
+  filters: TraceFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  options: { limit?: number; rootSpansOnly?: boolean } = {},
+): string {
+  const { body, sort, limit } = buildTraceSearchQueryParts(filters, fields, options);
+  return [body, sort, limit].join(" | ");
 }
 
 /**
@@ -129,10 +165,11 @@ export function buildTraceTimeseriesQuery(
   filters: TraceFilters,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
-  const baseQuery = buildTraceSearchQuery(filters, fields, { limit: 10000, rootSpansOnly: true });
-  // Remove the SORT and LIMIT from the base query, add aggregation
-  const withoutSortLimit = baseQuery.replace(/ ?\| SORT [^|]+/, "").replace(/ ?\| LIMIT \d+/, "");
-  return `${withoutSortLimit} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50, "", "")`;
+  const { body } = buildTraceSearchQueryParts(filters, fields, {
+    limit: 10000,
+    rootSpansOnly: true,
+  });
+  return `${body} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50, "", "")`;
 }
 
 /**
@@ -152,6 +189,8 @@ export function buildOperationSuggestionsQuery(
   serviceName?: string,
 ): string {
   const base = `FROM ${fields.index}`;
-  const where = serviceName ? ` | WHERE ${fields.serviceName} == "${escapeEsqlString(serviceName)}"` : "";
+  const where = serviceName
+    ? ` | WHERE ${fields.serviceName} == "${escapeEsqlString(serviceName)}"`
+    : "";
   return `${base}${where} | STATS count = COUNT(*) BY ${fields.spanName} | SORT count DESC | LIMIT 50`;
 }

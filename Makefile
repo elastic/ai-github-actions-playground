@@ -39,8 +39,8 @@ serve: setup
 
 serve-proxy: setup
 	@echo "Starting dev server with Elasticsearch proxy..."
-	@echo "  Proxying /_query → $${ES_URL:-http://localhost:9200}"
-	@echo "  Connect the dashboard to: http://localhost:3000"
+	@echo "  Proxying /_es/* and /_query → $${ES_URL:-http://localhost:9200}"
+	@echo "  Enter http://localhost:3000/_es as the Elasticsearch URL"
 	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
 
 build:

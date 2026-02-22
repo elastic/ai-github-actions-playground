@@ -9,6 +9,7 @@ import {
 import type { Span } from "../../src/components/traces/traceUtils";
 
 function makeSpan(overrides: Partial<Span> = {}): Span {
+  const timestamp = overrides.timestamp ?? "2026-01-01T00:00:00.000Z";
   return {
     traceId: "trace-1",
     spanId: "span-1",
@@ -18,7 +19,8 @@ function makeSpan(overrides: Partial<Span> = {}): Span {
     kind: "SERVER",
     durationUs: 1000,
     status: "OK",
-    timestamp: "2026-01-01T00:00:00.000Z",
+    timestamp,
+    startTimeUs: new Date(timestamp).getTime() * 1000,
     attributes: {},
     ...overrides,
   };
@@ -218,7 +220,18 @@ describe("parseSpansFromEsql", () => {
       { name: "http.method", type: "keyword" },
     ];
     const values = [
-      ["t1", "s1", null, "api-gw", "GET /users", "SERVER", 1500000, "OK", "2026-01-01T00:00:00Z", "GET"],
+      [
+        "t1",
+        "s1",
+        null,
+        "api-gw",
+        "GET /users",
+        "SERVER",
+        1500000,
+        "OK",
+        "2026-01-01T00:00:00Z",
+        "GET",
+      ],
     ];
 
     const spans = parseSpansFromEsql(columns, values, fieldMapping);
@@ -246,7 +259,9 @@ describe("parseSpansFromEsql", () => {
       { name: "http.method", type: "keyword" },
       { name: "http.url", type: "keyword" },
     ];
-    const values = [["t1", "s1", null, "svc", "op", "SERVER", 1000, "OK", "2026-01-01T00:00:00Z", "GET", null]];
+    const values = [
+      ["t1", "s1", null, "svc", "op", "SERVER", 1000, "OK", "2026-01-01T00:00:00Z", "GET", null],
+    ];
 
     const spans = parseSpansFromEsql(columns, values, fieldMapping);
     // http.url is null so it should not appear in attributes

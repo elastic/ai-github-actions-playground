@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -10,6 +10,7 @@ import TextField from "@mui/material/TextField";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+import { EditorView } from "@codemirror/view";
 import { useDashboardStore } from "../../store/useDashboardStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
@@ -52,6 +53,11 @@ export default function TracesPage() {
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
+
+  // Clear user edits when filters change so the generated query takes effect
+  useEffect(() => {
+    setRawQuery(null);
+  }, [filters, setRawQuery]);
 
   // Main search query
   const {
@@ -149,10 +155,19 @@ export default function TracesPage() {
     [selectedTraceSpans, selectedSpanId],
   );
 
-  const queryEditorExtensions = useMemo(() => [sql()], []);
+  const queryEditorExtensions = useMemo(() => [sql(), EditorView.lineWrapping], []);
+
+  const thStyle: React.CSSProperties = {
+    textAlign: "left",
+    padding: "8px 12px",
+    borderBottom: "1px solid var(--divider, #333)",
+    position: "sticky",
+    top: 0,
+    background: "inherit",
+  };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%", gap: 1 }}>
       {/* Query bar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box
@@ -293,7 +308,7 @@ export default function TracesPage() {
             onChange={(val) => setRawQuery(val)}
             extensions={queryEditorExtensions}
             theme={themeMode}
-            height="60px"
+            height="120px"
             basicSetup={{ lineNumbers: true, foldGutter: false }}
           />
         </Box>
@@ -322,7 +337,13 @@ export default function TracesPage() {
       {detailError && <Alert severity="error">{detailError}</Alert>}
 
       {/* Content area */}
-      <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          minHeight: 0,
+        }}
+      >
         {/* Results panel */}
         <Box
           sx={{
@@ -330,7 +351,7 @@ export default function TracesPage() {
             display: "flex",
             flexDirection: "column",
             minWidth: 0,
-            overflow: "hidden",
+            minHeight: 0,
           }}
         >
           {/* View switcher */}
@@ -348,7 +369,7 @@ export default function TracesPage() {
           </Box>
 
           {/* Results view */}
-          <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
             {!result && !searchLoading && (
               <Box
                 sx={{
@@ -380,78 +401,12 @@ export default function TracesPage() {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                   <thead>
                     <tr>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          borderBottom: "1px solid var(--divider, #333)",
-                          position: "sticky",
-                          top: 0,
-                          background: "inherit",
-                        }}
-                      >
-                        Trace ID
-                      </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          borderBottom: "1px solid var(--divider, #333)",
-                          position: "sticky",
-                          top: 0,
-                          background: "inherit",
-                        }}
-                      >
-                        Service
-                      </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          borderBottom: "1px solid var(--divider, #333)",
-                          position: "sticky",
-                          top: 0,
-                          background: "inherit",
-                        }}
-                      >
-                        Operation
-                      </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          borderBottom: "1px solid var(--divider, #333)",
-                          position: "sticky",
-                          top: 0,
-                          background: "inherit",
-                        }}
-                      >
-                        Duration
-                      </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          borderBottom: "1px solid var(--divider, #333)",
-                          position: "sticky",
-                          top: 0,
-                          background: "inherit",
-                        }}
-                      >
-                        Status
-                      </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          borderBottom: "1px solid var(--divider, #333)",
-                          position: "sticky",
-                          top: 0,
-                          background: "inherit",
-                        }}
-                      >
-                        Timestamp
-                      </th>
+                      <th style={thStyle}>Trace ID</th>
+                      <th style={thStyle}>Service</th>
+                      <th style={thStyle}>Operation</th>
+                      <th style={thStyle}>Duration</th>
+                      <th style={thStyle}>Status</th>
+                      <th style={thStyle}>Timestamp</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -609,7 +564,7 @@ export default function TracesPage() {
               sx={{
                 mt: 1,
                 flex: 1,
-                minHeight: 200,
+                minHeight: 360,
                 overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
