@@ -21,7 +21,7 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage: "dashboard" | "discover" | "dataStreams" | "docs";
+  currentPage: "dashboard" | "discover" | "dataStreams" | "docs" | "chat" | "settings";
   discoverQueryDraft: string | null;
 
   setConnection: (conn: ElasticsearchConnection) => void;
@@ -41,7 +41,9 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (page: "dashboard" | "discover" | "dataStreams" | "docs") => void;
+  setCurrentPage: (
+    page: "dashboard" | "discover" | "dataStreams" | "docs" | "chat" | "settings",
+  ) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
 
   addParameter: (param: DashboardParameter) => void;

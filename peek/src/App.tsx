@@ -15,6 +15,8 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import DocsPage from "./components/DocsPage";
 import DataStreamsPage from "./components/DataStreamsPage";
+import ChatPage from "./components/ChatPage";
+import SettingsPage from "./components/SettingsPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -43,6 +45,10 @@ export default function App() {
         >
           {currentPage === "docs" ? (
             <DocsPage />
+          ) : currentPage === "settings" ? (
+            <SettingsPage />
+          ) : currentPage === "chat" ? (
+            <ChatPage />
           ) : !connected ? (
             <WelcomeScreen />
           ) : currentPage === "dataStreams" ? (
