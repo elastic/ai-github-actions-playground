@@ -86,4 +86,62 @@ describe("ConnectionDialog", () => {
 
     expect(await screen.findByText("Unauthorized")).toBeInTheDocument();
   });
+
+  it("shows Save Profile button after entering a URL", async () => {
+    const user = userEvent.setup();
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeInTheDocument();
+  });
+
+  it("saves a connection profile from the dialog", async () => {
+    const user = userEvent.setup();
+    useDashboardStore.setState({
+      connection: { url: "https://dev.example.com", apiKey: "dev-key" },
+    });
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
+    await user.click(screen.getByRole("button", { name: /save profile/i }));
+
+    const profiles = useDashboardStore.getState().connectionProfiles;
+    expect(profiles).toHaveLength(1);
+    expect(profiles[0].name).toBe("Dev Cluster");
+  });
+
+  it("displays saved profiles in the dialog", () => {
+    useDashboardStore.setState({
+      connection: { url: "https://dev.example.com", apiKey: "dev-key" },
+      connectionProfiles: [
+        { id: "p1", name: "Dev", connection: { url: "https://dev.example.com", apiKey: "key1" } },
+        {
+          id: "p2",
+          name: "Prod",
+          connection: { url: "https://prod.example.com", apiKey: "key2" },
+        },
+      ],
+    });
+    render(<ConnectionDialog />);
+
+    expect(screen.getByText("Dev")).toBeInTheDocument();
+    expect(screen.getByText("Prod")).toBeInTheDocument();
+    expect(screen.getByText("Saved Profiles")).toBeInTheDocument();
+  });
+
+  it("deletes a profile when delete button is clicked", async () => {
+    const user = userEvent.setup();
+    useDashboardStore.setState({
+      connection: { url: "https://dev.example.com", apiKey: "dev-key" },
+      connectionProfiles: [
+        { id: "p1", name: "Dev", connection: { url: "https://dev.example.com", apiKey: "key1" } },
+      ],
+    });
+    render(<ConnectionDialog />);
+
+    await user.click(screen.getByLabelText(/delete profile dev/i));
+
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
+  });
 });
