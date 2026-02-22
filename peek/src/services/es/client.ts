@@ -237,9 +237,8 @@ export class ElasticsearchClient {
     signal?: AbortSignal,
   ): Promise<FieldCapsResponse> {
     const params = new URLSearchParams();
-    if (fields && fields.length > 0) {
-      params.set("fields", fields.join(","));
-    }
+    const normalizedFields = fields?.map((field) => field.trim()).filter(Boolean) ?? [];
+    params.set("fields", normalizedFields.length > 0 ? normalizedFields.join(",") : "*");
     const query = params.toString();
     const path = `/${encodeURIComponent(index)}/_field_caps${query ? `?${query}` : ""}`;
     return this._fetch<FieldCapsResponse>(path, { signal });

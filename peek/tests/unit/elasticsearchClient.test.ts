@@ -148,6 +148,17 @@ describe("request construction", () => {
     expect(url).toBe(`${BASE_URL}/logs-*/_field_caps?fields=%40timestamp%2Cmessage`);
   });
 
+  it("getFieldCaps() defaults to wildcard fields when none are provided", async () => {
+    const fetchSpy = mockFetchOnce({ fields: {}, indices: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getFieldCaps("logs-*");
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/logs-*/_field_caps?fields=*`);
+  });
+
   it("strips trailing slashes from the base URL", async () => {
     const fetchSpy = mockFetchOnce({ cluster_name: "test" });
     vi.stubGlobal("fetch", fetchSpy);
