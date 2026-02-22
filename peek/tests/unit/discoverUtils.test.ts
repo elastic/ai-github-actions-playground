@@ -71,6 +71,14 @@ describe("splitEsqlPipeline", () => {
       'WHERE msg == "it""s fine|here"',
     ]);
   });
+
+  it("ignores empty stages from consecutive pipes", () => {
+    expect(splitEsqlPipeline("FROM logs-* || LIMIT 10")).toEqual(["FROM logs-*", "LIMIT 10"]);
+  });
+
+  it("ignores a trailing pipe without adding empty stages", () => {
+    expect(splitEsqlPipeline("FROM logs-* | LIMIT 10 |")).toEqual(["FROM logs-*", "LIMIT 10"]);
+  });
 });
 
 describe("filterEsqlResult", () => {
