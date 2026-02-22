@@ -1,0 +1,681 @@
+import { useState, useCallback, useMemo } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import TextField from "@mui/material/TextField";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import CodeMirror from "@uiw/react-codemirror";
+import { sql } from "@codemirror/lang-sql";
+import { useDashboardStore } from "../../store/useDashboardStore";
+import { useTracesStore } from "../../store/useTracesStore";
+import { useEsqlQuery } from "../../hooks/useEsqlQuery";
+import {
+  buildTraceSearchQuery,
+  buildTraceDetailQuery,
+  DEFAULT_FIELD_MAPPING,
+} from "./traceQueryBuilder";
+import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
+import { getServiceColor } from "./traceColors";
+import type { EsqlResponse } from "../../types";
+import type { TracesViewMode } from "../../store/useTracesStore";
+import WaterfallChart from "../visualizations/WaterfallChart";
+import ScatterChart from "../visualizations/ScatterChart";
+import SpanDetailDrawer from "./SpanDetailDrawer";
+
+export default function TracesPage() {
+  const connection = useDashboardStore((s) => s.connection);
+  const themeMode = useDashboardStore((s) => s.themeMode);
+  const filters = useTracesStore((s) => s.filters);
+  const rawQuery = useTracesStore((s) => s.rawQuery);
+  const setRawQuery = useTracesStore((s) => s.setRawQuery);
+  const updateFilters = useTracesStore((s) => s.updateFilters);
+  const selectedTraceId = useTracesStore((s) => s.selectedTraceId);
+  const setSelectedTraceId = useTracesStore((s) => s.setSelectedTraceId);
+  const setSelectedTraceSpans = useTracesStore((s) => s.setSelectedTraceSpans);
+  const selectedTraceSpans = useTracesStore((s) => s.selectedTraceSpans);
+  const selectedSpanId = useTracesStore((s) => s.selectedSpanId);
+  const setSelectedSpanId = useTracesStore((s) => s.setSelectedSpanId);
+  const drawerOpen = useTracesStore((s) => s.drawerOpen);
+  const setDrawerOpen = useTracesStore((s) => s.setDrawerOpen);
+  const viewMode = useTracesStore((s) => s.viewMode);
+  const setViewMode = useTracesStore((s) => s.setViewMode);
+  const resetFilters = useTracesStore((s) => s.resetFilters);
+
+  const [result, setResult] = useState<EsqlResponse | null>(null);
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [minDurationInput, setMinDurationInput] = useState("");
+  const [maxDurationInput, setMaxDurationInput] = useState("");
+
+  const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
+  const effectiveQuery = rawQuery ?? generatedQuery;
+
+  // Main search query
+  const {
+    runQuery: runSearchQuery,
+    loading: searchLoading,
+    error: searchError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => setResult(data),
+    onFailure: () => setResult(null),
+  });
+
+  // Trace detail query
+  const {
+    runQuery: runDetailQuery,
+    loading: detailLoading,
+    error: detailError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => {
+      const spans = parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
+      setSelectedTraceSpans(spans);
+    },
+  });
+
+  const handleSearch = useCallback(() => {
+    runSearchQuery(effectiveQuery);
+  }, [runSearchQuery, effectiveQuery]);
+
+  const handleSelectTrace = useCallback(
+    (traceId: string) => {
+      setSelectedTraceId(traceId);
+      runDetailQuery(buildTraceDetailQuery(traceId));
+    },
+    [setSelectedTraceId, runDetailQuery],
+  );
+
+  const handleApplyDuration = useCallback(() => {
+    const minMs = minDurationInput ? Number(minDurationInput) : null;
+    const maxMs = maxDurationInput ? Number(maxDurationInput) : null;
+    updateFilters({
+      minDurationMs: minMs && !isNaN(minMs) ? minMs : null,
+      maxDurationMs: maxMs && !isNaN(maxMs) ? maxMs : null,
+    });
+  }, [minDurationInput, maxDurationInput, updateFilters]);
+
+  const handleAddService = useCallback(() => {
+    if (serviceFilter.trim()) {
+      updateFilters({
+        services: [...filters.services, serviceFilter.trim()],
+      });
+      setServiceFilter("");
+    }
+  }, [serviceFilter, filters.services, updateFilters]);
+
+  const handleRemoveService = useCallback(
+    (service: string) => {
+      updateFilters({
+        services: filters.services.filter((s) => s !== service),
+      });
+    },
+    [filters.services, updateFilters],
+  );
+
+  // Parse trace results for display
+  const traceRows = useMemo(() => {
+    if (!result) return [];
+    const colIndex = new Map<string, number>();
+    for (let i = 0; i < result.columns.length; i++) {
+      colIndex.set(result.columns[i]!.name, i);
+    }
+    const get = (row: unknown[], field: string): unknown => {
+      const idx = colIndex.get(field);
+      return idx !== undefined ? row[idx] : null;
+    };
+
+    return result.values.map((row) => ({
+      traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
+      serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
+      name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
+      durationUs: Number(get(row, DEFAULT_FIELD_MAPPING.durationUs) ?? 0),
+      status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
+      timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
+    }));
+  }, [result]);
+
+  const maxDuration = useMemo(
+    () => Math.max(1, ...traceRows.map((r) => r.durationUs)),
+    [traceRows],
+  );
+
+  const selectedSpan = useMemo(
+    () => selectedTraceSpans.find((s) => s.spanId === selectedSpanId) ?? null,
+    [selectedTraceSpans, selectedSpanId],
+  );
+
+  const queryEditorExtensions = useMemo(() => [sql()], []);
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+      {/* Query bar */}
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Box
+          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
+        >
+          <Typography variant="subtitle2" color="text.secondary">
+            Trace Search
+          </Typography>
+          <Button size="small" variant="text" onClick={resetFilters}>
+            Reset Filters
+          </Button>
+        </Box>
+
+        {/* Filter pills */}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
+          {filters.services.map((svc) => (
+            <Chip
+              key={svc}
+              label={`service: ${svc}`}
+              size="small"
+              onDelete={() => handleRemoveService(svc)}
+              sx={{
+                borderLeft: `3px solid ${getServiceColor(svc)}`,
+              }}
+            />
+          ))}
+          {filters.statusCodes.map((status) => (
+            <Chip
+              key={status}
+              label={`status: ${status}`}
+              size="small"
+              color={status === "Error" ? "error" : "default"}
+              onDelete={() =>
+                updateFilters({
+                  statusCodes: filters.statusCodes.filter((s) => s !== status),
+                })
+              }
+            />
+          ))}
+          {filters.minDurationMs !== null && (
+            <Chip
+              label={`min: ${filters.minDurationMs}ms`}
+              size="small"
+              onDelete={() => {
+                updateFilters({ minDurationMs: null });
+                setMinDurationInput("");
+              }}
+            />
+          )}
+          {filters.maxDurationMs !== null && (
+            <Chip
+              label={`max: ${filters.maxDurationMs}ms`}
+              size="small"
+              onDelete={() => {
+                updateFilters({ maxDurationMs: null });
+                setMaxDurationInput("");
+              }}
+            />
+          )}
+          {filters.tags.map((tag, i) => (
+            <Chip
+              key={`${tag.key}-${tag.value}-${i}`}
+              label={`${tag.exclude ? "NOT " : ""}${tag.key}: ${tag.value}`}
+              size="small"
+              color={tag.exclude ? "warning" : "default"}
+              onDelete={() =>
+                updateFilters({
+                  tags: filters.tags.filter((_, idx) => idx !== i),
+                })
+              }
+            />
+          ))}
+        </Box>
+
+        {/* Quick filters row */}
+        <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
+          <TextField
+            size="small"
+            placeholder="Service name"
+            value={serviceFilter}
+            onChange={(e) => setServiceFilter(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAddService();
+            }}
+            sx={{ width: 160 }}
+          />
+          <Button size="small" variant="outlined" onClick={handleAddService}>
+            Add Service
+          </Button>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+            <TextField
+              size="small"
+              placeholder="Min (ms)"
+              value={minDurationInput}
+              onChange={(e) => setMinDurationInput(e.target.value)}
+              sx={{ width: 100 }}
+            />
+            <Typography variant="caption">–</Typography>
+            <TextField
+              size="small"
+              placeholder="Max (ms)"
+              value={maxDurationInput}
+              onChange={(e) => setMaxDurationInput(e.target.value)}
+              sx={{ width: 100 }}
+            />
+            <Button size="small" variant="outlined" onClick={handleApplyDuration}>
+              Apply
+            </Button>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.5, ml: "auto" }}>
+            {(["Error", "OK"] as const).map((status) => (
+              <Chip
+                key={status}
+                label={status}
+                size="small"
+                variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
+                color={status === "Error" ? "error" : "default"}
+                onClick={() => {
+                  if (filters.statusCodes.includes(status)) {
+                    updateFilters({
+                      statusCodes: filters.statusCodes.filter((s) => s !== status),
+                    });
+                  } else {
+                    updateFilters({
+                      statusCodes: [...filters.statusCodes, status],
+                    });
+                  }
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* ES|QL editor */}
+        <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
+          <CodeMirror
+            value={effectiveQuery}
+            onChange={(val) => setRawQuery(val)}
+            extensions={queryEditorExtensions}
+            theme={themeMode}
+            height="60px"
+            basicSetup={{ lineNumbers: true, foldGutter: false }}
+          />
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={
+              searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
+            }
+            onClick={handleSearch}
+            disabled={searchLoading || !effectiveQuery.trim()}
+          >
+            Search Traces
+          </Button>
+          {result && (
+            <Typography variant="caption" color="text.secondary">
+              {result.values.length} traces found
+            </Typography>
+          )}
+        </Box>
+      </Paper>
+
+      {searchError && <Alert severity="error">{searchError}</Alert>}
+      {detailError && <Alert severity="error">{detailError}</Alert>}
+
+      {/* Content area */}
+      <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>
+        {/* Results panel */}
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minWidth: 0,
+            overflow: "hidden",
+          }}
+        >
+          {/* View switcher */}
+          <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
+            {(["list", "timeseries", "scatter"] as TracesViewMode[]).map((mode) => (
+              <Chip
+                key={mode}
+                label={mode === "list" ? "List" : mode === "timeseries" ? "Timeseries" : "Scatter"}
+                size="small"
+                variant={viewMode === mode ? "filled" : "outlined"}
+                color={viewMode === mode ? "primary" : "default"}
+                onClick={() => setViewMode(mode)}
+              />
+            ))}
+          </Box>
+
+          {/* Results view */}
+          <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
+            {!result && !searchLoading && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Search for traces to see results
+                </Typography>
+              </Box>
+            )}
+            {searchLoading && !result && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <CircularProgress size={32} />
+              </Box>
+            )}
+            {result && viewMode === "list" && (
+              <Box sx={{ overflow: "auto", height: "100%" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                  <thead>
+                    <tr>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderBottom: "1px solid var(--divider, #333)",
+                          position: "sticky",
+                          top: 0,
+                          background: "inherit",
+                        }}
+                      >
+                        Trace ID
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderBottom: "1px solid var(--divider, #333)",
+                          position: "sticky",
+                          top: 0,
+                          background: "inherit",
+                        }}
+                      >
+                        Service
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderBottom: "1px solid var(--divider, #333)",
+                          position: "sticky",
+                          top: 0,
+                          background: "inherit",
+                        }}
+                      >
+                        Operation
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderBottom: "1px solid var(--divider, #333)",
+                          position: "sticky",
+                          top: 0,
+                          background: "inherit",
+                        }}
+                      >
+                        Duration
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderBottom: "1px solid var(--divider, #333)",
+                          position: "sticky",
+                          top: 0,
+                          background: "inherit",
+                        }}
+                      >
+                        Status
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderBottom: "1px solid var(--divider, #333)",
+                          position: "sticky",
+                          top: 0,
+                          background: "inherit",
+                        }}
+                      >
+                        Timestamp
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {traceRows.map((row, idx) => (
+                      <tr
+                        key={`${row.traceId}-${idx}`}
+                        onClick={() => handleSelectTrace(row.traceId)}
+                        style={{
+                          cursor: "pointer",
+                          backgroundColor:
+                            selectedTraceId === row.traceId ? "rgba(0,119,204,0.1)" : "transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedTraceId !== row.traceId)
+                            (e.currentTarget as HTMLElement).style.backgroundColor =
+                              "rgba(255,255,255,0.04)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedTraceId !== row.traceId)
+                            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                        }}
+                      >
+                        <td
+                          style={{
+                            padding: "6px 12px",
+                            borderBottom: "1px solid rgba(128,128,128,0.2)",
+                            fontFamily: "monospace",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {row.traceId.slice(0, 16)}…
+                        </td>
+                        <td
+                          style={{
+                            padding: "6px 12px",
+                            borderBottom: "1px solid rgba(128,128,128,0.2)",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: getServiceColor(row.serviceName),
+                                flexShrink: 0,
+                              }}
+                            />
+                            {row.serviceName}
+                          </Box>
+                        </td>
+                        <td
+                          style={{
+                            padding: "6px 12px",
+                            borderBottom: "1px solid rgba(128,128,128,0.2)",
+                          }}
+                        >
+                          {row.name}
+                        </td>
+                        <td
+                          style={{
+                            padding: "6px 12px",
+                            borderBottom: "1px solid rgba(128,128,128,0.2)",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 60,
+                                height: 4,
+                                bgcolor: "action.hover",
+                                borderRadius: 1,
+                                overflow: "hidden",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: `${Math.max(2, (row.durationUs / maxDuration) * 100)}%`,
+                                  height: "100%",
+                                  bgcolor: getServiceColor(row.serviceName),
+                                  borderRadius: 1,
+                                }}
+                              />
+                            </Box>
+                            <Typography variant="caption">
+                              {formatSpanDuration(row.durationUs)}
+                            </Typography>
+                          </Box>
+                        </td>
+                        <td
+                          style={{
+                            padding: "6px 12px",
+                            borderBottom: "1px solid rgba(128,128,128,0.2)",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              bgcolor:
+                                row.status === "Error" || row.status === "STATUS_CODE_ERROR"
+                                  ? "error.main"
+                                  : "success.main",
+                            }}
+                          />
+                        </td>
+                        <td
+                          style={{
+                            padding: "6px 12px",
+                            borderBottom: "1px solid rgba(128,128,128,0.2)",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {row.timestamp ? new Date(row.timestamp).toLocaleString() : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Box>
+            )}
+            {result && viewMode === "scatter" && (
+              <ScatterChart
+                data={traceRows.map((r) => ({
+                  timestamp: r.timestamp,
+                  durationUs: r.durationUs,
+                  serviceName: r.serviceName,
+                  traceId: r.traceId,
+                }))}
+                onPointClick={(traceId) => handleSelectTrace(traceId)}
+              />
+            )}
+            {result && viewMode === "timeseries" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Timeseries view requires running an aggregation query. Use the List or Scatter
+                  view for now.
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+
+          {/* Trace Detail */}
+          {selectedTraceId && (
+            <Paper
+              variant="outlined"
+              sx={{
+                mt: 1,
+                flex: 1,
+                minHeight: 200,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.5,
+                  py: 0.5,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Typography variant="subtitle2">Trace: {selectedTraceId.slice(0, 16)}…</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {selectedTraceSpans.length} spans
+                </Typography>
+                <Box sx={{ flex: 1 }} />
+                <Button size="small" onClick={() => setSelectedTraceId(null)}>
+                  Close
+                </Button>
+              </Box>
+              {detailLoading ? (
+                <Box
+                  sx={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}
+                >
+                  <CircularProgress size={24} />
+                </Box>
+              ) : selectedTraceSpans.length > 0 ? (
+                <Box sx={{ flex: 1, overflow: "hidden" }}>
+                  <WaterfallChart
+                    spans={selectedTraceSpans}
+                    onSpanClick={(spanId) => setSelectedSpanId(spanId)}
+                    selectedSpanId={selectedSpanId}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    No spans found for this trace
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          )}
+        </Box>
+      </Box>
+
+      {/* Span Detail Drawer */}
+      <SpanDetailDrawer
+        span={selectedSpan}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onFilterBy={(key, value) => {
+          useTracesStore.getState().addTagFilter(key, value, false);
+          handleSearch();
+        }}
+        onExclude={(key, value) => {
+          useTracesStore.getState().addTagFilter(key, value, true);
+          handleSearch();
+        }}
+      />
+    </Box>
+  );
+}

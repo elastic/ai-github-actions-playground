@@ -1,6 +1,13 @@
 import { useRef, useEffect } from "react";
 import * as echarts from "echarts/core";
-import { LineChart, BarChart, PieChart, GaugeChart } from "echarts/charts";
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  GaugeChart,
+  ScatterChart,
+  CustomChart,
+} from "echarts/charts";
 import {
   GridComponent,
   TooltipComponent,
@@ -16,6 +23,8 @@ echarts.use([
   BarChart,
   PieChart,
   GaugeChart,
+  ScatterChart,
+  CustomChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,

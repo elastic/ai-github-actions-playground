@@ -21,6 +21,7 @@ import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
+import TracesPage from "./components/traces/TracesPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -71,6 +72,8 @@ export default function App() {
                 <ExplorePage />
               ) : currentPage === "discover" ? (
                 <DiscoverPage />
+              ) : currentPage === "traces" ? (
+                <TracesPage />
               ) : currentPage === "console" ? (
                 <ApiConsolePage />
               ) : (
