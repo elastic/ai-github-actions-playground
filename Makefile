@@ -1,6 +1,7 @@
 PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-harness-up otel-harness-down otel-harness-logs
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -23,6 +24,9 @@ help:
 	@echo "  clean            - Remove build artifacts and node_modules"
 	@echo "  docker-build     - Build the Docker image"
 	@echo "  docker-run       - Run the Docker container (set ES_URL)"
+	@echo "  otel-harness-up  - Start Elasticsearch + OTel host metrics harness"
+	@echo "  otel-harness-down - Stop and remove OTel host metrics harness"
+	@echo "  otel-harness-logs - Tail OTel collector logs"
 
 setup:
 	@echo "Installing dependencies..."
@@ -109,3 +113,16 @@ docker-run:
 	@echo "  Proxying /_query → $${ES_URL:-http://host.docker.internal:9200}"
 	@echo "  Connect the dashboard to: http://localhost:8080"
 	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} elastic-peek
+
+otel-harness-up:
+	@echo "Starting Elasticsearch + OTel host metrics harness..."
+	@docker compose -f docker-compose.otel-harness.yml up -d
+	@echo "✓ Harness running. Elasticsearch: http://localhost:9200"
+
+otel-harness-down:
+	@echo "Stopping OTel host metrics harness..."
+	@docker compose -f docker-compose.otel-harness.yml down -v
+	@echo "✓ Harness stopped."
+
+otel-harness-logs:
+	@docker compose -f docker-compose.otel-harness.yml logs -f otel-collector
