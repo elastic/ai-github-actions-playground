@@ -187,4 +187,32 @@ describe("ParameterBar", () => {
     expect(screen.getByText("Enter a valid date/time.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
   });
+
+  it("allows intermediate invalid number edits and commits on blur", async () => {
+    const user = userEvent.setup();
+    useDashboardStore.getState().addParameter({
+      name: "threshold",
+      label: "Threshold",
+      type: "number",
+      source: { mode: "text" },
+      value: 42,
+    });
+
+    render(<ParameterBar />);
+    const input = screen.getByRole("textbox");
+
+    await user.clear(input);
+    await user.type(input, "-");
+    expect(input).toHaveValue("-");
+    expect(screen.getByText("Enter a valid number.")).toBeInTheDocument();
+
+    await user.type(input, "7");
+    expect(input).toHaveValue("-7");
+    await user.tab();
+
+    await waitFor(() => {
+      const param = useDashboardStore.getState().dashboard.parameters?.find((p) => p.name === "threshold");
+      expect(param?.value).toBe(-7);
+    });
+  });
 });

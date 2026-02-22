@@ -497,6 +497,23 @@ function ParameterControl({
     .filter((entry) => entry.parsed.value !== undefined)
     .map((entry) => ({ label: entry.label, value: entry.parsed.value as ParameterValue }));
   const currentValueInput = formatValueForInput(param.type, param.value);
+  const [draftInput, setDraftInput] = useState(currentValueInput);
+
+  useEffect(() => {
+    setDraftInput(currentValueInput);
+    setValidationError(null);
+  }, [currentValueInput]);
+
+  const commitDraftValue = useCallback(() => {
+    const parsed = parseParameterValue(param.type, draftInput);
+    if (parsed.value === undefined) {
+      setValidationError(parsed.error ?? "Invalid value");
+      return;
+    }
+    setValidationError(null);
+    onChange(parsed.value);
+    setDraftInput(formatValueForInput(param.type, parsed.value));
+  }, [param.type, draftInput, onChange]);
 
   return (
     <Box
@@ -550,15 +567,19 @@ function ParameterControl({
       ) : (
         <TextField
           size="small"
-          value={currentValueInput}
+          value={draftInput}
           onChange={(e) => {
-            const parsed = parseParameterValue(param.type, e.target.value);
-            if (parsed.value === undefined) {
-              setValidationError(parsed.error ?? "Invalid value");
-              return;
+            const nextInput = e.target.value;
+            setDraftInput(nextInput);
+            const parsed = parseParameterValue(param.type, nextInput);
+            setValidationError(parsed.value === undefined ? (parsed.error ?? "Invalid value") : null);
+          }}
+          onBlur={commitDraftValue}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitDraftValue();
             }
-            setValidationError(null);
-            onChange(parsed.value);
           }}
           error={Boolean(validationError)}
           helperText={validationError}
