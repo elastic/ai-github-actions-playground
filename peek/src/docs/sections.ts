@@ -26,7 +26,7 @@ const sections: DocSection[] = [
       "Click the connection chip or gear icon in the header to open connection settings.",
       "Enter your Elasticsearch URL and choose API Key or Username/Password authentication.",
       "Your URL is saved in localStorage for convenience. Credentials are stored in sessionStorage and cleared when you close the tab.",
-      "Use saved connection profiles to switch between clusters (e.g. dev, staging, production) without retyping credentials.",
+      "The app remembers one connection in localStorage so you do not have to re-enter the URL each time.",
     ],
   },
   {
@@ -88,8 +88,8 @@ const sections: DocSection[] = [
     body: [
       "Click the dashboard title in the header to rename it inline.",
       "Use the theme toggle (sun/moon icon) to switch between light and dark mode.",
-      "The Disconnect button in the connection dialog drops the active connection without clearing saved profiles.",
-      "Reset All State in the overflow menu wipes everything — connection, profiles, dashboards — back to defaults.",
+      "The Disconnect button in the connection dialog drops the active connection.",
+      "Reset All State in the overflow menu wipes everything — connection and dashboards — back to defaults.",
     ],
   },
 ];
