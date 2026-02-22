@@ -390,7 +390,12 @@ export default function DiscoverPage() {
             </Box>
           )}
           {filteredResult && filteredResult.columns.length > 0 && (
-            <DataTable key={tableVersion} data={filteredResult} onExportCsv={handleExportCsv} />
+            <DataTable
+              key={tableVersion}
+              data={filteredResult}
+              onExportCsv={handleExportCsv}
+              onRemoveColumn={toggleField}
+            />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
             <Box
