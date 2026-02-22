@@ -16,7 +16,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "screenshot:preflight": "node scripts/screenshot-preflight.mjs",
-    "generate:types": "node scripts/filter-es-openapi.mjs && npx openapi-typescript src/services/es/elasticsearch-esql.openapi.json -o src/services/es/types.generated.d.ts"
+    "generate:types": "node scripts/filter-es-openapi.mjs && npx openapi-typescript src/services/es/elasticsearch-esql.openapi.json -o src/services/es/types.generated.d.ts",
+    "prepare": "cd .. && husky"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.30",
@@ -42,6 +43,12 @@
   "overridesMeta": {
     "glob": "Pinned to force consistent transitive dependency resolution. Glob v13 has breaking changes (including CLI split to glob-bin) and Node runtime requirements (20 or >=22); revisit this override when upgrading related tooling."
   },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
   "devDependencies": {
     "@elastic/elasticsearch": "^9.3.2",
     "@eslint/js": "^9.39.3",
@@ -58,7 +65,9 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.0",
+    "husky": "^9.1.7",
     "jsdom": "^28.1.0",
+    "lint-staged": "^16.2.7",
     "openapi-typescript": "^7.6.1",
     "playwright": "^1.58.2",
     "prettier": "^3.8.1",
