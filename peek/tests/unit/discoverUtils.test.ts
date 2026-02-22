@@ -7,6 +7,7 @@ import {
   paginateRows,
   splitEsqlPipeline,
   toCsv,
+  applyEsqlSort,
 } from "../../src/components/discoverUtils";
 
 function createLargeResult(rowCount = 1000, columnCount = 500): EsqlResponse {
@@ -60,10 +61,7 @@ describe("splitEsqlPipeline", () => {
   });
 
   it("trims whitespace from each step", () => {
-    expect(splitEsqlPipeline("  FROM logs-*  |  LIMIT 10  ")).toEqual([
-      "FROM logs-*",
-      "LIMIT 10",
-    ]);
+    expect(splitEsqlPipeline("  FROM logs-*  |  LIMIT 10  ")).toEqual(["FROM logs-*", "LIMIT 10"]);
   });
 
   it("handles escaped double-quote sequences inside strings", () => {
@@ -220,8 +218,48 @@ describe("toCsv", () => {
       values: [["=SUM(1,2)"], ["+10"], ["-5"], ["@cmd"], [" =SUM(3,4)"]],
     };
 
-    expect(toCsv(data)).toBe(
-      'value\r\n"\'=SUM(1,2)"\r\n\'+10\r\n\'-5\r\n\'@cmd\r\n"\' =SUM(3,4)"',
+    expect(toCsv(data)).toBe("value\r\n\"'=SUM(1,2)\"\r\n'+10\r\n'-5\r\n'@cmd\r\n\"' =SUM(3,4)\"");
+  });
+});
+
+describe("applyEsqlSort", () => {
+  it("appends a SORT step before LIMIT when no SORT exists", () => {
+    expect(applyEsqlSort("FROM logs-* | LIMIT 50", "message", "asc")).toBe(
+      "FROM logs-* | SORT message ASC | LIMIT 50",
+    );
+  });
+
+  it("appends a SORT step at the end when no LIMIT exists", () => {
+    expect(applyEsqlSort("FROM logs-*", "message", "asc")).toBe("FROM logs-* | SORT message ASC");
+  });
+
+  it("replaces an existing SORT step", () => {
+    expect(applyEsqlSort("FROM logs-* | SORT @timestamp DESC | LIMIT 50", "message", "asc")).toBe(
+      "FROM logs-* | SORT message ASC | LIMIT 50",
+    );
+  });
+
+  it("removes SORT when direction is null", () => {
+    expect(applyEsqlSort("FROM logs-* | SORT @timestamp | LIMIT 50", "@timestamp", null)).toBe(
+      "FROM logs-* | LIMIT 50",
+    );
+  });
+
+  it("quotes identifiers that require backticks", () => {
+    expect(applyEsqlSort("FROM logs-*", "field name", "desc")).toBe(
+      "FROM logs-* | SORT `field name` DESC",
+    );
+  });
+
+  it("escapes backslashes and backticks inside quoted identifiers", () => {
+    expect(applyEsqlSort("FROM logs-*", "field\\`name", "asc")).toBe(
+      "FROM logs-* | SORT `field\\\\\\`name` ASC",
+    );
+  });
+
+  it("does not quote simple identifiers", () => {
+    expect(applyEsqlSort("FROM logs-*", "@timestamp", "asc")).toBe(
+      "FROM logs-* | SORT @timestamp ASC",
     );
   });
 });

@@ -146,3 +146,54 @@ export function toCsv(data: EsqlResponse): string {
   const rows = data.values.map((row) => row.map((cell) => escapeCsvCell(cell)).join(","));
   return [header, ...rows].join("\r\n");
 }
+
+/**
+ * Returns a backtick-quoted ES|QL identifier, escaping any literal backticks
+ * inside the name as `\`` (the ES|QL escape sequence for backtick identifiers).
+ */
+function quoteEsqlIdentifier(name: string): string {
+  // If the name is a simple identifier (letters, digits, _, @, .) it doesn't need quoting.
+  if (/^[A-Za-z_@][A-Za-z0-9_@.]*$/.test(name)) return name;
+  // Escape backslashes first, then backticks, to produce a valid backtick-quoted identifier.
+  return "`" + name.replace(/\\/g, "\\\\").replace(/`/g, "\\`") + "`";
+}
+
+/**
+ * Modifies an ES|QL query to add, update, or remove a top-level SORT clause.
+ *
+ * - Any existing top-level `SORT` steps are removed.
+ * - If `direction` is non-null, a new `SORT <column> ASC|DESC` step is inserted
+ *   immediately before the last `LIMIT` step (if one exists), otherwise appended.
+ * - If `direction` is null all SORT steps are simply removed.
+ */
+export function applyEsqlSort(
+  query: string,
+  columnName: string,
+  direction: "asc" | "desc" | null,
+): string {
+  const steps = splitEsqlPipeline(query);
+  if (steps.length === 0) return query;
+
+  // Remove any existing SORT commands (case-insensitive).
+  const withoutSort = steps.filter((s) => !/^SORT\s+/i.test(s));
+
+  if (!direction) {
+    return withoutSort.join(" | ");
+  }
+
+  const sortStep = `SORT ${quoteEsqlIdentifier(columnName)} ${direction.toUpperCase()}`;
+
+  // Insert before the last LIMIT step if one exists.
+  const lastLimitIdx = [...withoutSort].reduceRight(
+    (found, s, i) => (found === -1 && /^LIMIT\s+/i.test(s) ? i : found),
+    -1,
+  );
+
+  if (lastLimitIdx !== -1) {
+    const result = [...withoutSort];
+    result.splice(lastLimitIdx, 0, sortStep);
+    return result.join(" | ");
+  }
+
+  return [...withoutSort, sortStep].join(" | ");
+}

@@ -146,17 +146,46 @@ describe("DataTable", () => {
     expect(screen.getByText("No data")).toBeInTheDocument();
   });
 
-  it("cycles header sort state on click", async () => {
+  it("calls onSortChange on first header click with asc direction", async () => {
     const user = userEvent.setup();
-    render(<DataTable data={mockData} />);
+    const onSortChange = vi.fn();
+    render(<DataTable data={mockData} onSortChange={onSortChange} />);
 
     await user.click(screen.getByRole("button", { name: /^count$/i }));
-    let rows = screen.getAllByRole("row");
-    expect(rows[1]).toHaveTextContent("aaa");
+
+    expect(onSortChange).toHaveBeenCalledWith("count", "asc");
+  });
+
+  it("calls onSortChange with desc when already sorted asc", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    render(
+      <DataTable
+        data={mockData}
+        currentSort={{ columnName: "count", direction: "asc" }}
+        onSortChange={onSortChange}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: /^count$/i }));
-    rows = screen.getAllByRole("row");
-    expect(rows[1]).toHaveTextContent("hello world");
+
+    expect(onSortChange).toHaveBeenCalledWith("count", "desc");
+  });
+
+  it("calls onSortChange with null when already sorted desc", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    render(
+      <DataTable
+        data={mockData}
+        currentSort={{ columnName: "count", direction: "desc" }}
+        onSortChange={onSortChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^count$/i }));
+
+    expect(onSortChange).toHaveBeenCalledWith("count", null);
   });
 
   it("moves columns via header menu actions", async () => {

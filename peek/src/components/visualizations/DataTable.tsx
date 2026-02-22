@@ -24,6 +24,11 @@ import RowInspectorFlyout from "./RowInspectorFlyout";
 
 type SortDirection = "asc" | "desc";
 
+export interface SortState {
+  columnName: string;
+  direction: SortDirection;
+}
+
 function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
   const kept = order.filter((i) => allIndices.includes(i));
   const missing = allIndices.filter((i) => !kept.includes(i));
@@ -34,15 +39,22 @@ interface Props {
   data: EsqlResponse;
   onExportCsv?: () => void;
   onRemoveColumn?: (name: string) => void;
+  currentSort?: SortState | null;
+  onSortChange?: (columnName: string, direction: SortDirection | null) => void;
 }
 
-export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) {
+export default function DataTable({
+  data,
+  onExportCsv,
+  onRemoveColumn,
+  currentSort,
+  onSortChange,
+}: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
   const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
-  const [sort, setSort] = useState<{ columnIndex: number; direction: SortDirection } | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuColumnIndex, setMenuColumnIndex] = useState<number | null>(null);
   const allColumnIndices = useMemo(() => data.columns.map((_, i) => i), [data.columns]);
@@ -60,31 +72,9 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
     return resolvedColumnOrder.filter((i) => visible.includes(i));
   }, [allColumnIndices, emptyColumnIndices, showEmptyColumns, resolvedColumnOrder]);
 
-  const sortedRows = useMemo(() => {
-    if (!sort) return data.values;
-    const column = data.columns[sort.columnIndex];
-    if (!column) return data.values;
-    const multiplier = sort.direction === "asc" ? 1 : -1;
-    return [...data.values].sort((a, b) => {
-      const left = a[sort.columnIndex];
-      const right = b[sort.columnIndex];
-      if (left == null && right == null) return 0;
-      if (left == null) return 1;
-      if (right == null) return -1;
-      if (isNumericType(column.type)) return (Number(left) - Number(right)) * multiplier;
-      if (column.type === "date" || column.type === "date_nanos") {
-        const leftTime = Date.parse(String(left));
-        const rightTime = Date.parse(String(right));
-        if (!Number.isNaN(leftTime) && !Number.isNaN(rightTime))
-          return (leftTime - rightTime) * multiplier;
-      }
-      return String(left).localeCompare(String(right), undefined, { numeric: true }) * multiplier;
-    });
-  }, [data.columns, data.values, sort]);
-
   const visibleRows = useMemo(
-    () => paginateRows(sortedRows, page, rowsPerPage),
-    [sortedRows, page, rowsPerPage],
+    () => paginateRows(data.values, page, rowsPerPage),
+    [data.values, page, rowsPerPage],
   );
 
   const handleRowClick = useCallback((row: unknown[]) => {
@@ -95,14 +85,20 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
     setInspectedRow(null);
   }, []);
 
-  const handleSortToggle = useCallback((columnIndex: number) => {
-    setSort((prev) => {
-      if (!prev || prev.columnIndex !== columnIndex) return { columnIndex, direction: "asc" };
-      if (prev.direction === "asc") return { columnIndex, direction: "desc" };
-      return null;
-    });
-    setPage(0);
-  }, []);
+  const handleSortToggle = useCallback(
+    (columnName: string) => {
+      if (!onSortChange) return;
+      if (!currentSort || currentSort.columnName !== columnName) {
+        onSortChange(columnName, "asc");
+      } else if (currentSort.direction === "asc") {
+        onSortChange(columnName, "desc");
+      } else {
+        onSortChange(columnName, null);
+      }
+      setPage(0);
+    },
+    [currentSort, onSortChange],
+  );
 
   const moveColumn = useCallback(
     (columnIndex: number, direction: "left" | "right") => {
@@ -171,7 +167,7 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
             <TableRow>
               {orderedVisibleColumnIndices.map((colIdx) => {
                 const col = data.columns[colIdx]!;
-                const isSorted = sort?.columnIndex === colIdx;
+                const isSorted = currentSort?.columnName === col.name;
                 return (
                   <TableCell
                     key={col.name}
@@ -184,8 +180,8 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                       <TableSortLabel
                         active={isSorted}
-                        direction={isSorted ? sort.direction : "asc"}
-                        onClick={() => handleSortToggle(colIdx)}
+                        direction={isSorted ? currentSort!.direction : "asc"}
+                        onClick={() => handleSortToggle(col.name)}
                       >
                         {col.name}
                       </TableSortLabel>
@@ -269,7 +265,7 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
       >
         <TablePagination
           component="div"
-          count={sortedRows.length}
+          count={data.values.length}
           page={page}
           onPageChange={(_, nextPage) => setPage(nextPage)}
           rowsPerPage={rowsPerPage}
@@ -296,9 +292,11 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
       />
       <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
         <MenuItem
+          disabled={!onSortChange}
           onClick={() => {
-            if (menuColumnIndex !== null) {
-              setSort({ columnIndex: menuColumnIndex, direction: "asc" });
+            if (menuColumnIndex !== null && onSortChange) {
+              const col = data.columns[menuColumnIndex];
+              if (col) onSortChange(col.name, "asc");
               setPage(0);
             }
             closeMenu();
@@ -307,9 +305,11 @@ export default function DataTable({ data, onExportCsv, onRemoveColumn }: Props) 
           Sort A→Z
         </MenuItem>
         <MenuItem
+          disabled={!onSortChange}
           onClick={() => {
-            if (menuColumnIndex !== null) {
-              setSort({ columnIndex: menuColumnIndex, direction: "desc" });
+            if (menuColumnIndex !== null && onSortChange) {
+              const col = data.columns[menuColumnIndex];
+              if (col) onSortChange(col.name, "desc");
               setPage(0);
             }
             closeMenu();
