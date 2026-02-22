@@ -36,6 +36,7 @@ const GAUGE_TYPES = new Set([
   "half_float",
   "scaled_float",
   "unsigned_long",
+  "aggregate_metric_double",
 ]);
 
 export function classifyMetricType(esqlType: string): MetricTypeClassification {

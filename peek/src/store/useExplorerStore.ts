@@ -169,7 +169,7 @@ export const useExplorerStore = create<ExplorerState>()((set) => ({
       selectedMetric: metric,
       metricType: metricType ?? s.metricType,
       aggregation:
-        metricType === "counter" ? "sum" : metricType === "gauge" ? "avg" : s.aggregation,
+        metricType === "counter" ? "count" : metricType === "gauge" ? "avg" : s.aggregation,
     })),
   setAggregation: (agg) => set({ aggregation: agg }),
   addFilter: (filter) => set((s) => ({ filters: [...s.filters, filter] })),
