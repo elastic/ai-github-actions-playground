@@ -22,7 +22,7 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { executeEsql, isEsqlError } from "../services/elasticsearch";
+import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type {
   VisualizationType,
   EsqlResponse,
@@ -87,10 +87,11 @@ export default function PanelEditor() {
     setLoading(true);
     setError(null);
     try {
-      const data = await executeEsql(connection, query.trim());
+      const client = new ElasticsearchClient(connection);
+      const data = await client.query({ query: query.trim() });
       setPreview(data);
     } catch (err) {
-      setError(isEsqlError(err) ? err.message : String(err));
+      setError(isElasticsearchError(err) ? err.message : String(err));
       setPreview(null);
     } finally {
       setLoading(false);

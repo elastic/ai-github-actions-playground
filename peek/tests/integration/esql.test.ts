@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { executeEsql, testConnection, isEsqlError } from "../../src/services/elasticsearch";
-import type { ElasticsearchConnection, EsqlResponse } from "../../src/types";
+import { ElasticsearchClient, isElasticsearchError } from "../../src/services/es";
+import type { ElasticsearchConnection } from "../../src/types";
 import { startElasticsearch, seedWebLogs, seedOrders, type TestContext } from "./setup";
 
 let ctx: TestContext;
 let connection: ElasticsearchConnection;
+let client: ElasticsearchClient;
 
 beforeAll(async () => {
   ctx = await startElasticsearch();
   connection = { url: ctx.baseUrl, apiKey: "" };
+  client = new ElasticsearchClient(connection);
 
   await seedWebLogs(ctx.esClient);
   await seedOrders(ctx.esClient);
@@ -24,14 +26,13 @@ afterAll(async () => {
 
 describe("testConnection", () => {
   it("returns ok for a valid cluster", async () => {
-    const result = await testConnection(connection);
-    expect(result.ok).toBe(true);
+    const info = await client.getClusterInfo();
+    expect(info.cluster_name).toBeTruthy();
   });
 
   it("returns error for a bad URL", async () => {
-    const bad: ElasticsearchConnection = { url: "http://localhost:1", apiKey: "" };
-    const result = await testConnection(bad);
-    expect(result.ok).toBe(false);
+    const bad = new ElasticsearchClient({ url: "http://localhost:1", apiKey: "" });
+    await expect(bad.getClusterInfo()).rejects.toThrow();
   });
 });
 
@@ -41,18 +42,18 @@ describe("testConnection", () => {
 
 describe("executeEsql", () => {
   it("runs SHOW INFO and returns columns + values", async () => {
-    const result = await executeEsql(connection, "SHOW INFO");
+    const result = await client.query({ query: "SHOW INFO" });
     expect(result.columns.length).toBeGreaterThan(0);
     expect(result.values.length).toBeGreaterThan(0);
   });
 
   it("throws a structured error for invalid syntax", async () => {
     try {
-      await executeEsql(connection, "THIS IS NOT VALID ESQL");
+      await client.query({ query: "THIS IS NOT VALID ESQL" });
       expect.fail("Should have thrown");
     } catch (err) {
-      expect(isEsqlError(err)).toBe(true);
-      if (isEsqlError(err)) {
+      expect(isElasticsearchError(err)).toBe(true);
+      if (isElasticsearchError(err)) {
         expect(err.status).toBe(400);
         expect(err.message).toBeTruthy();
       }
@@ -66,7 +67,7 @@ describe("executeEsql", () => {
 
 describe("web_logs queries", () => {
   it("FROM returns all 6 rows", async () => {
-    const result = await executeEsql(connection, "FROM web_logs");
+    const result = await client.query({ query: "FROM web_logs" });
     expect(result.values).toHaveLength(6);
 
     const colNames = result.columns.map((c) => c.name);
@@ -77,10 +78,9 @@ describe("web_logs queries", () => {
   });
 
   it("WHERE filters correctly", async () => {
-    const result = await executeEsql(
-      connection,
-      'FROM web_logs | WHERE status == 200',
-    );
+    const result = await client.query({
+      query: "FROM web_logs | WHERE status == 200",
+    });
     expect(result.values).toHaveLength(3);
     const statusIdx = result.columns.findIndex((c) => c.name === "status");
     for (const row of result.values) {
@@ -89,10 +89,9 @@ describe("web_logs queries", () => {
   });
 
   it("STATS COUNT aggregation", async () => {
-    const result = await executeEsql(
-      connection,
-      'FROM web_logs | STATS request_count = COUNT(*) BY method | SORT method',
-    );
+    const result = await client.query({
+      query: "FROM web_logs | STATS request_count = COUNT(*) BY method | SORT method",
+    });
 
     const methodIdx = result.columns.findIndex((c) => c.name === "method");
     const countIdx = result.columns.findIndex((c) => c.name === "request_count");
@@ -110,10 +109,9 @@ describe("web_logs queries", () => {
   });
 
   it("STATS SUM aggregation on bytes", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM web_logs | STATS total_bytes = SUM(bytes)",
-    );
+    const result = await client.query({
+      query: "FROM web_logs | STATS total_bytes = SUM(bytes)",
+    });
 
     expect(result.values).toHaveLength(1);
     const totalIdx = result.columns.findIndex((c) => c.name === "total_bytes");
@@ -121,10 +119,9 @@ describe("web_logs queries", () => {
   });
 
   it("SORT and LIMIT", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM web_logs | SORT bytes DESC | LIMIT 3",
-    );
+    const result = await client.query({
+      query: "FROM web_logs | SORT bytes DESC | LIMIT 3",
+    });
     expect(result.values).toHaveLength(3);
 
     const bytesIdx = result.columns.findIndex((c) => c.name === "bytes");
@@ -133,10 +130,9 @@ describe("web_logs queries", () => {
   });
 
   it("STATS grouped by host", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM web_logs | STATS count = COUNT(*) BY host | SORT host",
-    );
+    const result = await client.query({
+      query: "FROM web_logs | STATS count = COUNT(*) BY host | SORT host",
+    });
 
     const hostIdx = result.columns.findIndex((c) => c.name === "host");
     const countIdx = result.columns.findIndex((c) => c.name === "count");
@@ -152,10 +148,10 @@ describe("web_logs queries", () => {
   });
 
   it("EVAL computed column", async () => {
-    const result = await executeEsql(
-      connection,
-      'FROM web_logs | EVAL kb = bytes / 1024.0 | KEEP path, bytes, kb | SORT bytes DESC | LIMIT 2',
-    );
+    const result = await client.query({
+      query:
+        "FROM web_logs | EVAL kb = bytes / 1024.0 | KEEP path, bytes, kb | SORT bytes DESC | LIMIT 2",
+    });
 
     const kbIdx = result.columns.findIndex((c) => c.name === "kb");
     const bytesIdx = result.columns.findIndex((c) => c.name === "bytes");
@@ -172,15 +168,14 @@ describe("web_logs queries", () => {
 
 describe("orders queries", () => {
   it("FROM returns all 8 rows", async () => {
-    const result = await executeEsql(connection, "FROM orders");
+    const result = await client.query({ query: "FROM orders" });
     expect(result.values).toHaveLength(8);
   });
 
   it("STATS revenue by category", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM orders | STATS revenue = SUM(amount) BY category | SORT category",
-    );
+    const result = await client.query({
+      query: "FROM orders | STATS revenue = SUM(amount) BY category | SORT category",
+    });
 
     const catIdx = result.columns.findIndex((c) => c.name === "category");
     const revIdx = result.columns.findIndex((c) => c.name === "revenue");
@@ -195,10 +190,10 @@ describe("orders queries", () => {
   });
 
   it("STATS with multiple aggregations", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM orders | STATS total_orders = COUNT(*), avg_amount = AVG(amount), total_qty = SUM(quantity)",
-    );
+    const result = await client.query({
+      query:
+        "FROM orders | STATS total_orders = COUNT(*), avg_amount = AVG(amount), total_qty = SUM(quantity)",
+    });
 
     expect(result.values).toHaveLength(1);
 
@@ -215,10 +210,9 @@ describe("orders queries", () => {
   });
 
   it("WHERE with numeric filter", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM orders | WHERE amount > 100 | SORT amount DESC",
-    );
+    const result = await client.query({
+      query: "FROM orders | WHERE amount > 100 | SORT amount DESC",
+    });
 
     const amountIdx = result.columns.findIndex((c) => c.name === "amount");
     const amounts = result.values.map((row) => row[amountIdx] as number);
@@ -227,10 +221,9 @@ describe("orders queries", () => {
   });
 
   it("STATS grouped by region", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM orders | STATS order_count = COUNT(*) BY region | SORT region",
-    );
+    const result = await client.query({
+      query: "FROM orders | STATS order_count = COUNT(*) BY region | SORT region",
+    });
 
     const regionIdx = result.columns.findIndex((c) => c.name === "region");
     const countIdx = result.columns.findIndex((c) => c.name === "order_count");
@@ -249,19 +242,23 @@ describe("orders queries", () => {
 // Time range filter
 // ---------------------------------------------------------------------------
 
-describe("executeEsql time range filter", () => {
+describe("client.query time range filter", () => {
   it("returns all rows when time range covers all data", async () => {
-    const result = await executeEsql(connection, "FROM web_logs", undefined, {
-      from: "now-10m",
-      to: "now",
+    const result = await client.query({
+      query: "FROM web_logs",
+      filter: {
+        range: { "@timestamp": { gte: "now-10m", lte: "now" } },
+      },
     });
     expect(result.values).toHaveLength(6);
   });
 
   it("returns no rows when time range excludes all data", async () => {
-    const result = await executeEsql(connection, "FROM web_logs", undefined, {
-      from: "now-30d",
-      to: "now-1d",
+    const result = await client.query({
+      query: "FROM web_logs",
+      filter: {
+        range: { "@timestamp": { gte: "now-30d", lte: "now-1d" } },
+      },
     });
     expect(result.values).toHaveLength(0);
   });
@@ -273,10 +270,9 @@ describe("executeEsql time range filter", () => {
 
 describe("response structure", () => {
   it("columns include name and type", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM web_logs | KEEP method, status, bytes | LIMIT 1",
-    );
+    const result = await client.query({
+      query: "FROM web_logs | KEEP method, status, bytes | LIMIT 1",
+    });
 
     expect(result.columns).toHaveLength(3);
 
@@ -290,10 +286,9 @@ describe("response structure", () => {
   });
 
   it("aggregation columns have correct types", async () => {
-    const result = await executeEsql(
-      connection,
-      "FROM orders | STATS total = SUM(amount), cnt = COUNT(*)",
-    );
+    const result = await client.query({
+      query: "FROM orders | STATS total = SUM(amount), cnt = COUNT(*)",
+    });
 
     const totalCol = result.columns.find((c) => c.name === "total");
     const cntCol = result.columns.find((c) => c.name === "cnt");
