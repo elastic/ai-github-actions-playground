@@ -36,7 +36,11 @@ export function paginateRows(values: unknown[][], page: number, rowsPerPage: num
 
 function escapeCsvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
-  const asString = String(value);
+  let asString = String(value);
+  // Prevent CSV formula injection in spreadsheet software.
+  if (/^[\t\r ]*[=+\-@]/.test(asString)) {
+    asString = `'${asString}`;
+  }
   if (/[",\n\r]/.test(asString)) {
     return `"${asString.replace(/"/g, '""')}"`;
   }

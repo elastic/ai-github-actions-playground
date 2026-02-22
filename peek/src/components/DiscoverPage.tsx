@@ -111,7 +111,7 @@ export default function DiscoverPage() {
     a.href = url;
     a.download = "discover-results.csv";
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [filteredResult]);
 
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);

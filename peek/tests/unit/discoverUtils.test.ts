@@ -85,4 +85,15 @@ describe("toCsv", () => {
       'name,message\r\nalice,"hello ""world"""\r\nbob,"line1\nline2,with comma"\r\n,',
     );
   });
+
+  it("prefixes formula-like cells to prevent spreadsheet execution", () => {
+    const data: EsqlResponse = {
+      columns: [{ name: "value", type: "keyword" }],
+      values: [["=SUM(1,2)"], ["+10"], ["-5"], ["@cmd"], [" =SUM(3,4)"]],
+    };
+
+    expect(toCsv(data)).toBe(
+      'value\r\n"\'=SUM(1,2)"\r\n\'+10\r\n\'-5\r\n\'@cmd\r\n"\' =SUM(3,4)"',
+    );
+  });
 });
