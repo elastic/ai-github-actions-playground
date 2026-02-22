@@ -119,7 +119,7 @@ export default function AppHeader() {
 
   return (
     <AppBar position="static" color="default" elevation={1} sx={{ zIndex: 1201 }}>
-      <Toolbar variant="dense" sx={{ gap: 1, pl: 0 }}>
+      <Toolbar disableGutters variant="dense" sx={{ gap: 1, px: 0 }}>
         <Box
           sx={{
             width: 68,
