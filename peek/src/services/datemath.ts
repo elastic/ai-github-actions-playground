@@ -50,11 +50,11 @@ export function buildTimeParams(
 
   if (needs_tstart) {
     const resolved = resolveDateTime(timeRange.from, now);
-    if (resolved) params.push({ _tstart: resolved.toISOString() });
+    params.push({ _tstart: resolved ? resolved.toISOString() : timeRange.from });
   }
   if (needs_tend) {
     const resolved = resolveDateTime(timeRange.to, now);
-    if (resolved) params.push({ _tend: resolved.toISOString() });
+    params.push({ _tend: resolved ? resolved.toISOString() : timeRange.to });
   }
 
   return params;

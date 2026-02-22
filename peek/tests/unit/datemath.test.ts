@@ -91,14 +91,16 @@ describe("buildTimeParams", () => {
     expect(params).toEqual([]);
   });
 
-  it("returns empty array when date-math cannot be resolved", () => {
+  it("falls back to raw values when date-math cannot be resolved", () => {
     vi.useFakeTimers({ now: NOW });
     const query = "FROM logs-* | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)";
     const params = buildTimeParams(query, {
       from: "2025-01-01T00:00:00.000Z",
       to: "2025-01-02T00:00:00.000Z",
     });
-    // Absolute ISO timestamps are not date-math → resolveDateTime returns undefined
-    expect(params).toEqual([]);
+    expect(params).toEqual([
+      { _tstart: "2025-01-01T00:00:00.000Z" },
+      { _tend: "2025-01-02T00:00:00.000Z" },
+    ]);
   });
 });
