@@ -1,4 +1,5 @@
 import { useTheme } from "@mui/material/styles";
+
 import { CHART_COLORS, CHART_TOOLTIP_BG_DARK, CHART_TOOLTIP_BG_LIGHT } from "../../theme";
 
 /**

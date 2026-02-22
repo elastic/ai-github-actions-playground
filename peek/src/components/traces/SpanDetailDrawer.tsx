@@ -11,6 +11,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
+
 import type { Span } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
 import { getServiceColor } from "./traceColors";

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+
 import type { EsqlResponse } from "../../types";
+
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
+
 import type { EsqlResponse, TimeSeriesOptions } from "../../types";
+
 import { useEChartTheme } from "./useEChartTheme";
 import { findDateColumnIndex, findNumericColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";

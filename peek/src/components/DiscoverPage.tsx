@@ -16,10 +16,12 @@ import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
+
 import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";

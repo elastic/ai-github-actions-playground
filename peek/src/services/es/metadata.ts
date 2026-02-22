@@ -128,7 +128,7 @@ export async function getFieldCardinality(
   for (const field of fields) {
     const colIdx = response.columns.findIndex((c) => c.name === `${field}_card`);
     if (colIdx >= 0 && response.values.length > 0) {
-      result[field] = Number(response.values[0][colIdx]);
+      result[field] = Number(response.values[0]?.[colIdx]);
     }
   }
   return result;

@@ -1,4 +1,5 @@
 import type { FormatOptions } from "@perses-dev/core";
+
 import type { ElasticsearchConnection, EsqlResponse, EsqlError } from "./services/es";
 
 export type { FormatOptions };

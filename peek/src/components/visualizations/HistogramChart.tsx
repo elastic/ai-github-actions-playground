@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
+
 import type { EsqlResponse, HistogramChartOptions } from "../../types";
+
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
@@ -45,7 +47,8 @@ export default function HistogramChart({ data, options }: Props) {
     for (const v of values) {
       let idx = Math.floor((v - min) / binWidth);
       if (idx >= bins) idx = bins - 1;
-      counts[idx]++;
+      const current = counts[idx];
+      if (current !== undefined) counts[idx] = current + 1;
     }
 
     const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};

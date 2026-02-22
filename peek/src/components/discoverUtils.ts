@@ -19,7 +19,7 @@ export function filterEsqlResult(
 
   return {
     columns: selectedColumns,
-    values: result.values.map((row) => selectedIndices.map((idx) => row[idx])),
+    values: result.values.map((row) => selectedIndices.map((idx) => row[idx] ?? null)),
   };
 }
 

@@ -11,11 +11,13 @@ import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
 import type { PanelDefinition, EsqlResponse } from "../types";
+
 import Visualization from "./visualizations/Visualization";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
 

@@ -1,7 +1,9 @@
 import { useMemo, useCallback } from "react";
+
 import type { Span, SpanTreeNode } from "../traces/traceUtils";
 import { buildSpanTree, flattenSpanTree, formatSpanDuration } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
+
 import { useEChartTheme } from "./useEChartTheme";
 import EChartWrapper from "./EChartWrapper";
 import { escapeHtml } from "./escapeHtml";

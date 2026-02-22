@@ -1,7 +1,7 @@
 # Elastic Peek
 
 @README.md
-@DEVELOPING.md
+@DEVELOPING.md — includes engineering and accessibility standards that all contributions must follow
 @CONTRIBUTING.md
 
 ## Automation Runtime

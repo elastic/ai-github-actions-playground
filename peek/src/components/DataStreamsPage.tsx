@@ -14,6 +14,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useDashboardStore } from "../store/useDashboardStore";

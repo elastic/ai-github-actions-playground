@@ -15,8 +15,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import GroupWorkIcon from "@mui/icons-material/GroupWork";
-import type { FieldInfo, FieldValueEntry, ExplorerFilter } from "../services/es";
-import type { ElasticsearchClient } from "../services/es";
+
+import type {
+  FieldInfo,
+  FieldValueEntry,
+  ExplorerFilter,
+  ElasticsearchClient,
+} from "../services/es";
 import { getFieldValues } from "../services/es";
 
 interface Props {

@@ -17,8 +17,10 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DownloadIcon from "@mui/icons-material/Download";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+
 import type { EsqlResponse } from "../../types";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
+
 import { isNumericType } from "./chartUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
 

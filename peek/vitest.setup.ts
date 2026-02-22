@@ -1,6 +1,7 @@
 import { vi, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import "vitest-axe/extend-expect";
 
 afterEach(() => {
   cleanup();
@@ -25,5 +26,5 @@ vi.stubGlobal(
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
-  }))
+  })),
 );

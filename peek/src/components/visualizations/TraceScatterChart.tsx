@@ -1,6 +1,8 @@
 import { useMemo, useCallback } from "react";
+
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
+
 import { useEChartTheme } from "./useEChartTheme";
 import EChartWrapper from "./EChartWrapper";
 import { escapeHtml } from "./escapeHtml";
