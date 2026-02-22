@@ -69,7 +69,7 @@ describe("ExplorePage", () => {
   });
 
   it("coerces restored counter metric aggregation to count", async () => {
-    listFieldsMock.mockResolvedValueOnce([
+    listFieldsMock.mockResolvedValue([
       { name: "system.network.in.bytes", type: "long", metricType: "counter" },
     ]);
     window.history.replaceState(
