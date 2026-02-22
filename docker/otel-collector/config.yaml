@@ -1,0 +1,29 @@
+receivers:
+  hostmetrics:
+    collection_interval: 15s
+    root_path: /hostfs
+    scrapers:
+      cpu:
+      filesystem:
+      load:
+      memory:
+      network:
+      paging:
+      process:
+      processes:
+
+processors:
+  batch:
+
+exporters:
+  elasticsearch:
+    endpoints: ["http://elasticsearch:9200"]
+    mapping:
+      mode: ecs
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [batch]
+      exporters: [elasticsearch]
