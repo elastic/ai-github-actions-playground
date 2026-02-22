@@ -5,11 +5,13 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
@@ -31,6 +33,7 @@ export default function DataStreamsPage() {
 
   const [search, setSearch] = useState("");
   const [fieldSearch, setFieldSearch] = useState("");
+  const [showSystemStreams, setShowSystemStreams] = useState(false);
   const [loadingStreams, setLoadingStreams] = useState(false);
   const [loadingFields, setLoadingFields] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,17 +57,24 @@ export default function DataStreamsPage() {
       const nextStreams = response.data_streams ?? [];
       setDataStreams(nextStreams);
       setSelectedName((current) => {
-        if (current && nextStreams.some((stream) => stream.name === current)) {
+        if (
+          current &&
+          nextStreams.some((stream) => stream.name === current) &&
+          (showSystemStreams || !current.startsWith("."))
+        ) {
           return current;
         }
-        return nextStreams[0]?.name ?? null;
+        const firstVisible = showSystemStreams
+          ? nextStreams[0]
+          : nextStreams.find((stream) => !stream.name.startsWith("."));
+        return firstVisible?.name ?? null;
       });
     } catch (err) {
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
       setLoadingStreams(false);
     }
-  }, [connection]);
+  }, [connection, showSystemStreams]);
 
   const loadFields = useCallback(
     async (dataStreamName: string) => {
@@ -104,11 +114,22 @@ export default function DataStreamsPage() {
     void loadFields(selectedName);
   }, [selectedName, loadFields]);
 
+  // When system streams are hidden, ensure the selected stream is not a hidden system stream.
+  useEffect(() => {
+    if (showSystemStreams) return;
+    if (!selectedName?.startsWith(".")) return;
+    const firstVisible = dataStreams.find((s) => !s.name.startsWith("."));
+    setSelectedName(firstVisible?.name ?? null);
+  }, [showSystemStreams, selectedName, dataStreams]);
+
   const filteredStreams = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return dataStreams;
-    return dataStreams.filter((stream) => stream.name.toLowerCase().includes(term));
-  }, [dataStreams, search]);
+    return dataStreams.filter((stream) => {
+      if (!showSystemStreams && stream.name.startsWith(".")) return false;
+      if (term && !stream.name.toLowerCase().includes(term)) return false;
+      return true;
+    });
+  }, [dataStreams, search, showSystemStreams]);
 
   const fieldRows = useMemo(() => {
     const rows = fieldCaps ? toFieldRows(fieldCaps) : [];
@@ -164,6 +185,22 @@ export default function DataStreamsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={showSystemStreams}
+                  onChange={(e) => setShowSystemStreams(e.target.checked)}
+                  inputProps={{ "aria-label": "Show system streams" }}
+                />
+              }
+              label={
+                <Typography variant="caption" color="text.secondary">
+                  Show system streams
+                </Typography>
+              }
+              sx={{ mt: 0.5, ml: 0 }}
+            />
           </Box>
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
@@ -175,7 +212,9 @@ export default function DataStreamsPage() {
               >
                 <ListItemText
                   primary={stream.name}
-                  secondary={`${stream.indices.length} backing indices`}
+                  secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
+                    stream.indices.length === 1 ? "Index" : "Indices"
+                  }`}
                 />
               </ListItemButton>
             ))}
@@ -193,12 +232,64 @@ export default function DataStreamsPage() {
         >
           <Box sx={{ p: 1.5 }}>
             {selectedDataStream ? (
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <Typography variant="h6">{selectedDataStream.name}</Typography>
-                <Chip size="small" label={`status: ${selectedDataStream.status}`} />
-                <Chip size="small" label={`generation: ${selectedDataStream.generation}`} />
-                <Chip size="small" label={`template: ${selectedDataStream.template}`} />
-              </Stack>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(120px, auto) 1fr",
+                    rowGap: 0.5,
+                    columnGap: 1.5,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    Status
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-status">
+                    {selectedDataStream.status}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Generation
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-generation">
+                    {selectedDataStream.generation}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Backing indices
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
+                    {selectedDataStream.indices.length}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Write index
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-write-index">
+                    {selectedDataStream.indices[selectedDataStream.indices.length - 1]
+                      ?.index_name ?? "n/a"}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Managed by
+                  </Typography>
+                  <Typography variant="body2" data-testid="data-stream-meta-managed-by">
+                    {selectedDataStream.next_generation_managed_by}
+                  </Typography>
+
+                  {selectedDataStream.ilm_policy && (
+                    <>
+                      <Typography variant="caption" color="text.secondary">
+                        ILM policy
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
+                        {selectedDataStream.ilm_policy}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+              </Box>
             ) : (
               <Typography variant="body2" color="text.secondary">
                 Select a data stream.
