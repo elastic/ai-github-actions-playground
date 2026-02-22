@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -17,6 +17,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { EsqlColumn, EsqlResponse } from "../types";
+import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
@@ -48,6 +49,9 @@ export default function DiscoverPage() {
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
   const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
   const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
+  const refreshInterval = useDashboardStore(
+    (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
+  );
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
@@ -86,6 +90,14 @@ export default function DiscoverPage() {
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
     [handleRunQuery],
   );
+  useEffect(() => {
+    if (!connection || !refreshInterval || !effectiveQuery.trim()) return;
+    const id = setInterval(() => {
+      if (loading) return;
+      handleRunQuery();
+    }, refreshInterval * 1000);
+    return () => clearInterval(id);
+  }, [connection, refreshInterval, effectiveQuery, loading, handleRunQuery]);
 
   const toggleField = useCallback((name: string) => {
     setSelectedFields((prev) => {
