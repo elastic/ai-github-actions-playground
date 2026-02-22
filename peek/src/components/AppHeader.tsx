@@ -385,6 +385,15 @@ export default function AppHeader() {
             Dark/Light Mode
           </MenuItem>
           <MenuItem
+            selected={currentPage === "chat"}
+            onClick={() => {
+              setCurrentPage("chat");
+              setSettingsAnchor(null);
+            }}
+          >
+            Chat
+          </MenuItem>
+          <MenuItem
             selected={currentPage === "settings"}
             onClick={() => {
               setCurrentPage("settings");
