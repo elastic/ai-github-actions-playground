@@ -14,6 +14,7 @@ import PanelEditor from "./components/PanelEditor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import DocsPage from "./components/DocsPage";
+import DataStreamsPage from "./components/DataStreamsPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -44,6 +45,8 @@ export default function App() {
             <DocsPage />
           ) : !connected ? (
             <WelcomeScreen />
+          ) : currentPage === "dataStreams" ? (
+            <DataStreamsPage />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
           ) : (

@@ -16,9 +16,10 @@ import DownloadIcon from "@mui/icons-material/Download";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlColumn, EsqlResponse } from "../types";
+import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
+import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
@@ -45,34 +46,42 @@ export default function DiscoverPage() {
   const addPanel = useDashboardStore((s) => s.addPanel);
   const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
+  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
+  const effectiveQuery = discoverQueryDraft ?? query;
 
-  const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim() || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const data = await client.query({ query: query.trim() });
+  const { runQuery, loading, error, activeStep } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => {
       setResult(data);
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
-      setResult(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, query, loading]);
+    },
+    onFailure: () => setResult(null),
+  });
 
+  const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
+  const handleQueryChange = useCallback(
+    (nextQuery: string) => {
+      if (discoverQueryDraft) {
+        setDiscoverQueryDraft(null);
+      }
+      setQuery(nextQuery);
+    },
+    [discoverQueryDraft, setDiscoverQueryDraft],
+  );
+
+  const handleRunStep = useCallback(
+    (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
+    [runQuery],
+  );
   const queryEditorExtensions = useMemo(
     () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
     [handleRunQuery],
@@ -95,14 +104,14 @@ export default function DiscoverPage() {
     const newPanel = {
       id: crypto.randomUUID(),
       title: "Discover Panel",
-      query: query.trim(),
+      query: effectiveQuery.trim(),
       visualization: "table" as const,
       layout: { x: 0, y: Infinity, w: 12, h: 5 },
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
     setCurrentPage("dashboard");
-  }, [query, addPanel, setEditingPanelId, setCurrentPage]);
+  }, [effectiveQuery, addPanel, setEditingPanelId, setCurrentPage]);
 
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),
@@ -169,21 +178,27 @@ export default function DiscoverPage() {
         </Box>
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
           <CodeMirror
-            value={query}
-            onChange={setQuery}
+            value={effectiveQuery}
+            onChange={handleQueryChange}
             extensions={queryEditorExtensions}
             theme={themeMode}
             height="100px"
             basicSetup={{ lineNumbers: true, foldGutter: false }}
           />
         </Box>
+        <QueryPipelineSteps
+          query={effectiveQuery}
+          loading={loading}
+          activeStep={activeStep}
+          onRunStep={handleRunStep}
+        />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Button
             variant="contained"
             size="small"
             startIcon={loading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />}
             onClick={handleRunQuery}
-            disabled={loading || !query.trim()}
+            disabled={loading || !effectiveQuery.trim()}
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
@@ -200,7 +215,7 @@ export default function DiscoverPage() {
                 size="small"
                 startIcon={<AddIcon />}
                 onClick={handleCreatePanel}
-                disabled={!query.trim()}
+                disabled={!effectiveQuery.trim()}
               >
                 Create Panel
               </Button>

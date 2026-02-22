@@ -1,13 +1,52 @@
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
+import Divider from "@mui/material/Divider";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { fetchDemoConfig, type DemoConfig } from "../services/demo";
+import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function WelcomeScreen() {
   const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
+  const setConnection = useDashboardStore((s) => s.setConnection);
+  const setConnected = useDashboardStore((s) => s.setConnected);
+
+  const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
+  const [connectingDemo, setConnectingDemo] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchDemoConfig()
+      .then(setDemoConfig)
+      .catch(() => setDemoConfig(null));
+  }, []);
+
+  const handleTryDemo = async () => {
+    if (!demoConfig) return;
+    setConnectingDemo(true);
+    setDemoError(null);
+    try {
+      const conn = {
+        url: demoConfig.url,
+        username: demoConfig.username,
+        password: demoConfig.password,
+      };
+      const client = new ElasticsearchClient(conn);
+      await client.getClusterInfo();
+      setConnection(conn);
+      setConnected(true);
+    } catch (err: unknown) {
+      const message = isElasticsearchError(err) ? err.message : String(err);
+      setDemoError(message);
+    } finally {
+      setConnectingDemo(false);
+    }
+  };
 
   return (
     <Box
@@ -47,6 +86,25 @@ export default function WelcomeScreen() {
         <Button variant="contained" size="large" onClick={() => setConnectionDialogOpen(true)}>
           Connect to Elasticsearch
         </Button>
+        {demoConfig && (
+          <>
+            <Divider sx={{ my: 3 }}>or</Divider>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => void handleTryDemo()}
+              disabled={connectingDemo}
+              startIcon={connectingDemo ? <CircularProgress size={18} /> : undefined}
+            >
+              {connectingDemo ? "Connecting…" : "Try the Demo"}
+            </Button>
+            {demoError && (
+              <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
+                {demoError}
+              </Typography>
+            )}
+          </>
+        )}
       </Paper>
     </Box>
   );

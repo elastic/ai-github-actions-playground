@@ -10,6 +10,8 @@ vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("AppHeader", () => {
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetState();
     // Set connected so the dashboard title and controls are visible
     useDashboardStore.getState().setConnected(true);
