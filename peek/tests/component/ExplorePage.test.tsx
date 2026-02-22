@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import ExplorePage from "../../src/components/ExplorePage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
@@ -52,7 +53,11 @@ describe("ExplorePage", () => {
       "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01",
     );
 
-    render(<ExplorePage />);
+    render(
+      <MemoryRouter>
+        <ExplorePage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       const explorerState = useExplorerStore.getState();
@@ -78,7 +83,11 @@ describe("ExplorePage", () => {
       "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now",
     );
 
-    render(<ExplorePage />);
+    render(
+      <MemoryRouter>
+        <ExplorePage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       const explorerState = useExplorerStore.getState();

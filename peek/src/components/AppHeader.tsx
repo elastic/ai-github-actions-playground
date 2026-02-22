@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -14,6 +15,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { PAGE_MANIFEST } from "../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
@@ -41,7 +43,6 @@ const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 export default function AppHeader() {
   const {
     connected,
-    currentPage,
     dashboard,
     connectionProfiles,
     activeProfileId,
@@ -57,7 +58,6 @@ export default function AppHeader() {
   } = useDashboardStore(
     useShallow((s) => ({
       connected: s.connected,
-      currentPage: s.currentPage,
       dashboard: s.dashboard,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
@@ -73,13 +73,17 @@ export default function AppHeader() {
     })),
   );
 
+  const location = useLocation();
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [switchingProfile, setSwitchingProfile] = useState(false);
-  const showTimeControls =
-    connected &&
-    (currentPage === "dashboard" || currentPage === "discover" || currentPage === "explore");
+  const timeControlPaths: string[] = [
+    PAGE_MANIFEST.dashboard.path,
+    PAGE_MANIFEST.discover.path,
+    PAGE_MANIFEST.explore.path,
+  ];
+  const showTimeControls = connected && timeControlPaths.includes(location.pathname);
 
   const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
 
@@ -288,7 +292,7 @@ export default function AppHeader() {
               ))}
             </Menu>
 
-            {currentPage === "dashboard" && (
+            {location.pathname === PAGE_MANIFEST.dashboard.path && (
               <Button
                 size="small"
                 variant="contained"
