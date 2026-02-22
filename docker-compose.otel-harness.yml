@@ -17,11 +17,17 @@ services:
 
   otel-collector:
     image: docker.elastic.co/elastic-agent/elastic-agent:9.3.0
-    command: ["otel", "--config", "/etc/otelcol/config.yaml"]
+    command: ["otel", "--config=file:/etc/otelcol/config.yaml"]
     volumes:
       - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
       - /:/hostfs:ro
     pid: host
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:13133/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -36,7 +42,8 @@ services:
       - traces
       - multi
     depends_on:
-      - otel-collector
+      otel-collector:
+        condition: service_healthy
 
   otelgen-logs:
     image: ghcr.io/krzko/otelgen:v0.5.2
@@ -44,7 +51,9 @@ services:
       - --otel-exporter-otlp-endpoint=otel-collector:4317
       - --insecure
       - --rate=5
+      - --duration=86400
       - logs
       - multi
     depends_on:
-      - otel-collector
+      otel-collector:
+        condition: service_healthy

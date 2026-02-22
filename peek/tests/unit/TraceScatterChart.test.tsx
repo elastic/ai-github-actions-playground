@@ -142,11 +142,10 @@ describe("TraceScatterChart", () => {
     const mockInstance = mockInit.mock.results[0]?.value;
     const onFn = mockInstance?.on as ReturnType<typeof vi.fn>;
     const clickCall = onFn.mock.calls.find((c: unknown[]) => c[0] === "click");
-    if (clickCall) {
-      const handler = clickCall[1] as (params: { data: unknown }) => void;
-      handler({ data: { traceId: "clicked-trace" } });
-      expect(onPointClick).toHaveBeenCalledWith("clicked-trace");
-    }
+    expect(clickCall).toBeDefined();
+    const handler = clickCall![1] as (params: { data: unknown }) => void;
+    handler({ data: { traceId: "clicked-trace" } });
+    expect(onPointClick).toHaveBeenCalledWith("clicked-trace");
   });
 
   it("does not register click handler when onPointClick is not provided", () => {

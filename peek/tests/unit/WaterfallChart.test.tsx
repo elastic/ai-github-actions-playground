@@ -164,11 +164,10 @@ describe("WaterfallChart", () => {
     const onFn = mockInstance?.on as ReturnType<typeof vi.fn>;
     // Find the "click" handler
     const clickCall = onFn.mock.calls.find((c: unknown[]) => c[0] === "click");
-    if (clickCall) {
-      const handler = clickCall[1] as (params: { dataIndex: number }) => void;
-      handler({ dataIndex: 0 });
-      expect(onSpanClick).toHaveBeenCalledWith("clicked");
-    }
+    expect(clickCall).toBeDefined();
+    const handler = clickCall![1] as (params: { dataIndex: number }) => void;
+    handler({ dataIndex: 0 });
+    expect(onSpanClick).toHaveBeenCalledWith("clicked");
   });
 
   it("enables dataZoom for large trace trees", () => {

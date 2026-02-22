@@ -169,7 +169,7 @@ export function buildTraceTimeseriesQuery(
     limit: 10000,
     rootSpansOnly: true,
   });
-  return `${body} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50, "", "")`;
+  return `${body} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50)`;
 }
 
 /**

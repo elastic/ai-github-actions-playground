@@ -3,6 +3,7 @@ import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
 import { useEChartTheme } from "./useEChartTheme";
 import EChartWrapper from "./EChartWrapper";
+import { escapeHtml } from "./escapeHtml";
 
 interface ScatterDataPoint {
   timestamp: string;
@@ -14,10 +15,6 @@ interface ScatterDataPoint {
 interface TraceScatterChartProps {
   data: ScatterDataPoint[];
   onPointClick?: (traceId: string) => void;
-}
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 export default function TraceScatterChart({ data, onPointClick }: TraceScatterChartProps) {
@@ -42,21 +39,27 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
     const serviceNames = Array.from(byService.keys());
     const colorMap = buildServiceColorMap(serviceNames);
 
-    const series = serviceNames.map((serviceName) => ({
-      name: serviceName,
-      type: "scatter",
-      symbolSize: 6,
-      data: byService
-        .get(serviceName)!
-        .filter((point) => point.durationUs > 0)
-        .map((point) => ({
-          value: [new Date(point.timestamp).getTime(), point.durationUs / 1000],
-          traceId: point.traceId,
-        })),
-      itemStyle: {
-        color: colorMap.get(serviceName) ?? getServiceColor(serviceName),
-      },
-    }));
+    const series = serviceNames
+      .map((serviceName) => ({
+        name: serviceName,
+        type: "scatter",
+        symbolSize: 6,
+        data: byService
+          .get(serviceName)!
+          .filter((point) => point.durationUs > 0)
+          .map((point) => ({
+            value: [new Date(point.timestamp).getTime(), point.durationUs / 1000],
+            traceId: point.traceId,
+          })),
+        itemStyle: {
+          color: colorMap.get(serviceName) ?? getServiceColor(serviceName),
+        },
+      }))
+      .filter((s) => s.data.length > 0);
+
+    if (series.length === 0) {
+      return { title: { text: "No data to display", left: "center", top: "center" } };
+    }
 
     return {
       ...theme,

@@ -27,6 +27,15 @@ import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import SpanDetailDrawer from "./SpanDetailDrawer";
 
+const thStyle: React.CSSProperties = {
+  textAlign: "left",
+  padding: "8px 12px",
+  borderBottom: "1px solid var(--divider, #333)",
+  position: "sticky",
+  top: 0,
+  background: "inherit",
+};
+
 export default function TracesPage() {
   const connection = useDashboardStore((s) => s.connection);
   const themeMode = useDashboardStore((s) => s.themeMode);
@@ -156,15 +165,6 @@ export default function TracesPage() {
   );
 
   const queryEditorExtensions = useMemo(() => [sql(), EditorView.lineWrapping], []);
-
-  const thStyle: React.CSSProperties = {
-    textAlign: "left",
-    padding: "8px 12px",
-    borderBottom: "1px solid var(--divider, #333)",
-    position: "sticky",
-    top: 0,
-    background: "inherit",
-  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%", gap: 1 }}>

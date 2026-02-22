@@ -1,18 +1,10 @@
 import { useMemo, useCallback } from "react";
 import type { Span, SpanTreeNode } from "../traces/traceUtils";
-import {
-  buildSpanTree,
-  flattenSpanTree,
-  getTraceTimeBounds,
-  formatSpanDuration,
-} from "../traces/traceUtils";
+import { buildSpanTree, flattenSpanTree, formatSpanDuration } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
 import { useEChartTheme } from "./useEChartTheme";
 import EChartWrapper from "./EChartWrapper";
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+import { escapeHtml } from "./escapeHtml";
 
 interface WaterfallChartProps {
   spans: Span[];
@@ -39,7 +31,7 @@ export default function WaterfallChart({
       return { title: { text: "No spans to display", left: "center", top: "center" } };
     }
 
-    const { startUs } = getTraceTimeBounds(spans);
+    const startUs = Math.min(...flatNodes.map((node) => node.span.startTimeUs));
 
     const categories = flatNodes.map(
       (node) => `${"  ".repeat(node.depth)}${node.span.serviceName}: ${node.span.name}`,
@@ -145,7 +137,7 @@ export default function WaterfallChart({
         },
       ],
     };
-  }, [spans, flatNodes, theme, selectedSpanId]);
+  }, [flatNodes, theme, selectedSpanId]);
 
   const handleClick = useCallback(
     (params: { dataIndex: number }) => {

@@ -125,6 +125,7 @@ export default function SpanDetailDrawer({
   }, [attributes]);
 
   if (!span) return null;
+  const tsDisplay = span.timestamp ? new Date(span.timestamp).toISOString() : "—";
 
   return (
     <Drawer
@@ -179,8 +180,8 @@ export default function SpanDetailDrawer({
           <Tab label="Overview" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Resource" sx={{ minHeight: 36, py: 0 }} />
-          {/* TODO: wire up Events tab when span event data is available */}
-          {/* TODO: wire up Links tab when span link data is available */}
+          {/* TODO: wire up Events tab; tracked in #253 */}
+          {/* TODO: wire up Links tab; tracked in #254 */}
         </Tabs>
 
         {/* Tab content */}
@@ -229,16 +230,11 @@ export default function SpanDetailDrawer({
                   onCopy={() => handleCopy(span.parentSpanId!)}
                 />
               )}
-              {(() => {
-                const tsDisplay = span.timestamp ? new Date(span.timestamp).toISOString() : "—";
-                return (
-                  <KeyValueRow
-                    label="Timestamp"
-                    value={tsDisplay}
-                    onCopy={span.timestamp ? () => handleCopy(tsDisplay) : undefined}
-                  />
-                );
-              })()}
+              <KeyValueRow
+                label="Timestamp"
+                value={tsDisplay}
+                onCopy={span.timestamp ? () => handleCopy(tsDisplay) : undefined}
+              />
             </Box>
           )}
 

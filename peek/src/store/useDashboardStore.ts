@@ -92,6 +92,28 @@ const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
 const QUERY_HISTORY_MAX_SIZE = 10;
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getNextDuplicatedPanelTitle(sourceTitle: string, existingTitles: string[]): string {
+  const baseTitle = sourceTitle.replace(/\s*\(copy(?:\s*\d+)?\)$/i, "").trim() || "Panel";
+  const copyTitleRegex = new RegExp(
+    `^${escapeRegex(baseTitle)}\\s*\\(copy(?:\\s*(\\d+))?\\)$`,
+    "i",
+  );
+  let maxCopyNumber = 0;
+  for (const title of existingTitles) {
+    const match = title.match(copyTitleRegex);
+    if (!match) continue;
+    const copyNumber = match[1] ? Number(match[1]) : 1;
+    if (Number.isFinite(copyNumber)) {
+      maxCopyNumber = Math.max(maxCopyNumber, copyNumber);
+    }
+  }
+  return maxCopyNumber === 0 ? `${baseTitle} (copy)` : `${baseTitle} (copy ${maxCopyNumber + 1})`;
+}
+
 const splitStorage = {
   getItem: (name: string): StorageValue<PersistedState> | null => {
     const localRaw = localStorage.getItem(name);
@@ -194,22 +216,28 @@ export const useDashboardStore = create<DashboardState>()(
         })),
 
       duplicatePanel: (id) => {
-        const state = get();
-        const source = state.dashboard.panels.find((p) => p.id === id);
-        if (!source) return null;
-        const newId = crypto.randomUUID();
-        const clone: PanelDefinition = {
-          ...structuredClone(source),
-          id: newId,
-          title: `${source.title} (copy)`,
-          layout: { ...source.layout, y: Infinity },
-        };
+        let newId: string | null = null;
         set((s) => ({
-          dashboard: {
-            ...s.dashboard,
-            panels: [...s.dashboard.panels, clone],
-            updatedAt: new Date().toISOString(),
-          },
+          dashboard: (() => {
+            const source = s.dashboard.panels.find((p) => p.id === id);
+            if (!source) return s.dashboard;
+            const nextId = crypto.randomUUID();
+            const clone: PanelDefinition = {
+              ...structuredClone(source),
+              id: nextId,
+              title: getNextDuplicatedPanelTitle(
+                source.title,
+                s.dashboard.panels.map((panel) => panel.title),
+              ),
+              layout: { ...source.layout, y: Infinity },
+            };
+            newId = nextId;
+            return {
+              ...s.dashboard,
+              panels: [...s.dashboard.panels, clone],
+              updatedAt: new Date().toISOString(),
+            };
+          })(),
         }));
         return newId;
       },
