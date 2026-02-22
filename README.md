@@ -38,6 +38,7 @@ Elastic Peek is a browser-based dashboard builder that connects directly to your
 
 - **Direct browser-to-Elasticsearch** — or via a local proxy to avoid CORS
 - **ES|QL query editor** — write queries with syntax highlighting
+- **No-code metrics explorer** — browse, filter, and chart metrics from UI selections
 - **Multiple visualization types** — time series, bar charts, pie charts, tables, stats, gauges
 - **Drag-and-drop layout** — resize and rearrange panels freely
 - **Persistent state** — dashboards save to localStorage automatically
@@ -59,7 +60,7 @@ ES_URL=http://localhost:9200 make serve-proxy
 
 ### In-Product Docs
 
-Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting to Elasticsearch, proxy mode, and dashboard workflows.
+Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting to Elasticsearch, proxy mode, Query Lab, Metrics, and dashboard workflows.
 
 ## Further Reading
 
