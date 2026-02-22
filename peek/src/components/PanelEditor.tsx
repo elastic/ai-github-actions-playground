@@ -35,7 +35,8 @@ import type {
 } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import Visualization from "./visualizations/Visualization";
-import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
+import ChartOptionsEditor from "./ChartOptionsEditor";
+import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
