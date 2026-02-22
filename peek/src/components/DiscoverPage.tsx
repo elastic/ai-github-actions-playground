@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -54,12 +54,7 @@ export default function DiscoverPage() {
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
-
-  useEffect(() => {
-    if (!discoverQueryDraft) return;
-    setQuery(discoverQueryDraft);
-    setDiscoverQueryDraft(null);
-  }, [discoverQueryDraft, setDiscoverQueryDraft]);
+  const effectiveQuery = discoverQueryDraft ?? query;
 
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
@@ -72,7 +67,16 @@ export default function DiscoverPage() {
     onFailure: () => setResult(null),
   });
 
-  const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
+  const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
+  const handleQueryChange = useCallback(
+    (nextQuery: string) => {
+      if (discoverQueryDraft) {
+        setDiscoverQueryDraft(null);
+      }
+      setQuery(nextQuery);
+    },
+    [discoverQueryDraft, setDiscoverQueryDraft],
+  );
 
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
@@ -100,14 +104,14 @@ export default function DiscoverPage() {
     const newPanel = {
       id: crypto.randomUUID(),
       title: "Discover Panel",
-      query: query.trim(),
+      query: effectiveQuery.trim(),
       visualization: "table" as const,
       layout: { x: 0, y: Infinity, w: 12, h: 5 },
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
     setCurrentPage("dashboard");
-  }, [query, addPanel, setEditingPanelId, setCurrentPage]);
+  }, [effectiveQuery, addPanel, setEditingPanelId, setCurrentPage]);
 
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),
@@ -174,8 +178,8 @@ export default function DiscoverPage() {
         </Box>
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
           <CodeMirror
-            value={query}
-            onChange={setQuery}
+            value={effectiveQuery}
+            onChange={handleQueryChange}
             extensions={queryEditorExtensions}
             theme={themeMode}
             height="100px"
@@ -183,7 +187,7 @@ export default function DiscoverPage() {
           />
         </Box>
         <QueryPipelineSteps
-          query={query}
+          query={effectiveQuery}
           loading={loading}
           activeStep={activeStep}
           onRunStep={handleRunStep}
@@ -194,7 +198,7 @@ export default function DiscoverPage() {
             size="small"
             startIcon={loading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />}
             onClick={handleRunQuery}
-            disabled={loading || !query.trim()}
+            disabled={loading || !effectiveQuery.trim()}
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
@@ -211,7 +215,7 @@ export default function DiscoverPage() {
                 size="small"
                 startIcon={<AddIcon />}
                 onClick={handleCreatePanel}
-                disabled={!query.trim()}
+                disabled={!effectiveQuery.trim()}
               >
                 Create Panel
               </Button>
