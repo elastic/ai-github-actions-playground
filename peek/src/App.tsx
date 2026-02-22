@@ -15,6 +15,7 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import ExplorePage from "./components/ExplorePage";
 import DocsPage from "./components/DocsPage";
+import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
 
 const currentYear = new Date().getFullYear();
@@ -52,6 +53,8 @@ export default function App() {
             <ExplorePage />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
+          ) : currentPage === "console" ? (
+            <ApiConsolePage />
           ) : (
             <DashboardGrid />
           )}
