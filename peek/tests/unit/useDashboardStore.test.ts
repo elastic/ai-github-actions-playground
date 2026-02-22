@@ -200,6 +200,17 @@ describe("useDashboardStore query history", () => {
     expect(useDashboardStore.getState().queryHistory).toEqual(["FROM logs-* | LIMIT 10"]);
   });
 
+  it("moves existing queries to the front instead of duplicating", () => {
+    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
+    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
+
+    expect(useDashboardStore.getState().queryHistory).toEqual([
+      "FROM logs-* | LIMIT 10",
+      "FROM metrics-* | LIMIT 5",
+    ]);
+  });
+
   it("caps history size at 10 entries", () => {
     for (let i = 1; i <= 12; i += 1) {
       useDashboardStore.getState().appendQueryToHistory(`FROM logs-* | LIMIT ${i}`);

@@ -190,11 +190,9 @@ export const useDashboardStore = create<DashboardState>()(
           if (!trimmedQuery) {
             return {};
           }
-          if (s.queryHistory[0] === trimmedQuery) {
-            return {};
-          }
+          const dedupedHistory = s.queryHistory.filter((entry) => entry !== trimmedQuery);
           return {
-            queryHistory: [trimmedQuery, ...s.queryHistory].slice(0, QUERY_HISTORY_MAX_SIZE),
+            queryHistory: [trimmedQuery, ...dedupedHistory].slice(0, QUERY_HISTORY_MAX_SIZE),
           };
         }),
 

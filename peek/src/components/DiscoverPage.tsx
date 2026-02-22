@@ -67,12 +67,12 @@ export default function DiscoverPage() {
 
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
-    onSuccess: (data) => {
+    onSuccess: (data, executedQuery) => {
       setResult(data);
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
-      appendQueryToHistory(effectiveQuery);
+      appendQueryToHistory(executedQuery);
     },
     onFailure: () => setResult(null),
   });

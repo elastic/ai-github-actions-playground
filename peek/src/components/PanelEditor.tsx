@@ -101,9 +101,9 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   );
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
-    onSuccess: (data) => {
+    onSuccess: (data, executedQuery) => {
       setPreview(data);
-      appendQueryToHistory(query);
+      appendQueryToHistory(executedQuery);
     },
     onFailure: () => setPreview(null),
     buildRequest,
@@ -262,10 +262,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
             onClose={() => setHistoryAnchor(null)}
           >
             {queryHistory.map((historyQuery, idx) => (
-              <MenuItem
-                key={`${historyQuery}-${idx}`}
-                onClick={() => handleSelectHistory(historyQuery)}
-              >
+              <MenuItem key={idx} onClick={() => handleSelectHistory(historyQuery)}>
                 {historyQuery}
               </MenuItem>
             ))}

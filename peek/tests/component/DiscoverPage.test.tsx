@@ -30,6 +30,17 @@ vi.mock("@codemirror/lang-sql", () => ({
 vi.mock("../../src/components/visualizations/DataTable", () => ({
   default: () => <div data-testid="datatable-mock" />,
 }));
+vi.mock("../../src/components/QueryPipelineSteps", () => ({
+  default: ({
+    onRunStep,
+  }: {
+    onRunStep: (query: string, stepIndex: number) => void;
+  }) => (
+    <button type="button" onClick={() => onRunStep("FROM step-* | LIMIT 1", 0)}>
+      Run step 1
+    </button>
+  ),
+}));
 
 describe("DiscoverPage", () => {
   beforeEach(() => {
@@ -73,5 +84,19 @@ describe("DiscoverPage", () => {
       expect.objectContaining({ query: "FROM metrics-* | LIMIT 5" }),
       expect.any(AbortSignal),
     );
+  });
+
+  it("stores the executed step query in history", async () => {
+    const user = userEvent.setup();
+    render(<DiscoverPage />);
+
+    await user.click(screen.getByRole("button", { name: /run step 1/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "FROM step-* | LIMIT 1" }),
+      expect.any(AbortSignal),
+    );
+    expect(useDashboardStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
   });
 });
