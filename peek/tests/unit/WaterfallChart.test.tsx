@@ -53,6 +53,12 @@ describe("WaterfallChart", () => {
     expect(option.title).toEqual(expect.objectContaining({ text: "No spans to display" }));
   });
 
+  it("shows fallback title when all spans have invalid timestamps", () => {
+    render(<WaterfallChart spans={[makeSpan({ startTimeUs: Number.NaN })]} />);
+    const option = getLastSetOptionCall();
+    expect(option.title).toEqual(expect.objectContaining({ text: "No valid span timestamps" }));
+  });
+
   it("renders a single span as a stacked bar chart", () => {
     render(<WaterfallChart spans={[makeSpan()]} />);
     const option = getLastSetOptionCall();

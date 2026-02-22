@@ -26,29 +26,40 @@ export default function WaterfallChart({
     return flattenSpanTree(tree);
   }, [spans]);
 
+  const chartNodes = useMemo(
+    () =>
+      flatNodes.filter(
+        (node) => Number.isFinite(node.span.startTimeUs) && Number.isFinite(node.span.durationUs),
+      ),
+    [flatNodes],
+  );
+
   const option = useMemo(() => {
     if (flatNodes.length === 0) {
       return { title: { text: "No spans to display", left: "center", top: "center" } };
     }
+    if (chartNodes.length === 0) {
+      return { title: { text: "No valid span timestamps", left: "center", top: "center" } };
+    }
 
-    const startUs = Math.min(...flatNodes.map((node) => node.span.startTimeUs));
+    const startUs = Math.min(...chartNodes.map((node) => node.span.startTimeUs));
 
-    const categories = flatNodes.map(
+    const categories = chartNodes.map(
       (node) => `${"  ".repeat(node.depth)}${node.span.serviceName}: ${node.span.name}`,
     );
 
     // Base (invisible) bars for offset
-    const baseData = flatNodes.map((node) => {
+    const baseData = chartNodes.map((node) => {
       const spanStartUs = node.span.startTimeUs;
       const offsetMs = (spanStartUs - startUs) / 1000;
       return offsetMs;
     });
 
     // Duration bars
-    const durationData = flatNodes.map((node) => node.span.durationUs / 1000);
+    const durationData = chartNodes.map((node) => node.span.durationUs / 1000);
 
     // Colors — highlight selected span
-    const itemColors = flatNodes.map((node) => {
+    const itemColors = chartNodes.map((node) => {
       const isError = node.span.status === "Error" || node.span.status === "STATUS_CODE_ERROR";
       const isSelected = selectedSpanId === node.span.spanId;
       return {
@@ -59,7 +70,7 @@ export default function WaterfallChart({
     });
 
     const totalDurationMs = Math.max(
-      ...flatNodes.map((node) => {
+      ...chartNodes.map((node) => {
         const spanStartUs = node.span.startTimeUs;
         return (spanStartUs - startUs + node.span.durationUs) / 1000;
       }),
@@ -81,8 +92,8 @@ export default function WaterfallChart({
         axisPointer: { type: "shadow" },
         formatter: (params: Array<{ dataIndex: number }>) => {
           const idx = params[0]?.dataIndex;
-          if (idx == null || idx < 0 || idx >= flatNodes.length) return "Unknown span";
-          const node = flatNodes[idx]!;
+          if (idx == null || idx < 0 || idx >= chartNodes.length) return "Unknown span";
+          const node = chartNodes[idx]!;
           return `<strong>${escapeHtml(node.span.serviceName)}</strong>: ${escapeHtml(node.span.name)}<br/>Duration: ${escapeHtml(formatSpanDuration(node.span.durationUs))}`;
         },
       },
@@ -112,7 +123,7 @@ export default function WaterfallChart({
           right: 0,
           width: 15,
           start: 0,
-          end: Math.min(100, (20 / flatNodes.length) * 100),
+          end: Math.min(100, (20 / chartNodes.length) * 100),
         },
       ],
       series: [
@@ -137,16 +148,16 @@ export default function WaterfallChart({
         },
       ],
     };
-  }, [flatNodes, theme, selectedSpanId]);
+  }, [flatNodes, chartNodes, theme, selectedSpanId]);
 
   const handleClick = useCallback(
     (params: { dataIndex: number }) => {
-      const node = flatNodes[params.dataIndex];
+      const node = chartNodes[params.dataIndex];
       if (node && onSpanClick) {
         onSpanClick(node.span.spanId);
       }
     },
-    [flatNodes, onSpanClick],
+    [chartNodes, onSpanClick],
   );
 
   return <EChartWrapper option={option} onClick={onSpanClick ? handleClick : undefined} />;
