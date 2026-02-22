@@ -67,10 +67,13 @@ describe("WelcomeScreen", () => {
   });
 
   it('clicking "Try the Demo" connects with demo credentials on success', async () => {
-    // First call → demo.json; second call → cluster info (connect)
+    // First call → demo.json; second call → cluster info; third call → capabilities
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ cluster: { manage_data_stream: true } }), { status: 200 }),
+      );
 
     const user = userEvent.setup();
     render(<WelcomeScreen />);
@@ -84,9 +87,11 @@ describe("WelcomeScreen", () => {
       username: DEMO_CONFIG.username,
       password: DEMO_CONFIG.password,
     });
+    expect(useDashboardStore.getState().capabilities).toEqual({ canManageDataStreams: true });
   });
 
   it('shows error message when demo connection fails', async () => {
+    useDashboardStore.getState().setCapabilities({ canManageDataStreams: true });
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
       .mockResolvedValueOnce(
@@ -101,5 +106,6 @@ describe("WelcomeScreen", () => {
 
     await screen.findByText(/unauthorized/i);
     expect(useDashboardStore.getState().connected).toBe(false);
+    expect(useDashboardStore.getState().capabilities).toBeNull();
   });
 });

@@ -15,6 +15,7 @@ export default function WelcomeScreen() {
   const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
   const setConnection = useDashboardStore((s) => s.setConnection);
   const setConnected = useDashboardStore((s) => s.setConnected);
+  const setCapabilities = useDashboardStore((s) => s.setCapabilities);
 
   const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
   const [connectingDemo, setConnectingDemo] = useState(false);
@@ -38,10 +39,13 @@ export default function WelcomeScreen() {
       };
       const client = new ElasticsearchClient(conn);
       await client.getClusterInfo();
+      const caps = await client.getCapabilities();
       setConnection(conn);
       setConnected(true);
+      setCapabilities(caps);
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
+      setCapabilities(null);
       setDemoError(message);
     } finally {
       setConnectingDemo(false);
