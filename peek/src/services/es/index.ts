@@ -17,4 +17,5 @@ export type {
   ResolveIndexDataStreamInfo,
   FieldCapsResponse,
   FieldCapability,
+  UserCapabilities,
 } from "./client";

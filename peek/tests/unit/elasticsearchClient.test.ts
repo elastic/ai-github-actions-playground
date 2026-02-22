@@ -390,3 +390,71 @@ describe("isElasticsearchError", () => {
     expect(isElasticsearchError({ status: 500 })).toBe(false);
   });
 });
+
+// ── getCapabilities ───────────────────────────────────────────────────────
+
+describe("getCapabilities", () => {
+  it("returns canManageDataStreams: true when cluster privilege is granted", async () => {
+    const fetchSpy = mockFetchOnce(
+      { cluster: { manage_data_stream: true } },
+      { status: 200 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(true);
+  });
+
+  it("returns canManageDataStreams: false when cluster privilege is denied", async () => {
+    const fetchSpy = mockFetchOnce(
+      { cluster: { manage_data_stream: false } },
+      { status: 200 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(false);
+  });
+
+  it("falls back to canManageDataStreams: false when the security API returns an error", async () => {
+    const fetchSpy = mockFetchOnce(
+      { error: { reason: "security_exception" } },
+      { status: 403 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(false);
+  });
+
+  it("falls back to canManageDataStreams: false on a network failure", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(false);
+  });
+
+  it("POSTs to /_security/user/_has_privileges with the expected body", async () => {
+    const fetchSpy = mockFetchOnce(
+      { cluster: { manage_data_stream: false } },
+      { status: 200 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getCapabilities();
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/_security/user/_has_privileges`);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ cluster: ["manage_data_stream"] });
+  });
+});
