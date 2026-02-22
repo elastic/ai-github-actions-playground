@@ -58,13 +58,17 @@ export function useEsqlQuery({
         const data = await client.query(request, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
           const serverDurationMs = getServerDurationMs(data);
-          if (serverDurationMs !== null) {
-            if (stepIndex === null) {
-              setStepDurationsMs({});
-              setLastRunDurationMs(serverDurationMs);
-            } else {
-              setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
-            }
+          if (stepIndex === null) {
+            setStepDurationsMs({});
+            setLastRunDurationMs(serverDurationMs);
+          } else if (serverDurationMs !== null) {
+            setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
+          } else {
+            setStepDurationsMs((prev) => {
+              const next = { ...prev };
+              delete next[stepIndex];
+              return next;
+            });
           }
           onSuccess(data, trimmedQuery);
         }

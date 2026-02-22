@@ -115,4 +115,30 @@ describe("DiscoverPage", () => {
       expect(screen.getByText("1 rows × 1 columns • ES 123ms")).toBeInTheDocument(),
     );
   });
+
+  it("clears ES server timing when a later response omits took", async () => {
+    const user = userEvent.setup();
+    queryMock
+      .mockResolvedValueOnce({
+        columns: [{ name: "@timestamp", type: "date" }],
+        values: [["2025-06-15T12:00:00.000Z"]],
+        took: 123,
+      })
+      .mockResolvedValueOnce({
+        columns: [{ name: "@timestamp", type: "date" }],
+        values: [["2025-06-15T12:00:00.000Z"]],
+      });
+    render(<DiscoverPage />);
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() =>
+      expect(screen.getByText("1 rows × 1 columns • ES 123ms")).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() =>
+      expect(screen.getByText("1 rows × 1 columns")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/• ES /)).not.toBeInTheDocument();
+  });
 });
