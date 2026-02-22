@@ -8,3 +8,4 @@ playwright-report
 test-results
 screenshot-preflight.json
 screenshot*.png
+public/demo.json
