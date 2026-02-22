@@ -2,6 +2,13 @@
  * Span and trace data types and tree-building utilities.
  */
 
+/** A single event recorded within a span */
+export interface SpanEvent {
+  name: string;
+  timestamp: string;
+  attributes: Record<string, unknown>;
+}
+
 /** Represents a single span in a trace */
 export interface Span {
   traceId: string;
@@ -15,6 +22,7 @@ export interface Span {
   timestamp: string;
   startTimeUs: number;
   attributes: Record<string, unknown>;
+  events: SpanEvent[];
 }
 
 /** A span augmented with tree information for rendering */
@@ -118,6 +126,42 @@ export function flattenSpanTree(roots: SpanTreeNode[]): SpanTreeNode[] {
   return result;
 }
 
+/** Parse a raw events column value into an array of SpanEvent objects */
+function parseSpanEvents(raw: unknown): SpanEvent[] {
+  if (raw == null) return [];
+
+  let items: unknown[];
+  if (Array.isArray(raw)) {
+    items = raw;
+  } else if (typeof raw === "string") {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      items = parsed;
+    } catch {
+      return [];
+    }
+  } else {
+    return [];
+  }
+
+  const events: SpanEvent[] = [];
+  for (const item of items) {
+    if (typeof item !== "object" || item === null) continue;
+    const obj = item as Record<string, unknown>;
+    const name = String(obj["name"] ?? "");
+    const timestamp = String(obj["@timestamp"] ?? obj["timestamp"] ?? "");
+    const attributes: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (key !== "name" && key !== "@timestamp" && key !== "timestamp" && value != null) {
+        attributes[key] = value;
+      }
+    }
+    events.push({ name, timestamp, attributes });
+  }
+  return events;
+}
+
 /**
  * Parse raw ES|QL response rows into Span objects.
  * Maps column names to span fields using a flexible lookup.
@@ -137,6 +181,7 @@ export function parseSpansFromEsql(
     statusCode: string;
     timestamp: string;
     timestampUs: string;
+    events?: string;
   },
 ): Span[] {
   const colIndex = new Map<string, number>();
@@ -150,12 +195,13 @@ export function parseSpansFromEsql(
   };
 
   // Gather all known field names to exclude from attributes
-  const knownFields = new Set(Object.values(fieldMapping));
+  const knownFields = new Set(Object.values(fieldMapping).filter(Boolean));
+  const eventsField = fieldMapping.events ?? "events";
 
   return values.map((row) => {
     const attributes: Record<string, unknown> = {};
     for (const [colName, idx] of colIndex) {
-      if (!knownFields.has(colName) && row[idx] != null) {
+      if (!knownFields.has(colName) && colName !== eventsField && row[idx] != null) {
         attributes[colName] = row[idx];
       }
     }
@@ -190,6 +236,7 @@ export function parseSpansFromEsql(
       timestamp: String(get(row, fieldMapping.timestamp) ?? ""),
       startTimeUs,
       attributes,
+      events: parseSpanEvents(get(row, eventsField)),
     };
   });
 }

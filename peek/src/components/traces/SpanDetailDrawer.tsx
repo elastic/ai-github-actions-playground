@@ -181,7 +181,7 @@ export default function SpanDetailDrawer({
           <Tab label="Overview" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Resource" sx={{ minHeight: 36, py: 0 }} />
-          {/* TODO: wire up Events tab; tracked in #253 */}
+          <Tab label="Events" sx={{ minHeight: 36, py: 0 }} />
           {/* TODO: wire up Links tab; tracked in #254 */}
         </Tabs>
 
@@ -276,6 +276,49 @@ export default function SpanDetailDrawer({
                     onExclude={() => onExclude(attr.key, attr.value)}
                     onCopy={() => handleCopy(attr.value)}
                   />
+                ))
+              )}
+            </Box>
+          )}
+
+          {tabIndex === 3 && (
+            <Box sx={{ p: 1 }}>
+              {span.events.length === 0 ? (
+                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
+                  No events
+                </Typography>
+              ) : (
+                span.events.map((event, i) => (
+                  <Box key={i} sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
+                    <Box sx={{ px: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                        {event.name || "(unnamed event)"}
+                      </Typography>
+                      {event.timestamp && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1, fontFamily: "monospace" }}
+                        >
+                          {new Date(event.timestamp).toISOString()}
+                        </Typography>
+                      )}
+                    </Box>
+                    {Object.keys(event.attributes).length > 0 ? (
+                      Object.entries(event.attributes).map(([key, value]) => (
+                        <KeyValueRow
+                          key={key}
+                          label={key}
+                          value={String(value)}
+                          onCopy={() => handleCopy(String(value))}
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="caption" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+                        No attributes
+                      </Typography>
+                    )}
+                  </Box>
                 ))
               )}
             </Box>
