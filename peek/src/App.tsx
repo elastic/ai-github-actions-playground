@@ -13,6 +13,7 @@ import PanelEditor from "./components/PanelEditor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import DocsPage from "./components/DocsPage";
+import HostsPage from "./components/HostsPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -44,6 +45,8 @@ export default function App() {
             <WelcomeScreen />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
+          ) : currentPage === "hosts" ? (
+            <HostsPage />
           ) : (
             <DashboardGrid />
           )}
