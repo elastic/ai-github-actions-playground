@@ -35,6 +35,7 @@ describe("useDashboardStore resetState", () => {
       connected: true,
       themeMode: "light",
       currentPage: "discover",
+      discoverQueryDraft: "FROM logs-* | LIMIT 50",
       editingPanelId: "some-panel",
       connectionDialogOpen: true,
     });
@@ -48,6 +49,7 @@ describe("useDashboardStore resetState", () => {
     expect(state.connected).toBe(false);
     expect(state.themeMode).toBe("dark");
     expect(state.currentPage).toBe("dashboard");
+    expect(state.discoverQueryDraft).toBeNull();
     expect(state.editingPanelId).toBeNull();
     expect(state.connectionDialogOpen).toBe(false);
   });

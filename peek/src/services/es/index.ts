@@ -11,4 +11,10 @@ export type {
   EsqlQueryParams,
   EsqlQueryResponse,
   ClusterInfoResponse,
+  ResolveIndexResponse,
+  GetDataStreamsResponse,
+  DataStreamInfo,
+  ResolveIndexDataStreamInfo,
+  FieldCapsResponse,
+  FieldCapability,
 } from "./client";
