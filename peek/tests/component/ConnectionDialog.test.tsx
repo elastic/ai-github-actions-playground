@@ -13,6 +13,8 @@ vi.stubGlobal("fetch", vi.fn());
 
 describe("ConnectionDialog", () => {
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetState();
     // Open the dialog for all tests
     useDashboardStore.getState().setConnectionDialogOpen(true);

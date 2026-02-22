@@ -22,13 +22,13 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type {
   VisualizationType,
   EsqlResponse,
   VisualizationOptions,
   FormatOptions,
 } from "../types";
+import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
 import QueryPipelineSteps from "./QueryPipelineSteps";
@@ -58,9 +58,11 @@ export default function PanelEditor() {
   const [viz, setViz] = useState<VisualizationType>("timeseries");
   const [options, setOptions] = useState<VisualizationOptions>(() => defaultOptions("timeseries"));
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const { runQuery, loading, error, activeStep, clearError } = useEsqlQuery({
+    connection,
+    onSuccess: setPreview,
+    onFailure: () => setPreview(null),
+  });
 
   useEffect(() => {
     if (panel) {
@@ -69,9 +71,9 @@ export default function PanelEditor() {
       setViz(panel.visualization);
       setOptions(panel.options ?? defaultOptions(panel.visualization));
       setPreview(null);
-      setError(null);
+      clearError();
     }
-  }, [panel]);
+  }, [panel, clearError]);
 
   const handleVizChange = useCallback(
     (newViz: VisualizationType) => {
@@ -82,27 +84,6 @@ export default function PanelEditor() {
       setOptions(supportsFormat && currentFormat ? { ...next, format: currentFormat } : next);
     },
     [options],
-  );
-
-  const runQuery = useCallback(
-    async (queryText: string, stepIndex: number | null = null) => {
-      if (!connection || !queryText.trim()) return;
-      setLoading(true);
-      setActiveStep(stepIndex);
-      setError(null);
-      try {
-        const client = new ElasticsearchClient(connection);
-        const data = await client.query({ query: queryText.trim() });
-        setPreview(data);
-      } catch (err) {
-        setError(isElasticsearchError(err) ? err.message : String(err));
-        setPreview(null);
-      } finally {
-        setLoading(false);
-        setActiveStep(null);
-      }
-    },
-    [connection],
   );
 
   const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);

@@ -16,8 +16,8 @@ import DownloadIcon from "@mui/icons-material/Download";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlColumn, EsqlResponse } from "../types";
+import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
@@ -48,36 +48,19 @@ export default function DiscoverPage() {
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState<number | null>(null);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
-
-  const runQuery = useCallback(
-    async (queryText: string, stepIndex: number | null = null) => {
-      if (!connection || !queryText.trim()) return;
-      setLoading(true);
-      setActiveStep(stepIndex);
-      setError(null);
-      try {
-        const client = new ElasticsearchClient(connection);
-        const data = await client.query({ query: queryText.trim() });
-        setResult(data);
-        // By default select all fields
-        setSelectedFields(new Set(data.columns.map((c) => c.name)));
-        setTableVersion((prev) => prev + 1);
-      } catch (err) {
-        setError(isElasticsearchError(err) ? err.message : String(err));
-        setResult(null);
-      } finally {
-        setLoading(false);
-        setActiveStep(null);
-      }
+  const { runQuery, loading, error, activeStep } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => {
+      setResult(data);
+      // By default select all fields
+      setSelectedFields(new Set(data.columns.map((c) => c.name)));
+      setTableVersion((prev) => prev + 1);
     },
-    [connection],
-  );
+    onFailure: () => setResult(null),
+  });
 
   const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
 

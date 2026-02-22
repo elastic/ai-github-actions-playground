@@ -10,6 +10,8 @@ vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("WelcomeScreen", () => {
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetState();
   });
 
