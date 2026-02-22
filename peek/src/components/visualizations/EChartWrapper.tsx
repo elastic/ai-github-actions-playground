@@ -5,6 +5,7 @@ import {
   BarChart,
   PieChart,
   GaugeChart,
+  HeatmapChart,
   ScatterChart,
   CustomChart,
 } from "echarts/charts";
@@ -14,6 +15,7 @@ import {
   LegendComponent,
   TitleComponent,
   DataZoomComponent,
+  VisualMapComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import Box from "@mui/material/Box";
@@ -23,6 +25,7 @@ echarts.use([
   BarChart,
   PieChart,
   GaugeChart,
+  HeatmapChart,
   ScatterChart,
   CustomChart,
   GridComponent,
@@ -30,6 +33,7 @@ echarts.use([
   LegendComponent,
   TitleComponent,
   DataZoomComponent,
+  VisualMapComponent,
   CanvasRenderer,
 ]);
 

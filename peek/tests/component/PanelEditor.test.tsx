@@ -34,11 +34,7 @@ vi.mock("../../src/components/visualizations/Visualization", () => ({
   default: () => <div data-testid="visualization-mock" />,
 }));
 vi.mock("../../src/components/QueryPipelineSteps", () => ({
-  default: ({
-    onRunStep,
-  }: {
-    onRunStep: (query: string, stepIndex: number) => void;
-  }) => (
+  default: ({ onRunStep }: { onRunStep: (query: string, stepIndex: number) => void }) => (
     <button type="button" onClick={() => onRunStep("FROM panel-step-* | LIMIT 2", 1)}>
       Run step 2
     </button>
@@ -87,6 +83,9 @@ describe("PanelEditor", () => {
     expect(screen.getByTitle("Stat")).toBeInTheDocument();
     expect(screen.getByTitle("Gauge")).toBeInTheDocument();
     expect(screen.getByTitle("Pie")).toBeInTheDocument();
+    expect(screen.getByTitle("Heatmap")).toBeInTheDocument();
+    expect(screen.getByTitle("Scatter")).toBeInTheDocument();
+    expect(screen.getByTitle("Histogram")).toBeInTheDocument();
   });
 
   it("switching to table hides format options (ChartOptionsEditor)", async () => {
@@ -97,6 +96,26 @@ describe("PanelEditor", () => {
     await user.click(screen.getByTitle("Table"));
     expect(screen.queryByText("Options")).not.toBeInTheDocument();
   });
+
+  it("switching to heatmap hides format options", async () => {
+    const user = userEvent.setup();
+    render(<PanelEditor />);
+
+    expect(screen.getByText("Options")).toBeInTheDocument();
+    await user.click(screen.getByTitle("Heatmap"));
+    expect(screen.queryByText("Options")).not.toBeInTheDocument();
+  });
+
+  it.each(["Scatter", "Histogram"])(
+    "switching to %s keeps format options visible",
+    async (vizTitle) => {
+      const user = userEvent.setup();
+      render(<PanelEditor />);
+
+      await user.click(screen.getByTitle(vizTitle));
+      expect(screen.getByText("Options")).toBeInTheDocument();
+    },
+  );
 
   it("Save button calls updatePanel with current panel state", async () => {
     const user = userEvent.setup();

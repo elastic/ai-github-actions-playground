@@ -1,109 +1,94 @@
-import { useMemo, useCallback } from "react";
-import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
-import { formatSpanDuration } from "../traces/traceUtils";
+import { useMemo } from "react";
+import { formatValue } from "@perses-dev/core";
+import type { EsqlResponse, ScatterChartOptions } from "../../types";
 import { useEChartTheme } from "./useEChartTheme";
+import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
 
-interface ScatterDataPoint {
-  timestamp: string;
-  durationUs: number;
-  serviceName: string;
-  traceId: string;
+interface Props {
+  data: EsqlResponse;
+  options?: ScatterChartOptions;
 }
 
-interface ScatterChartProps {
-  data: ScatterDataPoint[];
-  onPointClick?: (traceId: string) => void;
-}
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-export default function ScatterChart({ data, onPointClick }: ScatterChartProps) {
+export default function ScatterChart({ data, options }: Props) {
   const theme = useEChartTheme();
+  const format = options?.format;
 
   const option = useMemo(() => {
-    if (data.length === 0) {
-      return { title: { text: "No data to display", left: "center", top: "center" } };
+    const numericIdxs = findNumericColumnIndices(data);
+    const stringIdxs = findStringColumnIndices(data);
+
+    if (numericIdxs.length < 2) {
+      return {
+        title: {
+          text: "Scatter requires at least 2 numeric columns",
+          left: "center",
+          top: "center",
+        },
+      };
     }
 
-    // Group data by service name
-    const byService = new Map<string, ScatterDataPoint[]>();
-    for (const point of data) {
-      const existing = byService.get(point.serviceName);
-      if (existing) {
-        existing.push(point);
-      } else {
-        byService.set(point.serviceName, [point]);
-      }
+    const xIdx = numericIdxs[0]!;
+    const yIdx = numericIdxs[1]!;
+    const groupIdx = stringIdxs[0] ?? -1;
+
+    const xValues = getColumnValues(data, xIdx) as number[];
+    const yValues = getColumnValues(data, yIdx) as number[];
+    const groups = groupIdx >= 0 ? getColumnValues(data, groupIdx).map(String) : null;
+    const uniqueGroups = groups ? [...new Set(groups)] : [data.columns[yIdx]!.name];
+
+    const seriesMap = new Map<string, [number, number][]>();
+    for (const g of uniqueGroups) seriesMap.set(g, []);
+
+    for (let i = 0; i < data.values.length; i++) {
+      const key = groups ? groups[i]! : uniqueGroups[0]!;
+      const x = xValues[i];
+      const y = yValues[i];
+      if (x == null || y == null) continue;
+      seriesMap.get(key)?.push([x, y]);
     }
 
-    const serviceNames = Array.from(byService.keys());
-    const colorMap = buildServiceColorMap(serviceNames);
+    const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};
 
-    const series = serviceNames.map((serviceName) => ({
-      name: serviceName,
-      type: "scatter",
-      symbolSize: 6,
-      data: byService.get(serviceName)!.map((point) => ({
-        value: [new Date(point.timestamp).getTime(), point.durationUs / 1000],
-        traceId: point.traceId,
-      })),
+    const series = [...seriesMap.entries()].map(([name, points], i) => ({
+      name,
+      type: "scatter" as const,
+      data: points,
       itemStyle: {
-        color: colorMap.get(serviceName) ?? getServiceColor(serviceName),
+        color: theme.color?.length ? theme.color[i % theme.color.length] : "#0077CC",
       },
     }));
 
     return {
       ...theme,
-      grid: { left: 60, right: 16, top: 32, bottom: 60 },
+      grid: { left: 48, right: 16, top: 32, bottom: 40 },
       tooltip: {
         ...theme.tooltip,
         trigger: "item",
-        formatter: (params: {
-          seriesName: string;
-          value: [number, number];
-          data: { traceId: string };
-        }) => {
-          const ts = new Date(params.value[0]).toLocaleString();
-          const duration = formatSpanDuration(params.value[1] * 1000);
-          return `<strong>${escapeHtml(params.seriesName)}</strong><br/>Time: ${escapeHtml(ts)}<br/>Duration: ${escapeHtml(duration)}<br/>Trace: ${escapeHtml(params.data.traceId.slice(0, 16))}…`;
-        },
       },
       legend: {
         ...theme.legend,
-        show: serviceNames.length > 1,
+        show: series.length > 1,
         bottom: 0,
-        type: "scroll",
+        type: "scroll" as const,
       },
       xAxis: {
         ...theme.xAxis,
-        type: "time",
+        type: "value" as const,
+        name: data.columns[xIdx]!.name,
       },
       yAxis: {
         ...theme.yAxis,
-        type: "log",
-        name: "Duration (ms)",
+        type: "value" as const,
+        name: data.columns[yIdx]!.name,
         axisLabel: {
           ...(theme.yAxis?.axisLabel ?? {}),
-          formatter: (v: number) => formatSpanDuration(v * 1000),
+          ...axisLabelFormatter,
         },
       },
-      dataZoom: [{ type: "inside", start: 0, end: 100 }],
       series,
     };
-  }, [data, theme]);
+  }, [data, theme, format]);
 
-  const handleClick = useCallback(
-    (params: { data: unknown }) => {
-      const point = params.data as { traceId?: string } | undefined;
-      if (point?.traceId && onPointClick) {
-        onPointClick(point.traceId);
-      }
-    },
-    [onPointClick],
-  );
-
-  return <EChartWrapper option={option} onClick={onPointClick ? handleClick : undefined} />;
+  return <EChartWrapper option={option} />;
 }

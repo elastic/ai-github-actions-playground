@@ -23,7 +23,7 @@ import { getServiceColor } from "./traceColors";
 import type { EsqlResponse } from "../../types";
 import type { TracesViewMode } from "../../store/useTracesStore";
 import WaterfallChart from "../visualizations/WaterfallChart";
-import ScatterChart from "../visualizations/ScatterChart";
+import TraceScatterChart from "../visualizations/TraceScatterChart";
 import SpanDetailDrawer from "./SpanDetailDrawer";
 
 export default function TracesPage() {
@@ -575,7 +575,7 @@ export default function TracesPage() {
               </Box>
             )}
             {result && viewMode === "scatter" && (
-              <ScatterChart
+              <TraceScatterChart
                 data={traceRows.map((r) => ({
                   timestamp: r.timestamp,
                   durationUs: r.durationUs,

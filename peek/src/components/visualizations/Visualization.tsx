@@ -6,6 +6,8 @@ import type {
   BarChartOptions,
   StatPanelOptions,
   GaugePanelOptions,
+  ScatterChartOptions,
+  HistogramChartOptions,
 } from "../../types";
 import TimeSeriesChart from "./TimeSeriesChart";
 import BarChart from "./BarChart";
@@ -13,6 +15,9 @@ import DataTable from "./DataTable";
 import StatPanel from "./StatPanel";
 import GaugePanel from "./GaugePanel";
 import PieChart from "./PieChart";
+import HeatmapChart from "./HeatmapChart";
+import ScatterChart from "./ScatterChart";
+import HistogramChart from "./HistogramChart";
 
 interface Props {
   type: VisualizationType;
@@ -53,6 +58,12 @@ export default function Visualization({ type, data, options, onExportReady }: Pr
       );
     case "pie":
       return <PieChart data={data} onExportReady={onExportReady} />;
+    case "heatmap":
+      return <HeatmapChart data={data} />;
+    case "scatter":
+      return <ScatterChart data={data} options={options as ScatterChartOptions | undefined} />;
+    case "histogram":
+      return <HistogramChart data={data} options={options as HistogramChartOptions | undefined} />;
     default:
       return <DataTable data={data} />;
   }

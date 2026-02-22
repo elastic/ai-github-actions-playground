@@ -25,3 +25,26 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+
+  otelgen-traces:
+    image: ghcr.io/krzko/otelgen:v0.5.2
+    command:
+      - --otel-exporter-otlp-endpoint=otel-collector:4317
+      - --insecure
+      - --rate=5
+      - --duration=86400
+      - traces
+      - multi
+    depends_on:
+      - otel-collector
+
+  otelgen-logs:
+    image: ghcr.io/krzko/otelgen:v0.5.2
+    command:
+      - --otel-exporter-otlp-endpoint=otel-collector:4317
+      - --insecure
+      - --rate=5
+      - logs
+      - multi
+    depends_on:
+      - otel-collector

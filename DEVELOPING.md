@@ -40,20 +40,22 @@ make otel-harness-down # stop and remove OTel host metrics harness
 
 ## Running with a Proxy
 
-Use `make serve-proxy` (or `ES_URL=... npm run dev` in the `peek/` directory) to start the Vite dev server with a built-in proxy. The proxy forwards `/_query` requests to your Elasticsearch cluster, so no CORS configuration is needed on Elasticsearch.
+Use `make serve-proxy` (or `ES_URL=... npm run dev` in the `peek/` directory) to start the Vite dev server with a built-in proxy. The proxy forwards requests to your Elasticsearch cluster, so no CORS configuration is needed on Elasticsearch.
 
 ```bash
 ES_URL=http://localhost:9200 make serve-proxy
 ```
 
-Then enter `http://localhost:3000` as the Elasticsearch URL when connecting the dashboard. The dev server will transparently proxy all `/_query` calls to `ES_URL`.
+Then enter `http://localhost:3000/_es` as the Elasticsearch URL when connecting the dashboard. The `/_es` prefix proxies all Elasticsearch API requests (connection validation, cluster health, queries, data streams, field caps, API console, etc.) to `ES_URL`.
 
 ```
-┌─────────────┐    /_query      ┌──────────────────┐    /_query      ┌────────────────────┐
+┌─────────────┐    /_es/*       ┌──────────────────┐    /*             ┌────────────────────┐
 │   Browser    │ ─────────────▶  │  Vite dev server  │ ─────────────▶  │   Elasticsearch    │
 │              │ ◀─────────────  │  (localhost:3000) │ ◀─────────────  │   cluster          │
 └─────────────┘    JSON          └──────────────────┘    JSON          └────────────────────┘
 ```
+
+> **Legacy path:** The `/_query` path is also proxied directly for backward compatibility with ES|QL-only workflows.
 
 ## Architecture
 
@@ -105,11 +107,11 @@ Or with Docker Compose:
 ES_URL=http://my-elasticsearch:9200 docker compose up
 ```
 
-Open `http://localhost:8080` and enter `http://localhost:8080` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_query` requests to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
+Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) and `/_query` requests to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
 
-## OTel Host Metrics Harness
+## OTel Harness
 
-Use this harness to generate real host metrics in a local `metrics-*` index so query work can run against incoming telemetry instead of seeded fixtures.
+Use this harness to generate real telemetry in local `metrics-*`, `traces-*`, and `logs-*` indices so query work can run against incoming data instead of seeded fixtures.
 
 ```bash
 make otel-harness-up
@@ -117,7 +119,9 @@ make otel-harness-up
 
 This starts:
 - Elasticsearch (`http://localhost:9200`)
-- OpenTelemetry Collector (`hostmetrics` receiver + Elasticsearch exporter)
+- OpenTelemetry Collector (`hostmetrics` receiver + OTLP receiver + Elasticsearch exporter)
+- otelgen traces generator (synthetic traces via OTLP)
+- otelgen logs generator (synthetic logs via OTLP)
 
 Stop it with:
 
@@ -144,10 +148,21 @@ curl -s -X POST 'http://localhost:9200/_query' \
 ```bash
 make test-unit        # fast, no Docker needed — primary CI gate
 make test-integration # requires Docker (spins up Elasticsearch via Testcontainers)
-make test             # run both
+make test-e2e         # Playwright browser tests (starts dev server automatically)
+make test             # run all (unit, integration, e2e)
 ```
 
 Unit tests (`peek/tests/unit/`) run in jsdom via Vitest. Integration tests (`peek/tests/integration/`) use [Testcontainers](https://testcontainers.com/) to start a real Elasticsearch instance, seed test data, and run ES|QL queries through the app's `executeEsql` service. **Docker must be running** for integration tests.
+
+E2E tests (`peek/tests/e2e/`) use [Playwright](https://playwright.dev/) to launch a real browser against the Vite dev server. Playwright and the Chromium browser are installed as devDependencies — run `npx playwright install chromium` if the browser binary is missing.
+
+To run E2E tests against live Elasticsearch data, start the OTel harness first:
+
+```bash
+make otel-harness-up                 # start Elasticsearch + OTel collector
+ES_URL=http://localhost:9200 make test-e2e   # run e2e tests with proxy
+make otel-harness-down               # stop when done
+```
 
 ### Testing Philosophy
 
