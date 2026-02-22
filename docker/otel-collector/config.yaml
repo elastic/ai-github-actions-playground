@@ -11,6 +11,10 @@ receivers:
       paging:
       process:
       processes:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
 
 processors:
   batch:
@@ -25,5 +29,13 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics]
+      processors: [batch]
+      exporters: [elasticsearch]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch]
+    logs:
+      receivers: [otlp]
       processors: [batch]
       exporters: [elasticsearch]

@@ -109,9 +109,9 @@ ES_URL=http://my-elasticsearch:9200 docker compose up
 
 Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) and `/_query` requests to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
 
-## OTel Host Metrics Harness
+## OTel Harness
 
-Use this harness to generate real host metrics in a local `metrics-*` index so query work can run against incoming telemetry instead of seeded fixtures.
+Use this harness to generate real telemetry in local `metrics-*`, `traces-*`, and `logs-*` indices so query work can run against incoming data instead of seeded fixtures.
 
 ```bash
 make otel-harness-up
@@ -119,7 +119,9 @@ make otel-harness-up
 
 This starts:
 - Elasticsearch (`http://localhost:9200`)
-- OpenTelemetry Collector (`hostmetrics` receiver + Elasticsearch exporter)
+- OpenTelemetry Collector (`hostmetrics` receiver + OTLP receiver + Elasticsearch exporter)
+- otelgen traces generator (synthetic traces via OTLP)
+- otelgen logs generator (synthetic logs via OTLP)
 
 Stop it with:
 
