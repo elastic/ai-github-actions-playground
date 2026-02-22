@@ -60,6 +60,7 @@ export function useEsqlQuery({
           const serverDurationMs = getServerDurationMs(data);
           if (serverDurationMs !== null) {
             if (stepIndex === null) {
+              setStepDurationsMs({});
               setLastRunDurationMs(serverDurationMs);
             } else {
               setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));

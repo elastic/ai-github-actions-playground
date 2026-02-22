@@ -22,6 +22,7 @@ import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
+import { formatDuration } from "./formatDuration";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
@@ -41,11 +42,6 @@ function getTypeColor(type: string): "default" | "primary" | "secondary" | "succ
   if (type === "keyword" || type === "text" || type === "ip" || type === "version")
     return "success";
   return "default";
-}
-
-function formatDuration(durationMs: number): string {
-  if (durationMs >= 1000) return `${(durationMs / 1000).toFixed(durationMs >= 10000 ? 0 : 1)}s`;
-  return `${durationMs}ms`;
 }
 
 export default function DiscoverPage() {

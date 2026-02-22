@@ -6,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { splitEsqlPipeline } from "./discoverUtils";
+import { formatDuration } from "./formatDuration";
 
 interface QueryPipelineStepsProps {
   query: string;
@@ -13,11 +14,6 @@ interface QueryPipelineStepsProps {
   activeStep: number | null;
   stepDurationsMs?: Record<number, number>;
   onRunStep: (cumulativeQuery: string, stepIndex: number) => void;
-}
-
-function formatDuration(durationMs: number): string {
-  if (durationMs >= 1000) return `${(durationMs / 1000).toFixed(durationMs >= 10000 ? 0 : 1)}s`;
-  return `${durationMs}ms`;
 }
 
 /**
