@@ -1,4 +1,5 @@
 import type { ElasticsearchConnection, EsqlResponse, EsqlError, TimeRange } from "../types";
+import { resolveDateTime } from "./datemath";
 
 export async function executeEsql(
   connection: ElasticsearchConnection,
@@ -32,6 +33,12 @@ export async function executeEsql(
         },
       },
     };
+
+    // Populate ?_tstart / ?_tend named parameters that Kibana normally provides.
+    const params = buildTimeParams(query, timeRange);
+    if (params.length > 0) {
+      body.params = params;
+    }
   }
 
   const start = Date.now();
@@ -81,4 +88,32 @@ export async function testConnection(
 
 export function isEsqlError(err: unknown): err is EsqlError {
   return typeof err === "object" && err !== null && "status" in err && "message" in err;
+}
+
+/**
+ * Build ES|QL named-parameter entries for `_tstart` / `_tend` when the
+ * query references them.  Returns an empty array when neither placeholder
+ * is present.
+ */
+export function buildTimeParams(
+  query: string,
+  timeRange: TimeRange,
+): Array<Record<string, string>> {
+  const needs_tstart = query.includes("?_tstart");
+  const needs_tend = query.includes("?_tend");
+  if (!needs_tstart && !needs_tend) return [];
+
+  const now = new Date();
+  const params: Array<Record<string, string>> = [];
+
+  if (needs_tstart) {
+    const resolved = resolveDateTime(timeRange.from, now);
+    if (resolved) params.push({ _tstart: resolved.toISOString() });
+  }
+  if (needs_tend) {
+    const resolved = resolveDateTime(timeRange.to, now);
+    if (resolved) params.push({ _tend: resolved.toISOString() });
+  }
+
+  return params;
 }
