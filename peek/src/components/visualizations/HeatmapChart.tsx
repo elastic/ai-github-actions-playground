@@ -40,10 +40,12 @@ export default function HeatmapChart({ data }: Props) {
         : data.values.map((_, i) => String(i));
     const yLabels = yIdx >= 0 ? [...new Set(getColumnValues(data, yIdx).map(String))] : ["value"];
 
-    const heatmapData = data.values.map((row, i) => {
+    const heatmapData = data.values.flatMap((row, i) => {
+      const value = rawValues[i];
+      if (value == null) return [];
       const xVal = xIdx >= 0 ? String(row[xIdx]) : String(i);
       const yVal = yIdx >= 0 ? String(row[yIdx]) : "value";
-      return [xLabels.indexOf(xVal), yLabels.indexOf(yVal), rawValues[i] ?? 0];
+      return [[xLabels.indexOf(xVal), yLabels.indexOf(yVal), value]];
     });
 
     return {

@@ -102,6 +102,23 @@ describe("HistogramChart", () => {
     expect(xAxis.data).toHaveLength(10);
   });
 
+  it.each([
+    { bins: 0, desc: "zero" },
+    { bins: -5, desc: "negative" },
+    { bins: 3.7, desc: "non-integer" },
+  ])("clamps bins to valid range for $desc value ($bins)", ({ bins }) => {
+    const data: EsqlResponse = {
+      columns: [{ name: "value", type: "double" }],
+      values: Array.from({ length: 10 }, (_, i) => [i]),
+    };
+    render(<HistogramChart data={data} options={{ bins }} />);
+    const option = getLastSetOptionCall();
+    const xAxis = option.xAxis as { data: string[] };
+    expect(xAxis.data.length).toBeGreaterThanOrEqual(1);
+    const series = option.series as { data: number[] }[];
+    expect(series[0].data.reduce((a, b) => a + b, 0)).toBe(10);
+  });
+
   it("rotates labels when bins exceed 10", () => {
     const data: EsqlResponse = {
       columns: [{ name: "value", type: "double" }],

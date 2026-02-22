@@ -12,7 +12,7 @@ interface Props {
 
 export default function HistogramChart({ data, options }: Props) {
   const theme = useEChartTheme();
-  const bins = options?.bins ?? 10;
+  const bins = Math.min(100, Math.max(1, Math.round(options?.bins ?? 10)));
   const format = options?.format;
 
   const option = useMemo(() => {
@@ -71,7 +71,7 @@ export default function HistogramChart({ data, options }: Props) {
         type: "value" as const,
         name: "Count",
         axisLabel: {
-          ...theme.yAxis.axisLabel,
+          ...(theme.yAxis?.axisLabel ?? {}),
           ...axisLabelFormatter,
         },
       },
@@ -81,7 +81,7 @@ export default function HistogramChart({ data, options }: Props) {
           type: "bar" as const,
           data: counts,
           itemStyle: {
-            color: theme.color.length ? theme.color[0] : "#0077CC",
+            color: theme.color?.length ? theme.color[0] : "#0077CC",
             borderRadius: [4, 4, 0, 0],
           },
           barWidth: "90%",

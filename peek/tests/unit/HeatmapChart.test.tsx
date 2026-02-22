@@ -110,6 +110,27 @@ describe("HeatmapChart", () => {
     ]);
   });
 
+  it("skips null-valued rows from heatmap series data", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "x", type: "keyword" },
+        { name: "y", type: "keyword" },
+        { name: "value", type: "double" },
+      ],
+      values: [
+        ["a", "p", 10],
+        ["b", "q", null],
+        ["c", "r", 30],
+      ],
+    };
+    render(<HeatmapChart data={data} />);
+    const option = getLastSetOptionCall();
+    const series = option.series as { data: number[][] }[];
+    // Null row ("b","q",null) should be excluded — only 2 data points
+    expect(series[0].data).toHaveLength(2);
+    expect(series[0].data.every((d) => d[2] !== 0)).toBe(true);
+  });
+
   it("falls back to row indices when no string columns exist", () => {
     const data: EsqlResponse = {
       columns: [{ name: "value", type: "double" }],
