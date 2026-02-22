@@ -14,6 +14,7 @@ import ExploreIcon from "@mui/icons-material/Explore";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
 import DatasetIcon from "@mui/icons-material/Dataset";
+import InfoIcon from "@mui/icons-material/Info";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -30,6 +31,7 @@ type Page =
   | "console"
   | "chat"
   | "settings"
+  | "clusterOverview"
   | "dashboardManagement";
 
 interface NavItem {
@@ -87,6 +89,12 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "System",
     items: [
+      {
+        label: "Cluster Overview",
+        page: "clusterOverview",
+        icon: <InfoIcon fontSize="small" />,
+        requiresConnection: true,
+      },
       {
         label: "Data Streams",
         page: "dataStreams",

@@ -38,6 +38,14 @@ describe("App shell visibility", () => {
     expect(screen.queryByText("Dashboard Management")).not.toBeInTheDocument();
   });
 
+  it("shows welcome screen when disconnected and current page is cluster overview", () => {
+    useDashboardStore.getState().setCurrentPage("clusterOverview");
+    render(<App />);
+
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+    expect(screen.queryByText("Cluster Overview")).not.toBeInTheDocument();
+  });
+
   it("shows welcome screen when disconnected and current page is console", () => {
     useDashboardStore.getState().setCurrentPage("console");
     render(<App />);
