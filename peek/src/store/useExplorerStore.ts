@@ -2,7 +2,16 @@ import { create } from "zustand";
 import type { TimeRange } from "../types";
 import type { AggregationType, ExplorerFilter, FieldInfo, MetricType } from "../services/es";
 
-const VALID_AGGREGATIONS: AggregationType[] = ["avg", "sum", "min", "max", "count", "p50", "p95", "p99"];
+const VALID_AGGREGATIONS: AggregationType[] = [
+  "avg",
+  "sum",
+  "min",
+  "max",
+  "count",
+  "p50",
+  "p95",
+  "p99",
+];
 
 function isAggregationType(value: string | null): value is AggregationType {
   return value !== null && VALID_AGGREGATIONS.includes(value as AggregationType);
