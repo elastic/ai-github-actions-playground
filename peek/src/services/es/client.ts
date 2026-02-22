@@ -21,7 +21,7 @@ export type EsqlQueryRequest =
 export type EsqlQueryParams = Omit<EsqlQueryRequest, "filter" | "params"> & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filter?: Record<string, any>;
-  params?: Array<Record<string, string>> | EsqlQueryRequest["params"];
+  params?: Array<Record<string, string | number | boolean>> | EsqlQueryRequest["params"];
 };
 
 /** Response from POST /_query */
@@ -31,6 +31,15 @@ export type EsqlQueryResponse =
 /** Response from GET / (cluster info) */
 export type ClusterInfoResponse =
   operations["info"]["responses"][200]["content"]["application/json"];
+export type ResolveIndexResponse =
+  operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
+export type GetDataStreamsResponse =
+  operations["indices-get-data-stream"]["responses"][200]["content"]["application/json"];
+export type DataStreamInfo = GetDataStreamsResponse["data_streams"][number];
+export type ResolveIndexDataStreamInfo = ResolveIndexResponse["data_streams"][number];
+export type FieldCapsResponse =
+  operations["field-caps-2"]["responses"][200]["content"]["application/json"];
+export type FieldCapability = components["schemas"]["_global.field_caps.FieldCapability"];
 
 /**
  * Backward-compatible alias — matches the shape components were already using.
@@ -81,6 +90,7 @@ interface HasPrivilegesResponse {
 const MAX_RETRIES = 3;
 const RETRY_STATUSES = new Set([429, 503]);
 const INITIAL_BACKOFF_MS = 500;
+const RAW_REQUEST_TIMEOUT_MS = 30_000;
 
 function sleepAbortable(ms: number, signal?: AbortSignal | null): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -211,6 +221,30 @@ export class ElasticsearchClient {
     return this._fetch<ClusterInfoResponse>("/", { signal });
   }
 
+  async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {
+    return this._fetch<ResolveIndexResponse>(`/_resolve/index/${encodeURIComponent(name)}`, {
+      signal,
+    });
+  }
+
+  async getDataStreams(name?: string, signal?: AbortSignal): Promise<GetDataStreamsResponse> {
+    const path = name ? `/_data_stream/${encodeURIComponent(name)}` : "/_data_stream";
+    return this._fetch<GetDataStreamsResponse>(path, { signal });
+  }
+
+  async getFieldCaps(
+    index: string,
+    fields?: string[],
+    signal?: AbortSignal,
+  ): Promise<FieldCapsResponse> {
+    const params = new URLSearchParams();
+    const normalizedFields = fields?.map((field) => field.trim()).filter(Boolean) ?? [];
+    params.set("fields", normalizedFields.length > 0 ? normalizedFields.join(",") : "*");
+    const query = params.toString();
+    const path = `/${encodeURIComponent(index)}/_field_caps${query ? `?${query}` : ""}`;
+    return this._fetch<FieldCapsResponse>(path, { signal });
+  }
+
   // -------------------------------------------------------------------------
   // Security / capabilities
   // -------------------------------------------------------------------------
@@ -234,6 +268,62 @@ export class ElasticsearchClient {
       // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
       return { canManageDataStreams: false };
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Raw request (API console)
+  // -------------------------------------------------------------------------
+
+  /** Execute an arbitrary HTTP request against the connected Elasticsearch cluster. */
+  async rawRequest(
+    method: string,
+    path: string,
+    body?: string,
+    signal?: AbortSignal,
+  ): Promise<{ status: number; body: unknown }> {
+    const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort(new DOMException("Request timed out", "AbortError"));
+    }, RAW_REQUEST_TIMEOUT_MS);
+    const onAbort = () => {
+      controller.abort(signal?.reason);
+    };
+    if (signal?.aborted) {
+      onAbort();
+    } else {
+      signal?.addEventListener("abort", onAbort, { once: true });
+    }
+    const init: RequestInit = {
+      method,
+      headers: { ...this.headers },
+      signal: controller.signal,
+    };
+    if (body && body.trim()) {
+      init.body = body;
+    }
+    let response: Response;
+    try {
+      response = await fetch(url, init);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener("abort", onAbort);
+      throw {
+        status: 0,
+        message: err instanceof Error ? err.message : String(err),
+      } satisfies ElasticsearchError;
+    }
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onAbort);
+    const contentType = response.headers.get("content-type") ?? "";
+    let responseBody: unknown;
+    if (contentType.includes("application/json")) {
+      responseBody = await response.json().catch(() => null);
+    } else {
+      const text = await response.text().catch(() => "");
+      responseBody = text || null;
+    }
+    return { status: response.status, body: responseBody };
   }
 }
 

@@ -5,11 +5,9 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import Tooltip from "@mui/material/Tooltip";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
-import Chip from "@mui/material/Chip";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Dialog from "@mui/material/Dialog";
@@ -17,16 +15,16 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
-import LightModeIcon from "@mui/icons-material/LightMode";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import CloudDoneIcon from "@mui/icons-material/CloudDone";
-import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import ExploreIcon from "@mui/icons-material/Explore";
+import DatasetIcon from "@mui/icons-material/Dataset";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
@@ -93,10 +91,16 @@ export default function AppHeader() {
   const [titleValue, setTitleValue] = useState(dashboard.title);
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
+  const [systemAnchor, setSystemAnchor] = useState<null | HTMLElement>(null);
+  const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
+  const tabValue =
+    currentPage === "dataStreams" || currentPage === "settings" || currentPage === "chat"
+      ? false
+      : currentPage;
   const timeRangeRef = useRef(dashboard.timeRange);
   useEffect(() => {
     timeRangeRef.current = dashboard.timeRange;
@@ -204,8 +208,10 @@ export default function AppHeader() {
 
         {connected && (
           <Tabs
-            value={currentPage}
-            onChange={(_, v: "dashboard" | "discover" | "docs") => setCurrentPage(v)}
+            value={tabValue}
+            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs" | "console") =>
+              setCurrentPage(v)
+            }
             sx={{ ml: 2, minHeight: 48 }}
             TabIndicatorProps={{ style: { height: 3 } }}
           >
@@ -218,8 +224,22 @@ export default function AppHeader() {
             />
             <Tab
               value="discover"
-              label="Discover"
+              label="Query Lab"
               icon={<SearchIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="explore"
+              label="Metrics"
+              icon={<ExploreIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="console"
+              label="Console"
+              icon={<TerminalIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
@@ -233,16 +253,38 @@ export default function AppHeader() {
           </Tabs>
         )}
 
-        <Box sx={{ flex: 1 }} />
+        {connected && (
+          <>
+            <Button
+              size="small"
+              variant={currentPage === "dataStreams" ? "contained" : "text"}
+              color={currentPage === "dataStreams" ? "primary" : "inherit"}
+              startIcon={<DatasetIcon fontSize="small" />}
+              endIcon={<ExpandMoreIcon fontSize="small" />}
+              onClick={(e) => setSystemAnchor(e.currentTarget)}
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem", ml: 0.5 }}
+            >
+              System
+            </Button>
+            <Menu
+              anchorEl={systemAnchor}
+              open={Boolean(systemAnchor)}
+              onClose={() => setSystemAnchor(null)}
+            >
+              <MenuItem
+                selected={currentPage === "dataStreams"}
+                onClick={() => {
+                  setCurrentPage("dataStreams");
+                  setSystemAnchor(null);
+                }}
+              >
+                Data Streams
+              </MenuItem>
+            </Menu>
+          </>
+        )}
 
-        <Chip
-          icon={connected ? <CloudDoneIcon /> : <CloudOffIcon />}
-          label={connected ? "Connected" : "Disconnected"}
-          color={connected ? "success" : "default"}
-          size="small"
-          onClick={() => setConnectionDialogOpen(true)}
-          sx={{ cursor: "pointer" }}
-        />
+        <Box sx={{ flex: 1 }} />
 
         {connected && (
           <>
@@ -313,24 +355,54 @@ export default function AppHeader() {
           </>
         )}
 
-        <Tooltip title="Connection settings">
-          <IconButton size="small" onClick={() => setConnectionDialogOpen(true)}>
-            <SettingsIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={themeMode === "dark" ? "Light mode" : "Dark mode"}>
-          <IconButton
-            size="small"
-            onClick={() => setThemeMode(themeMode === "dark" ? "light" : "dark")}
+        <IconButton
+          size="small"
+          color={currentPage === "settings" ? "primary" : "default"}
+          onClick={(e) => setSettingsAnchor(e.currentTarget)}
+          aria-label="Settings"
+        >
+          <SettingsIcon fontSize="small" />
+        </IconButton>
+        <Menu
+          anchorEl={settingsAnchor}
+          open={Boolean(settingsAnchor)}
+          onClose={() => setSettingsAnchor(null)}
+        >
+          <MenuItem
+            onClick={() => {
+              setConnectionDialogOpen(true);
+              setSettingsAnchor(null);
+            }}
           >
-            {themeMode === "dark" ? (
-              <LightModeIcon fontSize="small" />
-            ) : (
-              <DarkModeIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
+            Connection Settings
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setThemeMode(themeMode === "dark" ? "light" : "dark");
+              setSettingsAnchor(null);
+            }}
+          >
+            Dark/Light Mode
+          </MenuItem>
+          <MenuItem
+            selected={currentPage === "chat"}
+            onClick={() => {
+              setCurrentPage("chat");
+              setSettingsAnchor(null);
+            }}
+          >
+            Chat
+          </MenuItem>
+          <MenuItem
+            selected={currentPage === "settings"}
+            onClick={() => {
+              setCurrentPage("settings");
+              setSettingsAnchor(null);
+            }}
+          >
+            LLM Settings
+          </MenuItem>
+        </Menu>
 
         <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
           <MoreVertIcon fontSize="small" />

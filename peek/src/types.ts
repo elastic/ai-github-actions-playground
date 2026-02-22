@@ -55,11 +55,33 @@ export interface PanelDefinition {
   refreshInterval?: number;
 }
 
+/** How a dashboard parameter gets its selectable values. */
+export type ParameterSource =
+  | { mode: "text" }
+  | { mode: "options"; values: string[] }
+  | { mode: "esql"; query: string };
+
+/** A user-defined dashboard variable referenced as `?name` in ES|QL queries. */
+export interface DashboardParameter {
+  /** Identifier used in ES|QL queries (e.g. `service` → `?service`). */
+  name: string;
+  /** Human-readable label shown in the parameter bar. */
+  label: string;
+  /** ES|QL parameter type. */
+  type: "keyword" | "number" | "boolean" | "date";
+  /** How values are provided. */
+  source: ParameterSource;
+  /** Current value of the parameter. */
+  value: string | number | boolean;
+}
+
 export interface DashboardDefinition {
   id: string;
   title: string;
   description?: string;
   panels: PanelDefinition[];
+  /** Dashboard-level named parameters reusable across all panel queries. */
+  parameters?: DashboardParameter[];
   timeRange: TimeRange;
   /** Auto-refresh interval in seconds, 0 = disabled */
   refreshInterval?: number;

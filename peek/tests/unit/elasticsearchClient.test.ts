@@ -114,6 +114,51 @@ describe("request construction", () => {
     expect(init.method).toBeUndefined(); // GET is the default
   });
 
+  it("getDataStreams() GETs /_data_stream", async () => {
+    const fetchSpy = mockFetchOnce({ data_streams: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getDataStreams();
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/_data_stream`);
+    expect(init.method).toBeUndefined();
+  });
+
+  it("resolveIndex() GETs encoded /_resolve/index/{name}", async () => {
+    const fetchSpy = mockFetchOnce({ indices: [], aliases: [], data_streams: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.resolveIndex("logs-*,metrics-*");
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/_resolve/index/logs-*%2Cmetrics-*`);
+  });
+
+  it("getFieldCaps() appends fields query parameter", async () => {
+    const fetchSpy = mockFetchOnce({ fields: {}, indices: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getFieldCaps("logs-*", ["@timestamp", "message"]);
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/logs-*/_field_caps?fields=%40timestamp%2Cmessage`);
+  });
+
+  it("getFieldCaps() defaults to wildcard fields when none are provided", async () => {
+    const fetchSpy = mockFetchOnce({ fields: {}, indices: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getFieldCaps("logs-*");
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/logs-*/_field_caps?fields=*`);
+  });
+
   it("strips trailing slashes from the base URL", async () => {
     const fetchSpy = mockFetchOnce({ cluster_name: "test" });
     vi.stubGlobal("fetch", fetchSpy);
@@ -422,5 +467,69 @@ describe("getCapabilities", () => {
     expect(url).toBe(`${BASE_URL}/_security/user/_has_privileges`);
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body as string)).toEqual({ cluster: ["manage_data_stream"] });
+  });
+});
+
+// ── rawRequest (API console) ───────────────────────────────────────────────
+
+describe("rawRequest", () => {
+  it("normalizes path without a leading slash", async () => {
+    const fetchSpy = mockFetchOnce({ ok: true }, { status: 200 });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.rawRequest("GET", "_cat/indices?v");
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/_cat/indices?v`);
+    expect(init.method).toBe("GET");
+  });
+
+  it("sends request body only when provided", async () => {
+    const fetchSpy = mockFetchOnce({ acknowledged: true }, { status: 200 });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.rawRequest("POST", "/_bulk", '{"index":{}}');
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe('{"index":{}}');
+  });
+
+  it("parses JSON responses when content-type is application/json", async () => {
+    const fetchSpy = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ hits: { total: 1 } }), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    const result = await client.rawRequest("GET", "/_search");
+    expect(result).toEqual({ status: 200, body: { hits: { total: 1 } } });
+  });
+
+  it("parses plain-text responses when content-type is not JSON", async () => {
+    const fetchSpy = vi.fn().mockResolvedValueOnce(
+      new Response("green 1 1 0 0 0 0 0 0 -", {
+        status: 200,
+        headers: { "content-type": "text/plain" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    const result = await client.rawRequest("GET", "/_cat/health?v");
+    expect(result).toEqual({ status: 200, body: "green 1 1 0 0 0 0 0 0 -" });
+  });
+
+  it("maps fetch failures to ElasticsearchError shape", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network down")));
+
+    const client = makeClient();
+    await expect(client.rawRequest("GET", "/")).rejects.toEqual(
+      expect.objectContaining({ status: 0, message: "network down" }),
+    );
   });
 });

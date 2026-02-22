@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -40,15 +40,13 @@ export default function ConnectionDialog() {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const [prevSavedConn, setPrevSavedConn] = useState(savedConn);
-  if (savedConn !== prevSavedConn) {
-    setPrevSavedConn(savedConn);
+  useEffect(() => {
     setUrl(savedConn?.url ?? "");
     setAuthType(savedConn?.username ? "userpass" : "apiKey");
     setApiKey(savedConn?.apiKey ?? "");
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
-  }
+  }, [savedConn]);
 
   const buildConnection = useCallback((): ElasticsearchConnection => {
     if (authType === "userpass") {

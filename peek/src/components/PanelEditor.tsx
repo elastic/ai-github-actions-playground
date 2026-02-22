@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -13,6 +13,8 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TableChartIcon from "@mui/icons-material/TableChart";
@@ -22,15 +24,20 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import type { EsqlQueryParams } from "../services/es";
+import { buildQueryParams } from "../services/datemath";
 import type {
   VisualizationType,
   EsqlResponse,
   VisualizationOptions,
   FormatOptions,
+  PanelDefinition,
 } from "../types";
+import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import Visualization from "./visualizations/Visualization";
 import ChartOptionsEditor, { defaultOptions } from "./ChartOptionsEditor";
+import QueryPipelineSteps from "./QueryPipelineSteps";
+import { runQueryShortcutExtension } from "./queryEditorExtensions";
 
 const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
   { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
@@ -43,33 +50,64 @@ const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; labe
 
 export default function PanelEditor() {
   const editingId = useDashboardStore((s) => s.editingPanelId);
-  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
   const panels = useDashboardStore((s) => s.dashboard.panels);
+  const panel = panels.find((p) => p.id === editingId);
+
+  if (!panel || !editingId) {
+    return null;
+  }
+
+  return <PanelEditorDialog key={editingId} panel={panel} editingId={editingId} />;
+}
+
+function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
+  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
   const updatePanel = useDashboardStore((s) => s.updatePanel);
   const removePanel = useDashboardStore((s) => s.removePanel);
   const connection = useDashboardStore((s) => s.connection);
+  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
+  const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const themeMode = useDashboardStore((s) => s.themeMode);
+  const queryHistory = useDashboardStore((s) => s.queryHistory);
+  const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
 
-  const panel = panels.find((p) => p.id === editingId);
-
-  const [title, setTitle] = useState("");
-  const [query, setQuery] = useState("");
-  const [viz, setViz] = useState<VisualizationType>("timeseries");
-  const [options, setOptions] = useState<VisualizationOptions>(() => defaultOptions("timeseries"));
+  const [title, setTitle] = useState(panel.title);
+  const [query, setQuery] = useState(panel.query);
+  const [viz, setViz] = useState<VisualizationType>(panel.visualization);
+  const [options, setOptions] = useState<VisualizationOptions>(
+    panel.options ?? defaultOptions(panel.visualization),
+  );
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (panel) {
-      setTitle(panel.title);
-      setQuery(panel.query);
-      setViz(panel.visualization);
-      setOptions(panel.options ?? defaultOptions(panel.visualization));
-      setPreview(null);
-      setError(null);
-    }
-  }, [panel]);
+  const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
+  const buildRequest = useCallback(
+    (queryText: string): EsqlQueryParams => {
+      const body: EsqlQueryParams = { query: queryText };
+      if (!timeRange) return body;
+      body.filter = {
+        range: {
+          "@timestamp": {
+            gte: timeRange.from,
+            lte: timeRange.to,
+          },
+        },
+      };
+      const queryParams = buildQueryParams(queryText, timeRange, parameters);
+      if (queryParams.length > 0) {
+        body.params = queryParams;
+      }
+      return body;
+    },
+    [timeRange, parameters],
+  );
+  const { runQuery, loading, error, activeStep } = useEsqlQuery({
+    connection,
+    onSuccess: (data, executedQuery) => {
+      setPreview(data);
+      appendQueryToHistory(executedQuery);
+    },
+    onFailure: () => setPreview(null),
+    buildRequest,
+  });
 
   const handleVizChange = useCallback(
     (newViz: VisualizationType) => {
@@ -82,21 +120,20 @@ export default function PanelEditor() {
     [options],
   );
 
-  const handleRunQuery = useCallback(async () => {
-    if (!connection || !query.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const data = await client.query({ query: query.trim() });
-      setPreview(data);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
-      setPreview(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, query]);
+  const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
+
+  const handleRunStep = useCallback(
+    (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
+    [runQuery],
+  );
+  const handleSelectHistory = useCallback((selectedQuery: string) => {
+    setQuery(selectedQuery);
+    setHistoryAnchor(null);
+  }, []);
+  const queryEditorExtensions = useMemo(
+    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
+    [handleRunQuery],
+  );
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
@@ -181,12 +218,18 @@ export default function PanelEditor() {
             <CodeMirror
               value={query}
               onChange={setQuery}
-              extensions={[sql()]}
+              extensions={queryEditorExtensions}
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}
             />
           </Box>
+          <QueryPipelineSteps
+            query={query}
+            loading={loading}
+            activeStep={activeStep}
+            onRunStep={handleRunStep}
+          />
         </Box>
 
         {/* Query controls row */}
@@ -198,13 +241,32 @@ export default function PanelEditor() {
             disabled={loading || !query.trim()}
           >
             {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
-            Run Query
+            Run Query (Ctrl/Cmd+Enter)
           </Button>
           {preview && (
             <Typography variant="caption" color="text.secondary">
               {preview.values.length} rows × {preview.columns.length} columns
             </Typography>
           )}
+          <Button
+            variant="text"
+            size="small"
+            onClick={(e) => setHistoryAnchor(e.currentTarget)}
+            disabled={queryHistory.length === 0}
+          >
+            Recent queries
+          </Button>
+          <Menu
+            anchorEl={historyAnchor}
+            open={Boolean(historyAnchor)}
+            onClose={() => setHistoryAnchor(null)}
+          >
+            {queryHistory.map((historyQuery, idx) => (
+              <MenuItem key={idx} onClick={() => handleSelectHistory(historyQuery)}>
+                {historyQuery}
+              </MenuItem>
+            ))}
+          </Menu>
           <Box sx={{ flex: 1 }} />
           {/* Visualization type */}
           <ToggleButtonGroup

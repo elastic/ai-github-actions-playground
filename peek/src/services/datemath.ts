@@ -5,7 +5,7 @@
  * possible.
  */
 
-import type { TimeRange } from "../types";
+import type { DashboardParameter, TimeRange } from "../types";
 
 const UNIT_MS: Record<string, number> = {
   s: 1_000,
@@ -16,6 +16,11 @@ const UNIT_MS: Record<string, number> = {
 };
 
 const DATE_MATH_RE = /^now(?:([+-])(\d+)([smhdw]))?$/;
+function hasNamedPlaceholder(query: string, name: string): boolean {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`\\?${escapedName}(?![A-Za-z0-9_])`);
+  return pattern.test(query);
+}
 
 /**
  * Resolve a single date-math expression to a `Date`.
@@ -41,8 +46,8 @@ export function buildTimeParams(
   query: string,
   timeRange: TimeRange,
 ): Array<Record<string, string>> {
-  const needs_tstart = query.includes("?_tstart");
-  const needs_tend = query.includes("?_tend");
+  const needs_tstart = hasNamedPlaceholder(query, "_tstart");
+  const needs_tend = hasNamedPlaceholder(query, "_tend");
   if (!needs_tstart && !needs_tend) return [];
 
   const now = new Date();
@@ -58,4 +63,55 @@ export function buildTimeParams(
   }
 
   return params;
+}
+
+/**
+ * Build the full ES|QL `params` array by merging time-range parameters with
+ * user-defined dashboard parameters.  Only parameters actually referenced in
+ * the query (via `?name`) are included.
+ */
+export function buildQueryParams(
+  query: string,
+  timeRange: TimeRange,
+  userParams?: DashboardParameter[],
+): Array<Record<string, string | number | boolean>> {
+  const params: Array<Record<string, string | number | boolean>> = buildTimeParams(
+    query,
+    timeRange,
+  );
+
+  if (userParams) {
+    for (const { name, value, type } of userParams) {
+      if (name && hasNamedPlaceholder(query, name)) {
+        params.push({ [name]: serializeDashboardParam(type, value) });
+      }
+    }
+  }
+
+  return params;
+}
+
+function serializeDashboardParam(
+  type: DashboardParameter["type"],
+  value: DashboardParameter["value"],
+): string | number | boolean {
+  switch (type) {
+    case "number": {
+      const n = Number(value);
+      if (!Number.isFinite(n)) {
+        throw new TypeError(`Invalid numeric value: ${String(value)}`);
+      }
+      return n;
+    }
+    case "boolean":
+      if (typeof value === "boolean") return value;
+      return String(value).toLowerCase() === "true";
+    case "date": {
+      const parsed = Date.parse(String(value));
+      return Number.isNaN(parsed) ? String(value) : new Date(parsed).toISOString();
+    }
+    case "keyword":
+    default:
+      return String(value);
+  }
 }
