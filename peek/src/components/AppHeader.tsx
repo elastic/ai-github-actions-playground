@@ -101,6 +101,8 @@ export default function AppHeader() {
       } catch (err: unknown) {
         const message = isElasticsearchError(err) ? err.message : String(err);
         console.error("Profile switch failed:", message);
+        setConnected(false);
+        setCapabilities(null);
         setConnection(conn);
         setActiveProfileId(profileId);
         setConnectionDialogOpen(true);
