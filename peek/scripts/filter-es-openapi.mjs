@@ -14,6 +14,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Pinned to a branch in https://github.com/elastic/elasticsearch-specification.
+// To update: change ES_SPEC_VERSION, run `npm run generate:types`, and verify the build.
 const ES_SPEC_VERSION = "9.0";
 const SPEC_URL =
   `https://raw.githubusercontent.com/elastic/elasticsearch-specification/${ES_SPEC_VERSION}/output/openapi/elasticsearch-openapi.json`;
