@@ -47,8 +47,25 @@ export function buildSpanTree(spans: Span[]): SpanTreeNode[] {
     }
   }
 
+  // If every span points to a parent present in this trace (pure cycle),
+  // seed a deterministic synthetic root so rendering doesn't collapse to empty.
+  if (roots.length === 0 && byId.size > 0) {
+    let earliestNode: SpanTreeNode | null = null;
+    for (const node of byId.values()) {
+      if (!earliestNode || node.span.startTimeUs < earliestNode.span.startTimeUs) {
+        earliestNode = node;
+      }
+    }
+    if (earliestNode) {
+      roots.push(earliestNode);
+    }
+  }
+
   // Sort children by timestamp (chronological order)
+  const sortedVisited = new Set<string>();
   function sortChildren(node: SpanTreeNode): void {
+    if (sortedVisited.has(node.span.spanId)) return;
+    sortedVisited.add(node.span.spanId);
     node.children.sort((a, b) => a.span.startTimeUs - b.span.startTimeUs);
     for (const child of node.children) {
       sortChildren(child);
@@ -86,7 +103,10 @@ export function buildSpanTree(spans: Span[]): SpanTreeNode[] {
  */
 export function flattenSpanTree(roots: SpanTreeNode[]): SpanTreeNode[] {
   const result: SpanTreeNode[] = [];
+  const visited = new Set<string>();
   function dfs(node: SpanTreeNode): void {
+    if (visited.has(node.span.spanId)) return;
+    visited.add(node.span.spanId);
     result.push(node);
     for (const child of node.children) {
       dfs(child);

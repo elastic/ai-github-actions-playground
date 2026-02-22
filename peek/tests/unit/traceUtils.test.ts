@@ -93,6 +93,52 @@ describe("buildSpanTree", () => {
     expect(flat[0]!.span.spanId).toBe("root");
   });
 
+  it("seeds a fallback root when all spans are in a cycle", () => {
+    const spans = [
+      makeSpan({
+        spanId: "a",
+        parentSpanId: "b",
+        timestamp: "2026-01-01T00:00:00.000Z",
+      }),
+      makeSpan({
+        spanId: "b",
+        parentSpanId: "a",
+        timestamp: "2026-01-01T00:00:00.100Z",
+      }),
+    ];
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    expect(roots).toHaveLength(1);
+    // Earliest span is chosen as synthetic root.
+    expect(roots[0]!.span.spanId).toBe("a");
+    expect(flat.map((n) => n.span.spanId)).toEqual(["a", "b"]);
+    expect(flat[0]!.depth).toBe(0);
+    expect(flat[1]!.depth).toBe(1);
+  });
+
+  it("seeds fallback root for a self-cycle with no natural root", () => {
+    const spans = [makeSpan({ spanId: "self", parentSpanId: "self" })];
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    expect(roots).toHaveLength(1);
+    expect(roots[0]!.span.spanId).toBe("self");
+    expect(flat.map((n) => n.span.spanId)).toEqual(["self"]);
+    expect(flat[0]!.depth).toBe(0);
+  });
+
+  it("handles a three-node cycle without collapsing to empty", () => {
+    const spans = [
+      makeSpan({ spanId: "a", parentSpanId: "c", timestamp: "2026-01-01T00:00:00.000Z" }),
+      makeSpan({ spanId: "b", parentSpanId: "a", timestamp: "2026-01-01T00:00:00.100Z" }),
+      makeSpan({ spanId: "c", parentSpanId: "b", timestamp: "2026-01-01T00:00:00.200Z" }),
+    ];
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    expect(roots).toHaveLength(1);
+    expect(roots[0]!.span.spanId).toBe("a");
+    expect(flat.map((n) => n.span.spanId)).toEqual(["a", "b", "c"]);
+  });
+
   it("sorts children chronologically", () => {
     const spans = [
       makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.000Z" }),

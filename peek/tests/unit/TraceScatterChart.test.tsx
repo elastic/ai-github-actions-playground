@@ -99,6 +99,16 @@ describe("TraceScatterChart", () => {
     expect(series[0]!.data).toHaveLength(2);
   });
 
+  it("shows empty title when all points are filtered out", () => {
+    const data = [
+      makePoint({ traceId: "t1", durationUs: 0 }),
+      makePoint({ traceId: "t2", durationUs: -10 }),
+    ];
+    render(<TraceScatterChart data={data} />);
+    const option = getLastSetOptionCall();
+    expect(option.title).toEqual(expect.objectContaining({ text: "No data to display" }));
+  });
+
   it("uses log scale for y-axis", () => {
     render(<TraceScatterChart data={[makePoint()]} />);
     const option = getLastSetOptionCall();
