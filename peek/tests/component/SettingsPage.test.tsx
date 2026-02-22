@@ -61,4 +61,11 @@ describe("SettingsPage", () => {
     await user.type(input, "sk-new-key");
     expect(useLLMStore.getState().config.apiKey).toBe("sk-new-key");
   });
+
+  it("includes OpenRouter in provider options", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    await user.click(screen.getByLabelText("Provider"));
+    expect(screen.getByRole("option", { name: "OpenRouter" })).toBeInTheDocument();
+  });
 });

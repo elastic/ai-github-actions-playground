@@ -17,12 +17,14 @@ import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
 import { useDashboardStore } from "../store/useDashboardStore";
 
 export default function ChatPage() {
-  const { config, messages, addMessage, updateMessage, clearMessages, isConfigured } = useLLMStore(
+  const { config, messages, addMessage, updateMessage, removeMessage, clearMessages, isConfigured } =
+    useLLMStore(
     useShallow((s) => ({
       config: s.config,
       messages: s.messages,
       addMessage: s.addMessage,
       updateMessage: s.updateMessage,
+      removeMessage: s.removeMessage,
       clearMessages: s.clearMessages,
       isConfigured: s.isConfigured,
     })),
@@ -57,8 +59,14 @@ export default function ChatPage() {
     addMessage({ id: assistantId, role: "assistant", content: "" });
     setLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+
     try {
-      const openai = createOpenAI({ apiKey: config.apiKey });
+      const openai = createOpenAI({
+        apiKey: config.apiKey,
+        ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+      });
       const result = await generateText({
         model: openai(config.model),
         system:
@@ -69,17 +77,24 @@ export default function ChatPage() {
           ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
           { role: "user" as const, content: trimmed },
         ],
+        abortSignal: controller.signal,
       });
 
       updateMessage(assistantId, result.text);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      updateMessage(assistantId, `Error: ${errorMessage}`);
+      const errorMessage =
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Request timed out. Please try again."
+          : e instanceof Error
+            ? e.message
+            : String(e);
+      removeMessage(assistantId);
       setError(errorMessage);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [input, loading, configured, config, messages, addMessage, updateMessage]);
+  }, [input, loading, configured, config, messages, addMessage, updateMessage, removeMessage]);
 
   if (!configured) {
     return (

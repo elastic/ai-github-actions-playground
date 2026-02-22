@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ChatPage from "../../src/components/ChatPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -18,10 +21,13 @@ vi.mock("ai", () => ({
 
 describe("ChatPage", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
     useDashboardStore.getState().resetState();
+
+    vi.mocked(createOpenAI).mockReturnValue((model: string) => ({ model }) as never);
   });
 
   it("shows unconfigured message when no API key is set", () => {
@@ -71,5 +77,52 @@ describe("ChatPage", () => {
     render(<ChatPage />);
     const clearButton = screen.getByRole("button", { name: /clear/i });
     expect(clearButton).toBeDisabled();
+  });
+
+  it("sends a message and renders assistant reply", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    vi.mocked(generateText).mockResolvedValue({ text: "Assistant response" } as never);
+
+    render(<ChatPage />);
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Help me write ES|QL");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Help me write ES|QL")).toBeInTheDocument();
+      expect(screen.getByText("Assistant response")).toBeInTheDocument();
+    });
+  });
+
+  it("shows error alert and does not persist error text in chat bubble", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    vi.mocked(generateText).mockRejectedValue(new Error("API down"));
+
+    render(<ChatPage />);
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("API down")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Error: API down")).not.toBeInTheDocument();
+  });
+
+  it("clears messages and disables clear button", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    useLLMStore.getState().addMessage({ id: "msg-1", role: "user", content: "A message" });
+    render(<ChatPage />);
+
+    const clearButton = screen.getByRole("button", { name: /clear/i });
+    expect(clearButton).toBeEnabled();
+
+    await user.click(clearButton);
+
+    expect(useLLMStore.getState().messages).toEqual([]);
+    expect(screen.getByRole("button", { name: /clear/i })).toBeDisabled();
   });
 });

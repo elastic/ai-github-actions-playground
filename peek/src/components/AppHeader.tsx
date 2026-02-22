@@ -5,11 +5,9 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import Tooltip from "@mui/material/Tooltip";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
-import Chip from "@mui/material/Chip";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Dialog from "@mui/material/Dialog";
@@ -17,13 +15,9 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
-import LightModeIcon from "@mui/icons-material/LightMode";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import CloudDoneIcon from "@mui/icons-material/CloudDone";
-import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
@@ -98,11 +92,15 @@ export default function AppHeader() {
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [systemAnchor, setSystemAnchor] = useState<null | HTMLElement>(null);
+  const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
-  const tabValue = currentPage === "dataStreams" ? false : currentPage;
+  const tabValue =
+    currentPage === "dataStreams" || currentPage === "settings" || currentPage === "chat"
+      ? false
+      : currentPage;
   const timeRangeRef = useRef(dashboard.timeRange);
   useEffect(() => {
     timeRangeRef.current = dashboard.timeRange;
@@ -288,15 +286,6 @@ export default function AppHeader() {
 
         <Box sx={{ flex: 1 }} />
 
-        <Chip
-          icon={connected ? <CloudDoneIcon /> : <CloudOffIcon />}
-          label={connected ? "Connected" : "Disconnected"}
-          color={connected ? "success" : "default"}
-          size="small"
-          onClick={() => setConnectionDialogOpen(true)}
-          sx={{ cursor: "pointer" }}
-        />
-
         {connected && (
           <>
             <Button size="small" variant="outlined" onClick={(e) => setTimeAnchor(e.currentTarget)}>
@@ -366,24 +355,45 @@ export default function AppHeader() {
           </>
         )}
 
-        <Tooltip title="Connection settings">
-          <IconButton size="small" onClick={() => setConnectionDialogOpen(true)}>
-            <SettingsIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={themeMode === "dark" ? "Light mode" : "Dark mode"}>
-          <IconButton
-            size="small"
-            onClick={() => setThemeMode(themeMode === "dark" ? "light" : "dark")}
+        <IconButton
+          size="small"
+          color={currentPage === "settings" ? "primary" : "default"}
+          onClick={(e) => setSettingsAnchor(e.currentTarget)}
+          aria-label="Settings"
+        >
+          <SettingsIcon fontSize="small" />
+        </IconButton>
+        <Menu
+          anchorEl={settingsAnchor}
+          open={Boolean(settingsAnchor)}
+          onClose={() => setSettingsAnchor(null)}
+        >
+          <MenuItem
+            onClick={() => {
+              setConnectionDialogOpen(true);
+              setSettingsAnchor(null);
+            }}
           >
-            {themeMode === "dark" ? (
-              <LightModeIcon fontSize="small" />
-            ) : (
-              <DarkModeIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
+            Connection Settings
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setThemeMode(themeMode === "dark" ? "light" : "dark");
+              setSettingsAnchor(null);
+            }}
+          >
+            Dark/Light Mode
+          </MenuItem>
+          <MenuItem
+            selected={currentPage === "settings"}
+            onClick={() => {
+              setCurrentPage("settings");
+              setSettingsAnchor(null);
+            }}
+          >
+            LLM Settings
+          </MenuItem>
+        </Menu>
 
         <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
           <MoreVertIcon fontSize="small" />

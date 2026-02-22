@@ -29,33 +29,24 @@ describe("AppHeader", () => {
     expect(screen.getByText("Elastic Peek")).toBeInTheDocument();
   });
 
-  it("theme toggle button is present and toggleable", async () => {
+  it("toggles theme from the settings menu", async () => {
     const user = userEvent.setup();
     render(<AppHeader />);
 
-    // Default theme is "dark", so the toggle should show "Light mode" tooltip
-    const themeButton = screen.getByRole("button", { name: /light mode/i });
-    expect(themeButton).toBeInTheDocument();
-
-    await user.click(themeButton);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: "Dark/Light Mode" }));
 
     expect(useDashboardStore.getState().themeMode).toBe("light");
-
-    // Now should show "Dark mode"
-    expect(screen.getByRole("button", { name: /dark mode/i })).toBeInTheDocument();
   });
 
-  it("shows Connected chip when connected", () => {
+  it("opens LLM settings from the settings menu", async () => {
+    const user = userEvent.setup();
     render(<AppHeader />);
 
-    expect(screen.getByText("Connected")).toBeInTheDocument();
-  });
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: "LLM Settings" }));
 
-  it("shows Disconnected chip when not connected", () => {
-    useDashboardStore.getState().setConnected(false);
-    render(<AppHeader />);
-
-    expect(screen.getByText("Disconnected")).toBeInTheDocument();
+    expect(useDashboardStore.getState().currentPage).toBe("settings");
   });
 
   it("does not warn when current page is dataStreams", () => {

@@ -16,6 +16,7 @@ import { useLLMStore, type LLMProvider } from "../store/useLLMStore";
 
 const PROVIDERS: Array<{ value: LLMProvider; label: string }> = [
   { value: "openai", label: "OpenAI" },
+  { value: "openrouter", label: "OpenRouter" },
 ];
 
 const MODELS: Record<LLMProvider, Array<{ value: string; label: string }>> = {
@@ -26,6 +27,13 @@ const MODELS: Record<LLMProvider, Array<{ value: string; label: string }>> = {
     { value: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
     { value: "gpt-4.1-nano", label: "GPT-4.1 Nano" },
     { value: "o3-mini", label: "o3-mini" },
+  ],
+  openrouter: [
+    { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini" },
+    { value: "openai/gpt-4.1-mini", label: "OpenAI GPT-4.1 Mini" },
+    { value: "anthropic/claude-3.5-sonnet", label: "Anthropic Claude 3.5 Sonnet" },
+    { value: "google/gemini-2.0-flash-001", label: "Google Gemini 2.0 Flash" },
+    { value: "meta-llama/llama-3.3-70b-instruct", label: "Llama 3.3 70B Instruct" },
   ],
 };
 
@@ -71,7 +79,11 @@ export default function SettingsPage() {
             select
             label="Provider"
             value={config.provider}
-            onChange={(e) => setProvider(e.target.value as LLMProvider)}
+            onChange={(e) => {
+              const provider = e.target.value as LLMProvider;
+              setProvider(provider);
+              setModel(MODELS[provider]?.[0]?.value ?? "");
+            }}
             size="small"
             fullWidth
           >

@@ -21,7 +21,15 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage: "dashboard" | "discover" | "dataStreams" | "explore" | "docs" | "console";
+  currentPage:
+    | "dashboard"
+    | "discover"
+    | "dataStreams"
+    | "explore"
+    | "docs"
+    | "console"
+    | "chat"
+    | "settings";
   discoverQueryDraft: string | null;
   queryHistory: string[];
 
@@ -43,7 +51,15 @@ interface DashboardState {
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
   setCurrentPage: (
-    page: "dashboard" | "discover" | "dataStreams" | "explore" | "docs" | "console",
+    page:
+      | "dashboard"
+      | "discover"
+      | "dataStreams"
+      | "explore"
+      | "docs"
+      | "console"
+      | "chat"
+      | "settings",
   ) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;

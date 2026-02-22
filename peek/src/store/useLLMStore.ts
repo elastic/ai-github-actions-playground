@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 
-export type LLMProvider = "openai";
+export type LLMProvider = "openai" | "openrouter";
 
 export interface LLMConfig {
   provider: LLMProvider;
@@ -26,6 +26,7 @@ interface LLMState {
 
   addMessage: (message: ChatMessage) => void;
   updateMessage: (id: string, content: string) => void;
+  removeMessage: (id: string) => void;
   clearMessages: () => void;
   resetLLMState: () => void;
 }
@@ -34,6 +35,11 @@ const DEFAULT_CONFIG: LLMConfig = {
   provider: "openai",
   apiKey: "",
   model: "gpt-4o-mini",
+};
+
+const DEFAULT_MODEL_BY_PROVIDER: Record<LLMProvider, string> = {
+  openai: "gpt-4o-mini",
+  openrouter: "openai/gpt-4o-mini",
 };
 
 const LLM_API_KEY_SESSION_KEY = "elastic-peek-llm:apiKey";
@@ -52,6 +58,9 @@ const llmSplitStorage = {
     try {
       const stored = JSON.parse(localRaw) as StorageValue<PersistedLLMState>;
       const apiKey = sessionStorage.getItem(LLM_API_KEY_SESSION_KEY) ?? "";
+      if (!stored || !stored.state) {
+        return null;
+      }
       if (stored.state.config) {
         stored.state.config = { ...stored.state.config, apiKey };
       }
@@ -84,7 +93,14 @@ export const useLLMStore = create<LLMState>()(
       config: { ...DEFAULT_CONFIG },
       messages: [],
 
-      setProvider: (provider) => set((s) => ({ config: { ...s.config, provider } })),
+      setProvider: (provider) =>
+        set((s) => ({
+          config: {
+            ...s.config,
+            provider,
+            model: DEFAULT_MODEL_BY_PROVIDER[provider],
+          },
+        })),
       setApiKey: (apiKey) => set((s) => ({ config: { ...s.config, apiKey } })),
       setModel: (model) => set((s) => ({ config: { ...s.config, model } })),
       isConfigured: () => {
@@ -96,6 +112,10 @@ export const useLLMStore = create<LLMState>()(
       updateMessage: (id, content) =>
         set((s) => ({
           messages: s.messages.map((m) => (m.id === id ? { ...m, content } : m)),
+        })),
+      removeMessage: (id) =>
+        set((s) => ({
+          messages: s.messages.filter((m) => m.id !== id),
         })),
       clearMessages: () => set({ messages: [] }),
       resetLLMState: () => {

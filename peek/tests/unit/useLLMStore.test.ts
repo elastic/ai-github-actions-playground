@@ -38,8 +38,16 @@ describe("useLLMStore", () => {
   });
 
   it("setProvider updates the provider", () => {
-    useLLMStore.getState().setProvider("openai");
-    expect(useLLMStore.getState().config.provider).toBe("openai");
+    const initial = useLLMStore.getState().config.provider;
+    const newProvider = initial === "openai" ? "openrouter" : "openai";
+    useLLMStore.getState().setProvider(newProvider);
+    expect(useLLMStore.getState().config.provider).toBe(newProvider);
+  });
+
+  it("setProvider switches to openrouter and applies provider default model", () => {
+    useLLMStore.getState().setProvider("openrouter");
+    expect(useLLMStore.getState().config.provider).toBe("openrouter");
+    expect(useLLMStore.getState().config.model).toBe("openai/gpt-4o-mini");
   });
 
   it("setApiKey updates the API key", () => {
@@ -79,6 +87,15 @@ describe("useLLMStore", () => {
     useLLMStore.getState().updateMessage("msg-2", "Updated");
     expect(useLLMStore.getState().messages[0].content).toBe("First");
     expect(useLLMStore.getState().messages[1].content).toBe("Updated");
+  });
+
+  it("removeMessage removes one message by id", () => {
+    useLLMStore.getState().addMessage({ id: "msg-1", role: "user", content: "First" });
+    useLLMStore.getState().addMessage({ id: "msg-2", role: "assistant", content: "Second" });
+    useLLMStore.getState().removeMessage("msg-1");
+    expect(useLLMStore.getState().messages).toEqual([
+      { id: "msg-2", role: "assistant", content: "Second" },
+    ]);
   });
 
   it("clearMessages removes all messages", () => {
