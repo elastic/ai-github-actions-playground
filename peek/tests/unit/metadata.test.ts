@@ -19,6 +19,7 @@ describe("classifyMetricType", () => {
     expect(classifyMetricType("half_float")).toBe("gauge");
     expect(classifyMetricType("scaled_float")).toBe("gauge");
     expect(classifyMetricType("unsigned_long")).toBe("gauge");
+    expect(classifyMetricType("aggregate_metric_double")).toBe("gauge");
   });
 
   it("classifies unknown types", () => {

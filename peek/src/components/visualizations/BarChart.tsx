@@ -8,9 +8,10 @@ import EChartWrapper from "./EChartWrapper";
 interface Props {
   data: EsqlResponse;
   options?: BarChartOptions;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function BarChart({ data, options }: Props) {
+export default function BarChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
   const stacked = options?.stacked === true;
   const horizontal = options?.horizontal === true;
@@ -81,5 +82,5 @@ export default function BarChart({ data, options }: Props) {
     };
   }, [data, theme, stacked, horizontal, format]);
 
-  return <EChartWrapper option={option} />;
+  return <EChartWrapper option={option} onExportReady={onExportReady} />;
 }

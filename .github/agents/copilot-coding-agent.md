@@ -54,6 +54,8 @@ Before finishing:
 
 When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request.
 
+**Important:** Screenshots must show the feature you are building or modifying — not the default connections page. After starting the dev server, navigate to the relevant page or route that demonstrates your change before capturing the screenshot. If your change requires an Elasticsearch connection to be visible, describe the change in the PR body instead of attaching a screenshot of the connections page.
+
 1. Start the dev server in the background and wait until it is ready:
 
 ```bash
@@ -62,10 +64,10 @@ DEV_PID=$!
 for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000 >/dev/null && break; sleep 1; done
 ```
 
-2. Run the screenshot preflight:
+2. Run the screenshot preflight, passing `--url` with the route that shows your feature (not the default connections page):
 
 ```bash
-cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000 --output screenshot-preflight.json --screenshot screenshot.png
+cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000/<feature-route> --output screenshot-preflight.json --screenshot screenshot.png
 ```
 
 3. Stop the dev server:

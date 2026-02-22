@@ -19,9 +19,11 @@ import ExplorePage from "./components/ExplorePage";
 import DocsPage from "./components/DocsPage";
 import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
+import ClusterOverviewPage from "./components/ClusterOverviewPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
 import TracesPage from "./components/traces/TracesPage";
+import DashboardManagementPage from "./components/DashboardManagementPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -32,6 +34,16 @@ export default function App() {
   const resetState = useDashboardStore((s) => s.resetState);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
+  const requiresConnectionPage =
+    currentPage === "dashboard" ||
+    currentPage === "discover" ||
+    currentPage === "dataStreams" ||
+    currentPage === "clusterOverview" ||
+    currentPage === "explore" ||
+    currentPage === "console" ||
+    currentPage === "settings" ||
+    currentPage === "dashboardManagement";
+  const shouldShowWelcome = !connected && requiresConnectionPage;
 
   return (
     <ThemeProvider theme={theme}>
@@ -58,16 +70,20 @@ export default function App() {
                 flexDirection: "column",
               }}
             >
-              {currentPage === "docs" ? (
+              {shouldShowWelcome ? (
+                <WelcomeScreen />
+              ) : currentPage === "docs" ? (
                 <DocsPage />
               ) : currentPage === "settings" ? (
                 <SettingsPage />
+              ) : currentPage === "dashboardManagement" ? (
+                <DashboardManagementPage />
               ) : currentPage === "chat" ? (
                 <ChatPage />
-              ) : !connected ? (
-                <WelcomeScreen />
               ) : currentPage === "dataStreams" ? (
                 <DataStreamsPage />
+              ) : currentPage === "clusterOverview" ? (
+                <ClusterOverviewPage />
               ) : currentPage === "explore" ? (
                 <ExplorePage />
               ) : currentPage === "discover" ? (

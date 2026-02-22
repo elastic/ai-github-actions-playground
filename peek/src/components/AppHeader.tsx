@@ -2,13 +2,11 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
@@ -37,31 +35,29 @@ const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 export default function AppHeader() {
   const {
     connected,
+    currentPage,
     dashboard,
     setTimeRange,
     setRefreshInterval,
     setEditingPanelId,
     addPanel,
-    exportDashboard,
-    importDashboard,
-    loadDefaultDashboard,
   } = useDashboardStore(
     useShallow((s) => ({
       connected: s.connected,
+      currentPage: s.currentPage,
       dashboard: s.dashboard,
       setTimeRange: s.setTimeRange,
       setRefreshInterval: s.setRefreshInterval,
       setEditingPanelId: s.setEditingPanelId,
       addPanel: s.addPanel,
-      exportDashboard: s.exportDashboard,
-      importDashboard: s.importDashboard,
-      loadDefaultDashboard: s.loadDefaultDashboard,
     })),
   );
 
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const showTimeControls =
+    connected &&
+    (currentPage === "dashboard" || currentPage === "discover" || currentPage === "explore");
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
   const timeRangeRef = useRef(dashboard.timeRange);
@@ -70,13 +66,13 @@ export default function AppHeader() {
   }, [dashboard.timeRange]);
 
   useEffect(() => {
-    if (!refreshInterval || !connected) return;
+    if (!refreshInterval || !showTimeControls) return;
     const id = setInterval(() => {
       // Spread into a new object so PanelContainers detect the change and re-fetch
       setTimeRange({ ...timeRangeRef.current });
     }, refreshInterval * 1000);
     return () => clearInterval(id);
-  }, [refreshInterval, connected, setTimeRange]);
+  }, [refreshInterval, showTimeControls, setTimeRange]);
 
   const handleAddPanel = useCallback(() => {
     const newPanel = {
@@ -90,60 +86,44 @@ export default function AppHeader() {
     setEditingPanelId(newPanel.id);
   }, [addPanel, setEditingPanelId]);
 
-  const handleExport = useCallback(() => {
-    const json = exportDashboard();
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${dashboard.title.replace(/\s+/g, "-").toLowerCase()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setMenuAnchor(null);
-  }, [exportDashboard, dashboard.title]);
-
-  const handleImport = useCallback(() => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => importDashboard(reader.result as string);
-      reader.readAsText(file);
-    };
-    input.click();
-    setMenuAnchor(null);
-  }, [importDashboard]);
-
   return (
     <AppBar position="static" color="default" elevation={1} sx={{ zIndex: 1201 }}>
-      <Toolbar variant="dense" sx={{ gap: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mr: 2, flexShrink: 0 }}>
+      <Toolbar disableGutters variant="dense" sx={{ gap: 1, px: 0 }}>
+        <Box
+          sx={{
+            width: 68,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
           <Box
             component="img"
             src={logoUrl}
             alt="Peek"
             sx={{ width: 48, height: 48, objectFit: "contain" }}
           />
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              lineHeight: 1,
-            }}
-          >
-            Peek
-          </Typography>
         </Box>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            color: "transparent",
+            WebkitTextFillColor: "transparent",
+            lineHeight: 1,
+            mr: 2,
+          }}
+        >
+          Peek
+        </Typography>
 
         <Box sx={{ flex: 1 }} />
 
-        {connected && (
+        {showTimeControls && (
           <>
             <Button size="small" variant="outlined" onClick={(e) => setTimeAnchor(e.currentTarget)}>
               {TIME_PRESETS.find(
@@ -201,42 +181,16 @@ export default function AppHeader() {
               ))}
             </Menu>
 
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddPanel}
-            >
-              Add Panel
-            </Button>
-          </>
-        )}
-
-        {connected && (
-          <>
-            <IconButton
-              size="small"
-              onClick={(e) => setMenuAnchor(e.currentTarget)}
-              aria-label="Dashboard actions"
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
-            <Menu
-              anchorEl={menuAnchor}
-              open={Boolean(menuAnchor)}
-              onClose={() => setMenuAnchor(null)}
-            >
-              <MenuItem onClick={handleExport}>Export Dashboard</MenuItem>
-              <MenuItem onClick={handleImport}>Import Dashboard</MenuItem>
-              <MenuItem
-                onClick={() => {
-                  loadDefaultDashboard();
-                  setMenuAnchor(null);
-                }}
+            {currentPage === "dashboard" && (
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddPanel}
               >
-                Load Default Dashboard
-              </MenuItem>
-            </Menu>
+                Add Panel
+              </Button>
+            )}
           </>
         )}
       </Toolbar>

@@ -1,0 +1,89 @@
+name: Framework Best Practices
+on:
+  schedule:
+    - cron: "0 13 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    with:
+      issue-title-prefix: "[framework-best-practices]"
+      additional-instructions: |
+        You are the Framework & Library Best Practices Analyst — an expert in the libraries and
+        frameworks used by this project who identifies opportunities to leverage built-in features
+        instead of hand-rolled solutions.
+
+        Your task is to analyze the codebase, identify the frameworks and libraries in use (from
+        package.json, import statements, and configuration files), and find places where the code
+        could be simplified or improved by using library-native features.
+
+        ### What to Look For
+
+        1. **Reimplemented library features** — custom utility functions that duplicate what a
+           library already provides (e.g., hand-rolled debounce when lodash/debounce is available,
+           custom deep-clone when structuredClone or a library function exists).
+        2. **State management anti-patterns** — using React useState/useEffect for complex state
+           that the project's state management library (e.g., Zustand, Redux) handles better.
+           Prop drilling through many levels when a store or context is available.
+        3. **UI framework underuse** — building custom components (dialogs, tooltips, menus,
+           form controls) when the UI library (e.g., MUI) provides ready-made, accessible versions.
+        4. **Charting library features** — manually transforming data or styling charts when the
+           charting library (e.g., ECharts) has built-in options for the same effect (e.g., built-in
+           formatters, axis configurations, legend behaviors).
+        5. **Build tool configuration** — Vite, TypeScript, or ESLint configs that are overly
+           complex or work around issues that newer versions of the tool have resolved natively.
+        6. **Testing patterns** — manual mocking or test setup that testing libraries (e.g.,
+           Vitest, Testing Library) provide as built-in features.
+        7. **Deprecated or legacy patterns** — using older API styles when the library has
+           introduced newer, simpler alternatives (e.g., class components vs hooks, legacy
+           context vs modern context).
+        8. **Missing framework optimizations** — places where React.memo, useMemo, useCallback,
+           or Suspense could be applied following the framework's own performance guidance.
+
+        ### How to Analyze
+
+        - Start by reading `package.json` to identify all dependencies and their versions.
+        - For each major dependency, understand what features it provides.
+        - Scan the codebase for patterns that reinvent or work around library features.
+        - Check configuration files for unnecessary complexity.
+        - Look for TODOs or workaround comments that reference library limitations that may
+          have been resolved in the current version.
+
+        ### Quality Gate
+
+        Only file an issue when you find a **concrete simplification** — the library feature
+        exists, is stable, and would demonstrably reduce code complexity or improve behavior.
+        Include the specific library feature, its documentation reference, and the code that
+        would be simplified.
+
+        Do not file for: micro-optimizations, speculative performance improvements without
+        evidence, or cases where the custom implementation is intentionally different from the
+        library version.
+
+        ### Issue Format
+
+        **Title:** Brief summary of the opportunity (e.g., "Replace custom debounce with
+        lodash/debounce already in dependencies")
+
+        **Body:**
+        > ## Framework / Library Best Practices Findings
+        >
+        > ### 1. [Brief description]
+        > **Library:** [name and version from package.json]
+        > **Library feature:** [specific API or feature name]
+        > **Current code:** [file path(s) and brief description of what the code does]
+        > **Simplification:** [how using the library feature would reduce or improve the code]
+        > **Documentation:** [link to relevant library docs]
+        >
+        > ### 2. [Next finding...]
+        >
+        > ## Suggested Actions
+        > - [ ] [Specific, actionable checkbox for each improvement]
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
