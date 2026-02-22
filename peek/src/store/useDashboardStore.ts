@@ -41,7 +41,7 @@ interface DashboardState {
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
   setCapabilities: (caps: UserCapabilities | null) => void;
-  saveConnectionProfile: (name: string) => string | null;
+  saveConnectionProfile: (name: string, connection: ElasticsearchConnection) => string | null;
   deleteConnectionProfile: (id: string) => void;
   renameConnectionProfile: (id: string, name: string) => void;
   setActiveProfileId: (id: string | null) => void;
@@ -98,6 +98,7 @@ type PersistedState = {
   connectionProfiles?: ConnectionProfile[];
   activeProfileId?: string | null;
 };
+const STORE_NAME = "elastic-peek";
 const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
 const PROFILE_SESSION_PREFIX = ":profile:";
@@ -220,9 +221,9 @@ export const useDashboardStore = create<DashboardState>()(
       setConnected: (connected) => set({ connected }),
       setCapabilities: (caps) => set({ capabilities: caps }),
 
-      saveConnectionProfile: (name) => {
-        const { connection, connectionProfiles } = get();
-        if (!connection) return null;
+      saveConnectionProfile: (name, connection) => {
+        const { connectionProfiles } = get();
+        if (connectionProfiles.some((p) => p.name === name)) return null;
         const id = crypto.randomUUID();
         const profile: ConnectionProfile = { id, name, connection: { ...connection } };
         set({ connectionProfiles: [...connectionProfiles, profile], activeProfileId: id });
@@ -231,6 +232,12 @@ export const useDashboardStore = create<DashboardState>()(
 
       deleteConnectionProfile: (id) =>
         set((s) => {
+          sessionStorage.removeItem(
+            STORE_NAME + PROFILE_SESSION_PREFIX + id + API_KEY_SESSION_SUFFIX,
+          );
+          sessionStorage.removeItem(
+            STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
+          );
           const filtered = s.connectionProfiles.filter((p) => p.id !== id);
           return {
             connectionProfiles: filtered,
@@ -430,7 +437,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       resetState: () => {
-        splitStorage.removeItem("elastic-peek");
+        splitStorage.removeItem(STORE_NAME);
         set({
           connection: null,
           connected: false,
@@ -448,7 +455,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
     }),
     {
-      name: "elastic-peek",
+      name: STORE_NAME,
       storage: splitStorage,
       partialize: (state) => ({
         connection: state.connection,

@@ -21,6 +21,7 @@ import Divider from "@mui/material/Divider";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../types";
@@ -54,6 +55,7 @@ export default function ConnectionDialog() {
   const [profileName, setProfileName] = useState("");
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [editingProfileName, setEditingProfileName] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
@@ -112,12 +114,16 @@ export default function ConnectionDialog() {
     setResult(null);
   }, [setConnected, setCapabilities]);
 
+  const isDuplicateProfileName = profileName.trim()
+    ? connectionProfiles.some((p) => p.name === profileName.trim())
+    : false;
+
   const handleSaveProfile = useCallback(() => {
     const trimmed = profileName.trim();
     if (!trimmed) return;
-    saveConnectionProfile(trimmed);
-    setProfileName("");
-  }, [profileName, saveConnectionProfile]);
+    const id = saveConnectionProfile(trimmed, buildConnection());
+    if (id) setProfileName("");
+  }, [profileName, saveConnectionProfile, buildConnection]);
 
   const handleLoadProfile = useCallback(
     (profileId: string) => {
@@ -199,17 +205,47 @@ export default function ConnectionDialog() {
                       />
                     )}
                     <ListItemSecondaryAction>
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        aria-label={`Delete profile ${profile.name}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteConnectionProfile(profile.id);
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                      {confirmDeleteId === profile.id ? (
+                        <Button
+                          size="small"
+                          color="error"
+                          variant="contained"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConnectionProfile(profile.id);
+                            setConfirmDeleteId(null);
+                          }}
+                          onBlur={() => setConfirmDeleteId(null)}
+                        >
+                          Confirm
+                        </Button>
+                      ) : (
+                        <>
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            aria-label={`Rename profile ${profile.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingProfileId(profile.id);
+                              setEditingProfileName(profile.name);
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            aria-label={`Delete profile ${profile.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDeleteId(profile.id);
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </>
+                      )}
                     </ListItemSecondaryAction>
                   </ListItemButton>
                 ))}
@@ -223,13 +259,17 @@ export default function ConnectionDialog() {
             placeholder="https://my-cluster.es.us-east-1.aws.elastic.cloud:443"
             fullWidth
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setActiveProfileId(null);
+            }}
             helperText="The full URL including protocol and port"
           />
           <Tabs
             value={authType}
             onChange={(_, v: AuthType) => {
               setAuthType(v);
+              setActiveProfileId(null);
               setResult(null);
             }}
           >
@@ -243,13 +283,20 @@ export default function ConnectionDialog() {
               fullWidth
               type={showSecret ? "text" : "password"}
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setActiveProfileId(null);
+              }}
               helperText="Stored in session storage — cleared when the browser tab closes"
               slotProps={{
                 input: {
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowSecret(!showSecret)}>
+                      <IconButton
+                        size="small"
+                        aria-label={showSecret ? "Hide credentials" : "Show credentials"}
+                        onClick={() => setShowSecret(!showSecret)}
+                      >
                         {showSecret ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -264,20 +311,30 @@ export default function ConnectionDialog() {
                 label="Username"
                 fullWidth
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setActiveProfileId(null);
+                }}
               />
               <TextField
                 label="Password"
                 fullWidth
                 type={showSecret ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setActiveProfileId(null);
+                }}
                 helperText="Stored in session storage — cleared when the browser tab closes"
                 slotProps={{
                   input: {
                     endAdornment: (
                       <InputAdornment position="end">
-                        <IconButton size="small" onClick={() => setShowSecret(!showSecret)}>
+                        <IconButton
+                          size="small"
+                          aria-label={showSecret ? "Hide credentials" : "Show credentials"}
+                          onClick={() => setShowSecret(!showSecret)}
+                        >
                           {showSecret ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>
@@ -300,13 +357,17 @@ export default function ConnectionDialog() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSaveProfile();
                 }}
+                error={isDuplicateProfileName}
+                helperText={
+                  isDuplicateProfileName ? "A profile with this name already exists" : undefined
+                }
                 sx={{ flex: 1 }}
               />
               <Button
                 size="small"
                 variant="outlined"
                 onClick={handleSaveProfile}
-                disabled={!profileName.trim() || !url}
+                disabled={!profileName.trim() || !url || isDuplicateProfileName}
               >
                 Save Profile
               </Button>

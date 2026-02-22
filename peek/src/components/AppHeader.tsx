@@ -75,6 +75,7 @@ export default function AppHeader() {
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
+  const [switchingProfile, setSwitchingProfile] = useState(false);
   const showTimeControls =
     connected &&
     (currentPage === "dashboard" || currentPage === "discover" || currentPage === "explore");
@@ -83,9 +84,11 @@ export default function AppHeader() {
 
   const handleSwitchProfile = useCallback(
     async (profileId: string) => {
+      if (switchingProfile) return;
       const profile = connectionProfiles.find((p) => p.id === profileId);
       if (!profile) return;
       setProfileAnchor(null);
+      setSwitchingProfile(true);
       const conn = profile.connection;
       try {
         const client = new ElasticsearchClient(conn);
@@ -98,10 +101,15 @@ export default function AppHeader() {
       } catch (err: unknown) {
         const message = isElasticsearchError(err) ? err.message : String(err);
         console.error("Profile switch failed:", message);
+        setConnection(conn);
+        setActiveProfileId(profileId);
         setConnectionDialogOpen(true);
+      } finally {
+        setSwitchingProfile(false);
       }
     },
     [
+      switchingProfile,
       connectionProfiles,
       setConnection,
       setConnected,
@@ -176,10 +184,11 @@ export default function AppHeader() {
         {connected && connectionProfiles.length > 0 && (
           <>
             <Chip
-              label={activeProfile?.name ?? "No profile"}
+              label={switchingProfile ? "Connecting…" : (activeProfile?.name ?? "No profile")}
               size="small"
               variant="outlined"
               onClick={(e) => setProfileAnchor(e.currentTarget)}
+              disabled={switchingProfile}
               aria-label="Switch connection profile"
               sx={{ maxWidth: 180 }}
             />
@@ -192,6 +201,7 @@ export default function AppHeader() {
                 <MenuItem
                   key={profile.id}
                   selected={profile.id === activeProfileId}
+                  disabled={switchingProfile}
                   onClick={() => void handleSwitchProfile(profile.id)}
                 >
                   <ListItemText

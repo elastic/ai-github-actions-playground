@@ -96,19 +96,20 @@ describe("ConnectionDialog", () => {
     expect(screen.getByRole("button", { name: /save profile/i })).toBeInTheDocument();
   });
 
-  it("saves a connection profile from the dialog", async () => {
+  it("saves a connection profile from the dialog using form values", async () => {
     const user = userEvent.setup();
-    useDashboardStore.setState({
-      connection: { url: "https://dev.example.com", apiKey: "dev-key" },
-    });
     render(<ConnectionDialog />);
 
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
+    await user.type(screen.getByLabelText(/api key/i), "dev-key");
     await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
     const profiles = useDashboardStore.getState().connectionProfiles;
     expect(profiles).toHaveLength(1);
     expect(profiles[0].name).toBe("Dev Cluster");
+    expect(profiles[0].connection.url).toBe("https://dev.example.com");
+    expect(profiles[0].connection.apiKey).toBe("dev-key");
   });
 
   it("displays saved profiles in the dialog", () => {
@@ -130,7 +131,7 @@ describe("ConnectionDialog", () => {
     expect(screen.getByText("Saved Profiles")).toBeInTheDocument();
   });
 
-  it("deletes a profile when delete button is clicked", async () => {
+  it("deletes a profile after confirmation", async () => {
     const user = userEvent.setup();
     useDashboardStore.setState({
       connection: { url: "https://dev.example.com", apiKey: "dev-key" },
@@ -141,7 +142,10 @@ describe("ConnectionDialog", () => {
     render(<ConnectionDialog />);
 
     await user.click(screen.getByLabelText(/delete profile dev/i));
+    // Profile should still exist after first click
+    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
 
+    await user.click(screen.getByRole("button", { name: /^confirm$/i }));
     expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
   });
 });
