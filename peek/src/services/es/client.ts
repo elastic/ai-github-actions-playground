@@ -81,7 +81,11 @@ export class ElasticsearchClient {
 
     if (connection.username && connection.password) {
       const bytes = new TextEncoder().encode(`${connection.username}:${connection.password}`);
-      const credentials = btoa(String.fromCharCode(...bytes));
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]!);
+      }
+      const credentials = btoa(binary);
       this.headers["Authorization"] = `Basic ${credentials}`;
     } else if (connection.apiKey) {
       this.headers["Authorization"] = `ApiKey ${connection.apiKey}`;

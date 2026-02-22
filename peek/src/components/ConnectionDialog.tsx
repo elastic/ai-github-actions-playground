@@ -67,8 +67,9 @@ export default function ConnectionDialog() {
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
       setResult({ ok: false, message });
+    } finally {
+      setTesting(false);
     }
-    setTesting(false);
   }, [buildConnection]);
 
   const handleConnect = useCallback(async () => {
@@ -84,8 +85,9 @@ export default function ConnectionDialog() {
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
       setResult({ ok: false, message });
+    } finally {
+      setTesting(false);
     }
-    setTesting(false);
   }, [buildConnection, setConnection, setConnected, setOpen]);
 
   const handleDisconnect = useCallback(() => {
