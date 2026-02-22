@@ -64,16 +64,13 @@ describe("PanelEditor", () => {
     expect(screen.getByTitle("Pie")).toBeInTheDocument();
   });
 
-  it("switching to table hides format options (ChartOptionsEditor)", () => {
+  it("switching to table hides format options (ChartOptionsEditor)", async () => {
+    const user = userEvent.setup();
     render(<PanelEditor />);
 
-    // Initially timeseries — format options section should be present
-    // (ChartOptionsEditor renders a "Format" section when showOptions is true)
-    // The ChartOptionsEditor is shown when viz !== "table" && viz !== "pie"
-    // For timeseries, showOptions = true, so we expect the Divider/options
-    // Let's just verify the toggle value changes
-    const tableButton = screen.getByTitle("Table");
-    expect(tableButton).toBeInTheDocument();
+    expect(screen.getByText("Options")).toBeInTheDocument();
+    await user.click(screen.getByTitle("Table"));
+    expect(screen.queryByText("Options")).not.toBeInTheDocument();
   });
 
   it("Save button calls updatePanel with current panel state", async () => {
