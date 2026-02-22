@@ -33,3 +33,18 @@ export function paginateRows(values: unknown[][], page: number, rowsPerPage: num
   const start = page * rowsPerPage;
   return values.slice(start, start + rowsPerPage);
 }
+
+function escapeCsvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const asString = String(value);
+  if (/[",\n\r]/.test(asString)) {
+    return `"${asString.replace(/"/g, '""')}"`;
+  }
+  return asString;
+}
+
+export function toCsv(data: EsqlResponse): string {
+  const header = data.columns.map((column) => escapeCsvCell(column.name)).join(",");
+  const rows = data.values.map((row) => row.map((cell) => escapeCsvCell(cell)).join(","));
+  return [header, ...rows].join("\r\n");
+}
