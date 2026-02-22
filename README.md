@@ -6,7 +6,7 @@
 
 This repository is a proof-of-concept **AI Software Engineering Factory** built on [elastic/ai-github-actions](https://github.com/elastic/ai-github-actions). It demonstrates how a suite of AI-powered GitHub Actions workflows can autonomously triage issues, review pull requests, propose fixes, and iterate on a real codebase with minimal human intervention.
 
-Elastic Peek is a both a way to look into your cluster and your data and a look at the future of AI Powered Software Factories.
+Elastic Peek is both a way to look into your cluster and your data, and a look at the future of AI-powered software factories.
 
 > **This is a research project, not an official Elastic product.**
 
