@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 import type {
   DashboardDefinition,
+  DashboardParameter,
   ElasticsearchConnection,
   PanelDefinition,
   TimeRange,
@@ -20,7 +21,8 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage: "dashboard" | "discover" | "docs" | "console";
+  currentPage: "dashboard" | "discover" | "dataStreams" | "explore" | "docs" | "console";
+  discoverQueryDraft: string | null;
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -39,7 +41,15 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (page: "dashboard" | "discover" | "docs" | "console") => void;
+  setCurrentPage: (
+    page: "dashboard" | "discover" | "dataStreams" | "explore" | "docs" | "console",
+  ) => void;
+  setDiscoverQueryDraft: (query: string | null) => void;
+
+  addParameter: (param: DashboardParameter) => void;
+  updateParameter: (name: string, updates: Partial<DashboardParameter>) => void;
+  removeParameter: (name: string) => void;
+  setParameterValue: (name: string, value: string) => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => { success: boolean; error?: string };
@@ -106,6 +116,7 @@ export const useDashboardStore = create<DashboardState>()(
       editingPanelId: null,
       connectionDialogOpen: false,
       currentPage: "dashboard",
+      discoverQueryDraft: null,
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -170,6 +181,65 @@ export const useDashboardStore = create<DashboardState>()(
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCurrentPage: (page) => set({ currentPage: page }),
+      setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
+
+      addParameter: (param) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            parameters: [
+              ...(s.dashboard.parameters ?? []).filter((existing) => existing.name !== param.name),
+              param,
+            ],
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      updateParameter: (name, updates) =>
+        set((s) => {
+          const parameters = s.dashboard.parameters ?? [];
+          const target = parameters.find((p) => p.name === name);
+          if (!target) {
+            return { dashboard: s.dashboard };
+          }
+          const nextName = updates.name ?? name;
+          const next = { ...target, ...updates, name: nextName };
+          return {
+            dashboard: {
+              ...s.dashboard,
+              parameters: [
+                ...parameters.filter((p) => p.name !== name && p.name !== nextName),
+                next,
+              ],
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
+
+      removeParameter: (name) =>
+        set((s) => ({
+          dashboard: {
+            ...s.dashboard,
+            parameters: (s.dashboard.parameters ?? []).filter((p) => p.name !== name),
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      setParameterValue: (name, value) =>
+        set((s) => {
+          const parameters = s.dashboard.parameters ?? [];
+          const target = parameters.find((p) => p.name === name);
+          if (!target || target.value === value) {
+            return { dashboard: s.dashboard };
+          }
+          return {
+            dashboard: {
+              ...s.dashboard,
+              parameters: parameters.map((p) => (p.name === name ? { ...p, value } : p)),
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
 
       exportDashboard: () => {
         const { dashboard } = get();
@@ -210,6 +280,7 @@ export const useDashboardStore = create<DashboardState>()(
           editingPanelId: null,
           connectionDialogOpen: false,
           currentPage: "dashboard",
+          discoverQueryDraft: null,
         });
       },
     }),

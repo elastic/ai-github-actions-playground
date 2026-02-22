@@ -7,13 +7,16 @@ import Link from "@mui/material/Link";
 import { lightTheme, darkTheme } from "./theme";
 import { useDashboardStore } from "./store/useDashboardStore";
 import AppHeader from "./components/AppHeader";
+import ParameterBar from "./components/ParameterBar";
 import DashboardGrid from "./components/DashboardGrid";
 import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
+import ExplorePage from "./components/ExplorePage";
 import DocsPage from "./components/DocsPage";
 import ApiConsolePage from "./components/ApiConsolePage";
+import DataStreamsPage from "./components/DataStreamsPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -28,6 +31,7 @@ export default function App() {
       <CssBaseline />
       <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <AppHeader />
+        {connected && currentPage === "dashboard" && <ParameterBar />}
         <Box
           component="main"
           sx={{
@@ -43,6 +47,10 @@ export default function App() {
             <DocsPage />
           ) : !connected ? (
             <WelcomeScreen />
+          ) : currentPage === "dataStreams" ? (
+            <DataStreamsPage />
+          ) : currentPage === "explore" ? (
+            <ExplorePage />
           ) : currentPage === "discover" ? (
             <DiscoverPage />
           ) : currentPage === "console" ? (

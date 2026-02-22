@@ -37,6 +37,20 @@ jobs:
         working-directory: peek
         run: npm run build
 
+      - name: Generate demo config
+        if: vars.DEMO_URL != '' && vars.DEMO_USERNAME != '' && secrets.DEMO_PASSWORD != ''
+        working-directory: peek/dist
+        env:
+          DEMO_URL: ${{ vars.DEMO_URL }}
+          DEMO_USERNAME: ${{ vars.DEMO_USERNAME }}
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+        run: |
+          jq -n \
+            --arg url "$DEMO_URL" \
+            --arg username "$DEMO_USERNAME" \
+            --arg password "$DEMO_PASSWORD" \
+            '{"url": $url, "username": $username, "password": $password}' > demo.json
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

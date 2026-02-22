@@ -28,6 +28,9 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import TerminalIcon from "@mui/icons-material/Terminal";
+import ExploreIcon from "@mui/icons-material/Explore";
+import DatasetIcon from "@mui/icons-material/Dataset";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
@@ -94,10 +97,12 @@ export default function AppHeader() {
   const [titleValue, setTitleValue] = useState(dashboard.title);
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
+  const [systemAnchor, setSystemAnchor] = useState<null | HTMLElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
+  const tabValue = currentPage === "dataStreams" ? false : currentPage;
   const timeRangeRef = useRef(dashboard.timeRange);
   useEffect(() => {
     timeRangeRef.current = dashboard.timeRange;
@@ -205,8 +210,10 @@ export default function AppHeader() {
 
         {connected && (
           <Tabs
-            value={currentPage}
-            onChange={(_, v: "dashboard" | "discover" | "docs" | "console") => setCurrentPage(v)}
+            value={tabValue}
+            onChange={(_, v: "dashboard" | "discover" | "explore" | "docs" | "console") =>
+              setCurrentPage(v)
+            }
             sx={{ ml: 2, minHeight: 48 }}
             TabIndicatorProps={{ style: { height: 3 } }}
           >
@@ -219,8 +226,15 @@ export default function AppHeader() {
             />
             <Tab
               value="discover"
-              label="Discover"
+              label="Query Lab"
               icon={<SearchIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="explore"
+              label="Metrics"
+              icon={<ExploreIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
@@ -239,6 +253,36 @@ export default function AppHeader() {
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
           </Tabs>
+        )}
+        {connected && (
+          <>
+            <Button
+              size="small"
+              variant={currentPage === "dataStreams" ? "contained" : "text"}
+              color={currentPage === "dataStreams" ? "primary" : "inherit"}
+              startIcon={<DatasetIcon fontSize="small" />}
+              endIcon={<ExpandMoreIcon fontSize="small" />}
+              onClick={(e) => setSystemAnchor(e.currentTarget)}
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem", ml: 0.5 }}
+            >
+              System
+            </Button>
+            <Menu
+              anchorEl={systemAnchor}
+              open={Boolean(systemAnchor)}
+              onClose={() => setSystemAnchor(null)}
+            >
+              <MenuItem
+                selected={currentPage === "dataStreams"}
+                onClick={() => {
+                  setCurrentPage("dataStreams");
+                  setSystemAnchor(null);
+                }}
+              >
+                Data Streams
+              </MenuItem>
+            </Menu>
+          </>
         )}
 
         <Box sx={{ flex: 1 }} />

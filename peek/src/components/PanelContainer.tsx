@@ -12,7 +12,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
-import { buildTimeParams } from "../services/datemath";
+import { buildQueryParams } from "../services/datemath";
 import type { PanelDefinition, EsqlResponse } from "../types";
 import Visualization from "./visualizations/Visualization";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
@@ -24,6 +24,7 @@ interface Props {
 export default function PanelContainer({ panel }: Props) {
   const connection = useDashboardStore((s) => s.connection);
   const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
+  const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
 
   const [data, setData] = useState<EsqlResponse | null>(null);
@@ -57,9 +58,9 @@ export default function PanelContainer({ panel }: Props) {
             },
           },
         };
-        const timeParams = buildTimeParams(query, timeRange);
-        if (timeParams.length > 0) {
-          body.params = timeParams;
+        const queryParams = buildQueryParams(query, timeRange, parameters);
+        if (queryParams.length > 0) {
+          body.params = queryParams;
         }
       }
       const result = await client.query(body, ctrl.signal);
@@ -77,7 +78,7 @@ export default function PanelContainer({ panel }: Props) {
         setLoading(false);
       }
     }
-  }, [connection, panel.query, timeRange]);
+  }, [connection, panel.query, timeRange, parameters]);
 
   useEffect(() => {
     fetchData();

@@ -88,9 +88,11 @@ function RequestCard({
   const [copied, setCopied] = useState(false);
   const serializedResponse = useCallback((body: unknown): string => {
     try {
-      return JSON.stringify(body, (_key, value) =>
-        typeof value === "bigint" ? value.toString() : value,
-      2);
+      return JSON.stringify(
+        body,
+        (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+        2,
+      );
     } catch {
       return String(body);
     }

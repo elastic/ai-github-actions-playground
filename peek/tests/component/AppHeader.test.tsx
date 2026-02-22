@@ -10,6 +10,8 @@ vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("AppHeader", () => {
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetState();
     // Set connected so the dashboard title and controls are visible
     useDashboardStore.getState().setConnected(true);
@@ -54,5 +56,15 @@ describe("AppHeader", () => {
     render(<AppHeader />);
 
     expect(screen.getByText("Disconnected")).toBeInTheDocument();
+  });
+
+  it("does not warn when current page is dataStreams", () => {
+    useDashboardStore.getState().setCurrentPage("dataStreams");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(<AppHeader />);
+
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });

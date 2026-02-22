@@ -24,11 +24,26 @@ const panelDefinition = z.object({
   refreshInterval: z.number().optional(),
 });
 
+const parameterSource = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("text") }),
+  z.object({ mode: z.literal("options"), values: z.array(z.string()) }),
+  z.object({ mode: z.literal("esql"), query: z.string() }),
+]);
+
+const dashboardParameter = z.object({
+  name: z.string().min(1),
+  label: z.string().min(1),
+  type: z.literal("keyword"),
+  source: parameterSource,
+  value: z.string(),
+});
+
 export const dashboardDefinitionSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().optional(),
   panels: z.array(panelDefinition),
+  parameters: z.array(dashboardParameter).optional(),
   timeRange,
   refreshInterval: z.number().optional(),
   createdAt: z.string(),
