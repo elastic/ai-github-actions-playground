@@ -36,15 +36,20 @@ export function useEsqlQuery({ connection, onSuccess, onFailure }: UseEsqlQueryO
       try {
         const client = new ElasticsearchClient(connection);
         const data = await client.query({ query: queryText.trim() }, controller.signal);
-        if (requestId !== requestIdRef.current || controller.signal.aborted) return;
-        onSuccess(data);
+        if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          onSuccess(data);
+        }
       } catch (err) {
-        if (requestId !== requestIdRef.current || controller.signal.aborted) return;
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setError(isElasticsearchError(err) ? err.message : String(err));
-        onFailure?.();
-      } finally {
-        if (requestId !== requestIdRef.current) return;
+        if (
+          requestId === requestIdRef.current &&
+          !controller.signal.aborted &&
+          !(err instanceof DOMException && err.name === "AbortError")
+        ) {
+          setError(isElasticsearchError(err) ? err.message : String(err));
+          onFailure?.();
+        }
+      }
+      if (requestId === requestIdRef.current) {
         setLoading(false);
         setActiveStep(null);
       }

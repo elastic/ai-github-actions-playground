@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -27,6 +27,7 @@ import type {
   EsqlResponse,
   VisualizationOptions,
   FormatOptions,
+  PanelDefinition,
 } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import Visualization from "./visualizations/Visualization";
@@ -45,36 +46,35 @@ const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; labe
 
 export default function PanelEditor() {
   const editingId = useDashboardStore((s) => s.editingPanelId);
-  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
   const panels = useDashboardStore((s) => s.dashboard.panels);
+  const panel = panels.find((p) => p.id === editingId);
+
+  if (!panel || !editingId) {
+    return null;
+  }
+
+  return <PanelEditorDialog key={editingId} panel={panel} editingId={editingId} />;
+}
+
+function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
+  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
   const updatePanel = useDashboardStore((s) => s.updatePanel);
   const removePanel = useDashboardStore((s) => s.removePanel);
   const connection = useDashboardStore((s) => s.connection);
   const themeMode = useDashboardStore((s) => s.themeMode);
 
-  const panel = panels.find((p) => p.id === editingId);
-
-  const [title, setTitle] = useState("");
-  const [query, setQuery] = useState("");
-  const [viz, setViz] = useState<VisualizationType>("timeseries");
-  const [options, setOptions] = useState<VisualizationOptions>(() => defaultOptions("timeseries"));
+  const [title, setTitle] = useState(panel.title);
+  const [query, setQuery] = useState(panel.query);
+  const [viz, setViz] = useState<VisualizationType>(panel.visualization);
+  const [options, setOptions] = useState<VisualizationOptions>(
+    panel.options ?? defaultOptions(panel.visualization),
+  );
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
-  const { runQuery, loading, error, activeStep, clearError } = useEsqlQuery({
+  const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
     onSuccess: setPreview,
     onFailure: () => setPreview(null),
   });
-
-  useEffect(() => {
-    if (panel) {
-      setTitle(panel.title);
-      setQuery(panel.query);
-      setViz(panel.visualization);
-      setOptions(panel.options ?? defaultOptions(panel.visualization));
-      setPreview(null);
-      clearError();
-    }
-  }, [panel, clearError]);
 
   const handleVizChange = useCallback(
     (newViz: VisualizationType) => {
