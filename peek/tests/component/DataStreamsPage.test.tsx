@@ -73,6 +73,43 @@ describe("DataStreamsPage", () => {
     expect(useDashboardStore.getState().currentPage).toBe("discover");
   });
 
+  it("hides system streams (dot-prefixed) by default", async () => {
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(<DataStreamsPage />);
+
+    await screen.findAllByText("logs-a");
+    expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
+  });
+
+  it("shows system streams when the toggle is enabled", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(<DataStreamsPage />);
+
+    await screen.findAllByText("logs-a");
+    expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
+
+    await screen.findByText(".system-stream");
+    expect(screen.getByText(".system-stream")).toBeInTheDocument();
+  });
+
   it("ignores stale field-cap responses when selection changes quickly", async () => {
     const user = userEvent.setup();
     const firstFields = deferred<{ fields: Record<string, Record<string, { type: string }>> }>();

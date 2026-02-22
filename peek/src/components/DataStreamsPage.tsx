@@ -5,11 +5,13 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
@@ -31,6 +33,7 @@ export default function DataStreamsPage() {
 
   const [search, setSearch] = useState("");
   const [fieldSearch, setFieldSearch] = useState("");
+  const [showSystemStreams, setShowSystemStreams] = useState(false);
   const [loadingStreams, setLoadingStreams] = useState(false);
   const [loadingFields, setLoadingFields] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,9 +109,12 @@ export default function DataStreamsPage() {
 
   const filteredStreams = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return dataStreams;
-    return dataStreams.filter((stream) => stream.name.toLowerCase().includes(term));
-  }, [dataStreams, search]);
+    return dataStreams.filter((stream) => {
+      if (!showSystemStreams && stream.name.startsWith(".")) return false;
+      if (term && !stream.name.toLowerCase().includes(term)) return false;
+      return true;
+    });
+  }, [dataStreams, search, showSystemStreams]);
 
   const fieldRows = useMemo(() => {
     const rows = fieldCaps ? toFieldRows(fieldCaps) : [];
@@ -163,6 +169,22 @@ export default function DataStreamsPage() {
               placeholder="Search streams"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={showSystemStreams}
+                  onChange={(e) => setShowSystemStreams(e.target.checked)}
+                  inputProps={{ "aria-label": "Show system streams" }}
+                />
+              }
+              label={
+                <Typography variant="caption" color="text.secondary">
+                  Show system streams
+                </Typography>
+              }
+              sx={{ mt: 0.5, ml: 0 }}
             />
           </Box>
           <Divider />
