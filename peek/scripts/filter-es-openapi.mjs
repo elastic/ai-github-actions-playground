@@ -110,7 +110,7 @@ function pickByRefs(obj, refs, prefix) {
 
 async function main() {
   console.log("Downloading Elasticsearch OpenAPI spec...");
-  const response = await fetch(SPEC_URL);
+  const response = await fetch(SPEC_URL, { signal: AbortSignal.timeout(30_000) });
   if (!response.ok) {
     throw new Error(`Failed to download spec: ${response.status} ${response.statusText}`);
   }
@@ -133,34 +133,26 @@ async function main() {
   const pathRefs = collectRefs(filteredPaths);
   const allRefs = resolveAllRefs(spec, pathRefs);
 
-  // Filter each components section to only referenced items
-  const filteredSchemas = pickByRefs(spec.components?.schemas, allRefs, "components/schemas");
-  const filteredParams = pickByRefs(spec.components?.parameters, allRefs, "components/parameters");
-  const filteredResponses = pickByRefs(spec.components?.responses, allRefs, "components/responses");
-  const filteredRequestBodies = pickByRefs(
-    spec.components?.requestBodies,
-    allRefs,
-    "components/requestBodies",
-  );
+  // Filter every components section to only referenced items
+  const filteredComponents = {};
+  for (const [section, entries] of Object.entries(spec.components ?? {})) {
+    const picked = pickByRefs(entries, allRefs, `components/${section}`);
+    if (Object.keys(picked).length > 0) {
+      filteredComponents[section] = picked;
+    }
+  }
 
-  console.log(
-    `Kept ${Object.keys(filteredSchemas).length} schemas, ` +
-      `${Object.keys(filteredParams).length} parameters, ` +
-      `${Object.keys(filteredResponses).length} responses, ` +
-      `${Object.keys(filteredRequestBodies).length} request bodies`,
-  );
+  const summary = Object.entries(filteredComponents)
+    .map(([k, v]) => `${Object.keys(v).length} ${k}`)
+    .join(", ");
+  console.log(`Kept ${summary}`);
 
   // Build the filtered spec
   const filtered = {
     openapi: spec.openapi,
     info: spec.info,
     paths: filteredPaths,
-    components: {
-      schemas: filteredSchemas,
-      parameters: filteredParams,
-      responses: filteredResponses,
-      requestBodies: filteredRequestBodies,
-    },
+    components: filteredComponents,
   };
 
   const outPath = resolve(__dirname, "../src/services/es/elasticsearch-esql.openapi.json");

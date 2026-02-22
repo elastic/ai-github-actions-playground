@@ -68,6 +68,24 @@ const MAX_RETRIES = 3;
 const RETRY_STATUSES = new Set([429, 503]);
 const INITIAL_BACKOFF_MS = 500;
 
+function sleepAbortable(ms: number, signal?: AbortSignal | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+}
+
 export class ElasticsearchClient {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
@@ -107,9 +125,18 @@ export class ElasticsearchClient {
     };
 
     let lastError: ElasticsearchError | undefined;
+    const signal = init.signal;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const response = await fetch(url, init);
+      let response: Response;
+      try {
+        response = await fetch(url, init);
+      } catch (err) {
+        throw {
+          status: 0,
+          message: err instanceof Error ? err.message : String(err),
+        } satisfies ElasticsearchError;
+      }
 
       if (response.ok) {
         return (await response.json()) as T;
@@ -132,11 +159,11 @@ export class ElasticsearchClient {
 
       lastError = esError;
       const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
-      await new Promise((resolve) => setTimeout(resolve, backoff));
+      await sleepAbortable(backoff, signal);
     }
 
     // Should never reach here, but satisfy TypeScript
-    throw lastError ?? new Error("Unexpected error in _fetch");
+    throw lastError ?? ({ status: 0, message: "Unexpected error in _fetch" } satisfies ElasticsearchError);
   }
 
   // -------------------------------------------------------------------------
@@ -170,5 +197,7 @@ export class ElasticsearchClient {
 // ---------------------------------------------------------------------------
 
 export function isElasticsearchError(err: unknown): err is ElasticsearchError {
-  return typeof err === "object" && err !== null && "status" in err && "message" in err;
+  if (typeof err !== "object" || err === null) return false;
+  const obj = err as Record<string, unknown>;
+  return typeof obj.status === "number" && typeof obj.message === "string";
 }
