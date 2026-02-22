@@ -65,6 +65,10 @@ export default function PanelContainer({ panel }: Props) {
     a.click();
   }, [exportImage, panel.title]);
 
+  const handleExportReady = useCallback((exportFn: (() => string) | null) => {
+    setExportImage(() => exportFn);
+  }, []);
+
   const fetchData = useCallback(async () => {
     if (!connection || !panel.query.trim()) return;
 
@@ -248,7 +252,7 @@ export default function PanelContainer({ panel }: Props) {
             type={panel.visualization}
             data={data}
             options={panel.options}
-            onExportReady={setExportImage}
+            onExportReady={handleExportReady}
           />
         ) : (
           <Box
