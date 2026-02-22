@@ -6,7 +6,6 @@ import type {
   BarChartOptions,
   StatPanelOptions,
   GaugePanelOptions,
-  HeatmapChartOptions,
   ScatterChartOptions,
   HistogramChartOptions,
 } from "../../types";
@@ -41,7 +40,7 @@ export default function Visualization({ type, data, options }: Props) {
     case "pie":
       return <PieChart data={data} />;
     case "heatmap":
-      return <HeatmapChart data={data} options={options as HeatmapChartOptions | undefined} />;
+      return <HeatmapChart data={data} />;
     case "scatter":
       return <ScatterChart data={data} options={options as ScatterChartOptions | undefined} />;
     case "histogram":

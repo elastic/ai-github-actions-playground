@@ -1,12 +1,11 @@
 import { useMemo } from "react";
-import type { EsqlResponse, HeatmapChartOptions } from "../../types";
+import type { EsqlResponse } from "../../types";
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
-  options?: HeatmapChartOptions;
 }
 
 export default function HeatmapChart({ data }: Props) {
