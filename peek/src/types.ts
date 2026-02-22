@@ -1,14 +1,10 @@
 import type { FormatOptions } from "@perses-dev/core";
+import type { EsqlResponse, EsqlError } from "./services/es";
 
 export type { FormatOptions };
 
-export interface ElasticsearchConnection {
-  url: string;
-  apiKey?: string;
-  username?: string;
-  password?: string;
-  cloudId?: string;
-}
+// ES-specific types are now sourced from the generated OpenAPI types.
+export type { ElasticsearchConnection, EsqlColumn, EsqlResponse, EsqlError } from "./services/es";
 
 export type VisualizationType = "timeseries" | "bar" | "table" | "stat" | "gauge" | "pie";
 
@@ -78,22 +74,6 @@ export interface TimeRange {
 
 /** Default auto-refresh interval in seconds */
 export const DEFAULT_REFRESH_INTERVAL = 15;
-
-export interface EsqlColumn {
-  name: string;
-  type: string;
-}
-
-export interface EsqlResponse {
-  columns: EsqlColumn[];
-  values: unknown[][];
-}
-
-export interface EsqlError {
-  status: number;
-  message: string;
-  cause?: string;
-}
 
 export type QueryResult =
   | { status: "idle" }
