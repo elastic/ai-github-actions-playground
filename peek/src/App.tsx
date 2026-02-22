@@ -22,6 +22,7 @@ import DataStreamsPage from "./components/DataStreamsPage";
 import ClusterOverviewPage from "./components/ClusterOverviewPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
+import TracesPage from "./components/traces/TracesPage";
 import DashboardManagementPage from "./components/DashboardManagementPage";
 
 const currentYear = new Date().getFullYear();
@@ -40,6 +41,7 @@ export default function App() {
     currentPage === "clusterOverview" ||
     currentPage === "explore" ||
     currentPage === "console" ||
+    currentPage === "traces" ||
     currentPage === "settings" ||
     currentPage === "dashboardManagement";
   const shouldShowWelcome = !connected && requiresConnectionPage;
@@ -87,6 +89,8 @@ export default function App() {
                 <ExplorePage />
               ) : currentPage === "discover" ? (
                 <DiscoverPage />
+              ) : currentPage === "traces" ? (
+                <TracesPage />
               ) : currentPage === "console" ? (
                 <ApiConsolePage />
               ) : (

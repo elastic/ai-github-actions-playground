@@ -166,6 +166,17 @@ describe("useDashboardStore duplicatePanel", () => {
     expect(result).toBeNull();
   });
 
+  it("leaves state unchanged when duplicating a missing panel id", () => {
+    const beforePanels = useDashboardStore.getState().dashboard.panels;
+    const beforeUpdatedAt = useDashboardStore.getState().dashboard.updatedAt;
+    const result = useDashboardStore.getState().duplicatePanel("missing-id");
+    const afterPanels = useDashboardStore.getState().dashboard.panels;
+    const afterUpdatedAt = useDashboardStore.getState().dashboard.updatedAt;
+    expect(result).toBeNull();
+    expect(afterPanels).toEqual(beforePanels);
+    expect(afterUpdatedAt).toBe(beforeUpdatedAt);
+  });
+
   it("increases panel count by exactly 1", () => {
     const before = useDashboardStore.getState().dashboard.panels.length;
     const sourceId = useDashboardStore.getState().dashboard.panels[0].id;
@@ -237,6 +248,43 @@ describe("useDashboardStore duplicatePanel", () => {
     const sourceFormat = (source!.options as Record<string, unknown>).format;
     expect(cloneFormat).toEqual(sourceFormat);
     expect(cloneFormat).not.toBe(sourceFormat);
+  });
+
+  it("normalizes copy suffix and increments copy counters", () => {
+    useDashboardStore.getState().addPanel({
+      id: "copy-source",
+      title: "Panel",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+
+    const firstCopyId = useDashboardStore.getState().duplicatePanel("copy-source");
+    const secondCopyId = useDashboardStore.getState().duplicatePanel("copy-source");
+
+    const firstCopy = useDashboardStore
+      .getState()
+      .dashboard.panels.find((p) => p.id === firstCopyId);
+    const secondCopy = useDashboardStore
+      .getState()
+      .dashboard.panels.find((p) => p.id === secondCopyId);
+
+    expect(firstCopy?.title).toBe("Panel (copy)");
+    expect(secondCopy?.title).toBe("Panel (copy 2)");
+  });
+
+  it("normalizes source titles that already end with copy suffix", () => {
+    useDashboardStore.getState().addPanel({
+      id: "copy-suffixed-source",
+      title: "Panel (copy)",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+
+    const copyId = useDashboardStore.getState().duplicatePanel("copy-suffixed-source");
+    const copy = useDashboardStore.getState().dashboard.panels.find((p) => p.id === copyId);
+    expect(copy?.title).toBe("Panel (copy 2)");
   });
 });
 

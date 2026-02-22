@@ -7,6 +7,7 @@ import {
   GaugeChart,
   HeatmapChart,
   ScatterChart,
+  CustomChart,
 } from "echarts/charts";
 import {
   GridComponent,
@@ -26,6 +27,7 @@ echarts.use([
   GaugeChart,
   HeatmapChart,
   ScatterChart,
+  CustomChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
@@ -39,13 +41,14 @@ interface Props {
   option: Record<string, unknown>;
   style?: React.CSSProperties;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  onClick?: (params: { dataIndex: number; seriesIndex?: number; data: unknown }) => void;
 }
 
 /**
  * Lightweight ECharts wrapper component.
  * Perses uses a similar pattern via @perses-dev/components EChart.
  */
-export default function EChartWrapper({ option, style, onExportReady }: Props) {
+export default function EChartWrapper({ option, style, onExportReady, onClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
 
@@ -71,6 +74,18 @@ export default function EChartWrapper({ option, style, onExportReady }: Props) {
       chartRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || !onClick) return;
+    const handler = (params: { dataIndex: number; seriesIndex?: number; data: unknown }) => {
+      onClick(params);
+    };
+    chart.on("click", handler);
+    return () => {
+      chart.off("click", handler);
+    };
+  }, [onClick]);
 
   useEffect(() => {
     if (!onExportReady) return;
