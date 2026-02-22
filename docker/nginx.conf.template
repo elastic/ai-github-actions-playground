@@ -10,6 +10,26 @@ server {
         proxy_pass_request_headers on;
     }
 
+    # Full Elasticsearch proxy — handles connection validation, cluster health,
+    # data streams, field caps, API console, etc.
+    # Connect the dashboard to http://localhost:8080/_es
+    location /_es/ {
+        rewrite ^/_es(/.*)$ $1 break;
+        proxy_pass ${ES_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_pass_request_headers on;
+    }
+
+    # Also match /_es without trailing slash (e.g. GET /_es for cluster info).
+    location = /_es {
+        rewrite ^/_es$ / break;
+        proxy_pass ${ES_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_pass_request_headers on;
+    }
+
     location / {
         root /usr/share/nginx/html;
         index index.html;

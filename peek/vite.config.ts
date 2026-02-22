@@ -7,14 +7,25 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    // When ES_URL is set, proxy /_query to Elasticsearch to avoid CORS.
+    // When ES_URL is set, proxy /_query and /_es requests to Elasticsearch
+    // to avoid CORS.
+    //
+    // /_query  — backwards-compatible proxy for ES|QL queries.
+    // /_es     — full proxy for all Elasticsearch APIs (connection validation,
+    //            cluster health, data streams, field caps, API console, etc.).
+    //            Use http://localhost:3000/_es as the Elasticsearch URL.
+    //
     // Example: ES_URL=http://localhost:9200 npm run dev
-    // Then connect the dashboard to http://localhost:3000 (no path).
     proxy: process.env.ES_URL
       ? {
           "/_query": {
             target: process.env.ES_URL,
             changeOrigin: true,
+          },
+          "/_es": {
+            target: process.env.ES_URL,
+            changeOrigin: true,
+            rewrite: (path: string) => path.replace(/^\/_es/, ""),
           },
         }
       : undefined,
