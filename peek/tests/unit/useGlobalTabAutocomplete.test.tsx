@@ -78,4 +78,32 @@ describe("useGlobalTabAutocomplete", () => {
 
     expect(generateText).not.toHaveBeenCalled();
   });
+
+  it("discards completion when text changed while request was in flight", async () => {
+    const user = userEvent.setup();
+    let resolveGenerate: (value: { text: string }) => void;
+    vi.mocked(generateText).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveGenerate = resolve as typeof resolveGenerate;
+        }),
+    );
+
+    render(<TestHarness />);
+    const input = screen.getByLabelText("free text") as HTMLInputElement;
+    await user.click(input);
+    await user.keyboard("{Tab}");
+
+    // Simulate user typing while the request is in flight
+    await user.type(input, "extra ");
+
+    // Now resolve the stale completion
+    resolveGenerate!({ text: " elasticsearch logs" } as never);
+
+    // Wait a tick to let the .then() handler run
+    await new Promise((r) => setTimeout(r, 0));
+
+    // The completion should NOT have been applied because text changed
+    expect(input.value).toBe("show me extra ");
+  });
 });
