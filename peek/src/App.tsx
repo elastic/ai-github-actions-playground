@@ -19,6 +19,7 @@ import ExplorePage from "./components/ExplorePage";
 import DocsPage from "./components/DocsPage";
 import ApiConsolePage from "./components/ApiConsolePage";
 import DataStreamsPage from "./components/DataStreamsPage";
+import ClusterOverviewPage from "./components/ClusterOverviewPage";
 import ChatPage from "./components/ChatPage";
 import SettingsPage from "./components/SettingsPage";
 
@@ -67,6 +68,8 @@ export default function App() {
                 <WelcomeScreen />
               ) : currentPage === "dataStreams" ? (
                 <DataStreamsPage />
+              ) : currentPage === "clusterOverview" ? (
+                <ClusterOverviewPage />
               ) : currentPage === "explore" ? (
                 <ExplorePage />
               ) : currentPage === "discover" ? (
