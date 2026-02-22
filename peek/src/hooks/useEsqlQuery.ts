@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection, EsqlResponse } from "../types";
+import type { EsqlQueryParams } from "../services/es";
 
 interface UseEsqlQueryOptions {
   connection: ElasticsearchConnection | null;
   onSuccess: (data: EsqlResponse) => void;
   onFailure?: () => void;
+  buildRequest?: (queryText: string) => EsqlQueryParams;
 }
 
-export function useEsqlQuery({ connection, onSuccess, onFailure }: UseEsqlQueryOptions) {
+export function useEsqlQuery({
+  connection,
+  onSuccess,
+  onFailure,
+  buildRequest,
+}: UseEsqlQueryOptions) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<number | null>(null);
@@ -35,7 +42,9 @@ export function useEsqlQuery({ connection, onSuccess, onFailure }: UseEsqlQueryO
       setError(null);
       try {
         const client = new ElasticsearchClient(connection);
-        const data = await client.query({ query: queryText.trim() }, controller.signal);
+        const trimmedQuery = queryText.trim();
+        const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
+        const data = await client.query(request, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
           onSuccess(data);
         }
@@ -54,7 +63,7 @@ export function useEsqlQuery({ connection, onSuccess, onFailure }: UseEsqlQueryO
         setActiveStep(null);
       }
     },
-    [connection, onSuccess, onFailure],
+    [connection, onSuccess, onFailure, buildRequest],
   );
 
   return { runQuery, loading, error, activeStep, clearError };

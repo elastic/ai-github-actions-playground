@@ -16,6 +16,11 @@ const UNIT_MS: Record<string, number> = {
 };
 
 const DATE_MATH_RE = /^now(?:([+-])(\d+)([smhdw]))?$/;
+function hasNamedPlaceholder(query: string, name: string): boolean {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`\\?${escapedName}(?![A-Za-z0-9_])`);
+  return pattern.test(query);
+}
 
 /**
  * Resolve a single date-math expression to a `Date`.
@@ -41,8 +46,8 @@ export function buildTimeParams(
   query: string,
   timeRange: TimeRange,
 ): Array<Record<string, string>> {
-  const needs_tstart = query.includes("?_tstart");
-  const needs_tend = query.includes("?_tend");
+  const needs_tstart = hasNamedPlaceholder(query, "_tstart");
+  const needs_tend = hasNamedPlaceholder(query, "_tend");
   if (!needs_tstart && !needs_tend) return [];
 
   const now = new Date();
@@ -55,6 +60,29 @@ export function buildTimeParams(
   if (needs_tend) {
     const resolved = resolveDateTime(timeRange.to, now);
     params.push({ _tend: resolved ? resolved.toISOString() : timeRange.to });
+  }
+
+  return params;
+}
+
+/**
+ * Build the full ES|QL `params` array by merging time-range parameters with
+ * user-defined dashboard parameters.  Only parameters actually referenced in
+ * the query (via `?name`) are included.
+ */
+export function buildQueryParams(
+  query: string,
+  timeRange: TimeRange,
+  userParams?: Array<{ name: string; value: string }>,
+): Array<Record<string, string>> {
+  const params = buildTimeParams(query, timeRange);
+
+  if (userParams) {
+    for (const { name, value } of userParams) {
+      if (name && hasNamedPlaceholder(query, name)) {
+        params.push({ [name]: value });
+      }
+    }
   }
 
   return params;

@@ -7,6 +7,7 @@ import Link from "@mui/material/Link";
 import { lightTheme, darkTheme } from "./theme";
 import { useDashboardStore } from "./store/useDashboardStore";
 import AppHeader from "./components/AppHeader";
+import ParameterBar from "./components/ParameterBar";
 import DashboardGrid from "./components/DashboardGrid";
 import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
@@ -28,6 +29,7 @@ export default function App() {
       <CssBaseline />
       <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <AppHeader />
+        {connected && currentPage === "dashboard" && <ParameterBar />}
         <Box
           component="main"
           sx={{

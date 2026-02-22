@@ -22,6 +22,8 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
+import type { EsqlQueryParams } from "../services/es";
+import { buildQueryParams } from "../services/datemath";
 import type {
   VisualizationType,
   EsqlResponse,
@@ -61,6 +63,8 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   const updatePanel = useDashboardStore((s) => s.updatePanel);
   const removePanel = useDashboardStore((s) => s.removePanel);
   const connection = useDashboardStore((s) => s.connection);
+  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
+  const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const themeMode = useDashboardStore((s) => s.themeMode);
 
   const [title, setTitle] = useState(panel.title);
@@ -70,10 +74,31 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     panel.options ?? defaultOptions(panel.visualization),
   );
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
+  const buildRequest = useCallback(
+    (queryText: string): EsqlQueryParams => {
+      const body: EsqlQueryParams = { query: queryText };
+      if (!timeRange) return body;
+      body.filter = {
+        range: {
+          "@timestamp": {
+            gte: timeRange.from,
+            lte: timeRange.to,
+          },
+        },
+      };
+      const queryParams = buildQueryParams(queryText, timeRange, parameters);
+      if (queryParams.length > 0) {
+        body.params = queryParams;
+      }
+      return body;
+    },
+    [timeRange, parameters],
+  );
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
     onSuccess: setPreview,
     onFailure: () => setPreview(null),
+    buildRequest,
   });
 
   const handleVizChange = useCallback(

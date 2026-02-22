@@ -1,12 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PanelEditor from "../../src/components/PanelEditor";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
+const queryMock = vi.fn();
+
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
+
+vi.mock("../../src/services/es", () => ({
+  ElasticsearchClient: vi.fn().mockImplementation(() => ({
+    query: queryMock,
+  })),
+  isElasticsearchError: (err: unknown) => {
+    if (typeof err !== "object" || err === null) return false;
+    const obj = err as Record<string, unknown>;
+    return typeof obj.status === "number" && typeof obj.message === "string";
+  },
+}));
 
 // Mock CodeMirror — it doesn't work in jsdom
 vi.mock("@uiw/react-codemirror", () => ({
@@ -25,7 +38,21 @@ describe("PanelEditor", () => {
   let panelId: string;
 
   beforeEach(() => {
+    queryMock.mockReset();
+    queryMock.mockResolvedValue({ columns: [], values: [], executionTimeMs: 1 });
     useDashboardStore.getState().resetState();
+    useDashboardStore.getState().setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
+    useDashboardStore.getState().setConnected(true);
+    useDashboardStore
+      .getState()
+      .setTimeRange({ from: "2025-06-15T11:00:00.000Z", to: "2025-06-15T12:00:00.000Z" });
+    useDashboardStore.getState().addParameter({
+      name: "service",
+      label: "Service",
+      type: "keyword",
+      source: { mode: "text" },
+      value: "web",
+    });
     // Add a test panel and open it for editing
     panelId = "test-panel-editor";
     useDashboardStore.getState().addPanel({
@@ -84,5 +111,35 @@ describe("PanelEditor", () => {
     expect(
       useDashboardStore.getState().dashboard.panels.find((p) => p.id === panelId),
     ).toBeUndefined();
+  });
+
+  it("Run Query sends _tstart/_tend and dashboard variable params when referenced", async () => {
+    const user = userEvent.setup();
+    useDashboardStore.getState().updatePanel(panelId, {
+      query:
+        "FROM logs-* | WHERE service.name == ?service | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)",
+    });
+
+    render(<PanelEditor />);
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query:
+          "FROM logs-* | WHERE service.name == ?service | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)",
+        filter: {
+          range: {
+            "@timestamp": {
+              gte: "2025-06-15T11:00:00.000Z",
+              lte: "2025-06-15T12:00:00.000Z",
+            },
+          },
+        },
+        params: expect.arrayContaining([{ _tstart: "2025-06-15T11:00:00.000Z" }, { _tend: "2025-06-15T12:00:00.000Z" }, { service: "web" }]),
+      }),
+      expect.any(AbortSignal),
+    );
   });
 });
