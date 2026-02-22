@@ -11,6 +11,7 @@ export type {
   EsqlQueryParams,
   EsqlQueryResponse,
   ClusterInfoResponse,
+  ClusterHealthResponse,
   ResolveIndexResponse,
   GetDataStreamsResponse,
   DataStreamInfo,

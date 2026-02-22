@@ -8,9 +8,10 @@ import EChartWrapper from "./EChartWrapper";
 interface Props {
   data: EsqlResponse;
   options?: GaugePanelOptions;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function GaugePanel({ data, options }: Props) {
+export default function GaugePanel({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
 
   const option = useMemo(() => {
@@ -63,5 +64,5 @@ export default function GaugePanel({ data, options }: Props) {
     };
   }, [data, theme, options]);
 
-  return <EChartWrapper option={option} />;
+  return <EChartWrapper option={option} onExportReady={onExportReady} />;
 }

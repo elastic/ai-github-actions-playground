@@ -72,6 +72,10 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
+    expect(screen.getByRole("button", { name: /cluster overview/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("marks the active page with aria-current", () => {
@@ -110,6 +114,16 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /data streams/i }));
 
     expect(useDashboardStore.getState().currentPage).toBe("dataStreams");
+  });
+
+  it("navigates to Cluster Overview when clicked while connected", async () => {
+    useDashboardStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    render(<AppSidebar />);
+
+    await user.click(screen.getByRole("button", { name: /cluster overview/i }));
+
+    expect(useDashboardStore.getState().currentPage).toBe("clusterOverview");
   });
 
   it("updates aria-current when active page changes", () => {
@@ -155,6 +169,17 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("menuitem", { name: /llm settings/i }));
 
     expect(useDashboardStore.getState().currentPage).toBe("settings");
+  });
+
+  it("opens settings menu and navigates to Dashboard Management", async () => {
+    useDashboardStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    render(<AppSidebar />);
+
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: /dashboard management/i }));
+
+    expect(useDashboardStore.getState().currentPage).toBe("dashboardManagement");
   });
 
   it("toggles theme from sidebar settings menu", async () => {

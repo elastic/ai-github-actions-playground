@@ -92,4 +92,52 @@ describe("ApiConsolePage", () => {
     expect(init.method).toBe("POST");
     expect(init.body).toBe('{"query":{"match_all":{}}}');
   });
+
+  it("closes the response panel when the dismiss button is clicked", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<ApiConsolePage />);
+
+    await user.click(screen.getByRole("button", { name: /send/i }));
+
+    await waitFor(() => expect(screen.getByText("200")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: /dismiss/i }));
+
+    expect(screen.queryByText("200")).not.toBeInTheDocument();
+  });
+
+  it("sends all requests when Run All is clicked", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ first: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ second: true }), {
+          status: 201,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    const user = userEvent.setup();
+    render(<ApiConsolePage />);
+
+    // Add a second request
+    await user.click(screen.getByRole("button", { name: /add request/i }));
+
+    await user.click(screen.getByRole("button", { name: /run all/i }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+  });
 });

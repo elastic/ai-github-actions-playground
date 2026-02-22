@@ -14,6 +14,7 @@ import ExploreIcon from "@mui/icons-material/Explore";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
 import DatasetIcon from "@mui/icons-material/Dataset";
+import InfoIcon from "@mui/icons-material/Info";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -29,7 +30,9 @@ type Page =
   | "docs"
   | "console"
   | "chat"
-  | "settings";
+  | "settings"
+  | "clusterOverview"
+  | "dashboardManagement";
 
 interface NavItem {
   label: string;
@@ -86,6 +89,12 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "System",
     items: [
+      {
+        label: "Cluster Overview",
+        page: "clusterOverview",
+        icon: <InfoIcon fontSize="small" />,
+        requiresConnection: true,
+      },
       {
         label: "Data Streams",
         page: "dataStreams",
@@ -174,6 +183,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
+                  key={item.page}
                   selected={isActive}
                   disabled={isDisabled}
                   onClick={() => setCurrentPage(item.page)}
@@ -270,6 +280,15 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           }}
         >
           LLM Settings
+        </MenuItem>
+        <MenuItem
+          selected={currentPage === "dashboardManagement"}
+          onClick={() => {
+            setCurrentPage("dashboardManagement");
+            setSettingsAnchor(null);
+          }}
+        >
+          Dashboard Management
         </MenuItem>
       </Menu>
     </Box>

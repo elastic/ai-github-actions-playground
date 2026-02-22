@@ -129,6 +129,10 @@ export default function ExplorePage() {
     if (!selectedMetric) return null;
     return metricNamespaceOf(selectedMetric);
   }, [selectedMetric]);
+  const selectedMetricField = useMemo(
+    () => fields.find((field) => field.name === selectedMetric) ?? null,
+    [fields, selectedMetric],
+  );
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
@@ -194,6 +198,15 @@ export default function ExplorePage() {
       cancelled = true;
     };
   }, [client, indexPattern, setFields, setFieldsLoading]);
+
+  // Reconcile metric type after field metadata loads (important for URL hydration paths).
+  useEffect(() => {
+    if (!selectedMetricField) return;
+    const nextMetricType = selectedMetricField.metricType === "counter" ? "counter" : "gauge";
+    if (nextMetricType !== metricType) {
+      setSelectedMetric(selectedMetricField.name, nextMetricType);
+    }
+  }, [selectedMetricField, metricType, setSelectedMetric]);
 
   // Run query when metric/aggregation/filters/groupBy/timeRange change
   useEffect(() => {

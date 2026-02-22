@@ -177,8 +177,8 @@ describe("getDefaultAggregation", () => {
     expect(getDefaultAggregation("gauge")).toBe("avg");
   });
 
-  it("returns sum for counter metrics", () => {
-    expect(getDefaultAggregation("counter")).toBe("sum");
+  it("returns count aggregation for counter metrics (SUM/AVG/etc are unsupported for counter types)", () => {
+    expect(getDefaultAggregation("counter")).toBe("count");
   });
 });
 
@@ -195,12 +195,8 @@ describe("getAggregationOptions", () => {
     expect(options).toContain("p99");
   });
 
-  it("returns counter-appropriate options starting with sum", () => {
+  it("returns counter-appropriate options (count only, since SUM/AVG/etc are unsupported for counter types)", () => {
     const options = getAggregationOptions("counter");
-    expect(options[0]).toBe("sum");
-    expect(options).toContain("avg");
-    expect(options).toContain("p50");
-    expect(options).toContain("p95");
-    expect(options).toContain("p99");
+    expect(options).toEqual(["count"]);
   });
 });

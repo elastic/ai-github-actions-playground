@@ -74,8 +74,10 @@ export default function ChatPage() {
         apiKey: config.apiKey,
         ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
       });
+      const model =
+        config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
       const result = await generateText({
-        model: openai(config.model),
+        model,
         system:
           "You are a helpful assistant for the Elastic Peek dashboard application. " +
           "You help users with Elasticsearch ES|QL queries, dashboard configuration, " +
