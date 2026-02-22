@@ -12,12 +12,13 @@ import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import DownloadIcon from "@mui/icons-material/Download";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlColumn, EsqlResponse } from "../types";
-import { filterColumnsByName, filterEsqlResult } from "./discoverUtils";
+import { filterColumnsByName, filterEsqlResult, toCsv } from "./discoverUtils";
 import DataTable from "./visualizations/DataTable";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -102,6 +103,18 @@ export default function DiscoverPage() {
     [result, selectedFields],
   );
 
+  const handleExportCsv = useCallback(() => {
+    if (!filteredResult || filteredResult.columns.length === 0) return;
+    const csv = toCsv(filteredResult);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "discover-results.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }, [filteredResult]);
+
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
   const visibleColumns = useMemo(
     () => filterColumnsByName(columns, fieldFilter),
@@ -184,6 +197,19 @@ export default function DiscoverPage() {
                 disabled={!query.trim()}
               >
                 Create Panel
+              </Button>
+            </span>
+          </Tooltip>
+          <Tooltip title="Export currently visible results as CSV">
+            <span>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={handleExportCsv}
+                disabled={!filteredResult || filteredResult.columns.length === 0}
+              >
+                Export CSV
               </Button>
             </span>
           </Tooltip>
