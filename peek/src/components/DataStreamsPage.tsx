@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -37,6 +37,7 @@ export default function DataStreamsPage() {
   const [dataStreams, setDataStreams] = useState<DataStreamInfo[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [fieldCaps, setFieldCaps] = useState<FieldCapsResponse | null>(null);
+  const fieldRequestIdRef = useRef(0);
 
   const selectedDataStream = useMemo(
     () => dataStreams.find((stream) => stream.name === selectedName) ?? null,
@@ -50,8 +51,14 @@ export default function DataStreamsPage() {
     try {
       const client = new ElasticsearchClient(connection);
       const response = await client.getDataStreams();
-      setDataStreams(response.data_streams ?? []);
-      setSelectedName((current) => current ?? response.data_streams[0]?.name ?? null);
+      const nextStreams = response.data_streams ?? [];
+      setDataStreams(nextStreams);
+      setSelectedName((current) => {
+        if (current && nextStreams.some((stream) => stream.name === current)) {
+          return current;
+        }
+        return nextStreams[0]?.name ?? null;
+      });
     } catch (err) {
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
@@ -62,16 +69,24 @@ export default function DataStreamsPage() {
   const loadFields = useCallback(
     async (dataStreamName: string) => {
       if (!connection) return;
+      const requestId = fieldRequestIdRef.current + 1;
+      fieldRequestIdRef.current = requestId;
       setLoadingFields(true);
       setError(null);
       try {
         const client = new ElasticsearchClient(connection);
         const response = await client.getFieldCaps(dataStreamName);
-        setFieldCaps(response);
+        if (requestId === fieldRequestIdRef.current) {
+          setFieldCaps(response);
+        }
       } catch (err) {
-        setError(isElasticsearchError(err) ? err.message : String(err));
+        if (requestId === fieldRequestIdRef.current) {
+          setError(isElasticsearchError(err) ? err.message : String(err));
+        }
       } finally {
-        setLoadingFields(false);
+        if (requestId === fieldRequestIdRef.current) {
+          setLoadingFields(false);
+        }
       }
     },
     [connection],
