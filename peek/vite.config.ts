@@ -13,7 +13,7 @@ export default defineConfig({
     // /_query  — backwards-compatible proxy for ES|QL queries.
     // /_es     — full proxy for all Elasticsearch APIs (connection validation,
     //            cluster health, data streams, field caps, API console, etc.).
-    //            Connect the dashboard to http://localhost:3000/_es
+    //            Use http://localhost:3000/_es as the Elasticsearch URL.
     //
     // Example: ES_URL=http://localhost:9200 npm run dev
     proxy: process.env.ES_URL
