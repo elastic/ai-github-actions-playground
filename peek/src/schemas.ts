@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+const thresholdColor = z.enum(["success", "warning", "error"]);
+
+const thresholdStep = z.object({
+  value: z.number(),
+  color: thresholdColor,
+});
+
+export const thresholdsSchema = z.object({
+  steps: z.array(thresholdStep),
+  baseColor: thresholdColor.optional(),
+});
+
 const visualizationType = z.enum([
   "timeseries",
   "bar",

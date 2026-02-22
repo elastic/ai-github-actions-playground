@@ -6,6 +6,7 @@ import type {
   BarChartOptions,
   StatPanelOptions,
   GaugePanelOptions,
+  TablePanelOptions,
   ScatterChartOptions,
   HistogramChartOptions,
 } from "../../types";
@@ -46,7 +47,7 @@ export default function Visualization({ type, data, options, onExportReady }: Pr
         />
       );
     case "table":
-      return <DataTable data={data} />;
+      return <DataTable data={data} options={options as TablePanelOptions | undefined} />;
     case "stat":
       return <StatPanel data={data} options={options as StatPanelOptions | undefined} />;
     case "gauge":
