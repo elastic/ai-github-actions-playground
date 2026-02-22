@@ -361,7 +361,9 @@ function ParameterControl({
         }
       })
       .catch(() => {
-        /* ignore fetch errors for option loading */
+        if (!ctrl.signal.aborted) {
+          setEsqlOptions([]);
+        }
       });
 
     return () => ctrl.abort();

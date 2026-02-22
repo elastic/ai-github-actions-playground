@@ -69,6 +69,17 @@ describe("buildQueryParams", () => {
     expect(params[0]).toEqual({ service: "web" });
   });
 
+  it("does not match placeholder name prefixes", () => {
+    const query = "FROM logs-* | WHERE env_name == ?env_name";
+    const userParams = [
+      { name: "env", value: "prod" },
+      { name: "env_name", value: "web" },
+    ];
+    const params = buildQueryParams(query, { from: "now-1h", to: "now" }, userParams);
+    expect(params).toHaveLength(1);
+    expect(params[0]).toEqual({ env_name: "web" });
+  });
+
   it("handles undefined userParams gracefully", () => {
     const query = "FROM logs-* | WHERE x == ?_tstart";
     vi.useFakeTimers({ now: NOW });
