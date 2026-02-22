@@ -14,8 +14,9 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const ES_SPEC_VERSION = "9.0";
 const SPEC_URL =
-  "https://raw.githubusercontent.com/elastic/elasticsearch-specification/main/output/openapi/elasticsearch-openapi.json";
+  `https://raw.githubusercontent.com/elastic/elasticsearch-specification/${ES_SPEC_VERSION}/output/openapi/elasticsearch-openapi.json`;
 
 /** Paths we want to keep (OpenAPI path format). */
 const KEEP_PATHS = [

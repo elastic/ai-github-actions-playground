@@ -15,7 +15,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "screenshot:preflight": "node scripts/screenshot-preflight.mjs",
-    "generate:types": "node scripts/filter-es-openapi.mjs && openapi-typescript src/services/es/elasticsearch-esql.openapi.json -o src/services/es/types.generated.d.ts"
+    "generate:types": "node scripts/filter-es-openapi.mjs && npx openapi-typescript src/services/es/elasticsearch-esql.openapi.json -o src/services/es/types.generated.d.ts"
   },
   "dependencies": {
     "@codemirror/lang-sql": "^6.8.0",
