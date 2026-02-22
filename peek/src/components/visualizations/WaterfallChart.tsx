@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import type { Span } from "../traces/traceUtils";
 import {
   buildSpanTree,
@@ -8,6 +8,10 @@ import {
 } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
 import { useEChartTheme } from "./useEChartTheme";
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 import EChartWrapper from "./EChartWrapper";
 
 interface WaterfallChartProps {
@@ -16,7 +20,7 @@ interface WaterfallChartProps {
   selectedSpanId?: string | null;
 }
 
-export default function WaterfallChart({ spans }: WaterfallChartProps) {
+export default function WaterfallChart({ spans, onSpanClick, selectedSpanId }: WaterfallChartProps) {
   const theme = useEChartTheme();
 
   const option = useMemo(() => {
@@ -77,24 +81,24 @@ export default function WaterfallChart({ spans }: WaterfallChartProps) {
         formatter: (params: Array<{ dataIndex: number }>) => {
           const idx = params[0]?.dataIndex ?? 0;
           const node = flatNodes[idx]!;
-          return `<strong>${node.span.serviceName}</strong>: ${node.span.name}<br/>Duration: ${formatSpanDuration(node.span.durationUs)}`;
+          return `<strong>${escapeHtml(node.span.serviceName)}</strong>: ${escapeHtml(node.span.name)}<br/>Duration: ${escapeHtml(formatSpanDuration(node.span.durationUs))}`;
         },
       },
       xAxis: {
         type: "value",
         max: totalDurationMs,
         axisLabel: {
-          ...theme.xAxis.axisLabel,
+          ...(theme.xAxis?.axisLabel ?? {}),
           formatter: (v: number) => formatSpanDuration(v * 1000),
         },
-        splitLine: { ...theme.xAxis.splitLine },
+        splitLine: { ...(theme.xAxis?.splitLine ?? {}) },
       },
       yAxis: {
         type: "category",
         data: categories,
         inverse: true,
         axisLabel: {
-          ...theme.yAxis.axisLabel,
+          ...(theme.yAxis?.axisLabel ?? {}),
           fontSize: 11,
         },
       },
@@ -131,7 +135,24 @@ export default function WaterfallChart({ spans }: WaterfallChartProps) {
         },
       ],
     };
-  }, [spans, theme]);
+  }, [spans, theme, selectedSpanId]);
 
-  return <EChartWrapper option={option} />;
+  // Keep flatNodes accessible to the click handler without recalculating
+  const flatNodesRef = useMemo(() => {
+    if (spans.length === 0) return [];
+    const tree = buildSpanTree(spans);
+    return flattenSpanTree(tree);
+  }, [spans]);
+
+  const handleClick = useCallback(
+    (params: { dataIndex: number }) => {
+      const node = flatNodesRef[params.dataIndex];
+      if (node && onSpanClick) {
+        onSpanClick(node.span.spanId);
+      }
+    },
+    [flatNodesRef, onSpanClick],
+  );
+
+  return <EChartWrapper option={option} onClick={onSpanClick ? handleClick : undefined} />;
 }

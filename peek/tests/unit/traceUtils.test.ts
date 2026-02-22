@@ -77,6 +77,20 @@ describe("buildSpanTree", () => {
     expect(roots).toHaveLength(2);
   });
 
+  it("handles self-referencing span without infinite loop", () => {
+    const spans = [
+      makeSpan({ spanId: "root", parentSpanId: null }),
+      makeSpan({ spanId: "self", parentSpanId: "self" }),
+    ];
+    // "self" references itself — should not hang or crash
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    // "root" is a proper root, "self" references itself so byId.has("self")
+    // is true and it gets attached as its own child, not as a root
+    expect(flat.length).toBeGreaterThanOrEqual(1);
+    expect(flat[0]!.span.spanId).toBe("root");
+  });
+
   it("sorts children chronologically", () => {
     const spans = [
       makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.000Z" }),
@@ -128,6 +142,10 @@ describe("flattenSpanTree", () => {
 });
 
 describe("formatSpanDuration", () => {
+  it("formats zero duration", () => {
+    expect(formatSpanDuration(0)).toBe("0µs");
+  });
+
   it("formats microseconds", () => {
     expect(formatSpanDuration(500)).toBe("500µs");
   });
@@ -212,6 +230,28 @@ describe("parseSpansFromEsql", () => {
     expect(spans[0]!.name).toBe("GET /users");
     expect(spans[0]!.durationUs).toBe(1500000);
     expect(spans[0]!.attributes).toEqual({ "http.method": "GET" });
+  });
+
+  it("excludes null attribute values from span attributes", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "http.method", type: "keyword" },
+      { name: "http.url", type: "keyword" },
+    ];
+    const values = [["t1", "s1", null, "svc", "op", "SERVER", 1000, "OK", "2026-01-01T00:00:00Z", "GET", null]];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    // http.url is null so it should not appear in attributes
+    expect(spans[0]!.attributes).toEqual({ "http.method": "GET" });
+    expect(spans[0]!.attributes).not.toHaveProperty("http.url");
   });
 
   it("handles missing fields gracefully", () => {

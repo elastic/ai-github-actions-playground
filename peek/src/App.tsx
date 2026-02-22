@@ -41,6 +41,7 @@ export default function App() {
     currentPage === "clusterOverview" ||
     currentPage === "explore" ||
     currentPage === "console" ||
+    currentPage === "traces" ||
     currentPage === "settings" ||
     currentPage === "dashboardManagement";
   const shouldShowWelcome = !connected && requiresConnectionPage;

@@ -99,9 +99,10 @@ export default function TracesPage() {
   }, [minDurationInput, maxDurationInput, updateFilters]);
 
   const handleAddService = useCallback(() => {
-    if (serviceFilter.trim()) {
+    const trimmed = serviceFilter.trim();
+    if (trimmed && !filters.services.includes(trimmed)) {
       updateFilters({
-        services: [...filters.services, serviceFilter.trim()],
+        services: [...filters.services, trimmed],
       });
       setServiceFilter("");
     }
@@ -669,11 +670,14 @@ export default function TracesPage() {
         onClose={() => setDrawerOpen(false)}
         onFilterBy={(key, value) => {
           useTracesStore.getState().addTagFilter(key, value, false);
-          handleSearch();
+          // Run search with the updated filters (not the stale closure)
+          const updatedFilters = useTracesStore.getState().filters;
+          runSearchQuery(buildTraceSearchQuery(updatedFilters));
         }}
         onExclude={(key, value) => {
           useTracesStore.getState().addTagFilter(key, value, true);
-          handleSearch();
+          const updatedFilters = useTracesStore.getState().filters;
+          runSearchQuery(buildTraceSearchQuery(updatedFilters));
         }}
       />
     </Box>

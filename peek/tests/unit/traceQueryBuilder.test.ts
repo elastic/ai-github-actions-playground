@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
+  buildTraceTimeseriesQuery,
   buildServiceSuggestionsQuery,
   buildOperationSuggestionsQuery,
   EMPTY_FILTERS,
@@ -124,5 +125,69 @@ describe("buildOperationSuggestionsQuery", () => {
     const query = buildOperationSuggestionsQuery(DEFAULT_FIELD_MAPPING, "api-gw");
     expect(query).toContain('WHERE service.name == "api-gw"');
     expect(query).toContain("STATS count = COUNT(*) BY name");
+  });
+
+  it("escapes quotes in service name to prevent ES|QL injection", () => {
+    const query = buildOperationSuggestionsQuery(DEFAULT_FIELD_MAPPING, 'foo"bar');
+    expect(query).toContain('WHERE service.name == "foo\\"bar"');
+    expect(query).not.toContain('foo"bar"');
+  });
+});
+
+describe("ES|QL injection prevention", () => {
+  it("escapes double quotes in service filter values", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      services: ['my "service"'],
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain('service.name IN ("my \\"service\\"")');
+  });
+
+  it("escapes double quotes in tag filter values", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      tags: [{ key: "http.path", value: '/api?q="test"' }],
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain('http.path == "/api?q=\\"test\\""');
+  });
+
+  it("escapes backslashes in filter values", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      services: ["domain\\user"],
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain('service.name IN ("domain\\\\user")');
+  });
+
+  it("escapes quotes in trace detail query", () => {
+    const query = buildTraceDetailQuery('trace"id');
+    expect(query).toContain('trace.id == "trace\\"id"');
+  });
+});
+
+describe("buildTraceTimeseriesQuery", () => {
+  it("generates a STATS aggregation with BUCKET", () => {
+    const query = buildTraceTimeseriesQuery(EMPTY_FILTERS);
+    expect(query).toContain("STATS count = COUNT(*)");
+    expect(query).toContain("BUCKET(@timestamp");
+  });
+
+  it("does not include SORT or LIMIT from the base query", () => {
+    const query = buildTraceTimeseriesQuery(EMPTY_FILTERS);
+    expect(query).not.toContain("SORT");
+    expect(query).not.toContain("LIMIT");
+  });
+
+  it("preserves filters from the base query", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      services: ["api-gw"],
+    };
+    const query = buildTraceTimeseriesQuery(filters);
+    expect(query).toContain('service.name IN ("api-gw")');
+    expect(query).toContain("parent.id IS NULL");
   });
 });

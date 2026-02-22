@@ -30,6 +30,11 @@ export const DEFAULT_FIELD_MAPPING: TraceFieldMapping = {
   index: "traces-*",
 };
 
+/** Escape a string value for use inside ES|QL double-quoted literals */
+function escapeEsqlString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 /** Structured filters for trace search */
 export interface TraceFilters {
   services: string[];
@@ -67,17 +72,17 @@ export function buildTraceSearchQuery(
   }
 
   if (filters.services.length > 0) {
-    const serviceList = filters.services.map((s) => `"${s}"`).join(", ");
+    const serviceList = filters.services.map((s) => `"${escapeEsqlString(s)}"`).join(", ");
     whereClauses.push(`${fields.serviceName} IN (${serviceList})`);
   }
 
   if (filters.operations.length > 0) {
-    const opList = filters.operations.map((o) => `"${o}"`).join(", ");
+    const opList = filters.operations.map((o) => `"${escapeEsqlString(o)}"`).join(", ");
     whereClauses.push(`${fields.spanName} IN (${opList})`);
   }
 
   if (filters.statusCodes.length > 0) {
-    const statusList = filters.statusCodes.map((s) => `"${s}"`).join(", ");
+    const statusList = filters.statusCodes.map((s) => `"${escapeEsqlString(s)}"`).join(", ");
     whereClauses.push(`${fields.statusCode} IN (${statusList})`);
   }
 
@@ -91,9 +96,9 @@ export function buildTraceSearchQuery(
 
   for (const tag of filters.tags) {
     if (tag.exclude) {
-      whereClauses.push(`${tag.key} != "${tag.value}"`);
+      whereClauses.push(`${tag.key} != "${escapeEsqlString(tag.value)}"`);
     } else {
-      whereClauses.push(`${tag.key} == "${tag.value}"`);
+      whereClauses.push(`${tag.key} == "${escapeEsqlString(tag.value)}"`);
     }
   }
 
@@ -114,7 +119,7 @@ export function buildTraceDetailQuery(
   traceId: string,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
-  return `FROM ${fields.index} | WHERE ${fields.traceId} == "${traceId}" | LIMIT 10000`;
+  return `FROM ${fields.index} | WHERE ${fields.traceId} == "${escapeEsqlString(traceId)}" | LIMIT 10000`;
 }
 
 /**
@@ -126,7 +131,7 @@ export function buildTraceTimeseriesQuery(
 ): string {
   const baseQuery = buildTraceSearchQuery(filters, fields, { limit: 10000, rootSpansOnly: true });
   // Remove the SORT and LIMIT from the base query, add aggregation
-  const withoutSortLimit = baseQuery.replace(/ \| SORT [^|]+/, "").replace(/ \| LIMIT \d+/, "");
+  const withoutSortLimit = baseQuery.replace(/ ?\| SORT [^|]+/, "").replace(/ ?\| LIMIT \d+/, "");
   return `${withoutSortLimit} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50, "", "")`;
 }
 
@@ -147,6 +152,6 @@ export function buildOperationSuggestionsQuery(
   serviceName?: string,
 ): string {
   const base = `FROM ${fields.index}`;
-  const where = serviceName ? ` | WHERE ${fields.serviceName} == "${serviceName}"` : "";
+  const where = serviceName ? ` | WHERE ${fields.serviceName} == "${escapeEsqlString(serviceName)}"` : "";
   return `${base}${where} | STATS count = COUNT(*) BY ${fields.spanName} | SORT count DESC | LIMIT 50`;
 }

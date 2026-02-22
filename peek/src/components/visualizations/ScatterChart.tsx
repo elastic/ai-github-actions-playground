@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
 import { useEChartTheme } from "./useEChartTheme";
@@ -16,7 +16,11 @@ interface ScatterChartProps {
   onPointClick?: (traceId: string) => void;
 }
 
-export default function ScatterChart({ data }: ScatterChartProps) {
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export default function ScatterChart({ data, onPointClick }: ScatterChartProps) {
   const theme = useEChartTheme();
 
   const option = useMemo(() => {
@@ -64,7 +68,7 @@ export default function ScatterChart({ data }: ScatterChartProps) {
         }) => {
           const ts = new Date(params.value[0]).toLocaleString();
           const duration = formatSpanDuration(params.value[1] * 1000);
-          return `<strong>${params.seriesName}</strong><br/>Time: ${ts}<br/>Duration: ${duration}<br/>Trace: ${params.data.traceId.slice(0, 16)}…`;
+          return `<strong>${escapeHtml(params.seriesName)}</strong><br/>Time: ${escapeHtml(ts)}<br/>Duration: ${escapeHtml(duration)}<br/>Trace: ${escapeHtml(params.data.traceId.slice(0, 16))}…`;
         },
       },
       legend: {
@@ -82,7 +86,7 @@ export default function ScatterChart({ data }: ScatterChartProps) {
         type: "log",
         name: "Duration (ms)",
         axisLabel: {
-          ...theme.yAxis.axisLabel,
+          ...(theme.yAxis?.axisLabel ?? {}),
           formatter: (v: number) => formatSpanDuration(v * 1000),
         },
       },
@@ -91,5 +95,15 @@ export default function ScatterChart({ data }: ScatterChartProps) {
     };
   }, [data, theme]);
 
-  return <EChartWrapper option={option} />;
+  const handleClick = useCallback(
+    (params: { data: unknown }) => {
+      const point = params.data as { traceId?: string } | undefined;
+      if (point?.traceId && onPointClick) {
+        onPointClick(point.traceId);
+      }
+    },
+    [onPointClick],
+  );
+
+  return <EChartWrapper option={option} onClick={onPointClick ? handleClick : undefined} />;
 }
