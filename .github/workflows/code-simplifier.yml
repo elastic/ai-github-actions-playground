@@ -1,16 +1,16 @@
-name: Breaking Change Detector
+name: Code Simplifier
 on:
   schedule:
     - cron: "0 13 * * 1-5"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   run:
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-breaking-change-detector.lock.yml@v0
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-code-simplifier.lock.yml@v0
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-name: Text Auditor
+name: Product Manager Impersonator
 on:
   schedule:
     - cron: "0 10 * * 1-5"
@@ -11,6 +11,6 @@ permissions:
 
 jobs:
   run:
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-text-auditor.lock.yml@v0
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-product-manager-impersonator.lock.yml@v0
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-name: Performance Profiler
+name: Code Duplication Fixer
 on:
   schedule:
     - cron: "0 14 * * 1-5"
@@ -6,11 +6,11 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: read
+  issues: read
+  pull-requests: write
 
 jobs:
   run:
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-performance-profiler.lock.yml@v0
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-code-duplication-fixer.lock.yml@v0
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
