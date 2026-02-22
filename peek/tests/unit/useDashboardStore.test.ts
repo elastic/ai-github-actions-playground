@@ -35,6 +35,7 @@ describe("useDashboardStore resetState", () => {
       connected: true,
       themeMode: "light",
       currentPage: "discover",
+      llmSettings: { provider: "google", model: "gemini-2.0-flash", apiKey: "llm-key" },
       editingPanelId: "some-panel",
       connectionDialogOpen: true,
     });
@@ -48,6 +49,11 @@ describe("useDashboardStore resetState", () => {
     expect(state.connected).toBe(false);
     expect(state.themeMode).toBe("dark");
     expect(state.currentPage).toBe("dashboard");
+    expect(state.llmSettings).toEqual({
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      apiKey: "",
+    });
     expect(state.editingPanelId).toBeNull();
     expect(state.connectionDialogOpen).toBe(false);
   });

@@ -3,6 +3,7 @@ import { persist, type StorageValue } from "zustand/middleware";
 import type {
   DashboardDefinition,
   ElasticsearchConnection,
+  LlmSettings,
   PanelDefinition,
   TimeRange,
 } from "../types";
@@ -18,7 +19,8 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage: "dashboard" | "discover" | "docs";
+  currentPage: "dashboard" | "discover" | "docs" | "chat" | "settings";
+  llmSettings: LlmSettings;
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -36,7 +38,8 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (page: "dashboard" | "discover" | "docs") => void;
+  setCurrentPage: (page: "dashboard" | "discover" | "docs" | "chat" | "settings") => void;
+  setLlmSettings: (settings: LlmSettings) => void;
 
   exportDashboard: () => string;
   importDashboard: (json: string) => { success: boolean; error?: string };
@@ -49,9 +52,10 @@ interface DashboardState {
  * while storing the API key only in sessionStorage (cleared when the browser
  * session ends, reducing the exposure window of the credential).
  */
-type PersistedState = { connection?: ElasticsearchConnection | null };
+type PersistedState = { connection?: ElasticsearchConnection | null; llmSettings?: LlmSettings };
 const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
+const LLM_API_KEY_SESSION_SUFFIX = ":llmApiKey";
 
 const splitStorage = {
   getItem: (name: string): StorageValue<PersistedState> | null => {
@@ -61,8 +65,12 @@ const splitStorage = {
       const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
       const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
       const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
+      const llmApiKey = sessionStorage.getItem(name + LLM_API_KEY_SESSION_SUFFIX) ?? "";
       if (stored.state.connection) {
         stored.state.connection = { ...stored.state.connection, apiKey, password };
+      }
+      if (stored.state.llmSettings) {
+        stored.state.llmSettings = { ...stored.state.llmSettings, apiKey: llmApiKey };
       }
       return stored;
     } catch {
@@ -72,6 +80,7 @@ const splitStorage = {
   setItem: (name: string, value: StorageValue<PersistedState>): void => {
     const apiKey = value.state.connection?.apiKey ?? "";
     const password = value.state.connection?.password ?? "";
+    const llmApiKey = value.state.llmSettings?.apiKey ?? "";
     const toStore: StorageValue<PersistedState> = {
       ...value,
       state: {
@@ -79,16 +88,21 @@ const splitStorage = {
         connection: value.state.connection
           ? { ...value.state.connection, apiKey: "", password: "" }
           : value.state.connection,
+        llmSettings: value.state.llmSettings
+          ? { ...value.state.llmSettings, apiKey: "" }
+          : value.state.llmSettings,
       },
     };
     localStorage.setItem(name, JSON.stringify(toStore));
     sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, apiKey);
     sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, password);
+    sessionStorage.setItem(name + LLM_API_KEY_SESSION_SUFFIX, llmApiKey);
   },
   removeItem: (name: string): void => {
     localStorage.removeItem(name);
     sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
     sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
+    sessionStorage.removeItem(name + LLM_API_KEY_SESSION_SUFFIX);
   },
 };
 
@@ -102,6 +116,11 @@ export const useDashboardStore = create<DashboardState>()(
       editingPanelId: null,
       connectionDialogOpen: false,
       currentPage: "dashboard",
+      llmSettings: {
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        apiKey: "",
+      },
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -165,6 +184,7 @@ export const useDashboardStore = create<DashboardState>()(
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCurrentPage: (page) => set({ currentPage: page }),
+      setLlmSettings: (llmSettings) => set({ llmSettings }),
 
       exportDashboard: () => {
         const { dashboard } = get();
@@ -204,6 +224,11 @@ export const useDashboardStore = create<DashboardState>()(
           editingPanelId: null,
           connectionDialogOpen: false,
           currentPage: "dashboard",
+          llmSettings: {
+            provider: "openai",
+            model: "gpt-4.1-mini",
+            apiKey: "",
+          },
         });
       },
     }),
@@ -214,6 +239,7 @@ export const useDashboardStore = create<DashboardState>()(
         connection: state.connection,
         dashboard: state.dashboard,
         themeMode: state.themeMode,
+        llmSettings: state.llmSettings,
       }),
     },
   ),

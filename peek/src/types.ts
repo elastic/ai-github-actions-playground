@@ -80,3 +80,11 @@ export type QueryResult =
   | { status: "loading" }
   | { status: "success"; data: EsqlResponse; executionTimeMs: number }
   | { status: "error"; error: EsqlError };
+
+export type LlmProvider = "openai" | "anthropic" | "google";
+
+export interface LlmSettings {
+  provider: LlmProvider;
+  model: string;
+  apiKey: string;
+}

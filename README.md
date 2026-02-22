@@ -41,6 +41,7 @@ Elastic Peek is a browser-based dashboard builder that connects directly to your
 - **Persistent state** — dashboards save to localStorage automatically
 - **Import/export** — share dashboards as JSON files
 - **Dark and light themes**
+- **Optional LLM tooling** — provider settings + chat box via Vercel AI SDK
 
 ### Quick Start
 

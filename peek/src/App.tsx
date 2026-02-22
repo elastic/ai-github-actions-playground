@@ -13,6 +13,8 @@ import PanelEditor from "./components/PanelEditor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import DiscoverPage from "./components/DiscoverPage";
 import DocsPage from "./components/DocsPage";
+import ChatPage from "./components/ChatPage";
+import SettingsPage from "./components/SettingsPage";
 
 const currentYear = new Date().getFullYear();
 
@@ -38,14 +40,16 @@ export default function App() {
             flexDirection: "column",
           }}
         >
-          {currentPage === "docs" ? (
-            <DocsPage />
-          ) : !connected ? (
+          {!connected ? (
             <WelcomeScreen />
-          ) : currentPage === "discover" ? (
-            <DiscoverPage />
           ) : (
-            <DashboardGrid />
+            <>
+              {currentPage === "discover" && <DiscoverPage />}
+              {currentPage === "dashboard" && <DashboardGrid />}
+              {currentPage === "docs" && <DocsPage />}
+              {currentPage === "chat" && <ChatPage />}
+              {currentPage === "settings" && <SettingsPage />}
+            </>
           )}
         </Box>
         <Box

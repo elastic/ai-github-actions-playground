@@ -18,6 +18,9 @@
     "generate:types": "node scripts/filter-es-openapi.mjs && npx openapi-typescript src/services/es/elasticsearch-esql.openapi.json -o src/services/es/types.generated.d.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.46",
+    "@ai-sdk/google": "^3.0.30",
+    "@ai-sdk/openai": "^3.0.30",
     "@codemirror/lang-sql": "^6.8.0",
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
@@ -30,6 +33,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-grid-layout": "^2.2.2",
+    "ai": "^6.0.97",
     "zod": "^4.3.6",
     "zustand": "^5.0.0"
   },

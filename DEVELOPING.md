@@ -72,7 +72,7 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 ### Key Design Decisions
 
-- **No backend**: The site is fully static. The Elasticsearch URL is stored in `localStorage` for persistence, while API key/password are stored in `sessionStorage` and cleared when the tab session ends.
+- **No backend**: The site is fully static. The Elasticsearch URL is stored in `localStorage` for persistence, while API key/password and LLM API keys are stored in `sessionStorage` and cleared when the tab session ends.
 - **State persistence**: Dashboard state is persisted under the `elastic-peek` localStorage key via Zustand's `persist` middleware. Credentials are split into `sessionStorage` to limit exposure. If you rename the persist key, you must add a one-time migration that reads the old key and writes it to the new one — otherwise existing users lose their saved state.
 - **Perses-aligned**: Uses the same charting engine (Apache ECharts) and UI framework (MUI) as Perses. The theme system and chart patterns follow Perses conventions.
 - **ES|QL native**: Queries are written in ES|QL and sent directly to the `_query` endpoint. The response format (columnar JSON) is transformed into chart-compatible structures client-side.

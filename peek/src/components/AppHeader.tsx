@@ -27,6 +27,8 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import ChatIcon from "@mui/icons-material/Chat";
+import TuneIcon from "@mui/icons-material/Tune";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { TimeRange } from "../types";
@@ -205,7 +207,9 @@ export default function AppHeader() {
         {connected && (
           <Tabs
             value={currentPage}
-            onChange={(_, v: "dashboard" | "discover" | "docs") => setCurrentPage(v)}
+            onChange={(_, v: "dashboard" | "discover" | "docs" | "chat" | "settings") =>
+              setCurrentPage(v)
+            }
             sx={{ ml: 2, minHeight: 48 }}
             TabIndicatorProps={{ style: { height: 3 } }}
           >
@@ -227,6 +231,20 @@ export default function AppHeader() {
               value="docs"
               label="Docs"
               icon={<MenuBookIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="chat"
+              label="Chat"
+              icon={<ChatIcon fontSize="small" />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
+            />
+            <Tab
+              value="settings"
+              label="Settings"
+              icon={<TuneIcon fontSize="small" />}
               iconPosition="start"
               sx={{ minHeight: 48, textTransform: "none", fontSize: "0.875rem" }}
             />
