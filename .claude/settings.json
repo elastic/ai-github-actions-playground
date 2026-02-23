@@ -3,7 +3,8 @@
     "allow": [
       "Bash(*)",
       "WebFetch(domain:next.platejs.org)",
-      "WebFetch(domain:www.npmjs.com)"
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm install:*)"
     ]
   }
 }

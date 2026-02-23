@@ -18,10 +18,11 @@ import Typography from "@mui/material/Typography";
 import DownloadIcon from "@mui/icons-material/Download";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
-import type { EsqlResponse } from "../../types";
+import type { EsqlResponse, TablePanelOptions } from "../../types";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 
 import { isNumericType } from "./chartUtils";
+import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
 
 type SortDirection = "asc" | "desc";
@@ -39,6 +40,7 @@ function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
 
 interface Props {
   data: EsqlResponse;
+  options?: TablePanelOptions;
   onExportCsv?: () => void;
   onRemoveColumn?: (name: string) => void;
   currentSort?: SortState | null;
@@ -47,6 +49,7 @@ interface Props {
 
 export default function DataTable({
   data,
+  options,
   onExportCsv,
   onRemoveColumn,
   currentSort,
@@ -230,6 +233,23 @@ export default function DataTable({
                     const col = data.columns[colIdx];
                     const cell = row[colIdx];
                     const numeric = col ? isNumericType(col.type) : false;
+                    const thresholds = options?.thresholds;
+                    const thresholdColumns = options?.thresholdColumns;
+                    const applyThreshold =
+                      numeric &&
+                      thresholds &&
+                      thresholds.steps.length > 0 &&
+                      cell != null &&
+                      (!thresholdColumns ||
+                        thresholdColumns.length === 0 ||
+                        (col && thresholdColumns.includes(col.name)));
+                    const thresholdColor =
+                      applyThreshold && col
+                        ? resolveThresholdColor(Number(cell), thresholds!)
+                        : undefined;
+                    const bgColor = thresholdColor
+                      ? `${THRESHOLD_PALETTE[thresholdColor]}26`
+                      : undefined;
                     return (
                       <TableCell
                         key={colIdx}
@@ -238,6 +258,7 @@ export default function DataTable({
                           fontSize: "0.75rem",
                           fontFamily: numeric ? "monospace" : "inherit",
                           textAlign: numeric ? "right" : "left",
+                          ...(bgColor ? { backgroundColor: bgColor } : {}),
                         }}
                       >
                         {cell === null ? (
