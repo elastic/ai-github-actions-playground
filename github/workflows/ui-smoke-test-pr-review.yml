@@ -49,7 +49,16 @@ jobs:
         run: |
           npm run dev -- --port 3000 &
           DEV_PID=$!
-          for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000 >/dev/null 2>&1 && break; sleep 1; done
+          SERVER_READY=false
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; then SERVER_READY=true; break; fi
+            sleep 1
+          done
+          if [ "$SERVER_READY" = false ]; then
+            echo "::error::Dev server failed to start within 30 seconds"
+            kill "$DEV_PID" 2>/dev/null || true
+            exit 1
+          fi
           node scripts/screenshot-preflight.mjs \
             --url http://127.0.0.1:3000/ai-github-actions-playground/ \
             --output screenshot-preflight.json \
@@ -182,6 +191,8 @@ jobs:
               const diag = JSON.parse(
                 fs.readFileSync("peek/screenshot-preflight.json", "utf8"),
               );
+              // Mirror the benign-error filter from screenshot-preflight.mjs
+              // (Google Fonts DNS failures in sandboxed CI environments).
               const consoleErrors = (diag.consoleErrors || []).filter(
                 (e) =>
                   !/fonts\.googleapis\.com|fonts\.gstatic\.com|ERR_NAME_NOT_RESOLVED/.test(
