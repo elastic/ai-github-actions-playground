@@ -109,11 +109,18 @@ export default function TracesPage() {
     onFailure: () => setTimeseriesResult(null),
   });
 
+  const runTraceQueries = useCallback(
+    (query: string, updatedFilters = filters) => {
+      setTimeseriesResult(null);
+      runSearchQuery(query);
+      runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
+    },
+    [filters, runSearchQuery, runTimeseriesQuery],
+  );
+
   const handleSearch = useCallback(() => {
-    setTimeseriesResult(null);
-    runSearchQuery(effectiveQuery);
-    runTimeseriesQuery(buildTraceTimeseriesQuery(filters));
-  }, [runSearchQuery, runTimeseriesQuery, effectiveQuery, filters]);
+    runTraceQueries(effectiveQuery);
+  }, [runTraceQueries, effectiveQuery]);
 
   const handleSelectTrace = useCallback(
     (traceId: string) => {
@@ -159,9 +166,9 @@ export default function TracesPage() {
         : [...state.filters.services, serviceName];
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
-      runSearchQuery(buildTraceSearchQuery(updatedFilters));
+      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters);
     },
-    [runSearchQuery],
+    [runTraceQueries],
   );
 
   // Parse trace results for display
@@ -737,12 +744,12 @@ export default function TracesPage() {
           useTracesStore.getState().addTagFilter(key, value, false);
           // Run search with the updated filters (not the stale closure)
           const updatedFilters = useTracesStore.getState().filters;
-          runSearchQuery(buildTraceSearchQuery(updatedFilters));
+          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters);
         }}
         onExclude={(key, value) => {
           useTracesStore.getState().addTagFilter(key, value, true);
           const updatedFilters = useTracesStore.getState().filters;
-          runSearchQuery(buildTraceSearchQuery(updatedFilters));
+          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters);
         }}
       />
     </Box>
