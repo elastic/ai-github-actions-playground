@@ -62,7 +62,10 @@ export default function SettingsPage() {
   );
 
   const [showApiKey, setShowApiKey] = useState(false);
-  const [useCustomModel, setUseCustomModel] = useState(false);
+  const [useCustomModel, setUseCustomModel] = useState(() => {
+    const presets = MODELS[config.provider] ?? [];
+    return !presets.some((model) => model.value === config.model);
+  });
 
   const PROVIDER_HINT: Record<LLMProvider, string> = {
     openai: "e.g. gpt-4o, o3-mini",

@@ -94,6 +94,15 @@ describe("SettingsPage", () => {
     expect(screen.queryByLabelText("Model ID")).not.toBeInTheDocument();
   });
 
+  it("restores custom model mode when a persisted custom model ID is present", () => {
+    useLLMStore.getState().setModel("gpt-4.5-preview");
+    render(<SettingsPage />);
+    const toggle = screen.getByRole("checkbox", { name: /use custom model id/i });
+    expect(toggle).toBeChecked();
+    expect(screen.getByLabelText("Model ID")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Model")).not.toBeInTheDocument();
+  });
+
   it("enabling custom model toggle switches to free-text Model ID input", async () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
