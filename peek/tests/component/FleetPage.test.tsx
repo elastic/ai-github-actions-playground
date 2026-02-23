@@ -327,6 +327,57 @@ describe("Fleet pages", () => {
     });
   });
 
+  it("does not show missing-agent warning when inventory is truncated but agent logs exist", async () => {
+    rawRequestMock.mockImplementation((_method: string, url: string, body?: string) => {
+      if (!url.includes("logs-elastic_agent")) {
+        return Promise.resolve({ status: 200, body: { hits: { hits: [] }, aggregations: {} } });
+      }
+      const parsed = body ? (JSON.parse(body) as { aggs?: unknown }) : {};
+      if (parsed.aggs) {
+        return Promise.resolve({
+          status: 200,
+          body: {
+            aggregations: {
+              agent_count: { value: 750 },
+              agents: { buckets: [] },
+            },
+          },
+        });
+      }
+      return Promise.resolve({
+        status: 200,
+        body: {
+          hits: {
+            hits: [
+              {
+                _source: {
+                  "@timestamp": "2026-02-23T00:00:00Z",
+                  log: { level: "info" },
+                  message: "agent heartbeat",
+                  component: "agent",
+                  agent: { id: "agent-750" },
+                },
+              },
+            ],
+          },
+        },
+      });
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/fleet/agents/agent-750"]}>
+        <Routes>
+          <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/not found in recent Elastic Agent logs/i)).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("tab", { name: /Logs \(1\)/ })).toBeInTheDocument();
+  });
+
   it("shows partial error warning when some sources fail", async () => {
     rawRequestMock.mockImplementation((_method: string, url: string) => {
       if (url.includes("metrics-fleet_server.agent_status")) {

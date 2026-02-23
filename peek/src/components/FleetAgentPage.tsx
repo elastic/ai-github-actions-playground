@@ -69,7 +69,19 @@ export default function FleetAgentPage() {
         loadElasticAgentMetrics(client, decodedAgentId, 60),
       ]);
       const agent = inventory.agents.find((a) => a.agentId === decodedAgentId) ?? null;
-      setAgentInfo(agent);
+      const fallbackAgent =
+        !agent && (agentLogs.length > 0 || agentMetrics.length > 0)
+          ? {
+              agentId: decodedAgentId,
+              hostname: decodedAgentId,
+              version: "unknown",
+              os: null,
+              lastSeen: agentLogs[0]?.timestamp ?? agentMetrics[0]?.timestamp ?? "",
+              logCount: agentLogs.length,
+              errorCount: agentLogs.filter((entry) => entry.level.toLowerCase() === "error").length,
+            }
+          : null;
+      setAgentInfo(agent ?? fallbackAgent);
       setLogs(agentLogs);
       setMetrics(agentMetrics);
     } catch (err) {
