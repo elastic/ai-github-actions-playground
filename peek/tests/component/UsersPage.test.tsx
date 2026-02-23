@@ -209,6 +209,8 @@ describe("UsersPage", () => {
     } finally {
       if (original !== undefined) {
         Object.defineProperty(navigator, "clipboard", original);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
       }
     }
   });
