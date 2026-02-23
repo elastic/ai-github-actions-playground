@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 import { ElasticsearchClient } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
@@ -42,8 +42,11 @@ export function useMarkdownEsql({
   // Step 1 — parameter interpolation (synchronous, always applied)
   const interpolated = interpolateParameters(content, parameters);
 
-  // Step 2 — extract ES|QL blocks
-  const blocks = extractEsqlBlocks(interpolated);
+  // Step 2 — extract ES|QL blocks (memoized since interpolated is a string)
+  const blocks = useMemo(() => extractEsqlBlocks(interpolated), [interpolated]);
+
+  // Stable serialisation so the effect only re-runs when blocks actually change.
+  const blocksKey = blocks.map((b) => b.raw).join("\0");
 
   const [results, setResults] = useState<ReadonlyMap<string, EsqlResponse>>(new Map());
   const abortRef = useRef<AbortController | null>(null);
@@ -95,15 +98,9 @@ export function useMarkdownEsql({
       cancelled = true;
       ctrl.abort();
     };
-    // We serialise blocks by their raw strings to avoid re-running on every render
+    // blocksKey is a stable string that only changes when the extracted queries change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    blocks.map((b) => b.raw).join("\0"),
-    connection,
-    timeRange,
-    parameters,
-  ]);
+  }, [blocksKey, connection, timeRange, parameters]);
 
   // Step 4 — replace resolved blocks
   if (blocks.length === 0) return interpolated;
