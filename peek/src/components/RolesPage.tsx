@@ -15,6 +15,7 @@ import Typography from "@mui/material/Typography";
 
 import { ElasticsearchClient, isElasticsearchError, type SecurityRole } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { copyToClipboard } from "../utils/copyToClipboard";
 
 type RoleEntry = { name: string; role: SecurityRole };
 
@@ -83,7 +84,8 @@ export default function RolesPage() {
   }, [roles, search]);
 
   const copyQuery = useCallback(async () => {
-    await navigator.clipboard.writeText("GET /_security/role");
+    const copied = await copyToClipboard("GET /_security/role");
+    if (!copied) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, []);

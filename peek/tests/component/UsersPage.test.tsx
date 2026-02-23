@@ -188,6 +188,33 @@ describe("UsersPage", () => {
     await screen.findByText("internal_error");
   });
 
+  it("does not throw when Clipboard API is unavailable", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+
+    try {
+      render(
+        <MemoryRouter>
+          <UsersPage />
+        </MemoryRouter>,
+      );
+
+      await screen.findByRole("heading", { level: 6, name: "alice" });
+      await user.click(screen.getByRole("button", { name: "Copy API call" }));
+      expect(screen.getByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
+    } finally {
+      if (original !== undefined) {
+        Object.defineProperty(navigator, "clipboard", original);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
+  });
+
   it("refreshes data when Refresh button is clicked", async () => {
     const user = userEvent.setup();
     getCapabilitiesMock.mockResolvedValue(CAPS_OK);

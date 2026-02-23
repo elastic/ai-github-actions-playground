@@ -22,6 +22,16 @@ AI workflows in `.github/workflows/` handle the software engineering lifecycle:
 
 The workflows are powered by [elastic/ai-github-actions](https://github.com/elastic/ai-github-actions) and run in standard GitHub Actions CI — no custom infrastructure required.
 
+### Copilot PAT setup (including private repositories)
+
+These workflows require a repository secret named `COPILOT_GITHUB_TOKEN`.
+
+1. Create a GitHub Personal Access Token (PAT) for the account that will run the workflows.
+2. Grant the token access to the repository features your workflows use (for example: issues, pull requests, and contents).
+3. Add it as a repository secret named `COPILOT_GITHUB_TOKEN`.
+
+The same setup applies to private repositories; just make sure the PAT is authorized for the private repository (or org) where the workflows run.
+
 ---
 
 ## The Product: Elastic Peek
