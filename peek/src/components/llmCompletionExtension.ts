@@ -55,14 +55,12 @@ export const recentEditsField = StateField.define<RecentEdit[]>({
 const queryErrorMap = new WeakMap<EditorView, string | null>();
 
 /** Set the last query error for a specific editor view. */
-export function setLastQueryError(error: string | null, view?: EditorView) {
-  if (!view) return;
+export function setLastQueryError(error: string | null, view: EditorView) {
   queryErrorMap.set(view, error);
 }
 
 /** Read the last query error for a specific editor view. */
-export function getLastQueryError(view?: EditorView): string | null {
-  if (!view) return null;
+export function getLastQueryError(view: EditorView): string | null {
   return queryErrorMap.get(view) ?? null;
 }
 
@@ -98,9 +96,8 @@ function formatResultSnippet(data: {
 export function setLastQueryResult(
   query: string,
   data: { columns: { name: string; type: string }[]; values: unknown[][] },
-  view?: EditorView,
+  view: EditorView,
 ) {
-  if (!view) return;
   const snapshot: QueryResultSnapshot = {
     query,
     resultSnippet: formatResultSnippet(data),
@@ -108,8 +105,7 @@ export function setLastQueryResult(
   queryResultMap.set(view, snapshot);
 }
 
-function getLastQueryResult(view?: EditorView): QueryResultSnapshot | null {
-  if (!view) return null;
+function getLastQueryResult(view: EditorView): QueryResultSnapshot | null {
   return queryResultMap.get(view) ?? null;
 }
 
