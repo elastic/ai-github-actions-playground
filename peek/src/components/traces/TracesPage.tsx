@@ -23,12 +23,14 @@ import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
+import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
+  buildTraceTimeseriesQuery,
   buildTraceQueryLabDraft,
   DEFAULT_FIELD_MAPPING,
 } from "./traceQueryBuilder";
@@ -65,6 +67,7 @@ export default function TracesPage() {
   const resetFilters = useTracesStore((s) => s.resetFilters);
 
   const [result, setResult] = useState<EsqlResponse | null>(null);
+  const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [serviceFilter, setServiceFilter] = useState("");
   const [minDurationInput, setMinDurationInput] = useState("");
@@ -105,9 +108,30 @@ export default function TracesPage() {
     },
   });
 
+  const {
+    runQuery: runTimeseriesQuery,
+    loading: timeseriesLoading,
+    error: timeseriesError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => setTimeseriesResult(data),
+    onFailure: () => setTimeseriesResult(null),
+  });
+
+  const runTraceQueries = useCallback(
+    (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
+      setTimeseriesResult(null);
+      runSearchQuery(query);
+      if (includeTimeseries) {
+        runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
+      }
+    },
+    [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
+  );
+
   const handleSearch = useCallback(() => {
-    runSearchQuery(effectiveQuery);
-  }, [runSearchQuery, effectiveQuery]);
+    runTraceQueries(effectiveQuery, filters, rawQuery == null);
+  }, [runTraceQueries, effectiveQuery, filters, rawQuery]);
 
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
@@ -134,11 +158,11 @@ export default function TracesPage() {
   }, [setSelectedTraceId]);
 
   const handleApplyDuration = useCallback(() => {
-    const minMs = minDurationInput ? Number(minDurationInput) : null;
-    const maxMs = maxDurationInput ? Number(maxDurationInput) : null;
+    const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
+    const maxMs = maxDurationInput !== "" ? Number(maxDurationInput) : null;
     updateFilters({
-      minDurationMs: minMs && !isNaN(minMs) ? minMs : null,
-      maxDurationMs: maxMs && !isNaN(maxMs) ? maxMs : null,
+      minDurationMs: minMs !== null && !isNaN(minMs) ? minMs : null,
+      maxDurationMs: maxMs !== null && !isNaN(maxMs) ? maxMs : null,
     });
   }, [minDurationInput, maxDurationInput, updateFilters]);
 
@@ -169,9 +193,9 @@ export default function TracesPage() {
         : [...state.filters.services, serviceName];
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
-      runSearchQuery(buildTraceSearchQuery(updatedFilters));
+      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
     },
-    [runSearchQuery],
+    [runTraceQueries],
   );
 
   // Parse trace results for display
@@ -395,6 +419,7 @@ export default function TracesPage() {
 
       {searchError && <Alert severity="error">{searchError}</Alert>}
       {detailError && <Alert severity="error">{detailError}</Alert>}
+      {timeseriesError && <Alert severity="error">{timeseriesError}</Alert>}
 
       {/* Content area */}
       <Box
@@ -608,21 +633,54 @@ export default function TracesPage() {
                 onPointClick={(traceId) => handleSelectTrace(traceId)}
               />
             )}
-            {result && viewMode === "timeseries" && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Time Series view requires running an aggregation query. Use the List or Scatter
-                  view for now.
-                </Typography>
-              </Box>
-            )}
+            {result &&
+              viewMode === "timeseries" &&
+              (rawQuery ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Time series view is not available for custom queries. Use filter chips to see
+                    trends.
+                  </Typography>
+                </Box>
+              ) : timeseriesLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <CircularProgress size={32} />
+                </Box>
+              ) : timeseriesResult ? (
+                <Box sx={{ height: "100%" }}>
+                  <TimeSeriesChart
+                    data={timeseriesResult}
+                    options={{ smooth: true, showArea: false, stacked: false }}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Run search to load trace volume and latency trends.
+                  </Typography>
+                </Box>
+              ))}
             {result && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
@@ -742,12 +800,12 @@ export default function TracesPage() {
           useTracesStore.getState().addTagFilter(key, value, false);
           // Run search with the updated filters (not the stale closure)
           const updatedFilters = useTracesStore.getState().filters;
-          runSearchQuery(buildTraceSearchQuery(updatedFilters));
+          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
         }}
         onExclude={(key, value) => {
           useTracesStore.getState().addTagFilter(key, value, true);
           const updatedFilters = useTracesStore.getState().filters;
-          runSearchQuery(buildTraceSearchQuery(updatedFilters));
+          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
         }}
         onOpenInQueryLab={(spanContext) => {
           handleOpenInDiscover(spanContext.traceId, spanContext.spanId, spanContext.timestamp);

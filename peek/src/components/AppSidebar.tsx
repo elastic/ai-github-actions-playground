@@ -8,19 +8,9 @@ import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import SearchIcon from "@mui/icons-material/Search";
-import ExploreIcon from "@mui/icons-material/Explore";
-import TerminalIcon from "@mui/icons-material/Terminal";
-import ChatIcon from "@mui/icons-material/Chat";
-import DatasetIcon from "@mui/icons-material/Dataset";
-import InfoIcon from "@mui/icons-material/Info";
-import SecurityIcon from "@mui/icons-material/Security";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import TimelineIcon from "@mui/icons-material/Timeline";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -44,22 +34,6 @@ interface AppSidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const NAV_ICONS: Record<PageId, React.ReactNode> = {
-  dashboard: <DashboardIcon fontSize="small" />,
-  discover: <SearchIcon fontSize="small" />,
-  explore: <ExploreIcon fontSize="small" />,
-  traces: <TimelineIcon fontSize="small" />,
-  console: <TerminalIcon fontSize="small" />,
-  chat: <ChatIcon fontSize="small" />,
-  clusterOverview: <InfoIcon fontSize="small" />,
-  dataStreams: <DatasetIcon fontSize="small" />,
-  fleet: <SecurityIcon fontSize="small" />,
-  fleetAgentDetail: <SecurityIcon fontSize="small" />,
-  docs: <MenuBookIcon fontSize="small" />,
-  settings: <SettingsIcon fontSize="small" />,
-  dashboardManagement: <SettingsIcon fontSize="small" />,
-};
-
 function buildNavSections(): NavSection[] {
   const groups = new Map<string, NavItem[]>();
 
@@ -71,7 +45,7 @@ function buildNavSections(): NavSection[] {
     items.push({
       label: config.nav.label,
       page,
-      icon: NAV_ICONS[page],
+      icon: config.nav.icon,
       requiresConnection: config.requiresConnection,
     });
     groups.set(config.nav.group, items);

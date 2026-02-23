@@ -100,7 +100,7 @@ export default function ClusterOverviewPage() {
             : null,
         fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
         agentInventoryCount:
-          agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.length : null,
+          agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
       };
       setData(nextData);
 

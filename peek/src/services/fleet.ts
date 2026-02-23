@@ -232,7 +232,7 @@ export function computeCheckinStaleness(lastSeen: string | null): {
   }
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return { label: `${hours}h ago`, severity: hours < 1 ? "stale" : "critical" };
+    return { label: `${hours}h ago`, severity: hours < 2 ? "stale" : "critical" };
   }
   const days = Math.floor(hours / 24);
   return { label: `${days}d ago`, severity: "critical" };
@@ -426,13 +426,21 @@ export async function loadFleetOutputHealth(
 // Uses a composite/terms aggregation on agent.id with top_hits for metadata
 // ---------------------------------------------------------------------------
 
+export interface ElasticAgentInventoryResult {
+  agents: ElasticAgentInfo[];
+  total: number;
+}
+
 export async function loadElasticAgentInventory(
   client: ElasticsearchClient,
-): Promise<ElasticAgentInfo[]> {
+): Promise<ElasticAgentInventoryResult> {
   const data = await gracefulSearch(client, "logs-elastic_agent*", {
     size: 0,
     query: { range: { "@timestamp": { gte: "now-1h" } } },
     aggs: {
+      agent_count: {
+        cardinality: { field: "agent.id" },
+      },
       agents: {
         terms: { field: "agent.id", size: 500 },
         aggs: {
@@ -459,7 +467,8 @@ export async function loadElasticAgentInventory(
       },
     },
   });
-  if (!data?.aggregations) return [];
+  if (!data?.aggregations) return { agents: [], total: 0 };
+  const agentCount = data.aggregations.agent_count as { value?: number } | undefined;
   const agg = data.aggregations.agents as {
     buckets?: Array<{
       key: string;
@@ -468,8 +477,8 @@ export async function loadElasticAgentInventory(
       errors: { doc_count: number };
     }>;
   };
-  if (!agg?.buckets) return [];
-  return agg.buckets.map((bucket) => {
+  if (!agg?.buckets) return { agents: [], total: agentCount?.value ?? 0 };
+  const agents = agg.buckets.map((bucket) => {
     const source = bucket.latest.hits.hits[0]?._source ?? {};
     const osName = readNestedString(source, ["host", "os", "name"], "");
     const osPlatform = readNestedString(source, ["host", "os", "platform"], "");
@@ -485,6 +494,7 @@ export async function loadElasticAgentInventory(
       errorCount: bucket.errors.doc_count,
     };
   });
+  return { agents, total: agentCount?.value ?? agents.length };
 }
 
 // ---------------------------------------------------------------------------

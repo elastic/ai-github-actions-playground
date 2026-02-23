@@ -90,7 +90,8 @@ export default function FleetPage() {
       setServerStatus(value(results[0]!, "Server status") ?? null);
       setAgentVersions(value(results[1]!, "Agent versions") ?? []);
       setOutputHealth(value(results[2]!, "Output health") ?? []);
-      setAgentInventory(value(results[3]!, "Agent inventory") ?? []);
+      const inventoryResult = value(results[3]!, "Agent inventory");
+      setAgentInventory(inventoryResult?.agents ?? []);
       setActions(value(results[4]!, "Actions") ?? []);
       setActionResults(value(results[5]!, "Action results") ?? []);
       setPartialErrors(errors);

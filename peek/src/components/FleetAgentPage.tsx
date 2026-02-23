@@ -40,7 +40,13 @@ export default function FleetAgentPage() {
   const connection = useDashboardStore((s) => s.connection);
   const navigate = useNavigate();
   const { agentId = "" } = useParams<{ agentId: string }>();
-  const decodedAgentId = decodeURIComponent(agentId);
+  const decodedAgentId = (() => {
+    try {
+      return decodeURIComponent(agentId);
+    } catch {
+      return agentId;
+    }
+  })();
 
   const [activeTab, setActiveTab] = useState<AgentTab>("overview");
   const [loading, setLoading] = useState(false);
@@ -62,7 +68,7 @@ export default function FleetAgentPage() {
         loadElasticAgentLogs(client, decodedAgentId, { size: 200 }),
         loadElasticAgentMetrics(client, decodedAgentId, 60),
       ]);
-      const agent = inventory.find((a) => a.agentId === decodedAgentId) ?? null;
+      const agent = inventory.agents.find((a) => a.agentId === decodedAgentId) ?? null;
       setAgentInfo(agent);
       setLogs(agentLogs);
       setMetrics(agentMetrics);
@@ -529,9 +535,9 @@ function formatLogTimestamp(ts: string): string {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes <= 0) return "0 B";
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`;
 }

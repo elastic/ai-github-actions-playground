@@ -14,10 +14,12 @@ The ES|QL query editor shows the generated query and can be edited directly. Man
 
 Click Search Traces to run the current query against your Elasticsearch cluster.
 
-Switch between List, Scatter, Time Series, and Service Map view modes using the chips above the results panel. List shows a table of matching traces. Scatter plots trace duration over time, colored by service, and supports clicking a point to open the trace detail. Time Series view requires an aggregation query. Service Map renders service-to-service relationships for the selected trace.
+Switch between List, Scatter, Time Series, and Service Map view modes using the chips above the results panel. List shows a table of matching traces. Scatter plots trace duration over time, colored by service, and supports clicking a point to open the trace detail. Time Series view shows trace volume and latency trends for filter-driven searches; it is not available when using a custom raw query. Service Map renders service-to-service relationships for the selected trace.
 
 Click any row in the List view or any point in the Scatter view to load the trace detail panel below. The detail panel shows a waterfall chart of spans for the selected trace. Service Map is populated from this selected trace; if no trace is selected, it prompts you to select one from List or Scatter first.
 
-Click a span in the waterfall to open the Span Detail drawer. Use Filter By or Exclude in the drawer to add tag-based filters and re-run the search automatically.
+Click a span in the waterfall to open the Span Detail drawer. Use Filter By or Exclude in the drawer to add tag-based filters and re-run the search automatically. Click **Open in Query Lab** in the drawer to pivot to Query Lab with a draft query pre-populated with the span's trace ID, span ID, and timestamp.
+
+Click **Open in Query Lab** in the trace detail header to open Query Lab with a draft query scoped to the selected trace, using its trace ID, root span ID, and timestamp as context.
 
 If results are empty, verify that your Elasticsearch index contains OpenTelemetry-compatible span data and that the selected time range and service filters match existing data.
