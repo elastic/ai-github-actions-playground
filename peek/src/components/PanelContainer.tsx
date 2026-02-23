@@ -21,6 +21,7 @@ import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
+import { toCsv } from "./discoverUtils";
 import Visualization from "./visualizations/Visualization";
 import { getVizEntry } from "./visualizations/vizRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
@@ -57,6 +58,8 @@ export default function PanelContainer({ panel }: Props) {
     panel.visualization === "gauge" ||
     panel.visualization === "pie";
 
+  const supportsCSVExport = panel.visualization === "table";
+
   useEffect(() => {
     if (!supportsImageExport) {
       setExportImage(null);
@@ -83,6 +86,25 @@ export default function PanelContainer({ panel }: Props) {
   const handleExportReady = useCallback((exportFn: (() => string) | null) => {
     setExportImage(() => exportFn);
   }, []);
+
+  const handleExportCsv = useCallback(() => {
+    if (!data || data.columns.length === 0) return;
+    const csv = toCsv(data);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const safeTitle =
+      panel.title
+        .trim()
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase() || "panel";
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safeTitle}-${timestamp}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }, [data, panel.title]);
 
   const fetchData = useCallback(async () => {
     if (!supportsQuery) {
@@ -227,6 +249,20 @@ export default function PanelContainer({ panel }: Props) {
             </span>
           </Tooltip>
         )}
+        {supportsCSVExport && (
+          <Tooltip title="Export CSV">
+            <span>
+              <IconButton
+                size="small"
+                onClick={handleExportCsv}
+                disabled={loading || !data}
+                aria-label="Export CSV"
+              >
+                <DownloadIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
         {supportsQuery && (
           <Tooltip title="Refresh">
             <IconButton size="small" onClick={fetchData} disabled={loading}>
@@ -297,6 +333,7 @@ export default function PanelContainer({ panel }: Props) {
             data={data}
             options={panel.options}
             onExportReady={handleExportReady}
+            onExportCsv={supportsCSVExport ? handleExportCsv : undefined}
           />
         ) : (
           <Box
