@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import PanelEditor from "../../src/components/PanelEditor";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -88,13 +89,16 @@ describe("PanelEditor", () => {
     expect(screen.getByTitle("Histogram")).toBeInTheDocument();
   });
 
-  it("switching to table hides format options (ChartOptionsEditor)", async () => {
+  it("switching to table shows threshold controls instead of format options", async () => {
     const user = userEvent.setup();
     render(<PanelEditor />);
 
     expect(screen.getByText("Options")).toBeInTheDocument();
     await user.click(screen.getByTitle("Table"));
-    expect(screen.queryByText("Options")).not.toBeInTheDocument();
+    // Table now supports threshold options so "Options" stays visible
+    expect(screen.getByText("Options")).toBeInTheDocument();
+    // Format-specific controls are not present for table
+    expect(screen.queryByRole("combobox", { name: /unit/i })).not.toBeInTheDocument();
   });
 
   it("switching to heatmap hides format options", async () => {
