@@ -192,13 +192,12 @@ export function buildTraceTimeseriesQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
   options: { from?: string; to?: string } = {},
 ): string {
-  const { from, to } = options;
-  const bucketTimeRange = from && to ? `, ${from}, ${to}` : "";
+  const { from = "NOW() - 1 day", to = "NOW()" } = options;
   const { body } = buildTraceSearchQueryParts(filters, fields, {
     limit: 10000,
     rootSpansOnly: true,
   });
-  return `${body} | EVAL duration_ms = ${fields.durationUs} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50${bucketTimeRange})`;
+  return `${body} | EVAL duration_ms = ${fields.durationUs} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50, ${from}, ${to})`;
 }
 
 /**
