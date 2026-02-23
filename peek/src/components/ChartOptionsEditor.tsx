@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import InputLabel from "@mui/material/InputLabel";
@@ -136,18 +137,22 @@ interface Props {
 export default function ChartOptionsEditor({ vizType, options, onChange }: Props) {
   const format = (options as { format?: FormatOptions }).format ?? DEFAULT_FORMAT;
   const OptionsEditor = getVizEntry(vizType)?.OptionsEditor;
+  // Table uses threshold-only options; format controls don't apply
+  const showFormat = vizType !== "table";
 
   const handleFormatChange = (f: FormatOptions) => {
     onChange({ ...options, format: f });
   };
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 2, p: 1 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, mt: 1 }}>
         Options
       </Typography>
 
-      <FormatEditor value={format} onChange={handleFormatChange} />
+      {showFormat && <FormatEditor value={format} onChange={handleFormatChange} />}
+
+      {OptionsEditor && showFormat && <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />}
 
       {OptionsEditor && <OptionsEditor options={options} onChange={onChange} />}
     </Box>

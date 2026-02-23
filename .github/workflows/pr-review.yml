@@ -34,7 +34,7 @@ jobs:
         run: |
           START_TIME=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.created_at')
           REVIEW_ID=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
-            --jq --arg start "$START_TIME" \
+            | jq -r --arg start "$START_TIME" \
             '[.[] | select(.submitted_at > $start and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | last | .id // empty')
           echo "review_id=${REVIEW_ID}" >> "$GITHUB_OUTPUT"
 
