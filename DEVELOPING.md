@@ -21,6 +21,7 @@
 
 - **Node.js** `^20.19.0` or `>=22.12.0` (required by Vite 7)
 - **npm** `>=10` (bundled with Node.js 20/22)
+- **GNU Make** — pre-installed on macOS and most Linux distributions. On Windows, install via [Chocolatey](https://chocolatey.org/) (`choco install make`), [Scoop](https://scoop.sh/) (`scoop install make`), or use WSL.
 
 Use a version manager such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to switch Node versions quickly. A `.nvmrc` file is included in this repo — run `nvm use` or `fnm use` at the repo root to activate the correct version automatically.
 
@@ -43,6 +44,17 @@ make otel-harness-down # stop and remove OTel host metrics harness
 
 > **Note:** `make serve` and `make serve-proxy` auto-install dependencies. The other targets (`lint`, `format`, `build`, `test-*`) assume dependencies are already installed — run `make setup` once first.
 
+If `make` is unavailable, run the equivalent npm commands directly from the `peek/` directory:
+
+```bash
+cd peek
+npm install        # install dependencies (replaces make setup)
+npm run dev        # start dev server (replaces make serve)
+npm run build      # production build (replaces make build)
+npm run lint       # lint (replaces make lint)
+npm run format     # format (replaces make format)
+```
+
 > **Pre-commit hook:** `make setup` (or `npm install` inside `peek/`) also installs a [husky](https://typicode.github.io/husky/) pre-commit hook that automatically runs Prettier (format) and ESLint (lint) on staged files via [lint-staged](https://github.com/lint-staged/lint-staged). This keeps committed code consistently formatted and lint-free.
 
 ## Running with a Proxy
@@ -61,8 +73,6 @@ Then enter `http://localhost:3000/_es` as the Elasticsearch URL when connecting 
 │              │ ◀─────────────  │  (localhost:3000) │ ◀─────────────  │   cluster          │
 └─────────────┘    JSON          └──────────────────┘    JSON          └────────────────────┘
 ```
-
-> **Legacy path:** The `/_query` path is also proxied directly for backward compatibility with ES|QL-only workflows.
 
 ## Architecture
 
@@ -100,7 +110,7 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 ## Docker
 
-The `Dockerfile` produces a self-contained image that serves the built dashboard with nginx and proxies `/_query` to Elasticsearch. No CORS configuration on Elasticsearch is required.
+The `Dockerfile` produces a self-contained image that serves the built dashboard with nginx and proxies `/_es/*` to Elasticsearch. No CORS configuration on Elasticsearch is required.
 
 ```bash
 make docker-build                              # build the image
@@ -114,7 +124,7 @@ Or with Docker Compose:
 ES_URL=http://my-elasticsearch:9200 docker compose up
 ```
 
-Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) and `/_query` requests to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
+Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
 
 ## OTel Harness
 

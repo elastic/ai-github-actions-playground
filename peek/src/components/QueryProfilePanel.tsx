@@ -180,10 +180,16 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    void navigator.clipboard.writeText(JSON.stringify(profile, null, 2)).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (!navigator.clipboard) return;
+    void navigator.clipboard.writeText(JSON.stringify(profile, null, 2)).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => {
+        // writeText rejected (e.g. permission denied) — fail silently
+      },
+    );
   };
 
   const knownShape = isEsqlProfile(profile);

@@ -85,6 +85,20 @@ describe("QueryProfilePanel", () => {
     expect(screen.getByText("Profile returned no driver details.")).toBeInTheDocument();
   });
 
+  it("does not crash when Clipboard API is unavailable", async () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    try {
+      render(<QueryProfilePanel profile={{ drivers: [] }} />);
+      await userEvent.click(screen.getByLabelText("Copy profile diagnostics"));
+      expect(screen.getByText("Query Profile")).toBeInTheDocument();
+    } finally {
+      if (original !== undefined) {
+        Object.defineProperty(navigator, "clipboard", original);
+      }
+    }
+  });
+
   it("collapses and expands the panel on header click", async () => {
     render(<QueryProfilePanel profile={SAMPLE_PROFILE} />);
     const toggleBtn = screen.getByLabelText("Collapse profile");

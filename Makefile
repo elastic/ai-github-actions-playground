@@ -45,7 +45,7 @@ serve: setup
 
 serve-proxy: setup
 	@echo "Starting dev server with Elasticsearch proxy..."
-	@echo "  Proxying /_es/* and /_query → $${ES_URL:-http://localhost:9200}"
+	@echo "  Proxying /_es/* → $${ES_URL:-http://localhost:9200}"
 	@echo "  Enter http://localhost:3000/_es as the Elasticsearch URL"
 	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
 
@@ -116,7 +116,7 @@ docker-build:
 docker-run:
 	@echo "Starting Docker container..."
 	@echo "  Dashboard: http://localhost:8080"
-	@echo "  Proxying /_query → $${ES_URL:-http://host.docker.internal:9200}"
+	@echo "  Proxying /_es/* → $${ES_URL:-http://host.docker.internal:9200}"
 	@echo "  Connect the dashboard to: http://localhost:8080"
 	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} elastic-peek
 
