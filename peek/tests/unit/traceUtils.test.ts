@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
+
 import {
   buildSpanTree,
   flattenSpanTree,
   parseSpansFromEsql,
+  parseSpanLinks,
   formatSpanDuration,
   getTraceTimeBounds,
+  buildServiceMapData,
 } from "../../src/components/traces/traceUtils";
 import type { Span } from "../../src/components/traces/traceUtils";
 
@@ -326,5 +329,211 @@ describe("parseSpansFromEsql", () => {
     expect(spans).toHaveLength(1);
     expect(spans[0]!.serviceName).toBe("unknown");
     expect(spans[0]!.durationUs).toBe(0);
+  });
+
+  it("parses span links from links.trace.id and links.span.id columns", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "links.trace.id", type: "keyword" },
+      { name: "links.span.id", type: "keyword" },
+    ];
+    const values = [
+      [
+        "t1",
+        "s1",
+        null,
+        "svc",
+        "op",
+        "SERVER",
+        1000,
+        "OK",
+        "2026-01-01T00:00:00Z",
+        ["linked-trace-1", "linked-trace-2"],
+        ["linked-span-1", "linked-span-2"],
+      ],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.links).toHaveLength(2);
+    expect(spans[0]!.links![0]).toEqual({
+      traceId: "linked-trace-1",
+      spanId: "linked-span-1",
+      attributes: {},
+    });
+    expect(spans[0]!.links![1]).toEqual({
+      traceId: "linked-trace-2",
+      spanId: "linked-span-2",
+      attributes: {},
+    });
+  });
+
+  it("excludes links columns from span attributes", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "links.trace.id", type: "keyword" },
+      { name: "links.span.id", type: "keyword" },
+      { name: "http.method", type: "keyword" },
+    ];
+    const values = [
+      [
+        "t1",
+        "s1",
+        null,
+        "svc",
+        "op",
+        "SERVER",
+        1000,
+        "OK",
+        "2026-01-01T00:00:00Z",
+        "lt1",
+        "ls1",
+        "GET",
+      ],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.attributes).toEqual({ "http.method": "GET" });
+    expect(spans[0]!.attributes).not.toHaveProperty("links.trace.id");
+    expect(spans[0]!.attributes).not.toHaveProperty("links.span.id");
+  });
+});
+
+describe("parseSpanLinks", () => {
+  it("returns empty array when links columns are absent", () => {
+    const colIndex = new Map<string, number>([
+      ["trace.id", 0],
+      ["span.id", 1],
+    ]);
+    const row = ["t1", "s1"];
+    expect(parseSpanLinks(colIndex, row)).toEqual([]);
+  });
+
+  it("returns empty array when link trace or span id is null", () => {
+    const colIndex = new Map<string, number>([
+      ["links.trace.id", 0],
+      ["links.span.id", 1],
+    ]);
+    expect(parseSpanLinks(colIndex, [null, null])).toEqual([]);
+    expect(parseSpanLinks(colIndex, [null, "s1"])).toEqual([]);
+    expect(parseSpanLinks(colIndex, ["t1", null])).toEqual([]);
+  });
+
+  it("parses a single scalar link", () => {
+    const colIndex = new Map<string, number>([
+      ["links.trace.id", 0],
+      ["links.span.id", 1],
+    ]);
+    const row = ["trace-abc", "span-xyz"];
+    const links = parseSpanLinks(colIndex, row);
+    expect(links).toHaveLength(1);
+    expect(links[0]).toEqual({ traceId: "trace-abc", spanId: "span-xyz", attributes: {} });
+  });
+
+  it("parses multiple links from array values", () => {
+    const colIndex = new Map<string, number>([
+      ["links.trace.id", 0],
+      ["links.span.id", 1],
+    ]);
+    const row = [
+      ["trace-1", "trace-2"],
+      ["span-1", "span-2"],
+    ];
+    const links = parseSpanLinks(colIndex, row);
+    expect(links).toHaveLength(2);
+    expect(links[0]).toEqual({ traceId: "trace-1", spanId: "span-1", attributes: {} });
+    expect(links[1]).toEqual({ traceId: "trace-2", spanId: "span-2", attributes: {} });
+  });
+
+  it("zips link attributes with corresponding links", () => {
+    const colIndex = new Map<string, number>([
+      ["links.trace.id", 0],
+      ["links.span.id", 1],
+      ["links.attributes.messaging.system", 2],
+    ]);
+    const row = [
+      ["t1", "t2"],
+      ["s1", "s2"],
+      ["kafka", "rabbitmq"],
+    ];
+    const links = parseSpanLinks(colIndex, row);
+    expect(links[0]!.attributes).toEqual({ "messaging.system": "kafka" });
+    expect(links[1]!.attributes).toEqual({ "messaging.system": "rabbitmq" });
+  });
+
+  it("skips links where traceId or spanId array element is null", () => {
+    const colIndex = new Map<string, number>([
+      ["links.trace.id", 0],
+      ["links.span.id", 1],
+    ]);
+    const row = [
+      ["t1", null],
+      ["s1", "s2"],
+    ];
+    const links = parseSpanLinks(colIndex, row);
+    expect(links).toHaveLength(1);
+    expect(links[0]!.traceId).toBe("t1");
+  });
+
+  it("truncates to the shorter of traceIds/spanIds arrays", () => {
+    const colIndex = new Map<string, number>([
+      ["links.trace.id", 0],
+      ["links.span.id", 1],
+    ]);
+    const row = [["t1", "t2", "t3"], ["s1"]];
+    const links = parseSpanLinks(colIndex, row);
+    expect(links).toHaveLength(1);
+  });
+});
+
+describe("buildServiceMapData", () => {
+  it("builds service nodes and cross-service edges from parent/child spans", () => {
+    const spans = [
+      makeSpan({ spanId: "root", serviceName: "frontend", parentSpanId: null }),
+      makeSpan({ spanId: "api", serviceName: "api", parentSpanId: "root" }),
+      makeSpan({ spanId: "db", serviceName: "db", parentSpanId: "api" }),
+    ];
+
+    const map = buildServiceMapData(spans);
+    expect(map.nodes.map((n) => n.serviceName).sort()).toEqual(["api", "db", "frontend"]);
+    expect(map.edges).toEqual([
+      { source: "frontend", target: "api", callCount: 1, errorCount: 0, totalDurationUs: 1000 },
+      { source: "api", target: "db", callCount: 1, errorCount: 0, totalDurationUs: 1000 },
+    ]);
+  });
+
+  it("aggregates repeated edges and ignores same-service calls", () => {
+    const spans = [
+      makeSpan({ spanId: "root", serviceName: "frontend", parentSpanId: null }),
+      makeSpan({ spanId: "child-1", serviceName: "api", parentSpanId: "root", status: "Error" }),
+      makeSpan({ spanId: "child-2", serviceName: "api", parentSpanId: "root" }),
+      makeSpan({ spanId: "child-3", serviceName: "api", parentSpanId: "child-1" }),
+    ];
+
+    const map = buildServiceMapData(spans);
+    expect(map.edges).toEqual([
+      {
+        source: "frontend",
+        target: "api",
+        callCount: 2,
+        errorCount: 1,
+        totalDurationUs: 2000,
+      },
+    ]);
   });
 });

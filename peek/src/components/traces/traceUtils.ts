@@ -2,6 +2,13 @@
  * Span and trace data types and tree-building utilities.
  */
 
+/** Represents a link from a span to another span/trace */
+export interface SpanLink {
+  traceId: string;
+  spanId: string;
+  attributes: Record<string, unknown>;
+}
+
 /** Represents a single span in a trace */
 export interface Span {
   traceId: string;
@@ -15,6 +22,7 @@ export interface Span {
   timestamp: string;
   startTimeUs: number;
   attributes: Record<string, unknown>;
+  links?: SpanLink[];
 }
 
 /** A span augmented with tree information for rendering */
@@ -22,6 +30,25 @@ export interface SpanTreeNode {
   span: Span;
   children: SpanTreeNode[];
   depth: number;
+}
+
+export interface ServiceMapNode {
+  serviceName: string;
+  spanCount: number;
+  errorCount: number;
+}
+
+export interface ServiceMapEdge {
+  source: string;
+  target: string;
+  callCount: number;
+  errorCount: number;
+  totalDurationUs: number;
+}
+
+export interface ServiceMapData {
+  nodes: ServiceMapNode[];
+  edges: ServiceMapEdge[];
 }
 
 /**
@@ -118,6 +145,61 @@ export function flattenSpanTree(roots: SpanTreeNode[]): SpanTreeNode[] {
   return result;
 }
 
+function isErrorStatus(status: string): boolean {
+  return status === "Error" || status === "STATUS_CODE_ERROR";
+}
+
+/**
+ * Build an aggregated service dependency graph from span parent/child links.
+ */
+export function buildServiceMapData(spans: Span[]): ServiceMapData {
+  const spanById = new Map<string, Span>();
+  const nodeStats = new Map<string, ServiceMapNode>();
+  const edgeStats = new Map<string, ServiceMapEdge>();
+
+  for (const span of spans) {
+    spanById.set(span.spanId, span);
+    const existingNode = nodeStats.get(span.serviceName);
+    if (existingNode) {
+      existingNode.spanCount += 1;
+      existingNode.errorCount += isErrorStatus(span.status) ? 1 : 0;
+    } else {
+      nodeStats.set(span.serviceName, {
+        serviceName: span.serviceName,
+        spanCount: 1,
+        errorCount: isErrorStatus(span.status) ? 1 : 0,
+      });
+    }
+  }
+
+  for (const span of spans) {
+    if (!span.parentSpanId) continue;
+    const parentSpan = spanById.get(span.parentSpanId);
+    if (!parentSpan || parentSpan.serviceName === span.serviceName) continue;
+
+    const key = `${parentSpan.serviceName}→${span.serviceName}`;
+    const existingEdge = edgeStats.get(key);
+    if (existingEdge) {
+      existingEdge.callCount += 1;
+      existingEdge.errorCount += isErrorStatus(span.status) ? 1 : 0;
+      existingEdge.totalDurationUs += span.durationUs;
+    } else {
+      edgeStats.set(key, {
+        source: parentSpan.serviceName,
+        target: span.serviceName,
+        callCount: 1,
+        errorCount: isErrorStatus(span.status) ? 1 : 0,
+        totalDurationUs: span.durationUs,
+      });
+    }
+  }
+
+  return {
+    nodes: Array.from(nodeStats.values()),
+    edges: Array.from(edgeStats.values()),
+  };
+}
+
 /**
  * Parse raw ES|QL response rows into Span objects.
  * Maps column names to span fields using a flexible lookup.
@@ -155,7 +237,7 @@ export function parseSpansFromEsql(
   return values.map((row) => {
     const attributes: Record<string, unknown> = {};
     for (const [colName, idx] of colIndex) {
-      if (!knownFields.has(colName) && row[idx] != null) {
+      if (!knownFields.has(colName) && row[idx] != null && !isSpanLinkColumn(colName)) {
         attributes[colName] = row[idx];
       }
     }
@@ -190,8 +272,69 @@ export function parseSpansFromEsql(
       timestamp: String(get(row, fieldMapping.timestamp) ?? ""),
       startTimeUs,
       attributes,
+      links: parseSpanLinks(colIndex, row),
     };
   });
+}
+
+/** Returns true if the column name belongs to the span links data */
+function isSpanLinkColumn(colName: string): boolean {
+  return (
+    colName === "links.trace.id" ||
+    colName === "links.span.id" ||
+    colName.startsWith("links.attributes.")
+  );
+}
+
+/**
+ * Parse span links from a single ES|QL row.
+ * Handles multi-value (array) fields for `links.trace.id` and `links.span.id`,
+ * and zips them with any `links.attributes.*` columns.
+ */
+export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): SpanLink[] {
+  const getField = (field: string): unknown => {
+    const idx = colIndex.get(field);
+    return idx !== undefined ? row[idx] : null;
+  };
+
+  const rawTraceIds = getField("links.trace.id");
+  const rawSpanIds = getField("links.span.id");
+
+  if (rawTraceIds == null || rawSpanIds == null) return [];
+
+  const traceIds = Array.isArray(rawTraceIds) ? rawTraceIds : [rawTraceIds];
+  const spanIds = Array.isArray(rawSpanIds) ? rawSpanIds : [rawSpanIds];
+
+  // Gather links.attributes.* columns sorted for deterministic order
+  const attrCols: Array<[string, number]> = [];
+  for (const [colName, idx] of colIndex) {
+    if (colName.startsWith("links.attributes.")) {
+      attrCols.push([colName, idx]);
+    }
+  }
+
+  const count = Math.min(traceIds.length, spanIds.length);
+  const links: SpanLink[] = [];
+
+  for (let i = 0; i < count; i++) {
+    if (traceIds[i] != null && spanIds[i] != null) {
+      const attributes: Record<string, unknown> = {};
+      for (const [colName, idx] of attrCols) {
+        const rawVal = row[idx];
+        const vals = Array.isArray(rawVal) ? rawVal : [rawVal];
+        if (i < vals.length && vals[i] != null) {
+          attributes[colName.slice("links.attributes.".length)] = vals[i];
+        }
+      }
+      links.push({
+        traceId: String(traceIds[i]),
+        spanId: String(spanIds[i]),
+        attributes,
+      });
+    }
+  }
+
+  return links;
 }
 
 /** Format a duration in microseconds to a human-readable string */

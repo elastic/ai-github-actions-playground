@@ -1,0 +1,126 @@
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import SpanDetailDrawer from "../../src/components/traces/SpanDetailDrawer";
+import type { Span } from "../../src/components/traces/traceUtils";
+
+function makeSpan(overrides: Partial<Span> = {}): Span {
+  return {
+    traceId: "trace-abc",
+    spanId: "span-xyz",
+    parentSpanId: null,
+    serviceName: "test-service",
+    name: "GET /api",
+    kind: "SERVER",
+    durationUs: 1000,
+    status: "OK",
+    timestamp: "2026-01-01T00:00:00.000Z",
+    startTimeUs: new Date("2026-01-01T00:00:00.000Z").getTime() * 1000,
+    attributes: {},
+    ...overrides,
+  };
+}
+
+describe("SpanDetailDrawer – Links tab", () => {
+  it("shows empty state when span has no links", async () => {
+    const span = makeSpan({ links: [] });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Links" }));
+    expect(screen.getByText("No span links")).toBeInTheDocument();
+  });
+
+  it("shows empty state when span.links is undefined", async () => {
+    const span = makeSpan(); // no links field
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Links" }));
+    expect(screen.getByText("No span links")).toBeInTheDocument();
+  });
+
+  it("renders link trace and span IDs", async () => {
+    const span = makeSpan({
+      links: [{ traceId: "linked-trace-1", spanId: "linked-span-1", attributes: {} }],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Links" }));
+    expect(screen.getByText("Link 1")).toBeInTheDocument();
+    expect(screen.getByText("linked-trace-1")).toBeInTheDocument();
+    expect(screen.getByText("linked-span-1")).toBeInTheDocument();
+  });
+
+  it("renders multiple links", async () => {
+    const span = makeSpan({
+      links: [
+        { traceId: "t1", spanId: "s1", attributes: {} },
+        { traceId: "t2", spanId: "s2", attributes: {} },
+      ],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Links" }));
+    expect(screen.getByText("Link 1")).toBeInTheDocument();
+    expect(screen.getByText("Link 2")).toBeInTheDocument();
+    expect(screen.getByText("t1")).toBeInTheDocument();
+    expect(screen.getByText("t2")).toBeInTheDocument();
+  });
+
+  it("renders link attributes", async () => {
+    const span = makeSpan({
+      links: [
+        {
+          traceId: "t1",
+          spanId: "s1",
+          attributes: { "messaging.system": "kafka" },
+        },
+      ],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Links" }));
+    expect(screen.getByText("messaging.system")).toBeInTheDocument();
+    expect(screen.getByText("kafka")).toBeInTheDocument();
+  });
+});

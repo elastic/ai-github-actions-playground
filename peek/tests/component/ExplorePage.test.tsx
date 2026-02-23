@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+
+import type * as EsService from "../../src/services/es";
 import ExplorePage from "../../src/components/ExplorePage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
@@ -7,7 +10,10 @@ import { makeStorageMock } from "../fixtures/test-utils";
 
 const { queryMock, listFieldsMock } = vi.hoisted(() => ({
   queryMock: vi.fn().mockResolvedValue({
-    columns: [{ name: "timestamp", type: "date" }, { name: "metric", type: "double" }],
+    columns: [
+      { name: "timestamp", type: "date" },
+      { name: "metric", type: "double" },
+    ],
     values: [["2026-01-01T00:00:00.000Z", 1]],
     executionTimeMs: 1,
   }),
@@ -17,9 +23,7 @@ const { queryMock, listFieldsMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("../../src/services/es", async () => {
-  const actual = await vi.importActual<typeof import("../../src/services/es")>(
-    "../../src/services/es",
-  );
+  const actual = await vi.importActual<EsService>("../../src/services/es");
   return {
     ...actual,
     ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -46,13 +50,15 @@ describe("ExplorePage", () => {
   });
 
   it("restores explorer state from URL parameters on first render", async () => {
-    window.history.replaceState(
-      {},
-      "",
-      "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01",
+    render(
+      <MemoryRouter
+        initialEntries={[
+          "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01",
+        ]}
+      >
+        <ExplorePage />
+      </MemoryRouter>,
     );
-
-    render(<ExplorePage />);
 
     await waitFor(() => {
       const explorerState = useExplorerStore.getState();
@@ -61,9 +67,7 @@ describe("ExplorePage", () => {
       expect(explorerState.selectedMetric).toBe("system.cpu.total.pct");
       expect(explorerState.aggregation).toBe("p95");
       expect(explorerState.groupBy).toBe("host.name");
-      expect(explorerState.filters).toEqual([
-        { field: "host.name", op: "==", value: "web-01" },
-      ]);
+      expect(explorerState.filters).toEqual([{ field: "host.name", op: "==", value: "web-01" }]);
       expect(dashboardState.dashboard.timeRange).toEqual({ from: "now-24h", to: "now" });
     });
   });
@@ -72,13 +76,15 @@ describe("ExplorePage", () => {
     listFieldsMock.mockResolvedValue([
       { name: "system.network.in.bytes", type: "long", metricType: "counter" },
     ]);
-    window.history.replaceState(
-      {},
-      "",
-      "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now",
+    render(
+      <MemoryRouter
+        initialEntries={[
+          "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now",
+        ]}
+      >
+        <ExplorePage />
+      </MemoryRouter>,
     );
-
-    render(<ExplorePage />);
 
     await waitFor(() => {
       const explorerState = useExplorerStore.getState();
