@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -21,6 +21,8 @@ import { json } from "@codemirror/lang-json";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+
+import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD";
 
@@ -88,6 +90,16 @@ function RequestCard({
 }: RequestCardProps) {
   const showBody = METHODS_WITH_BODY.includes(entry.method);
   const [copied, setCopied] = useState(false);
+  const bodyEditorExtensions = useMemo(
+    () => [
+      json(),
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an Elasticsearch API expert. Complete the JSON request body at the cursor. Return only the completion text.",
+      }),
+    ],
+    [],
+  );
   const serializedResponse = useCallback((body: unknown): string => {
     try {
       return JSON.stringify(
@@ -187,7 +199,7 @@ function RequestCard({
             <CodeMirror
               value={entry.body}
               onChange={(v) => onUpdate(entry.id, { body: v, response: null })}
-              extensions={[json()]}
+              extensions={bodyEditorExtensions}
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}
