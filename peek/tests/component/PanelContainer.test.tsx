@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import PanelContainer from "../../src/components/PanelContainer";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 import type { PanelDefinition } from "../../src/types";
 
 const queryMock = vi.fn();
@@ -20,18 +21,20 @@ vi.mock("../../src/services/es", () => ({
   },
 }));
 
+function MockVisualization({
+  onExportReady,
+}: {
+  onExportReady?: (exportFn: (() => string) | null) => void;
+}) {
+  useEffect(() => {
+    onExportReady?.(() => "data:image/png;base64,ZmFrZQ==");
+    return () => onExportReady?.(null);
+  }, [onExportReady]);
+  return <div>Visualization mock</div>;
+}
+
 vi.mock("../../src/components/visualizations/Visualization", () => ({
-  default: ({
-    onExportReady,
-  }: {
-    onExportReady?: (exportFn: (() => string) | null) => void;
-  }) => {
-    useEffect(() => {
-      onExportReady?.(() => "data:image/png;base64,ZmFrZQ==");
-      return () => onExportReady?.(null);
-    }, [onExportReady]);
-    return <div>Visualization mock</div>;
-  },
+  default: MockVisualization,
 }));
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -42,8 +45,8 @@ describe("PanelContainer", () => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
 
@@ -76,6 +79,7 @@ describe("PanelContainer", () => {
 
     await screen.findByText("Visualization mock");
 
+    // eslint-disable-next-line testing-library/no-node-access -- icon button lacks accessible name
     const downloadButton = screen.getByTestId("DownloadIcon").closest("button");
     expect(downloadButton).not.toBeNull();
 

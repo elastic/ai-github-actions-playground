@@ -3,8 +3,8 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "../../src/App";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -13,7 +13,7 @@ describe("App shell visibility", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
   });
 
   it("hides navigation and shows footer reset when disconnected", () => {
@@ -84,7 +84,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows navigation and keeps footer reset when connected", () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     render(
       <MemoryRouter>
         <App />

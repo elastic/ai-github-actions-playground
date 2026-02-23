@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardParameter } from "../../src/types";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -21,7 +22,7 @@ describe("useDashboardStore parameter actions", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("addParameter adds a parameter to the dashboard", () => {
@@ -100,7 +101,7 @@ describe("useDashboardStore parameter actions", () => {
     });
 
     const exported = useDashboardStore.getState().exportDashboard();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
     const result = useDashboardStore.getState().importDashboard(exported);
     expect(result).toEqual({ success: true });
 

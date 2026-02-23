@@ -7,8 +7,7 @@ import { generateText } from "ai";
 
 import ChatPage from "../../src/components/ChatPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -27,7 +26,7 @@ describe("ChatPage", () => {
     localStorage.clear();
     sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
 
     const modelFactory = Object.assign((model: string) => ({ model, adapter: "responses" }), {
       chat: (model: string) => ({ model, adapter: "chat" }),
