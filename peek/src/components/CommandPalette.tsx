@@ -198,14 +198,14 @@ export default function CommandPalette() {
   // Global Ctrl/Cmd+K shortcut
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k" && !e.repeat) {
         e.preventDefault();
-        setOpen(!open);
+        setOpen(true);
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, setOpen]);
+  }, [setOpen]);
 
   const handleExecute = useCallback((cmd: Command) => {
     cmd.onExecute();
