@@ -4,7 +4,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 permissions:
-  contents: read
+  actions: read
+  contents: write
   issues: write
   pull-requests: write
 
@@ -17,5 +18,29 @@ jobs:
     with:
       intensity: aggressive
       minimum_severity: nitpick
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+
+  find-review:
+    needs: run
+    runs-on: ubuntu-latest
+    outputs:
+      review_id: ${{ steps.check.outputs.review_id }}
+    steps:
+      - name: Check for changes_requested review since run started
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          START_TIME=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.created_at')
+          REVIEW_ID=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            | jq -r --arg start "$START_TIME" \
+            '[.[] | select(.submitted_at > $start and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | last | .id // empty')
+          echo "review_id=${REVIEW_ID}" >> "$GITHUB_OUTPUT"
+
+  address-feedback:
+    needs: find-review
+    if: needs.find-review.outputs.review_id != ''
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review-addresser.lock.yml@main
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

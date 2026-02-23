@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import type { DashboardParameter, ElasticsearchConnection, TimeRange } from "../../types";
 import { useMarkdownEsql } from "../../hooks/useMarkdownEsql";
@@ -78,7 +79,7 @@ export default function MarkdownPanel({ content, connection, timeRange, paramete
         "& th": { bgcolor: "action.hover", fontWeight: 600 },
       }}
     >
-      <ReactMarkdown>{resolved}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolved}</ReactMarkdown>
     </Box>
   );
 }

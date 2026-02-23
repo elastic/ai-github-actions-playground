@@ -40,7 +40,7 @@ Elastic Peek is a browser-based dashboard builder that connects directly to your
 - **ES|QL query editor** — write queries with syntax highlighting
 - **No-code metrics explorer** — browse, filter, and chart metrics from UI selections
 - **Recent query history** — quickly re-use successful queries in Discover and Panel Editor
-- **Multiple visualization types** — time series, bar charts, pie charts, tables, stats, gauges
+- **Multiple visualization types** — time series, bar charts, pie charts, tables, stats, gauges, markdown panels
 - **Drag-and-drop layout** — resize and rearrange panels freely
 - **Persistent state** — dashboards save to localStorage automatically
 - **Import/export** — share dashboards as JSON files

@@ -30,6 +30,7 @@ import type {
   PieChartOptions,
   ScatterChartOptions,
   StatPanelOptions,
+  TablePanelOptions,
   TimeRange,
   TimeSeriesOptions,
   VisualizationOptions,
@@ -50,6 +51,8 @@ import {
   BarChartOptionsEditor,
   GaugeOptionsEditor,
   HistogramOptionsEditor,
+  StatOptionsEditor,
+  TableOptionsEditor,
   TimeSeriesOptionsEditor,
 } from "./vizOptionsEditors";
 
@@ -148,10 +151,13 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     type: "table",
     label: "Table",
     icon: <TableChartIcon />,
-    supportsOptions: false,
+    supportsOptions: true,
     supportsQuery: true,
-    defaultOptions: () => ({}),
-    renderComponent: ({ data }) => <DataTable data={data} />,
+    defaultOptions: () => ({}) satisfies TablePanelOptions,
+    renderComponent: ({ data, options }) => (
+      <DataTable data={data} options={options as TablePanelOptions | undefined} />
+    ),
+    OptionsEditor: TableOptionsEditor,
   },
   {
     type: "stat",
@@ -163,6 +169,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     renderComponent: ({ data, options }) => (
       <StatPanel data={data} options={options as StatPanelOptions | undefined} />
     ),
+    OptionsEditor: StatOptionsEditor,
   },
   {
     type: "gauge",

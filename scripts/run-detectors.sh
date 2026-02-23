@@ -37,18 +37,25 @@ fi
 
 # Detector / Auditor workflows that support workflow_dispatch
 WORKFLOWS=(
+  "autonomy-atomicity-analyzer.yml"
   "breaking-change-detector.yml"
   "bug-hunter.yml"
   "code-duplication-detector.yml"
   "docs-patrol.yml"
   "duplicate-issue-detector.yml"
   "flaky-test-investigator.yml"
+  "framework-best-practices.yml"
+  "information-architecture.yml"
   "iterative-ideas-man.yml"
+  "medium-ideas-man.yml"
   "newbie-contributor-patrol.yml"
   "performance-profiler.yml"
   "project-summary.yml"
+  "product-manager-impersonator.yml"
+  "refactor-opportunist.yml"
   "stale-issues.yml"
   "text-auditor.yml"
+  "ux-design-patrol.yml"
 )
 
 # Verify gh is available
