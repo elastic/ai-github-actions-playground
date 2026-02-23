@@ -52,6 +52,7 @@ export default function FleetPage() {
   const agentVersions = useFleetStore((s) => s.agentVersions);
   const outputHealth = useFleetStore((s) => s.outputHealth);
   const agentInventory = useFleetStore((s) => s.agentInventory);
+  const agentInventoryTotal = useFleetStore((s) => s.agentInventoryTotal);
   const actions = useFleetStore((s) => s.actions);
   const actionResults = useFleetStore((s) => s.actionResults);
 
@@ -59,6 +60,7 @@ export default function FleetPage() {
   const setAgentVersions = useFleetStore((s) => s.setAgentVersions);
   const setOutputHealth = useFleetStore((s) => s.setOutputHealth);
   const setAgentInventory = useFleetStore((s) => s.setAgentInventory);
+  const setAgentInventoryTotal = useFleetStore((s) => s.setAgentInventoryTotal);
   const setActions = useFleetStore((s) => s.setActions);
   const setActionResults = useFleetStore((s) => s.setActionResults);
   const setLoading = useFleetStore((s) => s.setLoading);
@@ -92,6 +94,7 @@ export default function FleetPage() {
       setOutputHealth(value(results[2]!, "Output health") ?? []);
       const inventoryResult = value(results[3]!, "Agent inventory");
       setAgentInventory(inventoryResult?.agents ?? []);
+      setAgentInventoryTotal(inventoryResult?.total ?? 0);
       setActions(value(results[4]!, "Actions") ?? []);
       setActionResults(value(results[5]!, "Action results") ?? []);
       setPartialErrors(errors);
@@ -108,6 +111,7 @@ export default function FleetPage() {
     setAgentVersions,
     setOutputHealth,
     setAgentInventory,
+    setAgentInventoryTotal,
     setActions,
     setActionResults,
     setPartialErrors,
@@ -178,6 +182,7 @@ export default function FleetPage() {
               serverStatus={serverStatus}
               agentVersions={agentVersions}
               agentInventory={agentInventory}
+              agentInventoryTotal={agentInventoryTotal}
             />
           )}
           {activeTab === "agents" && (
@@ -201,10 +206,12 @@ function OverviewTab({
   serverStatus,
   agentVersions,
   agentInventory,
+  agentInventoryTotal,
 }: {
   serverStatus: ReturnType<typeof useFleetStore.getState>["serverStatus"];
   agentVersions: ReturnType<typeof useFleetStore.getState>["agentVersions"];
   agentInventory: ReturnType<typeof useFleetStore.getState>["agentInventory"];
+  agentInventoryTotal: ReturnType<typeof useFleetStore.getState>["agentInventoryTotal"];
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -288,20 +295,20 @@ function OverviewTab({
           <Typography variant="body2" color="text.secondary">
             No Fleet Server status metrics found in metrics-fleet_server.agent_status-*.
           </Typography>
-          {agentInventory.length > 0 && (
+          {agentInventoryTotal > 0 && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              However, {agentInventory.length} agent{agentInventory.length !== 1 ? "s" : ""} found
-              via Elastic Agent logs. Switch to the Agents tab to view them.
+              However, {agentInventoryTotal} agent{agentInventoryTotal !== 1 ? "s" : ""} found via
+              Elastic Agent logs. Switch to the Agents tab to view them.
             </Typography>
           )}
         </Paper>
       )}
 
       {/* Quick agent summary when no server status but agents exist */}
-      {!serverStatus && agentInventory.length > 0 && (
+      {!serverStatus && agentInventoryTotal > 0 && (
         <>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <FleetStatCard title="Agents (from logs)" value={agentInventory.length} />
+            <FleetStatCard title="Agents (from logs)" value={agentInventoryTotal} />
             <FleetStatCard
               title="With Errors"
               value={agentInventory.filter((a) => a.errorCount > 0).length}

@@ -202,6 +202,7 @@ describe("Fleet pages", () => {
       agentVersions: [],
       outputHealth: [],
       agentInventory: [],
+      agentInventoryTotal: 0,
       actions: [],
       actionResults: [],
       activeTab: "overview",
@@ -324,6 +325,61 @@ describe("Fleet pages", () => {
     // Should render without crashing; no server status means fallback UI
     await waitFor(() => {
       expect(screen.getByText("Fleet")).toBeInTheDocument();
+    });
+  });
+
+  it("uses uncapped inventory total for fallback count when server status is unavailable", async () => {
+    rawRequestMock.mockImplementation((_method: string, url: string) => {
+      if (url.includes("metrics-fleet_server.agent_status")) {
+        return Promise.resolve({ status: 404, body: {} });
+      }
+      if (url.includes("logs-elastic_agent")) {
+        return Promise.resolve({
+          status: 200,
+          body: {
+            aggregations: {
+              agent_count: { value: 750 },
+              agents: {
+                buckets: [
+                  {
+                    key: "agent-1",
+                    doc_count: 50,
+                    latest: {
+                      hits: {
+                        hits: [
+                          {
+                            _source: {
+                              agent: { id: "agent-1", version: "8.14.0" },
+                              host: { hostname: "host-1" },
+                              "@timestamp": new Date().toISOString(),
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    errors: { doc_count: 2 },
+                  },
+                ],
+              },
+            },
+          },
+        });
+      }
+      return Promise.resolve({ status: 200, body: { hits: { hits: [] } } });
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/However, 750 agents found via Elastic Agent logs\./),
+      ).toBeInTheDocument();
     });
   });
 });

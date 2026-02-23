@@ -25,6 +25,8 @@ interface FleetState {
   outputHealth: FleetOutputHealth[];
   /** Agent inventory from logs-elastic_agent-* aggregation */
   agentInventory: ElasticAgentInfo[];
+  /** Uncapped agent inventory total from logs-elastic_agent-* cardinality aggregation */
+  agentInventoryTotal: number;
   /** Fleet actions from fleet-actions-sim */
   actions: FleetAction[];
   /** Fleet action results from fleet-actions-results-sim */
@@ -46,6 +48,7 @@ interface FleetState {
   setAgentVersions: (versions: FleetAgentVersionCount[]) => void;
   setOutputHealth: (health: FleetOutputHealth[]) => void;
   setAgentInventory: (agents: ElasticAgentInfo[]) => void;
+  setAgentInventoryTotal: (total: number) => void;
   setActions: (actions: FleetAction[]) => void;
   setActionResults: (results: FleetActionResult[]) => void;
   setActiveTab: (tab: FleetViewTab) => void;
@@ -63,6 +66,7 @@ export const useFleetStore = create<FleetState>()((set) => ({
   agentVersions: [],
   outputHealth: [],
   agentInventory: [],
+  agentInventoryTotal: 0,
   actions: [],
   actionResults: [],
 
@@ -77,6 +81,7 @@ export const useFleetStore = create<FleetState>()((set) => ({
   setAgentVersions: (versions) => set({ agentVersions: versions }),
   setOutputHealth: (health) => set({ outputHealth: health }),
   setAgentInventory: (agents) => set({ agentInventory: agents }),
+  setAgentInventoryTotal: (total) => set({ agentInventoryTotal: total }),
   setActions: (actions) => set({ actions }),
   setActionResults: (results) => set({ actionResults: results }),
   setActiveTab: (tab) => set({ activeTab: tab }),

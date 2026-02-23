@@ -15,6 +15,7 @@ describe("useFleetStore", () => {
       agentVersions: [],
       outputHealth: [],
       agentInventory: [],
+      agentInventoryTotal: 0,
       actions: [],
       actionResults: [],
       activeTab: "overview",
@@ -39,6 +40,7 @@ describe("useFleetStore", () => {
       expect(state.serverStatus).toBeNull();
       expect(state.agentVersions).toEqual([]);
       expect(state.agentInventory).toEqual([]);
+      expect(state.agentInventoryTotal).toBe(0);
       expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
     });
@@ -93,6 +95,11 @@ describe("useFleetStore", () => {
       ];
       useFleetStore.getState().setAgentInventory(agents);
       expect(useFleetStore.getState().agentInventory).toEqual(agents);
+    });
+
+    it("setAgentInventoryTotal updates total", () => {
+      useFleetStore.getState().setAgentInventoryTotal(750);
+      expect(useFleetStore.getState().agentInventoryTotal).toBe(750);
     });
 
     it("setLoading toggles loading", () => {
