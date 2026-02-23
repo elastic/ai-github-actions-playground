@@ -22,6 +22,8 @@ import { json } from "@codemirror/lang-json";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import type { ElasticsearchConnection } from "../services/es";
+import { buildCurlCommand } from "../utils/buildCurlCommand";
 
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 
@@ -75,6 +77,7 @@ function makeEntry(overrides: Partial<RequestEntry> = {}): RequestEntry {
 interface RequestCardProps {
   entry: RequestEntry;
   themeMode: "light" | "dark";
+  connection: ElasticsearchConnection | null;
   onUpdate: (id: string, updates: Partial<RequestEntry>) => void;
   onRemove: (id: string) => void;
   onSend: (id: string) => void;
@@ -84,6 +87,7 @@ interface RequestCardProps {
 function RequestCard({
   entry,
   themeMode,
+  connection,
   onUpdate,
   onRemove,
   onSend,
@@ -91,6 +95,7 @@ function RequestCard({
 }: RequestCardProps) {
   const showBody = METHODS_WITH_BODY.includes(entry.method);
   const [copied, setCopied] = useState(false);
+  const [copiedCurl, setCopiedCurl] = useState(false);
   const bodyEditorExtensions = useMemo(
     () => [
       json(),
@@ -120,6 +125,14 @@ function RequestCard({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [entry.response, serializedResponse]);
+
+  const handleCopyCurl = useCallback(() => {
+    if (!connection) return;
+    const cmd = buildCurlCommand(connection, entry.method, entry.path, entry.body);
+    void navigator.clipboard.writeText(cmd);
+    setCopiedCurl(true);
+    setTimeout(() => setCopiedCurl(false), 2000);
+  }, [connection, entry.method, entry.path, entry.body]);
 
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
@@ -180,6 +193,19 @@ function RequestCard({
         >
           Send
         </Button>
+
+        <Tooltip title={copiedCurl ? "Copied!" : "Copy as cURL"}>
+          <span>
+            <IconButton
+              size="small"
+              onClick={handleCopyCurl}
+              disabled={!connection || !entry.path.trim()}
+              aria-label="Copy as cURL"
+            >
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
 
         {removable && (
           <Tooltip title="Remove request">
@@ -379,6 +405,7 @@ export default function ApiConsolePage() {
           key={entry.id}
           entry={entry}
           themeMode={themeMode}
+          connection={connection}
           onUpdate={updateEntry}
           onRemove={removeEntry}
           onSend={sendRequest}

@@ -46,6 +46,24 @@ describe("ApiConsolePage", () => {
     vi.mocked(fetch).mockReset();
   });
 
+  it("copies a cURL command to the clipboard when Copy as cURL is clicked", () => {
+    useConnectionStore.getState().setConnection({
+      url: "http://localhost:9200",
+      apiKey: "my-api-key",
+    });
+
+    render(<ApiConsolePage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /copy as curl/i }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("curl -X GET 'http://localhost:9200/'"),
+    );
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("ApiKey my-api-key"),
+    );
+  });
+
   it("sends a request and renders response status/body", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ ok: true }), {

@@ -9,11 +9,13 @@ import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getCapabilitiesMock = vi.fn();
 const getSecurityRolesMock = vi.fn();
+const getSecurityUsersMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getCapabilities: getCapabilitiesMock,
     getSecurityRoles: getSecurityRolesMock,
+    getSecurityUsers: getSecurityUsersMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -51,6 +53,25 @@ const ROLES_RESPONSE = {
   },
 };
 
+const USERS_RESPONSE = {
+  elastic: {
+    username: "elastic",
+    enabled: true,
+    roles: ["superuser"],
+    full_name: null,
+    email: null,
+    metadata: {},
+  },
+  alice: {
+    username: "alice",
+    enabled: true,
+    roles: ["viewer"],
+    full_name: null,
+    email: null,
+    metadata: {},
+  },
+};
+
 describe("RolesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,6 +79,7 @@ describe("RolesPage", () => {
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
   });
 
   it("renders roles list sorted alphabetically and selects the first role", async () => {
@@ -195,5 +217,55 @@ describe("RolesPage", () => {
       expect(within(list).getByText("viewer")).toBeInTheDocument();
     });
     expect(getSecurityRolesMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows assigned users in the detail pane for the selected role", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <RolesPage />
+      </MemoryRouter>,
+    );
+
+    // empty_role is selected first alphabetically — no assigned users
+    await screen.findByRole("heading", { level: 6, name: "empty_role" });
+    expect(screen.getByText("No users assigned.")).toBeInTheDocument();
+  });
+
+  it("pre-selects a role from the ?role= URL search param", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/roles?role=superuser"]}>
+        <RolesPage />
+      </MemoryRouter>,
+    );
+
+    // superuser should be pre-selected rather than empty_role
+    await screen.findByRole("heading", { level: 6, name: "superuser" });
+    expect(screen.getByText("all")).toBeInTheDocument();
+  });
+
+  it("shows assigned users when a role with assignments is selected", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <RolesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "empty_role" });
+    await user.click(screen.getByRole("button", { name: /superuser/i }));
+
+    await screen.findByRole("heading", { level: 6, name: "superuser" });
+    await waitFor(() => {
+      expect(screen.getByText("elastic")).toBeInTheDocument();
+    });
   });
 });

@@ -132,10 +132,11 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           )}
           <List dense disablePadding>
             {section.items.map((item) => {
-              const pagePath = PAGE_MANIFEST[item.page].path;
+              const itemPath = PAGE_MANIFEST[item.page].path;
               const isActive =
-                location.pathname === pagePath ||
-                (pagePath === "/dashboards" && location.pathname.startsWith("/dashboards/"));
+                itemPath === "/"
+                  ? location.pathname === itemPath
+                  : location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
