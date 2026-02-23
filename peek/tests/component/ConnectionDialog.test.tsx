@@ -7,14 +7,12 @@ import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
-const getClusterInfoMock = vi.fn();
-const getCapabilitiesMock = vi.fn();
+const { fetchCapabilitiesForConnectionMock } = vi.hoisted(() => ({
+  fetchCapabilitiesForConnectionMock: vi.fn(),
+}));
 
 vi.mock("../../src/services/es", () => ({
-  ElasticsearchClient: vi.fn().mockImplementation(() => ({
-    getClusterInfo: getClusterInfoMock,
-    getCapabilities: getCapabilitiesMock,
-  })),
+  fetchCapabilitiesForConnection: fetchCapabilitiesForConnectionMock,
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
     const obj = err as Record<string, unknown>;
@@ -65,22 +63,23 @@ describe("ConnectionDialog", () => {
 
   it("connects successfully and closes the dialog", async () => {
     const user = userEvent.setup();
-    getClusterInfoMock.mockResolvedValue({});
-    getCapabilitiesMock.mockResolvedValue({ canUseEsql: true, canUseAsyncEsql: true });
+    fetchCapabilitiesForConnectionMock.mockResolvedValue({
+      canUseEsql: true,
+      canUseAsyncEsql: true,
+    });
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
-    expect(getClusterInfoMock).toHaveBeenCalledTimes(1);
-    expect(getCapabilitiesMock).toHaveBeenCalledTimes(1);
+    expect(fetchCapabilitiesForConnectionMock).toHaveBeenCalledTimes(1);
     expect(useConnectionStore.getState().connected).toBe(true);
     expect(useUIStore.getState().connectionDialogOpen).toBe(false);
   });
 
   it("shows an error when test connection fails", async () => {
     const user = userEvent.setup();
-    getClusterInfoMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    fetchCapabilitiesForConnectionMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");

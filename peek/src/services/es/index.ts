@@ -1,4 +1,5 @@
 export { ElasticsearchClient, isElasticsearchError } from "./client";
+export { fetchCapabilitiesForConnection } from "./connectionHandshake";
 export type {
   ElasticsearchConnection,
   ElasticsearchError,

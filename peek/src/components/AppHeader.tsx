@@ -27,7 +27,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import type { ProfileHealth, TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
@@ -131,9 +131,7 @@ export default function AppHeader() {
       setSwitchingProfile(true);
       const conn = profile.connection;
       try {
-        const client = new ElasticsearchClient(conn);
-        await client.getClusterInfo();
-        const caps = await client.getCapabilities();
+        const caps = await fetchCapabilitiesForConnection(conn);
         setConnection(conn);
         setConnected(true);
         setCapabilities(caps);
@@ -180,9 +178,7 @@ export default function AppHeader() {
       if (!profile) return;
       setRetestingProfileId(profileId);
       try {
-        const client = new ElasticsearchClient(profile.connection);
-        await client.getClusterInfo();
-        await client.getCapabilities();
+        await fetchCapabilitiesForConnection(profile.connection);
         setProfileHealth(profileId, {
           status: "healthy",
           checkedAt: new Date().toISOString(),
