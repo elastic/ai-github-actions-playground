@@ -157,6 +157,49 @@ describe("DiscoverPage", () => {
     });
   });
 
+  it("allows toggling field insights with keyboard", async () => {
+    const user = userEvent.setup();
+    queryMock.mockResolvedValueOnce({
+      columns: [{ name: "status", type: "keyword" }],
+      values: [["ok"], ["error"]],
+      executionTimeMs: 1,
+    });
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "status", type: "keyword" },
+        { name: "value_count", type: "long" },
+      ],
+      values: [
+        ["ok", 100],
+        ["error", 42],
+      ],
+      executionTimeMs: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const expandBtn = await screen.findByRole("button", {
+      name: /expand insights for status/i,
+    });
+    expandBtn.focus();
+    expect(expandBtn).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /collapse insights for status/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
+    });
+  });
+
   it("expands a numeric field to show min/max/avg stats", async () => {
     const user = userEvent.setup();
     queryMock.mockResolvedValueOnce({

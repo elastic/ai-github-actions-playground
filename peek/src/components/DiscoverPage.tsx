@@ -16,6 +16,7 @@ import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -516,21 +517,21 @@ export default function DiscoverPage() {
                           }}
                         />
                       </Box>
-                      <Box
-                        role="button"
+                      <IconButton
+                        size="small"
                         aria-label={`${isExpanded ? "Collapse" : "Expand"} insights for ${col.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleToggleInsight(col.name, col.type);
                         }}
-                        sx={{ display: "flex", alignItems: "center", p: 0.25, cursor: "pointer" }}
+                        sx={{ p: 0.25 }}
                       >
                         {isExpanded ? (
                           <ExpandLessIcon sx={{ fontSize: 16 }} />
                         ) : (
                           <ExpandMoreIcon sx={{ fontSize: 16 }} />
                         )}
-                      </Box>
+                      </IconButton>
                     </Box>
                     <Collapse in={isExpanded}>
                       <Box sx={{ px: 1.5, py: 0.75, bgcolor: "action.hover" }}>
