@@ -261,7 +261,7 @@ export function computeCheckinStaleness(lastSeen: string | null): {
   severity: "fresh" | "stale" | "critical";
 } {
   if (!lastSeen) return { label: "unknown", severity: "critical" };
-  const diffMs = Date.now() - Date.parse(lastSeen);
+  const diffMs = Math.max(0, Date.now() - Date.parse(lastSeen));
   if (Number.isNaN(diffMs)) return { label: "unknown", severity: "critical" };
   const seconds = Math.floor(diffMs / 1000);
   if (seconds < 60) {

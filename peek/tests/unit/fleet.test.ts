@@ -110,6 +110,12 @@ describe("computeCheckinStaleness", () => {
     expect(result.severity).toBe("critical");
     expect(result.label).toMatch(/\d+d ago/);
   });
+
+  it("clamps future timestamps to zero age", () => {
+    const future = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const result = computeCheckinStaleness(future);
+    expect(result).toEqual({ label: "0s ago", severity: "fresh" });
+  });
 });
 
 describe("aggregateFleetPolicies", () => {
