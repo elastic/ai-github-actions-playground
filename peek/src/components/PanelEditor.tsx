@@ -6,6 +6,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import InputBase from "@mui/material/InputBase";
 import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
@@ -31,6 +32,7 @@ import type {
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 
 import Visualization from "./visualizations/Visualization";
+import MarkdownPanel from "./visualizations/MarkdownPanel";
 import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
@@ -137,6 +139,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   }, [editingId, removePanel, setEditingId]);
 
   const showOptions = getVizEntry(viz)?.supportsOptions ?? false;
+  const isMarkdown = viz === "markdown";
 
   return (
     <Dialog
@@ -176,87 +179,107 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
       <Divider />
 
       <DialogContent sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Query editor */}
+        {/* Query / content editor */}
         <Box>
           <Box
             sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
           >
             <Typography variant="subtitle2" color="text.secondary">
-              ES|QL Query
+              {isMarkdown ? "Markdown Content" : "ES|QL Query"}
             </Typography>
-            <Typography
-              component="a"
-              href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
-              target="_blank"
-              rel="noreferrer"
-              variant="caption"
-              color="primary.main"
-              sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
-            >
-              ES|QL documentation
-            </Typography>
+            {!isMarkdown && (
+              <Typography
+                component="a"
+                href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
+                target="_blank"
+                rel="noreferrer"
+                variant="caption"
+                color="primary.main"
+                sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+              >
+                ES|QL documentation
+              </Typography>
+            )}
           </Box>
-          <Box
-            sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              overflow: "hidden",
-            }}
-          >
-            <CodeMirror
+          {isMarkdown ? (
+            <TextField
               value={query}
-              onChange={setQuery}
-              extensions={queryEditorExtensions}
-              theme={themeMode}
-              height="120px"
-              basicSetup={{ lineNumbers: true, foldGutter: false }}
+              onChange={(e) => setQuery(e.target.value)}
+              multiline
+              minRows={6}
+              maxRows={14}
+              fullWidth
+              placeholder="Enter markdown text…"
+              inputProps={{ "aria-label": "Markdown content" }}
+              sx={{ fontFamily: "monospace" }}
             />
-          </Box>
-          <QueryPipelineSteps
-            query={query}
-            loading={loading}
-            activeStep={activeStep}
-            onRunStep={handleRunStep}
-          />
+          ) : (
+            <>
+              <Box
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  overflow: "hidden",
+                }}
+              >
+                <CodeMirror
+                  value={query}
+                  onChange={setQuery}
+                  extensions={queryEditorExtensions}
+                  theme={themeMode}
+                  height="120px"
+                  basicSetup={{ lineNumbers: true, foldGutter: false }}
+                />
+              </Box>
+              <QueryPipelineSteps
+                query={query}
+                loading={loading}
+                activeStep={activeStep}
+                onRunStep={handleRunStep}
+              />
+            </>
+          )}
         </Box>
 
-        {/* Query controls row */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleRunQuery}
-            disabled={loading || !query.trim()}
-          >
-            {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
-            Run Query (Ctrl/Cmd+Enter)
-          </Button>
-          {preview && (
-            <Typography variant="caption" color="text.secondary">
-              {preview.values.length} rows × {preview.columns.length} columns
-            </Typography>
-          )}
-          <Button
-            variant="text"
-            size="small"
-            onClick={(e) => setHistoryAnchor(e.currentTarget)}
-            disabled={queryHistory.length === 0}
-          >
-            Recent queries
-          </Button>
-          <Menu
-            anchorEl={historyAnchor}
-            open={Boolean(historyAnchor)}
-            onClose={() => setHistoryAnchor(null)}
-          >
-            {queryHistory.map((historyQuery, idx) => (
-              <MenuItem key={idx} onClick={() => handleSelectHistory(historyQuery)}>
-                {historyQuery}
-              </MenuItem>
-            ))}
-          </Menu>
-        </Box>
+        {/* Query controls row — hidden for markdown panels */}
+        {!isMarkdown && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleRunQuery}
+              disabled={loading || !query.trim()}
+            >
+              {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
+              Run Query (Ctrl/Cmd+Enter)
+            </Button>
+            {preview && (
+              <Typography variant="caption" color="text.secondary">
+                {preview.values.length} rows × {preview.columns.length} columns
+              </Typography>
+            )}
+            <Button
+              variant="text"
+              size="small"
+              onClick={(e) => setHistoryAnchor(e.currentTarget)}
+              disabled={queryHistory.length === 0}
+            >
+              Recent queries
+            </Button>
+            <Menu
+              anchorEl={historyAnchor}
+              open={Boolean(historyAnchor)}
+              onClose={() => setHistoryAnchor(null)}
+            >
+              {queryHistory.map((historyQuery, idx) => (
+                <MenuItem key={idx} onClick={() => handleSelectHistory(historyQuery)}>
+                  {historyQuery}
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+        )}
 
         {/* Visualization type selector */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -283,8 +306,15 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        {/* Preview + options */}
-        {preview && (
+        {/* Markdown preview — always shown for markdown panels */}
+        {isMarkdown && (
+          <Paper variant="outlined" sx={{ minHeight: 120, p: 1, overflow: "auto" }}>
+            <MarkdownPanel content={query} />
+          </Paper>
+        )}
+
+        {/* Preview + options — only for query-based panels */}
+        {!isMarkdown && preview && (
           <>
             <Paper variant="outlined" sx={{ minHeight: 220, p: 1, overflow: "hidden" }}>
               <Visualization type={viz} data={preview} options={options} />
@@ -300,7 +330,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         )}
 
         {/* Show options even without a preview (e.g. when editing an existing panel) */}
-        {!preview && showOptions && (
+        {!isMarkdown && !preview && showOptions && (
           <>
             <Divider />
             <ChartOptionsEditor vizType={viz} options={options} onChange={setOptions} />
