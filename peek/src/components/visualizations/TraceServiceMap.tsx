@@ -21,6 +21,18 @@ const MIN_EDGE_WIDTH = 1.5;
 const EDGE_WIDTH_SCALE = 0.4;
 const MAX_EDGE_WIDTH = 5;
 
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char] ?? char);
+}
+
 export default function TraceServiceMap({ spans, onNodeClick }: Props) {
   const mapData = useMemo(() => buildServiceMapData(spans), [spans]);
 
@@ -45,16 +57,19 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
           if (params.dataType === "node") {
             const { name, value = 0, errorCount = 0 } = params.data;
             const errorRate = value > 0 ? ((errorCount / value) * 100).toFixed(1) : "0.0";
+            const escapedName = escapeHtml(name ?? "");
             return [
-              `<b>${name}</b>`,
+              `<b>${escapedName}</b>`,
               `Spans: ${value}`,
               `Errors: ${errorCount} (${errorRate}%)`,
             ].join("<br/>");
           }
           if (params.dataType === "edge") {
             const { source, target, callCount = 0, avgLatencyMs = 0 } = params.data;
+            const escapedSource = escapeHtml(source ?? "");
+            const escapedTarget = escapeHtml(target ?? "");
             return [
-              `<b>${source} → ${target}</b>`,
+              `<b>${escapedSource} → ${escapedTarget}</b>`,
               `Calls: ${callCount}`,
               `Avg latency: ${avgLatencyMs.toFixed(1)} ms`,
             ].join("<br/>");
