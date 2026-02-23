@@ -19,6 +19,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CodeIcon from "@mui/icons-material/Code";
 import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -43,6 +44,7 @@ import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse } from "../types";
 
 import MetricSearch from "./MetricSearch";
+import MetricOverviewGrid from "./MetricOverviewGrid";
 import DimensionSidebar from "./DimensionSidebar";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
 
@@ -135,6 +137,9 @@ export default function ExplorePage() {
     () => fields.find((field) => field.name === selectedMetric) ?? null,
     [fields, selectedMetric],
   );
+
+  // Show namespace overview when a namespace is picked but no single metric is selected.
+  const showOverview = selectedNamespace !== null && !selectedMetric;
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
@@ -289,6 +294,11 @@ export default function ExplorePage() {
     [setSelectedMetric],
   );
 
+  const handleBackToOverview = useCallback(() => {
+    setSelectedMetric(null);
+    setQueryResult({ status: "idle" });
+  }, [setSelectedMetric, setQueryResult]);
+
   const handleEditInDiscover = useCallback(() => {
     if (queryResult.esql) {
       setDiscoverQueryDraft(queryResult.esql);
@@ -358,25 +368,27 @@ export default function ExplorePage() {
             />
           </Box>
 
-          {/* Aggregation selector */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Aggregation</InputLabel>
-            <Select
-              value={aggregation}
-              label="Aggregation"
-              onChange={(e) => setAggregation(e.target.value as AggregationType)}
-            >
-              {aggOptions.map((agg) => (
-                <MenuItem key={agg} value={agg}>
-                  {agg.toUpperCase()}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* Aggregation selector — only in detail mode */}
+          {selectedMetric && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Aggregation</InputLabel>
+              <Select
+                value={aggregation}
+                label="Aggregation"
+                onChange={(e) => setAggregation(e.target.value as AggregationType)}
+              >
+                {aggOptions.map((agg) => (
+                  <MenuItem key={agg} value={agg}>
+                    {agg.toUpperCase()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Box>
 
-        {/* Active filters */}
-        {filters.length > 0 && (
+        {/* Active filters — detail mode only */}
+        {selectedMetric && filters.length > 0 && (
           <Box sx={{ display: "flex", gap: 0.5, mt: 1, flexWrap: "wrap", alignItems: "center" }}>
             <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
               Filters:
@@ -397,8 +409,8 @@ export default function ExplorePage() {
           </Box>
         )}
 
-        {/* Group by indicator */}
-        {groupBy && (
+        {/* Group by indicator — detail mode only */}
+        {selectedMetric && groupBy && (
           <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, alignItems: "center" }}>
             <Typography variant="caption" color="text.secondary">
               Split by:
@@ -412,54 +424,56 @@ export default function ExplorePage() {
           </Box>
         )}
 
-        {/* Action buttons */}
-        <Box sx={{ display: "flex", gap: 1, mt: 1, alignItems: "center" }}>
-          <Tooltip title="View generated ES|QL query">
-            <IconButton
-              size="small"
-              onClick={() => setShowEsql(!showEsql)}
-              color={showEsql ? "primary" : "default"}
-            >
-              <CodeIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+        {/* Action buttons — detail mode only */}
+        {selectedMetric && (
+          <Box sx={{ display: "flex", gap: 1, mt: 1, alignItems: "center" }}>
+            <Tooltip title="View generated ES|QL query">
+              <IconButton
+                size="small"
+                onClick={() => setShowEsql(!showEsql)}
+                color={showEsql ? "primary" : "default"}
+              >
+                <CodeIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
 
-          {queryResult.esql && (
-            <>
-              <Tooltip title="Edit this query in Query Lab">
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<SearchIcon />}
-                  onClick={handleEditInDiscover}
-                >
-                  Edit in Query Lab
-                </Button>
-              </Tooltip>
-              <Tooltip title="Save as dashboard panel">
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<SaveIcon />}
-                  onClick={handleSaveToDashboard}
-                >
-                  Save to Dashboard
-                </Button>
-              </Tooltip>
-            </>
-          )}
+            {queryResult.esql && (
+              <>
+                <Tooltip title="Edit this query in Query Lab">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<SearchIcon />}
+                    onClick={handleEditInDiscover}
+                  >
+                    Edit in Query Lab
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Save as dashboard panel">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSaveToDashboard}
+                  >
+                    Save to Dashboard
+                  </Button>
+                </Tooltip>
+              </>
+            )}
 
-          <Box sx={{ flex: 1 }} />
+            <Box sx={{ flex: 1 }} />
 
-          {queryResult.status === "success" && queryResult.executionTimeMs !== undefined && (
-            <Typography variant="caption" color="text.secondary">
-              Query took {queryResult.executionTimeMs}ms
-            </Typography>
-          )}
-        </Box>
+            {queryResult.status === "success" && queryResult.executionTimeMs !== undefined && (
+              <Typography variant="caption" color="text.secondary">
+                Query took {queryResult.executionTimeMs}ms
+              </Typography>
+            )}
+          </Box>
+        )}
 
-        {/* ES|QL display */}
-        <Collapse in={showEsql && !!queryResult.esql}>
+        {/* ES|QL display — detail mode only */}
+        <Collapse in={selectedMetric !== null && showEsql && !!queryResult.esql}>
           <Paper
             variant="outlined"
             sx={{
@@ -491,64 +505,95 @@ export default function ExplorePage() {
         </Alert>
       )}
 
-      {/* Content area: dimension sidebar + chart */}
+      {/* Content area: dimension sidebar + chart / overview grid */}
       <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>
-        {/* Dimension sidebar */}
-        <DimensionSidebar
-          fields={fields}
-          client={client}
-          indexPattern={indexPattern}
-          metricNamespace={selectedMetricNamespace}
-          groupBy={groupBy}
-          onAddFilter={handleAddFilter}
-          onSetGroupBy={setGroupBy}
-        />
+        {/* Dimension sidebar — only show when a single metric is selected */}
+        {selectedMetric && (
+          <DimensionSidebar
+            fields={fields}
+            client={client}
+            indexPattern={indexPattern}
+            metricNamespace={selectedMetricNamespace}
+            groupBy={groupBy}
+            onAddFilter={handleAddFilter}
+            onSetGroupBy={setGroupBy}
+          />
+        )}
 
-        {/* Chart area */}
-        <Paper
-          variant="outlined"
-          sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
-        >
-          {!selectedMetric && queryResult.status === "idle" && (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                gap: 1,
-              }}
-            >
-              <SearchIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-              <Typography variant="body2" color="text.secondary">
-                Search for a metric to start exploring
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Use the search bar above to find and visualize metrics without writing ES|QL
-              </Typography>
-            </Box>
-          )}
+        {/* Overview grid — shown when a namespace is selected but no metric */}
+        {showOverview && (
+          <Paper
+            variant="outlined"
+            sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
+          >
+            <MetricOverviewGrid
+              fields={fields}
+              namespace={selectedNamespace}
+              indexPattern={indexPattern}
+              timeRange={dashboard.timeRange}
+              client={client}
+              onSelectMetric={handleMetricSelect}
+            />
+          </Paper>
+        )}
 
-          {queryResult.status === "loading" && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <CircularProgress size={32} />
-            </Box>
-          )}
+        {/* Chart area — shown when a single metric is selected */}
+        {!showOverview && (
+          <Paper
+            variant="outlined"
+            sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
+          >
+            {/* Back to overview button */}
+            {selectedMetric && selectedNamespace && (
+              <Box sx={{ px: 1.5, pt: 1 }}>
+                <Button size="small" startIcon={<ArrowBackIcon />} onClick={handleBackToOverview}>
+                  Back to {selectedNamespace} overview
+                </Button>
+              </Box>
+            )}
 
-          {chartData && (
-            <Box sx={{ flex: 1, minHeight: 300 }}>
-              <TimeSeriesChart data={chartData} options={{ smooth: true, showArea: true }} />
-            </Box>
-          )}
-        </Paper>
+            {!selectedMetric && queryResult.status === "idle" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                  gap: 1,
+                }}
+              >
+                <SearchIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Search for a metric to start exploring
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Select a namespace to see an overview of all metrics, or search for a specific
+                  metric
+                </Typography>
+              </Box>
+            )}
+
+            {queryResult.status === "loading" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <CircularProgress size={32} />
+              </Box>
+            )}
+
+            {chartData && (
+              <Box sx={{ flex: 1, minHeight: 300 }}>
+                <TimeSeriesChart data={chartData} options={{ smooth: true, showArea: true }} />
+              </Box>
+            )}
+          </Paper>
+        )}
       </Box>
     </Box>
   );
