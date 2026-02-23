@@ -134,9 +134,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
             {section.items.map((item) => {
               const itemPath = PAGE_MANIFEST[item.page].path;
               const isActive =
-                itemPath === "/"
-                  ? location.pathname === itemPath
-                  : location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+                location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
