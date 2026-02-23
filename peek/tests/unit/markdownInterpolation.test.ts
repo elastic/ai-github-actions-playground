@@ -100,6 +100,28 @@ describe("extractEsqlBlocks", () => {
     const blocks = extractEsqlBlocks("${  FROM x | LIMIT 1  }");
     expect(blocks[0]?.query).toBe("FROM x | LIMIT 1");
   });
+
+  it("keeps full block when ES|QL query contains } inside double-quoted string", () => {
+    const content = 'Pattern: ${FROM logs-* | EVAL ok = GROK(message, "%{WORD:word}") | LIMIT 1}';
+    const blocks = extractEsqlBlocks(content);
+    expect(blocks).toEqual([
+      {
+        raw: '${FROM logs-* | EVAL ok = GROK(message, "%{WORD:word}") | LIMIT 1}',
+        query: 'FROM logs-* | EVAL ok = GROK(message, "%{WORD:word}") | LIMIT 1',
+      },
+    ]);
+  });
+
+  it("keeps full block when ES|QL query contains } inside single-quoted string", () => {
+    const content = "Pattern: ${FROM logs-* | EVAL ok = GROK(message, '%{WORD:word}') | LIMIT 1}";
+    const blocks = extractEsqlBlocks(content);
+    expect(blocks).toEqual([
+      {
+        raw: "${FROM logs-* | EVAL ok = GROK(message, '%{WORD:word}') | LIMIT 1}",
+        query: "FROM logs-* | EVAL ok = GROK(message, '%{WORD:word}') | LIMIT 1",
+      },
+    ]);
+  });
 });
 
 // ---------------------------------------------------------------------------
