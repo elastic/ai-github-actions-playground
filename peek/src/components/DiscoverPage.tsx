@@ -5,10 +5,12 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
+import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Menu from "@mui/material/Menu";
@@ -17,8 +19,12 @@ import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
+import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
+import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
@@ -26,6 +32,7 @@ import { useEsqlQuery } from "../hooks/useEsqlQuery";
 
 import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
+import QueryProfilePanel from "./QueryProfilePanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
@@ -48,14 +55,19 @@ function getTypeColor(type: string): "default" | "primary" | "secondary" | "succ
 }
 
 export default function DiscoverPage() {
-  const connection = useDashboardStore((s) => s.connection);
-  const themeMode = useDashboardStore((s) => s.themeMode);
+  const connection = useConnectionStore((s) => s.connection);
+  const themeMode = useUIStore((s) => s.themeMode);
   const addPanel = useDashboardStore((s) => s.addPanel);
-  const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
-  const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
-  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
-  const queryHistory = useDashboardStore((s) => s.queryHistory);
-  const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
+  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
+  const { discoverQueryDraft, setDiscoverQueryDraft, queryHistory, appendQueryToHistory } =
+    useQueryStore(
+      useShallow((s) => ({
+        discoverQueryDraft: s.discoverQueryDraft,
+        setDiscoverQueryDraft: s.setDiscoverQueryDraft,
+        queryHistory: s.queryHistory,
+        appendQueryToHistory: s.appendQueryToHistory,
+      })),
+    );
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
@@ -69,11 +81,23 @@ export default function DiscoverPage() {
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
+  const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
 
-  const { runQuery, loading, error, activeStep, stepDurationsMs, clearTimings } = useEsqlQuery({
+  const {
+    runQuery,
+    loading,
+    error,
+    activeStep,
+    stepDurationsMs,
+    clearTimings,
+    lastRunDurationMs,
+    lastRunProfile,
+    lastRunIsPartial,
+  } = useEsqlQuery({
     connection,
     queryContextView,
+    profileMode,
     onSuccess: (data, executedQuery) => {
       setResult(data);
       // By default select all fields
@@ -281,6 +305,19 @@ export default function DiscoverPage() {
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
+          <Tooltip title="Send profile: true with the query to see operator-level execution timings">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={profileMode}
+                  onChange={(e) => setProfileMode(e.target.checked)}
+                />
+              }
+              label={<Typography variant="caption">Profile query</Typography>}
+              sx={{ ml: 0.5 }}
+            />
+          </Tooltip>
           <Box sx={{ flex: 1 }} />
           <Tooltip title="Create a dashboard panel from this query">
             <span>
@@ -299,6 +336,19 @@ export default function DiscoverPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
+
+      {/* Summary strip: timing and partial-result indicator */}
+      {result && (lastRunDurationMs !== null || lastRunIsPartial) && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          {lastRunDurationMs !== null && (
+            <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
+          )}
+          {lastRunIsPartial && <Chip size="small" color="warning" label="partial results" />}
+        </Box>
+      )}
+
+      {/* Profile panel */}
+      {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
 
       {/* Content area: field picker + table */}
       <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>

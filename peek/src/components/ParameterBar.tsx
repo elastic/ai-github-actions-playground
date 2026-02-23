@@ -24,6 +24,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
 import { ElasticsearchClient } from "../services/es";
 import type { DashboardParameter, ParameterSource } from "../types";
 
@@ -75,23 +76,17 @@ function formatValueForInput(
 }
 
 export default function ParameterBar() {
-  const {
-    parameters,
-    connection,
-    setParameterValue,
-    addParameter,
-    updateParameter,
-    removeParameter,
-  } = useDashboardStore(
-    useShallow((s) => ({
-      parameters: s.dashboard.parameters ?? EMPTY_PARAMETERS,
-      connection: s.connection,
-      setParameterValue: s.setParameterValue,
-      addParameter: s.addParameter,
-      updateParameter: s.updateParameter,
-      removeParameter: s.removeParameter,
-    })),
-  );
+  const { parameters, setParameterValue, addParameter, updateParameter, removeParameter } =
+    useDashboardStore(
+      useShallow((s) => ({
+        parameters: s.dashboard.parameters ?? EMPTY_PARAMETERS,
+        setParameterValue: s.setParameterValue,
+        addParameter: s.addParameter,
+        updateParameter: s.updateParameter,
+        removeParameter: s.removeParameter,
+      })),
+    );
+  const connection = useConnectionStore((s) => s.connection);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<DashboardParameter | null>(null);
@@ -451,7 +446,7 @@ export default function ParameterBar() {
 
 interface ParameterControlProps {
   param: DashboardParameter;
-  connection: ReturnType<typeof useDashboardStore.getState>["connection"];
+  connection: ReturnType<typeof useConnectionStore.getState>["connection"];
   onChange: (value: DashboardParameter["value"]) => void;
   onEdit: () => void;
   onDelete: () => void;

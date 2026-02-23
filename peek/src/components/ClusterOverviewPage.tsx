@@ -25,7 +25,7 @@ import {
   type NodesInfoResponse,
   type NodesStatsResponse,
 } from "../services/es";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
@@ -124,7 +124,7 @@ function toNodeRows(
 }
 
 export default function ClusterOverviewPage() {
-  const connection = useDashboardStore((s) => s.connection);
+  const connection = useConnectionStore((s) => s.connection);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
