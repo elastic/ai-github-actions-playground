@@ -207,6 +207,7 @@ export default function DataTable({
                             minWidth: PINNED_COLUMN_MIN_WIDTH,
                             width: PINNED_COLUMN_MIN_WIDTH,
                             maxWidth: PINNED_COLUMN_MIN_WIDTH,
+                            overflow: "hidden",
                             backgroundColor: "background.paper",
                             borderRight: "1px solid",
                             borderRightColor: "divider",
@@ -215,16 +216,43 @@ export default function DataTable({
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-                      <TableSortLabel
-                        active={isSorted}
-                        direction={isSorted ? currentSort!.direction : "asc"}
-                        onClick={() => handleSortToggle(col.name)}
+                      <Box
+                        sx={
+                          isPinned
+                            ? {
+                                flex: 1,
+                                minWidth: 0,
+                                overflow: "hidden",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.25,
+                              }
+                            : { display: "contents" }
+                        }
                       >
-                        {col.name}
-                      </TableSortLabel>
-                      <Typography component="span" variant="caption" sx={{ opacity: 0.5 }}>
-                        {col.type}
-                      </Typography>
+                        <TableSortLabel
+                          active={isSorted}
+                          direction={isSorted ? currentSort!.direction : "asc"}
+                          onClick={() => handleSortToggle(col.name)}
+                          sx={
+                            isPinned
+                              ? {
+                                  overflow: "hidden",
+                                  "& .MuiTableSortLabel-root": { overflow: "hidden" },
+                                }
+                              : {}
+                          }
+                        >
+                          {col.name}
+                        </TableSortLabel>
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          sx={{ opacity: 0.5, flexShrink: 0 }}
+                        >
+                          {col.type}
+                        </Typography>
+                      </Box>
                       <IconButton
                         size="small"
                         aria-label={`column actions for ${col.name}`}
@@ -301,6 +329,8 @@ export default function DataTable({
                                 minWidth: PINNED_COLUMN_MIN_WIDTH,
                                 width: PINNED_COLUMN_MIN_WIDTH,
                                 maxWidth: PINNED_COLUMN_MIN_WIDTH,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                                 backgroundColor: bgColor ?? "background.paper",
                                 borderRight: "1px solid",
                                 borderRightColor: "divider",
