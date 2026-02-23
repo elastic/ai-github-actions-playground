@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,19 +14,26 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, isElasticsearchError, type SecurityRole } from "../services/es";
+import {
+  ElasticsearchClient,
+  isElasticsearchError,
+  type SecurityRole,
+  type SecurityUser,
+} from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 
 type RoleEntry = { name: string; role: SecurityRole };
 
 export default function RolesPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roles, setRoles] = useState<RoleEntry[]>([]);
-  const [selectedRoleName, setSelectedRoleName] = useState<string | null>(null);
+  const [users, setUsers] = useState<SecurityUser[]>([]);
+  const [selectedRoleName, setSelectedRoleName] = useState<string | null>(searchParams.get("role"));
   const [copied, setCopied] = useState(false);
 
   const selectedRole = useMemo(
@@ -40,9 +48,10 @@ export default function RolesPage() {
     setAccessNotice(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const [capsResult, rolesResult] = await Promise.allSettled([
+      const [capsResult, rolesResult, usersResult] = await Promise.allSettled([
         client.getCapabilities(),
         client.getSecurityRoles(),
+        client.getSecurityUsers(),
       ]);
       if (capsResult.status === "fulfilled" && !capsResult.value.canReadSecurityRoles) {
         setAccessNotice("Your credentials may have partial access to security APIs.");
@@ -67,6 +76,17 @@ export default function RolesPage() {
           setError(isElasticsearchError(reason) ? reason.message : String(reason));
         }
       }
+      if (usersResult.status === "fulfilled") {
+        setUsers(
+          Object.entries(usersResult.value).map(([username, user]) => ({
+            username: user.username ?? username,
+            enabled: user.enabled,
+            roles: user.roles ?? [],
+          })),
+        );
+      } else {
+        setUsers([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +101,12 @@ export default function RolesPage() {
     if (!term) return roles;
     return roles.filter((entry) => entry.name.toLowerCase().includes(term));
   }, [roles, search]);
+
+  const assignedUsers = useMemo(
+    () =>
+      selectedRoleName ? users.filter((user) => (user.roles ?? []).includes(selectedRoleName)) : [],
+    [users, selectedRoleName],
+  );
 
   const copyQuery = useCallback(async () => {
     await navigator.clipboard.writeText("GET /_security/role");
@@ -174,6 +200,20 @@ export default function RolesPage() {
               >
                 {JSON.stringify(selectedRole.role.indices ?? [], null, 2)}
               </Typography>
+
+              <Typography variant="caption" color="text.secondary">
+                Assigned users
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {assignedUsers.map((user) => (
+                  <Chip key={user.username} size="small" label={user.username} />
+                ))}
+                {assignedUsers.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    No users assigned.
+                  </Typography>
+                )}
+              </Stack>
             </>
           ) : (
             <Typography variant="body2" color="text.secondary">

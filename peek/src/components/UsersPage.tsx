@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -11,6 +12,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { ElasticsearchClient, isElasticsearchError, type SecurityUser } from "../services/es";
@@ -18,6 +20,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
@@ -167,7 +170,15 @@ export default function UsersPage() {
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 {(selectedUser.roles ?? []).map((role) => (
-                  <Chip key={role} size="small" label={role} />
+                  <Tooltip key={role} title={`View role: ${role}`}>
+                    <Chip
+                      size="small"
+                      label={role}
+                      clickable
+                      aria-label={`View role: ${role}`}
+                      onClick={() => navigate(`/roles?role=${encodeURIComponent(role)}`)}
+                    />
+                  </Tooltip>
                 ))}
                 {(selectedUser.roles ?? []).length === 0 && (
                   <Typography variant="body2" color="text.secondary">
