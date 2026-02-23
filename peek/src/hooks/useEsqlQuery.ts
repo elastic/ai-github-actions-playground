@@ -12,6 +12,8 @@ interface UseEsqlQueryOptions {
   onFailure?: () => void;
   buildRequest?: (queryText: string) => EsqlQueryParams;
   queryContextView?: EditorView | null;
+  /** When true, sends `profile: true` in the request and exposes the profile payload. */
+  profileMode?: boolean;
 }
 
 function getServerDurationMs(data: EsqlResponse): number | null {
@@ -25,18 +27,23 @@ export function useEsqlQuery({
   onFailure,
   buildRequest,
   queryContextView,
+  profileMode,
 }: UseEsqlQueryOptions) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [stepDurationsMs, setStepDurationsMs] = useState<Record<number, number>>({});
   const [lastRunDurationMs, setLastRunDurationMs] = useState<number | null>(null);
+  const [lastRunProfile, setLastRunProfile] = useState<unknown>(null);
+  const [lastRunIsPartial, setLastRunIsPartial] = useState<boolean | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const clearError = useCallback(() => setError(null), []);
   const clearTimings = useCallback(() => {
     setStepDurationsMs({});
     setLastRunDurationMs(null);
+    setLastRunProfile(null);
+    setLastRunIsPartial(null);
   }, []);
 
   useEffect(
@@ -60,12 +67,17 @@ export function useEsqlQuery({
         const client = new ElasticsearchClient(connection);
         const trimmedQuery = queryText.trim();
         const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
-        const data = await client.query(request, controller.signal);
+        const finalRequest = profileMode ? { ...request, profile: true } : request;
+        const data = await client.query(finalRequest, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
           const serverDurationMs = getServerDurationMs(data);
           if (stepIndex === null) {
             setStepDurationsMs({});
             setLastRunDurationMs(serverDurationMs);
+            setLastRunProfile(
+              profileMode ? ((data as { profile?: unknown }).profile ?? null) : null,
+            );
+            setLastRunIsPartial((data as { is_partial?: boolean }).is_partial ?? null);
           } else if (serverDurationMs !== null) {
             setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
           } else {
@@ -100,7 +112,7 @@ export function useEsqlQuery({
         setActiveStep(null);
       }
     },
-    [connection, onSuccess, onFailure, buildRequest, queryContextView],
+    [connection, onSuccess, onFailure, buildRequest, queryContextView, profileMode],
   );
 
   return {
@@ -110,6 +122,8 @@ export function useEsqlQuery({
     activeStep,
     stepDurationsMs,
     lastRunDurationMs,
+    lastRunProfile,
+    lastRunIsPartial,
     clearError,
     clearTimings,
   };
