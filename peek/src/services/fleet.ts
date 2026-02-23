@@ -480,7 +480,7 @@ export async function loadElasticAgentInventory(
     query: { range: { "@timestamp": { gte: "now-1h" } } },
     aggs: {
       agent_count: {
-        cardinality: { field: "agent.id" },
+        cardinality: { field: "agent.id", precision_threshold: 40000 },
       },
       agents: {
         terms: { field: "agent.id", size: 500 },
