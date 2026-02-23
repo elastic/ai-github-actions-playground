@@ -41,8 +41,14 @@ export default function App() {
         (e.ctrlKey || e.metaKey) &&
         ((e.shiftKey && e.key.toLowerCase() === "z") || (!e.shiftKey && e.key === "y"));
       if (!isUndo && !isRedo) return;
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const inEditableRegion =
+        target?.isContentEditable ||
+        Boolean(
+          target?.closest('[contenteditable="true"],[contenteditable=""],.cm-editor,.cm-content'),
+        );
+      if (tag === "INPUT" || tag === "TEXTAREA" || inEditableRegion) return;
       e.preventDefault();
       if (isUndo) undoDashboardChange();
       else redoDashboardChange();

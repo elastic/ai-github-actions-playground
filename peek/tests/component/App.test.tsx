@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -93,5 +94,66 @@ describe("App shell visibility", () => {
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /reset state/i })).toBeInTheDocument();
+  });
+
+  it("does not intercept undo shortcut inside contenteditable editors", () => {
+    const undoSpy = vi.fn();
+    const redoSpy = vi.fn();
+    useDashboardStore.setState({ undoDashboardChange: undoSpy, redoDashboardChange: redoSpy });
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const editorRoot = document.createElement("div");
+    editorRoot.setAttribute("contenteditable", "true");
+    document.body.appendChild(editorRoot);
+    const event = new KeyboardEvent("keydown", {
+      key: "z",
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    editorRoot.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(undoSpy).not.toHaveBeenCalled();
+    expect(redoSpy).not.toHaveBeenCalled();
+    editorRoot.remove();
+  });
+
+  it("does not intercept shortcuts from CodeMirror editor roots", () => {
+    const undoSpy = vi.fn();
+    const redoSpy = vi.fn();
+    useDashboardStore.setState({ undoDashboardChange: undoSpy, redoDashboardChange: redoSpy });
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const cmEditor = document.createElement("div");
+    cmEditor.className = "cm-editor";
+    const cmContent = document.createElement("div");
+    cmContent.className = "cm-content";
+    cmEditor.appendChild(cmContent);
+    document.body.appendChild(cmEditor);
+    const event = new KeyboardEvent("keydown", {
+      key: "z",
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    cmContent.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(undoSpy).not.toHaveBeenCalled();
+    expect(redoSpy).not.toHaveBeenCalled();
+    cmEditor.remove();
   });
 });
