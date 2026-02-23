@@ -6,6 +6,10 @@ import { ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 import { useLLMStore } from "../store/useLLMStore";
 
+import { ESQL_SYNTAX_GUIDE } from "./esqlSyntaxGuide";
+
+export { ESQL_SYNTAX_GUIDE };
+
 // ---------------------------------------------------------------------------
 // Recent-edits StateField — tracks the last few deletions so the LLM knows
 // what the user just removed.
@@ -59,22 +63,6 @@ export function setLastQueryError(error: string | null) {
 export function getLastQueryError(): string | null {
   return lastQueryError;
 }
-
-// ---------------------------------------------------------------------------
-// ES|QL syntax guide — compact reference included in the system prompt for
-// ES|QL editors so the LLM produces valid completions.
-// ---------------------------------------------------------------------------
-
-export const ESQL_SYNTAX_GUIDE = `
-ES|QL Quick Reference:
-- Source commands: FROM <index-pattern> | ROW <values> | SHOW INFO
-- Processing: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, ENRICH, MV_EXPAND
-- Aggregations: COUNT(), AVG(), SUM(), MIN(), MAX(), MEDIAN(), PERCENTILE(), VALUES(), COUNT_DISTINCT()
-- Functions: ROUND(), ABS(), CEIL(), FLOOR(), LENGTH(), SUBSTRING(), CONCAT(), TRIM(), TO_STRING(), TO_INTEGER(), TO_DOUBLE(), TO_DATETIME(), DATE_TRUNC(), DATE_FORMAT(), DATE_DIFF(), DATE_EXTRACT(), NOW(), CASE(), COALESCE(), GREATEST(), LEAST(), STARTS_WITH(), ENDS_WITH(), LIKE, RLIKE, IN, IS NULL, IS NOT NULL, CIDR_MATCH()
-- Operators: +, -, *, /, %, ==, !=, <, <=, >, >=, AND, OR, NOT
-- Pipe syntax: commands are chained with | (pipe)
-- Example: FROM logs-* | WHERE @timestamp > NOW() - 1 hour | STATS count = COUNT() BY host.name | SORT count DESC | LIMIT 10
-`.trim();
 
 // ---------------------------------------------------------------------------
 // Extension factory

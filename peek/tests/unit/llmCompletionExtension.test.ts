@@ -174,15 +174,38 @@ describe("ESQL_SYNTAX_GUIDE", () => {
     expect(ESQL_SYNTAX_GUIDE).toContain("EVAL");
     expect(ESQL_SYNTAX_GUIDE).toContain("SORT");
     expect(ESQL_SYNTAX_GUIDE).toContain("LIMIT");
+    expect(ESQL_SYNTAX_GUIDE).toContain("KEEP");
+    expect(ESQL_SYNTAX_GUIDE).toContain("DROP");
+    expect(ESQL_SYNTAX_GUIDE).toContain("RENAME");
+    expect(ESQL_SYNTAX_GUIDE).toContain("DISSECT");
+    expect(ESQL_SYNTAX_GUIDE).toContain("GROK");
+    expect(ESQL_SYNTAX_GUIDE).toContain("LOOKUP JOIN");
   });
 
   it("contains aggregation functions", () => {
-    expect(ESQL_SYNTAX_GUIDE).toContain("COUNT()");
-    expect(ESQL_SYNTAX_GUIDE).toContain("AVG()");
-    expect(ESQL_SYNTAX_GUIDE).toContain("SUM()");
+    expect(ESQL_SYNTAX_GUIDE).toContain("COUNT(*)");
+    expect(ESQL_SYNTAX_GUIDE).toContain("AVG(field)");
+    expect(ESQL_SYNTAX_GUIDE).toContain("SUM(field)");
+    expect(ESQL_SYNTAX_GUIDE).toContain("PERCENTILE(field, pct)");
+    expect(ESQL_SYNTAX_GUIDE).toContain("COUNT_DISTINCT(field)");
   });
 
-  it("contains an example query", () => {
+  it("contains example queries", () => {
     expect(ESQL_SYNTAX_GUIDE).toContain("FROM logs-*");
+    expect(ESQL_SYNTAX_GUIDE).toContain("FROM traces-apm*");
+    expect(ESQL_SYNTAX_GUIDE).toContain("FROM metrics-system.cpu-*");
+  });
+
+  it("contains Elastic field references", () => {
+    expect(ESQL_SYNTAX_GUIDE).toContain("@timestamp");
+    expect(ESQL_SYNTAX_GUIDE).toContain("service.name");
+    expect(ESQL_SYNTAX_GUIDE).toContain("log.level");
+    expect(ESQL_SYNTAX_GUIDE).toContain("transaction.duration.us");
+    expect(ESQL_SYNTAX_GUIDE).toContain("system.cpu.total.norm.pct");
+  });
+
+  it("contains gotchas and best practices", () => {
+    expect(ESQL_SYNTAX_GUIDE).toContain("ES|QL is NOT SQL");
+    expect(ESQL_SYNTAX_GUIDE).toContain("Filter early");
   });
 });
