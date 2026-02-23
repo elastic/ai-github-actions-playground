@@ -134,11 +134,11 @@ export default function TracesPage() {
   }, [setSelectedTraceId]);
 
   const handleApplyDuration = useCallback(() => {
-    const minMs = minDurationInput ? Number(minDurationInput) : null;
-    const maxMs = maxDurationInput ? Number(maxDurationInput) : null;
+    const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
+    const maxMs = maxDurationInput !== "" ? Number(maxDurationInput) : null;
     updateFilters({
-      minDurationMs: minMs && !isNaN(minMs) ? minMs : null,
-      maxDurationMs: maxMs && !isNaN(maxMs) ? maxMs : null,
+      minDurationMs: minMs !== null && !isNaN(minMs) ? minMs : null,
+      maxDurationMs: maxMs !== null && !isNaN(maxMs) ? maxMs : null,
     });
   }, [minDurationInput, maxDurationInput, updateFilters]);
 
