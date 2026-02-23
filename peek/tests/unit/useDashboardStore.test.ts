@@ -592,6 +592,40 @@ describe("useDashboardStore importDashboard", () => {
   );
 });
 
+describe("useDashboardStore importWorkspace", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetDashboardState();
+  });
+
+  it("rejects workspace imports with duplicate dashboard ids", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const initial = useDashboardStore.getState();
+    const workspace = {
+      dashboards: [
+        makeValidDashboard({ id: "duplicate-id", title: "Dashboard A" }),
+        makeValidDashboard({ id: "duplicate-id", title: "Dashboard B" }),
+      ],
+      activeDashboardId: "duplicate-id",
+    };
+
+    const result = useDashboardStore.getState().importWorkspace(JSON.stringify(workspace));
+
+    expect(result).toEqual({
+      success: false,
+      error: "dashboard ids must be unique within a workspace import",
+    });
+    expect(useDashboardStore.getState().dashboard.id).toBe(initial.dashboard.id);
+    expect(useDashboardStore.getState().dashboards).toEqual(initial.dashboards);
+    expect(spy).toHaveBeenCalledWith(
+      "Workspace import failed:",
+      "dashboard ids must be unique within a workspace import",
+    );
+    spy.mockRestore();
+  });
+});
+
 describe("useDashboardStore undo/redo history", () => {
   beforeEach(() => {
     localStorageMock.clear();
