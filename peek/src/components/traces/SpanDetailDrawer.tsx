@@ -29,6 +29,7 @@ interface SpanDetailDrawerProps {
   onClose: () => void;
   onFilterBy: (key: string, value: string) => void;
   onExclude: (key: string, value: string) => void;
+  onOpenInQueryLab?: (span: Pick<Span, "traceId" | "spanId" | "timestamp">) => void;
 }
 
 function KeyValueRow({
@@ -100,6 +101,7 @@ export default function SpanDetailDrawer({
   onClose,
   onFilterBy,
   onExclude,
+  onOpenInQueryLab,
 }: SpanDetailDrawerProps) {
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -379,6 +381,21 @@ export default function SpanDetailDrawer({
           >
             Filter by service
           </Button>
+          {onOpenInQueryLab && (
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() =>
+                onOpenInQueryLab({
+                  traceId: span.traceId,
+                  spanId: span.spanId,
+                  timestamp: span.timestamp,
+                })
+              }
+            >
+              Open in Query Lab
+            </Button>
+          )}
         </Box>
       </Box>
     </Drawer>

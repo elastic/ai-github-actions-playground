@@ -4,13 +4,25 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 permissions:
-  actions: read
+  actions: write
   contents: write
   issues: write
   pull-requests: write
 
 jobs:
+  capture-start-time:
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
+    runs-on: ubuntu-latest
+    outputs:
+      started_at: ${{ steps.start.outputs.started_at }}
+    steps:
+      - id: start
+        run: echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
   run:
+    needs: capture-start-time
     if: >-
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
@@ -21,26 +33,65 @@ jobs:
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
-  find-review:
-    needs: run
+  trigger-mention-for-feedback:
+    needs:
+      - capture-start-time
+      - run
+    if: >-
+      needs.run.result == 'success' &&
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
     runs-on: ubuntu-latest
-    outputs:
-      review_id: ${{ steps.check.outputs.review_id }}
     steps:
-      - name: Check for changes_requested review since run started
-        id: check
-        env:
-          GH_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-        run: |
-          START_TIME=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.created_at')
-          REVIEW_ID=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
-            | jq -r --arg start "$START_TIME" \
-            '[.[] | select(.submitted_at > $start and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | last | .id // empty')
-          echo "review_id=${REVIEW_ID}" >> "$GITHUB_OUTPUT"
+      - name: Find new CHANGES_REQUESTED review and dispatch follow-up
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const workflowStart = new Date("${{ needs.capture-start-time.outputs.started_at }}");
 
-  address-feedback:
-    needs: find-review
-    if: needs.find-review.outputs.review_id != ''
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review-addresser.lock.yml@main
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+            const reviews = await github.paginate(
+              github.rest.pulls.listReviews,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+
+            const matches = reviews.filter((review) => {
+              if (review.state !== "CHANGES_REQUESTED") return false;
+              if (!review.submitted_at) return false;
+              return new Date(review.submitted_at) >= workflowStart;
+            });
+
+            if (matches.length === 0) {
+              core.info("No CHANGES_REQUESTED review submitted since workflow start; skipping dispatch.");
+              return;
+            }
+
+            matches.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+            const latest = matches[0];
+            const reviewer = latest.user?.login || "unknown";
+            const feedback = (latest.body || "No review body provided.").trim();
+            const prompt = [
+              "A PR review requested changes. Please address the feedback with code changes and push fixes.",
+              "",
+              `Reviewer: @${reviewer}`,
+              `Review: ${latest.html_url}`,
+              "Feedback:",
+              feedback,
+              "",
+              "You must query for specific PR review comments for this review."
+            ].join("\n");
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: "trigger-mention-in-pr-by-id.yml",
+              ref: context.payload.pull_request.base.ref,
+              inputs: {
+                "pull-request-number": String(pull_number),
+                prompt
+              }
+            });
+            core.info(`Dispatched trigger workflow for PR #${pull_number}.`);
+

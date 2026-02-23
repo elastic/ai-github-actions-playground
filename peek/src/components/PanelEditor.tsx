@@ -17,6 +17,7 @@ import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import CodeMirror from "@uiw/react-codemirror";
+import type { EditorView } from "@codemirror/view";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { EsqlQueryParams } from "../services/es";
@@ -68,6 +69,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     panel.options ?? defaultOptions(panel.visualization),
   );
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
+  const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
@@ -91,6 +93,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   );
   const { runQuery, loading, error, activeStep } = useEsqlQuery({
     connection,
+    queryContextView,
     onSuccess: (data, executedQuery) => {
       setPreview(data);
       appendQueryToHistory(executedQuery);
@@ -231,6 +234,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
                 <CodeMirror
                   value={query}
                   onChange={setQuery}
+                  onCreateEditor={(view) => setQueryContextView(view)}
                   extensions={queryEditorExtensions}
                   theme={themeMode}
                   height="120px"

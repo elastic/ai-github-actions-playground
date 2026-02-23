@@ -1,20 +1,10 @@
 import { describe, it, expect } from "vitest";
 
 import { getAllVizEntries, getVizEntry } from "../../src/components/visualizations/vizRegistry";
+import { VISUALIZATION_TYPES } from "../../src/schemas";
 import type { VisualizationType } from "../../src/types";
 
-const ALL_VIZ_TYPES: VisualizationType[] = [
-  "timeseries",
-  "bar",
-  "table",
-  "stat",
-  "gauge",
-  "pie",
-  "heatmap",
-  "scatter",
-  "histogram",
-  "markdown",
-];
+const ALL_VIZ_TYPES: VisualizationType[] = [...VISUALIZATION_TYPES];
 
 describe("vizRegistry", () => {
   describe("getAllVizEntries", () => {
@@ -129,17 +119,7 @@ describe("vizRegistry", () => {
     });
 
     it("all other types support query", () => {
-      const queryTypes: VisualizationType[] = [
-        "timeseries",
-        "bar",
-        "table",
-        "stat",
-        "gauge",
-        "pie",
-        "heatmap",
-        "scatter",
-        "histogram",
-      ];
+      const queryTypes = ALL_VIZ_TYPES.filter((type) => type !== "markdown");
       for (const type of queryTypes) {
         expect(getVizEntry(type)?.supportsQuery).toBe(true);
       }

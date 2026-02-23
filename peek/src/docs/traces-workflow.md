@@ -14,7 +14,7 @@ The ES|QL query editor shows the generated query and can be edited directly. Man
 
 Click Search Traces to run the current query against your Elasticsearch cluster.
 
-Switch between List, Scatter, Timeseries, and Service Map view modes using the chips above the results panel. List shows a table of matching traces. Scatter plots trace duration over time, colored by service, and supports clicking a point to open the trace detail. Timeseries view requires an aggregation query. Service Map renders service-to-service relationships for the selected trace.
+Switch between List, Scatter, Time Series, and Service Map view modes using the chips above the results panel. List shows a table of matching traces. Scatter plots trace duration over time, colored by service, and supports clicking a point to open the trace detail. Time Series view requires an aggregation query. Service Map renders service-to-service relationships for the selected trace.
 
 Click any row in the List view or any point in the Scatter view to load the trace detail panel below. The detail panel shows a waterfall chart of spans for the selected trace. Service Map is populated from this selected trace; if no trace is selected, it prompts you to select one from List or Scatter first.
 

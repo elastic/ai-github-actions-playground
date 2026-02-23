@@ -29,7 +29,7 @@ export interface EsqlBlock {
   query: string;
 }
 
-const ESQL_BLOCK_RE = /\$\{([^}]+)\}/g;
+const ESQL_BLOCK_RE = /\$\{((?:[^}"']|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')+)\}/g;
 
 /** Extract all `${...}` ES|QL blocks from markdown content. */
 export function extractEsqlBlocks(content: string): EsqlBlock[] {
