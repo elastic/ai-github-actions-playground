@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
+
 import ChatPage from "../../src/components/ChatPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
-import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -28,12 +29,9 @@ describe("ChatPage", () => {
     useLLMStore.getState().resetLLMState();
     useDashboardStore.getState().resetState();
 
-    const modelFactory = Object.assign(
-      (model: string) => ({ model, adapter: "responses" }),
-      {
-        chat: (model: string) => ({ model, adapter: "chat" }),
-      },
-    );
+    const modelFactory = Object.assign((model: string) => ({ model, adapter: "responses" }), {
+      chat: (model: string) => ({ model, adapter: "chat" }),
+    });
     vi.mocked(createOpenAI).mockReturnValue(modelFactory as never);
   });
 
@@ -59,23 +57,21 @@ describe("ChatPage", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     renderChat();
     expect(screen.getByText("Chat")).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Type a message…"),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Type a message…")).toBeInTheDocument();
   });
 
   it("shows empty state message when no messages", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     renderChat();
-    expect(
-      screen.getByText("Start a conversation by typing a message below."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Start a conversation by typing a message below.")).toBeInTheDocument();
   });
 
   it("renders existing messages", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     useLLMStore.getState().addMessage({ id: "1", role: "user", content: "Hello there" });
-    useLLMStore.getState().addMessage({ id: "2", role: "assistant", content: "Hi! How can I help?" });
+    useLLMStore
+      .getState()
+      .addMessage({ id: "2", role: "assistant", content: "Hi! How can I help?" });
     renderChat();
     expect(screen.getByText("Hello there")).toBeInTheDocument();
     expect(screen.getByText("Hi! How can I help?")).toBeInTheDocument();

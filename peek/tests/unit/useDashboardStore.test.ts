@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardDefinition } from "../../src/types";
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import SettingsPage from "../../src/components/SettingsPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -67,5 +68,16 @@ describe("SettingsPage", () => {
     render(<SettingsPage />);
     await user.click(screen.getByLabelText("Provider"));
     expect(screen.getByRole("option", { name: "OpenRouter" })).toBeInTheDocument();
+  });
+
+  it("toggles AI inline completions setting", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    const toggle = screen.getByRole("checkbox", {
+      name: /enable ai inline completions for code editors/i,
+    });
+    expect(toggle).not.toBeChecked();
+    await user.click(toggle);
+    expect(useLLMStore.getState().config.tabAutocompleteEnabled).toBe(true);
   });
 });

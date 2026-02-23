@@ -8,6 +8,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Alert from "@mui/material/Alert";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -39,12 +41,21 @@ const MODELS: Record<LLMProvider, Array<{ value: string; label: string }>> = {
 };
 
 export default function SettingsPage() {
-  const { config, setProvider, setApiKey, setModel, isConfigured, resetLLMState } = useLLMStore(
+  const {
+    config,
+    setProvider,
+    setApiKey,
+    setModel,
+    setTabAutocompleteEnabled,
+    isConfigured,
+    resetLLMState,
+  } = useLLMStore(
     useShallow((s) => ({
       config: s.config,
       setProvider: s.setProvider,
       setApiKey: s.setApiKey,
       setModel: s.setModel,
+      setTabAutocompleteEnabled: s.setTabAutocompleteEnabled,
       isConfigured: s.isConfigured,
       resetLLMState: s.resetLLMState,
     })),
@@ -135,6 +146,16 @@ export default function SettingsPage() {
               </MenuItem>
             ))}
           </TextField>
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={config.tabAutocompleteEnabled}
+                onChange={(_, checked) => setTabAutocompleteEnabled(checked)}
+              />
+            }
+            label="Enable AI inline completions for code editors"
+          />
         </Box>
       </Paper>
 
