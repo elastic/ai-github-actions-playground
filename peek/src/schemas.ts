@@ -108,10 +108,18 @@ export const dashboardDefinitionSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  archived: z.boolean().optional(),
+  preferredProfileId: z.string().min(1).optional(),
   panels: z.array(panelDefinitionSchema),
   parameters: z.array(dashboardParameterSchema).optional(),
   timeRange: timeRangeSchema,
   refreshInterval: z.number().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+});
+
+export const workspaceSnapshotSchema = z.object({
+  dashboards: z.array(dashboardDefinitionSchema).min(1),
+  activeDashboardId: z.string().min(1),
 });

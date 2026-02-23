@@ -40,15 +40,15 @@ describe("App shell visibility", () => {
     expect(screen.queryByText(/llm settings/i)).not.toBeInTheDocument();
   });
 
-  it("shows welcome screen when disconnected and current page is dashboard management", () => {
+  it("shows welcome screen when disconnected and current page is dashboards", () => {
     render(
-      <MemoryRouter initialEntries={["/dashboard-management"]}>
+      <MemoryRouter initialEntries={["/dashboards"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
-    expect(screen.queryByText("Dashboard Management")).not.toBeInTheDocument();
+    expect(screen.queryByText("Dashboards")).not.toBeInTheDocument();
   });
 
   it("shows welcome screen when disconnected and current page is cluster overview", () => {

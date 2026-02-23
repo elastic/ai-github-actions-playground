@@ -42,8 +42,8 @@ describe("PAGE_MANIFEST", () => {
 
     for (const [page] of noConnectionPages) {
       expect(
-        PAGE_MANIFEST[page].nav.showInSidebar || page === "dashboardManagement",
-        `${page} doesn't require connection but is not reachable from sidebar or settings`,
+        PAGE_MANIFEST[page].nav.showInSidebar,
+        `${page} doesn't require connection but is not reachable from sidebar`,
       ).toBe(true);
     }
   });

@@ -140,6 +140,9 @@ export interface DashboardParameter {
 type InferredDashboardDefinition = z.infer<typeof dashboardDefinitionSchema>;
 export type DashboardDefinition = Omit<InferredDashboardDefinition, "panels"> & {
   panels: PanelDefinition[];
+  tags?: string[];
+  archived?: boolean;
+  preferredProfileId?: string;
 };
 
 export interface TimeRange {

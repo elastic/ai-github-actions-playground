@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -116,6 +116,7 @@ export default function AppHeader() {
   );
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
@@ -126,7 +127,9 @@ export default function AppHeader() {
     severity: "success" | "error";
   } | null>(null);
   const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
-  const showTimeControls = connected && Boolean(activePage?.showTimeControls);
+  const isDashboardView =
+    location.pathname.startsWith("/dashboards/") && location.pathname !== "/dashboards";
+  const showTimeControls = connected && (Boolean(activePage?.showTimeControls) || isDashboardView);
 
   const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
 
@@ -264,11 +267,45 @@ export default function AppHeader() {
             color: "transparent",
             WebkitTextFillColor: "transparent",
             lineHeight: 1,
-            mr: 2,
+            mr: 1,
           }}
         >
           Peek
         </Typography>
+        {isDashboardView ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+            <Chip
+              label="Dashboards"
+              size="small"
+              variant="outlined"
+              clickable
+              onClick={() => navigate("/dashboards")}
+            />
+            <Typography variant="body2" color="text.secondary">
+              /
+            </Typography>
+            <Chip
+              label={dashboard.title}
+              size="small"
+              variant="outlined"
+              sx={{
+                maxWidth: 220,
+                "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+              }}
+            />
+          </Box>
+        ) : (
+          <Chip
+            label={dashboard.title}
+            size="small"
+            variant="outlined"
+            sx={{
+              maxWidth: 220,
+              mr: 1,
+              "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+            }}
+          />
+        )}
 
         {connected && connectionProfiles.length > 0 && (
           <>
@@ -453,7 +490,7 @@ export default function AppHeader() {
               ))}
             </Menu>
 
-            {location.pathname === PAGE_MANIFEST.dashboard.path && (
+            {isDashboardView && (
               <>
                 <Tooltip
                   title={
