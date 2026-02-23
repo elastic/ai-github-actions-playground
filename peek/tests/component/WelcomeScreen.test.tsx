@@ -3,8 +3,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import WelcomeScreen from "../../src/components/WelcomeScreen";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -31,7 +32,7 @@ describe("WelcomeScreen", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     fetchMock.mockReset();
   });
 
@@ -48,7 +49,7 @@ describe("WelcomeScreen", () => {
 
     await user.click(screen.getByRole("button", { name: /connect to elasticsearch/i }));
 
-    expect(useDashboardStore.getState().connectionDialogOpen).toBe(true);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(true);
   });
 
   it('does not show "Try the Demo" button when demo.json is absent', async () => {
@@ -82,13 +83,13 @@ describe("WelcomeScreen", () => {
     const demoButton = await screen.findByRole("button", { name: /try the demo/i });
     await user.click(demoButton);
 
-    await waitFor(() => expect(useDashboardStore.getState().connected).toBe(true));
-    expect(useDashboardStore.getState().connection).toMatchObject({
+    await waitFor(() => expect(useConnectionStore.getState().connected).toBe(true));
+    expect(useConnectionStore.getState().connection).toMatchObject({
       url: DEMO_CONFIG.url,
       username: DEMO_CONFIG.username,
       password: DEMO_CONFIG.password,
     });
-    expect(useDashboardStore.getState().capabilities).toEqual({
+    expect(useConnectionStore.getState().capabilities).toEqual({
       canManageDataStreams: true,
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
@@ -96,13 +97,11 @@ describe("WelcomeScreen", () => {
   });
 
   it("shows error message when demo connection fails", async () => {
-    useDashboardStore
-      .getState()
-      .setCapabilities({
-        canManageDataStreams: true,
-        canReadSecurityUsers: false,
-        canReadSecurityRoles: false,
-      });
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+    });
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
       .mockResolvedValueOnce(
@@ -116,7 +115,7 @@ describe("WelcomeScreen", () => {
     await user.click(demoButton);
 
     await screen.findByText(/unauthorized/i);
-    expect(useDashboardStore.getState().connected).toBe(false);
-    expect(useDashboardStore.getState().capabilities).toBeNull();
+    expect(useConnectionStore.getState().connected).toBe(false);
+    expect(useConnectionStore.getState().capabilities).toBeNull();
   });
 });

@@ -23,10 +23,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       open: true,
-      // When ES_URL is set, proxy /_query and /_es requests to Elasticsearch
-      // to avoid CORS.
+      // When ES_URL is set, proxy /_es requests to Elasticsearch to avoid CORS.
       //
-      // /_query  — backwards-compatible proxy for ES|QL queries.
       // /_es     — full proxy for all Elasticsearch APIs (connection validation,
       //            cluster health, data streams, field caps, API console, etc.).
       //            Use http://localhost:3000/_es as the Elasticsearch URL.
@@ -35,10 +33,6 @@ export default defineConfig(({ mode }) => {
       //     or: add ES_URL=http://localhost:9200 to .env at the repo root
       proxy: esUrl
         ? {
-            "/_query": {
-              target: esUrl,
-              changeOrigin: true,
-            },
             "/_es": {
               target: esUrl,
               changeOrigin: true,

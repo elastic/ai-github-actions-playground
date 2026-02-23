@@ -22,26 +22,47 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../types";
 
 type AuthType = "apiKey" | "userpass";
 
 export default function ConnectionDialog() {
-  const open = useDashboardStore((s) => s.connectionDialogOpen);
-  const setOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const savedConn = useDashboardStore((s) => s.connection);
-  const setConnection = useDashboardStore((s) => s.setConnection);
-  const setConnected = useDashboardStore((s) => s.setConnected);
-  const setCapabilities = useDashboardStore((s) => s.setCapabilities);
-  const connectionProfiles = useDashboardStore((s) => s.connectionProfiles);
-  const activeProfileId = useDashboardStore((s) => s.activeProfileId);
-  const saveConnectionProfile = useDashboardStore((s) => s.saveConnectionProfile);
-  const deleteConnectionProfile = useDashboardStore((s) => s.deleteConnectionProfile);
-  const renameConnectionProfile = useDashboardStore((s) => s.renameConnectionProfile);
-  const setActiveProfileId = useDashboardStore((s) => s.setActiveProfileId);
+  const { connectionDialogOpen: open, setConnectionDialogOpen: setOpen } = useUIStore(
+    useShallow((s) => ({
+      connectionDialogOpen: s.connectionDialogOpen,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+    })),
+  );
+  const {
+    connection: savedConn,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    connectionProfiles,
+    activeProfileId,
+    saveConnectionProfile,
+    deleteConnectionProfile,
+    renameConnectionProfile,
+    setActiveProfileId,
+  } = useConnectionStore(
+    useShallow((s) => ({
+      connection: s.connection,
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+      connectionProfiles: s.connectionProfiles,
+      activeProfileId: s.activeProfileId,
+      saveConnectionProfile: s.saveConnectionProfile,
+      deleteConnectionProfile: s.deleteConnectionProfile,
+      renameConnectionProfile: s.renameConnectionProfile,
+      setActiveProfileId: s.setActiveProfileId,
+    })),
+  );
 
   const initialAuthType: AuthType = savedConn?.username ? "userpass" : "apiKey";
 
@@ -78,8 +99,7 @@ export default function ConnectionDialog() {
     setResult(null);
     const conn = buildConnection();
     try {
-      const client = new ElasticsearchClient(conn);
-      await client.getClusterInfo();
+      await fetchCapabilitiesForConnection(conn);
       setResult({ ok: true, message: "Connected successfully." });
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
@@ -94,9 +114,7 @@ export default function ConnectionDialog() {
     setTesting(true);
     setResult(null);
     try {
-      const client = new ElasticsearchClient(conn);
-      await client.getClusterInfo();
-      const caps = await client.getCapabilities();
+      const caps = await fetchCapabilitiesForConnection(conn);
       setConnection(conn);
       setConnected(true);
       setCapabilities(caps);

@@ -1,4 +1,5 @@
 export { ElasticsearchClient, isElasticsearchError } from "./client";
+export { fetchCapabilitiesForConnection } from "./connectionHandshake";
 export type {
   ElasticsearchConnection,
   ElasticsearchError,
@@ -12,6 +13,11 @@ export type {
   EsqlQueryResponse,
   ClusterInfoResponse,
   ClusterHealthResponse,
+  ClusterStatsResponse,
+  NodesInfoNode,
+  NodesInfoResponse,
+  NodeStatsNode,
+  NodesStatsResponse,
   ResolveIndexResponse,
   GetDataStreamsResponse,
   DataStreamInfo,

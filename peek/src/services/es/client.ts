@@ -39,6 +39,38 @@ export interface ClusterHealthResponse {
   active_shards?: number;
   unassigned_shards?: number;
 }
+export interface ClusterStatsResponse {
+  indices?: {
+    count?: number;
+    shards?: { total?: number };
+    docs?: { count?: number };
+    store?: { size_in_bytes?: number };
+  };
+  nodes?: {
+    count?: { total?: number };
+  };
+}
+export interface NodesInfoNode {
+  name?: string;
+  roles?: string[];
+  version?: string;
+}
+export interface NodesInfoResponse {
+  nodes?: Record<string, NodesInfoNode>;
+}
+export interface NodeStatsNode {
+  name?: string;
+  os?: { cpu?: { percent?: number } };
+  jvm?: { mem?: { heap_used_percent?: number } };
+  fs?: { total?: { total_in_bytes?: number; available_in_bytes?: number } };
+  indices?: {
+    docs?: { count?: number };
+    shard_stats?: { total_count?: number };
+  };
+}
+export interface NodesStatsResponse {
+  nodes?: Record<string, NodeStatsNode>;
+}
 export type ResolveIndexResponse =
   operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
 export type GetDataStreamsResponse =
@@ -255,6 +287,18 @@ export class ElasticsearchClient {
 
   async getClusterHealth(signal?: AbortSignal): Promise<ClusterHealthResponse> {
     return this._fetch<ClusterHealthResponse>("/_cluster/health", { signal });
+  }
+
+  async getClusterStats(signal?: AbortSignal): Promise<ClusterStatsResponse> {
+    return this._fetch<ClusterStatsResponse>("/_cluster/stats", { signal });
+  }
+
+  async getNodes(signal?: AbortSignal): Promise<NodesInfoResponse> {
+    return this._fetch<NodesInfoResponse>("/_nodes", { signal });
+  }
+
+  async getNodeStats(signal?: AbortSignal): Promise<NodesStatsResponse> {
+    return this._fetch<NodesStatsResponse>("/_nodes/stats", { signal });
   }
 
   async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {

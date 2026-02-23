@@ -4,8 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useQueryStore } from "../../src/store/useQueryStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
 
@@ -48,11 +49,11 @@ describe("DiscoverPage", () => {
       values: [["2025-06-15T12:00:00.000Z"]],
       executionTimeMs: 1,
     });
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
   });
 
   it("adds successful queries to history", async () => {
@@ -66,14 +67,14 @@ describe("DiscoverPage", () => {
     await user.click(screen.getByRole("button", { name: /run query/i }));
 
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
-    expect(useDashboardStore.getState().queryHistory).toEqual([
+    expect(useQueryStore.getState().queryHistory).toEqual([
       "FROM logs-* | SORT @timestamp | LIMIT 50",
     ]);
   });
 
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
-    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
     render(
       <MemoryRouter>
         <DiscoverPage />
@@ -107,6 +108,6 @@ describe("DiscoverPage", () => {
       expect.objectContaining({ query: "FROM step-* | LIMIT 1" }),
       expect.any(AbortSignal),
     );
-    expect(useDashboardStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
+    expect(useQueryStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
   });
 });

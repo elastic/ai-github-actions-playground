@@ -5,18 +5,24 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { fetchDemoConfig, type DemoConfig } from "../services/demo";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function WelcomeScreen() {
-  const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const setConnection = useDashboardStore((s) => s.setConnection);
-  const setConnected = useDashboardStore((s) => s.setConnected);
-  const setCapabilities = useDashboardStore((s) => s.setCapabilities);
+  const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const { setConnection, setConnected, setCapabilities } = useConnectionStore(
+    useShallow((s) => ({
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+    })),
+  );
 
   const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
   const [connectingDemo, setConnectingDemo] = useState(false);
@@ -38,9 +44,7 @@ export default function WelcomeScreen() {
         username: demoConfig.username,
         password: demoConfig.password,
       };
-      const client = new ElasticsearchClient(conn);
-      await client.getClusterInfo();
-      const caps = await client.getCapabilities();
+      const caps = await fetchCapabilitiesForConnection(conn);
       setConnection(conn);
       setConnected(true);
       setCapabilities(caps);

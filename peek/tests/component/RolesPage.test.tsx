@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import RolesPage from "../../src/components/RolesPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getCapabilitiesMock = vi.fn();
 const getSecurityRolesMock = vi.fn();
@@ -54,8 +54,8 @@ const ROLES_RESPONSE = {
 describe("RolesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });

@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import UsersPage from "../../src/components/UsersPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getCapabilitiesMock = vi.fn();
 const getSecurityUsersMock = vi.fn();
@@ -66,8 +66,8 @@ const USERS_RESPONSE = {
 describe("UsersPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });

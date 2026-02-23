@@ -4,8 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
 import AppSidebar from "../../src/components/AppSidebar";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -29,7 +30,7 @@ describe("AppSidebar", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
   });
 
   it("renders the main navigation landmark", () => {
@@ -66,7 +67,7 @@ describe("AppSidebar", () => {
   });
 
   it("enables all items when connected", () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     renderSidebar();
 
     expect(screen.getByRole("button", { name: /dashboard/i })).not.toHaveAttribute(
@@ -104,7 +105,7 @@ describe("AppSidebar", () => {
   });
 
   it("marks the active page with aria-current", () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     renderSidebar("/");
 
     const dashboardBtn = screen.getByRole("button", { name: /dashboard/i });
@@ -112,7 +113,7 @@ describe("AppSidebar", () => {
   });
 
   it("navigates to a page when a nav item is clicked", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -131,7 +132,7 @@ describe("AppSidebar", () => {
   });
 
   it("navigates to Data Streams when clicked while connected", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -141,7 +142,7 @@ describe("AppSidebar", () => {
   });
 
   it("navigates to Cluster Overview when clicked while connected", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -151,7 +152,7 @@ describe("AppSidebar", () => {
   });
 
   it("navigates to Users when clicked while connected", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -161,7 +162,7 @@ describe("AppSidebar", () => {
   });
 
   it("navigates to Roles when clicked while connected", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -171,7 +172,7 @@ describe("AppSidebar", () => {
   });
 
   it("updates aria-current when active page changes", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar("/console");
 
@@ -208,7 +209,7 @@ describe("AppSidebar", () => {
   });
 
   it("opens settings menu and navigates to LLM settings", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -219,7 +220,7 @@ describe("AppSidebar", () => {
   });
 
   it("opens settings menu and navigates to Dashboard Management", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
@@ -230,13 +231,13 @@ describe("AppSidebar", () => {
   });
 
   it("toggles theme from sidebar settings menu", async () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /settings/i }));
     await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
 
-    expect(useDashboardStore.getState().themeMode).toBe("light");
+    expect(useUIStore.getState().themeMode).toBe("light");
   });
 });
