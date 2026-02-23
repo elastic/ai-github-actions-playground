@@ -1,0 +1,214 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+
+import UsersPage from "../../src/components/UsersPage";
+import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { makeStorageMock } from "../fixtures/test-utils";
+
+const getCapabilitiesMock = vi.fn();
+const getSecurityUsersMock = vi.fn();
+
+vi.mock("../../src/services/es", () => ({
+  ElasticsearchClient: vi.fn().mockImplementation(() => ({
+    getCapabilities: getCapabilitiesMock,
+    getSecurityUsers: getSecurityUsersMock,
+  })),
+  isElasticsearchError: (err: unknown) => {
+    if (typeof err !== "object" || err === null) return false;
+    const obj = err as Record<string, unknown>;
+    return typeof obj.status === "number" && typeof obj.message === "string";
+  },
+}));
+
+vi.stubGlobal("localStorage", makeStorageMock());
+vi.stubGlobal("sessionStorage", makeStorageMock());
+
+const CAPS_OK = {
+  canManageDataStreams: false,
+  canReadSecurityUsers: true,
+  canReadSecurityRoles: true,
+};
+const CAPS_NO_READ = {
+  canManageDataStreams: false,
+  canReadSecurityUsers: false,
+  canReadSecurityRoles: false,
+};
+
+const USERS_RESPONSE = {
+  elastic: {
+    username: "elastic",
+    enabled: true,
+    roles: ["superuser"],
+    full_name: "Built-in superuser",
+    email: null,
+    metadata: { _reserved: true },
+  },
+  kibana_system: {
+    username: "kibana_system",
+    enabled: true,
+    roles: ["kibana_system"],
+    full_name: null,
+    email: null,
+    metadata: {},
+  },
+  alice: {
+    username: "alice",
+    enabled: false,
+    roles: [],
+    full_name: "Alice Smith",
+    email: "alice@example.com",
+    metadata: {},
+  },
+};
+
+describe("UsersPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useDashboardStore.getState().resetState();
+    useDashboardStore
+      .getState()
+      .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
+  });
+
+  it("renders users list sorted alphabetically and selects the first user", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    // First user alphabetically is "alice"
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
+    expect(screen.getByText("No assigned roles.")).toBeInTheDocument();
+  });
+
+  it("shows detail panel for a selected user", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    await user.click(screen.getByRole("button", { name: /elastic/i }));
+
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+    expect(screen.getByText("Enabled")).toBeInTheDocument();
+    expect(screen.getByText("superuser")).toBeInTheDocument();
+  });
+
+  it("filters the list panel by search term", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    // Wait for the list to populate
+    const list = await screen.findByRole("list");
+    await within(list).findByText("elastic");
+
+    await user.type(screen.getByPlaceholderText("Search users"), "elastic");
+
+    await waitFor(() => {
+      const listItems = within(list).getAllByRole("button");
+      expect(listItems).toHaveLength(1);
+      expect(within(list).getByText("elastic")).toBeInTheDocument();
+    });
+  });
+
+  it("shows empty state when no users match search", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("list");
+    await user.type(screen.getByPlaceholderText("Search users"), "nonexistent");
+
+    await screen.findByText("No users found.");
+  });
+
+  it("shows access warning when canReadSecurityUsers is false", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_NO_READ);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Your credentials may have partial access to security APIs.");
+  });
+
+  it("shows access notice on 403 and empties user list", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_NO_READ);
+    getSecurityUsersMock.mockRejectedValue({ status: 403, message: "security_exception" });
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Your credentials cannot read all Users data.");
+    expect(screen.getByText("Select a user.")).toBeInTheDocument();
+  });
+
+  it("shows error alert on non-auth failure", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockRejectedValue({ status: 500, message: "internal_error" });
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("internal_error");
+  });
+
+  it("refreshes data when Refresh button is clicked", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValueOnce(USERS_RESPONSE).mockResolvedValueOnce({
+      elastic: USERS_RESPONSE.elastic,
+    });
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    const list = await screen.findByRole("list");
+    await within(list).findByText("alice");
+    await user.click(screen.getByRole("button", { name: /refresh/i }));
+
+    await waitFor(() => {
+      expect(within(list).queryByText("alice")).not.toBeInTheDocument();
+      expect(within(list).getByText("elastic")).toBeInTheDocument();
+    });
+    expect(getSecurityUsersMock).toHaveBeenCalledTimes(2);
+  });
+});
