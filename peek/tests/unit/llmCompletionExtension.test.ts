@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { EditorState } from "@codemirror/state";
+import type { EditorView } from "@codemirror/view";
 
 import { useLLMStore } from "../../src/store/useLLMStore";
 import {
@@ -25,6 +26,7 @@ vi.mock("@ai-sdk/openai", () => ({
 }));
 
 const generateTextMock = vi.fn();
+const testEditorView = {} as EditorView;
 
 vi.mock("ai", () => ({
   generateText: (...args: unknown[]) => generateTextMock(...args),
@@ -139,22 +141,22 @@ describe("recentEditsField", () => {
 
 describe("query error side channel", () => {
   beforeEach(() => {
-    setLastQueryError(null);
+    setLastQueryError(null, testEditorView);
   });
 
   it("starts as null", () => {
-    expect(getLastQueryError()).toBeNull();
+    expect(getLastQueryError(testEditorView)).toBeNull();
   });
 
   it("stores an error message", () => {
-    setLastQueryError("line 3:40: extraneous input 'by'");
-    expect(getLastQueryError()).toBe("line 3:40: extraneous input 'by'");
+    setLastQueryError("line 3:40: extraneous input 'by'", testEditorView);
+    expect(getLastQueryError(testEditorView)).toBe("line 3:40: extraneous input 'by'");
   });
 
   it("clears error when set to null", () => {
-    setLastQueryError("some error");
-    setLastQueryError(null);
-    expect(getLastQueryError()).toBeNull();
+    setLastQueryError("some error", testEditorView);
+    setLastQueryError(null, testEditorView);
+    expect(getLastQueryError(testEditorView)).toBeNull();
   });
 });
 
@@ -171,7 +173,7 @@ describe("query result side channel", () => {
       ],
     };
     // Should not throw
-    setLastQueryResult("FROM logs-* | STATS count(*) BY host", data);
+    setLastQueryResult("FROM logs-* | STATS count(*) BY host", data, testEditorView);
   });
 
   it("truncates results beyond 5 rows", () => {
@@ -180,7 +182,7 @@ describe("query result side channel", () => {
       values: Array.from({ length: 20 }, (_, i) => [i]),
     };
     // Should not throw
-    setLastQueryResult("FROM big-index", data);
+    setLastQueryResult("FROM big-index", data, testEditorView);
   });
 });
 

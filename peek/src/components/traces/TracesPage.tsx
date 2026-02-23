@@ -65,6 +65,7 @@ export default function TracesPage() {
   const resetFilters = useTracesStore((s) => s.resetFilters);
 
   const [result, setResult] = useState<EsqlResponse | null>(null);
+  const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [serviceFilter, setServiceFilter] = useState("");
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
@@ -86,6 +87,7 @@ export default function TracesPage() {
     error: searchError,
   } = useEsqlQuery({
     connection,
+    queryContextView,
     onSuccess: (data) => setResult(data),
     onFailure: () => setResult(null),
   });
@@ -363,6 +365,7 @@ export default function TracesPage() {
           <CodeMirror
             value={effectiveQuery}
             onChange={(val) => setRawQuery(val)}
+            onCreateEditor={(view) => setQueryContextView(view)}
             extensions={queryEditorExtensions}
             theme={themeMode}
             height="120px"
