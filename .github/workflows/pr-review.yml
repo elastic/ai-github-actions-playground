@@ -41,6 +41,6 @@ jobs:
   address-feedback:
     needs: find-review
     if: needs.find-review.outputs.review_id != ''
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review-addresser.lock.yml@v0
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review-addresser.lock.yml@main
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
