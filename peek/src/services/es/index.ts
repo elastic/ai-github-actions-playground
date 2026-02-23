@@ -18,6 +18,10 @@ export type {
   ResolveIndexDataStreamInfo,
   FieldCapsResponse,
   FieldCapability,
+  SecurityUser,
+  SecurityRole,
+  GetSecurityUsersResponse,
+  GetSecurityRolesResponse,
   UserCapabilities,
 } from "./client";
 
