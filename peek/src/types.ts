@@ -1,5 +1,11 @@
 import type { FormatOptions } from "@perses-dev/core";
+import type { z } from "zod";
 
+import type {
+  dashboardDefinitionSchema,
+  panelDefinitionSchema,
+  visualizationTypeSchema,
+} from "./schemas";
 import type { ElasticsearchConnection, EsqlResponse, EsqlError } from "./services/es";
 
 export type { FormatOptions };
@@ -13,16 +19,7 @@ export interface ConnectionProfile {
   connection: ElasticsearchConnection;
 }
 
-export type VisualizationType =
-  | "timeseries"
-  | "bar"
-  | "table"
-  | "stat"
-  | "gauge"
-  | "pie"
-  | "heatmap"
-  | "scatter"
-  | "histogram";
+export type VisualizationType = z.infer<typeof visualizationTypeSchema>;
 
 export interface TimeSeriesOptions {
   format?: FormatOptions;
@@ -74,18 +71,11 @@ export type VisualizationOptions =
   | ScatterChartOptions
   | HistogramChartOptions;
 
-export interface PanelDefinition {
-  id: string;
-  title: string;
-  query: string;
-  visualization: VisualizationType;
-  /** Grid layout position */
-  layout: { x: number; y: number; w: number; h: number };
+type InferredPanelDefinition = z.infer<typeof panelDefinitionSchema>;
+export type PanelDefinition = Omit<InferredPanelDefinition, "options"> & {
   /** Visualization-specific options */
   options?: VisualizationOptions;
-  /** Auto-refresh interval in seconds, 0 = disabled */
-  refreshInterval?: number;
-}
+};
 
 /** How a dashboard parameter gets its selectable values. */
 export type ParameterSource =
@@ -107,19 +97,10 @@ export interface DashboardParameter {
   value: string | number | boolean;
 }
 
-export interface DashboardDefinition {
-  id: string;
-  title: string;
-  description?: string;
+type InferredDashboardDefinition = z.infer<typeof dashboardDefinitionSchema>;
+export type DashboardDefinition = Omit<InferredDashboardDefinition, "panels"> & {
   panels: PanelDefinition[];
-  /** Dashboard-level named parameters reusable across all panel queries. */
-  parameters?: DashboardParameter[];
-  timeRange: TimeRange;
-  /** Auto-refresh interval in seconds, 0 = disabled */
-  refreshInterval?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+};
 
 export interface TimeRange {
   from: string;
