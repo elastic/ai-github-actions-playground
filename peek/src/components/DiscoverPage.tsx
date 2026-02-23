@@ -5,10 +5,12 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
+import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Menu from "@mui/material/Menu";
@@ -26,10 +28,13 @@ import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
+import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
+import { buildQueryParams } from "../services/datemath";
 
 import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
+import QueryProfilePanel from "./QueryProfilePanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
@@ -68,6 +73,7 @@ export default function DiscoverPage() {
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
+  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
@@ -78,11 +84,37 @@ export default function DiscoverPage() {
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
+  const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
 
-  const { runQuery, loading, error, activeStep, stepDurationsMs, clearTimings } = useEsqlQuery({
+  const buildRequest = useCallback(
+    (queryText: string): EsqlQueryParams => {
+      const body: EsqlQueryParams = { query: queryText };
+      if (!timeRange) return body;
+      const queryParams = buildQueryParams(queryText, timeRange);
+      if (queryParams.length > 0) {
+        body.params = queryParams;
+      }
+      return body;
+    },
+    [timeRange],
+  );
+
+  const {
+    runQuery,
+    loading,
+    error,
+    activeStep,
+    stepDurationsMs,
+    clearTimings,
+    lastRunDurationMs,
+    lastRunProfile,
+    lastRunIsPartial,
+  } = useEsqlQuery({
     connection,
     queryContextView,
+    profileMode,
+    buildRequest,
     onSuccess: (data, executedQuery) => {
       setResult(data);
       // By default select all fields
@@ -290,6 +322,19 @@ export default function DiscoverPage() {
           >
             Run Query (Ctrl/Cmd+Enter)
           </Button>
+          <Tooltip title="Send profile: true with the query to see operator-level execution timings">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={profileMode}
+                  onChange={(e) => setProfileMode(e.target.checked)}
+                />
+              }
+              label={<Typography variant="caption">Profile query</Typography>}
+              sx={{ ml: 0.5 }}
+            />
+          </Tooltip>
           <Box sx={{ flex: 1 }} />
           <Tooltip title="Create a dashboard panel from this query">
             <span>
@@ -308,6 +353,19 @@ export default function DiscoverPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
+
+      {/* Summary strip: timing and partial-result indicator */}
+      {result && (lastRunDurationMs !== null || lastRunIsPartial) && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          {lastRunDurationMs !== null && (
+            <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
+          )}
+          {lastRunIsPartial && <Chip size="small" color="warning" label="partial results" />}
+        </Box>
+      )}
+
+      {/* Profile panel */}
+      {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
 
       {/* Content area: field picker + table */}
       <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>

@@ -27,6 +27,8 @@ import RowInspectorFlyout from "./RowInspectorFlyout";
 
 type SortDirection = "asc" | "desc";
 
+const PINNED_COLUMN_MIN_WIDTH = 120;
+
 export interface SortState {
   columnName: string;
   direction: SortDirection;
@@ -62,6 +64,7 @@ export default function DataTable({
   const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuColumnIndex, setMenuColumnIndex] = useState<number | null>(null);
+  const [pinnedColumns, setPinnedColumns] = useState<Set<number>>(new Set());
   const allColumnIndices = useMemo(() => data.columns.map((_, i) => i), [data.columns]);
   const resolvedColumnOrder = useMemo(
     () => reconcileColumnOrder(columnOrder, allColumnIndices),
@@ -74,8 +77,22 @@ export default function DataTable({
     const visible = showEmptyColumns
       ? allColumnIndices
       : allColumnIndices.filter((i) => !emptyColumnIndices.has(i));
-    return resolvedColumnOrder.filter((i) => visible.includes(i));
-  }, [allColumnIndices, emptyColumnIndices, showEmptyColumns, resolvedColumnOrder]);
+    const ordered = resolvedColumnOrder.filter((i) => visible.includes(i));
+    const pinned = ordered.filter((i) => pinnedColumns.has(i));
+    const unpinned = ordered.filter((i) => !pinnedColumns.has(i));
+    return [...pinned, ...unpinned];
+  }, [allColumnIndices, emptyColumnIndices, showEmptyColumns, resolvedColumnOrder, pinnedColumns]);
+
+  const pinnedLeftOffsets = useMemo(() => {
+    const offsets = new Map<number, number>();
+    let accumulated = 0;
+    for (const colIdx of orderedVisibleColumnIndices) {
+      if (!pinnedColumns.has(colIdx)) break;
+      offsets.set(colIdx, accumulated);
+      accumulated += PINNED_COLUMN_MIN_WIDTH;
+    }
+    return offsets;
+  }, [pinnedColumns, orderedVisibleColumnIndices]);
 
   const visibleRows = useMemo(
     () => paginateRows(data.values, page, rowsPerPage),
@@ -173,6 +190,8 @@ export default function DataTable({
               {orderedVisibleColumnIndices.map((colIdx) => {
                 const col = data.columns[colIdx]!;
                 const isSorted = currentSort?.columnName === col.name;
+                const isPinned = pinnedColumns.has(colIdx);
+                const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
                 return (
                   <TableCell
                     key={col.name}
@@ -180,19 +199,60 @@ export default function DataTable({
                       fontWeight: 600,
                       whiteSpace: "nowrap",
                       fontSize: "0.75rem",
+                      ...(isPinned
+                        ? {
+                            position: "sticky",
+                            left: stickyLeft,
+                            zIndex: 4,
+                            minWidth: PINNED_COLUMN_MIN_WIDTH,
+                            width: PINNED_COLUMN_MIN_WIDTH,
+                            maxWidth: PINNED_COLUMN_MIN_WIDTH,
+                            overflow: "hidden",
+                            backgroundColor: "background.paper",
+                            borderRight: "1px solid",
+                            borderRightColor: "divider",
+                          }
+                        : {}),
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-                      <TableSortLabel
-                        active={isSorted}
-                        direction={isSorted ? currentSort!.direction : "asc"}
-                        onClick={() => handleSortToggle(col.name)}
+                      <Box
+                        sx={
+                          isPinned
+                            ? {
+                                flex: 1,
+                                minWidth: 0,
+                                overflow: "hidden",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.25,
+                              }
+                            : { display: "contents" }
+                        }
                       >
-                        {col.name}
-                      </TableSortLabel>
-                      <Typography component="span" variant="caption" sx={{ opacity: 0.5 }}>
-                        {col.type}
-                      </Typography>
+                        <TableSortLabel
+                          active={isSorted}
+                          direction={isSorted ? currentSort!.direction : "asc"}
+                          onClick={() => handleSortToggle(col.name)}
+                          sx={
+                            isPinned
+                              ? {
+                                  overflow: "hidden",
+                                  "& .MuiTableSortLabel-root": { overflow: "hidden" },
+                                }
+                              : {}
+                          }
+                        >
+                          {col.name}
+                        </TableSortLabel>
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          sx={{ opacity: 0.5, flexShrink: 0 }}
+                        >
+                          {col.type}
+                        </Typography>
+                      </Box>
                       <IconButton
                         size="small"
                         aria-label={`column actions for ${col.name}`}
@@ -250,6 +310,8 @@ export default function DataTable({
                     const bgColor = thresholdColor
                       ? `${THRESHOLD_PALETTE[thresholdColor]}26`
                       : undefined;
+                    const isPinned = pinnedColumns.has(colIdx);
+                    const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
                     return (
                       <TableCell
                         key={colIdx}
@@ -259,6 +321,21 @@ export default function DataTable({
                           fontFamily: numeric ? "monospace" : "inherit",
                           textAlign: numeric ? "right" : "left",
                           ...(bgColor ? { backgroundColor: bgColor } : {}),
+                          ...(isPinned
+                            ? {
+                                position: "sticky",
+                                left: stickyLeft,
+                                zIndex: 1,
+                                minWidth: PINNED_COLUMN_MIN_WIDTH,
+                                width: PINNED_COLUMN_MIN_WIDTH,
+                                maxWidth: PINNED_COLUMN_MIN_WIDTH,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                backgroundColor: bgColor ?? "background.paper",
+                                borderRight: "1px solid",
+                                borderRightColor: "divider",
+                              }
+                            : {}),
                         }}
                       >
                         {cell === null ? (
@@ -368,6 +445,34 @@ export default function DataTable({
         >
           Remove column
         </MenuItem>
+        {menuColumnIndex !== null && !pinnedColumns.has(menuColumnIndex) && (
+          <MenuItem
+            onClick={() => {
+              setPinnedColumns((prev) => {
+                const next = new Set(prev);
+                next.add(menuColumnIndex);
+                return next;
+              });
+              closeMenu();
+            }}
+          >
+            Pin left
+          </MenuItem>
+        )}
+        {menuColumnIndex !== null && pinnedColumns.has(menuColumnIndex) && (
+          <MenuItem
+            onClick={() => {
+              setPinnedColumns((prev) => {
+                const next = new Set(prev);
+                next.delete(menuColumnIndex);
+                return next;
+              });
+              closeMenu();
+            }}
+          >
+            Unpin
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );

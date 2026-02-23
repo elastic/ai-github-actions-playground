@@ -26,7 +26,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../types";
 
 type AuthType = "apiKey" | "userpass";
@@ -99,8 +99,7 @@ export default function ConnectionDialog() {
     setResult(null);
     const conn = buildConnection();
     try {
-      const client = new ElasticsearchClient(conn);
-      await client.getClusterInfo();
+      await fetchCapabilitiesForConnection(conn);
       setResult({ ok: true, message: "Connected successfully." });
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
@@ -115,9 +114,7 @@ export default function ConnectionDialog() {
     setTesting(true);
     setResult(null);
     try {
-      const client = new ElasticsearchClient(conn);
-      await client.getClusterInfo();
-      const caps = await client.getCapabilities();
+      const caps = await fetchCapabilitiesForConnection(conn);
       setConnection(conn);
       setConnected(true);
       setCapabilities(caps);
