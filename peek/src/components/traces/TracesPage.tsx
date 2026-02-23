@@ -122,9 +122,13 @@ export default function TracesPage() {
     (query: string, updatedFilters = filters) => {
       setTimeseriesResult(null);
       runSearchQuery(query);
-      runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
+      // Skip timeseries when a custom raw query is active — we can't reliably
+      // wrap an arbitrary user-edited query with the STATS/BUCKET aggregation.
+      if (!rawQuery) {
+        runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
+      }
     },
-    [filters, runSearchQuery, runTimeseriesQuery],
+    [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
   );
 
   const handleSearch = useCallback(() => {
@@ -633,7 +637,21 @@ export default function TracesPage() {
             )}
             {result &&
               viewMode === "timeseries" &&
-              (timeseriesLoading ? (
+              (rawQuery ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Time series view is not available for custom queries. Use filter chips to see
+                    trends.
+                  </Typography>
+                </Box>
+              ) : timeseriesLoading ? (
                 <Box
                   sx={{
                     display: "flex",
