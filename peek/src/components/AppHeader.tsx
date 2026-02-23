@@ -236,41 +236,45 @@ export default function AppHeader() {
           </>
         )}
 
-        <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
-          <ButtonBase
-            onClick={() => setCommandPaletteOpen(true)}
-            aria-label="Open command palette"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 1,
-              border: 1,
-              borderColor: "divider",
-              bgcolor: "action.hover",
-              maxWidth: 360,
-              width: "100%",
-              justifyContent: "flex-start",
-              "&:hover": { borderColor: "text.secondary" },
-            }}
-          >
-            <SearchIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", flex: 1, textAlign: "left", fontSize: "0.8rem" }}
+        {connected ? (
+          <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
+            <ButtonBase
+              onClick={() => setCommandPaletteOpen(true)}
+              aria-label="Open command palette"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 1,
+                border: 1,
+                borderColor: "divider",
+                bgcolor: "action.hover",
+                maxWidth: 360,
+                width: "100%",
+                justifyContent: "flex-start",
+                "&:hover": { borderColor: "text.secondary" },
+              }}
             >
-              Search commands…
-            </Typography>
-            <Chip
-              label="⌘K"
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: "0.65rem", height: 20 }}
-            />
-          </ButtonBase>
-        </Box>
+              <SearchIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", flex: 1, textAlign: "left", fontSize: "0.8rem" }}
+              >
+                Search commands…
+              </Typography>
+              <Chip
+                label="⌘K"
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: "0.65rem", height: 20 }}
+              />
+            </ButtonBase>
+          </Box>
+        ) : (
+          <Box sx={{ flex: 1 }} />
+        )}
 
         {showTimeControls && (
           <>
