@@ -169,6 +169,26 @@ describe("formatEsqlResult", () => {
     const data: EsqlResponse = { columns: [col("name")], values: [[null]] };
     expect(formatEsqlResult(data)).toBe("");
   });
+
+  it("escapes pipe characters in table cell values", () => {
+    const data: EsqlResponse = {
+      columns: [col("service"), col("status")],
+      values: [["api|gateway", "ok"]],
+    };
+    const result = formatEsqlResult(data);
+    const lines = result.split("\n");
+    expect(lines[2]).toBe("api\\|gateway | ok");
+  });
+
+  it("escapes backslash characters in table cell values", () => {
+    const data: EsqlResponse = {
+      columns: [col("path"), col("count")],
+      values: [["C:\\Users\\foo", "1"]],
+    };
+    const result = formatEsqlResult(data);
+    const lines = result.split("\n");
+    expect(lines[2]).toBe("C:\\\\Users\\\\foo | 1");
+  });
 });
 
 // ---------------------------------------------------------------------------

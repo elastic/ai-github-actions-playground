@@ -68,7 +68,15 @@ export function formatEsqlResult(data: EsqlResponse): string {
   // Multiple columns → markdown table
   const header = columns.map((c) => c.name);
   const separator = columns.map(() => "---");
-  const rows = values.map((row) => row.map((v) => String(v ?? "")).join(" | "));
+  const rows = values.map((row) =>
+    row
+      .map((v) =>
+        String(v ?? "")
+          .replace(/\\/g, "\\\\")
+          .replace(/\|/g, "\\|"),
+      )
+      .join(" | "),
+  );
   return [header.join(" | "), separator.join(" | "), ...rows].join("\n");
 }
 
