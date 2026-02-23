@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useMatch } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -8,7 +8,10 @@ import Link from "@mui/material/Link";
 import Button from "@mui/material/Button";
 
 import { lightTheme, darkTheme } from "./theme";
-import { useDashboardStore } from "./store/useDashboardStore";
+import { useConnectionStore } from "./store/useConnectionStore";
+import { useUIStore } from "./store/useUIStore";
+import { useResetAllStores } from "./hooks/useResetAllStores";
+import { migrateLegacyDashboardStore } from "./store/migrateLegacyDashboardStore";
 import AppHeader from "./components/AppHeader";
 import AppSidebar from "./components/AppSidebar";
 import ParameterBar from "./components/ParameterBar";
@@ -21,12 +24,16 @@ import { PAGE_MANIFEST } from "./routes/manifest";
 const currentYear = new Date().getFullYear();
 
 export default function App() {
-  const themeMode = useDashboardStore((s) => s.themeMode);
-  const connected = useDashboardStore((s) => s.connected);
-  const resetState = useDashboardStore((s) => s.resetState);
+  const themeMode = useUIStore((s) => s.themeMode);
+  const connected = useConnectionStore((s) => s.connected);
+  const resetState = useResetAllStores();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const isDashboard = Boolean(useMatch("/"));
+
+  useEffect(() => {
+    migrateLegacyDashboardStore();
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>

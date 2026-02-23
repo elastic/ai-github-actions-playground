@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import ConnectionDialog from "../../src/components/ConnectionDialog";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
@@ -72,8 +75,8 @@ describe("ConnectionDialog", () => {
 
     expect(getClusterInfoMock).toHaveBeenCalledTimes(1);
     expect(getCapabilitiesMock).toHaveBeenCalledTimes(1);
-    expect(useDashboardStore.getState().connected).toBe(true);
-    expect(useDashboardStore.getState().connectionDialogOpen).toBe(false);
+    expect(useConnectionStore.getState().connected).toBe(true);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(false);
   });
 
   it("shows an error when test connection fails", async () => {
@@ -105,7 +108,7 @@ describe("ConnectionDialog", () => {
     await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
-    const profiles = useDashboardStore.getState().connectionProfiles;
+    const profiles = useConnectionStore.getState().connectionProfiles;
     expect(profiles).toHaveLength(1);
     expect(profiles[0].name).toBe("Dev Cluster");
     expect(profiles[0].connection.url).toBe("https://dev.example.com");
@@ -113,7 +116,7 @@ describe("ConnectionDialog", () => {
   });
 
   it("displays saved profiles in the dialog", () => {
-    useDashboardStore.setState({
+    useConnectionStore.setState({
       connection: { url: "https://dev.example.com", apiKey: "dev-key" },
       connectionProfiles: [
         { id: "p1", name: "Dev", connection: { url: "https://dev.example.com", apiKey: "key1" } },
@@ -133,7 +136,7 @@ describe("ConnectionDialog", () => {
 
   it("deletes a profile after confirmation", async () => {
     const user = userEvent.setup();
-    useDashboardStore.setState({
+    useConnectionStore.setState({
       connection: { url: "https://dev.example.com", apiKey: "dev-key" },
       connectionProfiles: [
         { id: "p1", name: "Dev", connection: { url: "https://dev.example.com", apiKey: "key1" } },
@@ -143,9 +146,9 @@ describe("ConnectionDialog", () => {
 
     await user.click(screen.getByLabelText(/delete profile dev/i));
     // Profile should still exist after first click
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(1);
 
     await user.click(screen.getByRole("button", { name: /^confirm$/i }));
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
   });
 });

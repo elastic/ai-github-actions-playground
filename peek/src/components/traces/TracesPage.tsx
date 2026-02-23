@@ -15,7 +15,9 @@ import { EditorView } from "@codemirror/view";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { PAGE_MANIFEST } from "../../routes/manifest";
-import { useDashboardStore } from "../../store/useDashboardStore";
+import { useConnectionStore } from "../../store/useConnectionStore";
+import { useUIStore } from "../../store/useUIStore";
+import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import type { TracesViewMode } from "../../store/useTracesStore";
 import type { EsqlResponse } from "../../types";
@@ -45,9 +47,9 @@ const thStyle: React.CSSProperties = {
 
 export default function TracesPage() {
   const navigate = useNavigate();
-  const connection = useDashboardStore((s) => s.connection);
-  const themeMode = useDashboardStore((s) => s.themeMode);
-  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
+  const connection = useConnectionStore((s) => s.connection);
+  const themeMode = useUIStore((s) => s.themeMode);
+  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
   const filters = useTracesStore((s) => s.filters);
   const rawQuery = useTracesStore((s) => s.rawQuery);
   const setRawQuery = useTracesStore((s) => s.setRawQuery);

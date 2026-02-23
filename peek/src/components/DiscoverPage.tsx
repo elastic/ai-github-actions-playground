@@ -19,6 +19,9 @@ import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
+import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
@@ -48,14 +51,14 @@ function getTypeColor(type: string): "default" | "primary" | "secondary" | "succ
 }
 
 export default function DiscoverPage() {
-  const connection = useDashboardStore((s) => s.connection);
-  const themeMode = useDashboardStore((s) => s.themeMode);
+  const connection = useConnectionStore((s) => s.connection);
+  const themeMode = useUIStore((s) => s.themeMode);
   const addPanel = useDashboardStore((s) => s.addPanel);
-  const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
-  const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
-  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
-  const queryHistory = useDashboardStore((s) => s.queryHistory);
-  const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
+  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
+  const discoverQueryDraft = useQueryStore((s) => s.discoverQueryDraft);
+  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const queryHistory = useQueryStore((s) => s.queryHistory);
+  const appendQueryToHistory = useQueryStore((s) => s.appendQueryToHistory);
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );

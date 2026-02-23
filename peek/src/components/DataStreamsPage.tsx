@@ -18,7 +18,8 @@ import Typography from "@mui/material/Typography";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
@@ -30,8 +31,8 @@ function toFieldRows(fieldCaps: FieldCapsResponse) {
 }
 
 export default function DataStreamsPage() {
-  const connection = useDashboardStore((s) => s.connection);
-  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
+  const connection = useConnectionStore((s) => s.connection);
+  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");

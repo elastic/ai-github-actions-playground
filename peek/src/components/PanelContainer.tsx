@@ -13,6 +13,8 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
@@ -27,10 +29,10 @@ interface Props {
 }
 
 export default function PanelContainer({ panel }: Props) {
-  const connection = useDashboardStore((s) => s.connection);
+  const connection = useConnectionStore((s) => s.connection);
   const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
   const parameters = useDashboardStore((s) => s.dashboard.parameters);
-  const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const duplicatePanel = useDashboardStore((s) => s.duplicatePanel);
 
   const vizEntry = getVizEntry(panel.visualization);

@@ -23,25 +23,26 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../types";
 
 type AuthType = "apiKey" | "userpass";
 
 export default function ConnectionDialog() {
-  const open = useDashboardStore((s) => s.connectionDialogOpen);
-  const setOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const savedConn = useDashboardStore((s) => s.connection);
-  const setConnection = useDashboardStore((s) => s.setConnection);
-  const setConnected = useDashboardStore((s) => s.setConnected);
-  const setCapabilities = useDashboardStore((s) => s.setCapabilities);
-  const connectionProfiles = useDashboardStore((s) => s.connectionProfiles);
-  const activeProfileId = useDashboardStore((s) => s.activeProfileId);
-  const saveConnectionProfile = useDashboardStore((s) => s.saveConnectionProfile);
-  const deleteConnectionProfile = useDashboardStore((s) => s.deleteConnectionProfile);
-  const renameConnectionProfile = useDashboardStore((s) => s.renameConnectionProfile);
-  const setActiveProfileId = useDashboardStore((s) => s.setActiveProfileId);
+  const open = useUIStore((s) => s.connectionDialogOpen);
+  const setOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const savedConn = useConnectionStore((s) => s.connection);
+  const setConnection = useConnectionStore((s) => s.setConnection);
+  const setConnected = useConnectionStore((s) => s.setConnected);
+  const setCapabilities = useConnectionStore((s) => s.setCapabilities);
+  const connectionProfiles = useConnectionStore((s) => s.connectionProfiles);
+  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
+  const saveConnectionProfile = useConnectionStore((s) => s.saveConnectionProfile);
+  const deleteConnectionProfile = useConnectionStore((s) => s.deleteConnectionProfile);
+  const renameConnectionProfile = useConnectionStore((s) => s.renameConnectionProfile);
+  const setActiveProfileId = useConnectionStore((s) => s.setActiveProfileId);
 
   const initialAuthType: AuthType = savedConn?.username ? "userpass" : "apiKey";
 

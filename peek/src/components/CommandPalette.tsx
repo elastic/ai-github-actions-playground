@@ -20,7 +20,9 @@ import HistoryIcon from "@mui/icons-material/History";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
+import { useQueryStore } from "../store/useQueryStore";
 
 interface Command {
   id: string;
@@ -34,13 +36,13 @@ interface Command {
 function useCommands(): Command[] {
   const navigate = useNavigate();
   const location = useLocation();
-  const connected = useDashboardStore((s) => s.connected);
-  const themeMode = useDashboardStore((s) => s.themeMode);
-  const queryHistory = useDashboardStore((s) => s.queryHistory);
-  const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const setThemeMode = useDashboardStore((s) => s.setThemeMode);
-  const setCommandPaletteOpen = useDashboardStore((s) => s.setCommandPaletteOpen);
-  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
+  const connected = useConnectionStore((s) => s.connected);
+  const themeMode = useUIStore((s) => s.themeMode);
+  const queryHistory = useQueryStore((s) => s.queryHistory);
+  const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const setThemeMode = useUIStore((s) => s.setThemeMode);
+  const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
+  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
 
   return useMemo(() => {
     const commands: Command[] = [];
@@ -172,8 +174,8 @@ function groupCommands(commands: Command[]): Array<{ group: string; items: Comma
 }
 
 export default function CommandPalette() {
-  const open = useDashboardStore((s) => s.commandPaletteOpen);
-  const setOpen = useDashboardStore((s) => s.setCommandPaletteOpen);
+  const open = useUIStore((s) => s.commandPaletteOpen);
+  const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);

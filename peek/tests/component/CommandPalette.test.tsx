@@ -5,6 +5,8 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 import CommandPalette from "../../src/components/CommandPalette";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useUIStore } from "../../src/store/useUIStore";
+import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -95,7 +97,7 @@ describe("CommandPalette", () => {
     await user.click(screen.getByText("Query Lab"));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");
-    expect(useDashboardStore.getState().commandPaletteOpen).toBe(false);
+    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("shows action commands", () => {
@@ -113,8 +115,8 @@ describe("CommandPalette", () => {
 
     await user.click(screen.getByText("Connection Settings"));
 
-    expect(useDashboardStore.getState().connectionDialogOpen).toBe(true);
-    expect(useDashboardStore.getState().commandPaletteOpen).toBe(false);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(true);
+    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("toggles theme when theme command is clicked", async () => {
@@ -122,10 +124,10 @@ describe("CommandPalette", () => {
     useDashboardStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
-    expect(useDashboardStore.getState().themeMode).toBe("dark");
+    expect(useUIStore.getState().themeMode).toBe("dark");
     await user.click(screen.getByText("Switch to Light Mode"));
 
-    expect(useDashboardStore.getState().themeMode).toBe("light");
+    expect(useUIStore.getState().themeMode).toBe("light");
   });
 
   it("shows recent queries when available", () => {
@@ -146,9 +148,9 @@ describe("CommandPalette", () => {
 
     await user.click(screen.getByText("FROM logs-* | LIMIT 10"));
 
-    expect(useDashboardStore.getState().discoverQueryDraft).toBe("FROM logs-* | LIMIT 10");
+    expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM logs-* | LIMIT 10");
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");
-    expect(useDashboardStore.getState().commandPaletteOpen).toBe(false);
+    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("opens with Ctrl+K keyboard shortcut", async () => {

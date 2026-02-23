@@ -19,7 +19,8 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
@@ -276,8 +277,8 @@ function RequestCard({
 }
 
 export default function ApiConsolePage() {
-  const connection = useDashboardStore((s) => s.connection);
-  const themeMode = useDashboardStore((s) => s.themeMode);
+  const connection = useConnectionStore((s) => s.connection);
+  const themeMode = useUIStore((s) => s.themeMode);
 
   const [entries, setEntries] = useState<RequestEntry[]>(() => [makeEntry()]);
   const entriesRef = useRef(entries);

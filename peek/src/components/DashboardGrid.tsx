@@ -15,6 +15,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useUIStore } from "../store/useUIStore";
 
 import PanelContainer from "./PanelContainer";
 
@@ -23,7 +24,7 @@ export default function DashboardGrid() {
   const panels = useDashboardStore((s) => s.dashboard.panels);
   const updatePanelLayouts = useDashboardStore((s) => s.updatePanelLayouts);
   const addPanel = useDashboardStore((s) => s.addPanel);
-  const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
+  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const loadDefaultDashboard = useDashboardStore((s) => s.loadDefaultDashboard);
 
   const layouts = useMemo<Layouts>(

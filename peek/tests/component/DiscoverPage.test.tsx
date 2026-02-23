@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
@@ -66,7 +67,7 @@ describe("DiscoverPage", () => {
     await user.click(screen.getByRole("button", { name: /run query/i }));
 
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
-    expect(useDashboardStore.getState().queryHistory).toEqual([
+    expect(useQueryStore.getState().queryHistory).toEqual([
       "FROM logs-* | SORT @timestamp | LIMIT 50",
     ]);
   });
@@ -107,6 +108,6 @@ describe("DiscoverPage", () => {
       expect.objectContaining({ query: "FROM step-* | LIMIT 1" }),
       expect.any(AbortSignal),
     );
-    expect(useDashboardStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
+    expect(useQueryStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
   });
 });

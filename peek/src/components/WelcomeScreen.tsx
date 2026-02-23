@@ -6,17 +6,18 @@ import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { fetchDemoConfig, type DemoConfig } from "../services/demo";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function WelcomeScreen() {
-  const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const setConnection = useDashboardStore((s) => s.setConnection);
-  const setConnected = useDashboardStore((s) => s.setConnected);
-  const setCapabilities = useDashboardStore((s) => s.setCapabilities);
+  const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const setConnection = useConnectionStore((s) => s.setConnection);
+  const setConnected = useConnectionStore((s) => s.setConnected);
+  const setCapabilities = useConnectionStore((s) => s.setCapabilities);
 
   const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
   const [connectingDemo, setConnectingDemo] = useState(false);

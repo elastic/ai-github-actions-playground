@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 import AppSidebar from "../../src/components/AppSidebar";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useUIStore } from "../../src/store/useUIStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -209,6 +210,6 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /settings/i }));
     await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
 
-    expect(useDashboardStore.getState().themeMode).toBe("light");
+    expect(useUIStore.getState().themeMode).toBe("light");
   });
 });

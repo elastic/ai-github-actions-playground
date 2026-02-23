@@ -17,6 +17,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { TimeRange } from "../types";
@@ -43,35 +45,36 @@ const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function AppHeader() {
+  const { dashboard, setTimeRange, setRefreshInterval, addPanel } = useDashboardStore(
+    useShallow((s) => ({
+      dashboard: s.dashboard,
+      setTimeRange: s.setTimeRange,
+      setRefreshInterval: s.setRefreshInterval,
+      addPanel: s.addPanel,
+    })),
+  );
   const {
     connected,
-    dashboard,
     connectionProfiles,
     activeProfileId,
-    setTimeRange,
-    setRefreshInterval,
-    setEditingPanelId,
-    addPanel,
     setConnection,
     setConnected,
     setCapabilities,
     setActiveProfileId,
-    setConnectionDialogOpen,
-    setCommandPaletteOpen,
-  } = useDashboardStore(
+  } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,
-      dashboard: s.dashboard,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
-      setTimeRange: s.setTimeRange,
-      setRefreshInterval: s.setRefreshInterval,
-      setEditingPanelId: s.setEditingPanelId,
-      addPanel: s.addPanel,
       setConnection: s.setConnection,
       setConnected: s.setConnected,
       setCapabilities: s.setCapabilities,
       setActiveProfileId: s.setActiveProfileId,
+    })),
+  );
+  const { setEditingPanelId, setConnectionDialogOpen, setCommandPaletteOpen } = useUIStore(
+    useShallow((s) => ({
+      setEditingPanelId: s.setEditingPanelId,
       setConnectionDialogOpen: s.setConnectionDialogOpen,
       setCommandPaletteOpen: s.setCommandPaletteOpen,
     })),

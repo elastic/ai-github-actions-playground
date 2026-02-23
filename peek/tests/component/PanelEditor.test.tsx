@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import PanelEditor from "../../src/components/PanelEditor";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
@@ -210,6 +211,6 @@ describe("PanelEditor", () => {
       expect.objectContaining({ query: "FROM panel-step-* | LIMIT 2" }),
       expect.any(AbortSignal),
     );
-    expect(useDashboardStore.getState().queryHistory[0]).toBe("FROM panel-step-* | LIMIT 2");
+    expect(useQueryStore.getState().queryHistory[0]).toBe("FROM panel-step-* | LIMIT 2");
   });
 });

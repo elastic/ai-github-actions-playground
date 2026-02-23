@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const getDataStreamsMock = vi.fn();
@@ -77,7 +78,7 @@ describe("DataStreamsPage", () => {
     expect(await screen.findByRole("heading", { level: 6, name: "logs-b" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /open in query lab/i }));
-    expect(useDashboardStore.getState().discoverQueryDraft).toBe(
+    expect(useQueryStore.getState().discoverQueryDraft).toBe(
       "FROM logs-b | SORT @timestamp DESC | LIMIT 50",
     );
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");
