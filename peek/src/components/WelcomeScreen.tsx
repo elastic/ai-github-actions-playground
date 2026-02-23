@@ -10,7 +10,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { fetchDemoConfig, type DemoConfig } from "../services/demo";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
@@ -44,9 +44,7 @@ export default function WelcomeScreen() {
         username: demoConfig.username,
         password: demoConfig.password,
       };
-      const client = new ElasticsearchClient(conn);
-      await client.getClusterInfo();
-      const caps = await client.getCapabilities();
+      const caps = await fetchCapabilitiesForConnection(conn);
       setConnection(conn);
       setConnected(true);
       setCapabilities(caps);
