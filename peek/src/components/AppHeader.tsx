@@ -21,13 +21,15 @@ import SearchIcon from "@mui/icons-material/Search";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import UndoIcon from "@mui/icons-material/Undo";
+import RedoIcon from "@mui/icons-material/Redo";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import type { ProfileHealth, TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
@@ -68,12 +70,25 @@ function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
 }
 
 export default function AppHeader() {
-  const { dashboard, setTimeRange, setRefreshInterval, addPanel } = useDashboardStore(
+  const {
+    dashboard,
+    setTimeRange,
+    setRefreshInterval,
+    addPanel,
+    historyPast,
+    historyFuture,
+    undoDashboardChange,
+    redoDashboardChange,
+  } = useDashboardStore(
     useShallow((s) => ({
       dashboard: s.dashboard,
       setTimeRange: s.setTimeRange,
       setRefreshInterval: s.setRefreshInterval,
       addPanel: s.addPanel,
+      historyPast: s.historyPast,
+      historyFuture: s.historyFuture,
+      undoDashboardChange: s.undoDashboardChange,
+      redoDashboardChange: s.redoDashboardChange,
     })),
   );
   const {
@@ -131,9 +146,7 @@ export default function AppHeader() {
       setSwitchingProfile(true);
       const conn = profile.connection;
       try {
-        const client = new ElasticsearchClient(conn);
-        await client.getClusterInfo();
-        const caps = await client.getCapabilities();
+        const caps = await fetchCapabilitiesForConnection(conn);
         setConnection(conn);
         setConnected(true);
         setCapabilities(caps);
@@ -180,9 +193,7 @@ export default function AppHeader() {
       if (!profile) return;
       setRetestingProfileId(profileId);
       try {
-        const client = new ElasticsearchClient(profile.connection);
-        await client.getClusterInfo();
-        await client.getCapabilities();
+        await fetchCapabilitiesForConnection(profile.connection);
         setProfileHealth(profileId, {
           status: "healthy",
           checkedAt: new Date().toISOString(),
@@ -460,14 +471,52 @@ export default function AppHeader() {
             </Menu>
 
             {location.pathname === PAGE_MANIFEST.dashboard.path && (
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddPanel}
-              >
-                Add Panel
-              </Button>
+              <>
+                <Tooltip
+                  title={
+                    historyPast.length > 0
+                      ? `Undo: ${historyPast[historyPast.length - 1]?.label ?? ""}`
+                      : "Nothing to undo"
+                  }
+                >
+                  <span>
+                    <IconButton
+                      size="small"
+                      aria-label="Undo"
+                      disabled={historyPast.length === 0}
+                      onClick={undoDashboardChange}
+                    >
+                      <UndoIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip
+                  title={
+                    historyFuture.length > 0
+                      ? `Redo: ${historyFuture[0]?.label ?? ""}`
+                      : "Nothing to redo"
+                  }
+                >
+                  <span>
+                    <IconButton
+                      size="small"
+                      aria-label="Redo"
+                      disabled={historyFuture.length === 0}
+                      onClick={redoDashboardChange}
+                    >
+                      <RedoIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddPanel}
+                >
+                  Add Panel
+                </Button>
+              </>
             )}
           </>
         )}

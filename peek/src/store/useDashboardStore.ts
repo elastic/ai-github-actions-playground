@@ -7,6 +7,15 @@ import { createDefaultDashboard } from "../dashboards/default";
 
 export { createDefaultDashboard };
 
+/** Maximum number of undo history entries to retain. */
+const MAX_HISTORY_DEPTH = 50;
+
+/** A single entry in the undo/redo history ring buffer. */
+export interface HistoryEntry {
+  dashboard: DashboardDefinition;
+  label: string;
+}
+
 interface DashboardState {
   dashboard: DashboardDefinition;
   dashboards: DashboardDefinition[];
@@ -19,6 +28,14 @@ interface DashboardState {
   archiveDashboard: (id: string, archived: boolean) => void;
   deleteDashboard: (id: string) => boolean;
   restoreDashboard: (dashboard: DashboardDefinition, makeActive?: boolean) => void;
+
+  /** Undo stack — most recent action is last (session-only, not persisted). */
+  historyPast: HistoryEntry[];
+  /** Redo stack — next action to redo is first (session-only, not persisted). */
+  historyFuture: HistoryEntry[];
+
+  undoDashboardChange: () => void;
+  redoDashboardChange: () => void;
 
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
@@ -125,6 +142,20 @@ function replaceActiveDashboard(
   return syncActiveState(dashboards, nextActive.id);
 }
 
+/** Push the current dashboard onto the past stack, returning the updated history slices. */
+function pushToHistory(
+  s: Pick<DashboardState, "dashboard" | "historyPast">,
+  label: string,
+): Pick<DashboardState, "historyPast" | "historyFuture"> {
+  return {
+    historyPast: [
+      ...s.historyPast.slice(-(MAX_HISTORY_DEPTH - 1)),
+      { dashboard: s.dashboard, label },
+    ],
+    historyFuture: [],
+  };
+}
+
 const initialDashboard = createDefaultDashboard();
 
 export const useDashboardStore = create<DashboardState>()(
@@ -133,13 +164,17 @@ export const useDashboardStore = create<DashboardState>()(
       dashboard: initialDashboard,
       dashboards: [initialDashboard],
       activeDashboardId: initialDashboard.id,
+      historyPast: [],
+      historyFuture: [],
+
+      // -- Multi-dashboard management --
 
       setActiveDashboard: (id) =>
         set((s) => {
           if (!s.dashboards.some((dashboard) => dashboard.id === id)) {
             return {};
           }
-          return syncActiveState(s.dashboards, id);
+          return { ...syncActiveState(s.dashboards, id), historyPast: [], historyFuture: [] };
         }),
 
       createDashboard: (title) => {
@@ -158,7 +193,11 @@ export const useDashboardStore = create<DashboardState>()(
           createdAt: timestamp,
           updatedAt: timestamp,
         };
-        set((s) => syncActiveState([...s.dashboards, next], id));
+        set((s) => ({
+          ...syncActiveState([...s.dashboards, next], id),
+          historyPast: [],
+          historyFuture: [],
+        }));
         return id;
       },
 
@@ -190,7 +229,11 @@ export const useDashboardStore = create<DashboardState>()(
           createdAt: timestamp,
           updatedAt: timestamp,
         };
-        set((s) => syncActiveState([...s.dashboards, clone], clone.id));
+        set((s) => ({
+          ...syncActiveState([...s.dashboards, clone], clone.id),
+          historyPast: [],
+          historyFuture: [],
+        }));
         return clone.id;
       },
 
@@ -211,7 +254,11 @@ export const useDashboardStore = create<DashboardState>()(
           state.activeDashboardId === id
             ? (dashboards[0]?.id ?? state.activeDashboardId)
             : state.activeDashboardId;
-        set(() => syncActiveState(dashboards, nextActiveId));
+        set(() => ({
+          ...syncActiveState(dashboards, nextActiveId),
+          historyPast: [],
+          historyFuture: [],
+        }));
         return true;
       },
 
@@ -219,11 +266,47 @@ export const useDashboardStore = create<DashboardState>()(
         set((s) => {
           const existing = s.dashboards.some((entry) => entry.id === dashboard.id);
           if (existing) {
-            return makeActive ? syncActiveState(s.dashboards, dashboard.id) : {};
+            return makeActive
+              ? {
+                  ...syncActiveState(s.dashboards, dashboard.id),
+                  historyPast: [],
+                  historyFuture: [],
+                }
+              : {};
           }
           const dashboards = [...s.dashboards, dashboard];
-          return syncActiveState(dashboards, makeActive ? dashboard.id : s.activeDashboardId);
+          const nextActive = makeActive ? dashboard.id : s.activeDashboardId;
+          return {
+            ...syncActiveState(dashboards, nextActive),
+            ...(makeActive ? { historyPast: [], historyFuture: [] } : {}),
+          };
         }),
+
+      // -- Undo / Redo --
+
+      undoDashboardChange: () =>
+        set((s) => {
+          const entry = s.historyPast[s.historyPast.length - 1];
+          if (!entry) return {};
+          return {
+            ...replaceActiveDashboard(s, entry.dashboard),
+            historyPast: s.historyPast.slice(0, -1),
+            historyFuture: [{ dashboard: s.dashboard, label: entry.label }, ...s.historyFuture],
+          };
+        }),
+
+      redoDashboardChange: () =>
+        set((s) => {
+          const entry = s.historyFuture[0];
+          if (!entry) return {};
+          return {
+            ...replaceActiveDashboard(s, entry.dashboard),
+            historyPast: [...s.historyPast, { dashboard: s.dashboard, label: entry.label }],
+            historyFuture: s.historyFuture.slice(1),
+          };
+        }),
+
+      // -- Dashboard editing (multi-dashboard + history) --
 
       setTimeRange: (range) =>
         set((s) => {
@@ -244,39 +327,53 @@ export const useDashboardStore = create<DashboardState>()(
       setDashboardTitle: (title) =>
         set((s) => {
           const active = getActiveDashboard(s);
-          return replaceActiveDashboard(s, { ...active, title, updatedAt: nowIso() });
+          return {
+            ...pushToHistory(s, "Renamed dashboard"),
+            ...replaceActiveDashboard(s, { ...active, title, updatedAt: nowIso() }),
+          };
         }),
 
       addPanel: (panel) =>
         set((s) => {
           const active = getActiveDashboard(s);
-          return replaceActiveDashboard(s, {
-            ...active,
-            panels: [...active.panels, panel],
-            updatedAt: nowIso(),
-          });
+          return {
+            ...pushToHistory(s, `Added panel "${panel.title}"`),
+            ...replaceActiveDashboard(s, {
+              ...active,
+              panels: [...active.panels, panel],
+              updatedAt: nowIso(),
+            }),
+          };
         }),
 
       updatePanel: (id, updates) =>
         set((s) => {
           const active = getActiveDashboard(s);
-          return replaceActiveDashboard(s, {
-            ...active,
-            panels: active.panels.map((panel) =>
-              panel.id === id ? { ...panel, ...updates } : panel,
-            ),
-            updatedAt: nowIso(),
-          });
+          const panel = active.panels.find((p) => p.id === id);
+          const label = panel ? `Updated panel "${updates.title ?? panel.title}"` : "Updated panel";
+          return {
+            ...pushToHistory(s, label),
+            ...replaceActiveDashboard(s, {
+              ...active,
+              panels: active.panels.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+              updatedAt: nowIso(),
+            }),
+          };
         }),
 
       removePanel: (id) =>
         set((s) => {
           const active = getActiveDashboard(s);
-          return replaceActiveDashboard(s, {
-            ...active,
-            panels: active.panels.filter((panel) => panel.id !== id),
-            updatedAt: nowIso(),
-          });
+          const panel = active.panels.find((p) => p.id === id);
+          const label = panel ? `Removed panel "${panel.title}"` : "Removed panel";
+          return {
+            ...pushToHistory(s, label),
+            ...replaceActiveDashboard(s, {
+              ...active,
+              panels: active.panels.filter((p) => p.id !== id),
+              updatedAt: nowIso(),
+            }),
+          };
         }),
 
       duplicatePanel: (id) => {
@@ -296,11 +393,14 @@ export const useDashboardStore = create<DashboardState>()(
             layout: { ...source.layout, y: Infinity },
           };
           newId = nextId;
-          return replaceActiveDashboard(s, {
-            ...active,
-            panels: [...active.panels, clone],
-            updatedAt: nowIso(),
-          });
+          return {
+            ...pushToHistory(s, `Duplicated panel "${source.title}"`),
+            ...replaceActiveDashboard(s, {
+              ...active,
+              panels: [...active.panels, clone],
+              updatedAt: nowIso(),
+            }),
+          };
         });
         return newId;
       },
@@ -380,6 +480,8 @@ export const useDashboardStore = create<DashboardState>()(
           });
         }),
 
+      // -- Export / Import --
+
       exportDashboard: () => {
         const { dashboard } = get();
         return JSON.stringify(dashboard, null, 2);
@@ -400,7 +502,11 @@ export const useDashboardStore = create<DashboardState>()(
             console.error("Import failed:", error);
             return { success: false, error };
           }
-          set((s) => replaceActiveDashboard(s, result.data));
+          set((s) => ({
+            ...replaceActiveDashboard(s, result.data),
+            historyPast: [],
+            historyFuture: [],
+          }));
           return { success: true };
         } catch (errorLike) {
           const error = errorLike instanceof Error ? errorLike.message : String(errorLike);
@@ -425,7 +531,11 @@ export const useDashboardStore = create<DashboardState>()(
             console.error("Workspace import failed:", error);
             return { success: false, error };
           }
-          set(() => syncActiveState(dashboards, activeDashboardId));
+          set(() => ({
+            ...syncActiveState(dashboards, activeDashboardId),
+            historyPast: [],
+            historyFuture: [],
+          }));
           return { success: true };
         } catch (errorLike) {
           const error = errorLike instanceof Error ? errorLike.message : String(errorLike);
@@ -435,7 +545,11 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       loadDefaultDashboard: () => {
-        set((s) => replaceActiveDashboard(s, createDefaultDashboard()));
+        set((s) => ({
+          ...replaceActiveDashboard(s, createDefaultDashboard()),
+          historyPast: [],
+          historyFuture: [],
+        }));
       },
 
       resetWorkspaceState: () => {
@@ -445,6 +559,8 @@ export const useDashboardStore = create<DashboardState>()(
           dashboard: fresh,
           dashboards: [fresh],
           activeDashboardId: fresh.id,
+          historyPast: [],
+          historyFuture: [],
         });
       },
 
