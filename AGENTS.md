@@ -74,5 +74,18 @@ The first 5 scheduled smoke plans map one-to-one to the existing tests in
 - `smoke-connect-button-enablement.yml` → `traces user opens a trace and pivots from service map context into Query Lab`
 - `smoke-reset-visibility.yml` → `ops user confirms connection guardrails and can reset back to the landing state`
 
+### UI Smoke Test PR Review
+
+`ui-smoke-test-pr-review.yml` runs on every non-draft pull request that touches
+`peek/**` or `Makefile`. It executes the full E2E smoke suite, runs the
+screenshot preflight, and posts (or updates) a structured PR comment with:
+
+- Per-test pass/fail status and durations
+- Console errors, page errors, and UI alert diagnostics
+- Actionable recommendations
+
+Artifacts (screenshots, JSON diagnostics, Playwright traces) are uploaded to the
+workflow run for deeper inspection.
+
 Use the workflow specs under `github/workflows/`; maintainers can relocate them into
 `.github/workflows/` when applying workflow changes.
