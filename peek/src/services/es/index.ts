@@ -31,13 +31,19 @@ export type {
   UserCapabilities,
 } from "./client";
 
-export { buildExplorerQuery, getDefaultAggregation, getAggregationOptions } from "./queryBuilder";
+export {
+  buildExplorerQuery,
+  buildOverviewQuery,
+  getDefaultAggregation,
+  getAggregationOptions,
+} from "./queryBuilder";
 export type {
   MetricType,
   AggregationType,
   ExplorerFilter,
   ExplorerQuery,
   ExplorerQueryResult,
+  OverviewQuery,
 } from "./queryBuilder";
 
 export { classifyMetricType, listFields, getFieldValues, getFieldCardinality } from "./metadata";

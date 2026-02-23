@@ -37,9 +37,10 @@ make format       # auto-format code with Prettier
 make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
-make otel-harness-up   # start local Elasticsearch + OTel host metrics harness
-make otel-harness-logs # tail logs from the already-running harness started by otel-harness-up
-make otel-harness-down # stop and remove OTel host metrics harness
+make otel-up           # start local ES + EDOT collector + telemetry generators
+make otel-logs         # tail EDOT collector logs
+make otel-down         # stop and remove local OTel stack
+make otel-cloud-up     # send OTel data to a remote cluster (set ES_URL, ES_API_KEY)
 ```
 
 > **Note:** `make serve` and `make serve-proxy` auto-install dependencies. The other targets (`lint`, `format`, `build`, `test-*`) assume dependencies are already installed — run `make setup` once first.
@@ -126,34 +127,36 @@ ES_URL=http://my-elasticsearch:9200 docker compose up
 
 Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
 
-## OTel Harness
+## OTel Telemetry Stack
 
-Use this harness to generate real telemetry in local `metrics-*`, `traces-*`, and `logs-*` indices so query work can run against incoming data instead of seeded fixtures.
+Generate real telemetry in `metrics-*`, `traces-*`, and `logs-*` indices using an EDOT collector and synthetic generators.
+
+### Local (with Elasticsearch)
 
 ```bash
-make otel-harness-up
+make otel-up      # starts ES + EDOT collector + otelgen traces & logs
+make otel-logs    # tail collector logs
+make otel-down    # stop and remove everything
 ```
 
 This starts:
 - Elasticsearch (`http://localhost:9200`)
-- OpenTelemetry Collector (`hostmetrics` receiver + OTLP receiver + Elasticsearch exporter)
-- otelgen traces generator (synthetic traces via OTLP)
+- EDOT collector (Elastic Agent in OTel mode — `hostmetrics` + OTLP receiver + ES exporter)
+- otelgen traces generator (synthetic multi-service traces via OTLP)
 - otelgen logs generator (synthetic logs via OTLP)
 - Fleet agent simulator that writes representative Fleet documents to `fleet-agents-sim` for Cluster Overview testing
 
-Stop it with:
+### Remote (Elastic Cloud or any ES endpoint)
 
 ```bash
-make otel-harness-down
+ES_URL=https://my-cluster.es.cloud:443 ES_API_KEY=... make otel-cloud-up
+make otel-cloud-logs
+make otel-cloud-down
 ```
 
-Optional:
+This starts only the EDOT collector and generators — no local Elasticsearch.
 
-```bash
-make otel-harness-logs
-```
-
-Quick data check:
+### Quick data check
 
 ```bash
 curl -s -X POST 'http://localhost:9200/_query' \
@@ -221,9 +224,9 @@ E2E tests (`peek/tests/e2e/`) use [Playwright](https://playwright.dev/) to launc
 To run E2E tests against live Elasticsearch data, start the OTel harness first:
 
 ```bash
-make otel-harness-up                 # start Elasticsearch + OTel collector
+make otel-up                                 # start ES + EDOT collector
 ES_URL=http://localhost:9200 make test-e2e   # run e2e tests with proxy
-make otel-harness-down               # stop when done
+make otel-down                               # stop when done
 ```
 
 ### Testing Philosophy
