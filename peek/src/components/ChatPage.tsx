@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -15,7 +16,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 
 import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { PAGE_MANIFEST } from "../routes/manifest";
 
 export default function ChatPage() {
   const {
@@ -38,7 +39,7 @@ export default function ChatPage() {
     })),
   );
 
-  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
+  const navigate = useNavigate();
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -127,7 +128,7 @@ export default function ChatPage() {
         <Button
           variant="contained"
           startIcon={<SettingsIcon />}
-          onClick={() => setCurrentPage("settings")}
+          onClick={() => navigate(PAGE_MANIFEST.settings.path)}
         >
           Go to Settings
         </Button>

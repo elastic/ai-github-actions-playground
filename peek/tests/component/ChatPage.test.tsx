@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import ChatPage from "../../src/components/ChatPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
@@ -36,19 +37,27 @@ describe("ChatPage", () => {
     vi.mocked(createOpenAI).mockReturnValue(modelFactory as never);
   });
 
+  function renderChat() {
+    return render(
+      <MemoryRouter>
+        <ChatPage />
+      </MemoryRouter>,
+    );
+  }
+
   it("shows unconfigured message when no API key is set", () => {
-    render(<ChatPage />);
+    renderChat();
     expect(screen.getByText("LLM provider not configured")).toBeInTheDocument();
   });
 
   it("shows Go to Settings button when not configured", () => {
-    render(<ChatPage />);
+    renderChat();
     expect(screen.getByRole("button", { name: /go to settings/i })).toBeInTheDocument();
   });
 
   it("renders chat UI when configured", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
-    render(<ChatPage />);
+    renderChat();
     expect(screen.getByText("Chat")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("Type a message…"),
@@ -57,7 +66,7 @@ describe("ChatPage", () => {
 
   it("shows empty state message when no messages", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
-    render(<ChatPage />);
+    renderChat();
     expect(
       screen.getByText("Start a conversation by typing a message below."),
     ).toBeInTheDocument();
@@ -67,20 +76,20 @@ describe("ChatPage", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     useLLMStore.getState().addMessage({ id: "1", role: "user", content: "Hello there" });
     useLLMStore.getState().addMessage({ id: "2", role: "assistant", content: "Hi! How can I help?" });
-    render(<ChatPage />);
+    renderChat();
     expect(screen.getByText("Hello there")).toBeInTheDocument();
     expect(screen.getByText("Hi! How can I help?")).toBeInTheDocument();
   });
 
   it("has a send button", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
-    render(<ChatPage />);
+    renderChat();
     expect(screen.getByRole("button", { name: /send message/i })).toBeInTheDocument();
   });
 
   it("has a clear button that is disabled when no messages", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
-    render(<ChatPage />);
+    renderChat();
     const clearButton = screen.getByRole("button", { name: /clear/i });
     expect(clearButton).toBeDisabled();
   });
@@ -90,7 +99,7 @@ describe("ChatPage", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     vi.mocked(generateText).mockResolvedValue({ text: "Assistant response" } as never);
 
-    render(<ChatPage />);
+    renderChat();
 
     await user.type(screen.getByPlaceholderText("Type a message…"), "Help me write ES|QL");
     await user.click(screen.getByRole("button", { name: /send message/i }));
@@ -106,7 +115,7 @@ describe("ChatPage", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     vi.mocked(generateText).mockRejectedValue(new Error("API down"));
 
-    render(<ChatPage />);
+    renderChat();
 
     await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
     await user.click(screen.getByRole("button", { name: /send message/i }));
@@ -123,7 +132,7 @@ describe("ChatPage", () => {
     useLLMStore.getState().setProvider("openrouter");
     vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
 
-    render(<ChatPage />);
+    renderChat();
 
     await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
     await user.click(screen.getByRole("button", { name: /send message/i }));
@@ -143,7 +152,7 @@ describe("ChatPage", () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
     useLLMStore.getState().addMessage({ id: "msg-1", role: "user", content: "A message" });
-    render(<ChatPage />);
+    renderChat();
 
     const clearButton = screen.getByRole("button", { name: /clear/i });
     expect(clearButton).toBeEnabled();
