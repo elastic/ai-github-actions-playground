@@ -12,6 +12,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
+import { useShallow } from "zustand/react/shallow";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -52,21 +53,41 @@ export default function TracesPage() {
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
-  const filters = useTracesStore((s) => s.filters);
-  const rawQuery = useTracesStore((s) => s.rawQuery);
-  const setRawQuery = useTracesStore((s) => s.setRawQuery);
-  const updateFilters = useTracesStore((s) => s.updateFilters);
-  const selectedTraceId = useTracesStore((s) => s.selectedTraceId);
-  const setSelectedTraceId = useTracesStore((s) => s.setSelectedTraceId);
-  const setSelectedTraceSpans = useTracesStore((s) => s.setSelectedTraceSpans);
-  const selectedTraceSpans = useTracesStore((s) => s.selectedTraceSpans);
-  const selectedSpanId = useTracesStore((s) => s.selectedSpanId);
-  const setSelectedSpanId = useTracesStore((s) => s.setSelectedSpanId);
-  const drawerOpen = useTracesStore((s) => s.drawerOpen);
-  const setDrawerOpen = useTracesStore((s) => s.setDrawerOpen);
-  const viewMode = useTracesStore((s) => s.viewMode);
-  const setViewMode = useTracesStore((s) => s.setViewMode);
-  const resetFilters = useTracesStore((s) => s.resetFilters);
+  const {
+    filters,
+    rawQuery,
+    setRawQuery,
+    updateFilters,
+    selectedTraceId,
+    setSelectedTraceId,
+    setSelectedTraceSpans,
+    selectedTraceSpans,
+    selectedSpanId,
+    setSelectedSpanId,
+    drawerOpen,
+    setDrawerOpen,
+    viewMode,
+    setViewMode,
+    resetFilters,
+  } = useTracesStore(
+    useShallow((s) => ({
+      filters: s.filters,
+      rawQuery: s.rawQuery,
+      setRawQuery: s.setRawQuery,
+      updateFilters: s.updateFilters,
+      selectedTraceId: s.selectedTraceId,
+      setSelectedTraceId: s.setSelectedTraceId,
+      setSelectedTraceSpans: s.setSelectedTraceSpans,
+      selectedTraceSpans: s.selectedTraceSpans,
+      selectedSpanId: s.selectedSpanId,
+      setSelectedSpanId: s.setSelectedSpanId,
+      drawerOpen: s.drawerOpen,
+      setDrawerOpen: s.setDrawerOpen,
+      viewMode: s.viewMode,
+      setViewMode: s.setViewMode,
+      resetFilters: s.resetFilters,
+    })),
+  );
 
   const [result, setResult] = useState<EsqlResponse | null>(null);
   const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);

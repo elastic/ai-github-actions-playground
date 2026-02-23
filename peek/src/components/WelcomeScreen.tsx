@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
@@ -15,9 +16,13 @@ const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function WelcomeScreen() {
   const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
-  const setConnection = useConnectionStore((s) => s.setConnection);
-  const setConnected = useConnectionStore((s) => s.setConnected);
-  const setCapabilities = useConnectionStore((s) => s.setCapabilities);
+  const { setConnection, setConnected, setCapabilities } = useConnectionStore(
+    useShallow((s) => ({
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+    })),
+  );
 
   const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
   const [connectingDemo, setConnectingDemo] = useState(false);

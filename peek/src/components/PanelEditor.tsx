@@ -18,6 +18,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
+import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -55,15 +56,27 @@ export default function PanelEditor() {
 }
 
 function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
-  const setEditingId = useUIStore((s) => s.setEditingPanelId);
-  const updatePanel = useDashboardStore((s) => s.updatePanel);
-  const removePanel = useDashboardStore((s) => s.removePanel);
+  const { setEditingPanelId: setEditingId, themeMode } = useUIStore(
+    useShallow((s) => ({
+      setEditingPanelId: s.setEditingPanelId,
+      themeMode: s.themeMode,
+    })),
+  );
+  const { updatePanel, removePanel, timeRange, parameters } = useDashboardStore(
+    useShallow((s) => ({
+      updatePanel: s.updatePanel,
+      removePanel: s.removePanel,
+      timeRange: s.dashboard.timeRange,
+      parameters: s.dashboard.parameters,
+    })),
+  );
   const connection = useConnectionStore((s) => s.connection);
-  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
-  const parameters = useDashboardStore((s) => s.dashboard.parameters);
-  const themeMode = useUIStore((s) => s.themeMode);
-  const queryHistory = useQueryStore((s) => s.queryHistory);
-  const appendQueryToHistory = useQueryStore((s) => s.appendQueryToHistory);
+  const { queryHistory, appendQueryToHistory } = useQueryStore(
+    useShallow((s) => ({
+      queryHistory: s.queryHistory,
+      appendQueryToHistory: s.appendQueryToHistory,
+    })),
+  );
 
   const [title, setTitle] = useState(panel.title);
   const [query, setQuery] = useState(panel.query);

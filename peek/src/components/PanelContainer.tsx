@@ -11,6 +11,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -30,10 +31,14 @@ interface Props {
 
 export default function PanelContainer({ panel }: Props) {
   const connection = useConnectionStore((s) => s.connection);
-  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
-  const parameters = useDashboardStore((s) => s.dashboard.parameters);
+  const { timeRange, parameters, duplicatePanel } = useDashboardStore(
+    useShallow((s) => ({
+      timeRange: s.dashboard.timeRange,
+      parameters: s.dashboard.parameters,
+      duplicatePanel: s.duplicatePanel,
+    })),
+  );
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
-  const duplicatePanel = useDashboardStore((s) => s.duplicatePanel);
 
   const vizEntry = getVizEntry(panel.visualization);
   const supportsQuery = vizEntry?.supportsQuery ?? true;

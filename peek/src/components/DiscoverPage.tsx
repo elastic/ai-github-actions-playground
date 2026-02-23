@@ -17,6 +17,7 @@ import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
+import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -55,10 +56,15 @@ export default function DiscoverPage() {
   const themeMode = useUIStore((s) => s.themeMode);
   const addPanel = useDashboardStore((s) => s.addPanel);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
-  const discoverQueryDraft = useQueryStore((s) => s.discoverQueryDraft);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
-  const queryHistory = useQueryStore((s) => s.queryHistory);
-  const appendQueryToHistory = useQueryStore((s) => s.appendQueryToHistory);
+  const { discoverQueryDraft, setDiscoverQueryDraft, queryHistory, appendQueryToHistory } =
+    useQueryStore(
+      useShallow((s) => ({
+        discoverQueryDraft: s.discoverQueryDraft,
+        setDiscoverQueryDraft: s.setDiscoverQueryDraft,
+        queryHistory: s.queryHistory,
+        appendQueryToHistory: s.appendQueryToHistory,
+      })),
+    );
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
