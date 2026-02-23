@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -31,6 +33,11 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
+}
+
 describe("DataStreamsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,7 +64,12 @@ describe("DataStreamsPage", () => {
       });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
 
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
     await user.click(screen.getByRole("button", { name: /refresh/i }));
@@ -70,7 +82,7 @@ describe("DataStreamsPage", () => {
     expect(useDashboardStore.getState().discoverQueryDraft).toBe(
       "FROM logs-b | SORT @timestamp DESC | LIMIT 50",
     );
-    expect(useDashboardStore.getState().currentPage).toBe("discover");
+    expect(screen.getByTestId("location")).toHaveTextContent("/discover");
   });
 
   it("hides system streams (dot-prefixed) by default", async () => {
@@ -90,7 +102,11 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findAllByText("logs-a");
     const logsRow = screen.getByRole("button", { name: /logs-a/i });
@@ -115,7 +131,11 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findAllByText("logs-a");
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
@@ -135,7 +155,11 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     // The detail heading should show the first *visible* stream (logs-a), not the hidden one
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
@@ -153,7 +177,11 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
     await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
@@ -177,7 +205,11 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findByText("No data streams found.");
     expect(screen.getByText("Select a data stream.")).toBeInTheDocument();
@@ -199,7 +231,11 @@ describe("DataStreamsPage", () => {
       .mockReturnValueOnce(firstFields.promise)
       .mockReturnValueOnce(secondFields.promise);
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
     await user.click(screen.getByText("logs-b"));
