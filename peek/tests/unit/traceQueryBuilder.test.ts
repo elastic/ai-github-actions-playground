@@ -263,8 +263,18 @@ describe("buildTraceSearchQueryParts", () => {
 describe("buildTraceTimeseriesQuery", () => {
   it("generates a STATS aggregation with BUCKET", () => {
     const query = buildTraceTimeseriesQuery(EMPTY_FILTERS);
-    expect(query).toContain("STATS count = COUNT(*)");
-    expect(query).toContain("BUCKET(@timestamp");
+    expect(query).toContain("request_count = COUNT(*)");
+    expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
+    expect(query).toContain("p95_latency_ms = PERCENTILE(duration_ms, 95)");
+    expect(query).toContain("BUCKET(@timestamp, 50, NOW() - 1 day, NOW())");
+  });
+
+  it("accepts custom from/to time range", () => {
+    const query = buildTraceTimeseriesQuery(EMPTY_FILTERS, DEFAULT_FIELD_MAPPING, {
+      from: "NOW() - 7 days",
+      to: "NOW()",
+    });
+    expect(query).toContain("BUCKET(@timestamp, 50, NOW() - 7 days, NOW())");
   });
 
   it("does not include SORT or LIMIT from the base query", () => {
