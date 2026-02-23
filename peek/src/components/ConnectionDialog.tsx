@@ -22,6 +22,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
@@ -31,18 +32,37 @@ import type { ElasticsearchConnection } from "../types";
 type AuthType = "apiKey" | "userpass";
 
 export default function ConnectionDialog() {
-  const open = useUIStore((s) => s.connectionDialogOpen);
-  const setOpen = useUIStore((s) => s.setConnectionDialogOpen);
-  const savedConn = useConnectionStore((s) => s.connection);
-  const setConnection = useConnectionStore((s) => s.setConnection);
-  const setConnected = useConnectionStore((s) => s.setConnected);
-  const setCapabilities = useConnectionStore((s) => s.setCapabilities);
-  const connectionProfiles = useConnectionStore((s) => s.connectionProfiles);
-  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
-  const saveConnectionProfile = useConnectionStore((s) => s.saveConnectionProfile);
-  const deleteConnectionProfile = useConnectionStore((s) => s.deleteConnectionProfile);
-  const renameConnectionProfile = useConnectionStore((s) => s.renameConnectionProfile);
-  const setActiveProfileId = useConnectionStore((s) => s.setActiveProfileId);
+  const { connectionDialogOpen: open, setConnectionDialogOpen: setOpen } = useUIStore(
+    useShallow((s) => ({
+      connectionDialogOpen: s.connectionDialogOpen,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+    })),
+  );
+  const {
+    connection: savedConn,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    connectionProfiles,
+    activeProfileId,
+    saveConnectionProfile,
+    deleteConnectionProfile,
+    renameConnectionProfile,
+    setActiveProfileId,
+  } = useConnectionStore(
+    useShallow((s) => ({
+      connection: s.connection,
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+      connectionProfiles: s.connectionProfiles,
+      activeProfileId: s.activeProfileId,
+      saveConnectionProfile: s.saveConnectionProfile,
+      deleteConnectionProfile: s.deleteConnectionProfile,
+      renameConnectionProfile: s.renameConnectionProfile,
+      setActiveProfileId: s.setActiveProfileId,
+    })),
+  );
 
   const initialAuthType: AuthType = savedConn?.username ? "userpass" : "apiKey";
 

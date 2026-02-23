@@ -3,9 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
 const getClusterHealthMock = vi.fn();
@@ -49,7 +48,7 @@ const CLUSTER_INFO = {
 describe("ClusterOverviewPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });

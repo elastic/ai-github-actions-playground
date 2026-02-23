@@ -7,7 +7,7 @@ import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
 
@@ -51,7 +51,7 @@ describe("PanelEditor", () => {
   beforeEach(() => {
     queryMock.mockReset();
     queryMock.mockResolvedValue({ columns: [], values: [], executionTimeMs: 1 });
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     useConnectionStore
       .getState()
       .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });

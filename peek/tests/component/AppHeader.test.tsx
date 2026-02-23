@@ -4,9 +4,8 @@ import { MemoryRouter } from "react-router-dom";
 
 import AppHeader from "../../src/components/AppHeader";
 import { PAGE_MANIFEST } from "../../src/routes/manifest";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -23,7 +22,7 @@ describe("AppHeader", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     // Set connected so the dashboard title and controls are visible
     useConnectionStore.getState().setConnected(true);
   });
@@ -106,7 +105,7 @@ describe("AppHeader profile health badges", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     useConnectionStore.getState().setConnected(true);
   });
 

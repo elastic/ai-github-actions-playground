@@ -3,10 +3,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ConnectionDialog from "../../src/components/ConnectionDialog";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
 const getCapabilitiesMock = vi.fn();
@@ -34,7 +33,7 @@ describe("ConnectionDialog", () => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     // Open the dialog for all tests
     useUIStore.getState().setConnectionDialogOpen(true);
   });

@@ -4,10 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
 
@@ -50,7 +49,7 @@ describe("DiscoverPage", () => {
       values: [["2025-06-15T12:00:00.000Z"]],
       executionTimeMs: 1,
     });
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     useConnectionStore
       .getState()
       .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });

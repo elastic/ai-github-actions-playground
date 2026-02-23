@@ -39,7 +39,6 @@ export const useQueryStore = create<QueryState>()(
     {
       name: STORE_NAME,
       partialize: (state) => ({
-        discoverQueryDraft: state.discoverQueryDraft,
         queryHistory: state.queryHistory,
       }),
     },

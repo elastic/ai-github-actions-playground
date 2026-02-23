@@ -19,6 +19,7 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -38,12 +39,20 @@ function useCommands(): Command[] {
   const navigate = useNavigate();
   const location = useLocation();
   const connected = useConnectionStore((s) => s.connected);
-  const themeMode = useUIStore((s) => s.themeMode);
-  const queryHistory = useQueryStore((s) => s.queryHistory);
-  const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
-  const setThemeMode = useUIStore((s) => s.setThemeMode);
-  const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const { themeMode, setConnectionDialogOpen, setThemeMode, setCommandPaletteOpen } = useUIStore(
+    useShallow((s) => ({
+      themeMode: s.themeMode,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+      setThemeMode: s.setThemeMode,
+      setCommandPaletteOpen: s.setCommandPaletteOpen,
+    })),
+  );
+  const { queryHistory, setDiscoverQueryDraft } = useQueryStore(
+    useShallow((s) => ({
+      queryHistory: s.queryHistory,
+      setDiscoverQueryDraft: s.setDiscoverQueryDraft,
+    })),
+  );
 
   return useMemo(() => {
     const commands: Command[] = [];

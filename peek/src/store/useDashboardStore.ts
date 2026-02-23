@@ -5,10 +5,6 @@ import type { DashboardDefinition, DashboardParameter, PanelDefinition, TimeRang
 import { dashboardDefinitionSchema } from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
 
-import { useConnectionStore } from "./useConnectionStore";
-import { useUIStore } from "./useUIStore";
-import { useQueryStore } from "./useQueryStore";
-
 export { createDefaultDashboard };
 
 interface DashboardState {
@@ -35,7 +31,6 @@ interface DashboardState {
   importDashboard: (json: string) => { success: boolean; error?: string };
   loadDefaultDashboard: () => void;
   resetDashboardState: () => void;
-  resetState: () => void;
 }
 
 const STORE_NAME = "elastic-peek-dashboard";
@@ -237,14 +232,6 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       resetDashboardState: () => {
-        localStorage.removeItem(STORE_NAME);
-        set({ dashboard: createDefaultDashboard() });
-      },
-
-      resetState: () => {
-        useConnectionStore.getState().resetConnectionState();
-        useUIStore.getState().resetUIState();
-        useQueryStore.getState().resetQueryState();
         localStorage.removeItem(STORE_NAME);
         set({ dashboard: createDefaultDashboard() });
       },

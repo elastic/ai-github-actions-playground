@@ -7,7 +7,7 @@ import ExplorePage from "../../src/components/ExplorePage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const { queryMock, listFieldsMock } = vi.hoisted(() => ({
   queryMock: vi.fn().mockResolvedValue({
@@ -42,7 +42,7 @@ describe("ExplorePage", () => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     useExplorerStore.getState().reset();
     useConnectionStore
       .getState()
