@@ -17,3 +17,5 @@ Stat — a single large number, ideal for KPIs and counters.
 Gauge — a value shown on a radial gauge with configurable min/max range.
 
 Table — raw tabular output, useful for detailed inspection of query results.
+
+Markdown — free-form text panel rendered as Markdown. Content is entered directly in the panel text field and is not driven by an ES|QL query.
