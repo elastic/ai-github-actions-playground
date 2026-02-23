@@ -94,6 +94,10 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
+    expect(screen.getByRole("button", { name: /fleet/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     expect(screen.getByRole("button", { name: /users/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
@@ -149,6 +153,16 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /cluster overview/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
+  });
+
+  it("navigates to Fleet when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /fleet/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/fleet");
   });
 
   it("navigates to Users when clicked while connected", async () => {

@@ -1,7 +1,7 @@
 PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run
-.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-harness-up otel-harness-down otel-harness-logs otel-cloud-up otel-cloud-down otel-cloud-logs
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-harness-up otel-harness-down otel-harness-logs otel-cloud-up otel-cloud-down otel-cloud-logs fleet-harness-up fleet-harness-down fleet-harness-logs
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -30,6 +30,9 @@ help:
 	@echo "  otel-cloud-up    - Send OTel data to a remote Elastic cluster (set ES_URL, ES_API_KEY)"
 	@echo "  otel-cloud-down  - Stop remote OTel harness"
 	@echo "  otel-cloud-logs  - Tail remote OTel collector logs"
+	@echo "  fleet-harness-up - Start Fleet Server + enrolled agents harness"
+	@echo "  fleet-harness-down - Stop and remove Fleet harness"
+	@echo "  fleet-harness-logs - Tail Fleet Server logs"
 
 setup:
 	@echo "Installing dependencies..."
@@ -142,3 +145,23 @@ otel-cloud-down:
 
 otel-cloud-logs:
 	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml logs -f otel-collector
+
+fleet-harness-up:
+	@echo "Starting Fleet Server harness (ES + Kibana + Fleet Server + 2 agents)..."
+	@echo "  This takes 3-5 minutes for all services to initialize."
+	@docker compose -f docker-compose.fleet-harness.yml up -d
+	@echo ""
+	@echo "Services:"
+	@echo "  Elasticsearch: http://localhost:9220  (elastic / changeme)"
+	@echo "  Kibana:        http://localhost:5601   (elastic / changeme)"
+	@echo "  Fleet Server:  http://localhost:8220"
+	@echo ""
+	@echo "Connect Peek to: http://localhost:9220 with user 'elastic', password 'changeme'"
+
+fleet-harness-down:
+	@echo "Stopping Fleet Server harness..."
+	@docker compose -f docker-compose.fleet-harness.yml down -v
+	@echo "✓ Fleet harness stopped."
+
+fleet-harness-logs:
+	@docker compose -f docker-compose.fleet-harness.yml logs -f fleet-server
