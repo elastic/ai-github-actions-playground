@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import type { EsqlResponse } from "../../src/types";
 import {
   filterColumnsByName,
@@ -8,6 +9,7 @@ import {
   splitEsqlPipeline,
   toCsv,
   applyEsqlSort,
+  buildColumnInsightsQuery,
 } from "../../src/components/discoverUtils";
 
 function createLargeResult(rowCount = 1000, columnCount = 500): EsqlResponse {
@@ -261,5 +263,68 @@ describe("applyEsqlSort", () => {
     expect(applyEsqlSort("FROM logs-*", "@timestamp", "asc")).toBe(
       "FROM logs-* | SORT @timestamp ASC",
     );
+  });
+});
+
+describe("buildColumnInsightsQuery", () => {
+  it("generates a STATS min/max/avg query for a numeric column", () => {
+    expect(buildColumnInsightsQuery("FROM logs-* | LIMIT 50", "count", "long")).toBe(
+      "FROM logs-* | STATS MIN(count) AS min_value, MAX(count) AS max_value, AVG(count) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(count) AS null_count",
+    );
+  });
+
+  it("generates a top-N values query for a keyword column", () => {
+    expect(buildColumnInsightsQuery("FROM logs-* | LIMIT 50", "status", "keyword")).toBe(
+      "FROM logs-* | STATS count = COUNT(*) BY status | SORT count DESC | LIMIT 10",
+    );
+  });
+
+  it("generates a top-N values query for a text column", () => {
+    expect(buildColumnInsightsQuery("FROM logs-*", "message", "text")).toBe(
+      "FROM logs-* | STATS count = COUNT(*) BY message | SORT count DESC | LIMIT 10",
+    );
+  });
+
+  it("strips existing SORT and LIMIT steps from the base query", () => {
+    expect(
+      buildColumnInsightsQuery("FROM logs-* | SORT @timestamp DESC | LIMIT 50", "count", "long"),
+    ).toBe(
+      "FROM logs-* | STATS MIN(count) AS min_value, MAX(count) AS max_value, AVG(count) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(count) AS null_count",
+    );
+  });
+
+  it("strips existing STATS steps from the base query", () => {
+    expect(
+      buildColumnInsightsQuery(
+        "FROM logs-* | STATS AVG(response_time) BY service",
+        "response_time",
+        "double",
+      ),
+    ).toBe(
+      "FROM logs-* | STATS MIN(response_time) AS min_value, MAX(response_time) AS max_value, AVG(response_time) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(response_time) AS null_count",
+    );
+  });
+
+  it("preserves WHERE filters in the base query", () => {
+    expect(
+      buildColumnInsightsQuery(
+        'FROM logs-* | WHERE level == "error" | LIMIT 50',
+        "count",
+        "integer",
+      ),
+    ).toBe(
+      'FROM logs-* | WHERE level == "error" | STATS MIN(count) AS min_value, MAX(count) AS max_value, AVG(count) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(count) AS null_count',
+    );
+  });
+
+  it("quotes column names that contain special characters", () => {
+    expect(buildColumnInsightsQuery("FROM logs-*", "field name", "keyword")).toBe(
+      "FROM logs-* | STATS count = COUNT(*) BY `field name` | SORT count DESC | LIMIT 10",
+    );
+  });
+
+  it("returns an empty string for a blank base query", () => {
+    expect(buildColumnInsightsQuery("", "count", "long")).toBe("");
+    expect(buildColumnInsightsQuery("   ", "count", "long")).toBe("");
   });
 });

@@ -32,11 +32,18 @@ import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { buildQueryParams } from "../services/datemath";
 
-import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./discoverUtils";
+import {
+  filterColumnsByName,
+  filterEsqlResult,
+  toCsv,
+  applyEsqlSort,
+  buildColumnInsightsQuery,
+} from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
+import ColumnInsightsFlyout from "./visualizations/ColumnInsightsFlyout";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -87,6 +94,12 @@ export default function DiscoverPage() {
   const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
 
+  const [profiledColumn, setProfiledColumn] = useState<{
+    name: string;
+    type: string;
+  } | null>(null);
+  const [profileData, setProfileData] = useState<EsqlResponse | null>(null);
+
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
       const body: EsqlQueryParams = { query: queryText };
@@ -124,6 +137,32 @@ export default function DiscoverPage() {
     },
     onFailure: () => setResult(null),
   });
+
+  const {
+    runQuery: runProfileQuery,
+    loading: profileLoading,
+    error: profileError,
+  } = useEsqlQuery({
+    connection,
+    buildRequest,
+    onSuccess: (data) => {
+      setProfileData(data);
+    },
+    onFailure: () => {
+      setProfileData(null);
+    },
+  });
+
+  const handleProfileColumn = useCallback(
+    (columnName: string, columnType: string) => {
+      const insightsQuery = buildColumnInsightsQuery(effectiveQuery, columnName, columnType);
+      if (!insightsQuery) return;
+      setProfiledColumn({ name: columnName, type: columnType });
+      setProfileData(null);
+      void runProfileQuery(insightsQuery);
+    },
+    [effectiveQuery, runProfileQuery],
+  );
 
   const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
   const handleQueryChange = useCallback(
@@ -491,6 +530,7 @@ export default function DiscoverPage() {
               onRemoveColumn={toggleField}
               currentSort={currentSort}
               onSortChange={handleSortChange}
+              onProfileColumn={handleProfileColumn}
             />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
@@ -509,6 +549,17 @@ export default function DiscoverPage() {
           )}
         </Paper>
       </Box>
+      {profiledColumn && (
+        <ColumnInsightsFlyout
+          open={profiledColumn !== null}
+          onClose={() => setProfiledColumn(null)}
+          columnName={profiledColumn.name}
+          columnType={profiledColumn.type}
+          loading={profileLoading}
+          error={profileError}
+          data={profileData}
+        />
+      )}
     </Box>
   );
 }

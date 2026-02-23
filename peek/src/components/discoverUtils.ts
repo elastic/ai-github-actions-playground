@@ -1,5 +1,7 @@
 import type { EsqlColumn, EsqlResponse } from "../types";
 
+import { isNumericType } from "./visualizations/chartUtils";
+
 export function filterEsqlResult(
   result: EsqlResponse | null,
   selectedFields: Set<string>,
@@ -168,6 +170,48 @@ function quoteEsqlIdentifier(name: string): string {
   if (/^[A-Za-z_@][A-Za-z0-9_@.]*$/.test(name)) return name;
   // Escape backslashes first, then backticks, to produce a valid backtick-quoted identifier.
   return "`" + name.replace(/\\/g, "\\\\").replace(/`/g, "\\`") + "`";
+}
+
+/** Maximum number of top values returned by a keyword column insights query. */
+const COLUMN_INSIGHTS_TOP_N = 10;
+
+/**
+ * Builds an ES|QL query to profile a specific column's value distribution.
+ *
+ * For numeric columns: returns min / max / avg / total_count / null_count statistics.
+ * For all other column types: returns the top-N values with their occurrence counts.
+ *
+ * Any existing SORT, LIMIT, and STATS steps are stripped from the base query so that
+ * the profiling runs over all matching documents rather than a paginated slice.
+ */
+export function buildColumnInsightsQuery(
+  baseQuery: string,
+  columnName: string,
+  columnType: string,
+): string {
+  const steps = splitEsqlPipeline(baseQuery);
+  if (steps.length === 0) return "";
+
+  // Strip SORT, LIMIT, and STATS steps so the profile query covers all matching documents.
+  const filteredSteps = steps.filter(
+    (s) => !/^SORT\s+/i.test(s) && !/^LIMIT\s+/i.test(s) && !/^STATS\s+/i.test(s),
+  );
+
+  const quotedCol = quoteEsqlIdentifier(columnName);
+
+  if (isNumericType(columnType)) {
+    return [
+      ...filteredSteps,
+      `STATS MIN(${quotedCol}) AS min_value, MAX(${quotedCol}) AS max_value, AVG(${quotedCol}) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(${quotedCol}) AS null_count`,
+    ].join(" | ");
+  }
+
+  return [
+    ...filteredSteps,
+    `STATS count = COUNT(*) BY ${quotedCol}`,
+    "SORT count DESC",
+    `LIMIT ${COLUMN_INSIGHTS_TOP_N}`,
+  ].join(" | ");
 }
 
 /**

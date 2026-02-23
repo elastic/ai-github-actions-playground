@@ -47,6 +47,7 @@ interface Props {
   onRemoveColumn?: (name: string) => void;
   currentSort?: SortState | null;
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
+  onProfileColumn?: (columnName: string, columnType: string) => void;
 }
 
 export default function DataTable({
@@ -56,6 +57,7 @@ export default function DataTable({
   onRemoveColumn,
   currentSort,
   onSortChange,
+  onProfileColumn,
 }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -391,6 +393,20 @@ export default function DataTable({
         row={inspectedRow}
       />
       <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
+        <MenuItem
+          disabled={!onProfileColumn}
+          onClick={() => {
+            if (menuColumnIndex !== null && onProfileColumn) {
+              const col = data.columns[menuColumnIndex];
+              if (col) {
+                onProfileColumn(col.name, col.type);
+              }
+            }
+            closeMenu();
+          }}
+        >
+          Profile column
+        </MenuItem>
         <MenuItem
           disabled={!onSortChange}
           onClick={() => {
