@@ -45,6 +45,7 @@ import type { EsqlResponse } from "../types";
 
 import MetricSearch from "./MetricSearch";
 import MetricOverviewGrid from "./MetricOverviewGrid";
+import DimensionOverviewGrid from "./DimensionOverviewGrid";
 import DimensionSidebar from "./DimensionSidebar";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
 
@@ -138,8 +139,12 @@ export default function ExplorePage() {
     [fields, selectedMetric],
   );
 
+  const [skipDimensionOverview, setSkipDimensionOverview] = useState(false);
+
   // Show namespace overview when a namespace is picked but no single metric is selected.
   const showOverview = selectedNamespace !== null && !selectedMetric;
+  // Show dimension overview when a metric is selected but no groupBy is set yet.
+  const showDimensionOverview = selectedMetric !== null && !groupBy && !skipDimensionOverview;
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
@@ -287,17 +292,38 @@ export default function ExplorePage() {
         const mt = field.metricType === "counter" ? "counter" : "gauge";
         setSelectedMetric(field.name, mt);
         setSelectedNamespace(metricNamespaceOf(field.name));
+        setGroupBy(null);
+        setSkipDimensionOverview(false);
       } else {
         setSelectedMetric(null);
       }
     },
-    [setSelectedMetric],
+    [setSelectedMetric, setGroupBy],
   );
 
   const handleBackToOverview = useCallback(() => {
     setSelectedMetric(null);
+    setGroupBy(null);
+    setSkipDimensionOverview(false);
     setQueryResult({ status: "idle" });
-  }, [setSelectedMetric, setQueryResult]);
+  }, [setSelectedMetric, setGroupBy, setQueryResult]);
+
+  const handleDimensionSelect = useCallback(
+    (dimensionField: string) => {
+      setGroupBy(dimensionField);
+    },
+    [setGroupBy],
+  );
+
+  const handleBackToDimensionOverview = useCallback(() => {
+    setGroupBy(null);
+    setSkipDimensionOverview(false);
+    setQueryResult({ status: "idle" });
+  }, [setGroupBy, setQueryResult]);
+
+  const handleViewUngrouped = useCallback(() => {
+    setSkipDimensionOverview(true);
+  }, []);
 
   const handleEditInDiscover = useCallback(() => {
     if (queryResult.esql) {
@@ -368,8 +394,8 @@ export default function ExplorePage() {
             />
           </Box>
 
-          {/* Aggregation selector — only in detail mode */}
-          {selectedMetric && (
+          {/* Aggregation selector — only in full detail mode */}
+          {selectedMetric && !showDimensionOverview && (
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Aggregation</InputLabel>
               <Select
@@ -387,8 +413,8 @@ export default function ExplorePage() {
           )}
         </Box>
 
-        {/* Active filters — detail mode only */}
-        {selectedMetric && filters.length > 0 && (
+        {/* Active filters — full detail mode only */}
+        {selectedMetric && !showDimensionOverview && filters.length > 0 && (
           <Box sx={{ display: "flex", gap: 0.5, mt: 1, flexWrap: "wrap", alignItems: "center" }}>
             <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
               Filters:
@@ -409,8 +435,8 @@ export default function ExplorePage() {
           </Box>
         )}
 
-        {/* Group by indicator — detail mode only */}
-        {selectedMetric && groupBy && (
+        {/* Group by indicator — full detail mode only */}
+        {selectedMetric && !showDimensionOverview && groupBy && (
           <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, alignItems: "center" }}>
             <Typography variant="caption" color="text.secondary">
               Split by:
@@ -424,8 +450,8 @@ export default function ExplorePage() {
           </Box>
         )}
 
-        {/* Action buttons — detail mode only */}
-        {selectedMetric && (
+        {/* Action buttons — full detail mode only */}
+        {selectedMetric && !showDimensionOverview && (
           <Box sx={{ display: "flex", gap: 1, mt: 1, alignItems: "center" }}>
             <Tooltip title="View generated ES|QL query">
               <IconButton
@@ -472,8 +498,10 @@ export default function ExplorePage() {
           </Box>
         )}
 
-        {/* ES|QL display — detail mode only */}
-        <Collapse in={selectedMetric !== null && showEsql && !!queryResult.esql}>
+        {/* ES|QL display — full detail mode only */}
+        <Collapse
+          in={selectedMetric !== null && !showDimensionOverview && showEsql && !!queryResult.esql}
+        >
           <Paper
             variant="outlined"
             sx={{
@@ -505,10 +533,10 @@ export default function ExplorePage() {
         </Alert>
       )}
 
-      {/* Content area: dimension sidebar + chart / overview grid */}
+      {/* Content area: dimension sidebar + chart / overview grids */}
       <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>
-        {/* Dimension sidebar — only show when a single metric is selected */}
-        {selectedMetric && (
+        {/* Dimension sidebar — only show in full detail mode */}
+        {selectedMetric && !showDimensionOverview && (
           <DimensionSidebar
             fields={fields}
             client={client}
@@ -520,7 +548,7 @@ export default function ExplorePage() {
           />
         )}
 
-        {/* Overview grid — shown when a namespace is selected but no metric */}
+        {/* Namespace overview grid */}
         {showOverview && (
           <Paper
             variant="outlined"
@@ -537,17 +565,42 @@ export default function ExplorePage() {
           </Paper>
         )}
 
-        {/* Chart area — shown when a single metric is selected */}
-        {!showOverview && (
+        {/* Dimension overview grid — metric selected, no groupBy yet */}
+        {showDimensionOverview && (
           <Paper
             variant="outlined"
             sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
           >
-            {/* Back to overview button */}
+            <DimensionOverviewGrid
+              fields={fields}
+              metricField={selectedMetric}
+              metricType={metricType}
+              metricNamespace={selectedMetricNamespace}
+              indexPattern={indexPattern}
+              timeRange={dashboard.timeRange}
+              client={client}
+              onSelectDimension={handleDimensionSelect}
+              onBackToOverview={handleBackToOverview}
+              onViewUngrouped={handleViewUngrouped}
+            />
+          </Paper>
+        )}
+
+        {/* Full detail chart area */}
+        {!showOverview && !showDimensionOverview && (
+          <Paper
+            variant="outlined"
+            sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
+          >
+            {/* Back button — goes to dimension overview */}
             {selectedMetric && selectedNamespace && (
               <Box sx={{ px: 1.5, pt: 1 }}>
-                <Button size="small" startIcon={<ArrowBackIcon />} onClick={handleBackToOverview}>
-                  Back to {selectedNamespace} overview
+                <Button
+                  size="small"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={handleBackToDimensionOverview}
+                >
+                  Back to dimensions
                 </Button>
               </Box>
             )}

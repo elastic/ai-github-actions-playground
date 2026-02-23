@@ -3,10 +3,15 @@ import { describe, it, expect } from "vitest";
 import {
   buildExplorerQuery,
   buildOverviewQuery,
+  buildDimensionOverviewQuery,
   getDefaultAggregation,
   getAggregationOptions,
 } from "../../src/services/es/queryBuilder";
-import type { ExplorerQuery, OverviewQuery } from "../../src/services/es/queryBuilder";
+import type {
+  ExplorerQuery,
+  OverviewQuery,
+  DimensionOverviewQuery,
+} from "../../src/services/es/queryBuilder";
 
 function makeQuery(overrides: Partial<ExplorerQuery> = {}): ExplorerQuery {
   return {
@@ -246,5 +251,59 @@ describe("buildOverviewQuery", () => {
     expect(result.esql).not.toContain("GROUP BY");
     expect(result.esql).not.toContain("LIKE");
     expect(result.esql).not.toContain("==");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildDimensionOverviewQuery
+// ---------------------------------------------------------------------------
+
+function makeDimensionQuery(
+  overrides: Partial<DimensionOverviewQuery> = {},
+): DimensionOverviewQuery {
+  return {
+    indexPattern: "metrics-*",
+    metricField: "system.cpu.total.pct",
+    metricType: "gauge",
+    dimensionField: "host.name",
+    timeRange: { from: "now-1h", to: "now" },
+    ...overrides,
+  };
+}
+
+describe("buildDimensionOverviewQuery", () => {
+  it("builds a query grouped by the dimension field", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery());
+    expect(result.esql).toContain("FROM metrics-*");
+    expect(result.esql).toContain("AVG(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("BUCKET(@timestamp, 20,");
+    expect(result.esql).toContain(", `host.name`");
+    expect(result.esql).toContain("SORT timestamp");
+  });
+
+  it("uses count aggregation for counter metrics", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ metricType: "counter" }));
+    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+  });
+
+  it("escapes dimension field with backticks", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ dimensionField: "dim`field" }));
+    expect(result.esql).toContain(", `dim``field`");
+  });
+
+  it("uses custom bucket count", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ bucketCount: 10 }));
+    expect(result.esql).toContain("BUCKET(@timestamp, 10,");
+  });
+
+  it("returns a meaningful y-axis label", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery());
+    expect(result.yAxisLabel).toBe("Avg pct");
+  });
+
+  it("includes time range placeholders", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery());
+    expect(result.esql).toContain("?_tstart");
+    expect(result.esql).toContain("?_tend");
   });
 });
