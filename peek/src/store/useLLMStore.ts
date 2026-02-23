@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import { persist, type StorageValue } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+
+import { createSplitSecretStorage } from "./createSplitSecretStorage";
 
 export type LLMProvider = "openai" | "openrouter";
 
@@ -51,41 +53,25 @@ const LLM_API_KEY_SESSION_KEY = "elastic-peek-llm:apiKey";
  */
 type PersistedLLMState = { config?: LLMConfig };
 
-const llmSplitStorage = {
-  getItem: (name: string): StorageValue<PersistedLLMState> | null => {
-    const localRaw = localStorage.getItem(name);
-    if (!localRaw) return null;
-    try {
-      const stored = JSON.parse(localRaw) as StorageValue<PersistedLLMState>;
-      const apiKey = sessionStorage.getItem(LLM_API_KEY_SESSION_KEY) ?? "";
-      if (!stored || !stored.state) {
-        return null;
-      }
-      if (stored.state.config) {
-        stored.state.config = { ...stored.state.config, apiKey };
-      }
-      return stored;
-    } catch {
-      return null;
+const llmSplitStorage = createSplitSecretStorage<PersistedLLMState>({
+  restoreSecrets: (_name, state) => {
+    const apiKey = sessionStorage.getItem(LLM_API_KEY_SESSION_KEY) ?? "";
+    if (state.config) {
+      return { ...state, config: { ...state.config, apiKey } };
     }
+    return state;
   },
-  setItem: (name: string, value: StorageValue<PersistedLLMState>): void => {
-    const apiKey = value.state.config?.apiKey ?? "";
-    const toStore: StorageValue<PersistedLLMState> = {
-      ...value,
-      state: {
-        ...value.state,
-        config: value.state.config ? { ...value.state.config, apiKey: "" } : value.state.config,
-      },
-    };
-    localStorage.setItem(name, JSON.stringify(toStore));
-    sessionStorage.setItem(LLM_API_KEY_SESSION_KEY, apiKey);
+  persistSecrets: (_name, state) => {
+    sessionStorage.setItem(LLM_API_KEY_SESSION_KEY, state.config?.apiKey ?? "");
   },
-  removeItem: (name: string): void => {
-    localStorage.removeItem(name);
+  stripSecrets: (state) => ({
+    ...state,
+    config: state.config ? { ...state.config, apiKey: "" } : state.config,
+  }),
+  clearSecrets: () => {
     sessionStorage.removeItem(LLM_API_KEY_SESSION_KEY);
   },
-};
+});
 
 export const useLLMStore = create<LLMState>()(
   persist(
