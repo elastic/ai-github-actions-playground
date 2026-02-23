@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "vitest-axe";
 
 import QueryProfilePanel from "../../src/components/QueryProfilePanel";
 
@@ -34,6 +35,12 @@ const SAMPLE_PROFILE = {
 };
 
 describe("QueryProfilePanel", () => {
+  it("has no accessibility violations", async () => {
+    const { container } = render(<QueryProfilePanel profile={SAMPLE_PROFILE} />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
+
   it("renders the panel header", () => {
     render(<QueryProfilePanel profile={SAMPLE_PROFILE} />);
     expect(screen.getByText("Query Profile")).toBeInTheDocument();

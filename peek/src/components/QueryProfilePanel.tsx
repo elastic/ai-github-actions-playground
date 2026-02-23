@@ -74,15 +74,22 @@ function DriverRow({ driver, index }: DriverRowProps) {
   return (
     <Box>
       <Box
+        component="button"
+        type="button"
         sx={{
           display: "flex",
           alignItems: "center",
+          width: "100%",
           px: 1.5,
           py: 0.75,
+          border: 0,
+          bgcolor: "transparent",
+          textAlign: "left",
           cursor: "pointer",
           "&:hover": { bgcolor: "action.hover" },
         }}
         onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
       >
         <ExpandMoreIcon
           fontSize="small"
