@@ -275,13 +275,13 @@ describe("buildColumnInsightsQuery", () => {
 
   it("generates a top-N values query for a keyword column", () => {
     expect(buildColumnInsightsQuery("FROM logs-* | LIMIT 50", "status", "keyword")).toBe(
-      "FROM logs-* | LIMIT 500 | STATS count = COUNT(*) BY status | SORT count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY status | SORT value_count DESC | LIMIT 10",
     );
   });
 
   it("generates a top-N values query for a text column", () => {
     expect(buildColumnInsightsQuery("FROM logs-*", "message", "text")).toBe(
-      "FROM logs-* | LIMIT 500 | STATS count = COUNT(*) BY message | SORT count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY message | SORT value_count DESC | LIMIT 10",
     );
   });
 
@@ -313,7 +313,7 @@ describe("buildColumnInsightsQuery", () => {
         "keyword",
       ),
     ).toBe(
-      "FROM logs-* | LIMIT 500 | STATS count = COUNT(*) BY status | SORT count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY status | SORT value_count DESC | LIMIT 10",
     );
   });
 
@@ -331,7 +331,7 @@ describe("buildColumnInsightsQuery", () => {
 
   it("quotes column names that contain special characters", () => {
     expect(buildColumnInsightsQuery("FROM logs-*", "field name", "keyword")).toBe(
-      "FROM logs-* | LIMIT 500 | STATS count = COUNT(*) BY `field name` | SORT count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY `field name` | SORT value_count DESC | LIMIT 10",
     );
   });
 

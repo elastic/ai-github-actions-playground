@@ -9,7 +9,7 @@ import { setLastQueryError, setLastQueryResult } from "../components/llmCompleti
 interface UseEsqlQueryOptions {
   connection: ElasticsearchConnection | null;
   onSuccess: (data: EsqlResponse, executedQuery: string) => void;
-  onFailure?: () => void;
+  onFailure?: (failedQuery: string) => void;
   buildRequest?: (queryText: string) => EsqlQueryParams;
   queryContextView?: EditorView | null;
   /** When true, sends `profile: true` in the request and exposes the profile payload. */
@@ -63,9 +63,9 @@ export function useEsqlQuery({
       setLoading(true);
       setActiveStep(stepIndex);
       setError(null);
+      const trimmedQuery = queryText.trim();
       try {
         const client = new ElasticsearchClient(connection);
-        const trimmedQuery = queryText.trim();
         const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
         const finalRequest = profileMode ? { ...request, profile: true } : request;
         const data = await client.query(finalRequest, controller.signal);
@@ -109,7 +109,7 @@ export function useEsqlQuery({
           if (queryContextView) {
             setLastQueryError(errorMessage, queryContextView);
           }
-          onFailure?.();
+          onFailure?.(trimmedQuery);
         }
       }
       if (requestId === requestIdRef.current) {

@@ -124,7 +124,7 @@ describe("DiscoverPage", () => {
     queryMock.mockResolvedValueOnce({
       columns: [
         { name: "status", type: "keyword" },
-        { name: "count", type: "long" },
+        { name: "value_count", type: "long" },
       ],
       values: [
         ["ok", 100],
@@ -214,7 +214,7 @@ describe("DiscoverPage", () => {
     queryMock.mockResolvedValueOnce({
       columns: [
         { name: "status", type: "keyword" },
-        { name: "count", type: "long" },
+        { name: "value_count", type: "long" },
       ],
       values: [["ok", 100]],
       executionTimeMs: 1,
@@ -255,7 +255,7 @@ describe("DiscoverPage", () => {
     queryMock.mockResolvedValueOnce({
       columns: [
         { name: "status", type: "keyword" },
-        { name: "count", type: "long" },
+        { name: "value_count", type: "long" },
       ],
       values: [["ok", 100]],
       executionTimeMs: 1,

@@ -215,8 +215,8 @@ export function buildColumnInsightsQuery(
 
   return [
     ...sampledSteps,
-    `STATS count = COUNT(*) BY ${quotedCol}`,
-    "SORT count DESC",
+    `STATS value_count = COUNT(*) BY ${quotedCol}`,
+    "SORT value_count DESC",
     `LIMIT ${COLUMN_INSIGHTS_TOP_N}`,
   ].join(" | ");
 }

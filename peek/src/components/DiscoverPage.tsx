@@ -141,7 +141,6 @@ export default function DiscoverPage() {
   });
 
   const insightQueryToColumnRef = useRef(new Map<string, string>());
-  const latestInsightQueryRef = useRef<string | null>(null);
   const { runQuery: runInsightQuery } = useEsqlQuery({
     connection,
     buildRequest,
@@ -151,12 +150,10 @@ export default function DiscoverPage() {
       insightQueryToColumnRef.current.delete(executedQuery);
       setInsightsCache((prev) => ({ ...prev, [col]: { loading: false, error: null, data } }));
     },
-    onFailure: () => {
-      const latestQuery = latestInsightQueryRef.current;
-      if (!latestQuery) return;
-      const col = insightQueryToColumnRef.current.get(latestQuery);
+    onFailure: (failedQuery) => {
+      const col = insightQueryToColumnRef.current.get(failedQuery);
       if (!col) return;
-      insightQueryToColumnRef.current.delete(latestQuery);
+      insightQueryToColumnRef.current.delete(failedQuery);
       setInsightsCache((prev) => ({
         ...prev,
         [col]: { loading: false, error: "Query failed", data: null },
@@ -178,7 +175,6 @@ export default function DiscoverPage() {
       const insightsQuery = buildColumnInsightsQuery(effectiveQuery, columnName, columnType);
       if (!insightsQuery) return;
       insightQueryToColumnRef.current.set(insightsQuery, columnName);
-      latestInsightQueryRef.current = insightsQuery;
       setInsightsCache((prev) => ({
         ...prev,
         [columnName]: { loading: true, error: null, data: null },
@@ -200,7 +196,6 @@ export default function DiscoverPage() {
       setInsightsCache({});
       setExpandedInsight(null);
       insightQueryToColumnRef.current.clear();
-      latestInsightQueryRef.current = null;
     },
     [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
   );
@@ -629,7 +624,7 @@ export default function DiscoverPage() {
                                     (c) => c.name === col.name,
                                   );
                                   const cntIdx = insight.data!.columns.findIndex(
-                                    (c) => c.name === "count",
+                                    (c) => c.name === "value_count",
                                   );
                                   const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
                                   const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
