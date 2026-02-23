@@ -265,7 +265,7 @@ export default function AppHeader() {
                 Search commands…
               </Typography>
               <Chip
-                label="⌘K"
+                label="Ctrl/Cmd+K"
                 size="small"
                 variant="outlined"
                 sx={{ fontSize: "0.65rem", height: 20 }}
