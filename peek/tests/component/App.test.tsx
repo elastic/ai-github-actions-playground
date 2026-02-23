@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import App from "../../src/App";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -84,7 +85,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows navigation and keeps footer reset when connected", () => {
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     render(
       <MemoryRouter>
         <App />

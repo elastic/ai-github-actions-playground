@@ -36,7 +36,7 @@ describe("ConnectionDialog", () => {
     sessionStorage.clear();
     useDashboardStore.getState().resetState();
     // Open the dialog for all tests
-    useDashboardStore.getState().setConnectionDialogOpen(true);
+    useUIStore.getState().setConnectionDialogOpen(true);
   });
 
   it("renders URL and API key fields", () => {

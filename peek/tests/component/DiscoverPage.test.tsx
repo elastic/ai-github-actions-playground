@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
@@ -50,10 +51,10 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
     useDashboardStore.getState().resetState();
-    useDashboardStore
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
   });
 
   it("adds successful queries to history", async () => {
@@ -74,7 +75,7 @@ describe("DiscoverPage", () => {
 
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
-    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
     render(
       <MemoryRouter>
         <DiscoverPage />

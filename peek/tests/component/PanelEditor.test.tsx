@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 
 import PanelEditor from "../../src/components/PanelEditor";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
@@ -50,10 +52,10 @@ describe("PanelEditor", () => {
     queryMock.mockReset();
     queryMock.mockResolvedValue({ columns: [], values: [], executionTimeMs: 1 });
     useDashboardStore.getState().resetState();
-    useDashboardStore
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
     useDashboardStore
       .getState()
       .setTimeRange({ from: "2025-06-15T11:00:00.000Z", to: "2025-06-15T12:00:00.000Z" });
@@ -73,7 +75,7 @@ describe("PanelEditor", () => {
       visualization: "timeseries",
       layout: { x: 0, y: 0, w: 6, h: 4 },
     });
-    useDashboardStore.getState().setEditingPanelId(panelId);
+    useUIStore.getState().setEditingPanelId(panelId);
   });
 
   it("renders the visualization type toggle buttons", () => {
@@ -130,7 +132,7 @@ describe("PanelEditor", () => {
     await user.click(saveButton);
 
     // After save, editingPanelId should be cleared
-    expect(useDashboardStore.getState().editingPanelId).toBeNull();
+    expect(useUIStore.getState().editingPanelId).toBeNull();
     // Panel should still exist
     const panel = useDashboardStore.getState().dashboard.panels.find((p) => p.id === panelId);
     expect(panel).toBeDefined();
@@ -144,7 +146,7 @@ describe("PanelEditor", () => {
     const deleteButton = screen.getByRole("button", { name: /delete panel/i });
     await user.click(deleteButton);
 
-    expect(useDashboardStore.getState().editingPanelId).toBeNull();
+    expect(useUIStore.getState().editingPanelId).toBeNull();
     expect(
       useDashboardStore.getState().dashboard.panels.find((p) => p.id === panelId),
     ).toBeUndefined();
@@ -186,7 +188,7 @@ describe("PanelEditor", () => {
 
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
-    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
+    useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
     render(<PanelEditor />);
 
     await user.click(screen.getByRole("button", { name: /recent queries/i }));

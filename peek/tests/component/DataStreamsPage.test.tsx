@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
@@ -43,7 +44,7 @@ describe("DataStreamsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useDashboardStore.getState().resetState();
-    useDashboardStore
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });

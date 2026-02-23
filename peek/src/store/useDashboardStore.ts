@@ -1,16 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type {
-  ConnectionProfile,
-  DashboardDefinition,
-  DashboardParameter,
-  ElasticsearchConnection,
-  PanelDefinition,
-  ProfileHealth,
-  TimeRange,
-} from "../types";
-import type { UserCapabilities } from "../services/es";
+import type { DashboardDefinition, DashboardParameter, PanelDefinition, TimeRange } from "../types";
 import { dashboardDefinitionSchema } from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
 
@@ -22,36 +13,6 @@ export { createDefaultDashboard };
 
 interface DashboardState {
   dashboard: DashboardDefinition;
-
-  // Compatibility fields while consumers migrate to domain stores.
-  connection: ElasticsearchConnection | null;
-  connected: boolean;
-  capabilities: UserCapabilities | null;
-  connectionProfiles: ConnectionProfile[];
-  activeProfileId: string | null;
-  profileHealthMap: Record<string, ProfileHealth>;
-  themeMode: "light" | "dark";
-  editingPanelId: string | null;
-  connectionDialogOpen: boolean;
-  commandPaletteOpen: boolean;
-  discoverQueryDraft: string | null;
-  queryHistory: string[];
-
-  setConnection: (conn: ElasticsearchConnection) => void;
-  setConnected: (connected: boolean) => void;
-  setCapabilities: (caps: UserCapabilities | null) => void;
-  saveConnectionProfile: (name: string, connection: ElasticsearchConnection) => string | null;
-  deleteConnectionProfile: (id: string) => void;
-  renameConnectionProfile: (id: string, name: string) => void;
-  setActiveProfileId: (id: string | null) => void;
-  getConnectionProfile: (id: string) => ConnectionProfile | undefined;
-  setProfileHealth: (id: string, health: ProfileHealth) => void;
-  setThemeMode: (mode: "light" | "dark") => void;
-  setEditingPanelId: (id: string | null) => void;
-  setConnectionDialogOpen: (open: boolean) => void;
-  setCommandPaletteOpen: (open: boolean) => void;
-  setDiscoverQueryDraft: (query: string | null) => void;
-  appendQueryToHistory: (query: string) => void;
 
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
@@ -105,62 +66,6 @@ export const useDashboardStore = create<DashboardState>()(
   persist(
     (set, get) => ({
       dashboard: createDefaultDashboard(),
-
-      get connection() {
-        return useConnectionStore.getState().connection;
-      },
-      get connected() {
-        return useConnectionStore.getState().connected;
-      },
-      get capabilities() {
-        return useConnectionStore.getState().capabilities;
-      },
-      get connectionProfiles() {
-        return useConnectionStore.getState().connectionProfiles;
-      },
-      get activeProfileId() {
-        return useConnectionStore.getState().activeProfileId;
-      },
-      get profileHealthMap() {
-        return useConnectionStore.getState().profileHealthMap;
-      },
-      get themeMode() {
-        return useUIStore.getState().themeMode;
-      },
-      get editingPanelId() {
-        return useUIStore.getState().editingPanelId;
-      },
-      get connectionDialogOpen() {
-        return useUIStore.getState().connectionDialogOpen;
-      },
-      get commandPaletteOpen() {
-        return useUIStore.getState().commandPaletteOpen;
-      },
-      get discoverQueryDraft() {
-        return useQueryStore.getState().discoverQueryDraft;
-      },
-      get queryHistory() {
-        return useQueryStore.getState().queryHistory;
-      },
-
-      setConnection: (conn) => useConnectionStore.getState().setConnection(conn),
-      setConnected: (connected) => useConnectionStore.getState().setConnected(connected),
-      setCapabilities: (caps) => useConnectionStore.getState().setCapabilities(caps),
-      saveConnectionProfile: (name, connection) =>
-        useConnectionStore.getState().saveConnectionProfile(name, connection),
-      deleteConnectionProfile: (id) => useConnectionStore.getState().deleteConnectionProfile(id),
-      renameConnectionProfile: (id, name) =>
-        useConnectionStore.getState().renameConnectionProfile(id, name),
-      setActiveProfileId: (id) => useConnectionStore.getState().setActiveProfileId(id),
-      getConnectionProfile: (id) => useConnectionStore.getState().getConnectionProfile(id),
-      setProfileHealth: (id, health) =>
-        useConnectionStore.getState().setProfileHealth(id, health),
-      setThemeMode: (mode) => useUIStore.getState().setThemeMode(mode),
-      setEditingPanelId: (id) => useUIStore.getState().setEditingPanelId(id),
-      setConnectionDialogOpen: (open) => useUIStore.getState().setConnectionDialogOpen(open),
-      setCommandPaletteOpen: (open) => useUIStore.getState().setCommandPaletteOpen(open),
-      setDiscoverQueryDraft: (query) => useQueryStore.getState().setDiscoverQueryDraft(query),
-      appendQueryToHistory: (query) => useQueryStore.getState().appendQueryToHistory(query),
 
       setTimeRange: (range) =>
         set((s) => ({

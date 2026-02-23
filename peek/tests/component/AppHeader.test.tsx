@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import AppHeader from "../../src/components/AppHeader";
 import { PAGE_MANIFEST } from "../../src/routes/manifest";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -24,7 +25,7 @@ describe("AppHeader", () => {
     sessionStorage.clear();
     useDashboardStore.getState().resetState();
     // Set connected so the dashboard title and controls are visible
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
   });
 
   it("renders the Peek branding", () => {
@@ -106,14 +107,14 @@ describe("AppHeader profile health badges", () => {
     localStorage.clear();
     sessionStorage.clear();
     useDashboardStore.getState().resetState();
-    useDashboardStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnected(true);
   });
 
   it("shows a re-test button for each profile in the switcher menu", async () => {
-    const id = useDashboardStore
+    const id = useConnectionStore
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
-    useDashboardStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setActiveProfileId(id!);
 
     renderHeader();
 
@@ -126,11 +127,11 @@ describe("AppHeader profile health badges", () => {
   });
 
   it("shows health badge for a healthy profile in the switcher menu", async () => {
-    const id = useDashboardStore
+    const id = useConnectionStore
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
-    useDashboardStore.getState().setActiveProfileId(id!);
-    useDashboardStore.getState().setProfileHealth(id!, {
+    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setProfileHealth(id!, {
       status: "healthy",
       checkedAt: new Date().toISOString(),
       errorSummary: null,

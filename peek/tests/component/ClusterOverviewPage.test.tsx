@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
@@ -48,7 +50,7 @@ describe("ClusterOverviewPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useDashboardStore.getState().resetState();
-    useDashboardStore
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });

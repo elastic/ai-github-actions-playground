@@ -1,8 +1,10 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+
 import ParameterBar from "../../src/components/ParameterBar";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
@@ -20,8 +22,10 @@ describe("ParameterBar", () => {
   beforeEach(() => {
     queryMock.mockReset();
     useDashboardStore.getState().resetState();
-    useDashboardStore.getState().setConnected(true);
-    useDashboardStore.getState().setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore
+      .getState()
+      .setConnection({ url: "https://localhost:9200", apiKey: "test-key" });
   });
 
   it("clears stale ES|QL options after a failed refresh", async () => {
@@ -211,7 +215,9 @@ describe("ParameterBar", () => {
     await user.tab();
 
     await waitFor(() => {
-      const param = useDashboardStore.getState().dashboard.parameters?.find((p) => p.name === "threshold");
+      const param = useDashboardStore
+        .getState()
+        .dashboard.parameters?.find((p) => p.name === "threshold");
       expect(param?.value).toBe(-7);
     });
   });

@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import ApiConsolePage from "../../src/components/ApiConsolePage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -37,8 +39,8 @@ describe("ApiConsolePage", () => {
     localStorage.clear();
     sessionStorage.clear();
     useDashboardStore.getState().resetState();
-    useDashboardStore.getState().setConnected(true);
-    useDashboardStore.getState().setConnection({
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setConnection({
       url: "http://localhost:9200",
       apiKey: "",
     });
@@ -106,7 +108,7 @@ describe("ApiConsolePage", () => {
 
     await user.click(screen.getByRole("button", { name: /send/i }));
 
-    await waitFor(() => expect(screen.getByText("200")).toBeInTheDocument());
+    expect(await screen.findByText("200")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /dismiss/i }));
 
