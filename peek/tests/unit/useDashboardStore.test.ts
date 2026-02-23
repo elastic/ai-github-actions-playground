@@ -793,3 +793,106 @@ describe("useDashboardStore connection profiles", () => {
     expect(useDashboardStore.getState().activeProfileId).toBeNull();
   });
 });
+
+describe("useDashboardStore profileHealthMap", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetState();
+  });
+
+  it("setProfileHealth records healthy status for a profile", () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+
+    useDashboardStore.getState().setProfileHealth(id!, {
+      status: "healthy",
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      errorSummary: null,
+    });
+
+    const health = useDashboardStore.getState().profileHealthMap[id!];
+    expect(health).toBeDefined();
+    expect(health.status).toBe("healthy");
+    expect(health.errorSummary).toBeNull();
+    expect(health.checkedAt).toBe("2026-01-01T00:00:00.000Z");
+  });
+
+  it("setProfileHealth records needs_attention status with error summary", () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
+
+    useDashboardStore.getState().setProfileHealth(id!, {
+      status: "needs_attention",
+      checkedAt: "2026-01-01T00:00:01.000Z",
+      errorSummary: "Connection refused",
+    });
+
+    const health = useDashboardStore.getState().profileHealthMap[id!];
+    expect(health.status).toBe("needs_attention");
+    expect(health.errorSummary).toBe("Connection refused");
+  });
+
+  it("setProfileHealth overwrites an existing health entry", () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+
+    useDashboardStore.getState().setProfileHealth(id!, {
+      status: "needs_attention",
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      errorSummary: "Timeout",
+    });
+    useDashboardStore.getState().setProfileHealth(id!, {
+      status: "healthy",
+      checkedAt: "2026-01-01T00:00:01.000Z",
+      errorSummary: null,
+    });
+
+    const health = useDashboardStore.getState().profileHealthMap[id!];
+    expect(health.status).toBe("healthy");
+    expect(health.errorSummary).toBeNull();
+  });
+
+  it("setProfileHealth does not affect health entries for other profiles", () => {
+    const devId = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    const prodId = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
+
+    useDashboardStore.getState().setProfileHealth(devId!, {
+      status: "healthy",
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      errorSummary: null,
+    });
+    useDashboardStore.getState().setProfileHealth(prodId!, {
+      status: "needs_attention",
+      checkedAt: "2026-01-01T00:00:01.000Z",
+      errorSummary: "Auth failed",
+    });
+
+    expect(useDashboardStore.getState().profileHealthMap[devId!].status).toBe("healthy");
+    expect(useDashboardStore.getState().profileHealthMap[prodId!].status).toBe("needs_attention");
+  });
+
+  it("resetState clears profileHealthMap", () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+
+    useDashboardStore.getState().setProfileHealth(id!, {
+      status: "healthy",
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      errorSummary: null,
+    });
+    expect(Object.keys(useDashboardStore.getState().profileHealthMap)).toHaveLength(1);
+
+    useDashboardStore.getState().resetState();
+
+    expect(useDashboardStore.getState().profileHealthMap).toEqual({});
+  });
+});

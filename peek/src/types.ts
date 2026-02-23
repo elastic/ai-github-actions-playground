@@ -19,6 +19,14 @@ export interface ConnectionProfile {
   connection: ElasticsearchConnection;
 }
 
+export type ProfileHealthStatus = "healthy" | "needs_attention" | "unknown";
+
+export interface ProfileHealth {
+  status: ProfileHealthStatus;
+  checkedAt: string | null;
+  errorSummary: string | null;
+}
+
 export type VisualizationType = z.infer<typeof visualizationTypeSchema>;
 
 export interface TimeSeriesOptions {
