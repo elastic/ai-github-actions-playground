@@ -160,6 +160,29 @@ export function buildTraceDetailQuery(
   return `FROM ${fields.index} | WHERE ${fields.traceId} == "${escapeEsqlString(traceId)}" | LIMIT 10000`;
 }
 
+export interface TraceQueryLabDraftContext {
+  traceId: string;
+  spanId?: string | null;
+  timestamp?: string | null;
+}
+
+/**
+ * Generates an ES|QL starter query for Query Lab from trace/span context.
+ */
+export function buildTraceQueryLabDraft(
+  context: TraceQueryLabDraftContext,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+): string {
+  const whereClauses = [`${fields.traceId} == "${escapeEsqlString(context.traceId)}"`];
+  if (context.spanId) {
+    whereClauses.push(`${fields.spanId} == "${escapeEsqlString(context.spanId)}"`);
+  }
+  if (context.timestamp) {
+    whereClauses.push(`${fields.timestamp} == "${escapeEsqlString(context.timestamp)}"`);
+  }
+  return `FROM ${fields.index} | WHERE ${whereClauses.join(" AND ")} | SORT ${fields.timestamp} DESC | LIMIT 200`;
+}
+
 /**
  * Generates an ES|QL query for the trace timeseries aggregation view.
  */

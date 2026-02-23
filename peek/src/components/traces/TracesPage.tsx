@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -12,12 +13,13 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 
-import { useDashboardStore } from "../../store/useDashboardStore";
-import { makeLLMCompletionExtension } from "../llmCompletionExtension";
-import { useTracesStore } from "../../store/useTracesStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
-import type { EsqlResponse } from "../../types";
+import { PAGE_MANIFEST } from "../../routes/manifest";
+import { useDashboardStore } from "../../store/useDashboardStore";
+import { useTracesStore } from "../../store/useTracesStore";
 import type { TracesViewMode } from "../../store/useTracesStore";
+import type { EsqlResponse } from "../../types";
+import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
@@ -27,6 +29,7 @@ import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
+  buildTraceQueryLabDraft,
   DEFAULT_FIELD_MAPPING,
 } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
@@ -41,8 +44,10 @@ const thStyle: React.CSSProperties = {
 };
 
 export default function TracesPage() {
+  const navigate = useNavigate();
   const connection = useDashboardStore((s) => s.connection);
   const themeMode = useDashboardStore((s) => s.themeMode);
+  const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
   const filters = useTracesStore((s) => s.filters);
   const rawQuery = useTracesStore((s) => s.rawQuery);
   const setRawQuery = useTracesStore((s) => s.setRawQuery);
@@ -63,6 +68,8 @@ export default function TracesPage() {
   const [serviceFilter, setServiceFilter] = useState("");
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
+  const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
+  const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
@@ -101,12 +108,28 @@ export default function TracesPage() {
   }, [runSearchQuery, effectiveQuery]);
 
   const handleSelectTrace = useCallback(
-    (traceId: string) => {
+    (traceId: string, spanId?: string, timestamp?: string) => {
       setSelectedTraceId(traceId);
+      setSelectedRootSpanId(spanId ?? null);
+      setSelectedTraceTimestamp(timestamp ?? null);
       runDetailQuery(buildTraceDetailQuery(traceId));
     },
     [setSelectedTraceId, runDetailQuery],
   );
+
+  const handleOpenInDiscover = useCallback(
+    (traceId: string, spanId?: string | null, timestamp?: string | null) => {
+      setDiscoverQueryDraft(buildTraceQueryLabDraft({ traceId, spanId, timestamp }));
+      navigate(PAGE_MANIFEST.discover.path);
+    },
+    [navigate, setDiscoverQueryDraft],
+  );
+
+  const clearTraceSelection = useCallback(() => {
+    setSelectedTraceId(null);
+    setSelectedRootSpanId(null);
+    setSelectedTraceTimestamp(null);
+  }, [setSelectedTraceId]);
 
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput ? Number(minDurationInput) : null;
@@ -163,6 +186,7 @@ export default function TracesPage() {
 
     return result.values.map((row) => ({
       traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
+      spanId: String(get(row, DEFAULT_FIELD_MAPPING.spanId) ?? ""),
       serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
       name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
       durationUs: Number(get(row, DEFAULT_FIELD_MAPPING.durationUs) ?? 0),
@@ -454,7 +478,7 @@ export default function TracesPage() {
                     {traceRows.map((row, idx) => (
                       <tr
                         key={`${row.traceId}-${idx}`}
-                        onClick={() => handleSelectTrace(row.traceId)}
+                        onClick={() => handleSelectTrace(row.traceId, row.spanId, row.timestamp)}
                         style={{
                           cursor: "pointer",
                           backgroundColor:
@@ -661,7 +685,20 @@ export default function TracesPage() {
                   {selectedTraceSpans.length} spans
                 </Typography>
                 <Box sx={{ flex: 1 }} />
-                <Button size="small" onClick={() => setSelectedTraceId(null)}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() =>
+                    handleOpenInDiscover(
+                      selectedTraceId,
+                      selectedRootSpanId,
+                      selectedTraceTimestamp,
+                    )
+                  }
+                >
+                  Open in Query Lab
+                </Button>
+                <Button size="small" onClick={clearTraceSelection}>
                   Close
                 </Button>
               </Box>
@@ -708,6 +745,9 @@ export default function TracesPage() {
           useTracesStore.getState().addTagFilter(key, value, true);
           const updatedFilters = useTracesStore.getState().filters;
           runSearchQuery(buildTraceSearchQuery(updatedFilters));
+        }}
+        onOpenInQueryLab={(spanContext) => {
+          handleOpenInDiscover(spanContext.traceId, spanContext.spanId, spanContext.timestamp);
         }}
       />
     </Box>
