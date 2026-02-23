@@ -122,6 +122,7 @@ This starts:
 - OpenTelemetry Collector (`hostmetrics` receiver + OTLP receiver + Elasticsearch exporter)
 - otelgen traces generator (synthetic traces via OTLP)
 - otelgen logs generator (synthetic logs via OTLP)
+- Fleet agent simulator that writes representative Fleet documents to `fleet-agents-sim` for Cluster Overview testing
 
 Stop it with:
 

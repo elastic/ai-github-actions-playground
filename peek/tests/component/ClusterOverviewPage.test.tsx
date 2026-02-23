@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -9,6 +10,7 @@ const getClusterInfoMock = vi.fn();
 const getClusterHealthMock = vi.fn();
 const getDataStreamsMock = vi.fn();
 const resolveIndexMock = vi.fn();
+const rawRequestMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -16,6 +18,7 @@ vi.mock("../../src/services/es", () => ({
     getClusterHealth: getClusterHealthMock,
     getDataStreams: getDataStreamsMock,
     resolveIndex: resolveIndexMock,
+    rawRequest: rawRequestMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -73,6 +76,24 @@ describe("ClusterOverviewPage", () => {
       aliases: [{ name: "alias-1" }],
       data_streams: [],
     });
+    rawRequestMock.mockResolvedValue({
+      status: 200,
+      body: {
+        hits: {
+          hits: [
+            {
+              _id: "agent-1",
+              _source: {
+                agent: { id: "agent-1" },
+                local_metadata: { host: { hostname: "host-1" } },
+                policy_id: "policy-1",
+                last_checkin_status: "online",
+              },
+            },
+          ],
+        },
+      },
+    });
 
     render(<ClusterOverviewPage />);
 
@@ -84,7 +105,10 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText("Nodes: 3")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument(); // data stream count
     expect(screen.getByText("3")).toBeInTheDocument(); // index count
-    expect(screen.getByText("1")).toBeInTheDocument(); // alias count
+    expect(screen.getByText("Fleet Agents")).toBeInTheDocument();
+    expect(screen.getByText("host-1")).toBeInTheDocument();
+    expect(screen.getByText("Policy: policy-1")).toBeInTheDocument();
+    expect(screen.getByText("online: 1")).toBeInTheDocument();
   });
 
   it("shows error alert on failure", async () => {
@@ -92,6 +116,7 @@ describe("ClusterOverviewPage", () => {
     getClusterHealthMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     getDataStreamsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     resolveIndexMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    rawRequestMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
 
     render(<ClusterOverviewPage />);
 
@@ -112,6 +137,7 @@ describe("ClusterOverviewPage", () => {
     });
     getDataStreamsMock.mockResolvedValue({ data_streams: [] });
     resolveIndexMock.mockResolvedValue({ indices: [], aliases: [], data_streams: [] });
+    rawRequestMock.mockResolvedValue({ status: 200, body: { hits: { hits: [] } } });
 
     render(<ClusterOverviewPage />);
 
@@ -143,6 +169,7 @@ describe("ClusterOverviewPage", () => {
     });
     getDataStreamsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
     resolveIndexMock.mockRejectedValue({ status: 403, message: "Forbidden" });
+    rawRequestMock.mockRejectedValue({ status: 403, message: "Forbidden" });
 
     render(<ClusterOverviewPage />);
 
@@ -150,6 +177,6 @@ describe("ClusterOverviewPage", () => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
     });
     expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Unavailable")).toHaveLength(3);
+    expect(screen.getAllByText("Unavailable")).toHaveLength(5);
   });
 });

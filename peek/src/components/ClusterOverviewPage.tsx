@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -22,6 +22,17 @@ interface OverviewData {
   dataStreamCount: number | null;
   indexCount: number | null;
   aliasCount: number | null;
+  fleetAgents: FleetAgentSummary[] | null;
+  fleetAgentCount: number | null;
+}
+
+interface FleetAgentSummary {
+  id: string;
+  hostname: string;
+  status: string;
+  policyId: string;
+  active: boolean | null;
+  lastCheckin: string | null;
 }
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -46,6 +57,8 @@ export default function ClusterOverviewPage() {
     dataStreamCount: null,
     indexCount: null,
     aliasCount: null,
+    fleetAgents: null,
+    fleetAgentCount: null,
   });
 
   const loadOverview = useCallback(async () => {
@@ -55,13 +68,19 @@ export default function ClusterOverviewPage() {
     setPartialErrors([]);
     try {
       const client = new ElasticsearchClient(connection);
-      const [clusterInfoResult, clusterHealthResult, dataStreamsResult, resolveIndexResult] =
-        await Promise.allSettled([
-          client.getClusterInfo(),
-          client.getClusterHealth(),
-          client.getDataStreams(),
-          client.resolveIndex("*"),
-        ]);
+      const [
+        clusterInfoResult,
+        clusterHealthResult,
+        dataStreamsResult,
+        resolveIndexResult,
+        fleetAgentsResult,
+      ] = await Promise.allSettled([
+        client.getClusterInfo(),
+        client.getClusterHealth(),
+        client.getDataStreams(),
+        client.resolveIndex("*"),
+        loadFleetAgents(client),
+      ]);
 
       const nextData: OverviewData = {
         clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
@@ -79,6 +98,9 @@ export default function ClusterOverviewPage() {
           resolveIndexResult.status === "fulfilled"
             ? (resolveIndexResult.value.aliases?.length ?? 0)
             : null,
+        fleetAgents: fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value : null,
+        fleetAgentCount:
+          fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value.length : null,
       };
       setData(nextData);
 
@@ -87,11 +109,12 @@ export default function ClusterOverviewPage() {
       if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
       if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
       if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
+      if (fleetAgentsResult.status === "rejected") failedParts.push("fleet agents");
       if (failedParts.length > 0) {
         setPartialErrors(failedParts);
       }
 
-      if (failedParts.length === 4) {
+      if (failedParts.length === 5) {
         const firstError =
           clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
         setError(
@@ -122,6 +145,14 @@ export default function ClusterOverviewPage() {
         : clusterHealth?.status === "red"
           ? "error"
           : "default";
+  const fleetAgentStatusCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const agent of data.fleetAgents ?? []) {
+      const normalized = agent.status.trim().toLowerCase() || "unknown";
+      counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [data.fleetAgents]);
 
   function renderCount(value: number | null) {
     if (value === null) {
@@ -255,9 +286,133 @@ export default function ClusterOverviewPage() {
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Aliases">{renderCount(data.aliasCount)}</InfoCard>
             </Box>
+
+            <Box sx={{ flex: 1 }}>
+              <InfoCard title="Fleet Agents">{renderCount(data.fleetAgentCount)}</InfoCard>
+            </Box>
           </Stack>
+
+          <InfoCard title="Fleet Agent Statuses">
+            {data.fleetAgents === null ? (
+              <Typography variant="body2" color="text.secondary">
+                Unavailable
+              </Typography>
+            ) : data.fleetAgents.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No Fleet agent documents found in .fleet-agents* or fleet-agents*.
+              </Typography>
+            ) : (
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {fleetAgentStatusCounts.map(([status, count]) => (
+                    <Chip
+                      key={status}
+                      size="small"
+                      color={fleetStatusColor(status)}
+                      label={`${status}: ${count}`}
+                    />
+                  ))}
+                </Stack>
+                <Stack spacing={0.5}>
+                  {data.fleetAgents.slice(0, 5).map((agent) => (
+                    <Stack
+                      key={agent.id}
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      <Chip
+                        size="small"
+                        label={agent.status}
+                        color={fleetStatusColor(agent.status)}
+                      />
+                      <Typography variant="body2">{agent.hostname}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {agent.id}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Policy: {agent.policyId}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Stack>
+            )}
+          </InfoCard>
         </Stack>
       )}
     </Box>
   );
+}
+
+function fleetStatusColor(
+  status: string,
+): "default" | "primary" | "secondary" | "success" | "warning" | "error" {
+  const normalized = status.toLowerCase();
+  if (normalized === "online") return "success";
+  if (normalized === "error") return "error";
+  if (normalized === "degraded" || normalized === "warning") return "warning";
+  return "default";
+}
+
+function readNestedString(
+  source: Record<string, unknown>,
+  path: string[],
+  fallback = "unknown",
+): string {
+  let current: unknown = source;
+  for (const key of path) {
+    if (typeof current !== "object" || current === null || !(key in current)) {
+      return fallback;
+    }
+    current = (current as Record<string, unknown>)[key];
+  }
+  return typeof current === "string" && current.length > 0 ? current : fallback;
+}
+
+async function loadFleetAgents(client: ElasticsearchClient): Promise<FleetAgentSummary[]> {
+  const response = await client.rawRequest(
+    "POST",
+    "/.fleet-agents*,fleet-agents*/_search?ignore_unavailable=true&allow_no_indices=true",
+    JSON.stringify({
+      size: 200,
+      sort: [{ last_checkin: { order: "desc", unmapped_type: "date" } }],
+      _source: [
+        "agent.id",
+        "active",
+        "policy_id",
+        "last_checkin_status",
+        "last_checkin",
+        "enrolled_at",
+        "local_metadata.host.hostname",
+      ],
+      query: { match_all: {} },
+    }),
+  );
+  if (response.status >= 400) {
+    const body = response.body as { error?: { reason?: string } } | null;
+    throw {
+      status: response.status,
+      message: body?.error?.reason ?? "Failed to load Fleet agents.",
+    };
+  }
+  const hits = (
+    response.body as {
+      hits?: { hits?: Array<{ _id?: string; _source?: Record<string, unknown> }> };
+    } | null
+  )?.hits?.hits;
+  if (!hits) return [];
+  return hits.map((hit) => {
+    const source = hit._source ?? {};
+    return {
+      id: readNestedString(source, ["agent", "id"], hit._id ?? "unknown"),
+      hostname: readNestedString(source, ["local_metadata", "host", "hostname"]),
+      status: readNestedString(source, ["last_checkin_status"]),
+      policyId: readNestedString(source, ["policy_id"]),
+      active: typeof source.active === "boolean" ? source.active : null,
+      lastCheckin: typeof source.last_checkin === "string" ? source.last_checkin : null,
+    };
+  });
 }
