@@ -304,7 +304,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
           </ToggleButtonGroup>
         </Box>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {!isMarkdown && error && <Alert severity="error">{error}</Alert>}
 
         {/* Markdown preview — always shown for markdown panels */}
         {isMarkdown && (
