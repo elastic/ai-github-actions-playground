@@ -15,6 +15,7 @@ import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import InfoIcon from "@mui/icons-material/Info";
+import SecurityIcon from "@mui/icons-material/Security";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -52,6 +53,8 @@ const NAV_ICONS: Record<PageId, React.ReactNode> = {
   chat: <ChatIcon fontSize="small" />,
   clusterOverview: <InfoIcon fontSize="small" />,
   dataStreams: <DatasetIcon fontSize="small" />,
+  fleet: <SecurityIcon fontSize="small" />,
+  fleetAgentDetail: <SecurityIcon fontSize="small" />,
   docs: <MenuBookIcon fontSize="small" />,
   settings: <SettingsIcon fontSize="small" />,
   dashboardManagement: <SettingsIcon fontSize="small" />,
@@ -151,7 +154,11 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           )}
           <List dense disablePadding>
             {section.items.map((item) => {
-              const isActive = location.pathname === PAGE_MANIFEST[item.page].path;
+              const itemPath = PAGE_MANIFEST[item.page].path;
+              const isActive =
+                itemPath === "/"
+                  ? location.pathname === itemPath
+                  : location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton

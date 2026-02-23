@@ -142,6 +142,16 @@ describe("AppSidebar", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
   });
 
+  it("navigates to Fleet when clicked while connected", async () => {
+    useDashboardStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /fleet/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/fleet");
+  });
+
   it("updates aria-current when active page changes", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();

@@ -14,6 +14,7 @@ import {
   type ClusterInfoResponse,
   type ClusterHealthResponse,
 } from "../services/es";
+import { fleetStatusColor, loadFleetAgents, type FleetAgentSummary } from "../services/fleet";
 import { useDashboardStore } from "../store/useDashboardStore";
 
 interface OverviewData {
@@ -24,20 +25,6 @@ interface OverviewData {
   aliasCount: number | null;
   fleetAgents: FleetAgentSummary[] | null;
   fleetAgentCount: number | null;
-}
-
-interface FleetAgentSummary {
-  id: string;
-  hostname: string;
-  status: string;
-  policyId: string;
-  active: boolean | null;
-  lastCheckin: string | null;
-}
-
-interface FleetAgentSearchResult {
-  agents: FleetAgentSummary[];
-  total: number;
 }
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -338,9 +325,10 @@ export default function ClusterOverviewPage() {
                       <Typography variant="caption" color="text.secondary">
                         {agent.id}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Policy: {agent.policyId}
-                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                      >{`Policy: ${agent.policyId}`}</Typography>
                     </Stack>
                   ))}
                 </Stack>
@@ -351,88 +339,4 @@ export default function ClusterOverviewPage() {
       )}
     </Box>
   );
-}
-
-function fleetStatusColor(
-  status: string,
-): "default" | "primary" | "secondary" | "success" | "warning" | "error" {
-  const normalized = status.toLowerCase();
-  if (normalized === "online") return "success";
-  if (normalized === "error") return "error";
-  if (normalized === "degraded" || normalized === "warning") return "warning";
-  return "default";
-}
-
-function readNestedString(
-  source: Record<string, unknown>,
-  path: string[],
-  fallback = "unknown",
-): string {
-  let current: unknown = source;
-  for (const key of path) {
-    if (typeof current !== "object" || current === null || !(key in current)) {
-      return fallback;
-    }
-    current = (current as Record<string, unknown>)[key];
-  }
-  return typeof current === "string" && current.length > 0 ? current : fallback;
-}
-
-async function loadFleetAgents(client: ElasticsearchClient): Promise<FleetAgentSearchResult> {
-  const response = await client.rawRequest(
-    "POST",
-    "/.fleet-agents*,fleet-agents*/_search?ignore_unavailable=true&allow_no_indices=true",
-    JSON.stringify({
-      size: 200,
-      track_total_hits: true,
-      sort: [{ last_checkin: { order: "desc", unmapped_type: "date" } }],
-      _source: [
-        "agent.id",
-        "active",
-        "policy_id",
-        "last_checkin_status",
-        "last_checkin",
-        "enrolled_at",
-        "local_metadata.host.hostname",
-      ],
-      query: { match_all: {} },
-    }),
-  );
-  if (response.status >= 400) {
-    const body = response.body as { error?: { reason?: string } } | null;
-    throw {
-      status: response.status,
-      message: body?.error?.reason ?? "Failed to load Fleet agents.",
-    };
-  }
-  const result = (
-    response.body as {
-      hits?: {
-        total?: { value?: number } | number;
-        hits?: Array<{ _id?: string; _source?: Record<string, unknown> }>;
-      };
-    } | null
-  )?.hits;
-  const hits = result?.hits;
-  const total =
-    typeof result?.total === "number"
-      ? result.total
-      : typeof result?.total?.value === "number"
-        ? result.total.value
-        : (hits?.length ?? 0);
-  if (!hits) return { total: 0, agents: [] };
-  return {
-    total,
-    agents: hits.map((hit) => {
-      const source = hit._source ?? {};
-      return {
-        id: readNestedString(source, ["agent", "id"], hit._id ?? "unknown"),
-        hostname: readNestedString(source, ["local_metadata", "host", "hostname"]),
-        status: readNestedString(source, ["last_checkin_status"]),
-        policyId: readNestedString(source, ["policy_id"]),
-        active: typeof source.active === "boolean" ? source.active : null,
-        lastCheckin: typeof source.last_checkin === "string" ? source.last_checkin : null,
-      };
-    }),
-  };
 }

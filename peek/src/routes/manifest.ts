@@ -9,6 +9,8 @@ import DataStreamsPage from "../components/DataStreamsPage";
 import DiscoverPage from "../components/DiscoverPage";
 import DocsPage from "../components/DocsPage";
 import ExplorePage from "../components/ExplorePage";
+import FleetAgentPage from "../components/FleetAgentPage";
+import FleetPage from "../components/FleetPage";
 import SettingsPage from "../components/SettingsPage";
 import TracesPage from "../components/traces/TracesPage";
 
@@ -74,6 +76,18 @@ export const PAGE_MANIFEST = {
     component: DataStreamsPage,
     requiresConnection: true,
     nav: { label: "Data Streams", group: "System", order: 20, showInSidebar: true },
+  },
+  fleet: {
+    path: "/fleet",
+    component: FleetPage,
+    requiresConnection: true,
+    nav: { label: "Fleet", group: "System", order: 15, showInSidebar: true },
+  },
+  fleetAgentDetail: {
+    path: "/fleet/agents/:agentId",
+    component: FleetAgentPage,
+    requiresConnection: true,
+    nav: { label: "Fleet Agent Detail", group: "System", order: 16, showInSidebar: false },
   },
   docs: {
     path: "/docs",
