@@ -9,3 +9,15 @@ Use Import Dashboard to replace the current dashboard state from a compatible ex
 Use Load Default Dashboard to reset to the built-in starter layout when testing or recovering from unwanted changes.
 
 If import fails, validate the file is valid JSON produced by Peek and includes required dashboard fields.
+
+## Dashboard Library Experience
+
+The dashboard index (`/dashboards`) is the primary management page for dashboards in a workspace.
+
+Each dashboard row supports open, rename, duplicate, archive, and delete actions. Deletes are guarded by confirmation and an undo-style recovery window.
+
+Import and export support two scopes: active dashboard JSON for sharing one view, and workspace JSON for backup/restore of all dashboards.
+
+Reset behavior is also scoped: reset the active dashboard (safe local rollback) or reset the full workspace (explicit destructive action).
+
+Connection profiles remain workspace-level by default. Dashboards can optionally store a preferred profile hint without forcing automatic profile switches.

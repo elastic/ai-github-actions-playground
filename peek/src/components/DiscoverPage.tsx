@@ -28,7 +28,6 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
@@ -70,6 +69,7 @@ export default function DiscoverPage() {
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const addPanel = useDashboardStore((s) => s.addPanel);
+  const activeDashboardId = useDashboardStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const { discoverQueryDraft, setDiscoverQueryDraft, queryHistory, appendQueryToHistory } =
     useQueryStore(
@@ -271,8 +271,8 @@ export default function DiscoverPage() {
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
-    navigate(PAGE_MANIFEST.dashboard.path);
-  }, [effectiveQuery, addPanel, setEditingPanelId, navigate]);
+    navigate(`/dashboards/${activeDashboardId}`);
+  }, [effectiveQuery, addPanel, setEditingPanelId, navigate, activeDashboardId]);
 
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),
