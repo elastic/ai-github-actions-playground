@@ -22,7 +22,6 @@ import { sql } from "@codemirror/lang-sql";
 import { useDashboardStore } from "../store/useDashboardStore";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
-import { interpolateParameters } from "../services/markdownInterpolation";
 import type {
   VisualizationType,
   EsqlResponse,
@@ -328,7 +327,12 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         {/* Markdown preview — always shown for markdown panels */}
         {isMarkdown && (
           <Paper variant="outlined" sx={{ minHeight: 120, p: 1, overflow: "auto" }}>
-            <MarkdownPanel content={interpolateParameters(query, parameters)} />
+            <MarkdownPanel
+              content={query}
+              connection={connection}
+              timeRange={timeRange}
+              parameters={parameters}
+            />
           </Paper>
         )}
 

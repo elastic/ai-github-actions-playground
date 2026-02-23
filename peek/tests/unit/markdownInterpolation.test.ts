@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import { interpolateParameters } from "../../src/services/markdownInterpolation";
-import type { DashboardParameter } from "../../src/types";
+import {
+  interpolateParameters,
+  extractEsqlBlocks,
+  formatEsqlResult,
+  replaceEsqlBlocks,
+} from "../../src/services/markdownInterpolation";
+import type { DashboardParameter, EsqlResponse } from "../../src/types";
 
 const makeParam = (
   name: string,
@@ -67,5 +72,107 @@ describe("interpolateParameters", () => {
   it("does not match tokens with spaces inside braces", () => {
     const result = interpolateParameters("{{ service }}", [makeParam("service", "web")]);
     expect(result).toBe("{{ service }}");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractEsqlBlocks
+// ---------------------------------------------------------------------------
+
+describe("extractEsqlBlocks", () => {
+  it("extracts a single ES|QL block", () => {
+    const blocks = extractEsqlBlocks("Top: ${FROM sales-* | LIMIT 1}");
+    expect(blocks).toEqual([{ raw: "${FROM sales-* | LIMIT 1}", query: "FROM sales-* | LIMIT 1" }]);
+  });
+
+  it("extracts multiple ES|QL blocks", () => {
+    const blocks = extractEsqlBlocks("A: ${FROM a | LIMIT 1} B: ${FROM b | LIMIT 2}");
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]?.query).toBe("FROM a | LIMIT 1");
+    expect(blocks[1]?.query).toBe("FROM b | LIMIT 2");
+  });
+
+  it("returns empty array when there are no blocks", () => {
+    expect(extractEsqlBlocks("No queries here")).toEqual([]);
+  });
+
+  it("trims whitespace inside the block", () => {
+    const blocks = extractEsqlBlocks("${  FROM x | LIMIT 1  }");
+    expect(blocks[0]?.query).toBe("FROM x | LIMIT 1");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatEsqlResult
+// ---------------------------------------------------------------------------
+
+const col = (name: string) => ({ name, type: "keyword" });
+
+describe("formatEsqlResult", () => {
+  it("renders _No results_ for empty data", () => {
+    const data: EsqlResponse = { columns: [col("name")], values: [] };
+    expect(formatEsqlResult(data)).toBe("_No results_");
+  });
+
+  it("renders inline value for 1 row × 1 column", () => {
+    const data: EsqlResponse = { columns: [col("name")], values: [["Acme"]] };
+    expect(formatEsqlResult(data)).toBe("Acme");
+  });
+
+  it("renders bulleted list for N rows × 1 column", () => {
+    const data: EsqlResponse = {
+      columns: [col("name")],
+      values: [["Alice"], ["Bob"], ["Carol"]],
+    };
+    expect(formatEsqlResult(data)).toBe("- Alice\n- Bob\n- Carol");
+  });
+
+  it("renders markdown table for N rows × M columns", () => {
+    const data: EsqlResponse = {
+      columns: [col("name"), col("dob")],
+      values: [
+        ["Alice", "1990-01-01"],
+        ["Bob", "1985-06-15"],
+      ],
+    };
+    const result = formatEsqlResult(data);
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("name | dob");
+    expect(lines[1]).toBe("--- | ---");
+    expect(lines[2]).toBe("Alice | 1990-01-01");
+    expect(lines[3]).toBe("Bob | 1985-06-15");
+  });
+
+  it("handles null values", () => {
+    const data: EsqlResponse = { columns: [col("name")], values: [[null]] };
+    expect(formatEsqlResult(data)).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// replaceEsqlBlocks
+// ---------------------------------------------------------------------------
+
+describe("replaceEsqlBlocks", () => {
+  it("replaces resolved blocks with formatted results", () => {
+    const content = "Top customer: ${FROM sales | LIMIT 1}";
+    const results = new Map<string, EsqlResponse>([
+      ["${FROM sales | LIMIT 1}", { columns: [col("name")], values: [["Acme"]] }],
+    ]);
+    expect(replaceEsqlBlocks(content, results)).toBe("Top customer: Acme");
+  });
+
+  it("leaves unresolved blocks as-is", () => {
+    const content = "Value: ${FROM missing | LIMIT 1}";
+    expect(replaceEsqlBlocks(content, new Map())).toBe(content);
+  });
+
+  it("replaces multiple blocks independently", () => {
+    const content = "${FROM a | LIMIT 1} and ${FROM b | LIMIT 1}";
+    const results = new Map<string, EsqlResponse>([
+      ["${FROM a | LIMIT 1}", { columns: [col("v")], values: [["X"]] }],
+      ["${FROM b | LIMIT 1}", { columns: [col("v")], values: [["Y"]] }],
+    ]);
+    expect(replaceEsqlBlocks(content, results)).toBe("X and Y");
   });
 });
