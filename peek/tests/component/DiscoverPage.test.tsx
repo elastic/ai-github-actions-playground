@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
+import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
@@ -109,5 +110,37 @@ describe("DiscoverPage", () => {
       expect.any(AbortSignal),
     );
     expect(useQueryStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
+  });
+
+  it("populates _tstart and _tend params when referenced in the query", async () => {
+    const user = userEvent.setup();
+    useDashboardStore
+      .getState()
+      .setTimeRange({ from: "2025-06-15T11:00:00.000Z", to: "2025-06-15T12:00:00.000Z" });
+    useQueryStore
+      .getState()
+      .setDiscoverQueryDraft(
+        "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | LIMIT 10",
+      );
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | LIMIT 10",
+        params: expect.arrayContaining([
+          { _tstart: "2025-06-15T11:00:00.000Z" },
+          { _tend: "2025-06-15T12:00:00.000Z" },
+        ]),
+      }),
+      expect.any(AbortSignal),
+    );
   });
 });
