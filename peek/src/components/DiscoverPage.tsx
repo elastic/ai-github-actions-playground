@@ -140,24 +140,27 @@ export default function DiscoverPage() {
     onFailure: () => setResult(null),
   });
 
-  const insightColumnRef = useRef<string | null>(null);
+  const insightQueryToColumnRef = useRef(new Map<string, string>());
+  const latestInsightQueryRef = useRef<string | null>(null);
   const { runQuery: runInsightQuery } = useEsqlQuery({
     connection,
     buildRequest,
-    onSuccess: (data) => {
-      const col = insightColumnRef.current;
-      if (col) {
-        setInsightsCache((prev) => ({ ...prev, [col]: { loading: false, error: null, data } }));
-      }
+    onSuccess: (data, executedQuery) => {
+      const col = insightQueryToColumnRef.current.get(executedQuery);
+      if (!col) return;
+      insightQueryToColumnRef.current.delete(executedQuery);
+      setInsightsCache((prev) => ({ ...prev, [col]: { loading: false, error: null, data } }));
     },
     onFailure: () => {
-      const col = insightColumnRef.current;
-      if (col) {
-        setInsightsCache((prev) => ({
-          ...prev,
-          [col]: { loading: false, error: "Query failed", data: null },
-        }));
-      }
+      const latestQuery = latestInsightQueryRef.current;
+      if (!latestQuery) return;
+      const col = insightQueryToColumnRef.current.get(latestQuery);
+      if (!col) return;
+      insightQueryToColumnRef.current.delete(latestQuery);
+      setInsightsCache((prev) => ({
+        ...prev,
+        [col]: { loading: false, error: "Query failed", data: null },
+      }));
     },
   });
 
@@ -174,7 +177,8 @@ export default function DiscoverPage() {
       // Fire query
       const insightsQuery = buildColumnInsightsQuery(effectiveQuery, columnName, columnType);
       if (!insightsQuery) return;
-      insightColumnRef.current = columnName;
+      insightQueryToColumnRef.current.set(insightsQuery, columnName);
+      latestInsightQueryRef.current = insightsQuery;
       setInsightsCache((prev) => ({
         ...prev,
         [columnName]: { loading: true, error: null, data: null },
@@ -195,6 +199,8 @@ export default function DiscoverPage() {
       setCurrentSort(null);
       setInsightsCache({});
       setExpandedInsight(null);
+      insightQueryToColumnRef.current.clear();
+      latestInsightQueryRef.current = null;
     },
     [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
   );
