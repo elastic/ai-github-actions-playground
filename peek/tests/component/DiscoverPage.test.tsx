@@ -112,6 +112,179 @@ describe("DiscoverPage", () => {
     expect(useQueryStore.getState().queryHistory[0]).toBe("FROM step-* | LIMIT 1");
   });
 
+  it("expands a keyword field to show top values", async () => {
+    const user = userEvent.setup();
+    // First call: main query returns a keyword column
+    queryMock.mockResolvedValueOnce({
+      columns: [{ name: "status", type: "keyword" }],
+      values: [["ok"], ["error"]],
+      executionTimeMs: 1,
+    });
+    // Second call: insights query returns top values
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "status", type: "keyword" },
+        { name: "count", type: "long" },
+      ],
+      values: [
+        ["ok", 100],
+        ["error", 42],
+      ],
+      executionTimeMs: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    // Expand the field insight
+    const expandBtn = await screen.findByRole("button", {
+      name: /expand insights for status/i,
+    });
+    await user.click(expandBtn);
+
+    // Should show top values
+    await waitFor(() => {
+      expect(screen.getByText("ok")).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
+      expect(screen.getByText("error")).toBeInTheDocument();
+      expect(screen.getByText("42")).toBeInTheDocument();
+    });
+  });
+
+  it("expands a numeric field to show min/max/avg stats", async () => {
+    const user = userEvent.setup();
+    queryMock.mockResolvedValueOnce({
+      columns: [{ name: "latency", type: "long" }],
+      values: [[50]],
+      executionTimeMs: 1,
+    });
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "min_value", type: "long" },
+        { name: "max_value", type: "long" },
+        { name: "avg_value", type: "double" },
+        { name: "total_count", type: "long" },
+        { name: "null_count", type: "long" },
+      ],
+      values: [[10, 200, 55.5, 1000, 3]],
+      executionTimeMs: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const expandBtn = await screen.findByRole("button", {
+      name: /expand insights for latency/i,
+    });
+    await user.click(expandBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Min")).toBeInTheDocument();
+      expect(screen.getByText("10")).toBeInTheDocument();
+      expect(screen.getByText("Max")).toBeInTheDocument();
+      expect(screen.getByText("200")).toBeInTheDocument();
+      expect(screen.getByText("Avg")).toBeInTheDocument();
+      expect(screen.getByText("55.5")).toBeInTheDocument();
+      expect(screen.getByText("Count")).toBeInTheDocument();
+      expect(screen.getByText("1000")).toBeInTheDocument();
+      expect(screen.getByText("Nulls")).toBeInTheDocument();
+      expect(screen.getByText("3")).toBeInTheDocument();
+    });
+  });
+
+  it("collapses an expanded field insight", async () => {
+    const user = userEvent.setup();
+    queryMock.mockResolvedValueOnce({
+      columns: [{ name: "status", type: "keyword" }],
+      values: [["ok"]],
+      executionTimeMs: 1,
+    });
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "status", type: "keyword" },
+        { name: "count", type: "long" },
+      ],
+      values: [["ok", 100]],
+      executionTimeMs: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const expandBtn = await screen.findByRole("button", {
+      name: /expand insights for status/i,
+    });
+    await user.click(expandBtn);
+    expect(await screen.findByText("100")).toBeInTheDocument();
+
+    // Collapse
+    const collapseBtn = screen.getByRole("button", {
+      name: /collapse insights for status/i,
+    });
+    await user.click(collapseBtn);
+
+    // Values should be hidden (Collapse animation)
+    await waitFor(() => expect(screen.queryByText("100")).not.toBeVisible());
+  });
+
+  it("caches insight data and does not re-query on re-expand", async () => {
+    const user = userEvent.setup();
+    queryMock.mockResolvedValueOnce({
+      columns: [{ name: "status", type: "keyword" }],
+      values: [["ok"]],
+      executionTimeMs: 1,
+    });
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "status", type: "keyword" },
+        { name: "count", type: "long" },
+      ],
+      values: [["ok", 100]],
+      executionTimeMs: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    // Expand
+    const expandBtn = await screen.findByRole("button", {
+      name: /expand insights for status/i,
+    });
+    await user.click(expandBtn);
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(2));
+
+    // Collapse
+    await user.click(screen.getByRole("button", { name: /collapse insights for status/i }));
+
+    // Re-expand — should NOT fire another query
+    await user.click(screen.getByRole("button", { name: /expand insights for status/i }));
+    expect(queryMock).toHaveBeenCalledTimes(2); // still 2
+  });
+
   it("populates _tstart and _tend params when referenced in the query", async () => {
     const user = userEvent.setup();
     useDashboardStore

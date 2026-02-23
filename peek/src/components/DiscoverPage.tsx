@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
@@ -17,6 +18,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
@@ -43,7 +46,7 @@ import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
-import ColumnInsightsFlyout from "./visualizations/ColumnInsightsFlyout";
+import { isNumericType } from "./visualizations/chartUtils";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
@@ -94,11 +97,10 @@ export default function DiscoverPage() {
   const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
 
-  const [profiledColumn, setProfiledColumn] = useState<{
-    name: string;
-    type: string;
-  } | null>(null);
-  const [profileData, setProfileData] = useState<EsqlResponse | null>(null);
+  const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
+  const [insightsCache, setInsightsCache] = useState<
+    Record<string, { loading: boolean; error: string | null; data: EsqlResponse | null }>
+  >({});
 
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
@@ -138,30 +140,48 @@ export default function DiscoverPage() {
     onFailure: () => setResult(null),
   });
 
-  const {
-    runQuery: runProfileQuery,
-    loading: profileLoading,
-    error: profileError,
-  } = useEsqlQuery({
+  const insightColumnRef = useRef<string | null>(null);
+  const { runQuery: runInsightQuery } = useEsqlQuery({
     connection,
     buildRequest,
     onSuccess: (data) => {
-      setProfileData(data);
+      const col = insightColumnRef.current;
+      if (col) {
+        setInsightsCache((prev) => ({ ...prev, [col]: { loading: false, error: null, data } }));
+      }
     },
     onFailure: () => {
-      setProfileData(null);
+      const col = insightColumnRef.current;
+      if (col) {
+        setInsightsCache((prev) => ({
+          ...prev,
+          [col]: { loading: false, error: "Query failed", data: null },
+        }));
+      }
     },
   });
 
-  const handleProfileColumn = useCallback(
+  const handleToggleInsight = useCallback(
     (columnName: string, columnType: string) => {
+      if (expandedInsight === columnName) {
+        setExpandedInsight(null);
+        return;
+      }
+      setExpandedInsight(columnName);
+      // Use cache if available and not loading
+      const cached = insightsCache[columnName];
+      if (cached && !cached.loading) return;
+      // Fire query
       const insightsQuery = buildColumnInsightsQuery(effectiveQuery, columnName, columnType);
       if (!insightsQuery) return;
-      setProfiledColumn({ name: columnName, type: columnType });
-      setProfileData(null);
-      void runProfileQuery(insightsQuery);
+      insightColumnRef.current = columnName;
+      setInsightsCache((prev) => ({
+        ...prev,
+        [columnName]: { loading: true, error: null, data: null },
+      }));
+      void runInsightQuery(insightsQuery);
     },
-    [effectiveQuery, runProfileQuery],
+    [expandedInsight, insightsCache, effectiveQuery, runInsightQuery],
   );
 
   const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
@@ -173,6 +193,8 @@ export default function DiscoverPage() {
       clearTimings();
       setQuery(nextQuery);
       setCurrentSort(null);
+      setInsightsCache({});
+      setExpandedInsight(null);
     },
     [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
   );
@@ -455,41 +477,213 @@ export default function DiscoverPage() {
                 Run a query to see fields
               </Typography>
             ) : (
-              visibleColumns.map((col) => (
-                <Box key={col.name}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      px: 0.5,
-                      py: 0.25,
-                      cursor: "pointer",
-                      "&:hover": { bgcolor: "action.hover" },
-                    }}
-                    onClick={() => toggleField(col.name)}
-                  >
-                    <Checkbox
-                      size="small"
-                      checked={selectedFields.has(col.name)}
-                      onChange={() => toggleField(col.name)}
-                      onClick={(e) => e.stopPropagation()}
-                      sx={{ p: 0.5 }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="caption" noWrap display="block" title={col.name}>
-                        {col.name}
-                      </Typography>
-                      <Chip
-                        label={col.type}
+              visibleColumns.map((col) => {
+                const insight = insightsCache[col.name];
+                const isExpanded = expandedInsight === col.name;
+                return (
+                  <Box key={col.name}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        px: 0.5,
+                        py: 0.25,
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                      onClick={() => toggleField(col.name)}
+                    >
+                      <Checkbox
                         size="small"
-                        color={getTypeColor(col.type)}
-                        sx={{ height: 14, fontSize: "0.6rem", "& .MuiChip-label": { px: 0.5 } }}
+                        checked={selectedFields.has(col.name)}
+                        onChange={() => toggleField(col.name)}
+                        onClick={(e) => e.stopPropagation()}
+                        sx={{ p: 0.5 }}
                       />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="caption" noWrap display="block" title={col.name}>
+                          {col.name}
+                        </Typography>
+                        <Chip
+                          label={col.type}
+                          size="small"
+                          color={getTypeColor(col.type)}
+                          sx={{
+                            height: 14,
+                            fontSize: "0.6rem",
+                            "& .MuiChip-label": { px: 0.5 },
+                          }}
+                        />
+                      </Box>
+                      <Box
+                        role="button"
+                        aria-label={`${isExpanded ? "Collapse" : "Expand"} insights for ${col.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleInsight(col.name, col.type);
+                        }}
+                        sx={{ display: "flex", alignItems: "center", p: 0.25, cursor: "pointer" }}
+                      >
+                        {isExpanded ? (
+                          <ExpandLessIcon sx={{ fontSize: 16 }} />
+                        ) : (
+                          <ExpandMoreIcon sx={{ fontSize: 16 }} />
+                        )}
+                      </Box>
                     </Box>
+                    <Collapse in={isExpanded}>
+                      <Box sx={{ px: 1.5, py: 0.75, bgcolor: "action.hover" }}>
+                        {insight?.loading && (
+                          <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
+                            <CircularProgress size={16} />
+                          </Box>
+                        )}
+                        {!insight?.loading && insight?.error && (
+                          <Alert severity="error" sx={{ py: 0, fontSize: "0.7rem" }}>
+                            {insight.error}
+                          </Alert>
+                        )}
+                        {!insight?.loading &&
+                          !insight?.error &&
+                          insight?.data &&
+                          isNumericType(col.type) &&
+                          (() => {
+                            const row = insight.data!.values[0];
+                            const getVal = (name: string) => {
+                              const idx = insight.data!.columns.findIndex((c) => c.name === name);
+                              return idx >= 0 && row ? (row[idx] ?? null) : null;
+                            };
+                            const min = getVal("min_value");
+                            const max = getVal("max_value");
+                            const avg = getVal("avg_value");
+                            const total = getVal("total_count");
+                            const nulls = getVal("null_count");
+                            return (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 0.25,
+                                  fontSize: "0.7rem",
+                                }}
+                              >
+                                {[
+                                  { label: "Min", value: min },
+                                  { label: "Max", value: max },
+                                  { label: "Avg", value: avg },
+                                  { label: "Count", value: total },
+                                  { label: "Nulls", value: nulls },
+                                ].map(({ label, value }) => (
+                                  <Box
+                                    key={label}
+                                    sx={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                    }}
+                                  >
+                                    <Typography variant="caption" color="text.secondary">
+                                      {label}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      fontFamily="monospace"
+                                      fontWeight={600}
+                                    >
+                                      {value == null ? "—" : String(value)}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            );
+                          })()}
+                        {!insight?.loading &&
+                          !insight?.error &&
+                          insight?.data &&
+                          !isNumericType(col.type) &&
+                          (() => {
+                            const vals = insight.data!.values;
+                            if (vals.length === 0) {
+                              return (
+                                <Typography variant="caption" color="text.secondary">
+                                  No values
+                                </Typography>
+                              );
+                            }
+                            return (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 0.25,
+                                  fontSize: "0.7rem",
+                                }}
+                              >
+                                {vals.map((row, i) => {
+                                  const valIdx = insight.data!.columns.findIndex(
+                                    (c) => c.name === col.name,
+                                  );
+                                  const cntIdx = insight.data!.columns.findIndex(
+                                    (c) => c.name === "count",
+                                  );
+                                  const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
+                                  const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
+                                  return (
+                                    <Box
+                                      key={i}
+                                      sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        gap: 0.5,
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        noWrap
+                                        sx={{ flex: 1, minWidth: 0, fontFamily: "monospace" }}
+                                        title={value == null ? "null" : String(value)}
+                                      >
+                                        {value == null ? (
+                                          <span style={{ opacity: 0.4, fontStyle: "italic" }}>
+                                            null
+                                          </span>
+                                        ) : (
+                                          String(value)
+                                        )}
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        fontFamily="monospace"
+                                        color="text.secondary"
+                                        sx={{ flexShrink: 0 }}
+                                      >
+                                        {count == null ? "—" : String(count)}
+                                      </Typography>
+                                    </Box>
+                                  );
+                                })}
+                                {vals.length >= 10 && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ opacity: 0.6 }}
+                                  >
+                                    Top 10 only
+                                  </Typography>
+                                )}
+                              </Box>
+                            );
+                          })()}
+                        {!insight?.loading && !insight?.error && !insight?.data && (
+                          <Typography variant="caption" color="text.secondary">
+                            No data
+                          </Typography>
+                        )}
+                      </Box>
+                    </Collapse>
+                    <Divider />
                   </Box>
-                  <Divider />
-                </Box>
-              ))
+                );
+              })
             )}
           </Box>
         </Paper>
@@ -530,7 +724,6 @@ export default function DiscoverPage() {
               onRemoveColumn={toggleField}
               currentSort={currentSort}
               onSortChange={handleSortChange}
-              onProfileColumn={handleProfileColumn}
             />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
@@ -549,17 +742,6 @@ export default function DiscoverPage() {
           )}
         </Paper>
       </Box>
-      {profiledColumn && (
-        <ColumnInsightsFlyout
-          open={profiledColumn !== null}
-          onClose={() => setProfiledColumn(null)}
-          columnName={profiledColumn.name}
-          columnType={profiledColumn.type}
-          loading={profileLoading}
-          error={profileError}
-          data={profileData}
-        />
-      )}
     </Box>
   );
 }

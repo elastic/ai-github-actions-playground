@@ -175,14 +175,17 @@ function quoteEsqlIdentifier(name: string): string {
 /** Maximum number of top values returned by a keyword column insights query. */
 const COLUMN_INSIGHTS_TOP_N = 10;
 
+/** Maximum number of rows sampled for column insights (keeps queries fast). */
+const COLUMN_INSIGHTS_SAMPLE_LIMIT = 500;
+
 /**
  * Builds an ES|QL query to profile a specific column's value distribution.
  *
  * For numeric columns: returns min / max / avg / total_count / null_count statistics.
  * For all other column types: returns the top-N values with their occurrence counts.
  *
- * Any existing SORT, LIMIT, and STATS steps are stripped from the base query so that
- * the profiling runs over all matching documents rather than a paginated slice.
+ * Any existing SORT, LIMIT, and STATS steps are stripped from the base query.
+ * A sample LIMIT of 500 rows is added before the aggregation to keep queries fast.
  */
 export function buildColumnInsightsQuery(
   baseQuery: string,
@@ -201,16 +204,17 @@ export function buildColumnInsightsQuery(
   }
 
   const quotedCol = quoteEsqlIdentifier(columnName);
+  const sampledSteps = [...filteredSteps, `LIMIT ${COLUMN_INSIGHTS_SAMPLE_LIMIT}`];
 
   if (isNumericType(columnType)) {
     return [
-      ...filteredSteps,
+      ...sampledSteps,
       `STATS MIN(${quotedCol}) AS min_value, MAX(${quotedCol}) AS max_value, AVG(${quotedCol}) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(${quotedCol}) AS null_count`,
     ].join(" | ");
   }
 
   return [
-    ...filteredSteps,
+    ...sampledSteps,
     `STATS count = COUNT(*) BY ${quotedCol}`,
     "SORT count DESC",
     `LIMIT ${COLUMN_INSIGHTS_TOP_N}`,
