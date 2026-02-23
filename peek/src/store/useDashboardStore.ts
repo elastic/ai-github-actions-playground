@@ -27,6 +27,7 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
+  commandPaletteOpen: boolean;
   discoverQueryDraft: string | null;
   queryHistory: string[];
 
@@ -53,6 +54,7 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;
 
@@ -196,6 +198,7 @@ export const useDashboardStore = create<DashboardState>()(
       themeMode: "dark",
       editingPanelId: null,
       connectionDialogOpen: false,
+      commandPaletteOpen: false,
       discoverQueryDraft: null,
       queryHistory: [],
 
@@ -324,6 +327,7 @@ export const useDashboardStore = create<DashboardState>()(
 
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
+      setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
       setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
       appendQueryToHistory: (query) =>
         set((s) => {
@@ -435,6 +439,7 @@ export const useDashboardStore = create<DashboardState>()(
           themeMode: "dark",
           editingPanelId: null,
           connectionDialogOpen: false,
+          commandPaletteOpen: false,
           discoverQueryDraft: null,
           queryHistory: [],
         });
