@@ -229,6 +229,21 @@ ES_URL=http://localhost:9200 make test-e2e   # run e2e tests with proxy
 make otel-down                               # stop when done
 ```
 
+### Scheduled Playwright Smoke Agents
+
+The smoke agent plan runs five scheduled checks, each mapped to one Playwright smoke scenario:
+
+| Scenario | Playwright test (`peek/tests/e2e/smoke.spec.ts`) | Workflow spec |
+| --- | --- | --- |
+| Welcome onboarding entry flow | `onboarding user reaches the connect entrypoint from the welcome screen` | `github/workflows/smoke-welcome-flow.yml` |
+| Metrics user path to chart-ready state | `metrics user connects, picks a metric, and gets a line chart-ready result` | `github/workflows/smoke-connection-dialog.yml` |
+| Credential mode switching guardrail | `security-focused user validates auth tab switching before submitting credentials` | `github/workflows/smoke-auth-tab-switch.yml` |
+| Traces investigation to Query Lab pivot | `traces user opens a trace and pivots from service map context into Query Lab` | `github/workflows/smoke-connect-button-enablement.yml` |
+| Connection guardrail + reset recovery | `ops user confirms connection guardrails and can reset back to the landing state` | `github/workflows/smoke-reset-visibility.yml` |
+
+Each scheduled workflow asks the audit agent to run only its assigned smoke test with Playwright and open an issue when it fails, including failing test output plus screenshot/preflight diagnostics where available.
+Workflow files are placed in `github/workflows/` so maintainers can relocate them into `.github/workflows/`.
+
 ### Testing Philosophy
 
 - **Test behavior, not implementation** — assert on what the user sees and what the system does, not internal wiring.

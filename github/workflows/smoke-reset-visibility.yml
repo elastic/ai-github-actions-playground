@@ -1,0 +1,41 @@
+name: Smoke Reset Visibility
+on:
+  schedule:
+    - cron: "0 13 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    with:
+      issue-title-prefix: "[smoke-reset-visibility]"
+      additional-instructions: |
+        You are the Playwright Smoke Agent for landing-state reset visibility.
+        Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
+        - `ops user confirms connection guardrails and can reset back to the landing state`
+
+        User flow to validate in detail:
+        - Open the connection dialog and verify connect stays disabled without a URL.
+        - Provide a URL and verify connect enablement toggles on.
+        - Cancel, then perform a mocked connection.
+        - Use the global Reset control in the footer.
+        - Verify the app returns to the landing state with welcome heading visible.
+
+        Run:
+        1. `make setup`
+        2. `cd peek && npx playwright install chromium`
+        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "ops user confirms connection guardrails and can reset back to the landing state"`
+
+        If the check fails, create/update one issue with:
+        - the failing test title and assertion/locator output
+        - command output needed to reproduce
+        - any screenshot/preflight diagnostics path you generated
+
+        If the check passes, do not open an issue.
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

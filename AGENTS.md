@@ -62,3 +62,17 @@ make test-e2e   # starts the dev server automatically via Playwright config
 
 E2E tests live in `peek/tests/e2e/` and run against Chromium.
 The Playwright config (`peek/playwright.config.ts`) auto-starts the Vite dev server.
+
+### Scheduled Playwright Smoke Agents
+
+The first 5 scheduled smoke plans map one-to-one to the existing tests in
+`peek/tests/e2e/smoke.spec.ts`:
+
+- `smoke-welcome-flow.yml` → `onboarding user reaches the connect entrypoint from the welcome screen`
+- `smoke-connection-dialog.yml` → `metrics user connects, picks a metric, and gets a line chart-ready result`
+- `smoke-auth-tab-switch.yml` → `security-focused user validates auth tab switching before submitting credentials`
+- `smoke-connect-button-enablement.yml` → `traces user opens a trace and pivots from service map context into Query Lab`
+- `smoke-reset-visibility.yml` → `ops user confirms connection guardrails and can reset back to the landing state`
+
+Use the workflow specs under `github/workflows/`; maintainers can relocate them into
+`.github/workflows/` when applying workflow changes.
