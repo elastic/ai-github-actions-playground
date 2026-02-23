@@ -185,16 +185,19 @@ export function buildTraceQueryLabDraft(
 
 /**
  * Generates an ES|QL query for the trace timeseries aggregation view.
+ * Optionally accepts explicit `from` and `to` bounds for BUCKET.
  */
 export function buildTraceTimeseriesQuery(
   filters: TraceFilters,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  options: { from?: string; to?: string } = {},
 ): string {
+  const { from = "NOW() - 1 day", to = "NOW()" } = options;
   const { body } = buildTraceSearchQueryParts(filters, fields, {
     limit: 10000,
     rootSpansOnly: true,
   });
-  return `${body} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50)`;
+  return `${body} | EVAL duration_ms = ${fields.durationUs} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50, ${from}, ${to})`;
 }
 
 /**
