@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import DataTable from "../../src/components/visualizations/DataTable";
 import type { EsqlResponse } from "../../src/types";
 
@@ -208,5 +209,59 @@ describe("DataTable", () => {
     await user.click(screen.getByRole("menuitem", { name: /remove column/i }));
 
     expect(onRemoveColumn).toHaveBeenCalledWith("message");
+  });
+
+  it("shows Pin left menu item for unpinned columns", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
+
+    expect(screen.getByRole("menuitem", { name: /pin left/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /^unpin$/i })).not.toBeInTheDocument();
+  });
+
+  it("pins a column and moves it to the first position", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByRole("button", { name: /column actions for count/i }));
+    await user.click(screen.getByRole("menuitem", { name: /pin left/i }));
+
+    const headers = screen.getAllByRole("columnheader");
+    expect(within(headers[0]!).getByText("count")).toBeInTheDocument();
+  });
+
+  it("shows Unpin menu item for a pinned column and hides Pin left", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
+    await user.click(screen.getByRole("menuitem", { name: /pin left/i }));
+
+    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
+
+    expect(screen.getByRole("menuitem", { name: /^unpin$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /pin left/i })).not.toBeInTheDocument();
+  });
+
+  it("unpins a pinned column and removes sticky positioning", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
+    await user.click(screen.getByRole("menuitem", { name: /pin left/i }));
+
+    const headers = screen.getAllByRole("columnheader");
+    const pinnedHeader = headers[0]!;
+    expect(within(pinnedHeader).getByText("message")).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "hello world" })).toHaveStyle({ position: "sticky" });
+
+    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
+    await user.click(screen.getByRole("menuitem", { name: /^unpin$/i }));
+
+    expect(screen.getByRole("cell", { name: "hello world" })).not.toHaveStyle({
+      position: "sticky",
+    });
   });
 });

@@ -5,9 +5,9 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import FleetAgentPage from "../../src/components/FleetAgentPage";
 import FleetPage from "../../src/components/FleetPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useFleetStore } from "../../src/store/useFleetStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const rawRequestMock = vi.fn();
 
@@ -192,8 +192,8 @@ function mockFleetResponses() {
 describe("Fleet pages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
     // Reset fleet store

@@ -1,14 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
 const getClusterHealthMock = vi.fn();
+const getClusterStatsMock = vi.fn();
+const getNodesMock = vi.fn();
+const getNodeStatsMock = vi.fn();
 const getDataStreamsMock = vi.fn();
 const resolveIndexMock = vi.fn();
 const rawRequestMock = vi.fn();
@@ -17,6 +20,9 @@ vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getClusterInfo: getClusterInfoMock,
     getClusterHealth: getClusterHealthMock,
+    getClusterStats: getClusterStatsMock,
+    getNodes: getNodesMock,
+    getNodeStats: getNodeStatsMock,
     getDataStreams: getDataStreamsMock,
     resolveIndex: resolveIndexMock,
     rawRequest: rawRequestMock,
@@ -45,6 +51,40 @@ const CLUSTER_INFO = {
     lucene_version: "9.10.0",
     minimum_wire_compatibility_version: "7.17.0",
     minimum_index_compatibility_version: "7.0.0",
+  },
+};
+
+const CLUSTER_STATS = {
+  nodes: { count: { total: 3 } },
+  indices: {
+    count: 12,
+    shards: { total: 48 },
+    docs: { count: 1200 },
+    store: { size_in_bytes: 5_368_709_120 },
+  },
+};
+
+const NODES_INFO = {
+  nodes: {
+    node_a: { name: "node-a", roles: ["master", "data_hot"] },
+    node_b: { name: "node-b", roles: ["data_hot", "ingest"] },
+  },
+};
+
+const NODE_STATS = {
+  nodes: {
+    node_a: {
+      os: { cpu: { percent: 45 } },
+      jvm: { mem: { heap_used_percent: 62 } },
+      fs: { total: { total_in_bytes: 1000, available_in_bytes: 250 } },
+      indices: { docs: { count: 650 }, shard_stats: { total_count: 20 } },
+    },
+    node_b: {
+      os: { cpu: { percent: 35 } },
+      jvm: { mem: { heap_used_percent: 40 } },
+      fs: { total: { total_in_bytes: 1000, available_in_bytes: 500 } },
+      indices: { docs: { count: 550 }, shard_stats: { total_count: 28 } },
+    },
   },
 };
 
@@ -95,13 +135,11 @@ function mockFleetRawRequest() {
 describe("ClusterOverviewPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
-  });
 
-  it("renders cluster info with fleet status after loading", async () => {
     getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
     getClusterHealthMock.mockResolvedValue({
       status: "green",
@@ -110,6 +148,9 @@ describe("ClusterOverviewPage", () => {
       active_primary_shards: 12,
       unassigned_shards: 0,
     });
+    getClusterStatsMock.mockResolvedValue(CLUSTER_STATS);
+    getNodesMock.mockResolvedValue(NODES_INFO);
+    getNodeStatsMock.mockResolvedValue(NODE_STATS);
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
@@ -122,7 +163,9 @@ describe("ClusterOverviewPage", () => {
       data_streams: [],
     });
     mockFleetRawRequest();
+  });
 
+  it("renders cluster info with nodes and fleet status after loading", async () => {
     render(
       <MemoryRouter>
         <ClusterOverviewPage />
@@ -135,6 +178,12 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText("8.14.0")).toBeInTheDocument();
     expect(screen.getByText("Status: GREEN")).toBeInTheDocument();
     expect(screen.getByText("Nodes: 3")).toBeInTheDocument();
+    expect(screen.getByText("Discovered nodes: 3")).toBeInTheDocument();
+    expect(screen.getByText("master: 1")).toBeInTheDocument();
+    expect(screen.getByText("data_hot: 2")).toBeInTheDocument();
+    expect(screen.getByText("node-a")).toBeInTheDocument();
+    expect(screen.getByText("node-b")).toBeInTheDocument();
+    expect(screen.getByText("5.0 GB")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument(); // data stream count
     expect(screen.getByText("3")).toBeInTheDocument(); // index count
     // Fleet section uses server status metrics
@@ -143,9 +192,12 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText("View Fleet →")).toBeInTheDocument();
   });
 
-  it("shows error alert on failure", async () => {
+  it("shows error alert on total failure", async () => {
     getClusterInfoMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     getClusterHealthMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    getClusterStatsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    getNodesMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    getNodeStatsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     getDataStreamsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     resolveIndexMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     rawRequestMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
@@ -163,17 +215,6 @@ describe("ClusterOverviewPage", () => {
 
   it("refreshes data when Refresh button is clicked", async () => {
     const user = userEvent.setup();
-    getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
-    getClusterHealthMock.mockResolvedValue({
-      status: "yellow",
-      number_of_nodes: 2,
-      number_of_data_nodes: 1,
-      active_primary_shards: 4,
-      unassigned_shards: 1,
-    });
-    getDataStreamsMock.mockResolvedValue({ data_streams: [] });
-    resolveIndexMock.mockResolvedValue({ indices: [], aliases: [], data_streams: [] });
-    mockFleetRawRequest();
 
     render(
       <MemoryRouter>
@@ -194,22 +235,14 @@ describe("ClusterOverviewPage", () => {
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("1")).toBeInTheDocument(); // updated data stream count
+      expect(getDataStreamsMock).toHaveBeenCalledTimes(2);
     });
   });
 
   it("shows unavailable metrics and warning on partial failures", async () => {
-    getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
-    getClusterHealthMock.mockResolvedValue({
-      status: "yellow",
-      number_of_nodes: 2,
-      number_of_data_nodes: 1,
-      active_primary_shards: 5,
-      unassigned_shards: 2,
-    });
-    getDataStreamsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
-    resolveIndexMock.mockRejectedValue({ status: 403, message: "Forbidden" });
-    rawRequestMock.mockRejectedValue({ status: 403, message: "Forbidden" });
+    getClusterStatsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
+    getNodesMock.mockRejectedValue({ status: 403, message: "Forbidden" });
+    getNodeStatsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
 
     render(
       <MemoryRouter>
@@ -220,8 +253,9 @@ describe("ClusterOverviewPage", () => {
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
     });
+
     expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument();
-    // Data streams, Indices, Aliases show unavailable; Fleet shows "No Fleet data available."
-    expect(screen.getAllByText("Unavailable").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(/cluster stats, nodes, node stats/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThanOrEqual(6);
   });
 });

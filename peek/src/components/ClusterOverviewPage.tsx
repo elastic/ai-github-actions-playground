@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -7,29 +7,54 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import {
   ElasticsearchClient,
   isElasticsearchError,
-  type ClusterInfoResponse,
   type ClusterHealthResponse,
+  type ClusterInfoResponse,
+  type ClusterStatsResponse,
+  type NodeStatsNode,
+  type NodesInfoNode,
+  type NodesInfoResponse,
+  type NodesStatsResponse,
 } from "../services/es";
 import {
   loadFleetServerStatus,
   loadElasticAgentInventory,
   type FleetServerStatusMetrics,
 } from "../services/fleet";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
   clusterHealth: ClusterHealthResponse | null;
+  clusterStats: ClusterStatsResponse | null;
+  nodesInfo: NodesInfoResponse | null;
+  nodesStats: NodesStatsResponse | null;
   dataStreamCount: number | null;
   indexCount: number | null;
   aliasCount: number | null;
   fleetStatus: FleetServerStatusMetrics | null;
   agentInventoryCount: number | null;
+}
+
+interface NodeRow {
+  id: string;
+  name: string;
+  roles: string[];
+  cpuPercent: number | null;
+  heapPercent: number | null;
+  diskUsedPercent: number | null;
+  shardCount: number | null;
+  docCount: number | null;
 }
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -43,8 +68,71 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
   );
 }
 
+function formatCompactNumber(value: number | null): string {
+  if (value === null) return "Unavailable";
+  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(
+    value,
+  );
+}
+
+function formatBytes(value: number | null): string {
+  if (value === null) return "Unavailable";
+  if (value === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const exponent = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  const normalized = value / Math.pow(1024, exponent);
+  return `${normalized.toFixed(normalized >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null) return "Unavailable";
+  return `${value.toFixed(0)}%`;
+}
+
+function renderCount(value: number | null) {
+  if (value === null) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        Unavailable
+      </Typography>
+    );
+  }
+  return <Typography variant="h4">{value.toLocaleString()}</Typography>;
+}
+
+function toNodeRows(
+  nodesInfo: NodesInfoResponse | null,
+  nodesStats: NodesStatsResponse | null,
+): NodeRow[] {
+  const infoById = nodesInfo?.nodes ?? {};
+  const statsById = nodesStats?.nodes ?? {};
+  const ids = Array.from(new Set([...Object.keys(infoById), ...Object.keys(statsById)])).sort();
+
+  return ids.map((id) => {
+    const info: NodesInfoNode | undefined = infoById[id];
+    const stats: NodeStatsNode | undefined = statsById[id];
+    const totalBytes = stats?.fs?.total?.total_in_bytes;
+    const availableBytes = stats?.fs?.total?.available_in_bytes;
+    const diskUsedPercent =
+      totalBytes && totalBytes > 0 && availableBytes !== undefined
+        ? ((totalBytes - availableBytes) / totalBytes) * 100
+        : null;
+
+    return {
+      id,
+      name: info?.name ?? stats?.name ?? id,
+      roles: info?.roles ?? [],
+      cpuPercent: stats?.os?.cpu?.percent ?? null,
+      heapPercent: stats?.jvm?.mem?.heap_used_percent ?? null,
+      diskUsedPercent,
+      shardCount: stats?.indices?.shard_stats?.total_count ?? null,
+      docCount: stats?.indices?.docs?.count ?? null,
+    };
+  });
+}
+
 export default function ClusterOverviewPage() {
-  const connection = useDashboardStore((s) => s.connection);
+  const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +140,9 @@ export default function ClusterOverviewPage() {
   const [data, setData] = useState<OverviewData>({
     clusterInfo: null,
     clusterHealth: null,
+    clusterStats: null,
+    nodesInfo: null,
+    nodesStats: null,
     dataStreamCount: null,
     indexCount: null,
     aliasCount: null,
@@ -69,6 +160,9 @@ export default function ClusterOverviewPage() {
       const [
         clusterInfoResult,
         clusterHealthResult,
+        clusterStatsResult,
+        nodesResult,
+        nodeStatsResult,
         dataStreamsResult,
         resolveIndexResult,
         fleetStatusResult,
@@ -76,6 +170,9 @@ export default function ClusterOverviewPage() {
       ] = await Promise.allSettled([
         client.getClusterInfo(),
         client.getClusterHealth(),
+        client.getClusterStats(),
+        client.getNodes(),
+        client.getNodeStats(),
         client.getDataStreams(),
         client.resolveIndex("*"),
         loadFleetServerStatus(client),
@@ -86,6 +183,9 @@ export default function ClusterOverviewPage() {
         clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
         clusterHealth:
           clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
+        clusterStats: clusterStatsResult.status === "fulfilled" ? clusterStatsResult.value : null,
+        nodesInfo: nodesResult.status === "fulfilled" ? nodesResult.value : null,
+        nodesStats: nodeStatsResult.status === "fulfilled" ? nodeStatsResult.value : null,
         dataStreamCount:
           dataStreamsResult.status === "fulfilled"
             ? (dataStreamsResult.value.data_streams?.length ?? 0)
@@ -107,6 +207,9 @@ export default function ClusterOverviewPage() {
       const failedParts: string[] = [];
       if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
       if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
+      if (clusterStatsResult.status === "rejected") failedParts.push("cluster stats");
+      if (nodesResult.status === "rejected") failedParts.push("nodes");
+      if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
       if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
       if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
       if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
@@ -115,15 +218,7 @@ export default function ClusterOverviewPage() {
         setPartialErrors(failedParts);
       }
 
-      // Core sources (cluster info/health, data streams, indices) determine total failure.
-      // Fleet sources use gracefulSearch and never reject.
-      const coreFailures = [
-        clusterInfoResult,
-        clusterHealthResult,
-        dataStreamsResult,
-        resolveIndexResult,
-      ].filter((r) => r.status === "rejected").length;
-      if (coreFailures === 4) {
+      if (failedParts.length === 9) {
         const firstError =
           clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
         setError(
@@ -143,8 +238,7 @@ export default function ClusterOverviewPage() {
     void loadOverview();
   }, [loadOverview]);
 
-  const { clusterInfo } = data;
-  const { clusterHealth } = data;
+  const { clusterInfo, clusterHealth, clusterStats } = data;
   const clusterStatus = clusterHealth?.status?.toUpperCase() ?? "UNKNOWN";
   const clusterStatusColor =
     clusterHealth?.status === "green"
@@ -155,16 +249,25 @@ export default function ClusterOverviewPage() {
           ? "error"
           : "default";
 
-  function renderCount(value: number | null) {
-    if (value === null) {
-      return (
-        <Typography variant="body2" color="text.secondary">
-          Unavailable
-        </Typography>
-      );
+  const nodeRows = useMemo(
+    () => toNodeRows(data.nodesInfo, data.nodesStats),
+    [data.nodesInfo, data.nodesStats],
+  );
+
+  const roleCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of nodeRows) {
+      for (const role of row.roles) {
+        counts.set(role, (counts.get(role) ?? 0) + 1);
+      }
     }
-    return <Typography variant="h4">{value}</Typography>;
-  }
+    return Array.from(counts.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [nodeRows]);
+
+  const clusterDocsCount = clusterStats?.indices?.docs?.count ?? null;
+  const clusterStoreBytes = clusterStats?.indices?.store?.size_in_bytes ?? null;
+  const clusterShardCount = clusterStats?.indices?.shards?.total ?? null;
+  const clusterIndexCount = clusterStats?.indices?.count ?? null;
 
   const fleetTotal = data.fleetStatus?.total ?? data.agentInventoryCount;
 
@@ -210,6 +313,12 @@ export default function ClusterOverviewPage() {
                         <Chip
                           size="small"
                           label={`Data nodes: ${clusterHealth.number_of_data_nodes}`}
+                        />
+                      )}
+                      {clusterStats?.nodes?.count?.total !== undefined && (
+                        <Chip
+                          size="small"
+                          label={`Discovered nodes: ${clusterStats.nodes.count.total}`}
                         />
                       )}
                     </Stack>
@@ -290,6 +399,80 @@ export default function ClusterOverviewPage() {
               <InfoCard title="Aliases">{renderCount(data.aliasCount)}</InfoCard>
             </Box>
           </Stack>
+
+          <Stack direction="row" spacing={2}>
+            <Box sx={{ flex: 1 }}>
+              <InfoCard title="Docs">
+                <Typography variant="h4">{formatCompactNumber(clusterDocsCount)}</Typography>
+              </InfoCard>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <InfoCard title="Store Size">
+                <Typography variant="h4">{formatBytes(clusterStoreBytes)}</Typography>
+              </InfoCard>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <InfoCard title="Total Shards">
+                <Typography variant="h4">{formatCompactNumber(clusterShardCount)}</Typography>
+              </InfoCard>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <InfoCard title="Total Indices">
+                <Typography variant="h4">{formatCompactNumber(clusterIndexCount)}</Typography>
+              </InfoCard>
+            </Box>
+          </Stack>
+
+          <InfoCard title="Node Role Summary">
+            {roleCounts.length > 0 ? (
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {roleCounts.map(([role, count]) => (
+                  <Chip key={role} size="small" label={`${role}: ${count}`} />
+                ))}
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Unavailable
+              </Typography>
+            )}
+          </InfoCard>
+
+          <InfoCard title="Nodes">
+            {nodeRows.length > 0 ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Roles</TableCell>
+                      <TableCell align="right">CPU %</TableCell>
+                      <TableCell align="right">Heap %</TableCell>
+                      <TableCell align="right">Disk Used %</TableCell>
+                      <TableCell align="right">Shards</TableCell>
+                      <TableCell align="right">Docs</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {nodeRows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.name}</TableCell>
+                        <TableCell>{row.roles.length > 0 ? row.roles.join(", ") : "—"}</TableCell>
+                        <TableCell align="right">{formatPercent(row.cpuPercent)}</TableCell>
+                        <TableCell align="right">{formatPercent(row.heapPercent)}</TableCell>
+                        <TableCell align="right">{formatPercent(row.diskUsedPercent)}</TableCell>
+                        <TableCell align="right">{formatCompactNumber(row.shardCount)}</TableCell>
+                        <TableCell align="right">{formatCompactNumber(row.docCount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Unavailable
+              </Typography>
+            )}
+          </InfoCard>
 
           {/* Fleet summary */}
           <InfoCard title="Fleet">

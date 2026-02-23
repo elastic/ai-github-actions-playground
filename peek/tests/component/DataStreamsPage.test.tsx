@@ -4,8 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
 import DataStreamsPage from "../../src/components/DataStreamsPage";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useQueryStore } from "../../src/store/useQueryStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const getDataStreamsMock = vi.fn();
 const getFieldCapsMock = vi.fn();
@@ -41,8 +42,8 @@ function LocationDisplay() {
 describe("DataStreamsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDashboardStore.getState().resetState();
-    useDashboardStore
+    resetAllStores();
+    useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });
@@ -77,7 +78,7 @@ describe("DataStreamsPage", () => {
     expect(await screen.findByRole("heading", { level: 6, name: "logs-b" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /open in query lab/i }));
-    expect(useDashboardStore.getState().discoverQueryDraft).toBe(
+    expect(useQueryStore.getState().discoverQueryDraft).toBe(
       "FROM logs-b | SORT @timestamp DESC | LIMIT 50",
     );
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");

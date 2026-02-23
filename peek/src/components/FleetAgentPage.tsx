@@ -22,7 +22,7 @@ import {
   type ElasticAgentLogEntry,
   type ElasticAgentMetricPoint,
 } from "../services/fleet";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -38,7 +38,7 @@ const LOG_LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function FleetAgentPage() {
-  const connection = useDashboardStore((s) => s.connection);
+  const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const { agentId = "" } = useParams<{ agentId: string }>();
   const decodedAgentId = (() => {

@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ConnectionDialog from "../../src/components/ConnectionDialog";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
 
-const getClusterInfoMock = vi.fn();
-const getCapabilitiesMock = vi.fn();
+import ConnectionDialog from "../../src/components/ConnectionDialog";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+
+const { fetchCapabilitiesForConnectionMock } = vi.hoisted(() => ({
+  fetchCapabilitiesForConnectionMock: vi.fn(),
+}));
 
 vi.mock("../../src/services/es", () => ({
-  ElasticsearchClient: vi.fn().mockImplementation(() => ({
-    getClusterInfo: getClusterInfoMock,
-    getCapabilities: getCapabilitiesMock,
-  })),
+  fetchCapabilitiesForConnection: fetchCapabilitiesForConnectionMock,
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
     const obj = err as Record<string, unknown>;
@@ -31,9 +31,9 @@ describe("ConnectionDialog", () => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     // Open the dialog for all tests
-    useDashboardStore.getState().setConnectionDialogOpen(true);
+    useUIStore.getState().setConnectionDialogOpen(true);
   });
 
   it("renders URL and API key fields", () => {
@@ -63,22 +63,22 @@ describe("ConnectionDialog", () => {
 
   it("connects successfully and closes the dialog", async () => {
     const user = userEvent.setup();
-    getClusterInfoMock.mockResolvedValue({});
-    getCapabilitiesMock.mockResolvedValue({ canUseEsql: true, canUseAsyncEsql: true });
+    fetchCapabilitiesForConnectionMock.mockResolvedValue({
+      canManageDataStreams: true,
+    });
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
-    expect(getClusterInfoMock).toHaveBeenCalledTimes(1);
-    expect(getCapabilitiesMock).toHaveBeenCalledTimes(1);
-    expect(useDashboardStore.getState().connected).toBe(true);
-    expect(useDashboardStore.getState().connectionDialogOpen).toBe(false);
+    expect(fetchCapabilitiesForConnectionMock).toHaveBeenCalledTimes(1);
+    expect(useConnectionStore.getState().connected).toBe(true);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(false);
   });
 
   it("shows an error when test connection fails", async () => {
     const user = userEvent.setup();
-    getClusterInfoMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    fetchCapabilitiesForConnectionMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
@@ -105,7 +105,7 @@ describe("ConnectionDialog", () => {
     await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
-    const profiles = useDashboardStore.getState().connectionProfiles;
+    const profiles = useConnectionStore.getState().connectionProfiles;
     expect(profiles).toHaveLength(1);
     expect(profiles[0].name).toBe("Dev Cluster");
     expect(profiles[0].connection.url).toBe("https://dev.example.com");
@@ -113,7 +113,7 @@ describe("ConnectionDialog", () => {
   });
 
   it("displays saved profiles in the dialog", () => {
-    useDashboardStore.setState({
+    useConnectionStore.setState({
       connection: { url: "https://dev.example.com", apiKey: "dev-key" },
       connectionProfiles: [
         { id: "p1", name: "Dev", connection: { url: "https://dev.example.com", apiKey: "key1" } },
@@ -133,7 +133,7 @@ describe("ConnectionDialog", () => {
 
   it("deletes a profile after confirmation", async () => {
     const user = userEvent.setup();
-    useDashboardStore.setState({
+    useConnectionStore.setState({
       connection: { url: "https://dev.example.com", apiKey: "dev-key" },
       connectionProfiles: [
         { id: "p1", name: "Dev", connection: { url: "https://dev.example.com", apiKey: "key1" } },
@@ -143,9 +143,9 @@ describe("ConnectionDialog", () => {
 
     await user.click(screen.getByLabelText(/delete profile dev/i));
     // Profile should still exist after first click
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(1);
 
     await user.click(screen.getByRole("button", { name: /^confirm$/i }));
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
   });
 });

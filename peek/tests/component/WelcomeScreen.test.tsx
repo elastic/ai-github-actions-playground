@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import WelcomeScreen from "../../src/components/WelcomeScreen";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -30,16 +32,14 @@ describe("WelcomeScreen", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     fetchMock.mockReset();
   });
 
   it('shows "Connect to Elasticsearch" button when disconnected', () => {
     mockDemoConfig(null);
     render(<WelcomeScreen />);
-    expect(
-      screen.getByRole("button", { name: /connect to elasticsearch/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
   });
 
   it("clicking the button opens the connection dialog", async () => {
@@ -49,7 +49,7 @@ describe("WelcomeScreen", () => {
 
     await user.click(screen.getByRole("button", { name: /connect to elasticsearch/i }));
 
-    expect(useDashboardStore.getState().connectionDialogOpen).toBe(true);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(true);
   });
 
   it('does not show "Try the Demo" button when demo.json is absent', async () => {
@@ -70,7 +70,9 @@ describe("WelcomeScreen", () => {
     // First call → demo.json; second call → cluster info; third call → capabilities
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }),
+      )
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ cluster: { manage_data_stream: true } }), { status: 200 }),
       );
@@ -81,17 +83,17 @@ describe("WelcomeScreen", () => {
     const demoButton = await screen.findByRole("button", { name: /try the demo/i });
     await user.click(demoButton);
 
-    await waitFor(() => expect(useDashboardStore.getState().connected).toBe(true));
-    expect(useDashboardStore.getState().connection).toMatchObject({
+    await waitFor(() => expect(useConnectionStore.getState().connected).toBe(true));
+    expect(useConnectionStore.getState().connection).toMatchObject({
       url: DEMO_CONFIG.url,
       username: DEMO_CONFIG.username,
       password: DEMO_CONFIG.password,
     });
-    expect(useDashboardStore.getState().capabilities).toEqual({ canManageDataStreams: true });
+    expect(useConnectionStore.getState().capabilities).toEqual({ canManageDataStreams: true });
   });
 
-  it('shows error message when demo connection fails', async () => {
-    useDashboardStore.getState().setCapabilities({ canManageDataStreams: true });
+  it("shows error message when demo connection fails", async () => {
+    useConnectionStore.getState().setCapabilities({ canManageDataStreams: true });
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
       .mockResolvedValueOnce(
@@ -105,7 +107,7 @@ describe("WelcomeScreen", () => {
     await user.click(demoButton);
 
     await screen.findByText(/unauthorized/i);
-    expect(useDashboardStore.getState().connected).toBe(false);
-    expect(useDashboardStore.getState().capabilities).toBeNull();
+    expect(useConnectionStore.getState().connected).toBe(false);
+    expect(useConnectionStore.getState().capabilities).toBeNull();
   });
 });

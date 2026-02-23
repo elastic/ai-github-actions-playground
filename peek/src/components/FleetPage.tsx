@@ -20,7 +20,7 @@ import {
   loadFleetActions,
   loadFleetActionResults,
 } from "../services/fleet";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
 import { useFleetStore, type FleetViewTab } from "../store/useFleetStore";
 
 import FleetStatCard from "./fleet/FleetStatCard";
@@ -40,7 +40,7 @@ const TABS: { value: FleetViewTab; label: string }[] = [
 const AUTO_REFRESH_MS = 30_000;
 
 export default function FleetPage() {
-  const connection = useDashboardStore((s) => s.connection);
+  const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
 
   const activeTab = useFleetStore((s) => s.activeTab);
