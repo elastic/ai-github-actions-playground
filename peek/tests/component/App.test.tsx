@@ -72,6 +72,17 @@ describe("App shell visibility", () => {
     expect(screen.queryByText(/api console/i)).not.toBeInTheDocument();
   });
 
+  it("shows welcome screen when disconnected and current page is chat", () => {
+    render(
+      <MemoryRouter initialEntries={["/chat"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /go to settings/i })).not.toBeInTheDocument();
+  });
+
   it("shows navigation and keeps footer reset when connected", () => {
     useDashboardStore.getState().setConnected(true);
     render(

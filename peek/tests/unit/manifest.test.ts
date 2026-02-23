@@ -48,9 +48,9 @@ describe("PAGE_MANIFEST", () => {
     }
   });
 
-  it("docs and chat are accessible without a connection", () => {
+  it("only docs is accessible without a connection", () => {
     expect(PAGE_MANIFEST.docs.requiresConnection).toBe(false);
-    expect(PAGE_MANIFEST.chat.requiresConnection).toBe(false);
+    expect(PAGE_MANIFEST.chat.requiresConnection).toBe(true);
   });
 
   it("every page has a non-empty nav label", () => {
