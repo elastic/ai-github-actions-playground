@@ -239,7 +239,7 @@ export default function MetricOverviewGrid({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
           gap: 1,
           flex: 1,
         }}

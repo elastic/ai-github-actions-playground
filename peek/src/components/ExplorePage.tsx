@@ -565,11 +565,11 @@ export default function ExplorePage() {
               >
                 <SearchIcon sx={{ fontSize: 48, opacity: 0.3 }} />
                 <Typography variant="body2" color="text.secondary">
-                  Search for a metric to start exploring
+                  Select a namespace to start exploring
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Select a namespace to see an overview of all metrics, or search for a specific
-                  metric
+                  Pick a namespace to see an overview of all its metrics, or search for a specific
+                  metric field
                 </Typography>
               </Box>
             )}
