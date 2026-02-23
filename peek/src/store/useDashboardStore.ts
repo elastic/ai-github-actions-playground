@@ -7,6 +7,7 @@ import type {
   DashboardParameter,
   ElasticsearchConnection,
   PanelDefinition,
+  ProfileHealth,
   TimeRange,
 } from "../types";
 import type { UserCapabilities } from "../services/es";
@@ -23,6 +24,7 @@ interface DashboardState {
   capabilities: UserCapabilities | null;
   connectionProfiles: ConnectionProfile[];
   activeProfileId: string | null;
+  profileHealthMap: Record<string, ProfileHealth>;
   dashboard: DashboardDefinition;
   themeMode: "light" | "dark";
   editingPanelId: string | null;
@@ -39,6 +41,7 @@ interface DashboardState {
   renameConnectionProfile: (id: string, name: string) => void;
   setActiveProfileId: (id: string | null) => void;
   getConnectionProfile: (id: string) => ConnectionProfile | undefined;
+  setProfileHealth: (id: string, health: ProfileHealth) => void;
   setThemeMode: (mode: "light" | "dark") => void;
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
@@ -194,6 +197,7 @@ export const useDashboardStore = create<DashboardState>()(
       capabilities: null,
       connectionProfiles: [],
       activeProfileId: null,
+      profileHealthMap: {},
       dashboard: createDefaultDashboard(),
       themeMode: "dark",
       editingPanelId: null,
@@ -240,6 +244,9 @@ export const useDashboardStore = create<DashboardState>()(
       getConnectionProfile: (id) => {
         return get().connectionProfiles.find((p) => p.id === id);
       },
+
+      setProfileHealth: (id, health) =>
+        set((s) => ({ profileHealthMap: { ...s.profileHealthMap, [id]: health } })),
 
       setThemeMode: (mode) => set({ themeMode: mode }),
       setTimeRange: (range) =>
@@ -435,6 +442,7 @@ export const useDashboardStore = create<DashboardState>()(
           capabilities: null,
           connectionProfiles: [],
           activeProfileId: null,
+          profileHealthMap: {},
           dashboard: createDefaultDashboard(),
           themeMode: "dark",
           editingPanelId: null,
