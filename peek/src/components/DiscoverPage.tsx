@@ -16,7 +16,6 @@ import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
-import { sql } from "@codemirror/lang-sql";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
@@ -28,8 +27,7 @@ import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./d
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
-import { runQueryShortcutExtension } from "./queryEditorExtensions";
-import { makeLLMCompletionExtension } from "./llmCompletionExtension";
+import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
   if (type === "date" || type === "date_nanos") return "warning";
@@ -125,20 +123,9 @@ export default function DiscoverPage() {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
-    () => [
-      sql(),
+    () =>
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
-      runQueryShortcutExtension(() => void handleRunQueryRef.current()),
-      makeLLMCompletionExtension({
-        prompt:
-          "You are an ES|QL expert. Complete the ES|QL query at the cursor. " +
-          "If a recent query error is shown, suggest a fix. " +
-          "If the user writes plain language (e.g. 'count events by host'), " +
-          "complete with the valid ES|QL implementation of their intent. " +
-          "Return only the completion text.",
-        esqlGuide: true,
-      }),
-    ],
+      createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
     [],
   );
   useEffect(() => {
