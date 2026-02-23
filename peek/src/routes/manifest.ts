@@ -7,6 +7,8 @@ import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
 import InfoIcon from "@mui/icons-material/Info";
 import DatasetIcon from "@mui/icons-material/Dataset";
+import PeopleIcon from "@mui/icons-material/People";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -22,8 +24,10 @@ import DocsPage from "../components/DocsPage";
 import ExplorePage from "../components/ExplorePage";
 import FleetAgentPage from "../components/FleetAgentPage";
 import FleetPage from "../components/FleetPage";
+import RolesPage from "../components/RolesPage";
 import SettingsPage from "../components/SettingsPage";
 import TracesPage from "../components/traces/TracesPage";
+import UsersPage from "../components/UsersPage";
 
 export type NavGroup = "Workspace" | "System" | "Help" | "Settings";
 
@@ -170,6 +174,32 @@ export const PAGE_MANIFEST = {
       order: 16,
       showInSidebar: false,
       icon: createElement(SecurityIcon, { fontSize: "small" }),
+    },
+  },
+  users: {
+    path: "/users",
+    component: UsersPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Users",
+      group: "System",
+      order: 30,
+      showInSidebar: true,
+      icon: createElement(PeopleIcon, { fontSize: "small" }),
+    },
+  },
+  roles: {
+    path: "/roles",
+    component: RolesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Roles",
+      group: "System",
+      order: 40,
+      showInSidebar: true,
+      icon: createElement(AdminPanelSettingsIcon, { fontSize: "small" }),
     },
   },
   docs: {
