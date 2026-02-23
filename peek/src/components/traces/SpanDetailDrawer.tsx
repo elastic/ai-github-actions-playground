@@ -12,7 +12,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
-import type { Span } from "./traceUtils";
+import type { Span, SpanLink } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
 import { getServiceColor } from "./traceColors";
 
@@ -181,8 +181,8 @@ export default function SpanDetailDrawer({
           <Tab label="Overview" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Resource" sx={{ minHeight: 36, py: 0 }} />
+          <Tab label="Links" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Events" sx={{ minHeight: 36, py: 0 }} />
-          {/* TODO: wire up Links tab; tracked in #254 */}
         </Tabs>
 
         {/* Tab content */}
@@ -283,7 +283,46 @@ export default function SpanDetailDrawer({
 
           {tabIndex === 3 && (
             <Box sx={{ p: 1 }}>
-              {span.events.length === 0 ? (
+              {!span.links || span.links.length === 0 ? (
+                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
+                  No span links
+                </Typography>
+              ) : (
+                span.links.map((link: SpanLink, i: number) => (
+                  <Box key={i} sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 600, px: 1, pt: 0.5, display: "block" }}
+                    >
+                      Link {i + 1}
+                    </Typography>
+                    <KeyValueRow
+                      label="trace.id"
+                      value={link.traceId}
+                      onCopy={() => handleCopy(link.traceId)}
+                    />
+                    <KeyValueRow
+                      label="span.id"
+                      value={link.spanId}
+                      onCopy={() => handleCopy(link.spanId)}
+                    />
+                    {Object.entries(link.attributes).map(([k, v]) => (
+                      <KeyValueRow
+                        key={k}
+                        label={k}
+                        value={String(v)}
+                        onCopy={() => handleCopy(String(v))}
+                      />
+                    ))}
+                  </Box>
+                ))
+              )}
+            </Box>
+          )}
+
+          {tabIndex === 4 && (
+            <Box sx={{ p: 1 }}>
+              {!span.events || span.events.length === 0 ? (
                 <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
                   No events
                 </Typography>

@@ -9,6 +9,13 @@ export interface SpanEvent {
   attributes: Record<string, unknown>;
 }
 
+/** Represents a link from a span to another span/trace */
+export interface SpanLink {
+  traceId: string;
+  spanId: string;
+  attributes: Record<string, unknown>;
+}
+
 /** Represents a single span in a trace */
 export interface Span {
   traceId: string;
@@ -22,7 +29,8 @@ export interface Span {
   timestamp: string;
   startTimeUs: number;
   attributes: Record<string, unknown>;
-  events: SpanEvent[];
+  events?: SpanEvent[];
+  links?: SpanLink[];
 }
 
 /** A span augmented with tree information for rendering */
@@ -201,7 +209,12 @@ export function parseSpansFromEsql(
   return values.map((row) => {
     const attributes: Record<string, unknown> = {};
     for (const [colName, idx] of colIndex) {
-      if (!knownFields.has(colName) && colName !== eventsField && row[idx] != null) {
+      if (
+        !knownFields.has(colName) &&
+        colName !== eventsField &&
+        row[idx] != null &&
+        !isSpanLinkColumn(colName)
+      ) {
         attributes[colName] = row[idx];
       }
     }
@@ -237,8 +250,69 @@ export function parseSpansFromEsql(
       startTimeUs,
       attributes,
       events: parseSpanEvents(get(row, eventsField)),
+      links: parseSpanLinks(colIndex, row),
     };
   });
+}
+
+/** Returns true if the column name belongs to the span links data */
+function isSpanLinkColumn(colName: string): boolean {
+  return (
+    colName === "links.trace.id" ||
+    colName === "links.span.id" ||
+    colName.startsWith("links.attributes.")
+  );
+}
+
+/**
+ * Parse span links from a single ES|QL row.
+ * Handles multi-value (array) fields for `links.trace.id` and `links.span.id`,
+ * and zips them with any `links.attributes.*` columns.
+ */
+export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): SpanLink[] {
+  const getField = (field: string): unknown => {
+    const idx = colIndex.get(field);
+    return idx !== undefined ? row[idx] : null;
+  };
+
+  const rawTraceIds = getField("links.trace.id");
+  const rawSpanIds = getField("links.span.id");
+
+  if (rawTraceIds == null || rawSpanIds == null) return [];
+
+  const traceIds = Array.isArray(rawTraceIds) ? rawTraceIds : [rawTraceIds];
+  const spanIds = Array.isArray(rawSpanIds) ? rawSpanIds : [rawSpanIds];
+
+  // Gather links.attributes.* columns sorted for deterministic order
+  const attrCols: Array<[string, number]> = [];
+  for (const [colName, idx] of colIndex) {
+    if (colName.startsWith("links.attributes.")) {
+      attrCols.push([colName, idx]);
+    }
+  }
+
+  const count = Math.min(traceIds.length, spanIds.length);
+  const links: SpanLink[] = [];
+
+  for (let i = 0; i < count; i++) {
+    if (traceIds[i] != null && spanIds[i] != null) {
+      const attributes: Record<string, unknown> = {};
+      for (const [colName, idx] of attrCols) {
+        const rawVal = row[idx];
+        const vals = Array.isArray(rawVal) ? rawVal : [rawVal];
+        if (i < vals.length && vals[i] != null) {
+          attributes[colName.slice("links.attributes.".length)] = vals[i];
+        }
+      }
+      links.push({
+        traceId: String(traceIds[i]),
+        spanId: String(spanIds[i]),
+        attributes,
+      });
+    }
+  }
+
+  return links;
 }
 
 /** Format a duration in microseconds to a human-readable string */

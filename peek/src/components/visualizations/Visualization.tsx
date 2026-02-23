@@ -1,24 +1,7 @@
-import type {
-  VisualizationType,
-  EsqlResponse,
-  VisualizationOptions,
-  TimeSeriesOptions,
-  BarChartOptions,
-  StatPanelOptions,
-  GaugePanelOptions,
-  ScatterChartOptions,
-  HistogramChartOptions,
-} from "../../types";
+import type { VisualizationType, EsqlResponse, VisualizationOptions } from "../../types";
 
-import TimeSeriesChart from "./TimeSeriesChart";
-import BarChart from "./BarChart";
 import DataTable from "./DataTable";
-import StatPanel from "./StatPanel";
-import GaugePanel from "./GaugePanel";
-import PieChart from "./PieChart";
-import HeatmapChart from "./HeatmapChart";
-import ScatterChart from "./ScatterChart";
-import HistogramChart from "./HistogramChart";
+import { getVizEntry } from "./vizRegistry";
 
 interface Props {
   type: VisualizationType;
@@ -28,44 +11,6 @@ interface Props {
 }
 
 export default function Visualization({ type, data, options, onExportReady }: Props) {
-  switch (type) {
-    case "timeseries":
-      return (
-        <TimeSeriesChart
-          data={data}
-          options={options as TimeSeriesOptions | undefined}
-          onExportReady={onExportReady}
-        />
-      );
-    case "bar":
-      return (
-        <BarChart
-          data={data}
-          options={options as BarChartOptions | undefined}
-          onExportReady={onExportReady}
-        />
-      );
-    case "table":
-      return <DataTable data={data} />;
-    case "stat":
-      return <StatPanel data={data} options={options as StatPanelOptions | undefined} />;
-    case "gauge":
-      return (
-        <GaugePanel
-          data={data}
-          options={options as GaugePanelOptions | undefined}
-          onExportReady={onExportReady}
-        />
-      );
-    case "pie":
-      return <PieChart data={data} onExportReady={onExportReady} />;
-    case "heatmap":
-      return <HeatmapChart data={data} />;
-    case "scatter":
-      return <ScatterChart data={data} options={options as ScatterChartOptions | undefined} />;
-    case "histogram":
-      return <HistogramChart data={data} options={options as HistogramChartOptions | undefined} />;
-    default:
-      return <DataTable data={data} />;
-  }
+  const entry = getVizEntry(type);
+  return entry?.renderComponent({ data, options, onExportReady }) ?? <DataTable data={data} />;
 }
