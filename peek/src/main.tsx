@@ -2,12 +2,19 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 
-import App from "./App";
+import { migrateLegacyDashboardStore } from "./store/migrateLegacyDashboardStore";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
-  </React.StrictMode>,
-);
+migrateLegacyDashboardStore();
+
+async function bootstrap() {
+  const { default: App } = await import("./App");
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </React.StrictMode>,
+  );
+}
+
+void bootstrap();
