@@ -1,7 +1,7 @@
 PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run
-.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-harness-up otel-harness-down otel-harness-logs otel-cloud-up otel-cloud-down otel-cloud-logs fleet-harness-up fleet-harness-down fleet-harness-logs
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs fleet-harness-up fleet-harness-down fleet-harness-logs
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -24,12 +24,12 @@ help:
 	@echo "  clean            - Remove build artifacts and node_modules"
 	@echo "  docker-build     - Build the Docker image"
 	@echo "  docker-run       - Run the Docker container (set ES_URL)"
-	@echo "  otel-harness-up  - Start Elasticsearch + OTel host metrics harness"
-	@echo "  otel-harness-down - Stop and remove OTel host metrics harness"
-	@echo "  otel-harness-logs - Tail OTel collector logs"
-	@echo "  otel-cloud-up    - Send OTel data to a remote Elastic cluster (set ES_URL, ES_API_KEY)"
-	@echo "  otel-cloud-down  - Stop remote OTel harness"
-	@echo "  otel-cloud-logs  - Tail remote OTel collector logs"
+	@echo "  otel-up          - Start local ES + EDOT collector + telemetry generators"
+	@echo "  otel-down        - Stop and remove local OTel stack"
+	@echo "  otel-logs        - Tail EDOT collector logs"
+	@echo "  otel-cloud-up    - Send OTel data to a remote cluster (set ES_URL, ES_API_KEY)"
+	@echo "  otel-cloud-down  - Stop remote OTel stack"
+	@echo "  otel-cloud-logs  - Tail remote EDOT collector logs"
 	@echo "  fleet-harness-up - Start Fleet Server + enrolled agents harness"
 	@echo "  fleet-harness-down - Stop and remove Fleet harness"
 	@echo "  fleet-harness-logs - Tail Fleet Server logs"
@@ -120,31 +120,31 @@ docker-run:
 	@echo "  Connect the dashboard to: http://localhost:8080"
 	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} elastic-peek
 
-otel-harness-up:
-	@echo "Starting Elasticsearch + OTel host metrics harness..."
-	@docker compose -f docker-compose.otel-harness.yml up -d
-	@echo "✓ Harness running. Elasticsearch: http://localhost:9200"
+otel-up:
+	@echo "Starting local ES + EDOT collector + telemetry generators..."
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml up -d
+	@echo "✓ Stack running. Elasticsearch: http://localhost:9200"
 
-otel-harness-down:
-	@echo "Stopping OTel host metrics harness..."
-	@docker compose -f docker-compose.otel-harness.yml down -v
-	@echo "✓ Harness stopped."
+otel-down:
+	@echo "Stopping local OTel stack..."
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml down -v
+	@echo "✓ Stopped."
 
-otel-harness-logs:
-	@docker compose -f docker-compose.otel-harness.yml logs -f otel-collector
+otel-logs:
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml logs -f otel-collector
 
 otel-cloud-up:
-	@echo "Starting OTel harness → remote Elastic cluster..."
-	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml up -d
+	@echo "Starting EDOT collector + telemetry generators → remote cluster..."
+	@docker compose -f docker-compose.otel.yml up -d
 	@echo "✓ Sending traces, metrics, and logs to $${ES_URL}"
 
 otel-cloud-down:
-	@echo "Stopping remote OTel harness..."
-	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml down -v
+	@echo "Stopping remote OTel stack..."
+	@docker compose -f docker-compose.otel.yml down -v
 	@echo "✓ Stopped."
 
 otel-cloud-logs:
-	@docker compose -f docker-compose.otel-harness.yml -f docker-compose.otel-cloud.yml logs -f otel-collector
+	@docker compose -f docker-compose.otel.yml logs -f otel-collector
 
 fleet-harness-up:
 	@echo "Starting Fleet Server harness (ES + Kibana + Fleet Server + 2 agents)..."

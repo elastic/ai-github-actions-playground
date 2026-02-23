@@ -25,6 +25,7 @@ import { useTracesStore } from "../../store/useTracesStore";
 import type { TracesViewMode } from "../../store/useTracesStore";
 import type { EsqlResponse } from "../../types";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
+import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
@@ -49,16 +50,6 @@ const thStyle: React.CSSProperties = {
   top: 0,
   background: "inherit",
 };
-
-/** Predefined relative time range options */
-const TIME_RANGE_OPTIONS = [
-  { label: "Any time", from: null, to: null },
-  { label: "Last 15 minutes", from: "NOW() - 15 minutes", to: "NOW()" },
-  { label: "Last 1 hour", from: "NOW() - 1 hour", to: "NOW()" },
-  { label: "Last 24 hours", from: "NOW() - 24 hours", to: "NOW()" },
-  { label: "Last 7 days", from: "NOW() - 7 days", to: "NOW()" },
-  { label: "Last 30 days", from: "NOW() - 30 days", to: "NOW()" },
-] as const;
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -360,7 +351,7 @@ export default function TracesPage() {
           ))}
           {filters.timeFrom !== null && (
             <Chip
-              label={`time: ${TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
+              label={`time: ${TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
               size="small"
               onDelete={() => updateFilters({ timeFrom: null, timeTo: null })}
             />
@@ -408,14 +399,14 @@ export default function TracesPage() {
             value={filters.timeFrom ?? ""}
             onChange={(e) => {
               const selectedFrom = e.target.value === "" ? null : e.target.value;
-              const opt = TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
+              const opt = TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
               if (opt) {
                 updateFilters({ timeFrom: opt.from, timeTo: opt.to });
               }
             }}
             sx={{ minWidth: 150 }}
           >
-            {TIME_RANGE_OPTIONS.map((opt) => (
+            {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
               <MenuItem key={opt.label} value={opt.from ?? ""}>
                 {opt.label}
               </MenuItem>
