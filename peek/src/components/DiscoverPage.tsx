@@ -168,9 +168,9 @@ export default function DiscoverPage() {
         return;
       }
       setExpandedInsight(columnName);
-      // Use cache if available and not loading
+      // Use cache only for completed successful results; allow retry after errors
       const cached = insightsCache[columnName];
-      if (cached && !cached.loading) return;
+      if (cached?.data && !cached.loading) return;
       // Fire query
       const insightsQuery = buildColumnInsightsQuery(effectiveQuery, columnName, columnType);
       if (!insightsQuery) return;
