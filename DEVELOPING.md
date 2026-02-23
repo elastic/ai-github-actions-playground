@@ -17,6 +17,13 @@
 | `docker/` | nginx config template for the Docker proxy image |
 | `.github/workflows/` | GitHub Actions workflows (CI, GitHub Pages deployment) |
 
+## Prerequisites
+
+- **Node.js** `^20.19.0` or `>=22.12.0` (required by Vite 7)
+- **npm** `>=10` (bundled with Node.js 20/22)
+
+Use a version manager such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to switch Node versions quickly. A `.nvmrc` file is included in this repo — run `nvm use` or `fnm use` at the repo root to activate the correct version automatically.
+
 ## Quick Start
 
 ```bash
