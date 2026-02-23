@@ -148,7 +148,7 @@ export const useDashboardStore = create<DashboardState>()(
       updatePanel: (id, updates) =>
         set((s) => {
           const panel = s.dashboard.panels.find((p) => p.id === id);
-          const label = panel ? `Updated panel "${panel.title}"` : "Updated panel";
+          const label = panel ? `Updated panel "${updates.title ?? panel.title}"` : "Updated panel";
           return {
             ...pushToHistory(s, label),
             dashboard: {

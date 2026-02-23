@@ -650,11 +650,23 @@ describe("useDashboardStore undo/redo history", () => {
 
   it("updatePanel pushes a history entry with correct label", () => {
     const panelId = useDashboardStore.getState().dashboard.panels[0].id;
-    const panelTitle = useDashboardStore.getState().dashboard.panels[0].title;
     // Clear history from reset
     useDashboardStore.setState({ historyPast: [], historyFuture: [] });
 
     useDashboardStore.getState().updatePanel(panelId, { title: "Renamed" });
+
+    const { historyPast } = useDashboardStore.getState();
+    expect(historyPast).toHaveLength(1);
+    // Label uses the updated title when a title change is included in the updates
+    expect(historyPast[0]?.label).toBe('Updated panel "Renamed"');
+  });
+
+  it("updatePanel label uses original title when title is not in updates", () => {
+    const panelId = useDashboardStore.getState().dashboard.panels[0].id;
+    const panelTitle = useDashboardStore.getState().dashboard.panels[0].title;
+    useDashboardStore.setState({ historyPast: [], historyFuture: [] });
+
+    useDashboardStore.getState().updatePanel(panelId, { query: "FROM new-index-*" });
 
     const { historyPast } = useDashboardStore.getState();
     expect(historyPast).toHaveLength(1);

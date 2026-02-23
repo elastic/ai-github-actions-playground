@@ -38,7 +38,8 @@ export default function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isUndo = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z";
       const isRedo =
-        (e.ctrlKey || e.metaKey) && (e.shiftKey ? e.key === "z" || e.key === "Z" : e.key === "y");
+        (e.ctrlKey || e.metaKey) &&
+        ((e.shiftKey && e.key.toLowerCase() === "z") || (!e.shiftKey && e.key === "y"));
       if (!isUndo && !isRedo) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
