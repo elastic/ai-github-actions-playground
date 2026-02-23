@@ -35,7 +35,7 @@ export function createDefaultDashboard(): DashboardDefinition {
         id: crypto.randomUUID(),
         title: "Total Volume",
         query:
-          "FROM * | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend), `data_stream.type` | SORT time_bucket ASC",
+          "FROM * | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend), `data_stream.type` | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 0, y: 2, w: 12, h: 5 },
         options: { showArea: true, stacked: true },
@@ -61,7 +61,7 @@ export function createDefaultDashboard(): DashboardDefinition {
         id: crypto.randomUUID(),
         title: "Log Volume",
         query:
-          "FROM logs-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
+          "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 0, y: 12, w: 4, h: 5 },
         options: { showArea: true },
@@ -70,7 +70,7 @@ export function createDefaultDashboard(): DashboardDefinition {
         id: crypto.randomUUID(),
         title: "Metric Volume",
         query:
-          "FROM metrics-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
+          "FROM metrics-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 4, y: 12, w: 4, h: 5 },
         options: { showArea: true },
@@ -79,7 +79,7 @@ export function createDefaultDashboard(): DashboardDefinition {
         id: crypto.randomUUID(),
         title: "Trace Volume",
         query:
-          "FROM traces-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
+          "FROM traces-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT time_bucket ASC",
         visualization: "timeseries",
         layout: { x: 8, y: 12, w: 4, h: 5 },
         options: { showArea: true },
