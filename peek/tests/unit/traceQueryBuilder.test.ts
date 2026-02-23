@@ -292,4 +292,64 @@ describe("buildTraceTimeseriesQuery", () => {
     expect(query).toContain('service.name IN ("api-gw")');
     expect(query).toContain("parent.id IS NULL");
   });
+
+  it("uses timeFrom/timeTo from filters for BUCKET bounds", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      timeFrom: "NOW() - 1 hour",
+      timeTo: "NOW()",
+    };
+    const query = buildTraceTimeseriesQuery(filters);
+    expect(query).toContain("BUCKET(@timestamp, 50, NOW() - 1 hour, NOW())");
+  });
+
+  it("explicit options override filter timeFrom/timeTo", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      timeFrom: "NOW() - 1 hour",
+      timeTo: "NOW()",
+    };
+    const query = buildTraceTimeseriesQuery(filters, DEFAULT_FIELD_MAPPING, {
+      from: "NOW() - 7 days",
+      to: "NOW()",
+    });
+    expect(query).toContain("BUCKET(@timestamp, 50, NOW() - 7 days, NOW())");
+  });
+});
+
+describe("buildTraceSearchQuery time range filter", () => {
+  it("includes timeFrom filter as a WHERE clause", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      timeFrom: "NOW() - 1 hour",
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain("@timestamp >= NOW() - 1 hour");
+  });
+
+  it("includes timeTo filter as a WHERE clause", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      timeTo: "NOW()",
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain("@timestamp <= NOW()");
+  });
+
+  it("includes both timeFrom and timeTo as WHERE clauses", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      timeFrom: "NOW() - 24 hours",
+      timeTo: "NOW()",
+    };
+    const query = buildTraceSearchQuery(filters);
+    expect(query).toContain("@timestamp >= NOW() - 24 hours");
+    expect(query).toContain("@timestamp <= NOW()");
+  });
+
+  it("omits time clauses when timeFrom and timeTo are null", () => {
+    const query = buildTraceSearchQuery(EMPTY_FILTERS);
+    expect(query).not.toContain("@timestamp >=");
+    expect(query).not.toContain("@timestamp <=");
+  });
 });

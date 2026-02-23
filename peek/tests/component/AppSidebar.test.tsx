@@ -94,6 +94,14 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
+    expect(screen.getByRole("button", { name: /users/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /roles/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("marks the active page with aria-current", () => {
@@ -141,6 +149,26 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /cluster overview/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
+  });
+
+  it("navigates to Users when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /users/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/users");
+  });
+
+  it("navigates to Roles when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /roles/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/roles");
   });
 
   it("updates aria-current when active page changes", async () => {

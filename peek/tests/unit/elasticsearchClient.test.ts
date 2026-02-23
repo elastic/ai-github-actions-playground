@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  ElasticsearchClient,
-  isElasticsearchError,
-} from "../../src/services/es/client";
+
+import { ElasticsearchClient, isElasticsearchError } from "../../src/services/es/client";
 import type { ElasticsearchConnection } from "../../src/services/es/client";
 
 // ---------------------------------------------------------------------------
@@ -13,9 +11,7 @@ function mockFetchOnce(body: unknown, init?: ResponseInit) {
   return vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(body), init));
 }
 
-function mockFetchSequence(
-  ...responses: Array<{ body: unknown; init?: ResponseInit }>
-) {
+function mockFetchSequence(...responses: Array<{ body: unknown; init?: ResponseInit }>) {
   const fn = vi.fn();
   for (const { body, init } of responses) {
     fn.mockResolvedValueOnce(new Response(JSON.stringify(body), init));
@@ -25,9 +21,7 @@ function mockFetchSequence(
 
 const BASE_URL = "https://my-cluster.es.io:9243";
 
-function makeClient(
-  overrides: Partial<ElasticsearchConnection> = {},
-): ElasticsearchClient {
+function makeClient(overrides: Partial<ElasticsearchConnection> = {}): ElasticsearchClient {
   return new ElasticsearchClient({ url: BASE_URL, ...overrides });
 }
 
@@ -126,6 +120,30 @@ describe("request construction", () => {
     expect(init.method).toBeUndefined();
   });
 
+  it("getSecurityUsers() GETs /_security/user", async () => {
+    const fetchSpy = mockFetchOnce({});
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getSecurityUsers();
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/_security/user`);
+    expect(init.method).toBeUndefined();
+  });
+
+  it("getSecurityRoles() GETs /_security/role", async () => {
+    const fetchSpy = mockFetchOnce({});
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getSecurityRoles();
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/_security/role`);
+    expect(init.method).toBeUndefined();
+  });
+
   it("resolveIndex() GETs encoded /_resolve/index/{name}", async () => {
     const fetchSpy = mockFetchOnce({ indices: [], aliases: [], data_streams: [] });
     vi.stubGlobal("fetch", fetchSpy);
@@ -198,10 +216,7 @@ describe("error handling", () => {
     const esBody = {
       error: { reason: "index_not_found_exception" },
     };
-    vi.stubGlobal(
-      "fetch",
-      mockFetchOnce(esBody, { status: 404, statusText: "Not Found" }),
-    );
+    vi.stubGlobal("fetch", mockFetchOnce(esBody, { status: 404, statusText: "Not Found" }));
 
     const client = makeClient();
     await expect(client.getClusterInfo()).rejects.toEqual(
@@ -219,10 +234,7 @@ describe("error handling", () => {
         caused_by: { reason: "Unknown column [foo]" },
       },
     };
-    vi.stubGlobal(
-      "fetch",
-      mockFetchOnce(esBody, { status: 400, statusText: "Bad Request" }),
-    );
+    vi.stubGlobal("fetch", mockFetchOnce(esBody, { status: 400, statusText: "Bad Request" }));
 
     const client = makeClient();
     await expect(client.query({ query: "bad" })).rejects.toEqual(
@@ -240,10 +252,7 @@ describe("error handling", () => {
         root_cause: [{ reason: "root cause reason" }],
       },
     };
-    vi.stubGlobal(
-      "fetch",
-      mockFetchOnce(esBody, { status: 400, statusText: "Bad Request" }),
-    );
+    vi.stubGlobal("fetch", mockFetchOnce(esBody, { status: 400, statusText: "Bad Request" }));
 
     const client = makeClient();
     await expect(client.getClusterInfo()).rejects.toEqual(
@@ -255,31 +264,21 @@ describe("error handling", () => {
   });
 
   it("does not retry on 400", async () => {
-    const fetchSpy = mockFetchOnce(
-      { error: { reason: "bad request" } },
-      { status: 400 },
-    );
+    const fetchSpy = mockFetchOnce({ error: { reason: "bad request" } }, { status: 400 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient();
-    await expect(client.getClusterInfo()).rejects.toEqual(
-      expect.objectContaining({ status: 400 }),
-    );
+    await expect(client.getClusterInfo()).rejects.toEqual(expect.objectContaining({ status: 400 }));
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   it("does not retry on 500", async () => {
-    const fetchSpy = mockFetchOnce(
-      { error: { reason: "internal error" } },
-      { status: 500 },
-    );
+    const fetchSpy = mockFetchOnce({ error: { reason: "internal error" } }, { status: 500 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient();
-    await expect(client.getClusterInfo()).rejects.toEqual(
-      expect.objectContaining({ status: 500 }),
-    );
+    await expect(client.getClusterInfo()).rejects.toEqual(expect.objectContaining({ status: 500 }));
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
@@ -330,10 +329,7 @@ describe("retry logic", () => {
 
 describe("network errors", () => {
   it("produces ElasticsearchError with status 0 when fetch throws", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
     const client = makeClient();
     await expect(client.getClusterInfo()).rejects.toEqual(
@@ -367,9 +363,7 @@ describe("abort signal", () => {
     const promise = client.getClusterInfo(controller.signal);
     controller.abort();
 
-    await expect(promise).rejects.toEqual(
-      expect.objectContaining({ status: 0 }),
-    );
+    await expect(promise).rejects.toEqual(expect.objectContaining({ status: 0 }));
   });
 });
 
@@ -407,7 +401,7 @@ describe("isElasticsearchError", () => {
 describe("getCapabilities", () => {
   it("returns canManageDataStreams: true when cluster privilege is granted", async () => {
     const fetchSpy = mockFetchOnce(
-      { cluster: { manage_data_stream: true } },
+      { cluster: { manage_data_stream: true, read_security: true } },
       { status: 200 },
     );
     vi.stubGlobal("fetch", fetchSpy);
@@ -416,32 +410,32 @@ describe("getCapabilities", () => {
     const caps = await client.getCapabilities();
 
     expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
   });
 
   it("returns canManageDataStreams: false when cluster privilege is denied", async () => {
-    const fetchSpy = mockFetchOnce(
-      { cluster: { manage_data_stream: false } },
-      { status: 200 },
-    );
+    const fetchSpy = mockFetchOnce({ cluster: { manage_data_stream: false } }, { status: 200 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
     const caps = await client.getCapabilities();
 
     expect(caps.canManageDataStreams).toBe(false);
+    expect(caps.canReadSecurityUsers).toBe(false);
+    expect(caps.canReadSecurityRoles).toBe(false);
   });
 
   it("falls back to canManageDataStreams: false when the security API returns an error", async () => {
-    const fetchSpy = mockFetchOnce(
-      { error: { reason: "security_exception" } },
-      { status: 403 },
-    );
+    const fetchSpy = mockFetchOnce({ error: { reason: "security_exception" } }, { status: 403 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
     const caps = await client.getCapabilities();
 
     expect(caps.canManageDataStreams).toBe(false);
+    expect(caps.canReadSecurityUsers).toBe(false);
+    expect(caps.canReadSecurityRoles).toBe(false);
   });
 
   it("falls back to canManageDataStreams: false on a network failure", async () => {
@@ -451,13 +445,12 @@ describe("getCapabilities", () => {
     const caps = await client.getCapabilities();
 
     expect(caps.canManageDataStreams).toBe(false);
+    expect(caps.canReadSecurityUsers).toBe(false);
+    expect(caps.canReadSecurityRoles).toBe(false);
   });
 
   it("POSTs to /_security/user/_has_privileges with the expected body", async () => {
-    const fetchSpy = mockFetchOnce(
-      { cluster: { manage_data_stream: false } },
-      { status: 200 },
-    );
+    const fetchSpy = mockFetchOnce({ cluster: { manage_data_stream: false } }, { status: 200 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient();
@@ -466,7 +459,9 @@ describe("getCapabilities", () => {
     const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(`${BASE_URL}/_security/user/_has_privileges`);
     expect(init.method).toBe("POST");
-    expect(JSON.parse(init.body as string)).toEqual({ cluster: ["manage_data_stream"] });
+    expect(JSON.parse(init.body as string)).toEqual({
+      cluster: ["manage_data_stream", "read_security", "manage_security"],
+    });
   });
 });
 

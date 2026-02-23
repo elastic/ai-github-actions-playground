@@ -8,6 +8,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
@@ -47,6 +49,16 @@ const thStyle: React.CSSProperties = {
   top: 0,
   background: "inherit",
 };
+
+/** Predefined relative time range options */
+const TIME_RANGE_OPTIONS = [
+  { label: "Any time", from: null, to: null },
+  { label: "Last 15 minutes", from: "NOW() - 15 minutes", to: "NOW()" },
+  { label: "Last 1 hour", from: "NOW() - 1 hour", to: "NOW()" },
+  { label: "Last 24 hours", from: "NOW() - 24 hours", to: "NOW()" },
+  { label: "Last 7 days", from: "NOW() - 7 days", to: "NOW()" },
+  { label: "Last 30 days", from: "NOW() - 30 days", to: "NOW()" },
+] as const;
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -346,6 +358,13 @@ export default function TracesPage() {
               }
             />
           ))}
+          {filters.timeFrom !== null && (
+            <Chip
+              label={`time: ${TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
+              size="small"
+              onDelete={() => updateFilters({ timeFrom: null, timeTo: null })}
+            />
+          )}
         </Box>
 
         {/* Quick filters row */}
@@ -383,6 +402,25 @@ export default function TracesPage() {
               Apply
             </Button>
           </Box>
+          <Select
+            size="small"
+            displayEmpty
+            value={filters.timeFrom ?? ""}
+            onChange={(e) => {
+              const selectedFrom = e.target.value === "" ? null : e.target.value;
+              const opt = TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
+              if (opt) {
+                updateFilters({ timeFrom: opt.from, timeTo: opt.to });
+              }
+            }}
+            sx={{ minWidth: 150 }}
+          >
+            {TIME_RANGE_OPTIONS.map((opt) => (
+              <MenuItem key={opt.label} value={opt.from ?? ""}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
           <Box sx={{ display: "flex", gap: 0.5, ml: "auto" }}>
             {(["Error", "OK"] as const).map((status) => (
               <Chip
