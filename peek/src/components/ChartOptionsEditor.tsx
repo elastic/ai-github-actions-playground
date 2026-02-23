@@ -353,6 +353,30 @@ export default function ChartOptionsEditor({ vizType, options, onChange }: Props
             <Typography variant="caption" color="text.secondary">
               Thresholds
             </Typography>
+            {vizType === "table" && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 70 }}>
+                  Columns
+                </Typography>
+                <TextField
+                  size="small"
+                  placeholder="All numeric columns"
+                  value={(options as TablePanelOptions).thresholdColumns?.join(", ") ?? ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.trim();
+                    const cols = raw
+                      ? raw
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                      : undefined;
+                    onChange({ ...options, thresholdColumns: cols });
+                  }}
+                  sx={{ width: 220 }}
+                  inputProps={{ "aria-label": "threshold columns" }}
+                />
+              </Box>
+            )}
             <ThresholdEditor
               value={
                 (options as StatPanelOptions | GaugePanelOptions | TablePanelOptions | undefined)
