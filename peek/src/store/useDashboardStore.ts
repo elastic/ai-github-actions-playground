@@ -550,11 +550,20 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       loadDefaultDashboard: () => {
-        set((s) => ({
-          ...replaceActiveDashboard(s, createDefaultDashboard()),
-          historyPast: [],
-          historyFuture: [],
-        }));
+        set((s) => {
+          const active = getActiveDashboard(s);
+          const defaults = createDefaultDashboard();
+          return {
+            ...replaceActiveDashboard(s, {
+              ...defaults,
+              id: active.id,
+              createdAt: active.createdAt,
+              updatedAt: nowIso(),
+            }),
+            historyPast: [],
+            historyFuture: [],
+          };
+        });
       },
 
       resetWorkspaceState: () => {
