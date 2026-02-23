@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from "react";
 import {
   Responsive,
-  WidthProvider,
+  useContainerWidth,
   type Layout,
   type LayoutItem,
   type ResponsiveLayouts as Layouts,
-} from "react-grid-layout/legacy";
+} from "react-grid-layout";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -18,9 +18,8 @@ import { useDashboardStore } from "../store/useDashboardStore";
 
 import PanelContainer from "./PanelContainer";
 
-const ResponsiveGrid = WidthProvider(Responsive);
-
 export default function DashboardGrid() {
+  const { width, containerRef, mounted } = useContainerWidth();
   const panels = useDashboardStore((s) => s.dashboard.panels);
   const updatePanelLayouts = useDashboardStore((s) => s.updatePanelLayouts);
   const addPanel = useDashboardStore((s) => s.addPanel);
@@ -101,22 +100,27 @@ export default function DashboardGrid() {
   }
 
   return (
-    <ResponsiveGrid
-      className="dashboard-grid"
-      layouts={layouts}
-      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-      rowHeight={80}
-      onLayoutChange={handleLayoutChange}
-      draggableHandle=".panel-drag-handle"
-      containerPadding={[0, 0]}
-      margin={[12, 12]}
-    >
-      {panels.map((panel) => (
-        <div key={panel.id}>
-          <PanelContainer panel={panel} />
-        </div>
-      ))}
-    </ResponsiveGrid>
+    <Box ref={containerRef}>
+      {mounted && (
+        <Responsive
+          className="dashboard-grid"
+          width={width}
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={80}
+          onLayoutChange={handleLayoutChange}
+          dragConfig={{ handle: ".panel-drag-handle" }}
+          containerPadding={[0, 0]}
+          margin={[12, 12]}
+        >
+          {panels.map((panel) => (
+            <div key={panel.id}>
+              <PanelContainer panel={panel} />
+            </div>
+          ))}
+        </Responsive>
+      )}
+    </Box>
   );
 }
