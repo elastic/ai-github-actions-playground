@@ -45,7 +45,7 @@ describe("makeLLMCompletionExtension", () => {
     localStorage.clear();
     sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
-    setLastQueryError(null);
+    setLastQueryError(null, testEditorView);
   });
 
   it("returns a non-empty extension array", () => {
