@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import AppHeader from "../../src/components/AppHeader";
@@ -98,5 +98,52 @@ describe("AppHeader", () => {
       );
       expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
     }
+  });
+});
+
+describe("AppHeader profile health badges", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().setConnected(true);
+  });
+
+  it("shows a re-test button for each profile in the switcher menu", async () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useDashboardStore.getState().setActiveProfileId(id!);
+
+    renderHeader();
+
+    // Open the profile menu
+    fireEvent.click(screen.getByRole("button", { name: /switch connection profile/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /re-test dev/i })).toBeInTheDocument();
+    });
+  });
+
+  it("shows health badge for a healthy profile in the switcher menu", async () => {
+    const id = useDashboardStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useDashboardStore.getState().setActiveProfileId(id!);
+    useDashboardStore.getState().setProfileHealth(id!, {
+      status: "healthy",
+      checkedAt: new Date().toISOString(),
+      errorSummary: null,
+    });
+
+    renderHeader();
+
+    // Open the profile menu
+    fireEvent.click(screen.getByRole("button", { name: /switch connection profile/i }));
+
+    await waitFor(() => {
+      // CheckCircleIcon is rendered by MUI with data-testid="CheckCircleIcon"
+      expect(screen.getByTestId("CheckCircleIcon")).toBeInTheDocument();
+    });
   });
 });

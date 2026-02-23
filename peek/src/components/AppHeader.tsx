@@ -11,9 +11,16 @@ import MenuItem from "@mui/material/MenuItem";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import ButtonBase from "@mui/material/ButtonBase";
+import IconButton from "@mui/material/IconButton";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SearchIcon from "@mui/icons-material/Search";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -21,7 +28,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
-import type { TimeRange } from "../types";
+import type { ProfileHealth, TimeRange } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
 const TIME_PRESETS: Array<{ label: string; range: TimeRange }> = [
@@ -44,6 +51,22 @@ const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
+function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
+  if (!health || health.status === "unknown") return null;
+  if (health.status === "healthy") {
+    return (
+      <Tooltip title="Healthy">
+        <CheckCircleIcon fontSize="small" sx={{ color: "success.main", ml: 0.5, flexShrink: 0 }} />
+      </Tooltip>
+    );
+  }
+  return (
+    <Tooltip title={health.errorSummary ?? "Connection failed"}>
+      <WarningAmberIcon fontSize="small" sx={{ color: "warning.main", ml: 0.5, flexShrink: 0 }} />
+    </Tooltip>
+  );
+}
+
 export default function AppHeader() {
   const { dashboard, setTimeRange, setRefreshInterval, addPanel } = useDashboardStore(
     useShallow((s) => ({
@@ -57,19 +80,23 @@ export default function AppHeader() {
     connected,
     connectionProfiles,
     activeProfileId,
+    profileHealthMap,
     setConnection,
     setConnected,
     setCapabilities,
     setActiveProfileId,
+    setProfileHealth,
   } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
+      profileHealthMap: s.profileHealthMap,
       setConnection: s.setConnection,
       setConnected: s.setConnected,
       setCapabilities: s.setCapabilities,
       setActiveProfileId: s.setActiveProfileId,
+      setProfileHealth: s.setProfileHealth,
     })),
   );
   const { setEditingPanelId, setConnectionDialogOpen, setCommandPaletteOpen } = useUIStore(
@@ -85,6 +112,11 @@ export default function AppHeader() {
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [switchingProfile, setSwitchingProfile] = useState(false);
+  const [retestingProfileId, setRetestingProfileId] = useState<string | null>(null);
+  const [profileFeedback, setProfileFeedback] = useState<{
+    message: string;
+    severity: "success" | "error";
+  } | null>(null);
   const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
   const showTimeControls = connected && Boolean(activePage?.showTimeControls);
 
@@ -106,6 +138,11 @@ export default function AppHeader() {
         setConnected(true);
         setCapabilities(caps);
         setActiveProfileId(profileId);
+        setProfileHealth(profileId, {
+          status: "healthy",
+          checkedAt: new Date().toISOString(),
+          errorSummary: null,
+        });
       } catch (err: unknown) {
         const message = isElasticsearchError(err) ? err.message : String(err);
         console.error("Profile switch failed:", message);
@@ -113,6 +150,11 @@ export default function AppHeader() {
         setCapabilities(null);
         setConnection(conn);
         setActiveProfileId(profileId);
+        setProfileHealth(profileId, {
+          status: "needs_attention",
+          checkedAt: new Date().toISOString(),
+          errorSummary: message,
+        });
         setConnectionDialogOpen(true);
       } finally {
         setSwitchingProfile(false);
@@ -125,8 +167,41 @@ export default function AppHeader() {
       setConnected,
       setCapabilities,
       setActiveProfileId,
+      setProfileHealth,
       setConnectionDialogOpen,
     ],
+  );
+
+  const handleRetestProfile = useCallback(
+    async (profileId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (retestingProfileId) return;
+      const profile = connectionProfiles.find((p) => p.id === profileId);
+      if (!profile) return;
+      setRetestingProfileId(profileId);
+      try {
+        const client = new ElasticsearchClient(profile.connection);
+        await client.getClusterInfo();
+        await client.getCapabilities();
+        setProfileHealth(profileId, {
+          status: "healthy",
+          checkedAt: new Date().toISOString(),
+          errorSummary: null,
+        });
+        setProfileFeedback({ message: `"${profile.name}" is healthy`, severity: "success" });
+      } catch (err: unknown) {
+        const message = isElasticsearchError(err) ? err.message : String(err);
+        setProfileHealth(profileId, {
+          status: "needs_attention",
+          checkedAt: new Date().toISOString(),
+          errorSummary: message,
+        });
+        setProfileFeedback({ message: `"${profile.name}" failed: ${message}`, severity: "error" });
+      } finally {
+        setRetestingProfileId(null);
+      }
+    },
+    [retestingProfileId, connectionProfiles, setProfileHealth],
   );
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
@@ -219,6 +294,33 @@ export default function AppHeader() {
                     secondary={profile.connection.url}
                     secondaryTypographyProps={{ fontSize: "0.7rem", noWrap: true }}
                   />
+                  <ProfileHealthBadge health={profileHealthMap[profile.id]} />
+                  <Tooltip title={`Re-test ${profile.name}`}>
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label={`Re-test ${profile.name}`}
+                        disabled={retestingProfileId === profile.id}
+                        onClick={(e) => void handleRetestProfile(profile.id, e)}
+                        sx={{ ml: 0.5 }}
+                      >
+                        <RefreshIcon
+                          fontSize="inherit"
+                          sx={
+                            retestingProfileId === profile.id
+                              ? {
+                                  animation: "spin 1s linear infinite",
+                                  "@keyframes spin": {
+                                    from: { rotate: "0deg" },
+                                    to: { rotate: "360deg" },
+                                  },
+                                }
+                              : undefined
+                          }
+                        />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </MenuItem>
               ))}
               <Divider />
@@ -232,6 +334,20 @@ export default function AppHeader() {
                 <SettingsIcon fontSize="small" sx={{ ml: 1, color: "text.secondary" }} />
               </MenuItem>
             </Menu>
+            <Snackbar
+              open={Boolean(profileFeedback)}
+              autoHideDuration={4000}
+              onClose={() => setProfileFeedback(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            >
+              <Alert
+                severity={profileFeedback?.severity ?? "success"}
+                onClose={() => setProfileFeedback(null)}
+                sx={{ width: "100%" }}
+              >
+                {profileFeedback?.message}
+              </Alert>
+            </Snackbar>
           </>
         )}
 

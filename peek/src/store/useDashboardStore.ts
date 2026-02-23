@@ -7,6 +7,7 @@ import type {
   DashboardParameter,
   ElasticsearchConnection,
   PanelDefinition,
+  ProfileHealth,
   TimeRange,
 } from "../types";
 import type { UserCapabilities } from "../services/es";
@@ -28,6 +29,7 @@ interface DashboardState {
   capabilities: UserCapabilities | null;
   connectionProfiles: ConnectionProfile[];
   activeProfileId: string | null;
+  profileHealthMap: Record<string, ProfileHealth>;
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
@@ -43,6 +45,7 @@ interface DashboardState {
   renameConnectionProfile: (id: string, name: string) => void;
   setActiveProfileId: (id: string | null) => void;
   getConnectionProfile: (id: string) => ConnectionProfile | undefined;
+  setProfileHealth: (id: string, health: ProfileHealth) => void;
   setThemeMode: (mode: "light" | "dark") => void;
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
@@ -118,6 +121,9 @@ export const useDashboardStore = create<DashboardState>()(
       get activeProfileId() {
         return useConnectionStore.getState().activeProfileId;
       },
+      get profileHealthMap() {
+        return useConnectionStore.getState().profileHealthMap;
+      },
       get themeMode() {
         return useUIStore.getState().themeMode;
       },
@@ -147,6 +153,8 @@ export const useDashboardStore = create<DashboardState>()(
         useConnectionStore.getState().renameConnectionProfile(id, name),
       setActiveProfileId: (id) => useConnectionStore.getState().setActiveProfileId(id),
       getConnectionProfile: (id) => useConnectionStore.getState().getConnectionProfile(id),
+      setProfileHealth: (id, health) =>
+        useConnectionStore.getState().setProfileHealth(id, health),
       setThemeMode: (mode) => useUIStore.getState().setThemeMode(mode),
       setEditingPanelId: (id) => useUIStore.getState().setEditingPanelId(id),
       setConnectionDialogOpen: (open) => useUIStore.getState().setConnectionDialogOpen(open),

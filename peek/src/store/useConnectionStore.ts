@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { ConnectionProfile, ElasticsearchConnection } from "../types";
+import type { ConnectionProfile, ElasticsearchConnection, ProfileHealth } from "../types";
 import type { UserCapabilities } from "../services/es";
 
 import { createSplitSecretStorage } from "./createSplitSecretStorage";
@@ -12,6 +12,7 @@ interface ConnectionState {
   capabilities: UserCapabilities | null;
   connectionProfiles: ConnectionProfile[];
   activeProfileId: string | null;
+  profileHealthMap: Record<string, ProfileHealth>;
 
   setConnection: (conn: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -21,6 +22,7 @@ interface ConnectionState {
   renameConnectionProfile: (id: string, name: string) => void;
   setActiveProfileId: (id: string | null) => void;
   getConnectionProfile: (id: string) => ConnectionProfile | undefined;
+  setProfileHealth: (id: string, health: ProfileHealth) => void;
   resetConnectionState: () => void;
 }
 
@@ -120,6 +122,7 @@ export const useConnectionStore = create<ConnectionState>()(
       capabilities: null,
       connectionProfiles: [],
       activeProfileId: null,
+      profileHealthMap: {},
 
       setConnection: (conn) => set({ connection: conn }),
       setConnected: (connected) => set({ connected }),
@@ -160,6 +163,9 @@ export const useConnectionStore = create<ConnectionState>()(
         return get().connectionProfiles.find((p) => p.id === id);
       },
 
+      setProfileHealth: (id, health) =>
+        set((s) => ({ profileHealthMap: { ...s.profileHealthMap, [id]: health } })),
+
       resetConnectionState: () => {
         splitStorage.removeItem(STORE_NAME);
         set({
@@ -168,6 +174,7 @@ export const useConnectionStore = create<ConnectionState>()(
           capabilities: null,
           connectionProfiles: [],
           activeProfileId: null,
+          profileHealthMap: {},
         });
       },
     }),
