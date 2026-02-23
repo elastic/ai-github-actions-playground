@@ -14,6 +14,7 @@ import AppSidebar from "./components/AppSidebar";
 import ParameterBar from "./components/ParameterBar";
 import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
+import CommandPalette from "./components/CommandPalette";
 import WelcomeScreen from "./components/WelcomeScreen";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
@@ -136,6 +137,7 @@ export default function App() {
       </Box>
       <ConnectionDialog />
       <PanelEditor />
+      <CommandPalette />
     </ThemeProvider>
   );
 }
