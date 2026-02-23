@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -35,6 +35,7 @@ import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
+import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 import { getAllVizEntries, getVizEntry } from "./visualizations/vizRegistry";
 
 export default function PanelEditor() {
@@ -119,9 +120,26 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setQuery(selectedQuery);
     setHistoryAnchor(null);
   }, []);
+  const handleRunQueryRef = useRef(handleRunQuery);
+  useEffect(() => {
+    handleRunQueryRef.current = handleRunQuery;
+  }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
-    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
-    [handleRunQuery],
+    () => [
+      sql(),
+      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
+      runQueryShortcutExtension(() => void handleRunQueryRef.current()),
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an ES|QL expert. Complete the ES|QL query at the cursor. " +
+          "If a recent query error is shown, suggest a fix. " +
+          "If the user writes plain language (e.g. 'count events by host'), " +
+          "complete with the valid ES|QL implementation of their intent. " +
+          "Return only the completion text.",
+        esqlGuide: true,
+      }),
+    ],
+    [],
   );
 
   const handleSave = useCallback(() => {

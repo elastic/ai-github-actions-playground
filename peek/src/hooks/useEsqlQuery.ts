@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection, EsqlResponse } from "../types";
 import type { EsqlQueryParams } from "../services/es";
+import { setLastQueryError, setLastQueryResult } from "../components/llmCompletionExtension";
 
 interface UseEsqlQueryOptions {
   connection: ElasticsearchConnection | null;
@@ -71,6 +72,8 @@ export function useEsqlQuery({
               return next;
             });
           }
+          setLastQueryError(null);
+          setLastQueryResult(trimmedQuery, data);
           onSuccess(data, trimmedQuery);
         }
       } catch (err) {
@@ -79,7 +82,9 @@ export function useEsqlQuery({
           !controller.signal.aborted &&
           !(err instanceof DOMException && err.name === "AbortError")
         ) {
-          setError(isElasticsearchError(err) ? err.message : String(err));
+          const errorMessage = isElasticsearchError(err) ? err.message : String(err);
+          setError(errorMessage);
+          setLastQueryError(errorMessage);
           onFailure?.();
         }
       }
