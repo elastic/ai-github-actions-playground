@@ -1,12 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import AppSidebar from "../../src/components/AppSidebar";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
+
+/** Helper to capture the current router location inside tests. */
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
+}
+
+function renderSidebar(initialPath = "/") {
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <AppSidebar />
+      <LocationDisplay />
+    </MemoryRouter>,
+  );
+}
 
 describe("AppSidebar", () => {
   beforeEach(() => {
@@ -16,13 +33,13 @@ describe("AppSidebar", () => {
   });
 
   it("renders the main navigation landmark", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
   });
 
   it("renders all section headings", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByText("Workspace")).toBeInTheDocument();
     expect(screen.getByText("System")).toBeInTheDocument();
@@ -30,19 +47,19 @@ describe("AppSidebar", () => {
   });
 
   it("renders Docs nav item regardless of connection state", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("button", { name: /docs/i })).toBeInTheDocument();
   });
 
   it("renders Chat nav item regardless of connection state", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("button", { name: /chat/i })).toBeInTheDocument();
   });
 
   it("disables connection-required items when disconnected", () => {
-    render(<AppSidebar />);
+    renderSidebar();
 
     const dashboardBtn = screen.getByRole("button", { name: /dashboard/i });
     expect(dashboardBtn).toHaveAttribute("aria-disabled", "true");
@@ -50,7 +67,7 @@ describe("AppSidebar", () => {
 
   it("enables all items when connected", () => {
     useDashboardStore.getState().setConnected(true);
-    render(<AppSidebar />);
+    renderSidebar();
 
     expect(screen.getByRole("button", { name: /dashboard/i })).not.toHaveAttribute(
       "aria-disabled",
@@ -80,8 +97,7 @@ describe("AppSidebar", () => {
 
   it("marks the active page with aria-current", () => {
     useDashboardStore.getState().setConnected(true);
-    useDashboardStore.getState().setCurrentPage("dashboard");
-    render(<AppSidebar />);
+    renderSidebar("/");
 
     const dashboardBtn = screen.getByRole("button", { name: /dashboard/i });
     expect(dashboardBtn).toHaveAttribute("aria-current", "page");
@@ -90,46 +106,46 @@ describe("AppSidebar", () => {
   it("navigates to a page when a nav item is clicked", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /query lab/i }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("discover");
+    expect(screen.getByTestId("location")).toHaveTextContent("/discover");
   });
 
   it("navigates to Docs when Docs item is clicked", async () => {
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /docs/i }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("docs");
+    expect(screen.getByTestId("location")).toHaveTextContent("/docs");
   });
 
   it("navigates to Data Streams when clicked while connected", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /data streams/i }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("dataStreams");
+    expect(screen.getByTestId("location")).toHaveTextContent("/data-streams");
   });
 
   it("navigates to Cluster Overview when clicked while connected", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /cluster overview/i }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("clusterOverview");
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
   });
 
-  it("updates aria-current when active page changes", () => {
+  it("updates aria-current when active page changes", async () => {
     useDashboardStore.getState().setConnected(true);
-    useDashboardStore.getState().setCurrentPage("console");
-    const { rerender } = render(<AppSidebar />);
+    const user = userEvent.setup();
+    renderSidebar("/console");
 
     expect(screen.getByRole("button", { name: /console/i })).toHaveAttribute(
       "aria-current",
@@ -137,8 +153,7 @@ describe("AppSidebar", () => {
     );
     expect(screen.getByRole("button", { name: /dashboard/i })).not.toHaveAttribute("aria-current");
 
-    useDashboardStore.getState().setCurrentPage("dashboard");
-    rerender(<AppSidebar />);
+    await user.click(screen.getByRole("button", { name: /dashboard/i }));
 
     expect(screen.getByRole("button", { name: /dashboard/i })).toHaveAttribute(
       "aria-current",
@@ -150,7 +165,11 @@ describe("AppSidebar", () => {
   it("renders icon-only mode when collapsed and supports toggle", async () => {
     const user = userEvent.setup();
     const onToggleCollapse = vi.fn();
-    render(<AppSidebar collapsed onToggleCollapse={onToggleCollapse} />);
+    render(
+      <MemoryRouter>
+        <AppSidebar collapsed onToggleCollapse={onToggleCollapse} />
+      </MemoryRouter>,
+    );
 
     expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
     expect(screen.queryByText("System")).not.toBeInTheDocument();
@@ -163,29 +182,29 @@ describe("AppSidebar", () => {
   it("opens settings menu and navigates to LLM settings", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /settings/i }));
     await user.click(screen.getByRole("menuitem", { name: /llm settings/i }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("settings");
+    expect(screen.getByTestId("location")).toHaveTextContent("/settings");
   });
 
   it("opens settings menu and navigates to Dashboard Management", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /settings/i }));
     await user.click(screen.getByRole("menuitem", { name: /dashboard management/i }));
 
-    expect(useDashboardStore.getState().currentPage).toBe("dashboardManagement");
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboard-management");
   });
 
   it("toggles theme from sidebar settings menu", async () => {
     useDashboardStore.getState().setConnected(true);
     const user = userEvent.setup();
-    render(<AppSidebar />);
+    renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /settings/i }));
     await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
