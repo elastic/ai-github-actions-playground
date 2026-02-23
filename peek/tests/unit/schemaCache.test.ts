@@ -59,13 +59,11 @@ describe("getFieldsForIndex", () => {
   });
 
   it("returns cached results on a cache hit without fetching", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
-          status: 200,
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
+        status: 200,
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await getFieldsForIndex(CONNECTION, "logs-*");
@@ -74,6 +72,47 @@ describe("getFieldsForIndex", () => {
     // fetch was only called once
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(secondResult).toHaveLength(1);
+  });
+
+  it("scopes cache entries by credentials for the same URL", async () => {
+    const keyA: ElasticsearchConnection = { url: CONNECTION.url, apiKey: "key-a" };
+    const keyB: ElasticsearchConnection = { url: CONNECTION.url, apiKey: "key-b" };
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
+          status: 200,
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getFieldsForIndex(keyA, "logs-*");
+    await getFieldsForIndex(keyB, "logs-*");
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("deduplicates concurrent misses for the same cache key", async () => {
+    let resolveFetch: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const first = getFieldsForIndex(CONNECTION, "logs-*");
+    const second = getFieldsForIndex(CONNECTION, "logs-*");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    resolveFetch?.(
+      new Response(JSON.stringify(makeFieldCapsResponse({ bytes: "long" })), { status: 200 }),
+    );
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    expect(firstResult).toEqual(secondResult);
+    expect(firstResult).toHaveLength(1);
   });
 
   it("returns an empty array when the cluster is unreachable", async () => {
@@ -122,15 +161,13 @@ describe("getFieldsForIndex", () => {
 
   it("re-fetches after the cache entry expires", async () => {
     vi.useFakeTimers();
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(() =>
-        Promise.resolve(
-          new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
-            status: 200,
-          }),
-        ),
-      );
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
+          status: 200,
+        }),
+      ),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await getFieldsForIndex(CONNECTION, "logs-*");
@@ -148,15 +185,13 @@ describe("getFieldsForIndex", () => {
 
 describe("invalidateSchema", () => {
   it("removes cached entries for the given connection", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(() =>
-        Promise.resolve(
-          new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
-            status: 200,
-          }),
-        ),
-      );
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(makeFieldCapsResponse({ "@timestamp": "date" })), {
+          status: 200,
+        }),
+      ),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await getFieldsForIndex(CONNECTION, "logs-*");
@@ -173,15 +208,13 @@ describe("invalidateSchema", () => {
     const other: ElasticsearchConnection = { url: "https://other-cluster.es.io" };
     // Use mockImplementation so a fresh Response (with a consumable body) is
     // returned for each fetch call.
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(() =>
-        Promise.resolve(
-          new Response(JSON.stringify(makeFieldCapsResponse({ "agent.id": "keyword" })), {
-            status: 200,
-          }),
-        ),
-      );
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(makeFieldCapsResponse({ "agent.id": "keyword" })), {
+          status: 200,
+        }),
+      ),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await getFieldsForIndex(CONNECTION, "logs-*");

@@ -36,9 +36,10 @@ export const MAX_FIELDS = 500;
 // ---------------------------------------------------------------------------
 
 const cache = new Map<string, CacheEntry>();
+const inFlightRequests = new Map<string, Promise<FieldInfo[]>>();
 
 function cacheKey(connection: ElasticsearchConnection, indexPattern: string): string {
-  return `${connection.url}|${indexPattern}`;
+  return `${connection.url}|${connection.apiKey ?? ""}|${connection.username ?? ""}|${connection.password ?? ""}|${indexPattern}`;
 }
 
 function evictOldestIfNeeded(): void {
@@ -71,28 +72,40 @@ export async function getFieldsForIndex(
     return cached.fields;
   }
 
-  try {
-    const client = new ElasticsearchClient(connection);
-    const response = await client.getFieldCaps(indexPattern, undefined, signal);
-    const seen = new Set<string>();
-    const fields: FieldInfo[] = Object.entries(response.fields ?? {})
-      .flatMap(([name, capabilities]) =>
-        Object.values(capabilities).map((cap) => ({ name, type: cap.type ?? "unknown" })),
-      )
-      .filter((f) => {
-        if (seen.has(f.name)) return false;
-        seen.add(f.name);
-        return true;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, MAX_FIELDS);
-
-    evictOldestIfNeeded();
-    cache.set(key, { fields, expiresAt: now + CACHE_TTL_MS });
-    return fields;
-  } catch {
-    return [];
+  const pending = inFlightRequests.get(key);
+  if (pending) {
+    return pending;
   }
+
+  const request = (async () => {
+    try {
+      const client = new ElasticsearchClient(connection);
+      const response = await client.getFieldCaps(indexPattern, undefined, signal);
+      const seen = new Set<string>();
+      const fields: FieldInfo[] = Object.entries(response.fields ?? {})
+        .flatMap(([name, capabilities]) =>
+          Object.values(capabilities).map((cap) => ({ name, type: cap.type ?? "unknown" })),
+        )
+        .filter((f) => {
+          if (seen.has(f.name)) return false;
+          seen.add(f.name);
+          return true;
+        })
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, MAX_FIELDS);
+
+      evictOldestIfNeeded();
+      cache.set(key, { fields, expiresAt: now + CACHE_TTL_MS });
+      return fields;
+    } catch {
+      return [];
+    } finally {
+      inFlightRequests.delete(key);
+    }
+  })();
+
+  inFlightRequests.set(key, request);
+  return request;
 }
 
 /**
@@ -106,9 +119,15 @@ export function invalidateSchema(connection: ElasticsearchConnection): void {
       cache.delete(key);
     }
   }
+  for (const key of inFlightRequests.keys()) {
+    if (key.startsWith(prefix)) {
+      inFlightRequests.delete(key);
+    }
+  }
 }
 
 /** Exposed for testing only — clears the entire cache. */
 export function _clearCacheForTesting(): void {
   cache.clear();
+  inFlightRequests.clear();
 }
