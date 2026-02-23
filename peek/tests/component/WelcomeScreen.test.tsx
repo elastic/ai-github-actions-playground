@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import WelcomeScreen from "../../src/components/WelcomeScreen";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -37,9 +38,7 @@ describe("WelcomeScreen", () => {
   it('shows "Connect to Elasticsearch" button when disconnected', () => {
     mockDemoConfig(null);
     render(<WelcomeScreen />);
-    expect(
-      screen.getByRole("button", { name: /connect to elasticsearch/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
   });
 
   it("clicking the button opens the connection dialog", async () => {
@@ -70,7 +69,9 @@ describe("WelcomeScreen", () => {
     // First call → demo.json; second call → cluster info; third call → capabilities
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }),
+      )
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ cluster: { manage_data_stream: true } }), { status: 200 }),
       );
@@ -87,11 +88,21 @@ describe("WelcomeScreen", () => {
       username: DEMO_CONFIG.username,
       password: DEMO_CONFIG.password,
     });
-    expect(useDashboardStore.getState().capabilities).toEqual({ canManageDataStreams: true });
+    expect(useDashboardStore.getState().capabilities).toEqual({
+      canManageDataStreams: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+    });
   });
 
-  it('shows error message when demo connection fails', async () => {
-    useDashboardStore.getState().setCapabilities({ canManageDataStreams: true });
+  it("shows error message when demo connection fails", async () => {
+    useDashboardStore
+      .getState()
+      .setCapabilities({
+        canManageDataStreams: true,
+        canReadSecurityUsers: false,
+        canReadSecurityRoles: false,
+      });
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
       .mockResolvedValueOnce(
