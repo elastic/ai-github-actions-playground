@@ -8,9 +8,12 @@ interface Props {
   data: EsqlResponse;
   options?: VisualizationOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  query?: string;
 }
 
-export default function Visualization({ type, data, options, onExportReady }: Props) {
+export default function Visualization({ type, data, options, onExportReady, query }: Props) {
   const entry = getVizEntry(type);
-  return entry?.renderComponent({ data, options, onExportReady }) ?? <DataTable data={data} />;
+  return (
+    entry?.renderComponent({ data, options, onExportReady, query }) ?? <DataTable data={data} />
+  );
 }

@@ -13,6 +13,7 @@ const ALL_VIZ_TYPES: VisualizationType[] = [
   "heatmap",
   "scatter",
   "histogram",
+  "markdown",
 ];
 
 describe("vizRegistry", () => {
@@ -93,6 +94,10 @@ describe("vizRegistry", () => {
       expect(getVizEntry("heatmap")?.supportsOptions).toBe(false);
     });
 
+    it("markdown does not support options", () => {
+      expect(getVizEntry("markdown")?.supportsOptions).toBe(false);
+    });
+
     it("timeseries supports options", () => {
       expect(getVizEntry("timeseries")?.supportsOptions).toBe(true);
     });
@@ -115,6 +120,29 @@ describe("vizRegistry", () => {
 
     it("histogram supports options", () => {
       expect(getVizEntry("histogram")?.supportsOptions).toBe(true);
+    });
+  });
+
+  describe("supportsQuery", () => {
+    it("markdown does not support query (static content)", () => {
+      expect(getVizEntry("markdown")?.supportsQuery).toBe(false);
+    });
+
+    it("all other types support query", () => {
+      const queryTypes: VisualizationType[] = [
+        "timeseries",
+        "bar",
+        "table",
+        "stat",
+        "gauge",
+        "pie",
+        "heatmap",
+        "scatter",
+        "histogram",
+      ];
+      for (const type of queryTypes) {
+        expect(getVizEntry(type)?.supportsQuery).toBe(true);
+      }
     });
   });
 

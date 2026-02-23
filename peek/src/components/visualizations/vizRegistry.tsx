@@ -10,6 +10,7 @@
 import BarChartIcon from "@mui/icons-material/BarChart";
 import EqualizerIcon from "@mui/icons-material/Equalizer";
 import GridOnIcon from "@mui/icons-material/GridOn";
+import NotesIcon from "@mui/icons-material/Notes";
 import NumbersIcon from "@mui/icons-material/Numbers";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import ScatterPlotIcon from "@mui/icons-material/ScatterPlot";
@@ -23,6 +24,7 @@ import type {
   GaugePanelOptions,
   HeatmapChartOptions,
   HistogramChartOptions,
+  MarkdownOptions,
   PieChartOptions,
   ScatterChartOptions,
   StatPanelOptions,
@@ -36,6 +38,7 @@ import DataTable from "./DataTable";
 import GaugePanel from "./GaugePanel";
 import HeatmapChart from "./HeatmapChart";
 import HistogramChart from "./HistogramChart";
+import MarkdownPanel from "./MarkdownPanel";
 import PieChart from "./PieChart";
 import ScatterChart from "./ScatterChart";
 import StatPanel from "./StatPanel";
@@ -55,6 +58,8 @@ export interface VizRendererProps {
   data: EsqlResponse;
   options?: VisualizationOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  /** Raw panel query text — used by static panels such as markdown. */
+  query?: string;
 }
 
 export interface VizOptionsEditorProps {
@@ -78,6 +83,12 @@ export interface VizRegistryEntry {
    * be displayed for this visualization type.
    */
   supportsOptions: boolean;
+  /**
+   * Whether this visualization type requires an ES|QL query and data fetch.
+   * When `false` the panel content comes from the `query` field as raw text
+   * (e.g. markdown) and no Elasticsearch request is made.
+   */
+  supportsQuery: boolean;
   /** Returns fresh default options for this visualization type. */
   defaultOptions(): VisualizationOptions;
   /** Renders the visualization given data and options. */
@@ -96,6 +107,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Time Series",
     icon: <ShowChartIcon />,
     supportsOptions: true,
+    supportsQuery: true,
     defaultOptions: () =>
       ({ smooth: true, showArea: true, stacked: false }) satisfies TimeSeriesOptions,
     renderComponent: ({ data, options, onExportReady }) => (
@@ -112,6 +124,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Bar",
     icon: <BarChartIcon />,
     supportsOptions: true,
+    supportsQuery: true,
     defaultOptions: () => ({ stacked: false, horizontal: false }) satisfies BarChartOptions,
     renderComponent: ({ data, options, onExportReady }) => (
       <BarChart
@@ -127,6 +140,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Table",
     icon: <TableChartIcon />,
     supportsOptions: false,
+    supportsQuery: true,
     defaultOptions: () => ({}),
     renderComponent: ({ data }) => <DataTable data={data} />,
   },
@@ -135,6 +149,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Stat",
     icon: <NumbersIcon />,
     supportsOptions: true,
+    supportsQuery: true,
     defaultOptions: () => ({}) satisfies StatPanelOptions,
     renderComponent: ({ data, options }) => (
       <StatPanel data={data} options={options as StatPanelOptions | undefined} />
@@ -145,6 +160,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Gauge",
     icon: <SpeedIcon />,
     supportsOptions: true,
+    supportsQuery: true,
     defaultOptions: () => ({}) satisfies GaugePanelOptions,
     renderComponent: ({ data, options, onExportReady }) => (
       <GaugePanel
@@ -160,6 +176,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Pie",
     icon: <PieChartIcon />,
     supportsOptions: false,
+    supportsQuery: true,
     defaultOptions: () => ({}) satisfies PieChartOptions,
     renderComponent: ({ data, onExportReady }) => (
       <PieChart data={data} onExportReady={onExportReady} />
@@ -170,6 +187,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Heatmap",
     icon: <GridOnIcon />,
     supportsOptions: false,
+    supportsQuery: true,
     defaultOptions: () => ({}) satisfies HeatmapChartOptions,
     renderComponent: ({ data }) => <HeatmapChart data={data} />,
   },
@@ -178,6 +196,7 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Scatter",
     icon: <ScatterPlotIcon />,
     supportsOptions: true,
+    supportsQuery: true,
     defaultOptions: () => ({}) satisfies ScatterChartOptions,
     renderComponent: ({ data, options }) => (
       <ScatterChart data={data} options={options as ScatterChartOptions | undefined} />
@@ -188,11 +207,21 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     label: "Histogram",
     icon: <EqualizerIcon />,
     supportsOptions: true,
+    supportsQuery: true,
     defaultOptions: () => ({ bins: 10 }) satisfies HistogramChartOptions,
     renderComponent: ({ data, options }) => (
       <HistogramChart data={data} options={options as HistogramChartOptions | undefined} />
     ),
     OptionsEditor: HistogramOptionsEditor,
+  },
+  {
+    type: "markdown",
+    label: "Markdown",
+    icon: <NotesIcon />,
+    supportsOptions: false,
+    supportsQuery: false,
+    defaultOptions: () => ({}) satisfies MarkdownOptions,
+    renderComponent: ({ query }) => <MarkdownPanel content={query ?? ""} />,
   },
 ];
 
