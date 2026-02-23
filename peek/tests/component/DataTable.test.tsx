@@ -253,12 +253,15 @@ describe("DataTable", () => {
     await user.click(screen.getByRole("menuitem", { name: /pin left/i }));
 
     const headers = screen.getAllByRole("columnheader");
-    expect(within(headers[0]!).getByText("message")).toBeInTheDocument();
+    const pinnedHeader = headers[0]!;
+    expect(within(pinnedHeader).getByText("message")).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "hello world" })).toHaveStyle({ position: "sticky" });
 
     await user.click(screen.getByRole("button", { name: /column actions for message/i }));
     await user.click(screen.getByRole("menuitem", { name: /^unpin$/i }));
 
-    await user.click(screen.getByRole("button", { name: /column actions for message/i }));
-    expect(screen.getByRole("menuitem", { name: /pin left/i })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "hello world" })).not.toHaveStyle({
+      position: "sticky",
+    });
   });
 });
