@@ -16,6 +16,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
+import { interpolateParameters } from "../services/markdownInterpolation";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import Visualization from "./visualizations/Visualization";
@@ -249,7 +250,7 @@ export default function PanelContainer({ panel }: Props) {
         {!supportsQuery ? (
           <Visualization
             type={panel.visualization}
-            query={panel.query}
+            query={interpolateParameters(panel.query, parameters)}
             data={{ columns: [], values: [] } as EsqlResponse}
             options={panel.options}
           />
