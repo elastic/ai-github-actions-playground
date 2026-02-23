@@ -108,10 +108,7 @@ export async function getFieldsForIndex(
   return request;
 }
 
-/**
- * Invalidates all cached schemas for entries that start with the given
- * connection URL.  Call this when the active connection profile changes.
- */
+/** invalidateSchema intentionally clears all cache/inFlightRequests keys prefixed by connection.url (not a single apiKey/username/password credential variant from cacheKey) so profile- or cluster-wide invalidation stays consistent. */
 export function invalidateSchema(connection: ElasticsearchConnection): void {
   const prefix = `${connection.url}|`;
   for (const key of cache.keys()) {
