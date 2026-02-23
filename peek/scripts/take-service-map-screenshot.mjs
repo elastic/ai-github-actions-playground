@@ -36,12 +36,12 @@ async function run() {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(2000);
 
-  // Set connected + connection URL via Zustand store
+  // Set connected + connection URL via Zustand store, then navigate to traces
   await page.evaluate(async () => {
-    const { useDashboardStore } = await import('/ai-github-actions-playground/src/store/useDashboardStore.ts');
-    useDashboardStore.getState().setConnection({ url: 'http://mock-es:9200' });
-    useDashboardStore.getState().setConnected(true);
-    useDashboardStore.getState().setCurrentPage('traces');
+    const { useConnectionStore } = await import('/ai-github-actions-playground/src/store/useConnectionStore.ts');
+    useConnectionStore.getState().setConnection({ url: 'http://mock-es:9200' });
+    useConnectionStore.getState().setConnected(true);
+    window.location.hash = '#/traces';
   });
 
   await page.waitForTimeout(1500);
