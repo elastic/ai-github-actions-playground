@@ -16,6 +16,7 @@ import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
+import type { EditorView } from "@codemirror/view";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
@@ -59,6 +60,7 @@ export default function DiscoverPage() {
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
   const navigate = useNavigate();
+  const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
@@ -71,6 +73,7 @@ export default function DiscoverPage() {
 
   const { runQuery, loading, error, activeStep, stepDurationsMs, clearTimings } = useEsqlQuery({
     connection,
+    queryContextView,
     onSuccess: (data, executedQuery) => {
       setResult(data);
       // By default select all fields
@@ -254,6 +257,7 @@ export default function DiscoverPage() {
           <CodeMirror
             value={effectiveQuery}
             onChange={handleQueryChange}
+            onCreateEditor={(view) => setQueryContextView(view)}
             extensions={queryEditorExtensions}
             theme={themeMode}
             height="100px"

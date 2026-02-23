@@ -56,24 +56,15 @@ const queryErrorMap = new WeakMap<EditorView, string | null>();
 
 /** Set the last query error for a specific editor view. */
 export function setLastQueryError(error: string | null, view?: EditorView) {
-  if (view) {
-    queryErrorMap.set(view, error);
-  } else {
-    // Fallback: set on all tracked views (for callers that don't have a view ref)
-    globalLastQueryError = error;
-  }
+  if (!view) return;
+  queryErrorMap.set(view, error);
 }
 
 /** Read the last query error for a specific editor view. */
 export function getLastQueryError(view?: EditorView): string | null {
-  if (view) {
-    return queryErrorMap.get(view) ?? globalLastQueryError;
-  }
-  return globalLastQueryError;
+  if (!view) return null;
+  return queryErrorMap.get(view) ?? null;
 }
-
-// Global fallback for callers (like useEsqlQuery) that don't have a view reference
-let globalLastQueryError: string | null = null;
 
 // ---------------------------------------------------------------------------
 // Per-editor last successful query + result snippet — gives the LLM context
@@ -86,7 +77,6 @@ interface QueryResultSnapshot {
 }
 
 const queryResultMap = new WeakMap<EditorView, QueryResultSnapshot>();
-let globalLastQueryResult: QueryResultSnapshot | null = null;
 
 const MAX_RESULT_SNIPPET_ROWS = 5;
 
@@ -110,22 +100,17 @@ export function setLastQueryResult(
   data: { columns: { name: string; type: string }[]; values: unknown[][] },
   view?: EditorView,
 ) {
+  if (!view) return;
   const snapshot: QueryResultSnapshot = {
     query,
     resultSnippet: formatResultSnippet(data),
   };
-  if (view) {
-    queryResultMap.set(view, snapshot);
-  } else {
-    globalLastQueryResult = snapshot;
-  }
+  queryResultMap.set(view, snapshot);
 }
 
 function getLastQueryResult(view?: EditorView): QueryResultSnapshot | null {
-  if (view) {
-    return queryResultMap.get(view) ?? globalLastQueryResult;
-  }
-  return globalLastQueryResult;
+  if (!view) return null;
+  return queryResultMap.get(view) ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -197,11 +182,13 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
   function buildContextSection(): string {
     const contextParts: string[] = [];
 
-    const lastResult = getLastQueryResult(currentView ?? undefined);
-    if (lastResult) {
-      contextParts.push(
-        `Last successful query:\n  ${lastResult.query}\n\nResult sample:\n${lastResult.resultSnippet}`,
-      );
+    if (currentView) {
+      const lastResult = getLastQueryResult(currentView);
+      if (lastResult) {
+        contextParts.push(
+          `Last successful query:\n  ${lastResult.query}\n\nResult sample:\n${lastResult.resultSnippet}`,
+        );
+      }
     }
 
     if (currentEdits.length > 0) {
@@ -209,9 +196,11 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
       contextParts.push(`Recent edits:\n${editLines}`);
     }
 
-    const queryError = getLastQueryError(currentView ?? undefined);
-    if (queryError) {
-      contextParts.push(`Last query error:\n  ${queryError}`);
+    if (currentView) {
+      const queryError = getLastQueryError(currentView);
+      if (queryError) {
+        contextParts.push(`Last query error:\n  ${queryError}`);
+      }
     }
 
     return contextParts.length > 0 ? `\n\n${contextParts.join("\n\n")}` : "";
