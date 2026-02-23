@@ -131,16 +131,34 @@ export function buildSpanTree(spans: Span[]): SpanTreeNode[] {
     assignDepths(root, 0);
   }
 
-  // Promote any nodes still unvisited (cyclic subgraphs disconnected from natural roots)
-  for (const node of byId.values()) {
-    if (!visited.has(node.span.spanId)) {
-      roots.push(node);
-      sortChildren(node);
-      assignDepths(node, 0);
-    }
-  }
+  // Promote disconnected unvisited components (e.g. mixed root+cycle traces).
+  while (true) {
+    const unvisitedNodes = Array.from(byId.values()).filter(
+      (node) => !visited.has(node.span.spanId),
+    );
+    if (unvisitedNodes.length === 0) break;
 
-  // Keep root ordering chronological after promoting synthetic roots.
+    const unvisitedIds = new Set(unvisitedNodes.map((node) => node.span.spanId));
+    const nonLeafCandidates = unvisitedNodes.filter((node) =>
+      node.children.some((child) => unvisitedIds.has(child.span.spanId)),
+    );
+    const candidates = nonLeafCandidates.length > 0 ? nonLeafCandidates : unvisitedNodes;
+
+    let syntheticRoot = candidates[0]!;
+    for (const node of candidates) {
+      if (
+        node.span.startTimeUs < syntheticRoot.span.startTimeUs ||
+        (node.span.startTimeUs === syntheticRoot.span.startTimeUs &&
+          node.span.spanId < syntheticRoot.span.spanId)
+      ) {
+        syntheticRoot = node;
+      }
+    }
+
+    roots.push(syntheticRoot);
+    sortChildren(syntheticRoot);
+    assignDepths(syntheticRoot, 0);
+  }
   roots.sort((a, b) => a.span.startTimeUs - b.span.startTimeUs);
 
   return roots;
