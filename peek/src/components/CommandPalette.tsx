@@ -229,6 +229,9 @@ export default function CommandPalette() {
         onChange={(_, option) => {
           if (option) handleExecute(option);
         }}
+        onClose={(_, reason) => {
+          if (reason === "escape") setOpen(false);
+        }}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         noOptionsText="No matching commands"
         PopperComponent={CommandPalettePopper}
