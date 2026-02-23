@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -71,6 +71,8 @@ export default function ExplorePage() {
   );
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearchRef = useRef(searchParams.toString());
 
   const {
     indexPattern,
@@ -140,7 +142,7 @@ export default function ExplorePage() {
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
-    const restored = deserializeExplorerState(window.location.search);
+    const restored = deserializeExplorerState(initialSearchRef.current);
     if (restored.indexPattern) {
       setIndexPattern(restored.indexPattern);
     }
@@ -177,9 +179,16 @@ export default function ExplorePage() {
     if (!hasHydratedFromUrlRef.current) return;
     const state = { indexPattern, selectedMetric, aggregation, filters, groupBy };
     const qs = serializeExplorerState(state, dashboard.timeRange);
-    const newUrl = `${window.location.pathname}?${qs}`;
-    window.history.replaceState(null, "", newUrl);
-  }, [indexPattern, selectedMetric, aggregation, filters, groupBy, dashboard.timeRange]);
+    setSearchParams(qs, { replace: true });
+  }, [
+    indexPattern,
+    selectedMetric,
+    aggregation,
+    filters,
+    groupBy,
+    dashboard.timeRange,
+    setSearchParams,
+  ]);
 
   // Load fields when index pattern changes
   useEffect(() => {
