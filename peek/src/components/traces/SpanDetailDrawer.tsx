@@ -300,7 +300,12 @@ export default function SpanDetailDrawer({
                           color="text.secondary"
                           sx={{ ml: 1, fontFamily: "monospace" }}
                         >
-                          {new Date(event.timestamp).toISOString()}
+                          {(() => {
+                            const parsedMs = Date.parse(event.timestamp);
+                            return Number.isNaN(parsedMs)
+                              ? event.timestamp
+                              : new Date(parsedMs).toISOString();
+                          })()}
                         </Typography>
                       )}
                     </Box>
