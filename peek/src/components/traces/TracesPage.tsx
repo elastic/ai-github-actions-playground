@@ -8,6 +8,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
@@ -23,6 +25,7 @@ import { useTracesStore } from "../../store/useTracesStore";
 import type { TracesViewMode } from "../../store/useTracesStore";
 import type { EsqlResponse } from "../../types";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
+import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
@@ -346,6 +349,13 @@ export default function TracesPage() {
               }
             />
           ))}
+          {filters.timeFrom !== null && (
+            <Chip
+              label={`time: ${TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
+              size="small"
+              onDelete={() => updateFilters({ timeFrom: null, timeTo: null })}
+            />
+          )}
         </Box>
 
         {/* Quick filters row */}
@@ -383,6 +393,25 @@ export default function TracesPage() {
               Apply
             </Button>
           </Box>
+          <Select
+            size="small"
+            displayEmpty
+            value={filters.timeFrom ?? ""}
+            onChange={(e) => {
+              const selectedFrom = e.target.value === "" ? null : e.target.value;
+              const opt = TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
+              if (opt) {
+                updateFilters({ timeFrom: opt.from, timeTo: opt.to });
+              }
+            }}
+            sx={{ minWidth: 150 }}
+          >
+            {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
+              <MenuItem key={opt.label} value={opt.from ?? ""}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
           <Box sx={{ display: "flex", gap: 0.5, ml: "auto" }}>
             {(["Error", "OK"] as const).map((status) => (
               <Chip

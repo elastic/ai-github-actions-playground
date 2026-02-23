@@ -1,0 +1,41 @@
+# Base OTel telemetry stack: EDOT collector + synthetic generators.
+# Point at any Elasticsearch endpoint via ES_URL and ES_API_KEY env vars.
+# For local ES, layer docker-compose.otel-es.yml on top.
+services:
+  otel-collector:
+    image: docker.elastic.co/elastic-agent/elastic-agent:9.3.0
+    command: ["otel", "--config=/etc/otelcol/config.yaml"]
+    environment:
+      - ES_URL=${ES_URL:?Set ES_URL or use docker-compose.otel-es.yml for local ES}
+      - ES_API_KEY=${ES_API_KEY:-}
+    volumes:
+      - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
+      - /:/hostfs:ro
+    pid: host
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:13133/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  tracegen:
+    build: ./docker/otel-tracegen
+    environment:
+      - RATE=${TRACEGEN_RATE:-3}
+    depends_on:
+      otel-collector:
+        condition: service_healthy
+
+  otelgen-logs:
+    image: ghcr.io/krzko/otelgen:v0.5.2
+    command:
+      - --otel-exporter-otlp-endpoint=otel-collector:4317
+      - --insecure
+      - --rate=5
+      - --duration=86400
+      - logs
+      - multi
+    depends_on:
+      otel-collector:
+        condition: service_healthy

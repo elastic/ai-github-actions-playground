@@ -118,6 +118,39 @@ function buildYAxisLabel(aggregation: AggregationType, metricField: string): str
   return `${aggLabels[aggregation]} ${fieldName}`;
 }
 
+// ---------------------------------------------------------------------------
+// Overview query — lightweight per-metric sparkline for the namespace grid
+// ---------------------------------------------------------------------------
+
+export interface OverviewQuery {
+  indexPattern: string;
+  metricField: string;
+  metricType: MetricType;
+  timeRange: TimeRange;
+  bucketCount?: number;
+}
+
+const OVERVIEW_BUCKET_COUNT = 20;
+
+export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
+  const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
+  const agg = getDefaultAggregation(q.metricType);
+  const aggExpr = buildAggExpression(agg, q.metricField);
+  const parts: string[] = [
+    `FROM ${q.indexPattern}`,
+    `WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend`,
+    `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`,
+    `SORT timestamp`,
+  ];
+  const esql = parts.join(" | ");
+  const yAxisLabel = buildYAxisLabel(agg, q.metricField);
+  return { esql, yAxisLabel };
+}
+
+// ---------------------------------------------------------------------------
+// Full explorer query
+// ---------------------------------------------------------------------------
+
 export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   const buckets = q.bucketCount ?? DEFAULT_BUCKET_COUNT;
   const parts: string[] = [];

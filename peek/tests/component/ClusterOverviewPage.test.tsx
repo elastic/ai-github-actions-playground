@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -13,6 +14,7 @@ const getNodesMock = vi.fn();
 const getNodeStatsMock = vi.fn();
 const getDataStreamsMock = vi.fn();
 const resolveIndexMock = vi.fn();
+const rawRequestMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -23,6 +25,7 @@ vi.mock("../../src/services/es", () => ({
     getNodeStats: getNodeStatsMock,
     getDataStreams: getDataStreamsMock,
     resolveIndex: resolveIndexMock,
+    rawRequest: rawRequestMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -85,6 +88,50 @@ const NODE_STATS = {
   },
 };
 
+function mockFleetRawRequest() {
+  rawRequestMock.mockImplementation((_method: string, url: string) => {
+    // Fleet server status
+    if (url.includes("metrics-fleet_server.agent_status")) {
+      return Promise.resolve({
+        status: 200,
+        body: {
+          hits: {
+            total: { value: 1 },
+            hits: [
+              {
+                _source: {
+                  fleet: {
+                    agents: {
+                      total: 10,
+                      healthy: 8,
+                      unhealthy: 1,
+                      offline: 1,
+                      updating: 0,
+                      inactive: 0,
+                      enrolled: 10,
+                      unenrolled: 0,
+                      unhealthy_reason: { input: 0, output: 1, other: 0 },
+                    },
+                  },
+                  "@timestamp": "2026-02-23T00:00:00Z",
+                },
+              },
+            ],
+          },
+        },
+      });
+    }
+    // Elastic agent inventory
+    if (url.includes("logs-elastic_agent")) {
+      return Promise.resolve({
+        status: 200,
+        body: { aggregations: { agents: { buckets: [] } } },
+      });
+    }
+    return Promise.resolve({ status: 200, body: { hits: { hits: [] } } });
+  });
+}
+
 describe("ClusterOverviewPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -115,10 +162,15 @@ describe("ClusterOverviewPage", () => {
       aliases: [{ name: "alias-1" }],
       data_streams: [],
     });
+    mockFleetRawRequest();
   });
 
-  it("renders cluster info after loading", async () => {
-    render(<ClusterOverviewPage />);
+  it("renders cluster info with nodes and fleet status after loading", async () => {
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
@@ -134,7 +186,10 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText("5.0 GB")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument(); // data stream count
     expect(screen.getByText("3")).toBeInTheDocument(); // index count
-    expect(screen.getByText("1")).toBeInTheDocument(); // alias count
+    // Fleet section uses server status metrics
+    expect(screen.getByText("Total: 10")).toBeInTheDocument();
+    expect(screen.getByText("Healthy: 8")).toBeInTheDocument();
+    expect(screen.getByText("View Fleet →")).toBeInTheDocument();
   });
 
   it("shows error alert on total failure", async () => {
@@ -145,8 +200,13 @@ describe("ClusterOverviewPage", () => {
     getNodeStatsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     getDataStreamsMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     resolveIndexMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
+    rawRequestMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Unauthorized");
@@ -156,7 +216,11 @@ describe("ClusterOverviewPage", () => {
   it("refreshes data when Refresh button is clicked", async () => {
     const user = userEvent.setup();
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
@@ -180,7 +244,11 @@ describe("ClusterOverviewPage", () => {
     getNodesMock.mockRejectedValue({ status: 403, message: "Forbidden" });
     getNodeStatsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();

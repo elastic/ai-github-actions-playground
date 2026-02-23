@@ -89,11 +89,19 @@ describe("WelcomeScreen", () => {
       username: DEMO_CONFIG.username,
       password: DEMO_CONFIG.password,
     });
-    expect(useConnectionStore.getState().capabilities).toEqual({ canManageDataStreams: true });
+    expect(useConnectionStore.getState().capabilities).toEqual({
+      canManageDataStreams: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+    });
   });
 
   it("shows error message when demo connection fails", async () => {
-    useConnectionStore.getState().setCapabilities({ canManageDataStreams: true });
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+    });
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))
       .mockResolvedValueOnce(

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -25,6 +26,11 @@ import {
   type NodesInfoResponse,
   type NodesStatsResponse,
 } from "../services/es";
+import {
+  loadFleetServerStatus,
+  loadElasticAgentInventory,
+  type FleetServerStatusMetrics,
+} from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
 
 interface OverviewData {
@@ -36,6 +42,8 @@ interface OverviewData {
   dataStreamCount: number | null;
   indexCount: number | null;
   aliasCount: number | null;
+  fleetStatus: FleetServerStatusMetrics | null;
+  agentInventoryCount: number | null;
 }
 
 interface NodeRow {
@@ -125,6 +133,7 @@ function toNodeRows(
 
 export default function ClusterOverviewPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
@@ -137,6 +146,8 @@ export default function ClusterOverviewPage() {
     dataStreamCount: null,
     indexCount: null,
     aliasCount: null,
+    fleetStatus: null,
+    agentInventoryCount: null,
   });
 
   const loadOverview = useCallback(async () => {
@@ -154,6 +165,8 @@ export default function ClusterOverviewPage() {
         nodeStatsResult,
         dataStreamsResult,
         resolveIndexResult,
+        fleetStatusResult,
+        agentInventoryResult,
       ] = await Promise.allSettled([
         client.getClusterInfo(),
         client.getClusterHealth(),
@@ -162,6 +175,8 @@ export default function ClusterOverviewPage() {
         client.getNodeStats(),
         client.getDataStreams(),
         client.resolveIndex("*"),
+        loadFleetServerStatus(client),
+        loadElasticAgentInventory(client),
       ]);
 
       const nextData: OverviewData = {
@@ -183,6 +198,9 @@ export default function ClusterOverviewPage() {
           resolveIndexResult.status === "fulfilled"
             ? (resolveIndexResult.value.aliases?.length ?? 0)
             : null,
+        fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
+        agentInventoryCount:
+          agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
       };
       setData(nextData);
 
@@ -194,11 +212,13 @@ export default function ClusterOverviewPage() {
       if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
       if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
       if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
+      if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
+      if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
       if (failedParts.length > 0) {
         setPartialErrors(failedParts);
       }
 
-      if (failedParts.length === 7) {
+      if (failedParts.length === 9) {
         const firstError =
           clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
         setError(
@@ -248,6 +268,8 @@ export default function ClusterOverviewPage() {
   const clusterStoreBytes = clusterStats?.indices?.store?.size_in_bytes ?? null;
   const clusterShardCount = clusterStats?.indices?.shards?.total ?? null;
   const clusterIndexCount = clusterStats?.indices?.count ?? null;
+
+  const fleetTotal = data.fleetStatus?.total ?? data.agentInventoryCount;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -448,6 +470,66 @@ export default function ClusterOverviewPage() {
             ) : (
               <Typography variant="body2" color="text.secondary">
                 Unavailable
+              </Typography>
+            )}
+          </InfoCard>
+
+          {/* Fleet summary */}
+          <InfoCard title="Fleet">
+            {data.fleetStatus ? (
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Chip size="small" label={`Total: ${data.fleetStatus.total}`} color="primary" />
+                  <Chip
+                    size="small"
+                    label={`Healthy: ${data.fleetStatus.healthy}`}
+                    color="success"
+                  />
+                  {data.fleetStatus.unhealthy > 0 && (
+                    <Chip
+                      size="small"
+                      label={`Unhealthy: ${data.fleetStatus.unhealthy}`}
+                      color="warning"
+                    />
+                  )}
+                  {data.fleetStatus.offline > 0 && (
+                    <Chip size="small" label={`Offline: ${data.fleetStatus.offline}`} />
+                  )}
+                  {data.fleetStatus.updating > 0 && (
+                    <Chip
+                      size="small"
+                      label={`Updating: ${data.fleetStatus.updating}`}
+                      color="info"
+                    />
+                  )}
+                </Stack>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => navigate("/fleet")}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  View Fleet →
+                </Button>
+              </Stack>
+            ) : fleetTotal !== null ? (
+              <Stack spacing={1}>
+                <Typography variant="h4">{fleetTotal}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  agent{fleetTotal !== 1 ? "s" : ""} detected from Elastic Agent logs
+                </Typography>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => navigate("/fleet")}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  View Fleet →
+                </Button>
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No Fleet data available.
               </Typography>
             )}
           </InfoCard>

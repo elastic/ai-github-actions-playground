@@ -80,6 +80,26 @@ export type ResolveIndexDataStreamInfo = ResolveIndexResponse["data_streams"][nu
 export type FieldCapsResponse =
   operations["field-caps-2"]["responses"][200]["content"]["application/json"];
 export type FieldCapability = components["schemas"]["_global.field_caps.FieldCapability"];
+export interface SecurityUser {
+  username: string;
+  enabled?: boolean;
+  roles?: string[];
+  full_name?: string | null;
+  email?: string | null;
+  metadata?: Record<string, unknown>;
+}
+export interface SecurityRoleIndexPrivilege {
+  names?: string[];
+  privileges?: string[];
+}
+export interface SecurityRole {
+  cluster?: string[];
+  indices?: SecurityRoleIndexPrivilege[];
+  run_as?: string[];
+  metadata?: Record<string, unknown>;
+}
+export type GetSecurityUsersResponse = Record<string, SecurityUser>;
+export type GetSecurityRolesResponse = Record<string, SecurityRole>;
 
 /**
  * Backward-compatible alias — matches the shape components were already using.
@@ -116,6 +136,10 @@ export type EsqlError = ElasticsearchError;
 export interface UserCapabilities {
   /** Whether the user can manage data streams (create, delete, rollover, etc.) */
   canManageDataStreams: boolean;
+  /** Whether the user can read user definitions from the security API. */
+  canReadSecurityUsers: boolean;
+  /** Whether the user can read role definitions from the security API. */
+  canReadSecurityRoles: boolean;
 }
 
 /** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
@@ -301,6 +325,14 @@ export class ElasticsearchClient {
     return this._fetch<FieldCapsResponse>(path, { signal });
   }
 
+  async getSecurityUsers(signal?: AbortSignal): Promise<GetSecurityUsersResponse> {
+    return this._fetch<GetSecurityUsersResponse>("/_security/user", { signal });
+  }
+
+  async getSecurityRoles(signal?: AbortSignal): Promise<GetSecurityRolesResponse> {
+    return this._fetch<GetSecurityRolesResponse>("/_security/role", { signal });
+  }
+
   // -------------------------------------------------------------------------
   // Security / capabilities
   // -------------------------------------------------------------------------
@@ -314,15 +346,26 @@ export class ElasticsearchClient {
     try {
       const response = await this._fetch<HasPrivilegesResponse>("/_security/user/_has_privileges", {
         method: "POST",
-        body: JSON.stringify({ cluster: ["manage_data_stream"] }),
+        body: JSON.stringify({
+          cluster: ["manage_data_stream", "read_security", "manage_security"],
+        }),
         signal,
       });
+      const canReadSecurity = Boolean(
+        response.cluster?.["read_security"] || response.cluster?.["manage_security"],
+      );
       return {
         canManageDataStreams: response.cluster?.["manage_data_stream"] ?? false,
+        canReadSecurityUsers: canReadSecurity,
+        canReadSecurityRoles: canReadSecurity,
       };
     } catch {
       // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
-      return { canManageDataStreams: false };
+      return {
+        canManageDataStreams: false,
+        canReadSecurityUsers: false,
+        canReadSecurityRoles: false,
+      };
     }
   }
 

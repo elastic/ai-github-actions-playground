@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
+
 import {
   buildExplorerQuery,
+  buildOverviewQuery,
   getDefaultAggregation,
   getAggregationOptions,
 } from "../../src/services/es/queryBuilder";
-import type { ExplorerQuery } from "../../src/services/es/queryBuilder";
+import type { ExplorerQuery, OverviewQuery } from "../../src/services/es/queryBuilder";
 
 function makeQuery(overrides: Partial<ExplorerQuery> = {}): ExplorerQuery {
   return {
@@ -30,9 +32,7 @@ describe("buildExplorerQuery", () => {
   });
 
   it("builds a sum aggregation for counter metrics", () => {
-    const result = buildExplorerQuery(
-      makeQuery({ metricType: "counter", aggregation: "sum" }),
-    );
+    const result = buildExplorerQuery(makeQuery({ metricType: "counter", aggregation: "sum" }));
 
     expect(result.esql).toContain("SUM(`system.cpu.total.pct`)");
     expect(result.yAxisLabel).toBe("Sum pct");
@@ -73,9 +73,7 @@ describe("buildExplorerQuery", () => {
   });
 
   it("includes groupBy in STATS clause", () => {
-    const result = buildExplorerQuery(
-      makeQuery({ groupBy: "service.name" }),
-    );
+    const result = buildExplorerQuery(makeQuery({ groupBy: "service.name" }));
 
     expect(result.esql).toContain("BY timestamp =");
     expect(result.esql).toContain(", `service.name`");
@@ -134,9 +132,7 @@ describe("buildExplorerQuery", () => {
   });
 
   it("includes time range in WHERE clause", () => {
-    const result = buildExplorerQuery(
-      makeQuery({ timeRange: { from: "now-7d", to: "now" } }),
-    );
+    const result = buildExplorerQuery(makeQuery({ timeRange: { from: "now-7d", to: "now" } }));
 
     expect(result.esql).toContain("@timestamp >= ?_tstart");
     expect(result.esql).toContain("@timestamp <= ?_tend");
@@ -198,5 +194,57 @@ describe("getAggregationOptions", () => {
   it("returns counter-appropriate options (count only, since SUM/AVG/etc are unsupported for counter types)", () => {
     const options = getAggregationOptions("counter");
     expect(options).toEqual(["count"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildOverviewQuery
+// ---------------------------------------------------------------------------
+
+function makeOverviewQuery(overrides: Partial<OverviewQuery> = {}): OverviewQuery {
+  return {
+    indexPattern: "metrics-*",
+    metricField: "system.cpu.total.pct",
+    metricType: "gauge",
+    timeRange: { from: "now-1h", to: "now" },
+    ...overrides,
+  };
+}
+
+describe("buildOverviewQuery", () => {
+  it("builds an overview query with 20 buckets by default", () => {
+    const result = buildOverviewQuery(makeOverviewQuery());
+    expect(result.esql).toContain("FROM metrics-*");
+    expect(result.esql).toContain("AVG(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("BUCKET(@timestamp, 20,");
+    expect(result.esql).toContain("SORT timestamp");
+  });
+
+  it("uses count aggregation for counter metrics", () => {
+    const result = buildOverviewQuery(makeOverviewQuery({ metricType: "counter" }));
+    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+  });
+
+  it("includes time range in WHERE clause", () => {
+    const result = buildOverviewQuery(makeOverviewQuery());
+    expect(result.esql).toContain("@timestamp >= ?_tstart");
+    expect(result.esql).toContain("@timestamp <= ?_tend");
+  });
+
+  it("uses custom bucket count", () => {
+    const result = buildOverviewQuery(makeOverviewQuery({ bucketCount: 10 }));
+    expect(result.esql).toContain("BUCKET(@timestamp, 10,");
+  });
+
+  it("returns a meaningful y-axis label", () => {
+    const result = buildOverviewQuery(makeOverviewQuery());
+    expect(result.yAxisLabel).toBe("Avg pct");
+  });
+
+  it("does not include GROUP BY or filters", () => {
+    const result = buildOverviewQuery(makeOverviewQuery());
+    expect(result.esql).not.toContain("GROUP BY");
+    expect(result.esql).not.toContain("LIKE");
+    expect(result.esql).not.toContain("==");
   });
 });
