@@ -10,14 +10,14 @@ Use Load Default Dashboard to reset to the built-in starter layout when testing 
 
 If import fails, validate the file is valid JSON produced by Peek and includes required dashboard fields.
 
-## Planned Dashboard Library Experience
+## Dashboard Library Experience
 
-The dashboard index (`/dashboards`) will be the primary management page for all dashboards in a workspace.
+The dashboard index (`/dashboards`) is the primary management page for dashboards in a workspace.
 
-Each dashboard row/card will support open, rename, duplicate, archive, and delete, with delete guarded by confirmation and an undo-style recovery window when possible.
+Each dashboard row supports open, rename, duplicate, archive, and delete actions. Deletes are guarded by confirmation and an undo-style recovery window.
 
-Import and export will support two scopes: active dashboard JSON for sharing one view, and workspace JSON for backup/restore of all dashboards.
+Import and export support two scopes: active dashboard JSON for sharing one view, and workspace JSON for backup/restore of all dashboards.
 
-Reset behavior will also be scoped: reset active dashboard (safe local rollback) or reset full workspace (explicit destructive action).
+Reset behavior is also scoped: reset the active dashboard (safe local rollback) or reset the full workspace (explicit destructive action).
 
-Connection profiles remain workspace-level by default; dashboards can optionally store a preferred profile hint without forcing automatic profile switches.
+Connection profiles remain workspace-level by default. Dashboards can optionally store a preferred profile hint without forcing automatic profile switches.

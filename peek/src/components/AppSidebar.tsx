@@ -77,7 +77,8 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const isSettingsPath =
     location.pathname === PAGE_MANIFEST.settings.path ||
-    location.pathname === PAGE_MANIFEST.dashboardManagement.path;
+    location.pathname === PAGE_MANIFEST.dashboardManagement.path ||
+    location.pathname === PAGE_MANIFEST.dashboards.path;
 
   return (
     <Box

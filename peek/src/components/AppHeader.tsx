@@ -260,11 +260,21 @@ export default function AppHeader() {
             color: "transparent",
             WebkitTextFillColor: "transparent",
             lineHeight: 1,
-            mr: 2,
+            mr: 1,
           }}
         >
           Peek
         </Typography>
+        <Chip
+          label={dashboard.title}
+          size="small"
+          variant="outlined"
+          sx={{
+            maxWidth: 220,
+            mr: 1,
+            "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+          }}
+        />
 
         {connected && connectionProfiles.length > 0 && (
           <>

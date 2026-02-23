@@ -9,6 +9,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
@@ -50,6 +51,19 @@ export const PAGE_MANIFEST = {
       order: 10,
       showInSidebar: true,
       icon: createElement(DashboardIcon, { fontSize: "small" }),
+    },
+  },
+  dashboards: {
+    path: "/dashboards",
+    component: DashboardManagementPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Library",
+      group: "Workspace",
+      order: 15,
+      showInSidebar: true,
+      icon: createElement(DashboardCustomizeIcon, { fontSize: "small" }),
     },
   },
   discover: {
@@ -175,7 +189,7 @@ export const PAGE_MANIFEST = {
     requiresConnection: true,
     showTimeControls: false,
     nav: {
-      label: "Dashboard Management",
+      label: "Dashboard Library",
       group: "Settings",
       order: 20,
       showInSidebar: false,
