@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { EditorView } from "@codemirror/view";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection, EsqlResponse } from "../types";
@@ -10,6 +11,7 @@ interface UseEsqlQueryOptions {
   onSuccess: (data: EsqlResponse, executedQuery: string) => void;
   onFailure?: () => void;
   buildRequest?: (queryText: string) => EsqlQueryParams;
+  queryContextView?: EditorView | null;
 }
 
 function getServerDurationMs(data: EsqlResponse): number | null {
@@ -22,6 +24,7 @@ export function useEsqlQuery({
   onSuccess,
   onFailure,
   buildRequest,
+  queryContextView,
 }: UseEsqlQueryOptions) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,8 +75,10 @@ export function useEsqlQuery({
               return next;
             });
           }
-          setLastQueryError(null);
-          setLastQueryResult(trimmedQuery, data);
+          if (queryContextView) {
+            setLastQueryError(null, queryContextView);
+            setLastQueryResult(trimmedQuery, data, queryContextView);
+          }
           onSuccess(data, trimmedQuery);
         }
       } catch (err) {
@@ -84,7 +89,9 @@ export function useEsqlQuery({
         ) {
           const errorMessage = isElasticsearchError(err) ? err.message : String(err);
           setError(errorMessage);
-          setLastQueryError(errorMessage);
+          if (queryContextView) {
+            setLastQueryError(errorMessage, queryContextView);
+          }
           onFailure?.();
         }
       }
@@ -93,7 +100,7 @@ export function useEsqlQuery({
         setActiveStep(null);
       }
     },
-    [connection, onSuccess, onFailure, buildRequest],
+    [connection, onSuccess, onFailure, buildRequest, queryContextView],
   );
 
   return {

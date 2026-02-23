@@ -12,7 +12,7 @@ export const thresholdsSchema = z.object({
   baseColor: thresholdColor.optional(),
 });
 
-export const visualizationTypeSchema = z.enum([
+export const VISUALIZATION_TYPES = [
   "timeseries",
   "bar",
   "table",
@@ -23,7 +23,9 @@ export const visualizationTypeSchema = z.enum([
   "scatter",
   "histogram",
   "markdown",
-]);
+] as const;
+
+export const visualizationTypeSchema = z.enum(VISUALIZATION_TYPES);
 
 const panelLayoutSchema = z.object({
   x: z.number(),

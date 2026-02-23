@@ -244,3 +244,32 @@ describe("SpanDetailDrawer – Events tab", () => {
     expect(screen.getByText("(unnamed event)")).toBeInTheDocument();
   });
 });
+
+describe("SpanDetailDrawer – Footer actions", () => {
+  it("calls query lab callback with span context", async () => {
+    const user = userEvent.setup();
+    const onOpenInQueryLab = vi.fn();
+    const span = makeSpan({
+      traceId: "trace-footer",
+      spanId: "span-footer",
+      timestamp: "2026-02-01T00:00:00.000Z",
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+        onOpenInQueryLab={onOpenInQueryLab}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open in Query Lab" }));
+    expect(onOpenInQueryLab).toHaveBeenCalledWith({
+      traceId: "trace-footer",
+      spanId: "span-footer",
+      timestamp: "2026-02-01T00:00:00.000Z",
+    });
+  });
+});
