@@ -252,6 +252,9 @@ export default function PanelContainer({ panel }: Props) {
             query={panel.query}
             data={{ columns: [], values: [] } as EsqlResponse}
             options={panel.options}
+            connection={connection}
+            timeRange={timeRange}
+            parameters={parameters}
           />
         ) : error ? (
           <Box

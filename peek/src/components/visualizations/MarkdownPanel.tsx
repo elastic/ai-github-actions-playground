@@ -3,12 +3,28 @@ import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import type { DashboardParameter, ElasticsearchConnection, TimeRange } from "../../types";
+import { useMarkdownEsql } from "../../hooks/useMarkdownEsql";
+
 interface Props {
   content: string;
+  /** Elasticsearch connection — needed only when content has `${esql}` blocks. */
+  connection?: ElasticsearchConnection | null;
+  /** Dashboard time range — forwarded to embedded ES|QL queries. */
+  timeRange?: TimeRange;
+  /** Dashboard parameters — used for `{{param}}` interpolation and ES|QL params. */
+  parameters?: DashboardParameter[];
 }
 
-export default function MarkdownPanel({ content }: Props) {
-  if (!content.trim()) {
+export default function MarkdownPanel({ content, connection, timeRange, parameters }: Props) {
+  const resolved = useMarkdownEsql({
+    content,
+    connection: connection ?? null,
+    timeRange,
+    parameters,
+  });
+
+  if (!resolved.trim()) {
     return (
       <Box
         sx={{
@@ -63,7 +79,7 @@ export default function MarkdownPanel({ content }: Props) {
         "& th": { bgcolor: "action.hover", fontWeight: 600 },
       }}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolved}</ReactMarkdown>
     </Box>
   );
 }

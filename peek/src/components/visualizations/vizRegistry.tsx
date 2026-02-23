@@ -20,6 +20,8 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 
 import type {
   BarChartOptions,
+  DashboardParameter,
+  ElasticsearchConnection,
   EsqlResponse,
   GaugePanelOptions,
   HeatmapChartOptions,
@@ -29,6 +31,7 @@ import type {
   ScatterChartOptions,
   StatPanelOptions,
   TablePanelOptions,
+  TimeRange,
   TimeSeriesOptions,
   VisualizationOptions,
   VisualizationType,
@@ -63,6 +66,12 @@ export interface VizRendererProps {
   onExportReady?: (exportFn: (() => string) | null) => void;
   /** Raw panel query text — used by static panels such as markdown. */
   query?: string;
+  /** Elasticsearch connection — forwarded to panels that run their own queries. */
+  connection?: ElasticsearchConnection | null;
+  /** Dashboard time range — forwarded to embedded ES|QL queries. */
+  timeRange?: TimeRange;
+  /** Dashboard parameters — forwarded to embedded ES|QL queries. */
+  parameters?: DashboardParameter[];
 }
 
 export interface VizOptionsEditorProps {
@@ -228,7 +237,14 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     supportsOptions: false,
     supportsQuery: false,
     defaultOptions: () => ({}) satisfies MarkdownOptions,
-    renderComponent: ({ query }) => <MarkdownPanel content={query ?? ""} />,
+    renderComponent: ({ query, connection, timeRange, parameters }) => (
+      <MarkdownPanel
+        content={query ?? ""}
+        connection={connection}
+        timeRange={timeRange}
+        parameters={parameters}
+      />
+    ),
   },
 ];
 

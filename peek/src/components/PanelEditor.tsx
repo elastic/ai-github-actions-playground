@@ -314,7 +314,12 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         {/* Markdown preview — always shown for markdown panels */}
         {isMarkdown && (
           <Paper variant="outlined" sx={{ minHeight: 120, p: 1, overflow: "auto" }}>
-            <MarkdownPanel content={query} />
+            <MarkdownPanel
+              content={query}
+              connection={connection}
+              timeRange={timeRange}
+              parameters={parameters}
+            />
           </Paper>
         )}
 
