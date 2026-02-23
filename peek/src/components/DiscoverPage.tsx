@@ -128,8 +128,8 @@ export default function DiscoverPage() {
   const queryEditorExtensions = useMemo(
     () =>
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
-      createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
-    [],
+      createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current(), connection),
+    [connection],
   );
   useEffect(() => {
     if (!connection || !refreshInterval || !effectiveQuery.trim()) return;
