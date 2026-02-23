@@ -78,14 +78,19 @@ export function useEsqlQuery({
               profileMode ? ((data as { profile?: unknown }).profile ?? null) : null,
             );
             setLastRunIsPartial((data as { is_partial?: boolean }).is_partial ?? null);
-          } else if (serverDurationMs !== null) {
-            setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
           } else {
-            setStepDurationsMs((prev) => {
-              const next = { ...prev };
-              delete next[stepIndex];
-              return next;
-            });
+            setLastRunDurationMs(null);
+            setLastRunProfile(null);
+            setLastRunIsPartial(null);
+            if (serverDurationMs !== null) {
+              setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
+            } else {
+              setStepDurationsMs((prev) => {
+                const next = { ...prev };
+                delete next[stepIndex];
+                return next;
+              });
+            }
           }
           if (queryContextView) {
             setLastQueryError(null, queryContextView);
