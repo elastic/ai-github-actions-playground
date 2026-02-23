@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
+
 import {
   buildTraceSearchQuery,
   buildTraceSearchQueryParts,
   buildTraceDetailQuery,
+  buildTraceQueryLabDraft,
   buildTraceTimeseriesQuery,
   buildServiceSuggestionsQuery,
   buildOperationSuggestionsQuery,
@@ -104,6 +106,30 @@ describe("buildTraceDetailQuery", () => {
   it("generates a query to fetch all spans for a trace", () => {
     const query = buildTraceDetailQuery("abc123");
     expect(query).toBe('FROM traces-* | WHERE trace.id == "abc123" | LIMIT 10000');
+  });
+});
+
+describe("buildTraceQueryLabDraft", () => {
+  it("generates a query with trace and span context", () => {
+    const query = buildTraceQueryLabDraft({
+      traceId: "trace-123",
+      spanId: "span-456",
+      timestamp: "2026-01-01T00:00:00.000Z",
+    });
+    expect(query).toBe(
+      'FROM traces-* | WHERE trace.id == "trace-123" AND span.id == "span-456" AND @timestamp == "2026-01-01T00:00:00.000Z" | SORT @timestamp DESC | LIMIT 200',
+    );
+  });
+
+  it("escapes user-controlled values", () => {
+    const query = buildTraceQueryLabDraft({
+      traceId: 'trace"id',
+      spanId: "span\\id",
+      timestamp: '2026-01-01T00:00:00.000"Z',
+    });
+    expect(query).toContain('trace.id == "trace\\"id"');
+    expect(query).toContain('span.id == "span\\\\id"');
+    expect(query).toContain('@timestamp == "2026-01-01T00:00:00.000\\"Z"');
   });
 });
 
