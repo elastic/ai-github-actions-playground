@@ -25,6 +25,7 @@ function makeSpan(overrides: Partial<Span> = {}): Span {
     timestamp,
     startTimeUs: new Date(timestamp).getTime() * 1000,
     attributes: {},
+    events: [],
     ...overrides,
   };
 }
@@ -265,8 +266,11 @@ describe("parseSpansFromEsql", () => {
     spanName: "name",
     spanKind: "kind",
     durationUs: "duration",
+    durationNs: "duration_nanos",
     statusCode: "status",
     timestamp: "@timestamp",
+    timestampUs: "timestamp_us",
+    events: "events",
   };
 
   it("parses rows into Span objects", () => {
@@ -330,6 +334,137 @@ describe("parseSpansFromEsql", () => {
     // http.url is null so it should not appear in attributes
     expect(spans[0]!.attributes).toEqual({ "http.method": "GET" });
     expect(spans[0]!.attributes).not.toHaveProperty("http.url");
+  });
+
+  it("parses span events from an array column", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "events", type: "nested" },
+    ];
+    const values = [
+      [
+        "t1",
+        "s1",
+        null,
+        "svc",
+        "op",
+        "SERVER",
+        1000,
+        "OK",
+        "2026-01-01T00:00:00Z",
+        [
+          {
+            name: "exception",
+            "@timestamp": "2026-01-01T00:00:00.500Z",
+            "exception.type": "RuntimeException",
+          },
+        ],
+      ],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.events).toHaveLength(1);
+    expect(spans[0]!.events[0]!.name).toBe("exception");
+    expect(spans[0]!.events[0]!.timestamp).toBe("2026-01-01T00:00:00.500Z");
+    expect(spans[0]!.events[0]!.attributes).toEqual({
+      "exception.type": "RuntimeException",
+    });
+  });
+
+  it("parses span events from a JSON string column", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "events", type: "keyword" },
+    ];
+    const eventsJson = JSON.stringify([{ name: "checkpoint", timestamp: "2026-01-01T00:00:01Z" }]);
+    const values = [
+      ["t1", "s1", null, "svc", "op", "SERVER", 1000, "OK", "2026-01-01T00:00:00Z", eventsJson],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.events).toHaveLength(1);
+    expect(spans[0]!.events[0]!.name).toBe("checkpoint");
+    expect(spans[0]!.events[0]!.timestamp).toBe("2026-01-01T00:00:01Z");
+  });
+
+  it("returns empty events when events column is null", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "events", type: "nested" },
+    ];
+    const values = [
+      ["t1", "s1", null, "svc", "op", "SERVER", 1000, "OK", "2026-01-01T00:00:00Z", null],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.events).toEqual([]);
+  });
+
+  it("returns empty events when events column is absent", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+    ];
+    const values = [["t1", "s1"]];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.events).toEqual([]);
+  });
+
+  it("excludes events column from span attributes", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "events", type: "nested" },
+    ];
+    const values = [
+      [
+        "t1",
+        "s1",
+        null,
+        "svc",
+        "op",
+        "SERVER",
+        1000,
+        "OK",
+        "2026-01-01T00:00:00Z",
+        [{ name: "ev" }],
+      ],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.attributes).not.toHaveProperty("events");
   });
 
   it("handles missing fields gracefully", () => {
