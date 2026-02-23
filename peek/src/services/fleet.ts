@@ -1,4 +1,4 @@
-import type { ElasticsearchClient } from "./es";
+import { isElasticsearchError, type ElasticsearchClient, type ElasticsearchError } from "./es";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -53,6 +53,38 @@ interface SearchResponse {
   aggregations?: Record<string, unknown>;
 }
 
+function extractSearchErrorMessage(body: unknown, status: number): string {
+  if (typeof body === "object" && body !== null) {
+    const error = (body as Record<string, unknown>).error;
+    if (typeof error === "object" && error !== null) {
+      const reason = (error as Record<string, unknown>).reason;
+      if (typeof reason === "string" && reason.length > 0) return reason;
+      const rootCause = (error as Record<string, unknown>).root_cause;
+      if (Array.isArray(rootCause) && rootCause.length > 0) {
+        const firstReason = (rootCause[0] as Record<string, unknown>)?.reason;
+        if (typeof firstReason === "string" && firstReason.length > 0) return firstReason;
+      }
+      const type = (error as Record<string, unknown>).type;
+      if (typeof type === "string" && type.length > 0) return type;
+    }
+    const message = (body as Record<string, unknown>).message;
+    if (typeof message === "string" && message.length > 0) return message;
+  }
+  return `Elasticsearch search failed with status ${status}`;
+}
+
+function isMissingIndexError(
+  error: Pick<ElasticsearchError, "status" | "message" | "cause">,
+): boolean {
+  if (error.status === 404) return true;
+  const normalized = `${error.message} ${error.cause ?? ""}`.toLowerCase();
+  return (
+    normalized.includes("index_not_found_exception") ||
+    normalized.includes("resource_not_found_exception") ||
+    normalized.includes("no such index")
+  );
+}
+
 async function gracefulSearch(
   client: ElasticsearchClient,
   index: string,
@@ -64,11 +96,20 @@ async function gracefulSearch(
       `/${index}/_search?ignore_unavailable=true&allow_no_indices=true`,
       JSON.stringify(body),
     );
-    if (response.status === 404) return null;
-    if (response.status >= 400) return null;
+    if (response.status >= 400) {
+      const error = {
+        status: response.status,
+        message: extractSearchErrorMessage(response.body, response.status),
+      } satisfies ElasticsearchError;
+      if (isMissingIndexError(error)) return null;
+      throw error;
+    }
     return response.body as SearchResponse;
-  } catch {
-    return null;
+  } catch (error) {
+    if (isElasticsearchError(error) && isMissingIndexError(error)) {
+      return null;
+    }
+    throw error;
   }
 }
 

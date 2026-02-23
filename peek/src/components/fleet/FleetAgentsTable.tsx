@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type KeyboardEvent } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
@@ -53,6 +53,13 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
     return result;
   }, [agents, agentFilter]);
 
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, agentId: string) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onAgentClick(agentId);
+    }
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -98,7 +105,9 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
                   hover
                   key={agent.agentId}
                   sx={{ cursor: "pointer" }}
+                  tabIndex={0}
                   onClick={() => onAgentClick(agent.agentId)}
+                  onKeyDown={(event) => handleRowKeyDown(event, agent.agentId)}
                 >
                   <TableCell>
                     <Stack>

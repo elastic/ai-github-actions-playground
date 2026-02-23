@@ -83,9 +83,14 @@ export default function FleetPage() {
       ]);
 
       const errors: string[] = [];
+      const formatReason = (reason: unknown): string => {
+        if (isElasticsearchError(reason)) return reason.message;
+        if (reason instanceof Error) return reason.message;
+        return String(reason);
+      };
       const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
         if (r.status === "fulfilled") return r.value;
-        errors.push(`${label}: ${r.reason}`);
+        errors.push(`${label}: ${formatReason(r.reason)}`);
         return null;
       };
 

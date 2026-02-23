@@ -300,6 +300,33 @@ describe("Fleet pages", () => {
     });
   });
 
+  it("navigates to agent detail when pressing Enter on a focused agent row", async () => {
+    mockFleetResponses();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+          <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
+        </Routes>
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Agents" })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("tab", { name: "Agents" }));
+
+    const row = await screen.findByRole("row", { name: /host-1/i });
+    row.focus();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location")).toHaveTextContent("/fleet/agents/agent-1");
+    });
+  });
+
   it("shows partial error warning when some sources fail", async () => {
     rawRequestMock.mockImplementation((_method: string, url: string) => {
       if (url.includes("metrics-fleet_server.agent_status")) {
@@ -381,5 +408,34 @@ describe("Fleet pages", () => {
         screen.getByText(/However, 750 agents found via Elastic Agent logs\./),
       ).toBeInTheDocument();
     });
+  });
+
+  it("surfaces non-404 Fleet search failures as partial warnings", async () => {
+    rawRequestMock.mockImplementation((_method: string, url: string) => {
+      if (url.includes("logs-elastic_agent")) {
+        return Promise.resolve({
+          status: 403,
+          body: {
+            error: {
+              reason: "forbidden by role",
+            },
+          },
+        });
+      }
+      return Promise.resolve({ status: 200, body: { hits: { hits: [] }, aggregations: {} } });
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Some data sources unavailable:/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Agent inventory: forbidden by role/)).toBeInTheDocument();
   });
 });
