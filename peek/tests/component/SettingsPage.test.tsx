@@ -80,4 +80,66 @@ describe("SettingsPage", () => {
     await user.click(toggle);
     expect(useLLMStore.getState().config.tabAutocompleteEnabled).toBe(true);
   });
+
+  it("renders the Use custom model ID toggle", () => {
+    render(<SettingsPage />);
+    expect(screen.getByRole("checkbox", { name: /use custom model id/i })).toBeInTheDocument();
+  });
+
+  it("custom model toggle is off by default and Model dropdown is shown", () => {
+    render(<SettingsPage />);
+    const toggle = screen.getByRole("checkbox", { name: /use custom model id/i });
+    expect(toggle).not.toBeChecked();
+    expect(screen.getByLabelText("Model")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Model ID")).not.toBeInTheDocument();
+  });
+
+  it("enabling custom model toggle switches to free-text Model ID input", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    await user.click(screen.getByRole("checkbox", { name: /use custom model id/i }));
+    expect(screen.getByLabelText("Model ID")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Model")).not.toBeInTheDocument();
+  });
+
+  it("typing in custom Model ID input updates the store", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    await user.click(screen.getByRole("checkbox", { name: /use custom model id/i }));
+    const input = screen.getByLabelText("Model ID");
+    await user.clear(input);
+    await user.type(input, "gpt-4.5-preview");
+    expect(useLLMStore.getState().config.model).toBe("gpt-4.5-preview");
+  });
+
+  it("shows validation error when custom Model ID is cleared", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    await user.click(screen.getByRole("checkbox", { name: /use custom model id/i }));
+    const input = screen.getByLabelText("Model ID");
+    await user.clear(input);
+    expect(screen.getByText("Model ID is required")).toBeInTheDocument();
+  });
+
+  it("disabling custom model toggle restores the Model dropdown", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    const toggle = screen.getByRole("checkbox", { name: /use custom model id/i });
+    await user.click(toggle);
+    expect(screen.getByLabelText("Model ID")).toBeInTheDocument();
+    await user.click(toggle);
+    expect(screen.getByLabelText("Model")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Model ID")).not.toBeInTheDocument();
+  });
+
+  it("changing provider resets custom model toggle to off", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    await user.click(screen.getByRole("checkbox", { name: /use custom model id/i }));
+    expect(screen.getByLabelText("Model ID")).toBeInTheDocument();
+    await user.click(screen.getByLabelText("Provider"));
+    await user.click(screen.getByRole("option", { name: "OpenRouter" }));
+    expect(screen.queryByLabelText("Model ID")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Model")).toBeInTheDocument();
+  });
 });
