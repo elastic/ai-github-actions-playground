@@ -97,6 +97,10 @@ export default function RolesPage() {
     void loadRoles();
   }, [loadRoles]);
 
+  useEffect(() => {
+    setSelectedRoleName(searchParams.get("role"));
+  }, [searchParams]);
+
   const filteredRoles = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return roles;
