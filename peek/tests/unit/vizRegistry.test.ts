@@ -82,10 +82,6 @@ describe("vizRegistry", () => {
   });
 
   describe("supportsOptions", () => {
-    it("table does not support options", () => {
-      expect(getVizEntry("table")?.supportsOptions).toBe(false);
-    });
-
     it("pie does not support options", () => {
       expect(getVizEntry("pie")?.supportsOptions).toBe(false);
     });
@@ -104,6 +100,10 @@ describe("vizRegistry", () => {
 
     it("bar supports options", () => {
       expect(getVizEntry("bar")?.supportsOptions).toBe(true);
+    });
+
+    it("table supports options (threshold controls)", () => {
+      expect(getVizEntry("table")?.supportsOptions).toBe(true);
     });
 
     it("stat supports options", () => {
@@ -163,8 +163,12 @@ describe("vizRegistry", () => {
       expect(getVizEntry("histogram")?.OptionsEditor).toBeDefined();
     });
 
-    it("table has no OptionsEditor", () => {
-      expect(getVizEntry("table")?.OptionsEditor).toBeUndefined();
+    it("table has an OptionsEditor (threshold controls)", () => {
+      expect(getVizEntry("table")?.OptionsEditor).toBeDefined();
+    });
+
+    it("stat has an OptionsEditor (threshold controls)", () => {
+      expect(getVizEntry("stat")?.OptionsEditor).toBeDefined();
     });
 
     it("pie has no OptionsEditor", () => {
@@ -173,12 +177,6 @@ describe("vizRegistry", () => {
 
     it("heatmap has no OptionsEditor", () => {
       expect(getVizEntry("heatmap")?.OptionsEditor).toBeUndefined();
-    });
-
-    // stat and scatter show format options (supportsOptions: true) but have no
-    // type-specific controls beyond the shared FormatEditor.
-    it("stat has no type-specific OptionsEditor (format-only)", () => {
-      expect(getVizEntry("stat")?.OptionsEditor).toBeUndefined();
     });
 
     it("scatter has no type-specific OptionsEditor (format-only)", () => {
