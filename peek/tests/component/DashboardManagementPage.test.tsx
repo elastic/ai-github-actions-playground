@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import DashboardManagementPage from "../../src/components/DashboardManagementPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock } from "../fixtures/test-utils";
+import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -27,7 +28,7 @@ describe("DashboardManagementPage", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useDashboardStore.getState().resetState();
+    resetAllStores();
     mockFileReaderText = "";
     vi.stubGlobal("FileReader", MockFileReader as unknown as typeof FileReader);
   });

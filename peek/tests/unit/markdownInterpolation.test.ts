@@ -189,6 +189,28 @@ describe("formatEsqlResult", () => {
     const lines = result.split("\n");
     expect(lines[2]).toBe("C:\\\\Users\\\\foo | 1");
   });
+
+  it("replaces newlines in table cell values with a space", () => {
+    const data: EsqlResponse = {
+      columns: [col("service"), col("message")],
+      values: [["api", "line1\nline2"]],
+    };
+    const result = formatEsqlResult(data);
+    const lines = result.split("\n");
+    expect(lines.length).toBe(3);
+    expect(lines[2]).toBe("api | line1 line2");
+  });
+
+  it("replaces CRLF newlines in table cell values with a space", () => {
+    const data: EsqlResponse = {
+      columns: [col("service"), col("message")],
+      values: [["api", "line1\r\nline2"]],
+    };
+    const result = formatEsqlResult(data);
+    const lines = result.split("\n");
+    expect(lines.length).toBe(3);
+    expect(lines[2]).toBe("api | line1 line2");
+  });
 });
 
 // ---------------------------------------------------------------------------

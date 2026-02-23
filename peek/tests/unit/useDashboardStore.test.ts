@@ -26,41 +26,25 @@ const sessionStorageMock = makeStorageMock();
 vi.stubGlobal("localStorage", localStorageMock);
 vi.stubGlobal("sessionStorage", sessionStorageMock);
 
-describe("useDashboardStore resetState", () => {
+describe("useDashboardStore resetDashboardState", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
     // Reset to a clean store state before each test
     useDashboardStore.setState({
-      connection: { url: "https://example.com", apiKey: "test-key" },
-      connected: true,
-      themeMode: "light",
-      discoverQueryDraft: "FROM logs-* | LIMIT 50",
-      editingPanelId: "some-panel",
-      connectionDialogOpen: true,
+      dashboard: {
+        ...useDashboardStore.getState().dashboard,
+        title: "Custom Title",
+      },
     });
   });
 
-  it("resets all state to initial values", () => {
-    useDashboardStore.getState().resetState();
+  it("resets dashboard state to initial values", () => {
+    useDashboardStore.getState().resetDashboardState();
 
     const state = useDashboardStore.getState();
-    expect(state.connection).toBeNull();
-    expect(state.connected).toBe(false);
-    expect(state.themeMode).toBe("dark");
-    expect(state.discoverQueryDraft).toBeNull();
-    expect(state.queryHistory).toEqual([]);
-    expect(state.editingPanelId).toBeNull();
-    expect(state.connectionDialogOpen).toBe(false);
-  });
-
-  it("resets the dashboard to the default dashboard", () => {
-    useDashboardStore.getState().setDashboardTitle("Custom Title");
-    useDashboardStore.getState().resetState();
-
-    const { dashboard } = useDashboardStore.getState();
-    expect(dashboard.title).toBe("Default");
-    expect(dashboard.panels.length).toBeGreaterThan(0);
+    expect(state.dashboard.title).toBe("Default");
+    expect(state.dashboard.panels.length).toBeGreaterThan(0);
   });
 });
 
@@ -88,7 +72,7 @@ describe("useDashboardStore addPanel / removePanel", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("addPanel increases panel count", () => {
@@ -125,7 +109,7 @@ describe("useDashboardStore duplicatePanel", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("creates a copy with a new id and appended title", () => {
@@ -207,7 +191,7 @@ describe("useDashboardStore duplicatePanel", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
     // Reset so updatedAt uses the fake time
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
 
     const beforeTimestamp = useDashboardStore.getState().dashboard.updatedAt;
     const sourceId = useDashboardStore.getState().dashboard.panels[0].id;
@@ -291,7 +275,7 @@ describe("useDashboardStore updatePanel", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("merges partial updates into the target panel", () => {
@@ -325,7 +309,7 @@ describe("useDashboardStore updatePanelLayouts", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("updates layout positions without affecting other panel fields", () => {
@@ -341,58 +325,11 @@ describe("useDashboardStore updatePanelLayouts", () => {
   });
 });
 
-describe("useDashboardStore query history", () => {
-  beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
-  });
-
-  it("prepends trimmed queries to history", () => {
-    useDashboardStore.getState().appendQueryToHistory("  FROM logs-* | LIMIT 10  ");
-    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
-
-    expect(useDashboardStore.getState().queryHistory).toEqual([
-      "FROM metrics-* | LIMIT 5",
-      "FROM logs-* | LIMIT 10",
-    ]);
-  });
-
-  it("does not append adjacent duplicates", () => {
-    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
-    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
-
-    expect(useDashboardStore.getState().queryHistory).toEqual(["FROM logs-* | LIMIT 10"]);
-  });
-
-  it("moves existing queries to the front instead of duplicating", () => {
-    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
-    useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
-    useDashboardStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
-
-    expect(useDashboardStore.getState().queryHistory).toEqual([
-      "FROM logs-* | LIMIT 10",
-      "FROM metrics-* | LIMIT 5",
-    ]);
-  });
-
-  it("caps history size at 10 entries", () => {
-    for (let i = 1; i <= 12; i += 1) {
-      useDashboardStore.getState().appendQueryToHistory(`FROM logs-* | LIMIT ${i}`);
-    }
-
-    const history = useDashboardStore.getState().queryHistory;
-    expect(history).toHaveLength(10);
-    expect(history[0]).toBe("FROM logs-* | LIMIT 12");
-    expect(history[9]).toBe("FROM logs-* | LIMIT 3");
-  });
-});
-
 describe("useDashboardStore setTimeRange / setDashboardTitle", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
   });
@@ -426,7 +363,7 @@ describe("useDashboardStore exportDashboard / importDashboard round-trip", () =>
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("export then import preserves all fields", () => {
@@ -437,7 +374,7 @@ describe("useDashboardStore exportDashboard / importDashboard round-trip", () =>
     const exported = useDashboardStore.getState().exportDashboard();
 
     // Reset to defaults and re-import
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
     const result = useDashboardStore.getState().importDashboard(exported);
 
     expect(result).toEqual({ success: true });
@@ -451,7 +388,7 @@ describe("useDashboardStore importDashboard", () => {
   beforeEach(() => {
     localStorageMock.clear();
     sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
+    useDashboardStore.getState().resetDashboardState();
   });
 
   it("imports a valid dashboard", () => {
@@ -653,246 +590,4 @@ describe("useDashboardStore importDashboard", () => {
       expect(useDashboardStore.getState().dashboard.panels[0].visualization).toBe(vizType);
     },
   );
-});
-
-describe("useDashboardStore connection profiles", () => {
-  beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
-  });
-
-  it("saveConnectionProfile creates a profile from the provided connection", () => {
-    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
-
-    const id = useDashboardStore.getState().saveConnectionProfile("Dev Cluster", conn);
-
-    expect(id).toBeTruthy();
-    const state = useDashboardStore.getState();
-    expect(state.connectionProfiles).toHaveLength(1);
-    expect(state.connectionProfiles[0].name).toBe("Dev Cluster");
-    expect(state.connectionProfiles[0].connection.url).toBe("https://dev.example.com");
-    expect(state.connectionProfiles[0].connection.apiKey).toBe("dev-key");
-    expect(state.activeProfileId).toBe(id);
-  });
-
-  it("saveConnectionProfile adds multiple profiles", () => {
-    useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-    useDashboardStore
-      .getState()
-      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
-
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(2);
-  });
-
-  it("deleteConnectionProfile removes the profile by ID", () => {
-    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
-    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
-
-    useDashboardStore.getState().deleteConnectionProfile(id);
-
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
-  });
-
-  it("deleteConnectionProfile clears activeProfileId when deleting the active profile", () => {
-    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
-    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
-    expect(useDashboardStore.getState().activeProfileId).toBe(id);
-
-    useDashboardStore.getState().deleteConnectionProfile(id);
-
-    expect(useDashboardStore.getState().activeProfileId).toBeNull();
-  });
-
-  it("deleteConnectionProfile preserves activeProfileId when deleting a different profile", () => {
-    const devId = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-    const prodId = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
-
-    useDashboardStore.getState().deleteConnectionProfile(devId);
-
-    expect(useDashboardStore.getState().activeProfileId).toBe(prodId);
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
-  });
-
-  it("renameConnectionProfile updates the profile name", () => {
-    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
-    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
-
-    useDashboardStore.getState().renameConnectionProfile(id, "Development");
-
-    const profile = useDashboardStore.getState().connectionProfiles[0];
-    expect(profile.name).toBe("Development");
-    expect(profile.connection.url).toBe("https://dev.example.com");
-  });
-
-  it("getConnectionProfile returns the correct profile", () => {
-    const conn = { url: "https://dev.example.com", apiKey: "dev-key" };
-    const id = useDashboardStore.getState().saveConnectionProfile("Dev", conn);
-
-    const profile = useDashboardStore.getState().getConnectionProfile(id);
-
-    expect(profile).toBeDefined();
-    expect(profile!.name).toBe("Dev");
-  });
-
-  it("getConnectionProfile returns undefined for unknown id", () => {
-    const profile = useDashboardStore.getState().getConnectionProfile("nonexistent");
-
-    expect(profile).toBeUndefined();
-  });
-
-  it("setActiveProfileId updates the active profile", () => {
-    useDashboardStore.getState().setActiveProfileId("some-id");
-
-    expect(useDashboardStore.getState().activeProfileId).toBe("some-id");
-  });
-
-  it("saveConnectionProfile returns null for duplicate name", () => {
-    useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-    const id = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev2.example.com", apiKey: "key2" });
-
-    expect(id).toBeNull();
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
-  });
-
-  it("deleteConnectionProfile cleans up sessionStorage credentials", () => {
-    const id = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-    // Trigger persistence so credentials are written to sessionStorage
-    const apiKeyKey = `elastic-peek:profile:${id}:apiKey`;
-    const passwordKey = `elastic-peek:profile:${id}:password`;
-    sessionStorageMock.setItem(apiKeyKey, "dev-key");
-    sessionStorageMock.setItem(passwordKey, "dev-pass");
-
-    useDashboardStore.getState().deleteConnectionProfile(id!);
-
-    expect(sessionStorageMock.getItem(apiKeyKey)).toBeNull();
-    expect(sessionStorageMock.getItem(passwordKey)).toBeNull();
-  });
-
-  it("resetState clears connection profiles", () => {
-    useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(1);
-
-    useDashboardStore.getState().resetState();
-
-    expect(useDashboardStore.getState().connectionProfiles).toHaveLength(0);
-    expect(useDashboardStore.getState().activeProfileId).toBeNull();
-  });
-});
-
-describe("useDashboardStore profileHealthMap", () => {
-  beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
-    useDashboardStore.getState().resetState();
-  });
-
-  it("setProfileHealth records healthy status for a profile", () => {
-    const id = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-
-    useDashboardStore.getState().setProfileHealth(id!, {
-      status: "healthy",
-      checkedAt: "2026-01-01T00:00:00.000Z",
-      errorSummary: null,
-    });
-
-    const health = useDashboardStore.getState().profileHealthMap[id!];
-    expect(health).toBeDefined();
-    expect(health.status).toBe("healthy");
-    expect(health.errorSummary).toBeNull();
-    expect(health.checkedAt).toBe("2026-01-01T00:00:00.000Z");
-  });
-
-  it("setProfileHealth records needs_attention status with error summary", () => {
-    const id = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
-
-    useDashboardStore.getState().setProfileHealth(id!, {
-      status: "needs_attention",
-      checkedAt: "2026-01-01T00:00:01.000Z",
-      errorSummary: "Connection refused",
-    });
-
-    const health = useDashboardStore.getState().profileHealthMap[id!];
-    expect(health.status).toBe("needs_attention");
-    expect(health.errorSummary).toBe("Connection refused");
-  });
-
-  it("setProfileHealth overwrites an existing health entry", () => {
-    const id = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-
-    useDashboardStore.getState().setProfileHealth(id!, {
-      status: "needs_attention",
-      checkedAt: "2026-01-01T00:00:00.000Z",
-      errorSummary: "Timeout",
-    });
-    useDashboardStore.getState().setProfileHealth(id!, {
-      status: "healthy",
-      checkedAt: "2026-01-01T00:00:01.000Z",
-      errorSummary: null,
-    });
-
-    const health = useDashboardStore.getState().profileHealthMap[id!];
-    expect(health.status).toBe("healthy");
-    expect(health.errorSummary).toBeNull();
-  });
-
-  it("setProfileHealth does not affect health entries for other profiles", () => {
-    const devId = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-    const prodId = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
-
-    useDashboardStore.getState().setProfileHealth(devId!, {
-      status: "healthy",
-      checkedAt: "2026-01-01T00:00:00.000Z",
-      errorSummary: null,
-    });
-    useDashboardStore.getState().setProfileHealth(prodId!, {
-      status: "needs_attention",
-      checkedAt: "2026-01-01T00:00:01.000Z",
-      errorSummary: "Auth failed",
-    });
-
-    expect(useDashboardStore.getState().profileHealthMap[devId!].status).toBe("healthy");
-    expect(useDashboardStore.getState().profileHealthMap[prodId!].status).toBe("needs_attention");
-  });
-
-  it("resetState clears profileHealthMap", () => {
-    const id = useDashboardStore
-      .getState()
-      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
-
-    useDashboardStore.getState().setProfileHealth(id!, {
-      status: "healthy",
-      checkedAt: "2026-01-01T00:00:00.000Z",
-      errorSummary: null,
-    });
-    expect(Object.keys(useDashboardStore.getState().profileHealthMap)).toHaveLength(1);
-
-    useDashboardStore.getState().resetState();
-
-    expect(useDashboardStore.getState().profileHealthMap).toEqual({});
-  });
 });

@@ -21,5 +21,16 @@ You can save multiple named connection profiles so you don't have to re-enter UR
 - **Load a profile in the dialog**: Click a saved profile in the "Saved Profiles" list to populate the form fields, then click "Connect".
 - **Rename a profile**: Double-click a profile name in the dialog to edit it, or click the edit icon.
 - **Delete a profile**: Click the delete icon next to a profile in the dialog, then confirm.
+- **Re-test a saved profile**: In the quick switcher menu, click the refresh icon next to any profile to test its connection without switching to it. A brief spinning animation plays while the test runs. A toast notification confirms the result: a success message if the profile is reachable, or an error message with details if it is not. The health badge next to the profile name updates immediately to reflect the new status.
 
 Profile URLs are persisted in localStorage. Profile credentials are stored in sessionStorage and cleared when you close the tab, just like the active connection.
+
+### Profile health badges
+
+Each profile in the quick switcher menu displays a health badge that reflects the last known connection status:
+
+- **Green check (✓)**: The profile was last tested successfully and is healthy. Hovering over the badge shows the "Healthy" tooltip.
+- **Amber warning (⚠)**: The profile failed its last connection test. Hovering over the badge shows a short error summary describing what went wrong.
+- **No badge**: The profile has not been tested yet in this session (status is unknown).
+
+Badges are updated automatically whenever you switch to a profile or use the Re-test action. They are stored in memory and reset when you close or reload the tab.
