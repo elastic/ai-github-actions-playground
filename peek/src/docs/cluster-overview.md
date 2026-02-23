@@ -8,54 +8,20 @@ A warning indicates partial data retrieval, usually caused by missing API permis
 
 Use this page before deeper investigation to confirm cluster state and quickly spot red or yellow health conditions.
 
-## UX review: current state
+## Stack information surfaces
 
-Today the page is optimized for a quick "is the cluster okay?" check:
+Cluster Overview now combines cluster identity and health with broader stack-level telemetry:
 
-- Identity and version (`/`)
-- Health and shard risk (`/_cluster/health`)
-- Surface-level scale signals (`/_data_stream`, `/_resolve/index/*`)
+- Cluster totals from `/_cluster/stats` (docs, store size, shards, indices)
+- Node inventory from `/_nodes` (roles and topology summary)
+- Per-node operational metrics from `/_nodes/stats` (CPU, heap, disk, shard/doc load)
 
-This is effective as a first screen, but it does not yet answer common operator follow-up questions such as:
-
-- Which node roles are present and how balanced are they?
-- Are CPU, heap, and disk pressure concentrated on specific nodes?
-- What are cluster-wide document/store/shard totals beyond health color?
-
-## Comprehensive stack information plan
-
-Expand Cluster Overview in phased, read-only steps so the page remains fast and resilient even with partial permissions.
-
-### Phase 1: Add richer stack data endpoints
-
-Planned API sources:
-
-| Endpoint | UX value |
-| --- | --- |
-| `/_cluster/stats` | Cluster-wide totals (docs, store size, nodes, shards, indices). |
-| `/_nodes` | Node inventory (name, roles, version, transport/http addresses). |
-| `/_nodes/stats` | Per-node operational metrics (CPU, JVM heap, FS usage, index pressure). |
-
-### Phase 2: Add compact information architecture
-
-Proposed layout additions:
-
-1. **Cluster Stats** cards for docs count, store size, total shards, and total indices.
-2. **Node Role Summary** chips grouped by role with counts (for quick topology validation).
-3. **Nodes Table** with high-signal columns: node name, roles, CPU %, heap %, disk used %, shard/doc counts.
-
-### Phase 3: Preserve graceful degradation
-
-Keep `Promise.allSettled` loading semantics so each section can render independently:
-
-- Show available sections even if one endpoint fails.
-- Keep a partial-data warning that names unavailable sections.
-- Reserve hard error state for total failure across all overview sources.
+The page keeps partial-load behavior via `Promise.allSettled`, so each section renders independently when permissions vary.
 
 ## Permissions and availability notes
 
-Exact data visibility depends on cluster privileges. The overview should continue to work as a progressive disclosure screen:
+Exact data visibility depends on cluster privileges:
 
 - Low-privilege users still get identity/health basics.
-- Additional cards/tables appear when cluster and node stats APIs are permitted.
-- Missing permissions should produce explicit "Unavailable" UI, not silent omission.
+- Additional cards and node-level sections appear when stats APIs are permitted.
+- Missing permissions are shown as explicit "Unavailable" values, not silent omission.
