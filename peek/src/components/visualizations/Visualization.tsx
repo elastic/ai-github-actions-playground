@@ -13,5 +13,7 @@ interface Props {
 
 export default function Visualization({ type, data, options, onExportReady, query }: Props) {
   const entry = getVizEntry(type);
-  return entry?.renderComponent({ data, options, onExportReady, query }) ?? <DataTable data={data} />;
+  return (
+    entry?.renderComponent({ data, options, onExportReady, query }) ?? <DataTable data={data} />
+  );
 }
