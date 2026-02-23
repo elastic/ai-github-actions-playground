@@ -171,7 +171,7 @@ describe("CommandPalette", () => {
 
     // Query Lab maps to /discover — should not appear since we're on that page
     expect(screen.queryByText("Query Lab")).not.toBeInTheDocument();
-    // But other pages should appear
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    // But other pages should appear (may appear as both nav command and group heading)
+    expect(screen.getAllByText("Dashboards").length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -75,10 +75,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  const isSettingsPath =
-    location.pathname === PAGE_MANIFEST.settings.path ||
-    location.pathname === PAGE_MANIFEST.dashboardManagement.path ||
-    location.pathname === PAGE_MANIFEST.dashboards.path;
+  const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
 
   return (
     <Box
@@ -135,7 +132,10 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           )}
           <List dense disablePadding>
             {section.items.map((item) => {
-              const isActive = location.pathname === PAGE_MANIFEST[item.page].path;
+              const pagePath = PAGE_MANIFEST[item.page].path;
+              const isActive =
+                location.pathname === pagePath ||
+                (pagePath === "/dashboards" && location.pathname.startsWith("/dashboards/"));
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
@@ -236,15 +236,6 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           }}
         >
           LLM Settings
-        </MenuItem>
-        <MenuItem
-          selected={location.pathname === PAGE_MANIFEST.dashboardManagement.path}
-          onClick={() => {
-            navigate(PAGE_MANIFEST.dashboardManagement.path);
-            setSettingsAnchor(null);
-          }}
-        >
-          Dashboard Management
         </MenuItem>
       </Menu>
     </Box>

@@ -11,13 +11,11 @@ import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SettingsIcon from "@mui/icons-material/Settings";
-import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
 import ClusterOverviewPage from "../components/ClusterOverviewPage";
-import DashboardGrid from "../components/DashboardGrid";
-import DashboardManagementPage from "../components/DashboardManagementPage";
+import DashboardsLandingPage from "../components/DashboardsLandingPage";
 import DataStreamsPage from "../components/DataStreamsPage";
 import DiscoverPage from "../components/DiscoverPage";
 import DocsPage from "../components/DocsPage";
@@ -44,30 +42,17 @@ export interface PageConfig {
 }
 
 export const PAGE_MANIFEST = {
-  dashboard: {
-    path: "/",
-    component: DashboardGrid,
+  dashboards: {
+    path: "/dashboards",
+    component: DashboardsLandingPage,
     requiresConnection: true,
-    showTimeControls: true,
+    showTimeControls: false,
     nav: {
-      label: "Dashboard",
+      label: "Dashboards",
       group: "Workspace",
       order: 10,
       showInSidebar: true,
       icon: createElement(DashboardIcon, { fontSize: "small" }),
-    },
-  },
-  dashboards: {
-    path: "/dashboards",
-    component: DashboardManagementPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    nav: {
-      label: "Library",
-      group: "Workspace",
-      order: 15,
-      showInSidebar: true,
-      icon: createElement(DashboardCustomizeIcon, { fontSize: "small" }),
     },
   },
   discover: {
@@ -209,19 +194,6 @@ export const PAGE_MANIFEST = {
       label: "LLM Settings",
       group: "Settings",
       order: 10,
-      showInSidebar: false,
-      icon: createElement(SettingsIcon, { fontSize: "small" }),
-    },
-  },
-  dashboardManagement: {
-    path: "/dashboard-management",
-    component: DashboardManagementPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    nav: {
-      label: "Dashboard Library",
-      group: "Settings",
-      order: 20,
       showInSidebar: false,
       icon: createElement(SettingsIcon, { fontSize: "small" }),
     },

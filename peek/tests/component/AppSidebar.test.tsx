@@ -62,7 +62,7 @@ describe("AppSidebar", () => {
   it("disables connection-required items when disconnected", () => {
     renderSidebar();
 
-    const dashboardBtn = screen.getByRole("button", { name: /dashboard/i });
+    const dashboardBtn = screen.getByRole("button", { name: /dashboards/i });
     expect(dashboardBtn).toHaveAttribute("aria-disabled", "true");
   });
 
@@ -70,7 +70,7 @@ describe("AppSidebar", () => {
     useConnectionStore.getState().setConnected(true);
     renderSidebar();
 
-    expect(screen.getByRole("button", { name: /dashboard/i })).not.toHaveAttribute(
+    expect(screen.getByRole("button", { name: /dashboards/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
     );
@@ -106,9 +106,9 @@ describe("AppSidebar", () => {
 
   it("marks the active page with aria-current", () => {
     useConnectionStore.getState().setConnected(true);
-    renderSidebar("/");
+    renderSidebar("/dashboards");
 
-    const dashboardBtn = screen.getByRole("button", { name: /dashboard/i });
+    const dashboardBtn = screen.getByRole("button", { name: /dashboards/i });
     expect(dashboardBtn).toHaveAttribute("aria-current", "page");
   });
 
@@ -180,11 +180,11 @@ describe("AppSidebar", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("button", { name: /dashboard/i })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("button", { name: /dashboards/i })).not.toHaveAttribute("aria-current");
 
-    await user.click(screen.getByRole("button", { name: /dashboard/i }));
+    await user.click(screen.getByRole("button", { name: /dashboards/i }));
 
-    expect(screen.getByRole("button", { name: /dashboard/i })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /dashboards/i })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -202,7 +202,7 @@ describe("AppSidebar", () => {
 
     expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
     expect(screen.queryByText("System")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /dashboards/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /expand navigation/i }));
     expect(onToggleCollapse).toHaveBeenCalledTimes(1);
@@ -217,17 +217,6 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("menuitem", { name: /llm settings/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/settings");
-  });
-
-  it("opens settings menu and navigates to Dashboard Management", async () => {
-    useConnectionStore.getState().setConnected(true);
-    const user = userEvent.setup();
-    renderSidebar();
-
-    await user.click(screen.getByRole("button", { name: /settings/i }));
-    await user.click(screen.getByRole("menuitem", { name: /dashboard management/i }));
-
-    expect(screen.getByTestId("location")).toHaveTextContent("/dashboard-management");
   });
 
   it("toggles theme from sidebar settings menu", async () => {
