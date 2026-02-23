@@ -62,8 +62,6 @@ Then enter `http://localhost:3000/_es` as the Elasticsearch URL when connecting 
 └─────────────┘    JSON          └──────────────────┘    JSON          └────────────────────┘
 ```
 
-> **Legacy path:** The `/_query` path is also proxied directly for backward compatibility with ES|QL-only workflows.
-
 ## Architecture
 
 The dashboard is a static single-page application. Elasticsearch queries are made directly from the browser, or via a local proxy that avoids CORS.
@@ -100,7 +98,7 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 ## Docker
 
-The `Dockerfile` produces a self-contained image that serves the built dashboard with nginx and proxies `/_query` to Elasticsearch. No CORS configuration on Elasticsearch is required.
+The `Dockerfile` produces a self-contained image that serves the built dashboard with nginx and proxies `/_es/*` to Elasticsearch. No CORS configuration on Elasticsearch is required.
 
 ```bash
 make docker-build                              # build the image
@@ -114,7 +112,7 @@ Or with Docker Compose:
 ES_URL=http://my-elasticsearch:9200 docker compose up
 ```
 
-Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) and `/_query` requests to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
+Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
 
 ## OTel Harness
 
