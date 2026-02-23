@@ -33,7 +33,7 @@ import { fetchCapabilitiesForConnection, isElasticsearchError } from "../service
 import type { ProfileHealth } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
-import { DASHBOARD_TIME_PRESETS } from "./timePresets";
+import DateRangePicker from "./DateRangePicker";
 
 const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
   { label: "Off", seconds: 0 },
@@ -117,7 +117,6 @@ export default function AppHeader() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [switchingProfile, setSwitchingProfile] = useState(false);
@@ -434,35 +433,7 @@ export default function AppHeader() {
 
         {showTimeControls && (
           <>
-            <Button size="small" variant="outlined" onClick={(e) => setTimeAnchor(e.currentTarget)}>
-              {DASHBOARD_TIME_PRESETS.find(
-                (p) =>
-                  p.range.from === dashboard.timeRange.from &&
-                  p.range.to === dashboard.timeRange.to,
-              )?.label ?? `${dashboard.timeRange.from} → ${dashboard.timeRange.to}`}
-            </Button>
-            <Menu
-              anchorEl={timeAnchor}
-              open={Boolean(timeAnchor)}
-              onClose={() => setTimeAnchor(null)}
-            >
-              {DASHBOARD_TIME_PRESETS.map((preset) => (
-                <MenuItem
-                  key={preset.label}
-                  selected={
-                    preset.range.from === dashboard.timeRange.from &&
-                    preset.range.to === dashboard.timeRange.to
-                  }
-                  onClick={() => {
-                    setTimeRange(preset.range);
-                    setTimeAnchor(null);
-                  }}
-                >
-                  {preset.label}
-                </MenuItem>
-              ))}
-            </Menu>
-
+            <DateRangePicker value={dashboard.timeRange} onChange={setTimeRange} />
             <Button
               size="small"
               variant="outlined"
