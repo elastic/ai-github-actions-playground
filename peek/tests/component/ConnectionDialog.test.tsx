@@ -64,8 +64,7 @@ describe("ConnectionDialog", () => {
   it("connects successfully and closes the dialog", async () => {
     const user = userEvent.setup();
     fetchCapabilitiesForConnectionMock.mockResolvedValue({
-      canUseEsql: true,
-      canUseAsyncEsql: true,
+      canManageDataStreams: true,
     });
     render(<ConnectionDialog />);
 
