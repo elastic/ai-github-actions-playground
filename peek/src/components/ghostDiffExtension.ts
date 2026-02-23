@@ -1,4 +1,4 @@
-import { StateEffect, StateField, type Extension, type Transaction } from "@codemirror/state";
+import { Prec, StateEffect, StateField, type Extension, type Transaction } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType, keymap } from "@codemirror/view";
 
 // ---------------------------------------------------------------------------
@@ -127,32 +127,35 @@ const suggestionDecorations = EditorView.decorations.compute([suggestionField], 
 // Keymap
 // ---------------------------------------------------------------------------
 
-const suggestionKeymap = keymap.of([
-  {
-    key: "Tab",
-    run(view) {
-      const suggestion = view.state.field(suggestionField);
-      if (!suggestion) return false;
-      const { from, to, replacement } = suggestion;
-      view.dispatch({
-        changes: { from, to, insert: replacement },
-        effects: clearSuggestion.of(null),
-        selection: { anchor: from + replacement.length },
-        userEvent: "input.complete",
-      });
-      return true;
+// Prec.highest ensures Tab/Escape run before basicSetup's indentWithTab
+const suggestionKeymap = Prec.highest(
+  keymap.of([
+    {
+      key: "Tab",
+      run(view) {
+        const suggestion = view.state.field(suggestionField);
+        if (!suggestion) return false;
+        const { from, to, replacement } = suggestion;
+        view.dispatch({
+          changes: { from, to, insert: replacement },
+          effects: clearSuggestion.of(null),
+          selection: { anchor: from + replacement.length },
+          userEvent: "input.complete",
+        });
+        return true;
+      },
     },
-  },
-  {
-    key: "Escape",
-    run(view) {
-      const suggestion = view.state.field(suggestionField);
-      if (!suggestion) return false;
-      view.dispatch({ effects: clearSuggestion.of(null) });
-      return true;
+    {
+      key: "Escape",
+      run(view) {
+        const suggestion = view.state.field(suggestionField);
+        if (!suggestion) return false;
+        view.dispatch({ effects: clearSuggestion.of(null) });
+        return true;
+      },
     },
-  },
-]);
+  ]),
+);
 
 // ---------------------------------------------------------------------------
 // Theme (light + dark)
