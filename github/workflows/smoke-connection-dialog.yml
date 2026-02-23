@@ -15,14 +15,21 @@ jobs:
     with:
       issue-title-prefix: "[smoke-connection-dialog]"
       additional-instructions: |
-        You are the Playwright Smoke Agent for connection dialog behavior.
+        You are the Playwright Smoke Agent for the metrics persona flow.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `opens and closes the connection dialog`
+        - `metrics user connects, picks a metric, and gets a line chart-ready result`
+
+        User flow to validate in detail:
+        - Connect with mocked Elasticsearch credentials as a metrics analyst.
+        - Open the Metrics workspace from the sidebar.
+        - Search for `system.cpu.total.norm.pct` and select it.
+        - Verify query execution feedback is visible and the chart/save controls appear.
+        - Confirm the flow is sufficient for building a line chart panel.
 
         Run:
         1. `make setup`
         2. `cd peek && npx playwright install chromium`
-        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "opens and closes the connection dialog"`
+        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "metrics user connects, picks a metric, and gets a line chart-ready result"`
 
         If the check fails, create/update one issue with:
         - the failing test title and assertion/locator output

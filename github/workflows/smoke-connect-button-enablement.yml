@@ -15,14 +15,21 @@ jobs:
     with:
       issue-title-prefix: "[smoke-connect-button-enablement]"
       additional-instructions: |
-        You are the Playwright Smoke Agent for connect button enablement.
+        You are the Playwright Smoke Agent for the traces persona flow.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `shows disabled Connect button until a URL is entered`
+        - `traces user opens a trace and pivots from service map context into Query Lab`
+
+        User flow to validate in detail:
+        - Connect using mocked Elasticsearch responses.
+        - Navigate to Traces and run search to load trace rows.
+        - Click a trace row to load span details.
+        - Switch to Service Map to validate trace topology rendering.
+        - Click "Open in Query Lab" to pivot investigation into query workflow.
 
         Run:
         1. `make setup`
         2. `cd peek && npx playwright install chromium`
-        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "shows disabled Connect button until a URL is entered"`
+        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "traces user opens a trace and pivots from service map context into Query Lab"`
 
         If the check fails, create/update one issue with:
         - the failing test title and assertion/locator output

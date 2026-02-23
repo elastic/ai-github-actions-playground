@@ -17,12 +17,19 @@ jobs:
       additional-instructions: |
         You are the Playwright Smoke Agent for auth tab switching.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `switches between API Key and Username / Password tabs`
+        - `security-focused user validates auth tab switching before submitting credentials`
+
+        User flow to validate in detail:
+        - Open the connection dialog from the welcome screen.
+        - Confirm API key auth fields are shown first.
+        - Switch to Username / Password and verify username input appears.
+        - Switch back to API Key and verify the API key input is restored.
+        - Treat this as a security UX sanity check before cluster login.
 
         Run:
         1. `make setup`
         2. `cd peek && npx playwright install chromium`
-        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "switches between API Key and Username / Password tabs"`
+        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "security-focused user validates auth tab switching before submitting credentials"`
 
         If the check fails, create/update one issue with:
         - the failing test title and assertion/locator output
