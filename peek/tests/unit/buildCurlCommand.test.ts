@@ -69,6 +69,27 @@ describe("buildCurlCommand", () => {
     expect(cmd).not.toContain("///");
   });
 
+  it("escapes single quotes in the body to keep the shell command valid", () => {
+    const body = `{"query":"it's a test"}`;
+    const cmd = buildCurlCommand(makeConnection(), "POST", "/_search", body);
+    expect(cmd).toContain(`-d '{"query":"it'\\''s a test"}'`);
+  });
+
+  it("escapes single quotes in the API key", () => {
+    const cmd = buildCurlCommand(makeConnection({ apiKey: "key'with'quotes" }), "GET", "/", "");
+    expect(cmd).toContain(`ApiKey key'\\''with'\\''quotes`);
+  });
+
+  it("escapes single quotes in username and password", () => {
+    const cmd = buildCurlCommand(
+      makeConnection({ username: "user'name", password: "pass'word" }),
+      "GET",
+      "/",
+      "",
+    );
+    expect(cmd).toContain(`-u 'user'\\''name:pass'\\''word'`);
+  });
+
   it("uses multiline format joining parts with backslash-newline", () => {
     const cmd = buildCurlCommand(makeConnection({ apiKey: "k" }), "GET", "/", "");
     expect(cmd).toContain("\\\n  ");
