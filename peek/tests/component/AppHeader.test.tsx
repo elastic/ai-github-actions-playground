@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import AppHeader from "../../src/components/AppHeader";
+import { PAGE_MANIFEST } from "../../src/routes/manifest";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
@@ -34,20 +35,20 @@ describe("AppHeader", () => {
   });
 
   it("shows Add Panel button on the dashboard page", () => {
-    renderHeader("/");
+    renderHeader(PAGE_MANIFEST.dashboard.path);
 
     expect(screen.getByRole("button", { name: /add panel/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
   });
 
   it("hides Add Panel button on non-dashboard pages", () => {
-    renderHeader("/discover");
+    renderHeader(PAGE_MANIFEST.discover.path);
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 
   it("shows time controls on query pages", () => {
-    renderHeader("/discover");
+    renderHeader(PAGE_MANIFEST.discover.path);
 
     const headerButtons = screen.getAllByRole("button");
     expect(headerButtons.length).toBeGreaterThanOrEqual(2);
@@ -56,28 +57,46 @@ describe("AppHeader", () => {
   });
 
   it("shows time controls on metrics page", () => {
-    renderHeader("/explore");
+    renderHeader(PAGE_MANIFEST.explore.path);
 
     expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 
   it("hides time controls on non-time pages", () => {
-    renderHeader("/settings");
+    renderHeader(PAGE_MANIFEST.settings.path);
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
   });
 
   it("hides time controls on docs and chat pages", () => {
-    const { rerender } = renderHeader("/docs");
+    const { rerender } = renderHeader(PAGE_MANIFEST.docs.path);
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
 
     rerender(
-      <MemoryRouter initialEntries={["/chat"]}>
+      <MemoryRouter initialEntries={[PAGE_MANIFEST.chat.path]}>
         <AppHeader />
       </MemoryRouter>,
     );
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
+  });
+
+  it("shows time controls for routes configured with showTimeControls", () => {
+    const timeControlRoutes = Object.values(PAGE_MANIFEST)
+      .filter((page) => page.showTimeControls)
+      .map((page) => page.path);
+
+    const { rerender } = renderHeader(timeControlRoutes[0]);
+    expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
+
+    for (const route of timeControlRoutes.slice(1)) {
+      rerender(
+        <MemoryRouter initialEntries={[route]}>
+          <AppHeader />
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
+    }
   });
 });

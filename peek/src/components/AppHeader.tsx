@@ -82,12 +82,8 @@ export default function AppHeader() {
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [switchingProfile, setSwitchingProfile] = useState(false);
-  const timeControlPaths: string[] = [
-    PAGE_MANIFEST.dashboard.path,
-    PAGE_MANIFEST.discover.path,
-    PAGE_MANIFEST.explore.path,
-  ];
-  const showTimeControls = connected && timeControlPaths.includes(location.pathname);
+  const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
+  const showTimeControls = connected && Boolean(activePage?.showTimeControls);
 
   const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
 
