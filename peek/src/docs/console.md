@@ -8,4 +8,6 @@ Use Add Request to build multiple requests and Run All to execute a batch sequen
 
 Responses include HTTP status, execution time, and a formatted JSON body you can copy to share in issues or investigations.
 
+Use the **Copy as cURL** button (clipboard icon next to Send) to copy the current request as a runnable `curl` command. The command includes the full URL, `Content-Type` header, and any active auth credentials, making it ready to paste into a terminal, runbook, or support ticket.
+
 If a request fails, check the path first, then payload JSON validity, then user permissions for the target API.
