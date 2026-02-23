@@ -8,7 +8,7 @@ COPY peek/ ./
 ENV VITE_BASE_PATH=/
 RUN npm run build
 
-# Stage 2: Serve the dashboard with nginx and proxy /_query to Elasticsearch
+# Stage 2: Serve the dashboard with nginx and proxy /_es/* and /_query to Elasticsearch
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 # nginx:alpine processes templates in /etc/nginx/templates/ at startup,
