@@ -143,6 +143,43 @@ describe("buildSpanTree", () => {
     expect(flat.map((n) => n.span.spanId)).toEqual(["a", "b", "c"]);
   });
 
+  it("includes all spans when trace has both a natural root and a cyclic component", () => {
+    const spans = [
+      makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.200Z" }),
+      makeSpan({ spanId: "a", parentSpanId: "b", timestamp: "2026-01-01T00:00:00.000Z" }),
+      makeSpan({ spanId: "b", parentSpanId: "a", timestamp: "2026-01-01T00:00:00.100Z" }),
+    ];
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    expect(roots.map((n) => n.span.spanId)).toEqual(["a", "root"]);
+    expect(flat.map((n) => n.span.spanId)).toContain("root");
+    expect(flat.map((n) => n.span.spanId)).toContain("a");
+    expect(flat.map((n) => n.span.spanId)).toContain("b");
+    expect(flat).toHaveLength(spans.length);
+  });
+
+  it("does not keep child depth at root level when promoting disconnected cycles", () => {
+    const spans = [
+      makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.000Z" }),
+      makeSpan({ spanId: "x", parentSpanId: "y", timestamp: "2026-01-01T00:00:00.100Z" }),
+      makeSpan({ spanId: "y", parentSpanId: "z", timestamp: "2026-01-01T00:00:00.200Z" }),
+      makeSpan({ spanId: "z", parentSpanId: "y", timestamp: "2026-01-01T00:00:00.300Z" }),
+    ];
+
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    const yIndex = flat.findIndex((node) => node.span.spanId === "y");
+    const xNode = flat.find((node) => node.span.spanId === "x");
+    const yNode = flat.find((node) => node.span.spanId === "y");
+
+    expect(flat.map((node) => node.span.spanId).sort()).toEqual(["root", "x", "y", "z"]);
+    expect(yIndex).toBeGreaterThanOrEqual(0);
+    expect(xNode).toBeDefined();
+    expect(yNode).toBeDefined();
+    expect(flat.findIndex((node) => node.span.spanId === "x")).toBeGreaterThan(yIndex);
+    expect(xNode!.depth).toBeGreaterThan(yNode!.depth);
+  });
+
   it("sorts children chronologically", () => {
     const spans = [
       makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.000Z" }),
