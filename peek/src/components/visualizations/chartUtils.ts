@@ -77,17 +77,22 @@ export function buildGroupedSeries(
     }));
   }
 
-  const groupValues = getColumnValues(data, groupIdx).map((v) =>
-    v == null ? "(empty)" : String(v),
-  );
-  const uniqueGroups = [...new Set(groupValues)];
+  const NULL_GROUP_KEY = Symbol("null-group");
+  const groupedRows = new Map<unknown, number[]>();
+  const groupValues = getColumnValues(data, groupIdx);
+  for (let i = 0; i < groupValues.length; i++) {
+    const key = groupValues[i] == null ? NULL_GROUP_KEY : groupValues[i];
+    const rows = groupedRows.get(key);
+    if (rows) {
+      rows.push(i);
+    } else {
+      groupedRows.set(key, [i]);
+    }
+  }
 
   const result: SeriesDescriptor[] = [];
-  for (const groupName of uniqueGroups) {
-    const rows: number[] = [];
-    for (let i = 0; i < groupValues.length; i++) {
-      if (groupValues[i] === groupName) rows.push(i);
-    }
+  for (const [groupValue, rows] of groupedRows) {
+    const groupName = groupValue === NULL_GROUP_KEY ? "(empty)" : String(groupValue);
     for (const colIdx of numericIdxs) {
       const colName = data.columns[colIdx]!.name;
       const name = numericIdxs.length > 1 ? `${colName} (${groupName})` : groupName;

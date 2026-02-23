@@ -79,6 +79,31 @@ describe("BarChart", () => {
     expect(xAxis.data).toEqual(["nginx", "system"]);
   });
 
+  it("sums duplicate rows for the same category and group", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "doc_count", type: "long" },
+        { name: "dataset", type: "keyword" },
+        { name: "type", type: "keyword" },
+      ],
+      values: [
+        [100, "nginx", "logs"],
+        [25, "nginx", "logs"],
+        [200, "nginx", "metrics"],
+        [150, "system", "logs"],
+        [50, "system", "metrics"],
+      ],
+    };
+
+    render(<BarChart data={data} />);
+    const option = getLastSetOptionCall();
+    const series = option.series as { name: string; data: number[] }[];
+
+    expect(series.map((s) => s.name)).toEqual(["logs", "metrics"]);
+    expect(series[0]!.data).toEqual([125, 150]);
+    expect(series[1]!.data).toEqual([200, 50]);
+  });
+
   it("shows error title when no numeric columns", () => {
     const data: EsqlResponse = {
       columns: [{ name: "label", type: "keyword" }],

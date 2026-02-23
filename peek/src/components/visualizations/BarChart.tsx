@@ -47,8 +47,11 @@ export default function BarChart({ data, options, onExportReady }: Props) {
 
       series = grouped.map((s, i) => {
         const seriesData = categories.map((cat) => {
-          const rowIdx = s.rows.find((r) => rawCategories[r] === cat);
-          return rowIdx !== undefined ? (data.values[rowIdx]![s.colIdx] as number) : 0;
+          return s.rows.reduce((sum, rowIdx) => {
+            if (rawCategories[rowIdx] !== cat) return sum;
+            const value = Number(data.values[rowIdx]![s.colIdx] ?? 0);
+            return Number.isFinite(value) ? sum + value : sum;
+          }, 0);
         });
         return {
           name: s.name,

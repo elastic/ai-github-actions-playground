@@ -340,6 +340,26 @@ describe("buildGroupedSeries", () => {
     expect(result[1]!.rows).toEqual([1]);
   });
 
+  it("keeps null groups distinct from literal '(empty)' values", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "count", type: "long" },
+        { name: "label", type: "keyword" },
+      ],
+      values: [
+        [10, null],
+        [20, "(empty)"],
+        [30, "A"],
+      ],
+    };
+    const result = buildGroupedSeries(data, [0], 1);
+    expect(result).toHaveLength(3);
+    expect(result[0]!.rows).toEqual([0]);
+    expect(result[1]!.rows).toEqual([1]);
+    expect(result[2]!.name).toBe("A");
+    expect(result[2]!.rows).toEqual([2]);
+  });
+
   it("returns empty array when no numeric indices are provided", () => {
     const data: EsqlResponse = {
       columns: [{ name: "label", type: "keyword" }],
