@@ -78,7 +78,13 @@ export default function PanelContainer({ panel }: Props) {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!supportsQuery || !connection || !panel.query.trim()) return;
+    if (!supportsQuery) {
+      abortRef.current?.abort();
+      setLoading(false);
+      setError(null);
+      return;
+    }
+    if (!connection || !panel.query.trim()) return;
 
     abortRef.current?.abort();
     const ctrl = new AbortController();
