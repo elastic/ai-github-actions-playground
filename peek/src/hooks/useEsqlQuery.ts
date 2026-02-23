@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection, EsqlResponse } from "../types";
 import type { EsqlQueryParams } from "../services/es";
-import { setLastQueryError } from "../components/llmCompletionExtension";
+import { setLastQueryError, setLastQueryResult } from "../components/llmCompletionExtension";
 
 interface UseEsqlQueryOptions {
   connection: ElasticsearchConnection | null;
@@ -73,6 +73,7 @@ export function useEsqlQuery({
             });
           }
           setLastQueryError(null);
+          setLastQueryResult(trimmedQuery, data);
           onSuccess(data, trimmedQuery);
         }
       } catch (err) {

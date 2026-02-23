@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -120,10 +120,15 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setQuery(selectedQuery);
     setHistoryAnchor(null);
   }, []);
+  const handleRunQueryRef = useRef(handleRunQuery);
+  useEffect(() => {
+    handleRunQueryRef.current = handleRunQuery;
+  }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
     () => [
       sql(),
-      runQueryShortcutExtension(() => void handleRunQuery()),
+      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
+      runQueryShortcutExtension(() => void handleRunQueryRef.current()),
       makeLLMCompletionExtension({
         prompt:
           "You are an ES|QL expert. Complete the ES|QL query at the cursor. " +
@@ -134,7 +139,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         esqlGuide: true,
       }),
     ],
-    [handleRunQuery],
+    [],
   );
 
   const handleSave = useCallback(() => {

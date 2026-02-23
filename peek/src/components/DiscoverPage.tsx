@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -118,10 +118,15 @@ export default function DiscoverPage() {
     },
     [setDiscoverQueryDraft, clearTimings],
   );
+  const handleRunQueryRef = useRef(handleRunQuery);
+  useEffect(() => {
+    handleRunQueryRef.current = handleRunQuery;
+  }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
     () => [
       sql(),
-      runQueryShortcutExtension(() => void handleRunQuery()),
+      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
+      runQueryShortcutExtension(() => void handleRunQueryRef.current()),
       makeLLMCompletionExtension({
         prompt:
           "You are an ES|QL expert. Complete the ES|QL query at the cursor. " +
@@ -132,7 +137,7 @@ export default function DiscoverPage() {
         esqlGuide: true,
       }),
     ],
-    [handleRunQuery],
+    [],
   );
   useEffect(() => {
     if (!connection || !refreshInterval || !effectiveQuery.trim()) return;

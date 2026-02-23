@@ -7,6 +7,7 @@ import {
   recentEditsField,
   setLastQueryError,
   getLastQueryError,
+  setLastQueryResult,
   ESQL_SYNTAX_GUIDE,
 } from "../../src/components/llmCompletionExtension";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -34,11 +35,6 @@ vi.mock("../../src/components/ghostDiffExtension", () => ({
   ghostDiffExtension: [],
   setSuggestion: { of: vi.fn((v: unknown) => ({ type: "setSuggestion", value: v })) },
   clearSuggestion: { of: vi.fn(() => ({ type: "clearSuggestion", value: null })) },
-}));
-
-// Mock nlDetector
-vi.mock("../../src/components/nlDetector", () => ({
-  detectNaturalLanguage: vi.fn(() => null),
 }));
 
 describe("makeLLMCompletionExtension", () => {
@@ -159,6 +155,32 @@ describe("query error side channel", () => {
     setLastQueryError("some error");
     setLastQueryError(null);
     expect(getLastQueryError()).toBeNull();
+  });
+});
+
+describe("query result side channel", () => {
+  it("stores last query and result snippet", () => {
+    const data = {
+      columns: [
+        { name: "host", type: "keyword" },
+        { name: "count", type: "long" },
+      ],
+      values: [
+        ["web-1", 42],
+        ["web-2", 17],
+      ],
+    };
+    // Should not throw
+    setLastQueryResult("FROM logs-* | STATS count(*) BY host", data);
+  });
+
+  it("truncates results beyond 5 rows", () => {
+    const data = {
+      columns: [{ name: "x", type: "long" }],
+      values: Array.from({ length: 20 }, (_, i) => [i]),
+    };
+    // Should not throw
+    setLastQueryResult("FROM big-index", data);
   });
 });
 

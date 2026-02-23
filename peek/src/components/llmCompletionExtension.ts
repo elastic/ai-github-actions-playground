@@ -7,7 +7,6 @@ import { useLLMStore } from "../store/useLLMStore";
 
 import { ESQL_SYNTAX_GUIDE } from "./esqlSyntaxGuide";
 import { ghostDiffExtension, setSuggestion } from "./ghostDiffExtension";
-import { detectNaturalLanguage, type NLChunk } from "./nlDetector";
 
 export { ESQL_SYNTAX_GUIDE };
 
@@ -75,6 +74,59 @@ export function getLastQueryError(view?: EditorView): string | null {
 
 // Global fallback for callers (like useEsqlQuery) that don't have a view reference
 let globalLastQueryError: string | null = null;
+
+// ---------------------------------------------------------------------------
+// Per-editor last successful query + result snippet — gives the LLM context
+// about what the user last ran and what came back.
+// ---------------------------------------------------------------------------
+
+interface QueryResultSnapshot {
+  query: string;
+  resultSnippet: string;
+}
+
+const queryResultMap = new WeakMap<EditorView, QueryResultSnapshot>();
+let globalLastQueryResult: QueryResultSnapshot | null = null;
+
+const MAX_RESULT_SNIPPET_ROWS = 5;
+
+/** Format an ES|QL response into a compact text snippet for LLM context. */
+function formatResultSnippet(data: {
+  columns: { name: string; type: string }[];
+  values: unknown[][];
+}): string {
+  const cols = data.columns.map((c) => c.name);
+  const rows = data.values.slice(0, MAX_RESULT_SNIPPET_ROWS);
+  const header = cols.join(" | ");
+  const body = rows.map((row) => row.map((v) => String(v ?? "null")).join(" | ")).join("\n");
+  const total = data.values.length;
+  const suffix = total > MAX_RESULT_SNIPPET_ROWS ? `\n... (${total} rows total)` : "";
+  return `${header}\n${body}${suffix}`;
+}
+
+/** Store the last successful query + result for LLM context. */
+export function setLastQueryResult(
+  query: string,
+  data: { columns: { name: string; type: string }[]; values: unknown[][] },
+  view?: EditorView,
+) {
+  const snapshot: QueryResultSnapshot = {
+    query,
+    resultSnippet: formatResultSnippet(data),
+  };
+  if (view) {
+    queryResultMap.set(view, snapshot);
+  } else {
+    globalLastQueryResult = snapshot;
+  }
+}
+
+function getLastQueryResult(view?: EditorView): QueryResultSnapshot | null {
+  if (view) {
+    return queryResultMap.get(view) ?? globalLastQueryResult;
+  }
+  return globalLastQueryResult;
+}
 
 // ---------------------------------------------------------------------------
 // OpenAI client cache — avoids recreating clients on every completion request
@@ -145,6 +197,13 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
   function buildContextSection(): string {
     const contextParts: string[] = [];
 
+    const lastResult = getLastQueryResult(currentView ?? undefined);
+    if (lastResult) {
+      contextParts.push(
+        `Last successful query:\n  ${lastResult.query}\n\nResult sample:\n${lastResult.resultSnippet}`,
+      );
+    }
+
     if (currentEdits.length > 0) {
       const editLines = currentEdits.map((e) => `  - Deleted: "${e.deleted}"`).join("\n");
       contextParts.push(`Recent edits:\n${editLines}`);
@@ -159,14 +218,45 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
   }
 
   // ---------------------------------------------------------------------------
-  // fetchCompletion — calls the LLM with the appropriate prompt
+  // Diff helper — finds the changed region between original and corrected text
   // ---------------------------------------------------------------------------
 
-  async function fetchCompletion(
-    prefix: string,
-    suffix: string,
-    nlChunk: NLChunk | null,
-  ): Promise<string> {
+  function findDiff(
+    original: string,
+    corrected: string,
+  ): { from: number; to: number; replacement: string } | null {
+    if (original === corrected) return null;
+
+    // Common prefix
+    let prefixLen = 0;
+    const minLen = Math.min(original.length, corrected.length);
+    while (prefixLen < minLen && original[prefixLen] === corrected[prefixLen]) {
+      prefixLen++;
+    }
+
+    // Common suffix (without overlapping with prefix)
+    let suffixLen = 0;
+    while (
+      suffixLen < original.length - prefixLen &&
+      suffixLen < corrected.length - prefixLen &&
+      original[original.length - 1 - suffixLen] === corrected[corrected.length - 1 - suffixLen]
+    ) {
+      suffixLen++;
+    }
+
+    const from = prefixLen;
+    const to = original.length - suffixLen;
+    const replacement = corrected.slice(prefixLen, corrected.length - suffixLen);
+
+    if (from === to && !replacement) return null;
+    return { from, to, replacement };
+  }
+
+  // ---------------------------------------------------------------------------
+  // fetchCompletion — calls the LLM, asks for the full corrected query
+  // ---------------------------------------------------------------------------
+
+  async function fetchCompletion(docText: string): Promise<string> {
     const { config } = useLLMStore.getState();
     if (!config.tabAutocompleteEnabled || !config.apiKey.trim()) {
       return "";
@@ -174,28 +264,16 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
 
     const contextSection = buildContextSection();
 
-    let userMessage: string;
-    if (nlChunk) {
-      userMessage =
-        `The user typed natural language in their ES|QL query. ` +
-        `Translate the natural language into valid ES|QL syntax.\n\n` +
-        `Full query:\n${prefix}${suffix}\n\n` +
-        `Natural language to translate: "${nlChunk.text}"\n\n` +
-        `Return ONLY the ES|QL replacement for the natural language portion. ` +
-        `Do not include surrounding query text. No explanation.` +
-        contextSection;
-    } else {
-      userMessage =
-        `Complete the code at the cursor position.\n` +
-        `Text before cursor:\n${prefix}\n` +
-        `Text after cursor:\n${suffix}` +
-        contextSection +
-        `\n\nIMPORTANT: The user may type plain language descriptions as pseudo-code ` +
-        `(e.g. "count events by host", "filter where status > 400", "sort by timestamp descending"). ` +
-        `When the text before the cursor ends with natural language rather than valid syntax, ` +
-        `treat it as the user's intent and complete with the proper implementation. ` +
-        `Output only the completion text, nothing else.`;
-    }
+    const userMessage =
+      `Here is an ES|QL query the user is editing:\n\n${docText}\n\n` +
+      `Return the COMPLETE corrected/completed query. Rules:\n` +
+      `- If the query contains natural language (e.g. "where agents name is bill"), ` +
+      `replace it with valid ES|QL syntax.\n` +
+      `- If the query looks incomplete, complete it.\n` +
+      `- If the query is already valid ES|QL, return it unchanged.\n` +
+      `- Preserve all valid ES|QL parts exactly as-is.\n` +
+      `- Return ONLY the full query text, no explanation, no markdown fences.` +
+      contextSection;
 
     try {
       const openai = getOrCreateClient(config.apiKey, config.provider);
@@ -216,7 +294,7 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
   }
 
   // ---------------------------------------------------------------------------
-  // Completion trigger plugin — debounces, detects NL, calls LLM, dispatches
+  // Completion trigger plugin — debounces, calls LLM, diffs, dispatches
   // ---------------------------------------------------------------------------
 
   let generationId = 0;
@@ -232,10 +310,12 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
         currentView = update.view;
         currentEdits = update.state.field(recentEditsField, false) ?? [];
 
-        // Clear recent edits when a completion is accepted
+        // Clear recent edits when a completion is accepted (deferred to avoid
+        // dispatching during an in-progress update)
         if (update.transactions.some((tr) => tr.isUserEvent("input.complete"))) {
-          update.view.dispatch({
-            effects: resetRecentEditsEffect.of(null),
+          const view = update.view;
+          queueMicrotask(() => {
+            view.dispatch({ effects: resetRecentEditsEffect.of(null) });
           });
         }
 
@@ -264,45 +344,50 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
 
   async function triggerCompletion(view: EditorView) {
     const { config } = useLLMStore.getState();
-    if (!config.tabAutocompleteEnabled || !config.apiKey.trim()) return;
+    if (!config.tabAutocompleteEnabled || !config.apiKey.trim()) {
+      console.debug(
+        "[llm-completion] skipped: enabled=%s, hasKey=%s",
+        config.tabAutocompleteEnabled,
+        !!config.apiKey.trim(),
+      );
+      return;
+    }
 
-    const state = view.state;
-    const cursor = state.selection.main.head;
-    const docText = state.doc.toString();
-
-    // Increment generation so stale responses are ignored
+    const docText = view.state.doc.toString();
     const myGeneration = ++generationId;
 
-    // Detect NL chunk (only for ES|QL editors with the guide enabled)
-    const nlChunk = options.esqlGuide ? detectNaturalLanguage(docText, cursor) : null;
+    console.debug("[llm-completion] gen=%d requesting completion", myGeneration);
 
-    const prefix = docText.slice(0, cursor);
-    const suffix = docText.slice(cursor);
-    const completionText = await fetchCompletion(prefix, suffix, nlChunk);
+    const correctedText = await fetchCompletion(docText);
 
     // Discard if a newer request has been started
-    if (generationId !== myGeneration) return;
-    if (!completionText) return;
-
-    if (nlChunk) {
-      // Replace mode: strikethrough the NL chunk, ghost the ES|QL
-      view.dispatch({
-        effects: setSuggestion.of({
-          from: nlChunk.from,
-          to: nlChunk.to,
-          replacement: completionText,
-        }),
-      });
-    } else {
-      // Append mode: ghost text at cursor
-      view.dispatch({
-        effects: setSuggestion.of({
-          from: cursor,
-          to: cursor,
-          replacement: completionText,
-        }),
-      });
+    if (generationId !== myGeneration) {
+      console.debug("[llm-completion] gen=%d discarded (current=%d)", myGeneration, generationId);
+      return;
     }
+    if (!correctedText) {
+      console.debug("[llm-completion] gen=%d got empty completion", myGeneration);
+      return;
+    }
+
+    // Diff original vs corrected to find the replacement range
+    const diff = findDiff(docText, correctedText);
+    if (!diff) {
+      console.debug("[llm-completion] gen=%d no diff (query unchanged)", myGeneration);
+      return;
+    }
+
+    console.debug(
+      "[llm-completion] gen=%d diff: [%d,%d] → %s",
+      myGeneration,
+      diff.from,
+      diff.to,
+      diff.replacement.slice(0, 80),
+    );
+
+    view.dispatch({
+      effects: setSuggestion.of(diff),
+    });
   }
 
   return [recentEditsField, ghostDiffExtension, completionPlugin];
