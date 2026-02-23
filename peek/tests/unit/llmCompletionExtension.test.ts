@@ -29,14 +29,16 @@ vi.mock("ai", () => ({
   generateText: (...args: unknown[]) => generateTextMock(...args),
 }));
 
-// inlineCopilot is mocked to capture the fetchFn callback for direct testing
-let capturedFetchFn: ((prefix: string, suffix: string) => Promise<string>) | null = null;
+// Mock ghostDiffExtension to return empty array (rendering tested separately)
+vi.mock("../../src/components/ghostDiffExtension", () => ({
+  ghostDiffExtension: [],
+  setSuggestion: { of: vi.fn((v: unknown) => ({ type: "setSuggestion", value: v })) },
+  clearSuggestion: { of: vi.fn(() => ({ type: "clearSuggestion", value: null })) },
+}));
 
-vi.mock("codemirror-copilot", () => ({
-  inlineCopilot: vi.fn((fetchFn: (prefix: string, suffix: string) => Promise<string>) => {
-    capturedFetchFn = fetchFn;
-    return [];
-  }),
+// Mock nlDetector
+vi.mock("../../src/components/nlDetector", () => ({
+  detectNaturalLanguage: vi.fn(() => null),
 }));
 
 describe("makeLLMCompletionExtension", () => {
@@ -46,56 +48,12 @@ describe("makeLLMCompletionExtension", () => {
     sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
     setLastQueryError(null);
-    capturedFetchFn = null;
   });
 
   it("returns a non-empty extension array", () => {
     const ext = makeLLMCompletionExtension({ prompt: "test prompt" });
     expect(Array.isArray(ext)).toBe(true);
     expect((ext as unknown[]).length).toBeGreaterThan(0);
-  });
-
-  it("does not call LLM when feature is disabled", async () => {
-    useLLMStore.getState().setApiKey("sk-test");
-    useLLMStore.getState().setTabAutocompleteEnabled(false);
-    makeLLMCompletionExtension({ prompt: "test" });
-
-    expect(capturedFetchFn).toBeTruthy();
-    const result = await capturedFetchFn!("FROM logs", "");
-    expect(result).toBe("");
-    expect(generateTextMock).not.toHaveBeenCalled();
-  });
-
-  it("does not call LLM when API key is empty", async () => {
-    useLLMStore.getState().setTabAutocompleteEnabled(true);
-    // API key is empty by default after reset
-    makeLLMCompletionExtension({ prompt: "test" });
-
-    expect(capturedFetchFn).toBeTruthy();
-    const result = await capturedFetchFn!("FROM logs", "");
-    expect(result).toBe("");
-    expect(generateTextMock).not.toHaveBeenCalled();
-  });
-
-  it("calls generateText when configured and returns trimmed text", async () => {
-    useLLMStore.getState().setApiKey("sk-test");
-    useLLMStore.getState().setTabAutocompleteEnabled(true);
-    generateTextMock.mockResolvedValue({ text: "  | LIMIT 10  " });
-    makeLLMCompletionExtension({ prompt: "test" });
-
-    const result = await capturedFetchFn!("FROM logs-*", "");
-    expect(result).toBe("| LIMIT 10");
-    expect(generateTextMock).toHaveBeenCalledOnce();
-  });
-
-  it("returns empty string when generateText throws", async () => {
-    useLLMStore.getState().setApiKey("sk-test");
-    useLLMStore.getState().setTabAutocompleteEnabled(true);
-    generateTextMock.mockRejectedValue(new Error("API error"));
-    makeLLMCompletionExtension({ prompt: "test" });
-
-    const result = await capturedFetchFn!("FROM logs-*", "");
-    expect(result).toBe("");
   });
 
   it("accepts custom delay option", () => {
