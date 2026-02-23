@@ -1,0 +1,119 @@
+name: PR Review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  capture-start-time:
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
+    runs-on: ubuntu-latest
+    outputs:
+      started_at: ${{ steps.start.outputs.started_at }}
+    steps:
+      - id: start
+        run: echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+  run:
+    needs: capture-start-time
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review.lock.yml@e1d1b3475a1318f42c9f46c597f9b0eb0972bd74 # v0.2.5
+    with:
+      intensity: aggressive
+      minimum_severity: nitpick
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+
+  trigger-mention-for-feedback:
+    needs:
+      - capture-start-time
+      - run
+    if: >-
+      needs.run.result == 'success' &&
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find new actionable review and dispatch follow-up
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const workflowStart = new Date("${{ needs.capture-start-time.outputs.started_at }}");
+
+            const reviews = await github.paginate(
+              github.rest.pulls.listReviews,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+
+            const candidates = reviews
+              .filter((review) => review.submitted_at && new Date(review.submitted_at) >= workflowStart)
+              .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+
+            let latest = null;
+            let inlineCommentCount = 0;
+
+            for (const review of candidates) {
+              if (review.state === "CHANGES_REQUESTED") {
+                latest = review;
+                break;
+              }
+
+              // Some automated reviews are submitted as COMMENTED, but still include
+              // actionable inline review comments. Treat those as trigger-worthy.
+              if (review.state === "COMMENTED") {
+                const inlineComments = await github.paginate(
+                  github.rest.pulls.listCommentsForReview,
+                  { owner, repo, pull_number, review_id: review.id, per_page: 100 }
+                );
+                if (inlineComments.length > 0) {
+                  latest = review;
+                  inlineCommentCount = inlineComments.length;
+                  break;
+                }
+              }
+            }
+
+            if (!latest) {
+              core.info("No actionable review (CHANGES_REQUESTED or COMMENTED with inline comments) submitted since workflow start; skipping dispatch.");
+              return;
+            }
+
+            const reviewer = latest.user?.login || "unknown";
+            const feedback = (latest.body || "No review body provided.").trim();
+            const prompt = [
+              "A PR review requested changes. Please address the feedback with code changes and push fixes.",
+              "",
+              `Reviewer: @${reviewer}`,
+              `Review state: ${latest.state}`,
+              `Review: ${latest.html_url}`,
+              ...(inlineCommentCount > 0 ? [`Inline review comments: ${inlineCommentCount}`] : []),
+              "Feedback:",
+              feedback,
+              "",
+              "You must query for specific PR review comments for this review."
+            ].join("\n");
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: "trigger-mention-in-pr-by-id.yml",
+              ref: context.payload.pull_request.base.ref,
+              inputs: {
+                "pull-request-number": String(pull_number),
+                prompt
+              }
+            });
+            core.info(`Dispatched trigger workflow for PR #${pull_number}.`);
+
