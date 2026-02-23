@@ -53,6 +53,14 @@ describe("PAGE_MANIFEST", () => {
     expect(PAGE_MANIFEST.chat.requiresConnection).toBe(true);
   });
 
+  it("every sidebar-visible manifest entry has a non-null icon", () => {
+    for (const [page, config] of entries) {
+      if (config.nav.showInSidebar) {
+        expect(config.nav.icon, `${page} is sidebar-visible but has no icon`).toBeTruthy();
+      }
+    }
+  });
+
   it("every page has a non-empty nav label", () => {
     for (const [page, config] of entries) {
       expect(config.nav.label.length, `${page} has an empty nav label`).toBeGreaterThan(0);
