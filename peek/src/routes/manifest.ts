@@ -60,7 +60,7 @@ export const PAGE_MANIFEST = {
   chat: {
     path: "/chat",
     component: ChatPage,
-    requiresConnection: false,
+    requiresConnection: true,
     nav: { label: "Chat", group: "Workspace", order: 60, showInSidebar: true },
   },
   clusterOverview: {
