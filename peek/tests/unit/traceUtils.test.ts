@@ -7,6 +7,7 @@ import {
   parseSpanLinks,
   formatSpanDuration,
   getTraceTimeBounds,
+  buildServiceMapData,
 } from "../../src/components/traces/traceUtils";
 import type { Span } from "../../src/components/traces/traceUtils";
 
@@ -629,5 +630,42 @@ describe("parseSpanLinks", () => {
     const row = [["t1", "t2", "t3"], ["s1"]];
     const links = parseSpanLinks(colIndex, row);
     expect(links).toHaveLength(1);
+  });
+});
+
+describe("buildServiceMapData", () => {
+  it("builds service nodes and cross-service edges from parent/child spans", () => {
+    const spans = [
+      makeSpan({ spanId: "root", serviceName: "frontend", parentSpanId: null }),
+      makeSpan({ spanId: "api", serviceName: "api", parentSpanId: "root" }),
+      makeSpan({ spanId: "db", serviceName: "db", parentSpanId: "api" }),
+    ];
+
+    const map = buildServiceMapData(spans);
+    expect(map.nodes.map((n) => n.serviceName).sort()).toEqual(["api", "db", "frontend"]);
+    expect(map.edges).toEqual([
+      { source: "frontend", target: "api", callCount: 1, errorCount: 0, totalDurationUs: 1000 },
+      { source: "api", target: "db", callCount: 1, errorCount: 0, totalDurationUs: 1000 },
+    ]);
+  });
+
+  it("aggregates repeated edges and ignores same-service calls", () => {
+    const spans = [
+      makeSpan({ spanId: "root", serviceName: "frontend", parentSpanId: null }),
+      makeSpan({ spanId: "child-1", serviceName: "api", parentSpanId: "root", status: "Error" }),
+      makeSpan({ spanId: "child-2", serviceName: "api", parentSpanId: "root" }),
+      makeSpan({ spanId: "child-3", serviceName: "api", parentSpanId: "child-1" }),
+    ];
+
+    const map = buildServiceMapData(spans);
+    expect(map.edges).toEqual([
+      {
+        source: "frontend",
+        target: "api",
+        callCount: 2,
+        errorCount: 1,
+        totalDurationUs: 2000,
+      },
+    ]);
   });
 });

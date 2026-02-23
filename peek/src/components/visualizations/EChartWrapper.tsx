@@ -8,6 +8,7 @@ import {
   HeatmapChart,
   ScatterChart,
   CustomChart,
+  GraphChart,
 } from "echarts/charts";
 import {
   GridComponent,
@@ -28,6 +29,7 @@ echarts.use([
   HeatmapChart,
   ScatterChart,
   CustomChart,
+  GraphChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,

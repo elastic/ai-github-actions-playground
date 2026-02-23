@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Routes, Route, Navigate, useMatch } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
@@ -21,13 +22,10 @@ const currentYear = new Date().getFullYear();
 export default function App() {
   const themeMode = useDashboardStore((s) => s.themeMode);
   const connected = useDashboardStore((s) => s.connected);
-  const currentPage = useDashboardStore((s) => s.currentPage);
   const resetState = useDashboardStore((s) => s.resetState);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
-  const currentPageConfig = PAGE_MANIFEST[currentPage];
-  const CurrentPage = currentPageConfig.component;
-  const shouldShowWelcome = !connected && currentPageConfig.requiresConnection;
+  const isDashboard = Boolean(useMatch("/"));
 
   return (
     <ThemeProvider theme={theme}>
@@ -42,7 +40,7 @@ export default function App() {
             />
           )}
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-            {connected && currentPage === "dashboard" && <ParameterBar />}
+            {connected && isDashboard && <ParameterBar />}
             <Box
               component="main"
               sx={{
@@ -54,7 +52,25 @@ export default function App() {
                 flexDirection: "column",
               }}
             >
-              {shouldShowWelcome ? <WelcomeScreen /> : <CurrentPage />}
+              <Routes>
+                {Object.entries(PAGE_MANIFEST).map(([, config]) => {
+                  const PageComponent = config.component;
+                  return (
+                    <Route
+                      key={config.path}
+                      path={config.path}
+                      element={
+                        !connected && config.requiresConnection ? (
+                          <WelcomeScreen />
+                        ) : (
+                          <PageComponent />
+                        )
+                      }
+                    />
+                  );
+                })}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
             </Box>
             <Box
               component="footer"

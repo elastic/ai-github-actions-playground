@@ -40,6 +40,25 @@ export interface SpanTreeNode {
   depth: number;
 }
 
+export interface ServiceMapNode {
+  serviceName: string;
+  spanCount: number;
+  errorCount: number;
+}
+
+export interface ServiceMapEdge {
+  source: string;
+  target: string;
+  callCount: number;
+  errorCount: number;
+  totalDurationUs: number;
+}
+
+export interface ServiceMapData {
+  nodes: ServiceMapNode[];
+  edges: ServiceMapEdge[];
+}
+
 /**
  * Build a span tree from a flat list of spans.
  * Returns root nodes (spans with no parent or whose parent is not in the list).
@@ -168,6 +187,61 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
     events.push({ name, timestamp, attributes });
   }
   return events;
+}
+
+function isErrorStatus(status: string): boolean {
+  return status === "Error" || status === "STATUS_CODE_ERROR";
+}
+
+/**
+ * Build an aggregated service dependency graph from span parent/child links.
+ */
+export function buildServiceMapData(spans: Span[]): ServiceMapData {
+  const spanById = new Map<string, Span>();
+  const nodeStats = new Map<string, ServiceMapNode>();
+  const edgeStats = new Map<string, ServiceMapEdge>();
+
+  for (const span of spans) {
+    spanById.set(span.spanId, span);
+    const existingNode = nodeStats.get(span.serviceName);
+    if (existingNode) {
+      existingNode.spanCount += 1;
+      existingNode.errorCount += isErrorStatus(span.status) ? 1 : 0;
+    } else {
+      nodeStats.set(span.serviceName, {
+        serviceName: span.serviceName,
+        spanCount: 1,
+        errorCount: isErrorStatus(span.status) ? 1 : 0,
+      });
+    }
+  }
+
+  for (const span of spans) {
+    if (!span.parentSpanId) continue;
+    const parentSpan = spanById.get(span.parentSpanId);
+    if (!parentSpan || parentSpan.serviceName === span.serviceName) continue;
+
+    const key = `${parentSpan.serviceName}→${span.serviceName}`;
+    const existingEdge = edgeStats.get(key);
+    if (existingEdge) {
+      existingEdge.callCount += 1;
+      existingEdge.errorCount += isErrorStatus(span.status) ? 1 : 0;
+      existingEdge.totalDurationUs += span.durationUs;
+    } else {
+      edgeStats.set(key, {
+        source: parentSpan.serviceName,
+        target: span.serviceName,
+        callCount: 1,
+        errorCount: isErrorStatus(span.status) ? 1 : 0,
+        totalDurationUs: span.durationUs,
+      });
+    }
+  }
+
+  return {
+    nodes: Array.from(nodeStats.values()),
+    edges: Array.from(edgeStats.values()),
+  };
 }
 
 /**

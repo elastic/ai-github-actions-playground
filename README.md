@@ -61,7 +61,7 @@ ES_URL=http://localhost:9200 make serve-proxy
 
 ### In-Product Docs
 
-Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting, CORS/proxy setup, Query Lab, Metrics, dashboard workflows, Console, Data Streams, Chat, LLM settings, Cluster Overview, and dashboard management.
+Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting, CORS/proxy setup, Query Lab, Metrics, Traces, dashboard workflows, Console, Data Streams, Chat, LLM settings, Cluster Overview, and dashboard management.
 
 ## Further Reading
 

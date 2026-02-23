@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter , useLocation } from "react-router-dom";
+
 import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -31,6 +33,11 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
+}
+
 describe("DataStreamsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,20 +64,23 @@ describe("DataStreamsPage", () => {
       });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
 
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
-    await waitFor(() =>
-      expect(screen.getByRole("heading", { level: 6, name: "logs-b" })).toBeInTheDocument(),
-    );
+    expect(await screen.findByRole("heading", { level: 6, name: "logs-b" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /open in query lab/i }));
     expect(useDashboardStore.getState().discoverQueryDraft).toBe(
       "FROM logs-b | SORT @timestamp DESC | LIMIT 50",
     );
-    expect(useDashboardStore.getState().currentPage).toBe("discover");
+    expect(screen.getByTestId("location")).toHaveTextContent("/discover");
   });
 
   it("hides system streams (dot-prefixed) by default", async () => {
@@ -85,18 +95,30 @@ describe("DataStreamsPage", () => {
           ilm_policy: "logs-hot-warm",
           indices: [{ index_name: ".ds-logs-a-000001" }],
         },
-        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+        {
+          name: ".system-stream",
+          status: "GREEN",
+          generation: 1,
+          template: "system",
+          indices: [{}],
+        },
       ],
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findAllByText("logs-a");
     const logsRow = screen.getByRole("button", { name: /logs-a/i });
     expect(within(logsRow).getByText("YELLOW - 1 Index")).toBeInTheDocument();
     expect(screen.getByTestId("data-stream-meta-backing-indices")).toHaveTextContent("1");
-    expect(screen.getByTestId("data-stream-meta-write-index")).toHaveTextContent(".ds-logs-a-000001");
+    expect(screen.getByTestId("data-stream-meta-write-index")).toHaveTextContent(
+      ".ds-logs-a-000001",
+    );
     expect(screen.getByTestId("data-stream-meta-managed-by")).toHaveTextContent(
       "Index Lifecycle Management",
     );
@@ -110,12 +132,22 @@ describe("DataStreamsPage", () => {
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
-        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+        {
+          name: ".system-stream",
+          status: "GREEN",
+          generation: 1,
+          template: "system",
+          indices: [{}],
+        },
       ],
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findAllByText("logs-a");
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
@@ -129,17 +161,29 @@ describe("DataStreamsPage", () => {
   it("does not show a system stream in the details pane when system streams are hidden by default", async () => {
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
-        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+        {
+          name: ".system-stream",
+          status: "GREEN",
+          generation: 1,
+          template: "system",
+          indices: [{}],
+        },
         { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
       ],
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     // The detail heading should show the first *visible* stream (logs-a), not the hidden one
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
-    expect(screen.queryByRole("heading", { level: 6, name: ".system-stream" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 6, name: ".system-stream" }),
+    ).not.toBeInTheDocument();
   });
 
   it("re-selects first visible stream when hiding system streams after selecting one", async () => {
@@ -148,12 +192,22 @@ describe("DataStreamsPage", () => {
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
-        { name: ".system-stream", status: "GREEN", generation: 1, template: "system", indices: [{}] },
+        {
+          name: ".system-stream",
+          status: "GREEN",
+          generation: 1,
+          template: "system",
+          indices: [{}],
+        },
       ],
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
     await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
@@ -164,7 +218,9 @@ describe("DataStreamsPage", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { level: 6, name: "logs-a" })).toBeInTheDocument();
-      expect(screen.queryByRole("heading", { level: 6, name: ".system-stream" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { level: 6, name: ".system-stream" }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -177,7 +233,11 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findByText("No data streams found.");
     expect(screen.getByText("Select a data stream.")).toBeInTheDocument();
@@ -199,7 +259,11 @@ describe("DataStreamsPage", () => {
       .mockReturnValueOnce(firstFields.promise)
       .mockReturnValueOnce(secondFields.promise);
 
-    render(<DataStreamsPage />);
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
 
     await screen.findByRole("heading", { level: 6, name: "logs-a" });
     await user.click(screen.getByText("logs-b"));
