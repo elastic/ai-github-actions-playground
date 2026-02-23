@@ -30,17 +30,10 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
-import type { ProfileHealth, TimeRange } from "../types";
+import type { ProfileHealth } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
-const TIME_PRESETS: Array<{ label: string; range: TimeRange }> = [
-  { label: "Last 15m", range: { from: "now-15m", to: "now" } },
-  { label: "Last 1h", range: { from: "now-1h", to: "now" } },
-  { label: "Last 4h", range: { from: "now-4h", to: "now" } },
-  { label: "Last 24h", range: { from: "now-24h", to: "now" } },
-  { label: "Last 7d", range: { from: "now-7d", to: "now" } },
-  { label: "Last 30d", range: { from: "now-30d", to: "now" } },
-];
+import { DASHBOARD_TIME_PRESETS } from "./timePresets";
 
 const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
   { label: "Off", seconds: 0 },
@@ -405,7 +398,7 @@ export default function AppHeader() {
         {showTimeControls && (
           <>
             <Button size="small" variant="outlined" onClick={(e) => setTimeAnchor(e.currentTarget)}>
-              {TIME_PRESETS.find(
+              {DASHBOARD_TIME_PRESETS.find(
                 (p) =>
                   p.range.from === dashboard.timeRange.from &&
                   p.range.to === dashboard.timeRange.to,
@@ -416,7 +409,7 @@ export default function AppHeader() {
               open={Boolean(timeAnchor)}
               onClose={() => setTimeAnchor(null)}
             >
-              {TIME_PRESETS.map((preset) => (
+              {DASHBOARD_TIME_PRESETS.map((preset) => (
                 <MenuItem
                   key={preset.label}
                   selected={
