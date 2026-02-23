@@ -43,7 +43,7 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
     runs-on: ubuntu-latest
     steps:
-      - name: Find new CHANGES_REQUESTED review and dispatch follow-up
+      - name: Find new actionable review and dispatch follow-up
         uses: actions/github-script@v7
         with:
           github-token: ${{ github.token }}
@@ -57,26 +57,48 @@ jobs:
               { owner, repo, pull_number, per_page: 100 }
             );
 
-            const matches = reviews.filter((review) => {
-              if (review.state !== "CHANGES_REQUESTED") return false;
-              if (!review.submitted_at) return false;
-              return new Date(review.submitted_at) >= workflowStart;
-            });
+            const candidates = reviews
+              .filter((review) => review.submitted_at && new Date(review.submitted_at) >= workflowStart)
+              .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
 
-            if (matches.length === 0) {
-              core.info("No CHANGES_REQUESTED review submitted since workflow start; skipping dispatch.");
+            let latest = null;
+            let inlineCommentCount = 0;
+
+            for (const review of candidates) {
+              if (review.state === "CHANGES_REQUESTED") {
+                latest = review;
+                break;
+              }
+
+              // Some automated reviews are submitted as COMMENTED, but still include
+              // actionable inline review comments. Treat those as trigger-worthy.
+              if (review.state === "COMMENTED") {
+                const inlineComments = await github.paginate(
+                  github.rest.pulls.listCommentsForReview,
+                  { owner, repo, pull_number, review_id: review.id, per_page: 100 }
+                );
+                if (inlineComments.length > 0) {
+                  latest = review;
+                  inlineCommentCount = inlineComments.length;
+                  break;
+                }
+              }
+            }
+
+            if (!latest) {
+              core.info("No actionable review (CHANGES_REQUESTED or COMMENTED with inline comments) submitted since workflow start; skipping dispatch.");
               return;
             }
 
-            matches.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-            const latest = matches[0];
             const reviewer = latest.user?.login || "unknown";
             const feedback = (latest.body || "No review body provided.").trim();
             const prompt = [
               "A PR review requested changes. Please address the feedback with code changes and push fixes.",
               "",
               `Reviewer: @${reviewer}`,
+              `Review state: ${latest.state}`,
               `Review: ${latest.html_url}`,
+              ...(inlineCommentCount > 0 ? [`Inline review comments: ${inlineCommentCount}`] : []),
               "Feedback:",
               feedback,
               "",
