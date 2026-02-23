@@ -121,6 +121,14 @@ export function buildSpanTree(spans: Span[]): SpanTreeNode[] {
     assignDepths(root, 0);
   }
 
+  // Promote any nodes still unvisited (cyclic subgraphs disconnected from natural roots)
+  for (const node of byId.values()) {
+    if (!visited.has(node.span.spanId)) {
+      roots.push(node);
+      assignDepths(node, 0);
+    }
+  }
+
   return roots;
 }
 

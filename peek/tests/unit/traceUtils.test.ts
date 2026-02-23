@@ -142,6 +142,20 @@ describe("buildSpanTree", () => {
     expect(flat.map((n) => n.span.spanId)).toEqual(["a", "b", "c"]);
   });
 
+  it("includes all spans when trace has both a natural root and a cyclic component", () => {
+    const spans = [
+      makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.000Z" }),
+      makeSpan({ spanId: "a", parentSpanId: "b", timestamp: "2026-01-01T00:00:00.100Z" }),
+      makeSpan({ spanId: "b", parentSpanId: "a", timestamp: "2026-01-01T00:00:00.200Z" }),
+    ];
+    const roots = buildSpanTree(spans);
+    const flat = flattenSpanTree(roots);
+    expect(flat.map((n) => n.span.spanId)).toContain("root");
+    expect(flat.map((n) => n.span.spanId)).toContain("a");
+    expect(flat.map((n) => n.span.spanId)).toContain("b");
+    expect(flat).toHaveLength(spans.length);
+  });
+
   it("sorts children chronologically", () => {
     const spans = [
       makeSpan({ spanId: "root", parentSpanId: null, timestamp: "2026-01-01T00:00:00.000Z" }),
