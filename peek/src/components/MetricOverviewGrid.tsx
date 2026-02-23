@@ -118,15 +118,16 @@ export default function MetricOverviewGrid({
   // Track which metrics have had data so refreshes only re-query those
   const knownWithDataRef = useRef<Set<string> | null>(null);
 
-  const prevNamespaceRef = useRef(namespace);
+  const prevScopeRef = useRef<string | null>(null);
 
   // Fetch sparkline data for all namespace metrics in batches
   useEffect(() => {
     if (!client || namespaceMetrics.length === 0) return;
 
-    // When the namespace changes, clear the cache so we do full discovery
-    if (namespace !== prevNamespaceRef.current) {
-      prevNamespaceRef.current = namespace;
+    // When the data scope changes, clear the cache so we do full discovery
+    const scopeKey = `${namespace}|${indexPattern}|${timeRange.from}|${timeRange.to}`;
+    if (scopeKey !== prevScopeRef.current) {
+      prevScopeRef.current = scopeKey;
       knownWithDataRef.current = null;
     }
 
@@ -212,7 +213,7 @@ export default function MetricOverviewGrid({
     return () => {
       abortRef.current?.abort();
     };
-  }, [client, namespaceMetrics, indexPattern, timeRange]);
+  }, [client, namespace, namespaceMetrics, indexPattern, timeRange]);
 
   // Filter to only metrics with non-null data points (include loading cards with stale data)
   const metricsWithData = useMemo(() => {

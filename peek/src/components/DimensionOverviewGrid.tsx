@@ -163,15 +163,23 @@ export default function DimensionOverviewGrid({
   const [results, setResults] = useState<Record<string, DimensionCardResult>>({});
   const abortRef = useRef<AbortController | null>(null);
   const knownWithDataRef = useRef<Set<string> | null>(null);
-  const prevMetricRef = useRef(metricField);
+  const prevScopeRef = useRef<string | null>(null);
 
   // Fetch sparkline data for all dimensions in batches
   useEffect(() => {
     if (!client || dimensionFields.length === 0) return;
 
-    // When the metric changes, clear the cache so we do full discovery
-    if (metricField !== prevMetricRef.current) {
-      prevMetricRef.current = metricField;
+    // When the data scope changes, clear the cache so we do full discovery
+    const scopeKey = [
+      metricField,
+      metricType,
+      indexPattern,
+      timeRange.from,
+      timeRange.to,
+      dimensionFields.map((f) => f.name).join(","),
+    ].join("|");
+    if (scopeKey !== prevScopeRef.current) {
+      prevScopeRef.current = scopeKey;
       knownWithDataRef.current = null;
     }
 
