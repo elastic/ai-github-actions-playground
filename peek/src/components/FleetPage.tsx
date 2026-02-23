@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -7,36 +7,63 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import {
-  aggregateFleetPolicies,
-  fleetStatusColor,
-  loadFleetAgents,
-  type FleetAgentSummary,
-  type FleetPolicySummary,
+  loadFleetServerStatus,
+  loadFleetAgentVersions,
+  loadFleetOutputHealth,
+  loadElasticAgentInventory,
+  loadFleetActions,
+  loadFleetActionResults,
 } from "../services/fleet";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useFleetStore, type FleetViewTab } from "../store/useFleetStore";
 
-interface FleetDataState {
-  agents: FleetAgentSummary[];
-  total: number;
-  policies: FleetPolicySummary[];
-}
+import FleetStatCard from "./fleet/FleetStatCard";
+import FleetStatusChart from "./fleet/FleetStatusChart";
+import FleetVersionChart from "./fleet/FleetVersionChart";
+import FleetAgentsTable from "./fleet/FleetAgentsTable";
+import FleetOutputsList from "./fleet/FleetOutputsList";
+import FleetActivityList from "./fleet/FleetActivityList";
+
+const TABS: { value: FleetViewTab; label: string }[] = [
+  { value: "overview", label: "Overview" },
+  { value: "agents", label: "Agents" },
+  { value: "outputs", label: "Outputs" },
+  { value: "activity", label: "Activity" },
+];
+
+const AUTO_REFRESH_MS = 30_000;
 
 export default function FleetPage() {
   const connection = useDashboardStore((s) => s.connection);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<FleetDataState>({ agents: [], total: 0, policies: [] });
+
+  const activeTab = useFleetStore((s) => s.activeTab);
+  const setActiveTab = useFleetStore((s) => s.setActiveTab);
+  const loading = useFleetStore((s) => s.loading);
+  const error = useFleetStore((s) => s.error);
+  const partialErrors = useFleetStore((s) => s.partialErrors);
+  const serverStatus = useFleetStore((s) => s.serverStatus);
+  const agentVersions = useFleetStore((s) => s.agentVersions);
+  const outputHealth = useFleetStore((s) => s.outputHealth);
+  const agentInventory = useFleetStore((s) => s.agentInventory);
+  const actions = useFleetStore((s) => s.actions);
+  const actionResults = useFleetStore((s) => s.actionResults);
+
+  const setServerStatus = useFleetStore((s) => s.setServerStatus);
+  const setAgentVersions = useFleetStore((s) => s.setAgentVersions);
+  const setOutputHealth = useFleetStore((s) => s.setOutputHealth);
+  const setAgentInventory = useFleetStore((s) => s.setAgentInventory);
+  const setActions = useFleetStore((s) => s.setActions);
+  const setActionResults = useFleetStore((s) => s.setActionResults);
+  const setLoading = useFleetStore((s) => s.setLoading);
+  const setError = useFleetStore((s) => s.setError);
+  const setPartialErrors = useFleetStore((s) => s.setPartialErrors);
 
   const loadFleetData = useCallback(async () => {
     if (!connection) return;
@@ -44,155 +71,253 @@ export default function FleetPage() {
     setError(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const fleetAgents = await loadFleetAgents(client);
-      setData({
-        agents: fleetAgents.agents,
-        total: fleetAgents.total,
-        policies: aggregateFleetPolicies(fleetAgents.agents),
-      });
+      const results = await Promise.allSettled([
+        loadFleetServerStatus(client),
+        loadFleetAgentVersions(client),
+        loadFleetOutputHealth(client),
+        loadElasticAgentInventory(client),
+        loadFleetActions(client),
+        loadFleetActionResults(client),
+      ]);
+
+      const errors: string[] = [];
+      const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
+        if (r.status === "fulfilled") return r.value;
+        errors.push(`${label}: ${r.reason}`);
+        return null;
+      };
+
+      setServerStatus(value(results[0]!, "Server status") ?? null);
+      setAgentVersions(value(results[1]!, "Agent versions") ?? []);
+      setOutputHealth(value(results[2]!, "Output health") ?? []);
+      setAgentInventory(value(results[3]!, "Agent inventory") ?? []);
+      setActions(value(results[4]!, "Actions") ?? []);
+      setActionResults(value(results[5]!, "Action results") ?? []);
+      setPartialErrors(errors);
     } catch (err) {
       setError(isElasticsearchError(err) ? err.message : String(err));
-      setData({ agents: [], total: 0, policies: [] });
     } finally {
       setLoading(false);
     }
-  }, [connection]);
+  }, [
+    connection,
+    setLoading,
+    setError,
+    setServerStatus,
+    setAgentVersions,
+    setOutputHealth,
+    setAgentInventory,
+    setActions,
+    setActionResults,
+    setPartialErrors,
+  ]);
 
   useEffect(() => {
     void loadFleetData();
   }, [loadFleetData]);
 
-  const statusCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const agent of data.agents) {
-      const normalized = agent.status.trim().toLowerCase() || "unknown";
-      counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [data.agents]);
+  // Auto-refresh
+  const loadRef = useRef(loadFleetData);
+  loadRef.current = loadFleetData;
+  useEffect(() => {
+    const id = setInterval(() => void loadRef.current(), AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleAgentClick = useCallback(
+    (agentId: string) => navigate(`/fleet/agents/${encodeURIComponent(agentId)}`),
+    [navigate],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
+      {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="h6" sx={{ flex: 1 }}>
             Fleet
           </Typography>
-          <Button size="small" variant="outlined" onClick={loadFleetData} disabled={loading}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => void loadFleetData()}
+            disabled={loading}
+          >
             {loading ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
         </Stack>
       </Paper>
 
+      {/* Errors */}
       {error && <Alert severity="error">{error}</Alert>}
+      {partialErrors.length > 0 && (
+        <Alert severity="warning">Some data sources unavailable: {partialErrors.join("; ")}</Alert>
+      )}
 
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-          <Chip label={`Agents: ${data.total}`} size="small" color="primary" />
-          <Chip label={`Policies: ${data.policies.length}`} size="small" />
-          {statusCounts.map(([status, count]) => (
-            <Chip
-              key={status}
-              size="small"
-              color={fleetStatusColor(status)}
-              label={`${status}: ${count}`}
-            />
-          ))}
-        </Stack>
-      </Paper>
+      {/* Tabs */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, v: FleetViewTab) => setActiveTab(v)}
+        sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
+      >
+        {TABS.map((t) => (
+          <Tab key={t.value} value={t.value} label={t.label} />
+        ))}
+      </Tabs>
 
-      {loading && data.agents.length === 0 ? (
+      {/* Initial loading */}
+      {loading && !serverStatus && agentInventory.length === 0 ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress />
         </Box>
       ) : (
-        <Box sx={{ display: "flex", gap: 1.5, minHeight: 0, flex: 1 }}>
-          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, minHeight: 0 }}>
-            <Table stickyHeader size="small" aria-label="Fleet agents table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Agent</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Policy</TableCell>
-                  <TableCell>Last check-in</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.agents.map((agent) => (
-                  <TableRow
-                    hover
-                    key={agent.id}
-                    sx={{ cursor: "pointer" }}
-                    onClick={() => navigate(`/fleet/agents/${encodeURIComponent(agent.id)}`)}
-                  >
-                    <TableCell>
-                      <Stack>
-                        <Typography variant="body2">{agent.hostname}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {agent.id}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={agent.status}
-                        color={fleetStatusColor(agent.status)}
-                      />
-                    </TableCell>
-                    <TableCell>{agent.policyId}</TableCell>
-                    <TableCell>{agent.lastCheckin ?? "n/a"}</TableCell>
-                  </TableRow>
-                ))}
-                {data.agents.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        No Fleet agent documents found in .fleet-agents* or fleet-agents*.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, minHeight: 0 }}>
-            <Table stickyHeader size="small" aria-label="Fleet policies table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Policy</TableCell>
-                  <TableCell align="right">Agents</TableCell>
-                  <TableCell align="right">Online</TableCell>
-                  <TableCell align="right">Degraded</TableCell>
-                  <TableCell align="right">Errors</TableCell>
-                  <TableCell align="right">Inactive</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.policies.map((policy) => (
-                  <TableRow key={policy.policyId}>
-                    <TableCell>{policy.policyId}</TableCell>
-                    <TableCell align="right">{policy.agents}</TableCell>
-                    <TableCell align="right">{policy.onlineAgents}</TableCell>
-                    <TableCell align="right">{policy.degradedAgents}</TableCell>
-                    <TableCell align="right">{policy.errorAgents}</TableCell>
-                    <TableCell align="right">{policy.inactiveAgents}</TableCell>
-                  </TableRow>
-                ))}
-                {data.policies.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Policy summary appears when Fleet agents are available.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+          {activeTab === "overview" && (
+            <OverviewTab
+              serverStatus={serverStatus}
+              agentVersions={agentVersions}
+              agentInventory={agentInventory}
+            />
+          )}
+          {activeTab === "agents" && (
+            <FleetAgentsTable agents={agentInventory} onAgentClick={handleAgentClick} />
+          )}
+          {activeTab === "outputs" && <FleetOutputsList outputs={outputHealth} />}
+          {activeTab === "activity" && (
+            <FleetActivityList actions={actions} actionResults={actionResults} />
+          )}
         </Box>
+      )}
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Overview Tab
+// ---------------------------------------------------------------------------
+
+function OverviewTab({
+  serverStatus,
+  agentVersions,
+  agentInventory,
+}: {
+  serverStatus: ReturnType<typeof useFleetStore.getState>["serverStatus"];
+  agentVersions: ReturnType<typeof useFleetStore.getState>["agentVersions"];
+  agentInventory: ReturnType<typeof useFleetStore.getState>["agentInventory"];
+}) {
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* Stat cards */}
+      {serverStatus ? (
+        <>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <FleetStatCard title="Total" value={serverStatus.total} />
+            <FleetStatCard title="Healthy" value={serverStatus.healthy} color="success.main" />
+            <FleetStatCard title="Unhealthy" value={serverStatus.unhealthy} color="warning.main" />
+            <FleetStatCard title="Offline" value={serverStatus.offline} color="text.secondary" />
+            <FleetStatCard title="Updating" value={serverStatus.updating} color="info.main" />
+            <FleetStatCard title="Inactive" value={serverStatus.inactive} />
+          </Stack>
+
+          {/* Unhealthy reason breakdown */}
+          {serverStatus.unhealthy > 0 && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="caption" color="text.secondary">
+                Unhealthy reasons:
+              </Typography>
+              {serverStatus.unhealthyReason.input > 0 && (
+                <Chip
+                  size="small"
+                  label={`Input: ${serverStatus.unhealthyReason.input}`}
+                  color="warning"
+                  variant="outlined"
+                />
+              )}
+              {serverStatus.unhealthyReason.output > 0 && (
+                <Chip
+                  size="small"
+                  label={`Output: ${serverStatus.unhealthyReason.output}`}
+                  color="warning"
+                  variant="outlined"
+                />
+              )}
+              {serverStatus.unhealthyReason.other > 0 && (
+                <Chip
+                  size="small"
+                  label={`Other: ${serverStatus.unhealthyReason.other}`}
+                  color="warning"
+                  variant="outlined"
+                />
+              )}
+            </Stack>
+          )}
+
+          {/* Charts */}
+          <Box sx={{ display: "flex", gap: 1.5, minHeight: 250 }}>
+            <Paper variant="outlined" sx={{ flex: 1, p: 1.5 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Agent Status
+              </Typography>
+              <Box sx={{ height: 200 }}>
+                <FleetStatusChart status={serverStatus} />
+              </Box>
+            </Paper>
+            <Paper variant="outlined" sx={{ flex: 1, p: 1.5 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Version Distribution
+              </Typography>
+              <Box sx={{ height: 200 }}>
+                <FleetVersionChart versions={agentVersions} />
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* Enrolled/Unenrolled */}
+          <Stack direction="row" spacing={1}>
+            <Chip size="small" label={`Enrolled: ${serverStatus.enrolled}`} variant="outlined" />
+            <Chip
+              size="small"
+              label={`Unenrolled: ${serverStatus.unenrolled}`}
+              variant="outlined"
+            />
+          </Stack>
+        </>
+      ) : (
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            No Fleet Server status metrics found in metrics-fleet_server.agent_status-*.
+          </Typography>
+          {agentInventory.length > 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              However, {agentInventory.length} agent{agentInventory.length !== 1 ? "s" : ""} found
+              via Elastic Agent logs. Switch to the Agents tab to view them.
+            </Typography>
+          )}
+        </Paper>
+      )}
+
+      {/* Quick agent summary when no server status but agents exist */}
+      {!serverStatus && agentInventory.length > 0 && (
+        <>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <FleetStatCard title="Agents (from logs)" value={agentInventory.length} />
+            <FleetStatCard
+              title="With Errors"
+              value={agentInventory.filter((a) => a.errorCount > 0).length}
+              color="error.main"
+            />
+          </Stack>
+          {agentVersions.length > 0 && (
+            <Paper variant="outlined" sx={{ p: 1.5, height: 200 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Version Distribution
+              </Typography>
+              <Box sx={{ height: 160 }}>
+                <FleetVersionChart versions={agentVersions} />
+              </Box>
+            </Paper>
+          )}
+        </>
       )}
     </Box>
   );

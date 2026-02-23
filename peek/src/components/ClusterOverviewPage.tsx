@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -14,7 +15,11 @@ import {
   type ClusterInfoResponse,
   type ClusterHealthResponse,
 } from "../services/es";
-import { fleetStatusColor, loadFleetAgents, type FleetAgentSummary } from "../services/fleet";
+import {
+  loadFleetServerStatus,
+  loadElasticAgentInventory,
+  type FleetServerStatusMetrics,
+} from "../services/fleet";
 import { useDashboardStore } from "../store/useDashboardStore";
 
 interface OverviewData {
@@ -23,8 +28,8 @@ interface OverviewData {
   dataStreamCount: number | null;
   indexCount: number | null;
   aliasCount: number | null;
-  fleetAgents: FleetAgentSummary[] | null;
-  fleetAgentCount: number | null;
+  fleetStatus: FleetServerStatusMetrics | null;
+  agentInventoryCount: number | null;
 }
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -40,6 +45,7 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
 
 export default function ClusterOverviewPage() {
   const connection = useDashboardStore((s) => s.connection);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
@@ -49,8 +55,8 @@ export default function ClusterOverviewPage() {
     dataStreamCount: null,
     indexCount: null,
     aliasCount: null,
-    fleetAgents: null,
-    fleetAgentCount: null,
+    fleetStatus: null,
+    agentInventoryCount: null,
   });
 
   const loadOverview = useCallback(async () => {
@@ -65,13 +71,15 @@ export default function ClusterOverviewPage() {
         clusterHealthResult,
         dataStreamsResult,
         resolveIndexResult,
-        fleetAgentsResult,
+        fleetStatusResult,
+        agentInventoryResult,
       ] = await Promise.allSettled([
         client.getClusterInfo(),
         client.getClusterHealth(),
         client.getDataStreams(),
         client.resolveIndex("*"),
-        loadFleetAgents(client),
+        loadFleetServerStatus(client),
+        loadElasticAgentInventory(client),
       ]);
 
       const nextData: OverviewData = {
@@ -90,10 +98,9 @@ export default function ClusterOverviewPage() {
           resolveIndexResult.status === "fulfilled"
             ? (resolveIndexResult.value.aliases?.length ?? 0)
             : null,
-        fleetAgents:
-          fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value.agents : null,
-        fleetAgentCount:
-          fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value.total : null,
+        fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
+        agentInventoryCount:
+          agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.length : null,
       };
       setData(nextData);
 
@@ -102,12 +109,21 @@ export default function ClusterOverviewPage() {
       if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
       if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
       if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
-      if (fleetAgentsResult.status === "rejected") failedParts.push("fleet agents");
+      if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
+      if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
       if (failedParts.length > 0) {
         setPartialErrors(failedParts);
       }
 
-      if (failedParts.length === 5) {
+      // Core sources (cluster info/health, data streams, indices) determine total failure.
+      // Fleet sources use gracefulSearch and never reject.
+      const coreFailures = [
+        clusterInfoResult,
+        clusterHealthResult,
+        dataStreamsResult,
+        resolveIndexResult,
+      ].filter((r) => r.status === "rejected").length;
+      if (coreFailures === 4) {
         const firstError =
           clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
         setError(
@@ -138,14 +154,6 @@ export default function ClusterOverviewPage() {
         : clusterHealth?.status === "red"
           ? "error"
           : "default";
-  const fleetAgentStatusCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const agent of data.fleetAgents ?? []) {
-      const normalized = agent.status.trim().toLowerCase() || "unknown";
-      counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [data.fleetAgents]);
 
   function renderCount(value: number | null) {
     if (value === null) {
@@ -157,6 +165,8 @@ export default function ClusterOverviewPage() {
     }
     return <Typography variant="h4">{value}</Typography>;
   }
+
+  const fleetTotal = data.fleetStatus?.total ?? data.agentInventoryCount;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -279,60 +289,65 @@ export default function ClusterOverviewPage() {
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Aliases">{renderCount(data.aliasCount)}</InfoCard>
             </Box>
-
-            <Box sx={{ flex: 1 }}>
-              <InfoCard title="Fleet Agents">{renderCount(data.fleetAgentCount)}</InfoCard>
-            </Box>
           </Stack>
 
-          <InfoCard title="Fleet Agent Statuses">
-            {data.fleetAgents === null ? (
-              <Typography variant="body2" color="text.secondary">
-                Unavailable
-              </Typography>
-            ) : data.fleetAgents.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No Fleet agent documents found in .fleet-agents* or fleet-agents*.
-              </Typography>
-            ) : (
-              <Stack spacing={1.5}>
+          {/* Fleet summary */}
+          <InfoCard title="Fleet">
+            {data.fleetStatus ? (
+              <Stack spacing={1}>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  {fleetAgentStatusCounts.map(([status, count]) => (
+                  <Chip size="small" label={`Total: ${data.fleetStatus.total}`} color="primary" />
+                  <Chip
+                    size="small"
+                    label={`Healthy: ${data.fleetStatus.healthy}`}
+                    color="success"
+                  />
+                  {data.fleetStatus.unhealthy > 0 && (
                     <Chip
-                      key={status}
                       size="small"
-                      color={fleetStatusColor(status)}
-                      label={`${status}: ${count}`}
+                      label={`Unhealthy: ${data.fleetStatus.unhealthy}`}
+                      color="warning"
                     />
-                  ))}
+                  )}
+                  {data.fleetStatus.offline > 0 && (
+                    <Chip size="small" label={`Offline: ${data.fleetStatus.offline}`} />
+                  )}
+                  {data.fleetStatus.updating > 0 && (
+                    <Chip
+                      size="small"
+                      label={`Updating: ${data.fleetStatus.updating}`}
+                      color="info"
+                    />
+                  )}
                 </Stack>
-                <Stack spacing={0.5}>
-                  {data.fleetAgents.slice(0, 5).map((agent) => (
-                    <Stack
-                      key={agent.id}
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      flexWrap="wrap"
-                      useFlexGap
-                    >
-                      <Chip
-                        size="small"
-                        label={agent.status}
-                        color={fleetStatusColor(agent.status)}
-                      />
-                      <Typography variant="body2">{agent.hostname}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {agent.id}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >{`Policy: ${agent.policyId}`}</Typography>
-                    </Stack>
-                  ))}
-                </Stack>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => navigate("/fleet")}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  View Fleet →
+                </Button>
               </Stack>
+            ) : fleetTotal !== null ? (
+              <Stack spacing={1}>
+                <Typography variant="h4">{fleetTotal}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  agent{fleetTotal !== 1 ? "s" : ""} detected from Elastic Agent logs
+                </Typography>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => navigate("/fleet")}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  View Fleet →
+                </Button>
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No Fleet data available.
+              </Typography>
             )}
           </InfoCard>
         </Stack>

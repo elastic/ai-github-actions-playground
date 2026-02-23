@@ -90,12 +90,14 @@ export const PAGE_MANIFEST = {
     path: "/fleet",
     component: FleetPage,
     requiresConnection: true,
+    showTimeControls: false,
     nav: { label: "Fleet", group: "System", order: 15, showInSidebar: true },
   },
   fleetAgentDetail: {
     path: "/fleet/agents/:agentId",
     component: FleetAgentPage,
     requiresConnection: true,
+    showTimeControls: false,
     nav: { label: "Fleet Agent Detail", group: "System", order: 16, showInSidebar: false },
   },
   docs: {

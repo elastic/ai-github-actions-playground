@@ -144,6 +144,50 @@ curl -s -X POST 'http://localhost:9200/_query' \
   -d '{"query":"FROM metrics-hostmetricsreceiver-default | STATS count = COUNT(*) BY dataset = data_stream.dataset, metric_type = type | SORT count DESC"}'
 ```
 
+## Fleet Harness
+
+Use this harness to run a real Fleet Server stack with enrolled Elastic Agents. This produces the actual Fleet and agent telemetry data streams that the Fleet page consumes.
+
+```bash
+make fleet-harness-up
+```
+
+This starts (allow 3-5 minutes for full initialization):
+
+- Elasticsearch with security enabled (`http://localhost:9220`, user `elastic`, password `changeme`)
+- Kibana with Fleet auto-configuration (`http://localhost:5601`)
+- Fleet Server (`http://localhost:8220`)
+- Two enrolled Elastic Agents (`agent-host-01`, `agent-host-02`)
+
+Data streams produced:
+
+- `metrics-fleet_server.agent_status-default` — aggregate agent counts
+- `metrics-fleet_server.agent_versions-default` — agent count per version
+- `logs-fleet_server.output_health-default` — output health
+- `logs-elastic_agent-default` — agent logs
+- `metrics-elastic_agent.*-default` — agent metrics (CPU, memory)
+
+Connect Peek to `http://localhost:9220` with credentials `elastic` / `changeme`.
+
+Stop with:
+
+```bash
+make fleet-harness-down
+```
+
+Tail Fleet Server logs:
+
+```bash
+make fleet-harness-logs
+```
+
+Quick data check:
+
+```bash
+curl -sf -u elastic:changeme \
+  'http://localhost:9220/_cat/indices/metrics-fleet_server*,logs-fleet_server*,logs-elastic_agent*,metrics-elastic_agent*?v&h=index,docs.count,store.size'
+```
+
 ## Testing
 
 ```bash

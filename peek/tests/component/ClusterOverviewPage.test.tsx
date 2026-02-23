@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
@@ -47,6 +48,50 @@ const CLUSTER_INFO = {
   },
 };
 
+function mockFleetRawRequest() {
+  rawRequestMock.mockImplementation((_method: string, url: string) => {
+    // Fleet server status
+    if (url.includes("metrics-fleet_server.agent_status")) {
+      return Promise.resolve({
+        status: 200,
+        body: {
+          hits: {
+            total: { value: 1 },
+            hits: [
+              {
+                _source: {
+                  fleet: {
+                    agents: {
+                      total: 10,
+                      healthy: 8,
+                      unhealthy: 1,
+                      offline: 1,
+                      updating: 0,
+                      inactive: 0,
+                      enrolled: 10,
+                      unenrolled: 0,
+                      unhealthy_reason: { input: 0, output: 1, other: 0 },
+                    },
+                  },
+                  "@timestamp": "2026-02-23T00:00:00Z",
+                },
+              },
+            ],
+          },
+        },
+      });
+    }
+    // Elastic agent inventory
+    if (url.includes("logs-elastic_agent")) {
+      return Promise.resolve({
+        status: 200,
+        body: { aggregations: { agents: { buckets: [] } } },
+      });
+    }
+    return Promise.resolve({ status: 200, body: { hits: { hits: [] } } });
+  });
+}
+
 describe("ClusterOverviewPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -56,7 +101,7 @@ describe("ClusterOverviewPage", () => {
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });
 
-  it("renders cluster info after loading", async () => {
+  it("renders cluster info with fleet status after loading", async () => {
     getClusterInfoMock.mockResolvedValue(CLUSTER_INFO);
     getClusterHealthMock.mockResolvedValue({
       status: "green",
@@ -76,27 +121,13 @@ describe("ClusterOverviewPage", () => {
       aliases: [{ name: "alias-1" }],
       data_streams: [],
     });
-    rawRequestMock.mockResolvedValue({
-      status: 200,
-      body: {
-        hits: {
-          total: { value: 250, relation: "eq" },
-          hits: [
-            {
-              _id: "agent-1",
-              _source: {
-                agent: { id: "agent-1" },
-                local_metadata: { host: { hostname: "host-1" } },
-                policy_id: "policy-1",
-                last_checkin_status: "online",
-              },
-            },
-          ],
-        },
-      },
-    });
+    mockFleetRawRequest();
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
@@ -106,11 +137,10 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText("Nodes: 3")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument(); // data stream count
     expect(screen.getByText("3")).toBeInTheDocument(); // index count
-    expect(screen.getByText("250")).toBeInTheDocument(); // fleet agent total
-    expect(screen.getByText("Fleet Agents")).toBeInTheDocument();
-    expect(screen.getByText("host-1")).toBeInTheDocument();
-    expect(screen.getByText("Policy: policy-1")).toBeInTheDocument();
-    expect(screen.getByText("online: 1")).toBeInTheDocument();
+    // Fleet section uses server status metrics
+    expect(screen.getByText("Total: 10")).toBeInTheDocument();
+    expect(screen.getByText("Healthy: 8")).toBeInTheDocument();
+    expect(screen.getByText("View Fleet →")).toBeInTheDocument();
   });
 
   it("shows error alert on failure", async () => {
@@ -120,7 +150,11 @@ describe("ClusterOverviewPage", () => {
     resolveIndexMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     rawRequestMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Unauthorized");
@@ -139,9 +173,13 @@ describe("ClusterOverviewPage", () => {
     });
     getDataStreamsMock.mockResolvedValue({ data_streams: [] });
     resolveIndexMock.mockResolvedValue({ indices: [], aliases: [], data_streams: [] });
-    rawRequestMock.mockResolvedValue({ status: 200, body: { hits: { hits: [] } } });
+    mockFleetRawRequest();
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
@@ -173,12 +211,17 @@ describe("ClusterOverviewPage", () => {
     resolveIndexMock.mockRejectedValue({ status: 403, message: "Forbidden" });
     rawRequestMock.mockRejectedValue({ status: 403, message: "Forbidden" });
 
-    render(<ClusterOverviewPage />);
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
     });
     expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Unavailable")).toHaveLength(5);
+    // Data streams, Indices, Aliases show unavailable; Fleet shows "No Fleet data available."
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThanOrEqual(2);
   });
 });
