@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+
 import {
   isDateColumn,
   findDateColumnIndex,
@@ -8,6 +9,7 @@ import {
   isDateType,
   isNumericType,
   formatNumber,
+  buildGroupedSeries,
 } from "../../src/components/visualizations/chartUtils";
 import type { EsqlResponse } from "../../src/types";
 
@@ -256,5 +258,94 @@ describe("formatNumber", () => {
   it("handles string numbers", () => {
     expect(formatNumber("42")).toBe("42");
     expect(formatNumber("3.14")).toBe("3.14");
+  });
+});
+
+describe("buildGroupedSeries", () => {
+  it("returns one series per numeric column when groupIdx is -1", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "ts", type: "date" },
+        { name: "count", type: "long" },
+        { name: "avg", type: "double" },
+      ],
+      values: [
+        ["2024-01-01", 10, 1.5],
+        ["2024-01-02", 20, 2.5],
+      ],
+    };
+    const result = buildGroupedSeries(data, [1, 2], -1);
+    expect(result).toEqual([
+      { name: "count", colIdx: 1, rows: [0, 1] },
+      { name: "avg", colIdx: 2, rows: [0, 1] },
+    ]);
+  });
+
+  it("splits by group column when groupIdx >= 0 with single numeric column", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "doc_count", type: "long" },
+        { name: "time_bucket", type: "date" },
+        { name: "data_stream.type", type: "keyword" },
+      ],
+      values: [
+        [100, "2024-01-01", "logs"],
+        [200, "2024-01-01", "metrics"],
+        [150, "2024-01-02", "logs"],
+        [250, "2024-01-02", "metrics"],
+      ],
+    };
+    const result = buildGroupedSeries(data, [0], 2);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ name: "logs", colIdx: 0, rows: [0, 2] });
+    expect(result[1]).toEqual({ name: "metrics", colIdx: 0, rows: [1, 3] });
+  });
+
+  it("uses 'colName (groupValue)' when multiple numeric columns", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "avg_cpu", type: "double" },
+        { name: "max_mem", type: "double" },
+        { name: "host", type: "keyword" },
+      ],
+      values: [
+        [50, 800, "host-a"],
+        [60, 900, "host-b"],
+      ],
+    };
+    const result = buildGroupedSeries(data, [0, 1], 2);
+    expect(result).toHaveLength(4);
+    expect(result[0]!.name).toBe("avg_cpu (host-a)");
+    expect(result[1]!.name).toBe("max_mem (host-a)");
+    expect(result[2]!.name).toBe("avg_cpu (host-b)");
+    expect(result[3]!.name).toBe("max_mem (host-b)");
+  });
+
+  it("handles null group values as '(empty)'", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "count", type: "long" },
+        { name: "label", type: "keyword" },
+      ],
+      values: [
+        [10, null],
+        [20, "A"],
+      ],
+    };
+    const result = buildGroupedSeries(data, [0], 1);
+    expect(result).toHaveLength(2);
+    expect(result[0]!.name).toBe("(empty)");
+    expect(result[0]!.rows).toEqual([0]);
+    expect(result[1]!.name).toBe("A");
+    expect(result[1]!.rows).toEqual([1]);
+  });
+
+  it("returns empty array when no numeric indices are provided", () => {
+    const data: EsqlResponse = {
+      columns: [{ name: "label", type: "keyword" }],
+      values: [["A"], ["B"]],
+    };
+    expect(buildGroupedSeries(data, [], -1)).toEqual([]);
+    expect(buildGroupedSeries(data, [], 0)).toEqual([]);
   });
 });
