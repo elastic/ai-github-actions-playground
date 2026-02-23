@@ -119,12 +119,10 @@ export default function TracesPage() {
   });
 
   const runTraceQueries = useCallback(
-    (query: string, updatedFilters = filters) => {
+    (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
       setTimeseriesResult(null);
       runSearchQuery(query);
-      // Skip timeseries when a custom raw query is active — we can't reliably
-      // wrap an arbitrary user-edited query with the STATS/BUCKET aggregation.
-      if (!rawQuery) {
+      if (includeTimeseries) {
         runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
       }
     },
@@ -132,8 +130,8 @@ export default function TracesPage() {
   );
 
   const handleSearch = useCallback(() => {
-    runTraceQueries(effectiveQuery);
-  }, [runTraceQueries, effectiveQuery]);
+    runTraceQueries(effectiveQuery, filters, rawQuery == null);
+  }, [runTraceQueries, effectiveQuery, filters, rawQuery]);
 
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
@@ -195,7 +193,7 @@ export default function TracesPage() {
         : [...state.filters.services, serviceName];
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters);
+      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
     },
     [runTraceQueries],
   );
@@ -802,12 +800,12 @@ export default function TracesPage() {
           useTracesStore.getState().addTagFilter(key, value, false);
           // Run search with the updated filters (not the stale closure)
           const updatedFilters = useTracesStore.getState().filters;
-          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters);
+          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
         }}
         onExclude={(key, value) => {
           useTracesStore.getState().addTagFilter(key, value, true);
           const updatedFilters = useTracesStore.getState().filters;
-          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters);
+          runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
         }}
         onOpenInQueryLab={(spanContext) => {
           handleOpenInDiscover(spanContext.traceId, spanContext.spanId, spanContext.timestamp);
