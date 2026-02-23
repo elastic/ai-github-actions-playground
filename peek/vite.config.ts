@@ -3,6 +3,8 @@ import path from "path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
+import { rewriteEsProxyPath } from "./src/utils/rewriteEsProxyPath";
+
 export default defineConfig(({ mode }) => {
   // Load env vars from the repo root (.env) and peek/ directory so ES_URL
   // can be set in either location without requiring a shell export.
@@ -40,7 +42,7 @@ export default defineConfig(({ mode }) => {
             "/_es": {
               target: esUrl,
               changeOrigin: true,
-              rewrite: (p: string) => p.replace(/^\/_es(?=\/|$)/, "") || "/",
+              rewrite: rewriteEsProxyPath,
             },
           }
         : undefined,
