@@ -124,3 +124,123 @@ describe("SpanDetailDrawer – Links tab", () => {
     expect(screen.getByText("kafka")).toBeInTheDocument();
   });
 });
+
+describe("SpanDetailDrawer – Events tab", () => {
+  it("shows empty state when span has no events", async () => {
+    const span = makeSpan({ events: [] });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Events" }));
+    expect(screen.getByText("No events")).toBeInTheDocument();
+  });
+
+  it("shows empty state when span.events is undefined", async () => {
+    const span = makeSpan(); // no events field
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Events" }));
+    expect(screen.getByText("No events")).toBeInTheDocument();
+  });
+
+  it("renders event name and timestamp", async () => {
+    const span = makeSpan({
+      events: [
+        {
+          name: "exception",
+          timestamp: "2026-01-15T10:23:45.123Z",
+          attributes: {},
+        },
+      ],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Events" }));
+    expect(screen.getByText("exception")).toBeInTheDocument();
+    expect(screen.getByText("2026-01-15T10:23:45.123Z")).toBeInTheDocument();
+  });
+
+  it("renders event attributes", async () => {
+    const span = makeSpan({
+      events: [
+        {
+          name: "exception",
+          timestamp: "2026-01-15T10:23:45.123Z",
+          attributes: { "exception.type": "RuntimeException" },
+        },
+      ],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Events" }));
+    expect(screen.getByText("exception.type")).toBeInTheDocument();
+    expect(screen.getByText("RuntimeException")).toBeInTheDocument();
+  });
+
+  it("shows 'No attributes' for events with no attributes", async () => {
+    const span = makeSpan({
+      events: [{ name: "checkpoint", timestamp: "2026-01-15T10:23:45.000Z", attributes: {} }],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Events" }));
+    expect(screen.getByText("No attributes")).toBeInTheDocument();
+  });
+
+  it("renders fallback name for unnamed events", async () => {
+    const span = makeSpan({
+      events: [{ name: "", timestamp: "", attributes: {} }],
+    });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("tab", { name: "Events" }));
+    expect(screen.getByText("(unnamed event)")).toBeInTheDocument();
+  });
+});

@@ -35,11 +35,23 @@ export function filterColumnsByName(columns: EsqlColumn[], query: string): EsqlC
  */
 export function getEmptyColumnIndices(data: EsqlResponse): Set<number> {
   if (data.values.length === 0) return new Set();
-  const emptySet = new Set<number>();
-  for (let colIdx = 0; colIdx < data.columns.length; colIdx++) {
-    if (data.values.every((row) => row[colIdx] === null || row[colIdx] === undefined)) {
-      emptySet.add(colIdx);
+  const emptyColumns = new Array<boolean>(data.columns.length).fill(true);
+  let remainingEmpty = data.columns.length;
+  for (let rowIdx = 0; rowIdx < data.values.length && remainingEmpty > 0; rowIdx += 1) {
+    const row = data.values[rowIdx];
+    if (!row) continue;
+    for (let colIdx = 0; colIdx < data.columns.length; colIdx += 1) {
+      if (!emptyColumns[colIdx]) continue;
+      const value = row[colIdx];
+      if (value !== null && value !== undefined) {
+        emptyColumns[colIdx] = false;
+        remainingEmpty -= 1;
+      }
     }
+  }
+  const emptySet = new Set<number>();
+  for (let colIdx = 0; colIdx < emptyColumns.length; colIdx += 1) {
+    if (emptyColumns[colIdx]) emptySet.add(colIdx);
   }
   return emptySet;
 }
