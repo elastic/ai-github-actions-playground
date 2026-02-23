@@ -18,6 +18,11 @@ import { getServiceColor } from "./traceColors";
 
 const DEFAULT_FIELD_MAPPING_SERVICE = "service.name";
 
+function formatEventTimestamp(ts: string): string {
+  const parsedMs = Date.parse(ts);
+  return Number.isNaN(parsedMs) ? ts : new Date(parsedMs).toISOString();
+}
+
 interface SpanDetailDrawerProps {
   span: Span | null;
   open: boolean;
@@ -339,12 +344,7 @@ export default function SpanDetailDrawer({
                           color="text.secondary"
                           sx={{ ml: 1, fontFamily: "monospace" }}
                         >
-                          {(() => {
-                            const parsedMs = Date.parse(event.timestamp);
-                            return Number.isNaN(parsedMs)
-                              ? event.timestamp
-                              : new Date(parsedMs).toISOString();
-                          })()}
+                          {formatEventTimestamp(event.timestamp)}
                         </Typography>
                       )}
                     </Box>

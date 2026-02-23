@@ -2,6 +2,8 @@
  * Span and trace data types and tree-building utilities.
  */
 
+import type { TraceFieldMapping } from "./traceQueryBuilder";
+
 /** A single event recorded within a span */
 export interface SpanEvent {
   name: string;
@@ -153,42 +155,6 @@ export function flattenSpanTree(roots: SpanTreeNode[]): SpanTreeNode[] {
   return result;
 }
 
-/** Parse a raw events column value into an array of SpanEvent objects */
-function parseSpanEvents(raw: unknown): SpanEvent[] {
-  if (raw == null) return [];
-
-  let items: unknown[];
-  if (Array.isArray(raw)) {
-    items = raw;
-  } else if (typeof raw === "string") {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      items = parsed;
-    } catch {
-      return [];
-    }
-  } else {
-    return [];
-  }
-
-  const events: SpanEvent[] = [];
-  for (const item of items) {
-    if (typeof item !== "object" || item === null) continue;
-    const obj = item as Record<string, unknown>;
-    const name = String(obj["name"] ?? "");
-    const timestamp = String(obj["@timestamp"] ?? obj["timestamp"] ?? "");
-    const attributes: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      if (key !== "name" && key !== "@timestamp" && key !== "timestamp" && value != null) {
-        attributes[key] = value;
-      }
-    }
-    events.push({ name, timestamp, attributes });
-  }
-  return events;
-}
-
 function isErrorStatus(status: string): boolean {
   return status === "Error" || status === "STATUS_CODE_ERROR";
 }
@@ -251,20 +217,7 @@ export function buildServiceMapData(spans: Span[]): ServiceMapData {
 export function parseSpansFromEsql(
   columns: Array<{ name: string; type: string }>,
   values: unknown[][],
-  fieldMapping: {
-    traceId: string;
-    spanId: string;
-    parentSpanId: string;
-    serviceName: string;
-    spanName: string;
-    spanKind: string;
-    durationUs: string;
-    durationNs: string;
-    statusCode: string;
-    timestamp: string;
-    timestampUs: string;
-    events?: string;
-  },
+  fieldMapping: Omit<TraceFieldMapping, "index">,
 ): Span[] {
   const colIndex = new Map<string, number>();
   for (let i = 0; i < columns.length; i++) {
@@ -327,6 +280,42 @@ export function parseSpansFromEsql(
       links: parseSpanLinks(colIndex, row),
     };
   });
+}
+
+/** Parse a raw events column value into an array of SpanEvent objects */
+function parseSpanEvents(raw: unknown): SpanEvent[] {
+  if (raw == null) return [];
+
+  let items: unknown[];
+  if (Array.isArray(raw)) {
+    items = raw;
+  } else if (typeof raw === "string") {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      items = parsed;
+    } catch {
+      return [];
+    }
+  } else {
+    return [];
+  }
+
+  const events: SpanEvent[] = [];
+  for (const item of items) {
+    if (typeof item !== "object" || item === null) continue;
+    const obj = item as Record<string, unknown>;
+    const name = String(obj["name"] ?? "");
+    const timestamp = String(obj["@timestamp"] ?? obj["timestamp"] ?? "");
+    const attributes: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (key !== "name" && key !== "@timestamp" && key !== "timestamp" && value != null) {
+        attributes[key] = value;
+      }
+    }
+    events.push({ name, timestamp, attributes });
+  }
+  return events;
 }
 
 /** Returns true if the column name belongs to the span links data */

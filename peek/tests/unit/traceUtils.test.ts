@@ -252,8 +252,11 @@ describe("parseSpansFromEsql", () => {
     spanName: "name",
     spanKind: "kind",
     durationUs: "duration",
+    durationNs: "duration_nanos",
     statusCode: "status",
     timestamp: "@timestamp",
+    timestampUs: "timestamp_us",
+    events: "events",
   };
 
   it("parses rows into Span objects", () => {
