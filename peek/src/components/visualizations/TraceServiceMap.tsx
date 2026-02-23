@@ -79,7 +79,7 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
     [onNodeClick],
   );
 
-  if (mapData.nodes.length === 0) {
+  if (mapData.edges.length === 0) {
     return (
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
         <Typography variant="body2" color="text.secondary">
