@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 
 import UsersPage from "../../src/components/UsersPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -188,6 +188,33 @@ describe("UsersPage", () => {
     await screen.findByText("internal_error");
   });
 
+  it("does not throw when Clipboard API is unavailable", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+
+    try {
+      render(
+        <MemoryRouter>
+          <UsersPage />
+        </MemoryRouter>,
+      );
+
+      await screen.findByRole("heading", { level: 6, name: "alice" });
+      await user.click(screen.getByRole("button", { name: "Copy API call" }));
+      expect(screen.getByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
+    } finally {
+      if (original !== undefined) {
+        Object.defineProperty(navigator, "clipboard", original);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
+  });
+
   it("refreshes data when Refresh button is clicked", async () => {
     const user = userEvent.setup();
     getCapabilitiesMock.mockResolvedValue(CAPS_OK);
@@ -210,5 +237,36 @@ describe("UsersPage", () => {
       expect(within(list).getByText("elastic")).toBeInTheDocument();
     });
     expect(getSecurityUsersMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("navigates to /roles?role=<name> when a role chip is clicked", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    function LocationDisplay() {
+      const location = useLocation();
+      return <div data-testid="location-display">{location.pathname + location.search}</div>;
+    }
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    // Select the elastic user (has superuser role)
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    await user.click(screen.getByRole("button", { name: /elastic/i }));
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+
+    // Click the superuser role chip
+    const chip = screen.getByRole("button", { name: "View role: superuser" });
+    await user.click(chip);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-display").textContent).toBe("/roles?role=superuser");
+    });
   });
 });
