@@ -92,7 +92,7 @@ describe("AppHeader", () => {
 
     for (const route of timeControlRoutes.slice(1)) {
       rerender(
-        <MemoryRouter initialEntries={[route]}>
+        <MemoryRouter key={route} initialEntries={[route]}>
           <AppHeader />
         </MemoryRouter>,
       );
