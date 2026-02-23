@@ -73,7 +73,8 @@ export function formatEsqlResult(data: EsqlResponse): string {
       .map((v) =>
         String(v ?? "")
           .replace(/\\/g, "\\\\")
-          .replace(/\|/g, "\\|"),
+          .replace(/\|/g, "\\|")
+          .replace(/\r?\n/g, " "),
       )
       .join(" | "),
   );
