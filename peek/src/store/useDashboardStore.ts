@@ -7,8 +7,25 @@ import { createDefaultDashboard } from "../dashboards/default";
 
 export { createDefaultDashboard };
 
+/** Maximum number of undo history entries to retain. */
+const MAX_HISTORY_DEPTH = 50;
+
+/** A single entry in the undo/redo history ring buffer. */
+export interface HistoryEntry {
+  dashboard: DashboardDefinition;
+  label: string;
+}
+
 interface DashboardState {
   dashboard: DashboardDefinition;
+
+  /** Undo stack — most recent action is last (session-only, not persisted). */
+  historyPast: HistoryEntry[];
+  /** Redo stack — next action to redo is first (session-only, not persisted). */
+  historyFuture: HistoryEntry[];
+
+  undoDashboardChange: () => void;
+  redoDashboardChange: () => void;
 
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
@@ -57,10 +74,48 @@ function getNextDuplicatedPanelTitle(sourceTitle: string, existingTitles: string
   return maxCopyNumber === 0 ? `${baseTitle} (copy)` : `${baseTitle} (copy ${maxCopyNumber + 1})`;
 }
 
+/** Push the current dashboard onto the past stack, returning the updated history slices. */
+function pushToHistory(
+  s: Pick<DashboardState, "dashboard" | "historyPast">,
+  label: string,
+): Pick<DashboardState, "historyPast" | "historyFuture"> {
+  return {
+    historyPast: [
+      ...s.historyPast.slice(-(MAX_HISTORY_DEPTH - 1)),
+      { dashboard: s.dashboard, label },
+    ],
+    historyFuture: [],
+  };
+}
+
 export const useDashboardStore = create<DashboardState>()(
   persist(
     (set, get) => ({
       dashboard: createDefaultDashboard(),
+      historyPast: [],
+      historyFuture: [],
+
+      undoDashboardChange: () =>
+        set((s) => {
+          const entry = s.historyPast[s.historyPast.length - 1];
+          if (!entry) return {};
+          return {
+            dashboard: entry.dashboard,
+            historyPast: s.historyPast.slice(0, -1),
+            historyFuture: [{ dashboard: s.dashboard, label: entry.label }, ...s.historyFuture],
+          };
+        }),
+
+      redoDashboardChange: () =>
+        set((s) => {
+          const entry = s.historyFuture[0];
+          if (!entry) return {};
+          return {
+            dashboard: entry.dashboard,
+            historyPast: [...s.historyPast, { dashboard: s.dashboard, label: entry.label }],
+            historyFuture: s.historyFuture.slice(1),
+          };
+        }),
 
       setTimeRange: (range) =>
         set((s) => ({
@@ -76,11 +131,13 @@ export const useDashboardStore = create<DashboardState>()(
         })),
       setDashboardTitle: (title) =>
         set((s) => ({
+          ...pushToHistory(s, "Renamed dashboard"),
           dashboard: { ...s.dashboard, title, updatedAt: new Date().toISOString() },
         })),
 
       addPanel: (panel) =>
         set((s) => ({
+          ...pushToHistory(s, `Added panel "${panel.title}"`),
           dashboard: {
             ...s.dashboard,
             panels: [...s.dashboard.panels, panel],
@@ -89,47 +146,58 @@ export const useDashboardStore = create<DashboardState>()(
         })),
 
       updatePanel: (id, updates) =>
-        set((s) => ({
-          dashboard: {
-            ...s.dashboard,
-            panels: s.dashboard.panels.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-            updatedAt: new Date().toISOString(),
-          },
-        })),
+        set((s) => {
+          const panel = s.dashboard.panels.find((p) => p.id === id);
+          const label = panel ? `Updated panel "${panel.title}"` : "Updated panel";
+          return {
+            ...pushToHistory(s, label),
+            dashboard: {
+              ...s.dashboard,
+              panels: s.dashboard.panels.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
 
       removePanel: (id) =>
-        set((s) => ({
-          dashboard: {
-            ...s.dashboard,
-            panels: s.dashboard.panels.filter((p) => p.id !== id),
-            updatedAt: new Date().toISOString(),
-          },
-        })),
+        set((s) => {
+          const panel = s.dashboard.panels.find((p) => p.id === id);
+          const label = panel ? `Removed panel "${panel.title}"` : "Removed panel";
+          return {
+            ...pushToHistory(s, label),
+            dashboard: {
+              ...s.dashboard,
+              panels: s.dashboard.panels.filter((p) => p.id !== id),
+              updatedAt: new Date().toISOString(),
+            },
+          };
+        }),
 
       duplicatePanel: (id) => {
         let newId: string | null = null;
-        set((s) => ({
-          dashboard: (() => {
-            const source = s.dashboard.panels.find((p) => p.id === id);
-            if (!source) return s.dashboard;
-            const nextId = crypto.randomUUID();
-            const clone: PanelDefinition = {
-              ...structuredClone(source),
-              id: nextId,
-              title: getNextDuplicatedPanelTitle(
-                source.title,
-                s.dashboard.panels.map((panel) => panel.title),
-              ),
-              layout: { ...source.layout, y: Infinity },
-            };
-            newId = nextId;
-            return {
+        set((s) => {
+          const source = s.dashboard.panels.find((p) => p.id === id);
+          if (!source) return {};
+          const nextId = crypto.randomUUID();
+          const clone: PanelDefinition = {
+            ...structuredClone(source),
+            id: nextId,
+            title: getNextDuplicatedPanelTitle(
+              source.title,
+              s.dashboard.panels.map((panel) => panel.title),
+            ),
+            layout: { ...source.layout, y: Infinity },
+          };
+          newId = nextId;
+          return {
+            ...pushToHistory(s, `Duplicated panel "${source.title}"`),
+            dashboard: {
               ...s.dashboard,
               panels: [...s.dashboard.panels, clone],
               updatedAt: new Date().toISOString(),
-            };
-          })(),
-        }));
+            },
+          };
+        });
         return newId;
       },
 
@@ -218,7 +286,7 @@ export const useDashboardStore = create<DashboardState>()(
             console.error("Import failed:", error);
             return { success: false, error };
           }
-          set({ dashboard: result.data });
+          set({ dashboard: result.data, historyPast: [], historyFuture: [] });
           return { success: true };
         } catch (e) {
           const error = e instanceof Error ? e.message : String(e);
@@ -228,12 +296,12 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       loadDefaultDashboard: () => {
-        set({ dashboard: createDefaultDashboard() });
+        set({ dashboard: createDefaultDashboard(), historyPast: [], historyFuture: [] });
       },
 
       resetDashboardState: () => {
         localStorage.removeItem(STORE_NAME);
-        set({ dashboard: createDefaultDashboard() });
+        set({ dashboard: createDefaultDashboard(), historyPast: [], historyFuture: [] });
       },
     }),
     {

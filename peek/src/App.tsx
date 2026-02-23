@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Routes, Route, Navigate, useMatch } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -10,6 +10,7 @@ import Button from "@mui/material/Button";
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
 import { useUIStore } from "./store/useUIStore";
+import { useDashboardStore } from "./store/useDashboardStore";
 import { useResetAllStores } from "./hooks/useResetAllStores";
 import AppHeader from "./components/AppHeader";
 import AppSidebar from "./components/AppSidebar";
@@ -29,6 +30,25 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const isDashboard = Boolean(useMatch("/"));
+
+  const undoDashboardChange = useDashboardStore((s) => s.undoDashboardChange);
+  const redoDashboardChange = useDashboardStore((s) => s.redoDashboardChange);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isUndo = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z";
+      const isRedo =
+        (e.ctrlKey || e.metaKey) && (e.shiftKey ? e.key === "z" || e.key === "Z" : e.key === "y");
+      if (!isUndo && !isRedo) return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      if (isUndo) undoDashboardChange();
+      else redoDashboardChange();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undoDashboardChange, redoDashboardChange]);
 
   return (
     <ThemeProvider theme={theme}>

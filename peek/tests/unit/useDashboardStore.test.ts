@@ -591,3 +591,243 @@ describe("useDashboardStore importDashboard", () => {
     },
   );
 });
+
+describe("useDashboardStore undo/redo history", () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    sessionStorageMock.clear();
+    useDashboardStore.getState().resetDashboardState();
+  });
+
+  it("starts with empty history", () => {
+    expect(useDashboardStore.getState().historyPast).toHaveLength(0);
+    expect(useDashboardStore.getState().historyFuture).toHaveLength(0);
+  });
+
+  it("undoDashboardChange does nothing when history is empty", () => {
+    const before = useDashboardStore.getState().dashboard;
+    useDashboardStore.getState().undoDashboardChange();
+    expect(useDashboardStore.getState().dashboard).toBe(before);
+  });
+
+  it("redoDashboardChange does nothing when future is empty", () => {
+    const before = useDashboardStore.getState().dashboard;
+    useDashboardStore.getState().redoDashboardChange();
+    expect(useDashboardStore.getState().dashboard).toBe(before);
+  });
+
+  it("addPanel pushes a history entry with correct label", () => {
+    useDashboardStore.getState().addPanel({
+      id: "p1",
+      title: "My Panel",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+
+    const { historyPast } = useDashboardStore.getState();
+    expect(historyPast).toHaveLength(1);
+    expect(historyPast[0]?.label).toBe('Added panel "My Panel"');
+  });
+
+  it("removePanel pushes a history entry with correct label", () => {
+    useDashboardStore.getState().addPanel({
+      id: "rem-panel",
+      title: "To Remove",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    // Clear history so we're only testing removePanel
+    useDashboardStore.setState({ historyPast: [], historyFuture: [] });
+
+    useDashboardStore.getState().removePanel("rem-panel");
+
+    const { historyPast } = useDashboardStore.getState();
+    expect(historyPast).toHaveLength(1);
+    expect(historyPast[0]?.label).toBe('Removed panel "To Remove"');
+  });
+
+  it("updatePanel pushes a history entry with correct label", () => {
+    const panelId = useDashboardStore.getState().dashboard.panels[0].id;
+    const panelTitle = useDashboardStore.getState().dashboard.panels[0].title;
+    // Clear history from reset
+    useDashboardStore.setState({ historyPast: [], historyFuture: [] });
+
+    useDashboardStore.getState().updatePanel(panelId, { title: "Renamed" });
+
+    const { historyPast } = useDashboardStore.getState();
+    expect(historyPast).toHaveLength(1);
+    expect(historyPast[0]?.label).toBe(`Updated panel "${panelTitle}"`);
+  });
+
+  it("duplicatePanel pushes a history entry with correct label", () => {
+    const panelId = useDashboardStore.getState().dashboard.panels[0].id;
+    const panelTitle = useDashboardStore.getState().dashboard.panels[0].title;
+    useDashboardStore.setState({ historyPast: [], historyFuture: [] });
+
+    useDashboardStore.getState().duplicatePanel(panelId);
+
+    const { historyPast } = useDashboardStore.getState();
+    expect(historyPast).toHaveLength(1);
+    expect(historyPast[0]?.label).toBe(`Duplicated panel "${panelTitle}"`);
+  });
+
+  it("setDashboardTitle pushes a 'Renamed dashboard' history entry", () => {
+    useDashboardStore.setState({ historyPast: [], historyFuture: [] });
+    useDashboardStore.getState().setDashboardTitle("New Title");
+
+    const { historyPast } = useDashboardStore.getState();
+    expect(historyPast).toHaveLength(1);
+    expect(historyPast[0]?.label).toBe("Renamed dashboard");
+  });
+
+  it("undo after addPanel restores the previous state and populates future", () => {
+    const before = useDashboardStore.getState().dashboard;
+    useDashboardStore.getState().addPanel({
+      id: "undo-me",
+      title: "Undo Panel",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    expect(
+      useDashboardStore.getState().dashboard.panels.find((p) => p.id === "undo-me"),
+    ).toBeDefined();
+
+    useDashboardStore.getState().undoDashboardChange();
+
+    const state = useDashboardStore.getState();
+    expect(state.dashboard.panels.find((p) => p.id === "undo-me")).toBeUndefined();
+    expect(state.historyPast).toHaveLength(0);
+    expect(state.historyFuture).toHaveLength(1);
+    expect(state.historyFuture[0]?.label).toBe('Added panel "Undo Panel"');
+    // The dashboard object reference should match the saved snapshot
+    expect(state.dashboard.panels.length).toBe(before.panels.length);
+  });
+
+  it("redo after undo re-applies the action", () => {
+    useDashboardStore.getState().addPanel({
+      id: "redo-me",
+      title: "Redo Panel",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    useDashboardStore.getState().undoDashboardChange();
+    expect(
+      useDashboardStore.getState().dashboard.panels.find((p) => p.id === "redo-me"),
+    ).toBeUndefined();
+
+    useDashboardStore.getState().redoDashboardChange();
+
+    const state = useDashboardStore.getState();
+    expect(state.dashboard.panels.find((p) => p.id === "redo-me")).toBeDefined();
+    expect(state.historyPast).toHaveLength(1);
+    expect(state.historyFuture).toHaveLength(0);
+  });
+
+  it("new action after undo clears the future", () => {
+    useDashboardStore.getState().addPanel({
+      id: "panel-a",
+      title: "Panel A",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    useDashboardStore.getState().undoDashboardChange();
+    expect(useDashboardStore.getState().historyFuture).toHaveLength(1);
+
+    // New action should clear the redo future
+    useDashboardStore.getState().addPanel({
+      id: "panel-b",
+      title: "Panel B",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+
+    expect(useDashboardStore.getState().historyFuture).toHaveLength(0);
+  });
+
+  it("importDashboard clears history", () => {
+    useDashboardStore.getState().addPanel({
+      id: "pre-import",
+      title: "Pre Import",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    expect(useDashboardStore.getState().historyPast.length).toBeGreaterThan(0);
+
+    const dashboard = makeValidDashboard();
+    useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+
+    const state = useDashboardStore.getState();
+    expect(state.historyPast).toHaveLength(0);
+    expect(state.historyFuture).toHaveLength(0);
+  });
+
+  it("loadDefaultDashboard clears history", () => {
+    useDashboardStore.getState().addPanel({
+      id: "pre-load",
+      title: "Pre Load",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    expect(useDashboardStore.getState().historyPast.length).toBeGreaterThan(0);
+
+    useDashboardStore.getState().loadDefaultDashboard();
+
+    const state = useDashboardStore.getState();
+    expect(state.historyPast).toHaveLength(0);
+    expect(state.historyFuture).toHaveLength(0);
+  });
+
+  it("resetDashboardState clears history", () => {
+    useDashboardStore.getState().addPanel({
+      id: "pre-reset",
+      title: "Pre Reset",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+    expect(useDashboardStore.getState().historyPast.length).toBeGreaterThan(0);
+
+    useDashboardStore.getState().resetDashboardState();
+
+    const state = useDashboardStore.getState();
+    expect(state.historyPast).toHaveLength(0);
+    expect(state.historyFuture).toHaveLength(0);
+  });
+
+  it("history is capped at MAX_HISTORY_DEPTH (50) entries", () => {
+    for (let i = 0; i < 55; i++) {
+      useDashboardStore.getState().addPanel({
+        id: `panel-${i}`,
+        title: `Panel ${i}`,
+        query: "FROM x",
+        visualization: "bar",
+        layout: { x: 0, y: 0, w: 6, h: 4 },
+      });
+    }
+
+    expect(useDashboardStore.getState().historyPast.length).toBe(50);
+  });
+
+  it("history is not persisted to localStorage", () => {
+    useDashboardStore.getState().addPanel({
+      id: "persist-test",
+      title: "Persist Test",
+      query: "FROM x",
+      visualization: "bar",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    });
+
+    const persisted = JSON.parse(localStorageMock.getItem("elastic-peek-dashboard") ?? "{}") as {
+      state?: { historyPast?: unknown };
+    };
+    expect(persisted.state?.historyPast).toBeUndefined();
+  });
+});
