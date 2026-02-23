@@ -135,9 +135,13 @@ export function buildSpanTree(spans: Span[]): SpanTreeNode[] {
   for (const node of byId.values()) {
     if (!visited.has(node.span.spanId)) {
       roots.push(node);
+      sortChildren(node);
       assignDepths(node, 0);
     }
   }
+
+  // Keep root ordering chronological after promoting synthetic roots.
+  roots.sort((a, b) => a.span.startTimeUs - b.span.startTimeUs);
 
   return roots;
 }
