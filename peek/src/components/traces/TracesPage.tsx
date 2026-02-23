@@ -396,7 +396,7 @@ export default function TracesPage() {
                   mode === "list"
                     ? "List"
                     : mode === "timeseries"
-                      ? "Timeseries"
+                      ? "Time Series"
                       : mode === "scatter"
                         ? "Scatter"
                         : "Service Map"
@@ -591,7 +591,7 @@ export default function TracesPage() {
                 }}
               >
                 <Typography variant="body2" color="text.secondary">
-                  Timeseries view requires running an aggregation query. Use the List or Scatter
+                  Time Series view requires running an aggregation query. Use the List or Scatter
                   view for now.
                 </Typography>
               </Box>
