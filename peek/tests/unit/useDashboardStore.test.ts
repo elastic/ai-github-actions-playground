@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardDefinition } from "../../src/types";
 
@@ -34,7 +35,6 @@ describe("useDashboardStore resetState", () => {
       connection: { url: "https://example.com", apiKey: "test-key" },
       connected: true,
       themeMode: "light",
-      currentPage: "discover",
       discoverQueryDraft: "FROM logs-* | LIMIT 50",
       editingPanelId: "some-panel",
       connectionDialogOpen: true,
@@ -48,7 +48,6 @@ describe("useDashboardStore resetState", () => {
     expect(state.connection).toBeNull();
     expect(state.connected).toBe(false);
     expect(state.themeMode).toBe("dark");
-    expect(state.currentPage).toBe("dashboard");
     expect(state.discoverQueryDraft).toBeNull();
     expect(state.queryHistory).toEqual([]);
     expect(state.editingPanelId).toBeNull();

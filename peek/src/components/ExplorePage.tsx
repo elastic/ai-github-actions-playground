@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -21,6 +22,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { PAGE_MANIFEST } from "../routes/manifest";
 import {
   useExplorerStore,
   serializeExplorerState,
@@ -54,7 +56,6 @@ export default function ExplorePage() {
     connection,
     dashboard,
     addPanel,
-    setCurrentPage,
     setEditingPanelId,
     setDiscoverQueryDraft,
     setTimeRange,
@@ -63,12 +64,15 @@ export default function ExplorePage() {
       connection: s.connection,
       dashboard: s.dashboard,
       addPanel: s.addPanel,
-      setCurrentPage: s.setCurrentPage,
       setEditingPanelId: s.setEditingPanelId,
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
       setTimeRange: s.setTimeRange,
     })),
   );
+
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearchRef = useRef(searchParams.toString());
 
   const {
     indexPattern,
@@ -138,7 +142,7 @@ export default function ExplorePage() {
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
-    const restored = deserializeExplorerState(window.location.search);
+    const restored = deserializeExplorerState(initialSearchRef.current);
     if (restored.indexPattern) {
       setIndexPattern(restored.indexPattern);
     }
@@ -175,9 +179,16 @@ export default function ExplorePage() {
     if (!hasHydratedFromUrlRef.current) return;
     const state = { indexPattern, selectedMetric, aggregation, filters, groupBy };
     const qs = serializeExplorerState(state, dashboard.timeRange);
-    const newUrl = `${window.location.pathname}?${qs}`;
-    window.history.replaceState(null, "", newUrl);
-  }, [indexPattern, selectedMetric, aggregation, filters, groupBy, dashboard.timeRange]);
+    setSearchParams(qs, { replace: true });
+  }, [
+    indexPattern,
+    selectedMetric,
+    aggregation,
+    filters,
+    groupBy,
+    dashboard.timeRange,
+    setSearchParams,
+  ]);
 
   // Load fields when index pattern changes
   useEffect(() => {
@@ -285,9 +296,9 @@ export default function ExplorePage() {
   const handleEditInDiscover = useCallback(() => {
     if (queryResult.esql) {
       setDiscoverQueryDraft(queryResult.esql);
-      setCurrentPage("discover");
+      navigate(PAGE_MANIFEST.discover.path);
     }
-  }, [queryResult.esql, setDiscoverQueryDraft, setCurrentPage]);
+  }, [queryResult.esql, setDiscoverQueryDraft, navigate]);
 
   const handleSaveToDashboard = useCallback(() => {
     if (!queryResult.esql) return;
@@ -300,8 +311,8 @@ export default function ExplorePage() {
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
-    setCurrentPage("dashboard");
-  }, [queryResult.esql, selectedMetric, addPanel, setEditingPanelId, setCurrentPage]);
+    navigate(PAGE_MANIFEST.dashboard.path);
+  }, [queryResult.esql, selectedMetric, addPanel, setEditingPanelId, navigate]);
 
   const handleAddFilter = useCallback(
     (filter: ExplorerFilter) => {

@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -18,6 +19,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { PAGE_MANIFEST } from "../routes/manifest";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
@@ -27,6 +29,7 @@ import QueryPipelineSteps from "./QueryPipelineSteps";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
+import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 
 function getTypeColor(type: string): "default" | "primary" | "secondary" | "success" | "warning" {
   if (type === "date" || type === "date_nanos") return "warning";
@@ -49,7 +52,6 @@ export default function DiscoverPage() {
   const connection = useDashboardStore((s) => s.connection);
   const themeMode = useDashboardStore((s) => s.themeMode);
   const addPanel = useDashboardStore((s) => s.addPanel);
-  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
   const discoverQueryDraft = useDashboardStore((s) => s.discoverQueryDraft);
   const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
@@ -58,6 +60,7 @@ export default function DiscoverPage() {
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
+  const navigate = useNavigate();
 
   const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
   const [result, setResult] = useState<EsqlResponse | null>(null);
@@ -117,9 +120,26 @@ export default function DiscoverPage() {
     },
     [setDiscoverQueryDraft, clearTimings],
   );
+  const handleRunQueryRef = useRef(handleRunQuery);
+  useEffect(() => {
+    handleRunQueryRef.current = handleRunQuery;
+  }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
-    () => [sql(), runQueryShortcutExtension(() => void handleRunQuery())],
-    [handleRunQuery],
+    () => [
+      sql(),
+      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
+      runQueryShortcutExtension(() => void handleRunQueryRef.current()),
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an ES|QL expert. Complete the ES|QL query at the cursor. " +
+          "If a recent query error is shown, suggest a fix. " +
+          "If the user writes plain language (e.g. 'count events by host'), " +
+          "complete with the valid ES|QL implementation of their intent. " +
+          "Return only the completion text.",
+        esqlGuide: true,
+      }),
+    ],
+    [],
   );
   useEffect(() => {
     if (!connection || !refreshInterval || !effectiveQuery.trim()) return;
@@ -153,8 +173,8 @@ export default function DiscoverPage() {
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
-    setCurrentPage("dashboard");
-  }, [effectiveQuery, addPanel, setEditingPanelId, setCurrentPage]);
+    navigate(PAGE_MANIFEST.dashboard.path);
+  }, [effectiveQuery, addPanel, setEditingPanelId, navigate]);
 
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),

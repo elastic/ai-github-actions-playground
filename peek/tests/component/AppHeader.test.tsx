@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+
 import AppHeader from "../../src/components/AppHeader";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
+
+function renderHeader(path = "/") {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <AppHeader />
+    </MemoryRouter>,
+  );
+}
 
 describe("AppHeader", () => {
   beforeEach(() => {
@@ -17,30 +27,27 @@ describe("AppHeader", () => {
   });
 
   it("renders the Peek branding", () => {
-    render(<AppHeader />);
+    renderHeader();
 
     expect(screen.getByText("Peek")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Peek" })).toBeInTheDocument();
   });
 
   it("shows Add Panel button on the dashboard page", () => {
-    useDashboardStore.getState().setCurrentPage("dashboard");
-    render(<AppHeader />);
+    renderHeader("/");
 
     expect(screen.getByRole("button", { name: /add panel/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
   });
 
   it("hides Add Panel button on non-dashboard pages", () => {
-    useDashboardStore.getState().setCurrentPage("discover");
-    render(<AppHeader />);
+    renderHeader("/discover");
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 
   it("shows time controls on query pages", () => {
-    useDashboardStore.getState().setCurrentPage("discover");
-    render(<AppHeader />);
+    renderHeader("/discover");
 
     const headerButtons = screen.getAllByRole("button");
     expect(headerButtons.length).toBeGreaterThanOrEqual(2);
@@ -49,28 +56,28 @@ describe("AppHeader", () => {
   });
 
   it("shows time controls on metrics page", () => {
-    useDashboardStore.getState().setCurrentPage("explore");
-    render(<AppHeader />);
+    renderHeader("/explore");
 
     expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 
   it("hides time controls on non-time pages", () => {
-    useDashboardStore.getState().setCurrentPage("settings");
-    render(<AppHeader />);
+    renderHeader("/settings");
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
   });
 
   it("hides time controls on docs and chat pages", () => {
-    useDashboardStore.getState().setCurrentPage("docs");
-    const { rerender } = render(<AppHeader />);
+    const { rerender } = renderHeader("/docs");
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
 
-    useDashboardStore.getState().setCurrentPage("chat");
-    rerender(<AppHeader />);
+    rerender(
+      <MemoryRouter initialEntries={["/chat"]}>
+        <AppHeader />
+      </MemoryRouter>,
+    );
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
   });
 });

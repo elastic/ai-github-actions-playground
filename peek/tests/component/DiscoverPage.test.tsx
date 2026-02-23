@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock } from "../fixtures/test-utils";
@@ -31,11 +33,7 @@ vi.mock("../../src/components/visualizations/DataTable", () => ({
   default: () => <div data-testid="datatable-mock" />,
 }));
 vi.mock("../../src/components/QueryPipelineSteps", () => ({
-  default: ({
-    onRunStep,
-  }: {
-    onRunStep: (query: string, stepIndex: number) => void;
-  }) => (
+  default: ({ onRunStep }: { onRunStep: (query: string, stepIndex: number) => void }) => (
     <button type="button" onClick={() => onRunStep("FROM step-* | LIMIT 1", 0)}>
       Run step 1
     </button>
@@ -59,7 +57,11 @@ describe("DiscoverPage", () => {
 
   it("adds successful queries to history", async () => {
     const user = userEvent.setup();
-    render(<DiscoverPage />);
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
 
@@ -72,7 +74,11 @@ describe("DiscoverPage", () => {
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
     useDashboardStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
-    render(<DiscoverPage />);
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
 
     await user.click(screen.getByRole("button", { name: /recent queries/i }));
     await user.click(screen.getByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
@@ -88,7 +94,11 @@ describe("DiscoverPage", () => {
 
   it("stores the executed step query in history", async () => {
     const user = userEvent.setup();
-    render(<DiscoverPage />);
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
 
     await user.click(screen.getByRole("button", { name: /run step 1/i }));
 

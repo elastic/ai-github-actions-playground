@@ -13,12 +13,14 @@ import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 
 import { useDashboardStore } from "../../store/useDashboardStore";
+import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import type { EsqlResponse } from "../../types";
 import type { TracesViewMode } from "../../store/useTracesStore";
 import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
+import TraceServiceMap from "../visualizations/TraceServiceMap";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
@@ -134,6 +136,19 @@ export default function TracesPage() {
     [filters.services, updateFilters],
   );
 
+  const handleServiceMapNodeClick = useCallback(
+    (serviceName: string) => {
+      const state = useTracesStore.getState();
+      const services = state.filters.services.includes(serviceName)
+        ? state.filters.services
+        : [...state.filters.services, serviceName];
+      state.updateFilters({ services });
+      const updatedFilters = useTracesStore.getState().filters;
+      runSearchQuery(buildTraceSearchQuery(updatedFilters));
+    },
+    [runSearchQuery],
+  );
+
   // Parse trace results for display
   const traceRows = useMemo(() => {
     if (!result) return [];
@@ -166,7 +181,23 @@ export default function TracesPage() {
     [selectedTraceSpans, selectedSpanId],
   );
 
-  const queryEditorExtensions = useMemo(() => [sql(), EditorView.lineWrapping], []);
+  const queryEditorExtensions = useMemo(
+    () => [
+      sql(),
+      EditorView.lineWrapping,
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an ES|QL expert specializing in OpenTelemetry trace queries. " +
+          "Complete the ES|QL query at the cursor. " +
+          "If a recent query error is shown, suggest a fix. " +
+          "If the user writes plain language (e.g. 'count traces by service'), " +
+          "complete with the valid ES|QL implementation of their intent. " +
+          "Return only the completion text.",
+        esqlGuide: true,
+      }),
+    ],
+    [],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%", gap: 1 }}>
@@ -358,10 +389,18 @@ export default function TracesPage() {
         >
           {/* View switcher */}
           <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
-            {(["list", "timeseries", "scatter"] as TracesViewMode[]).map((mode) => (
+            {(["list", "timeseries", "scatter", "serviceMap"] as TracesViewMode[]).map((mode) => (
               <Chip
                 key={mode}
-                label={mode === "list" ? "List" : mode === "timeseries" ? "Timeseries" : "Scatter"}
+                label={
+                  mode === "list"
+                    ? "List"
+                    : mode === "timeseries"
+                      ? "Timeseries"
+                      : mode === "scatter"
+                        ? "Scatter"
+                        : "Service Map"
+                }
                 size="small"
                 variant={viewMode === mode ? "filled" : "outlined"}
                 color={viewMode === mode ? "primary" : "default"}
@@ -555,6 +594,40 @@ export default function TracesPage() {
                   Timeseries view requires running an aggregation query. Use the List or Scatter
                   view for now.
                 </Typography>
+              </Box>
+            )}
+            {result && viewMode === "serviceMap" && (
+              <Box sx={{ height: "100%" }}>
+                {!selectedTraceId ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Select a trace in List or Scatter view to see its service map
+                    </Typography>
+                  </Box>
+                ) : detailLoading ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <CircularProgress size={32} />
+                  </Box>
+                ) : (
+                  <TraceServiceMap
+                    spans={selectedTraceSpans}
+                    onNodeClick={handleServiceMapNodeClick}
+                  />
+                )}
               </Box>
             )}
           </Paper>

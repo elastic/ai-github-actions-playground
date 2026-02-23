@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -18,6 +19,7 @@ import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { PAGE_MANIFEST } from "../routes/manifest";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -29,8 +31,8 @@ function toFieldRows(fieldCaps: FieldCapsResponse) {
 
 export default function DataStreamsPage() {
   const connection = useDashboardStore((s) => s.connection);
-  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setDiscoverQueryDraft = useDashboardStore((s) => s.setDiscoverQueryDraft);
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [fieldSearch, setFieldSearch] = useState("");
@@ -142,8 +144,8 @@ export default function DataStreamsPage() {
   const handleOpenInDiscover = useCallback(() => {
     if (!selectedName) return;
     setDiscoverQueryDraft(`FROM ${selectedName} | SORT @timestamp DESC | LIMIT 50`);
-    setCurrentPage("discover");
-  }, [selectedName, setCurrentPage, setDiscoverQueryDraft]);
+    navigate(PAGE_MANIFEST.discover.path);
+  }, [selectedName, navigate, setDiscoverQueryDraft]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>

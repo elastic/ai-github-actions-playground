@@ -21,6 +21,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId } from "../routes/manifest";
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -86,11 +87,14 @@ const NAV_SECTIONS: NavSection[] = buildNavSections();
 export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {
   const connected = useDashboardStore((s) => s.connected);
   const themeMode = useDashboardStore((s) => s.themeMode);
-  const currentPage = useDashboardStore((s) => s.currentPage);
-  const setCurrentPage = useDashboardStore((s) => s.setCurrentPage);
   const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
   const setThemeMode = useDashboardStore((s) => s.setThemeMode);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
+  const isSettingsPath =
+    location.pathname === PAGE_MANIFEST.settings.path ||
+    location.pathname === PAGE_MANIFEST.dashboardManagement.path;
 
   return (
     <Box
@@ -147,14 +151,14 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           )}
           <List dense disablePadding>
             {section.items.map((item) => {
-              const isActive = currentPage === item.page;
+              const isActive = location.pathname === PAGE_MANIFEST[item.page].path;
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
                   key={item.page}
                   selected={isActive}
                   disabled={isDisabled}
-                  onClick={() => setCurrentPage(item.page)}
+                  onClick={() => navigate(PAGE_MANIFEST[item.page].path)}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={item.label}
                   sx={{
@@ -211,7 +215,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
           <IconButton
             size="small"
-            color={currentPage === "settings" ? "primary" : "default"}
+            color={isSettingsPath ? "primary" : "default"}
             aria-label="Settings"
             onClick={(e) => setSettingsAnchor(e.currentTarget)}
           >
@@ -241,18 +245,18 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           Dark/Light Mode
         </MenuItem>
         <MenuItem
-          selected={currentPage === "settings"}
+          selected={location.pathname === PAGE_MANIFEST.settings.path}
           onClick={() => {
-            setCurrentPage("settings");
+            navigate(PAGE_MANIFEST.settings.path);
             setSettingsAnchor(null);
           }}
         >
           LLM Settings
         </MenuItem>
         <MenuItem
-          selected={currentPage === "dashboardManagement"}
+          selected={location.pathname === PAGE_MANIFEST.dashboardManagement.path}
           onClick={() => {
-            setCurrentPage("dashboardManagement");
+            navigate(PAGE_MANIFEST.dashboardManagement.path);
             setSettingsAnchor(null);
           }}
         >

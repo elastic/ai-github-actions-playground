@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { EMPTY_FILTERS } from "../../src/components/traces/traceQueryBuilder";
 import type { Span } from "../../src/components/traces/traceUtils";
@@ -193,6 +194,9 @@ describe("useTracesStore", () => {
 
       useTracesStore.getState().setViewMode("timeseries");
       expect(useTracesStore.getState().viewMode).toBe("timeseries");
+
+      useTracesStore.getState().setViewMode("serviceMap");
+      expect(useTracesStore.getState().viewMode).toBe("serviceMap");
     });
   });
 });
