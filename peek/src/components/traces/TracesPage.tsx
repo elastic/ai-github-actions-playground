@@ -173,7 +173,13 @@ export default function TracesPage() {
       EditorView.lineWrapping,
       makeLLMCompletionExtension({
         prompt:
-          "You are an ES|QL expert specializing in OpenTelemetry trace queries. Complete the ES|QL query at the cursor. Return only the completion text.",
+          "You are an ES|QL expert specializing in OpenTelemetry trace queries. " +
+          "Complete the ES|QL query at the cursor. " +
+          "If a recent query error is shown, suggest a fix. " +
+          "If the user writes plain language (e.g. 'count traces by service'), " +
+          "complete with the valid ES|QL implementation of their intent. " +
+          "Return only the completion text.",
+        esqlGuide: true,
       }),
     ],
     [],
