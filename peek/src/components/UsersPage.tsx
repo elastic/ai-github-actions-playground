@@ -15,6 +15,7 @@ import Typography from "@mui/material/Typography";
 
 import { ElasticsearchClient, isElasticsearchError, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { copyToClipboard } from "../utils/copyToClipboard";
 
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -88,7 +89,8 @@ export default function UsersPage() {
   }, [search, users]);
 
   const copyQuery = useCallback(async () => {
-    await navigator.clipboard.writeText("GET /_security/user");
+    const copied = await copyToClipboard("GET /_security/user");
+    if (!copied) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, []);
