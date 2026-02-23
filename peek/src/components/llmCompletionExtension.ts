@@ -2,7 +2,7 @@ import { inlineCopilot } from "codemirror-copilot";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { StateEffect, StateField, type Extension } from "@codemirror/state";
-import { ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { type EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 import { useLLMStore } from "../store/useLLMStore";
 
@@ -48,20 +48,50 @@ export const recentEditsField = StateField.define<RecentEdit[]>({
 });
 
 // ---------------------------------------------------------------------------
-// Query-error side channel — pages set this after a failed ES|QL run so the
-// completion extension can suggest fixes.
+// Per-editor query error store — keyed by EditorView so each editor tracks
+// its own last query error independently.
 // ---------------------------------------------------------------------------
 
-let lastQueryError: string | null = null;
+const queryErrorMap = new WeakMap<EditorView, string | null>();
 
-/** Call from page components after a query fails. */
-export function setLastQueryError(error: string | null) {
-  lastQueryError = error;
+/** Set the last query error for a specific editor view. */
+export function setLastQueryError(error: string | null, view?: EditorView) {
+  if (view) {
+    queryErrorMap.set(view, error);
+  } else {
+    // Fallback: set on all tracked views (for callers that don't have a view ref)
+    globalLastQueryError = error;
+  }
 }
 
-/** Read the last query error (used internally by the extension). */
-export function getLastQueryError(): string | null {
-  return lastQueryError;
+/** Read the last query error for a specific editor view. */
+export function getLastQueryError(view?: EditorView): string | null {
+  if (view) {
+    return queryErrorMap.get(view) ?? globalLastQueryError;
+  }
+  return globalLastQueryError;
+}
+
+// Global fallback for callers (like useEsqlQuery) that don't have a view reference
+let globalLastQueryError: string | null = null;
+
+// ---------------------------------------------------------------------------
+// OpenAI client cache — avoids recreating clients on every completion request
+// ---------------------------------------------------------------------------
+
+const clientCache = new Map<string, ReturnType<typeof createOpenAI>>();
+
+function getOrCreateClient(apiKey: string, provider: string) {
+  const cacheKey = `${apiKey}|${provider}`;
+  let client = clientCache.get(cacheKey);
+  if (!client) {
+    client = createOpenAI({
+      apiKey,
+      ...(provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+    });
+    clientCache.set(cacheKey, client);
+  }
+  return client;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,14 +126,19 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
     ? `${options.prompt}\n\n${ESQL_SYNTAX_GUIDE}`
     : options.prompt;
 
-  // Closure variable synced from the StateField by the ViewPlugin below.
-  // This lets us access per-editor recent edits from the inlineCopilot
-  // callback which only receives (prefix, suffix).
+  // Closure variables synced from the StateField/view by the ViewPlugin below.
+  // This lets us access per-editor state from the inlineCopilot callback
+  // which only receives (prefix, suffix).
   let currentEdits: RecentEdit[] = [];
+  let currentView: EditorView | null = null;
 
   const syncPlugin = ViewPlugin.fromClass(
     class {
+      constructor(view: EditorView) {
+        currentView = view;
+      }
       update(update: ViewUpdate) {
+        currentView = update.view;
         currentEdits = update.state.field(recentEditsField, false) ?? [];
         // Clear recent edits when a completion is accepted
         if (update.transactions.some((tr) => tr.isUserEvent("input.complete"))) {
@@ -130,42 +165,44 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
       contextParts.push(`Recent edits:\n${editLines}`);
     }
 
-    // Last query error
-    const queryError = getLastQueryError();
+    // Last query error (per-editor or global fallback)
+    const queryError = getLastQueryError(currentView ?? undefined);
     if (queryError) {
       contextParts.push(`Last query error:\n  ${queryError}`);
     }
 
     const contextSection = contextParts.length > 0 ? `\n\n${contextParts.join("\n\n")}` : "";
 
-    const openai = createOpenAI({
-      apiKey: config.apiKey,
-      ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
-    });
-    const model =
-      config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
+    try {
+      const openai = getOrCreateClient(config.apiKey, config.provider);
+      const model =
+        config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
 
-    const result = await generateText({
-      model,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content:
-            `Complete the code at the cursor position.\n` +
-            `Text before cursor:\n${prefix}\n` +
-            `Text after cursor:\n${suffix}` +
-            contextSection +
-            `\n\nIMPORTANT: The user may type plain language descriptions as pseudo-code ` +
-            `(e.g. "count events by host", "filter where status > 400", "sort by timestamp descending"). ` +
-            `When the text before the cursor ends with natural language rather than valid syntax, ` +
-            `treat it as the user's intent and complete with the proper implementation. ` +
-            `Output only the completion text, nothing else.`,
-        },
-      ],
-    });
+      const result = await generateText({
+        model,
+        system: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content:
+              `Complete the code at the cursor position.\n` +
+              `Text before cursor:\n${prefix}\n` +
+              `Text after cursor:\n${suffix}` +
+              contextSection +
+              `\n\nIMPORTANT: The user may type plain language descriptions as pseudo-code ` +
+              `(e.g. "count events by host", "filter where status > 400", "sort by timestamp descending"). ` +
+              `When the text before the cursor ends with natural language rather than valid syntax, ` +
+              `treat it as the user's intent and complete with the proper implementation. ` +
+              `Output only the completion text, nothing else.`,
+          },
+        ],
+      });
 
-    return result.text.trim();
+      return result.text.trim();
+    } catch (err) {
+      console.error("LLM completion failed:", err);
+      return "";
+    }
   };
 
   return [recentEditsField, syncPlugin, ...inlineCopilot(fetchCompletion, options.delay ?? 500)];

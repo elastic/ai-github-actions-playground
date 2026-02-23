@@ -67,6 +67,12 @@ describe("useLLMStore", () => {
     expect(useLLMStore.getState().config.tabAutocompleteEnabled).toBe(true);
   });
 
+  it("setTabAutocompleteEnabled can disable the autocomplete toggle", () => {
+    useLLMStore.getState().setTabAutocompleteEnabled(true);
+    useLLMStore.getState().setTabAutocompleteEnabled(false);
+    expect(useLLMStore.getState().config.tabAutocompleteEnabled).toBe(false);
+  });
+
   it("addMessage appends a message", () => {
     useLLMStore.getState().addMessage({
       id: "msg-1",

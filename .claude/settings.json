@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "WebFetch(domain:next.platejs.org)",
+      "WebFetch(domain:www.npmjs.com)"
+    ]
+  }
+}
