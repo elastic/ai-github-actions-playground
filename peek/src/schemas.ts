@@ -22,6 +22,7 @@ export const visualizationTypeSchema = z.enum([
   "heatmap",
   "scatter",
   "histogram",
+  "markdown",
 ]);
 
 const panelLayoutSchema = z.object({

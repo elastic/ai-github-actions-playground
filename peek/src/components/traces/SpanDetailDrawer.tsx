@@ -18,6 +18,11 @@ import { getServiceColor } from "./traceColors";
 
 const DEFAULT_FIELD_MAPPING_SERVICE = "service.name";
 
+function formatEventTimestamp(ts: string): string {
+  const parsedMs = Date.parse(ts);
+  return Number.isNaN(parsedMs) ? ts : new Date(parsedMs).toISOString();
+}
+
 interface SpanDetailDrawerProps {
   span: Span | null;
   open: boolean;
@@ -182,7 +187,7 @@ export default function SpanDetailDrawer({
           <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Resource" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Links" sx={{ minHeight: 36, py: 0 }} />
-          {/* TODO: wire up Events tab; tracked in #253 */}
+          <Tab label="Events" sx={{ minHeight: 36, py: 0 }} />
         </Tabs>
 
         {/* Tab content */}
@@ -314,6 +319,49 @@ export default function SpanDetailDrawer({
                         onCopy={() => handleCopy(String(v))}
                       />
                     ))}
+                  </Box>
+                ))
+              )}
+            </Box>
+          )}
+
+          {tabIndex === 4 && (
+            <Box sx={{ p: 1 }}>
+              {!span.events || span.events.length === 0 ? (
+                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
+                  No events
+                </Typography>
+              ) : (
+                span.events.map((event, i) => (
+                  <Box key={i} sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
+                    <Box sx={{ px: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                        {event.name || "(unnamed event)"}
+                      </Typography>
+                      {event.timestamp && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1, fontFamily: "monospace" }}
+                        >
+                          {formatEventTimestamp(event.timestamp)}
+                        </Typography>
+                      )}
+                    </Box>
+                    {Object.keys(event.attributes).length > 0 ? (
+                      Object.entries(event.attributes).map(([key, value]) => (
+                        <KeyValueRow
+                          key={key}
+                          label={key}
+                          value={String(value)}
+                          onCopy={() => handleCopy(String(value))}
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="caption" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+                        No attributes
+                      </Typography>
+                    )}
                   </Box>
                 ))
               )}

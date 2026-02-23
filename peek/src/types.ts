@@ -88,6 +88,9 @@ export interface HistogramChartOptions {
   bins?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface MarkdownOptions {}
+
 export type VisualizationOptions =
   | TimeSeriesOptions
   | BarChartOptions
@@ -97,7 +100,8 @@ export type VisualizationOptions =
   | PieChartOptions
   | HeatmapChartOptions
   | ScatterChartOptions
-  | HistogramChartOptions;
+  | HistogramChartOptions
+  | MarkdownOptions;
 
 type InferredPanelDefinition = z.infer<typeof panelDefinitionSchema>;
 export type PanelDefinition = Omit<InferredPanelDefinition, "options"> & {

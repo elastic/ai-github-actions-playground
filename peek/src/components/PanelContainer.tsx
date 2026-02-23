@@ -19,6 +19,7 @@ import { buildQueryParams } from "../services/datemath";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import Visualization from "./visualizations/Visualization";
+import { getVizEntry } from "./visualizations/vizRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
 
 interface Props {
@@ -31,6 +32,9 @@ export default function PanelContainer({ panel }: Props) {
   const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const setEditingPanelId = useDashboardStore((s) => s.setEditingPanelId);
   const duplicatePanel = useDashboardStore((s) => s.duplicatePanel);
+
+  const vizEntry = getVizEntry(panel.visualization);
+  const supportsQuery = vizEntry?.supportsQuery ?? true;
 
   const [data, setData] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -74,6 +78,12 @@ export default function PanelContainer({ panel }: Props) {
   }, []);
 
   const fetchData = useCallback(async () => {
+    if (!supportsQuery) {
+      abortRef.current?.abort();
+      setLoading(false);
+      setError(null);
+      return;
+    }
     if (!connection || !panel.query.trim()) return;
 
     abortRef.current?.abort();
@@ -116,7 +126,7 @@ export default function PanelContainer({ panel }: Props) {
         setLoading(false);
       }
     }
-  }, [connection, panel.query, timeRange, parameters]);
+  }, [supportsQuery, connection, panel.query, timeRange, parameters]);
 
   useEffect(() => {
     fetchData();
@@ -169,7 +179,7 @@ export default function PanelContainer({ panel }: Props) {
           {panel.title}
         </Typography>
         {loading && <CircularProgress size={14} sx={{ mr: 0.5 }} />}
-        {!loading && executionTimeMs !== null && data && lastRefreshAt && (
+        {supportsQuery && !loading && executionTimeMs !== null && data && lastRefreshAt && (
           <Tooltip title={`Refreshed at ${lastRefreshAt.toLocaleTimeString()}`}>
             <Typography
               component="span"
@@ -192,7 +202,7 @@ export default function PanelContainer({ panel }: Props) {
             </Typography>
           </Tooltip>
         )}
-        {!loading && error && (
+        {supportsQuery && !loading && error && (
           <Tooltip title={error}>
             <ErrorOutlineIcon sx={{ fontSize: 14, color: "error.main", mr: 0.5 }} />
           </Tooltip>
@@ -210,11 +220,13 @@ export default function PanelContainer({ panel }: Props) {
             </span>
           </Tooltip>
         )}
-        <Tooltip title="Refresh">
-          <IconButton size="small" onClick={fetchData} disabled={loading}>
-            <RefreshIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
+        {supportsQuery && (
+          <Tooltip title="Refresh">
+            <IconButton size="small" onClick={fetchData} disabled={loading}>
+              <RefreshIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        )}
         <Tooltip title="Duplicate panel">
           <IconButton
             size="small"
@@ -234,7 +246,14 @@ export default function PanelContainer({ panel }: Props) {
       </Box>
 
       <Box sx={{ flex: 1, overflow: "auto", position: "relative", p: 1 }}>
-        {error ? (
+        {!supportsQuery ? (
+          <Visualization
+            type={panel.visualization}
+            query={panel.query}
+            data={{ columns: [], values: [] } as EsqlResponse}
+            options={panel.options}
+          />
+        ) : error ? (
           <Box
             sx={{
               display: "flex",
