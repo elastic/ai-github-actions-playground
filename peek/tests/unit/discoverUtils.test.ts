@@ -305,6 +305,16 @@ describe("buildColumnInsightsQuery", () => {
     );
   });
 
+  it("drops post-aggregation steps after an existing STATS stage", () => {
+    expect(
+      buildColumnInsightsQuery(
+        "FROM logs-* | STATS avg_rt = AVG(rt) BY service | WHERE avg_rt > 100",
+        "status",
+        "keyword",
+      ),
+    ).toBe("FROM logs-* | STATS count = COUNT(*) BY status | SORT count DESC | LIMIT 10");
+  });
+
   it("preserves WHERE filters in the base query", () => {
     expect(
       buildColumnInsightsQuery(

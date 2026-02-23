@@ -192,10 +192,13 @@ export function buildColumnInsightsQuery(
   const steps = splitEsqlPipeline(baseQuery);
   if (steps.length === 0) return "";
 
-  // Strip SORT, LIMIT, and STATS steps so the profile query covers all matching documents.
-  const filteredSteps = steps.filter(
-    (s) => !/^SORT\s+/i.test(s) && !/^LIMIT\s+/i.test(s) && !/^STATS\s+/i.test(s),
-  );
+  // Strip SORT/LIMIT and stop at STATS so post-aggregation stages are not preserved.
+  const filteredSteps: string[] = [];
+  for (const step of steps) {
+    if (/^SORT\s+/i.test(step) || /^LIMIT\s+/i.test(step)) continue;
+    if (/^STATS\s+/i.test(step)) break;
+    filteredSteps.push(step);
+  }
 
   const quotedCol = quoteEsqlIdentifier(columnName);
 
