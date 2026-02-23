@@ -13,9 +13,11 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId } from "../routes/manifest";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 
 interface NavItem {
   label: string;
@@ -62,10 +64,14 @@ function buildNavSections(): NavSection[] {
 const NAV_SECTIONS: NavSection[] = buildNavSections();
 
 export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {
-  const connected = useDashboardStore((s) => s.connected);
-  const themeMode = useDashboardStore((s) => s.themeMode);
-  const setConnectionDialogOpen = useDashboardStore((s) => s.setConnectionDialogOpen);
-  const setThemeMode = useDashboardStore((s) => s.setThemeMode);
+  const connected = useConnectionStore((s) => s.connected);
+  const { themeMode, setConnectionDialogOpen, setThemeMode } = useUIStore(
+    useShallow((s) => ({
+      themeMode: s.themeMode,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+      setThemeMode: s.setThemeMode,
+    })),
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);

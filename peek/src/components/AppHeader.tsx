@@ -24,6 +24,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ProfileHealth, TimeRange } from "../types";
@@ -66,39 +68,40 @@ function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
 }
 
 export default function AppHeader() {
+  const { dashboard, setTimeRange, setRefreshInterval, addPanel } = useDashboardStore(
+    useShallow((s) => ({
+      dashboard: s.dashboard,
+      setTimeRange: s.setTimeRange,
+      setRefreshInterval: s.setRefreshInterval,
+      addPanel: s.addPanel,
+    })),
+  );
   const {
     connected,
-    dashboard,
     connectionProfiles,
     activeProfileId,
     profileHealthMap,
-    setTimeRange,
-    setRefreshInterval,
-    setEditingPanelId,
-    addPanel,
     setConnection,
     setConnected,
     setCapabilities,
     setActiveProfileId,
     setProfileHealth,
-    setConnectionDialogOpen,
-    setCommandPaletteOpen,
-  } = useDashboardStore(
+  } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,
-      dashboard: s.dashboard,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
       profileHealthMap: s.profileHealthMap,
-      setTimeRange: s.setTimeRange,
-      setRefreshInterval: s.setRefreshInterval,
-      setEditingPanelId: s.setEditingPanelId,
-      addPanel: s.addPanel,
       setConnection: s.setConnection,
       setConnected: s.setConnected,
       setCapabilities: s.setCapabilities,
       setActiveProfileId: s.setActiveProfileId,
       setProfileHealth: s.setProfileHealth,
+    })),
+  );
+  const { setEditingPanelId, setConnectionDialogOpen, setCommandPaletteOpen } = useUIStore(
+    useShallow((s) => ({
+      setEditingPanelId: s.setEditingPanelId,
       setConnectionDialogOpen: s.setConnectionDialogOpen,
       setCommandPaletteOpen: s.setCommandPaletteOpen,
     })),

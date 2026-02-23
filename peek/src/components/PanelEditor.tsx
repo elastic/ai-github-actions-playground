@@ -18,8 +18,12 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
+import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
+import { useQueryStore } from "../store/useQueryStore";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
 import type {
@@ -40,7 +44,7 @@ import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import { getAllVizEntries, getVizEntry } from "./visualizations/vizRegistry";
 
 export default function PanelEditor() {
-  const editingId = useDashboardStore((s) => s.editingPanelId);
+  const editingId = useUIStore((s) => s.editingPanelId);
   const panels = useDashboardStore((s) => s.dashboard.panels);
   const panel = panels.find((p) => p.id === editingId);
 
@@ -52,15 +56,27 @@ export default function PanelEditor() {
 }
 
 function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
-  const setEditingId = useDashboardStore((s) => s.setEditingPanelId);
-  const updatePanel = useDashboardStore((s) => s.updatePanel);
-  const removePanel = useDashboardStore((s) => s.removePanel);
-  const connection = useDashboardStore((s) => s.connection);
-  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
-  const parameters = useDashboardStore((s) => s.dashboard.parameters);
-  const themeMode = useDashboardStore((s) => s.themeMode);
-  const queryHistory = useDashboardStore((s) => s.queryHistory);
-  const appendQueryToHistory = useDashboardStore((s) => s.appendQueryToHistory);
+  const { setEditingPanelId: setEditingId, themeMode } = useUIStore(
+    useShallow((s) => ({
+      setEditingPanelId: s.setEditingPanelId,
+      themeMode: s.themeMode,
+    })),
+  );
+  const { updatePanel, removePanel, timeRange, parameters } = useDashboardStore(
+    useShallow((s) => ({
+      updatePanel: s.updatePanel,
+      removePanel: s.removePanel,
+      timeRange: s.dashboard.timeRange,
+      parameters: s.dashboard.parameters,
+    })),
+  );
+  const connection = useConnectionStore((s) => s.connection);
+  const { queryHistory, appendQueryToHistory } = useQueryStore(
+    useShallow((s) => ({
+      queryHistory: s.queryHistory,
+      appendQueryToHistory: s.appendQueryToHistory,
+    })),
+  );
 
   const [title, setTitle] = useState(panel.title);
   const [query, setQuery] = useState(panel.query);
