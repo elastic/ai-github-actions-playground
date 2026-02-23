@@ -93,6 +93,7 @@ jobs:
             // ── Parse smoke test results ──────────────────────────────
             let smokeSection = "";
             let testCount = { total: 0, passed: 0, failed: 0, flaky: 0, skipped: 0 };
+            let smokeResultsParsed = false;
 
             try {
               const results = JSON.parse(
@@ -110,6 +111,7 @@ jobs:
                 flaky: stats.flaky || 0,
                 skipped: stats.skipped || 0,
               };
+              smokeResultsParsed = true;
 
               const smokeStatus =
                 testCount.failed === 0
@@ -251,6 +253,11 @@ jobs:
 
             // ── Recommendations ───────────────────────────────────────
             const recommendations = [];
+            if (!smokeResultsParsed) {
+              recommendations.push(
+                "🔧 Smoke test results were unavailable or invalid — rerun this workflow and verify `peek/smoke-results.json` is generated.",
+              );
+            }
             if (testCount.failed > 0) {
               recommendations.push(
                 "🔧 Fix failing E2E smoke tests before merging.",
@@ -266,14 +273,14 @@ jobs:
                 "⚠️ Flaky tests detected — consider stabilizing them.",
               );
             }
-            if (testCount.failed === 0 && preflightClean) {
+            if (smokeResultsParsed && testCount.failed === 0 && preflightClean) {
               recommendations.push(
                 "✨ All smoke tests pass and no UI errors detected. Ready for review.",
               );
             }
 
             // ── Compose comment ───────────────────────────────────────
-            const allGood = testCount.failed === 0 && preflightClean;
+            const allGood = smokeResultsParsed && testCount.failed === 0 && preflightClean;
             const statusEmoji = allGood ? "✅" : "❌";
             const MARKER = "<!-- ui-smoke-test-pr-review -->";
 
