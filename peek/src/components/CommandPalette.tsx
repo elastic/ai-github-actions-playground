@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
+import Autocomplete from "@mui/material/Autocomplete";
+import type { PopperProps } from "@mui/material/Popper";
 import InputBase from "@mui/material/InputBase";
-import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -150,49 +151,21 @@ function useCommands(): Command[] {
   ]);
 }
 
-function filterCommands(commands: Command[], search: string): Command[] {
-  if (!search.trim()) return commands;
-  const lower = search.toLowerCase();
-  return commands.filter(
-    (cmd) =>
-      cmd.label.toLowerCase().includes(lower) ||
-      cmd.group.toLowerCase().includes(lower) ||
-      cmd.keywords?.toLowerCase().includes(lower),
-  );
-}
-
-function groupCommands(commands: Command[]): Array<{ group: string; items: Command[] }> {
-  const groups = new Map<string, Command[]>();
-  for (const cmd of commands) {
-    const items = groups.get(cmd.group) ?? [];
-    items.push(cmd);
-    groups.set(cmd.group, items);
-  }
-  return Array.from(groups.entries()).map(([group, items]) => ({ group, items }));
+function CommandPalettePopper({ children }: PopperProps) {
+  return <Box sx={{ width: "100%" }}>{children as React.ReactNode}</Box>;
 }
 
 export default function CommandPalette() {
   const open = useDashboardStore((s) => s.commandPaletteOpen);
   const setOpen = useDashboardStore((s) => s.setCommandPaletteOpen);
   const [search, setSearch] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const commands = useCommands();
-
-  const filtered = useMemo(() => filterCommands(commands, search), [commands, search]);
-  const grouped = useMemo(() => groupCommands(filtered), [filtered]);
 
   // Reset state when dialog opens and focus the input
   const handleDialogEntered = useCallback(() => {
     setSearch("");
-    setSelectedIndex(0);
     inputRef.current?.focus();
-  }, []);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setSelectedIndex(0);
   }, []);
 
   // Global Ctrl/Cmd+K shortcut
@@ -211,32 +184,6 @@ export default function CommandPalette() {
     cmd.onExecute();
     setSearch("");
   }, []);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, filtered.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === "Enter" && filtered.length > 0) {
-        e.preventDefault();
-        const cmd = filtered[selectedIndex];
-        if (cmd) handleExecute(cmd);
-      }
-    },
-    [filtered, selectedIndex, handleExecute],
-  );
-
-  // Keep selected item in view
-  useEffect(() => {
-    if (!listRef.current) return;
-    const item = listRef.current.querySelectorAll('[role="option"]')[selectedIndex];
-    if (item && typeof item.scrollIntoView === "function") {
-      item.scrollIntoView({ block: "nearest" });
-    }
-  }, [selectedIndex]);
 
   return (
     <Dialog
@@ -258,103 +205,112 @@ export default function CommandPalette() {
         },
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          px: 2,
-          py: 1,
-          borderBottom: 1,
-          borderColor: "divider",
+      <Autocomplete<Command>
+        open
+        disablePortal
+        options={commands}
+        groupBy={(option) => option.group}
+        getOptionLabel={(option) => option.label}
+        filterOptions={(options, { inputValue }) => {
+          if (!inputValue.trim()) return options;
+          const lower = inputValue.toLowerCase();
+          return options.filter(
+            (cmd) =>
+              cmd.label.toLowerCase().includes(lower) ||
+              cmd.group.toLowerCase().includes(lower) ||
+              cmd.keywords?.toLowerCase().includes(lower),
+          );
         }}
-      >
-        <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
-        <InputBase
-          inputRef={inputRef}
-          fullWidth
-          placeholder="Type a command or search…"
-          value={search}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          inputProps={{
-            "aria-label": "Search commands",
-            role: "combobox",
-            "aria-expanded": open,
-            "aria-controls": "command-palette-list",
-            "aria-activedescendant":
-              filtered.length > 0 ? `command-palette-item-${selectedIndex}` : undefined,
-          }}
-          sx={{ fontSize: "1rem" }}
-        />
-        <Chip label="esc" size="small" variant="outlined" sx={{ ml: 1, fontSize: "0.7rem" }} />
-      </Box>
-      <DialogContent sx={{ p: 0 }}>
-        {filtered.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
-              No matching commands
-            </Typography>
-          </Box>
-        ) : (
-          <List
-            ref={listRef}
-            dense
-            id="command-palette-list"
-            role="listbox"
-            aria-label="Commands"
-            sx={{ py: 0.5 }}
+        value={null}
+        inputValue={search}
+        onInputChange={(_, value, reason) => {
+          if (reason !== "reset") setSearch(value);
+        }}
+        onChange={(_, option) => {
+          if (option) handleExecute(option);
+        }}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        noOptionsText="No matching commands"
+        PopperComponent={CommandPalettePopper}
+        PaperComponent={({ children }) => <DialogContent sx={{ p: 0 }}>{children}</DialogContent>}
+        ListboxProps={
+          {
+            id: "command-palette-list",
+            "aria-label": "Commands",
+          } as React.HTMLAttributes<HTMLUListElement>
+        }
+        renderInput={(params) => (
+          <Box
+            ref={params.InputProps.ref}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              px: 2,
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
           >
-            {grouped.map((section) => (
-              <Box key={section.group}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    px: 2,
-                    py: 0.75,
-                    display: "block",
-                    color: "text.secondary",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    fontSize: "0.65rem",
-                  }}
-                >
-                  {section.group}
-                </Typography>
-                {section.items.map((cmd) => {
-                  const flatIndex = filtered.indexOf(cmd);
-                  return (
-                    <ListItemButton
-                      key={cmd.id}
-                      id={`command-palette-item-${flatIndex}`}
-                      role="option"
-                      aria-selected={flatIndex === selectedIndex}
-                      selected={flatIndex === selectedIndex}
-                      onClick={() => handleExecute(cmd)}
-                      onMouseEnter={() => setSelectedIndex(flatIndex)}
-                      sx={{
-                        px: 2,
-                        py: 0.75,
-                        mx: 0.5,
-                        borderRadius: 1,
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 32 }}>{cmd.icon}</ListItemIcon>
-                      <ListItemText
-                        primary={cmd.label}
-                        primaryTypographyProps={{
-                          fontSize: "0.875rem",
-                          noWrap: true,
-                        }}
-                      />
-                    </ListItemButton>
-                  );
-                })}
-              </Box>
-            ))}
-          </List>
+            <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
+            <InputBase
+              inputRef={inputRef}
+              fullWidth
+              placeholder="Type a command or search…"
+              inputProps={{
+                ...params.inputProps,
+                "aria-label": "Search commands",
+              }}
+              sx={{ fontSize: "1rem" }}
+            />
+            <Chip label="esc" size="small" variant="outlined" sx={{ ml: 1, fontSize: "0.7rem" }} />
+          </Box>
         )}
-      </DialogContent>
+        renderGroup={(params) => (
+          <Box key={params.key}>
+            <Typography
+              variant="caption"
+              sx={{
+                px: 2,
+                py: 0.75,
+                display: "block",
+                color: "text.secondary",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                fontSize: "0.65rem",
+              }}
+            >
+              {params.group}
+            </Typography>
+            {params.children}
+          </Box>
+        )}
+        renderOption={(props, option) => {
+          const { key, ...optionProps } = props;
+          return (
+            <ListItemButton
+              key={key}
+              {...optionProps}
+              component="li"
+              sx={{
+                px: 2,
+                py: 0.75,
+                mx: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>{option.icon}</ListItemIcon>
+              <ListItemText
+                primary={option.label}
+                primaryTypographyProps={{
+                  fontSize: "0.875rem",
+                  noWrap: true,
+                }}
+              />
+            </ListItemButton>
+          );
+        }}
+      />
     </Dialog>
   );
 }
