@@ -50,6 +50,7 @@ Elastic Peek is a browser-based dashboard builder that connects directly to your
 
 - **Node.js** `^20.19.0` or `>=22.12.0` (required by Vite 7)
 - **npm** `>=10` (bundled with Node.js 20/22)
+- **GNU Make** — pre-installed on macOS and most Linux distributions. On Windows, install via [Chocolatey](https://chocolatey.org/) (`choco install make`), [Scoop](https://scoop.sh/) (`scoop install make`), or use WSL.
 
 Use a version manager such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to switch Node versions quickly. A `.nvmrc` file is included in this repo — run `nvm use` or `fnm use` at the repo root to activate the correct version automatically.
 
@@ -60,10 +61,20 @@ make setup   # install dependencies
 make serve   # start dev server at http://localhost:3000
 ```
 
+If `make` is unavailable, run the equivalent npm commands directly:
+
+```bash
+cd peek
+npm install   # install dependencies
+npm run dev   # start dev server at http://localhost:3000
+```
+
 Or use the built-in proxy to avoid CORS (see [DEVELOPING.md](DEVELOPING.md#running-with-a-proxy)):
 
 ```bash
 ES_URL=http://localhost:9200 make serve-proxy
+# or without make:
+cd peek && ES_URL=http://localhost:9200 npm run dev
 ```
 
 ### In-Product Docs
