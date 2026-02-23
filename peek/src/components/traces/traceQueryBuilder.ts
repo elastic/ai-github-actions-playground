@@ -171,7 +171,7 @@ export function buildTraceTimeseriesQuery(
     limit: 10000,
     rootSpansOnly: true,
   });
-  return `${body} | STATS count = COUNT(*) BY BUCKET(${fields.timestamp}, 50)`;
+  return `${body} | EVAL duration_ms = ${fields.durationUs} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50)`;
 }
 
 /**

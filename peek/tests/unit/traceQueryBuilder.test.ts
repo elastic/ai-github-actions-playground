@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+
 import {
   buildTraceSearchQuery,
   buildTraceSearchQueryParts,
@@ -237,7 +238,9 @@ describe("buildTraceSearchQueryParts", () => {
 describe("buildTraceTimeseriesQuery", () => {
   it("generates a STATS aggregation with BUCKET", () => {
     const query = buildTraceTimeseriesQuery(EMPTY_FILTERS);
-    expect(query).toContain("STATS count = COUNT(*)");
+    expect(query).toContain("request_count = COUNT(*)");
+    expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
+    expect(query).toContain("p95_latency_ms = PERCENTILE(duration_ms, 95)");
     expect(query).toContain("BUCKET(@timestamp");
   });
 

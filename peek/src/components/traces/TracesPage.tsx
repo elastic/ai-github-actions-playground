@@ -21,12 +21,14 @@ import type { TracesViewMode } from "../../store/useTracesStore";
 import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
+import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
+  buildTraceTimeseriesQuery,
   DEFAULT_FIELD_MAPPING,
 } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
@@ -60,6 +62,7 @@ export default function TracesPage() {
   const resetFilters = useTracesStore((s) => s.resetFilters);
 
   const [result, setResult] = useState<EsqlResponse | null>(null);
+  const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
   const [serviceFilter, setServiceFilter] = useState("");
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
@@ -96,9 +99,21 @@ export default function TracesPage() {
     },
   });
 
+  const {
+    runQuery: runTimeseriesQuery,
+    loading: timeseriesLoading,
+    error: timeseriesError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => setTimeseriesResult(data),
+    onFailure: () => setTimeseriesResult(null),
+  });
+
   const handleSearch = useCallback(() => {
+    setTimeseriesResult(null);
     runSearchQuery(effectiveQuery);
-  }, [runSearchQuery, effectiveQuery]);
+    runTimeseriesQuery(buildTraceTimeseriesQuery(filters));
+  }, [runSearchQuery, runTimeseriesQuery, effectiveQuery, filters]);
 
   const handleSelectTrace = useCallback(
     (traceId: string) => {
@@ -368,6 +383,7 @@ export default function TracesPage() {
 
       {searchError && <Alert severity="error">{searchError}</Alert>}
       {detailError && <Alert severity="error">{detailError}</Alert>}
+      {timeseriesError && <Alert severity="error">{timeseriesError}</Alert>}
 
       {/* Content area */}
       <Box
@@ -581,21 +597,40 @@ export default function TracesPage() {
                 onPointClick={(traceId) => handleSelectTrace(traceId)}
               />
             )}
-            {result && viewMode === "timeseries" && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Timeseries view requires running an aggregation query. Use the List or Scatter
-                  view for now.
-                </Typography>
-              </Box>
-            )}
+            {result &&
+              viewMode === "timeseries" &&
+              (timeseriesLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <CircularProgress size={32} />
+                </Box>
+              ) : timeseriesResult ? (
+                <Box sx={{ height: "100%" }}>
+                  <TimeSeriesChart
+                    data={timeseriesResult}
+                    options={{ smooth: true, showArea: false, stacked: false }}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Run search to load trace volume and latency trends.
+                  </Typography>
+                </Box>
+              ))}
             {result && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
