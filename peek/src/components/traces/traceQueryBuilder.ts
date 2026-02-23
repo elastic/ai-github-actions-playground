@@ -59,6 +59,10 @@ export interface TraceFilters {
   minDurationMs: number | null;
   maxDurationMs: number | null;
   tags: Array<{ key: string; value: string; exclude?: boolean }>;
+  /** ES|QL date expression for the lower time bound, e.g. "NOW() - 1 hour" */
+  timeFrom: string | null;
+  /** ES|QL date expression for the upper time bound, e.g. "NOW()" */
+  timeTo: string | null;
 }
 
 export const EMPTY_FILTERS: TraceFilters = {
@@ -68,6 +72,8 @@ export const EMPTY_FILTERS: TraceFilters = {
   minDurationMs: null,
   maxDurationMs: null,
   tags: [],
+  timeFrom: null,
+  timeTo: null,
 };
 
 /** Structured query parts returned by buildTraceSearchQueryParts */
@@ -124,6 +130,14 @@ export function buildTraceSearchQueryParts(
     } else {
       whereClauses.push(`${validatedKey} == "${escapeEsqlString(tag.value)}"`);
     }
+  }
+
+  if (filters.timeFrom != null) {
+    whereClauses.push(`${fields.timestamp} >= ${filters.timeFrom}`);
+  }
+
+  if (filters.timeTo != null) {
+    whereClauses.push(`${fields.timestamp} <= ${filters.timeTo}`);
   }
 
   if (whereClauses.length > 0) {
@@ -192,7 +206,7 @@ export function buildTraceTimeseriesQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
   options: { from?: string; to?: string } = {},
 ): string {
-  const { from = "NOW() - 1 day", to = "NOW()" } = options;
+  const { from = filters.timeFrom ?? "NOW() - 1 day", to = filters.timeTo ?? "NOW()" } = options;
   const { body } = buildTraceSearchQueryParts(filters, fields, {
     limit: 10000,
     rootSpansOnly: true,
