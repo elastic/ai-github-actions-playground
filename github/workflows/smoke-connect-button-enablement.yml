@@ -1,0 +1,34 @@
+name: Smoke Connect Button Enablement
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    with:
+      issue-title-prefix: "[smoke-connect-button-enablement]"
+      additional-instructions: |
+        You are the Playwright Smoke Agent for connect button enablement.
+        Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
+        - `shows disabled Connect button until a URL is entered`
+
+        Run:
+        1. `make setup`
+        2. `cd peek && npx playwright install chromium`
+        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "shows disabled Connect button until a URL is entered"`
+
+        If the check fails, create/update one issue with:
+        - the failing test title and assertion/locator output
+        - command output needed to reproduce
+        - any screenshot/preflight diagnostics path you generated
+
+        If the check passes, do not open an issue.
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
