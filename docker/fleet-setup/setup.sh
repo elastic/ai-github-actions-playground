@@ -43,7 +43,7 @@ while [ -z "$TOKEN" ]; do
   if [ -n "$RESP" ]; then
     # Extract api_key for our policy_id using grep/sed (no jq available)
     TOKEN=$(printf '%s' "$RESP" | \
-      grep -o '"policy_id":"[^"]*"[^}]*"api_key":"[^"]*"' | \
+      grep -Eo '"policy_id":"[^"]*"[^}]*"api_key":"[^"]*"|"api_key":"[^"]*"[^}]*"policy_id":"[^"]*"' | \
       grep "\"policy_id\":\"${POLICY_ID}\"" | \
       grep -o '"api_key":"[^"]*"' | \
       head -1 | \
