@@ -28,7 +28,9 @@ import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
+import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
+import { buildQueryParams } from "../services/datemath";
 
 import { filterColumnsByName, filterEsqlResult, toCsv, applyEsqlSort } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
@@ -71,6 +73,7 @@ export default function DiscoverPage() {
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
+  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
@@ -83,6 +86,19 @@ export default function DiscoverPage() {
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
+
+  const buildRequest = useCallback(
+    (queryText: string): EsqlQueryParams => {
+      const body: EsqlQueryParams = { query: queryText };
+      if (!timeRange) return body;
+      const queryParams = buildQueryParams(queryText, timeRange);
+      if (queryParams.length > 0) {
+        body.params = queryParams;
+      }
+      return body;
+    },
+    [timeRange],
+  );
 
   const {
     runQuery,
@@ -98,6 +114,7 @@ export default function DiscoverPage() {
     connection,
     queryContextView,
     profileMode,
+    buildRequest,
     onSuccess: (data, executedQuery) => {
       setResult(data);
       // By default select all fields
