@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
@@ -83,7 +83,9 @@ describe("CommandPalette", () => {
 
     await user.type(screen.getByLabelText("Search commands"), "zzzznonexistent");
 
-    expect(screen.getByText("No matching commands")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("No matching commands")).toBeInTheDocument();
+    });
   });
 
   it("navigates to a page when a command is clicked", async () => {

@@ -14,7 +14,8 @@ import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import {
   computeCheckinStaleness,
-  loadElasticAgentInventory,
+  formatFleetTime,
+  loadElasticAgentInfo,
   loadElasticAgentLogs,
   loadElasticAgentMetrics,
   type ElasticAgentInfo,
@@ -63,12 +64,11 @@ export default function FleetAgentPage() {
     setError(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const [inventory, agentLogs, agentMetrics] = await Promise.all([
-        loadElasticAgentInventory(client),
+      const [agent, agentLogs, agentMetrics] = await Promise.all([
+        loadElasticAgentInfo(client, decodedAgentId),
         loadElasticAgentLogs(client, decodedAgentId, { size: 200 }),
         loadElasticAgentMetrics(client, decodedAgentId, 60),
       ]);
-      const agent = inventory.agents.find((a) => a.agentId === decodedAgentId) ?? null;
       const fallbackAgent =
         !agent && (agentLogs.length > 0 || agentMetrics.length > 0)
           ? {
@@ -243,7 +243,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
             {recentErrors.map((log, i) => (
               <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "baseline" }}>
                 <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                  {formatLogTimestamp(log.timestamp)}
+                  {formatFleetTime(log.timestamp)}
                 </Typography>
                 {log.component && (
                   <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
@@ -344,7 +344,7 @@ function AgentLogs({
                 flexShrink: 0,
               }}
             >
-              {formatLogTimestamp(log.timestamp)}
+              {formatFleetTime(log.timestamp)}
             </Typography>
             <Typography
               component="span"
@@ -408,7 +408,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
       xAxis: {
         ...theme.xAxis,
         type: "category",
-        data: sorted.map((m) => formatLogTimestamp(m.timestamp)),
+        data: sorted.map((m) => formatFleetTime(m.timestamp)),
         axisLabel: { ...theme.xAxis?.axisLabel, rotate: 30, fontSize: 10 },
       },
       yAxis: { ...theme.yAxis, type: "value", name: "CPU %", axisLabel: { formatter: "{value}%" } },
@@ -434,7 +434,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
       xAxis: {
         ...theme.xAxis,
         type: "category",
-        data: sorted.map((m) => formatLogTimestamp(m.timestamp)),
+        data: sorted.map((m) => formatFleetTime(m.timestamp)),
         axisLabel: { ...theme.xAxis?.axisLabel, rotate: 30, fontSize: 10 },
       },
       yAxis: {
@@ -465,7 +465,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
       xAxis: {
         ...theme.xAxis,
         type: "category",
-        data: sorted.map((m) => formatLogTimestamp(m.timestamp)),
+        data: sorted.map((m) => formatFleetTime(m.timestamp)),
         axisLabel: { ...theme.xAxis?.axisLabel, rotate: 30, fontSize: 10 },
       },
       yAxis: { ...theme.yAxis, type: "value", name: "Events Total" },
@@ -536,15 +536,6 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatLogTimestamp(ts: string): string {
-  if (!ts) return "";
-  try {
-    return new Date(ts).toLocaleTimeString();
-  } catch {
-    return ts;
-  }
-}
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return "0 B";

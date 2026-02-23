@@ -4,7 +4,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import type { FleetOutputHealth } from "../../services/fleet";
+import { formatFleetTimestamp, type FleetOutputHealth } from "../../services/fleet";
 
 interface Props {
   outputs: FleetOutputHealth[];
@@ -15,15 +15,6 @@ const STATE_COLOR: Record<string, "success" | "warning" | "error" | "default"> =
   DEGRADED: "warning",
   UNHEALTHY: "error",
 };
-
-function formatTimestamp(ts: string): string {
-  if (!ts) return "";
-  try {
-    return new Date(ts).toLocaleString();
-  } catch {
-    return ts;
-  }
-}
 
 export default function FleetOutputsList({ outputs }: Props) {
   if (outputs.length === 0) {
@@ -55,7 +46,7 @@ export default function FleetOutputsList({ outputs }: Props) {
           )}
           {o.timestamp && (
             <Typography variant="caption" color="text.secondary">
-              {formatTimestamp(o.timestamp)}
+              {formatFleetTimestamp(o.timestamp)}
             </Typography>
           )}
         </Paper>

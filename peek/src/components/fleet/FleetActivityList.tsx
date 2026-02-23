@@ -5,7 +5,11 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import type { FleetAction, FleetActionResult } from "../../services/fleet";
+import {
+  formatFleetTimestamp,
+  type FleetAction,
+  type FleetActionResult,
+} from "../../services/fleet";
 
 interface Props {
   actions: FleetAction[];
@@ -18,15 +22,6 @@ const TYPE_COLOR: Record<string, "primary" | "secondary" | "warning" | "info" | 
   UPGRADE: "info",
   INPUT_ACTION: "secondary",
 };
-
-function formatTimestamp(ts: string): string {
-  if (!ts) return "";
-  try {
-    return new Date(ts).toLocaleString();
-  } catch {
-    return ts;
-  }
-}
 
 export default function FleetActivityList({ actions, actionResults }: Props) {
   const resultsByAction = useMemo(() => {
@@ -65,7 +60,7 @@ export default function FleetActivityList({ actions, actionResults }: Props) {
                 variant="outlined"
               />
               <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                {formatTimestamp(action.createdAt)}
+                {formatFleetTimestamp(action.createdAt)}
               </Typography>
               {targetCount > 0 && (
                 <Chip
@@ -98,7 +93,7 @@ export default function FleetActivityList({ actions, actionResults }: Props) {
 
             {action.expiration && (
               <Typography variant="caption" color="text.secondary" component="div">
-                Expires: {formatTimestamp(action.expiration)}
+                Expires: {formatFleetTimestamp(action.expiration)}
               </Typography>
             )}
           </Paper>

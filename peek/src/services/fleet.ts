@@ -539,6 +539,75 @@ export async function loadElasticAgentInventory(
 }
 
 // ---------------------------------------------------------------------------
+// Single Elastic Agent info (filtered inventory for one agent)
+// ---------------------------------------------------------------------------
+
+export async function loadElasticAgentInfo(
+  client: ElasticsearchClient,
+  agentId: string,
+): Promise<ElasticAgentInfo | null> {
+  const data = await gracefulSearch(client, "logs-elastic_agent*", {
+    size: 0,
+    query: {
+      bool: {
+        must: [{ term: { "agent.id": agentId } }, { range: { "@timestamp": { gte: "now-1h" } } }],
+      },
+    },
+    aggs: {
+      agents: {
+        terms: { field: "agent.id", size: 1 },
+        aggs: {
+          latest: {
+            top_hits: {
+              size: 1,
+              sort: [{ "@timestamp": { order: "desc" } }],
+              _source: [
+                "agent.id",
+                "agent.version",
+                "host.hostname",
+                "host.os.name",
+                "host.os.platform",
+                "host.os.version",
+                "host.os.full",
+                "@timestamp",
+              ],
+            },
+          },
+          errors: {
+            filter: { term: { "log.level": "error" } },
+          },
+        },
+      },
+    },
+  });
+  if (!data?.aggregations) return null;
+  const agg = data.aggregations.agents as {
+    buckets?: Array<{
+      key: string;
+      doc_count: number;
+      latest: { hits: { hits: Array<{ _source: Record<string, unknown> }> } };
+      errors: { doc_count: number };
+    }>;
+  };
+  const bucket = agg?.buckets?.[0];
+  if (!bucket) return null;
+  const source = bucket.latest.hits.hits[0]?._source ?? {};
+  const osName = readNestedString(source, ["host", "os", "name"], "");
+  const osPlatform = readNestedString(source, ["host", "os", "platform"], "");
+  const osVersion = readNestedString(source, ["host", "os", "version"], "");
+  const osFull = readNestedString(source, ["host", "os", "full"], "");
+  return {
+    agentId: bucket.key,
+    hostname: readNestedString(source, ["host", "hostname"], "unknown"),
+    version: readNestedString(source, ["agent", "version"], "unknown"),
+    os: osName ? { name: osName, platform: osPlatform, version: osVersion, full: osFull } : null,
+    lastSeen: readNestedString(source, ["@timestamp"], ""),
+    logCount: bucket.doc_count,
+    errorCount: bucket.errors.doc_count,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Elastic Agent logs for a specific agent
 // ---------------------------------------------------------------------------
 
@@ -650,4 +719,28 @@ export async function loadFleetActionResults(
     completedAt:
       (hit._source.completed_at as string) ?? readNestedString(hit._source, ["@timestamp"], ""),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Shared timestamp formatters
+// ---------------------------------------------------------------------------
+
+/** Format a timestamp as locale time only (e.g. "2:30:15 PM"). */
+export function formatFleetTime(ts: string): string {
+  if (!ts) return "";
+  try {
+    return new Date(ts).toLocaleTimeString();
+  } catch {
+    return ts;
+  }
+}
+
+/** Format a timestamp as full locale date+time (e.g. "2/23/2026, 2:30:15 PM"). */
+export function formatFleetTimestamp(ts: string): string {
+  if (!ts) return "";
+  try {
+    return new Date(ts).toLocaleString();
+  } catch {
+    return ts;
+  }
 }
