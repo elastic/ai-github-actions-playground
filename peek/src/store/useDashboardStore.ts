@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist, type StorageValue } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 
 import type {
   ConnectionProfile,
@@ -10,8 +10,11 @@ import type {
   TimeRange,
 } from "../types";
 import type { UserCapabilities } from "../services/es";
+import type { PageId } from "../routes/manifest";
 import { dashboardDefinitionSchema } from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
+
+import { createSplitSecretStorage } from "./createSplitSecretStorage";
 
 export { createDefaultDashboard };
 
@@ -25,18 +28,7 @@ interface DashboardState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
-  currentPage:
-    | "dashboard"
-    | "discover"
-    | "dataStreams"
-    | "explore"
-    | "traces"
-    | "docs"
-    | "console"
-    | "chat"
-    | "settings"
-    | "clusterOverview"
-    | "dashboardManagement";
+  currentPage: PageId;
   discoverQueryDraft: string | null;
   queryHistory: string[];
 
@@ -63,20 +55,7 @@ interface DashboardState {
 
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
-  setCurrentPage: (
-    page:
-      | "dashboard"
-      | "discover"
-      | "dataStreams"
-      | "explore"
-      | "traces"
-      | "docs"
-      | "console"
-      | "chat"
-      | "settings"
-      | "clusterOverview"
-      | "dashboardManagement",
-  ) => void;
+  setCurrentPage: (page: PageId) => void;
   setDiscoverQueryDraft: (query: string | null) => void;
   appendQueryToHistory: (query: string) => void;
 
@@ -139,46 +118,36 @@ function getNextDuplicatedPanelTitle(sourceTitle: string, existingTitles: string
   return maxCopyNumber === 0 ? `${baseTitle} (copy)` : `${baseTitle} (copy ${maxCopyNumber + 1})`;
 }
 
-const splitStorage = {
-  getItem: (name: string): StorageValue<PersistedState> | null => {
-    const localRaw = localStorage.getItem(name);
-    if (!localRaw) return null;
-    try {
-      const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
-      // Restore active connection credentials
+const splitStorage = createSplitSecretStorage<PersistedState>({
+  restoreSecrets: (name, state) => {
+    const restored = { ...state };
+    if (restored.connection) {
       const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
       const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
-      if (stored.state.connection) {
-        stored.state.connection = { ...stored.state.connection, apiKey, password };
-      }
-      // Restore profile credentials from sessionStorage
-      if (stored.state.connectionProfiles) {
-        stored.state.connectionProfiles = stored.state.connectionProfiles.map((profile) => {
-          const pApiKey =
-            sessionStorage.getItem(
-              name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
-            ) ?? "";
-          const pPassword =
-            sessionStorage.getItem(
-              name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
-            ) ?? "";
-          return {
-            ...profile,
-            connection: { ...profile.connection, apiKey: pApiKey, password: pPassword },
-          };
-        });
-      }
-      return stored;
-    } catch {
-      return null;
+      restored.connection = { ...restored.connection, apiKey, password };
     }
+    if (restored.connectionProfiles) {
+      restored.connectionProfiles = restored.connectionProfiles.map((profile) => {
+        const pApiKey =
+          sessionStorage.getItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          ) ?? "";
+        const pPassword =
+          sessionStorage.getItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          ) ?? "";
+        return {
+          ...profile,
+          connection: { ...profile.connection, apiKey: pApiKey, password: pPassword },
+        };
+      });
+    }
+    return restored;
   },
-  setItem: (name: string, value: StorageValue<PersistedState>): void => {
-    const apiKey = value.state.connection?.apiKey ?? "";
-    const password = value.state.connection?.password ?? "";
-    // Save profile credentials to sessionStorage, strip from localStorage
-    const profiles = value.state.connectionProfiles ?? [];
-    for (const profile of profiles) {
+  persistSecrets: (name, state) => {
+    sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, state.connection?.apiKey ?? "");
+    sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
+    for (const profile of state.connectionProfiles ?? []) {
       sessionStorage.setItem(
         name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
         profile.connection.apiKey ?? "",
@@ -188,26 +157,19 @@ const splitStorage = {
         profile.connection.password ?? "",
       );
     }
-    const toStore: StorageValue<PersistedState> = {
-      ...value,
-      state: {
-        ...value.state,
-        connection: value.state.connection
-          ? stripCredentials(value.state.connection)
-          : value.state.connection,
-        connectionProfiles: profiles.length > 0 ? stripProfileCredentials(profiles) : profiles,
-      },
-    };
-    localStorage.setItem(name, JSON.stringify(toStore));
-    sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, apiKey);
-    sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, password);
   },
-  removeItem: (name: string): void => {
-    // Clean up profile credential keys from sessionStorage
-    const localRaw = localStorage.getItem(name);
+  stripSecrets: (state) => {
+    const profiles = state.connectionProfiles ?? [];
+    return {
+      ...state,
+      connection: state.connection ? stripCredentials(state.connection) : state.connection,
+      connectionProfiles: profiles.length > 0 ? stripProfileCredentials(profiles) : profiles,
+    };
+  },
+  clearSecrets: (name, localRaw) => {
     if (localRaw) {
       try {
-        const stored = JSON.parse(localRaw) as StorageValue<PersistedState>;
+        const stored = JSON.parse(localRaw) as { state: PersistedState };
         for (const profile of stored.state.connectionProfiles ?? []) {
           sessionStorage.removeItem(
             name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
@@ -220,11 +182,10 @@ const splitStorage = {
         /* ignore parse errors during cleanup */
       }
     }
-    localStorage.removeItem(name);
     sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
     sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
   },
-};
+});
 
 export const useDashboardStore = create<DashboardState>()(
   persist(
@@ -454,7 +415,7 @@ export const useDashboardStore = create<DashboardState>()(
             console.error("Import failed:", error);
             return { success: false, error };
           }
-          set({ dashboard: result.data as DashboardDefinition });
+          set({ dashboard: result.data });
           return { success: true };
         } catch (e) {
           const error = e instanceof Error ? e.message : String(e);

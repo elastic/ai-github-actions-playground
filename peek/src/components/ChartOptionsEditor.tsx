@@ -1,12 +1,10 @@
 import Box from "@mui/material/Box";
-import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import {
   UNIT_CONFIG,
@@ -15,15 +13,9 @@ import {
   isUnitWithShortValues,
 } from "@perses-dev/core";
 
-import type {
-  BarChartOptions,
-  FormatOptions,
-  GaugePanelOptions,
-  HistogramChartOptions,
-  TimeSeriesOptions,
-  VisualizationOptions,
-  VisualizationType,
-} from "../types";
+import type { FormatOptions, VisualizationOptions, VisualizationType } from "../types";
+
+import { getVizEntry } from "./visualizations/vizRegistry";
 
 const DEFAULT_FORMAT: FormatOptions = { unit: "decimal" };
 
@@ -143,6 +135,7 @@ interface Props {
 /** Horizontal row of chart customization controls rendered below the preview. */
 export default function ChartOptionsEditor({ vizType, options, onChange }: Props) {
   const format = (options as { format?: FormatOptions }).format ?? DEFAULT_FORMAT;
+  const OptionsEditor = getVizEntry(vizType)?.OptionsEditor;
 
   const handleFormatChange = (f: FormatOptions) => {
     onChange({ ...options, format: f });
@@ -156,169 +149,7 @@ export default function ChartOptionsEditor({ vizType, options, onChange }: Props
 
       <FormatEditor value={format} onChange={handleFormatChange} />
 
-      {vizType === "timeseries" && (
-        <TimeSeriesOptionsEditor options={options as TimeSeriesOptions} onChange={onChange} />
-      )}
-
-      {vizType === "bar" && (
-        <BarChartOptionsEditor options={options as BarChartOptions} onChange={onChange} />
-      )}
-
-      {vizType === "gauge" && (
-        <GaugeOptionsEditor options={options as GaugePanelOptions} onChange={onChange} />
-      )}
-
-      {vizType === "histogram" && (
-        <HistogramOptionsEditor options={options as HistogramChartOptions} onChange={onChange} />
-      )}
+      {OptionsEditor && <OptionsEditor options={options} onChange={onChange} />}
     </Box>
-  );
-}
-
-function TimeSeriesOptionsEditor({
-  options,
-  onChange,
-}: {
-  options: TimeSeriesOptions;
-  onChange: (o: VisualizationOptions) => void;
-}) {
-  return (
-    <>
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={options.smooth !== false}
-            onChange={(e) => onChange({ ...options, smooth: e.target.checked })}
-          />
-        }
-        label={<Typography variant="body2">Smooth</Typography>}
-        sx={{ ml: 0 }}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={options.showArea !== false}
-            onChange={(e) => onChange({ ...options, showArea: e.target.checked })}
-          />
-        }
-        label={<Typography variant="body2">Area fill</Typography>}
-        sx={{ ml: 0 }}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={options.stacked === true}
-            onChange={(e) => onChange({ ...options, stacked: e.target.checked })}
-          />
-        }
-        label={<Typography variant="body2">Stacked</Typography>}
-        sx={{ ml: 0 }}
-      />
-    </>
-  );
-}
-
-function BarChartOptionsEditor({
-  options,
-  onChange,
-}: {
-  options: BarChartOptions;
-  onChange: (o: VisualizationOptions) => void;
-}) {
-  return (
-    <>
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={options.stacked === true}
-            onChange={(e) => onChange({ ...options, stacked: e.target.checked })}
-          />
-        }
-        label={<Typography variant="body2">Stacked</Typography>}
-        sx={{ ml: 0 }}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={options.horizontal === true}
-            onChange={(e) => onChange({ ...options, horizontal: e.target.checked })}
-          />
-        }
-        label={<Typography variant="body2">Horizontal</Typography>}
-        sx={{ ml: 0 }}
-      />
-    </>
-  );
-}
-
-function GaugeOptionsEditor({
-  options,
-  onChange,
-}: {
-  options: GaugePanelOptions;
-  onChange: (o: VisualizationOptions) => void;
-}) {
-  return (
-    <>
-      <TextField
-        label="Min"
-        size="small"
-        type="number"
-        value={options.min ?? ""}
-        onChange={(e) => {
-          const n = Number(e.target.value);
-          onChange({
-            ...options,
-            min: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
-          });
-        }}
-        sx={{ width: 90 }}
-      />
-      <TextField
-        label="Max"
-        size="small"
-        type="number"
-        value={options.max ?? ""}
-        onChange={(e) => {
-          const n = Number(e.target.value);
-          onChange({
-            ...options,
-            max: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
-          });
-        }}
-        sx={{ width: 90 }}
-      />
-    </>
-  );
-}
-
-function HistogramOptionsEditor({
-  options,
-  onChange,
-}: {
-  options: HistogramChartOptions;
-  onChange: (o: VisualizationOptions) => void;
-}) {
-  return (
-    <TextField
-      label="Bins"
-      size="small"
-      type="number"
-      value={options.bins ?? 10}
-      onChange={(e) => {
-        const n = Number(e.target.value);
-        onChange({
-          ...options,
-          bins: !Number.isFinite(n) || n < 1 ? 10 : Math.min(Math.round(n), 100),
-        });
-      }}
-      sx={{ width: 90 }}
-      inputProps={{ min: 1, max: 100 }}
-    />
   );
 }

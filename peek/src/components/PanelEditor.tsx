@@ -15,15 +15,6 @@ import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import TableChartIcon from "@mui/icons-material/TableChart";
-import NumbersIcon from "@mui/icons-material/Numbers";
-import PieChartIcon from "@mui/icons-material/PieChart";
-import SpeedIcon from "@mui/icons-material/Speed";
-import GridOnIcon from "@mui/icons-material/GridOn";
-import ScatterPlotIcon from "@mui/icons-material/ScatterPlot";
-import EqualizerIcon from "@mui/icons-material/Equalizer";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 
@@ -45,18 +36,7 @@ import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { runQueryShortcutExtension } from "./queryEditorExtensions";
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
-
-const VIZ_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
-  { value: "timeseries", icon: <ShowChartIcon />, label: "Time Series" },
-  { value: "bar", icon: <BarChartIcon />, label: "Bar" },
-  { value: "table", icon: <TableChartIcon />, label: "Table" },
-  { value: "stat", icon: <NumbersIcon />, label: "Stat" },
-  { value: "gauge", icon: <SpeedIcon />, label: "Gauge" },
-  { value: "pie", icon: <PieChartIcon />, label: "Pie" },
-  { value: "heatmap", icon: <GridOnIcon />, label: "Heatmap" },
-  { value: "scatter", icon: <ScatterPlotIcon />, label: "Scatter" },
-  { value: "histogram", icon: <EqualizerIcon />, label: "Histogram" },
-];
+import { getAllVizEntries, getVizEntry } from "./visualizations/vizRegistry";
 
 export default function PanelEditor() {
   const editingId = useDashboardStore((s) => s.editingPanelId);
@@ -123,9 +103,9 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     (newViz: VisualizationType) => {
       setViz(newViz);
       const next = defaultOptions(newViz);
-      const supportsFormat = newViz !== "table" && newViz !== "pie" && newViz !== "heatmap";
+      const supportsOptions = getVizEntry(newViz)?.supportsOptions ?? false;
       const currentFormat = (options as { format?: FormatOptions }).format;
-      setOptions(supportsFormat && currentFormat ? { ...next, format: currentFormat } : next);
+      setOptions(supportsOptions && currentFormat ? { ...next, format: currentFormat } : next);
     },
     [options],
   );
@@ -169,7 +149,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setEditingId(null);
   }, [editingId, removePanel, setEditingId]);
 
-  const showOptions = viz !== "table" && viz !== "pie" && viz !== "heatmap";
+  const showOptions = getVizEntry(viz)?.supportsOptions ?? false;
 
   return (
     <Dialog
@@ -303,11 +283,11 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
             size="small"
             sx={{ flexWrap: "wrap" }}
           >
-            {VIZ_OPTIONS.map((opt) => (
-              <ToggleButton key={opt.value} value={opt.value} title={opt.label}>
-                {opt.icon}
+            {getAllVizEntries().map((entry) => (
+              <ToggleButton key={entry.type} value={entry.type} title={entry.label}>
+                {entry.icon}
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {opt.label}
+                  {entry.label}
                 </Typography>
               </ToggleButton>
             ))}

@@ -18,6 +18,9 @@ services:
   otel-collector:
     image: docker.elastic.co/elastic-agent/elastic-agent:9.3.0
     command: ["otel", "--config=file:/etc/otelcol/config.yaml"]
+    environment:
+      - ES_URL=${ES_URL:-http://elasticsearch:9200}
+      - ES_API_KEY=${ES_API_KEY:-}
     volumes:
       - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
       - /:/hostfs:ro
