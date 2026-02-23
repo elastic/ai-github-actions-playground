@@ -35,6 +35,11 @@ interface FleetAgentSummary {
   lastCheckin: string | null;
 }
 
+interface FleetAgentSearchResult {
+  agents: FleetAgentSummary[];
+  total: number;
+}
+
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Paper variant="outlined" sx={{ p: 2, height: "100%" }}>
@@ -98,9 +103,10 @@ export default function ClusterOverviewPage() {
           resolveIndexResult.status === "fulfilled"
             ? (resolveIndexResult.value.aliases?.length ?? 0)
             : null,
-        fleetAgents: fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value : null,
+        fleetAgents:
+          fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value.agents : null,
         fleetAgentCount:
-          fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value.length : null,
+          fleetAgentsResult.status === "fulfilled" ? fleetAgentsResult.value.total : null,
       };
       setData(nextData);
 
@@ -372,12 +378,13 @@ function readNestedString(
   return typeof current === "string" && current.length > 0 ? current : fallback;
 }
 
-async function loadFleetAgents(client: ElasticsearchClient): Promise<FleetAgentSummary[]> {
+async function loadFleetAgents(client: ElasticsearchClient): Promise<FleetAgentSearchResult> {
   const response = await client.rawRequest(
     "POST",
     "/.fleet-agents*,fleet-agents*/_search?ignore_unavailable=true&allow_no_indices=true",
     JSON.stringify({
       size: 200,
+      track_total_hits: true,
       sort: [{ last_checkin: { order: "desc", unmapped_type: "date" } }],
       _source: [
         "agent.id",
@@ -398,21 +405,34 @@ async function loadFleetAgents(client: ElasticsearchClient): Promise<FleetAgentS
       message: body?.error?.reason ?? "Failed to load Fleet agents.",
     };
   }
-  const hits = (
+  const result = (
     response.body as {
-      hits?: { hits?: Array<{ _id?: string; _source?: Record<string, unknown> }> };
+      hits?: {
+        total?: { value?: number } | number;
+        hits?: Array<{ _id?: string; _source?: Record<string, unknown> }>;
+      };
     } | null
-  )?.hits?.hits;
-  if (!hits) return [];
-  return hits.map((hit) => {
-    const source = hit._source ?? {};
-    return {
-      id: readNestedString(source, ["agent", "id"], hit._id ?? "unknown"),
-      hostname: readNestedString(source, ["local_metadata", "host", "hostname"]),
-      status: readNestedString(source, ["last_checkin_status"]),
-      policyId: readNestedString(source, ["policy_id"]),
-      active: typeof source.active === "boolean" ? source.active : null,
-      lastCheckin: typeof source.last_checkin === "string" ? source.last_checkin : null,
-    };
-  });
+  )?.hits;
+  const hits = result?.hits;
+  const total =
+    typeof result?.total === "number"
+      ? result.total
+      : typeof result?.total?.value === "number"
+        ? result.total.value
+        : (hits?.length ?? 0);
+  if (!hits) return { total: 0, agents: [] };
+  return {
+    total,
+    agents: hits.map((hit) => {
+      const source = hit._source ?? {};
+      return {
+        id: readNestedString(source, ["agent", "id"], hit._id ?? "unknown"),
+        hostname: readNestedString(source, ["local_metadata", "host", "hostname"]),
+        status: readNestedString(source, ["last_checkin_status"]),
+        policyId: readNestedString(source, ["policy_id"]),
+        active: typeof source.active === "boolean" ? source.active : null,
+        lastCheckin: typeof source.last_checkin === "string" ? source.last_checkin : null,
+      };
+    }),
+  };
 }

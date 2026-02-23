@@ -80,6 +80,7 @@ describe("ClusterOverviewPage", () => {
       status: 200,
       body: {
         hits: {
+          total: { value: 250, relation: "eq" },
           hits: [
             {
               _id: "agent-1",
@@ -105,6 +106,7 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText("Nodes: 3")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument(); // data stream count
     expect(screen.getByText("3")).toBeInTheDocument(); // index count
+    expect(screen.getByText("250")).toBeInTheDocument(); // fleet agent total
     expect(screen.getByText("Fleet Agents")).toBeInTheDocument();
     expect(screen.getByText("host-1")).toBeInTheDocument();
     expect(screen.getByText("Policy: policy-1")).toBeInTheDocument();
