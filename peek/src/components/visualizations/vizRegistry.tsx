@@ -64,6 +64,8 @@ export interface VizRendererProps {
   data: EsqlResponse;
   options?: VisualizationOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  /** Callback invoked when the user requests a CSV export of the table data. */
+  onExportCsv?: () => void;
   /** Raw panel query text — used by static panels such as markdown. */
   query?: string;
   /** Elasticsearch connection — forwarded to panels that run their own queries. */
@@ -154,8 +156,12 @@ const vizRegistryEntries: VizRegistryEntry[] = [
     supportsOptions: true,
     supportsQuery: true,
     defaultOptions: () => ({}) satisfies TablePanelOptions,
-    renderComponent: ({ data, options }) => (
-      <DataTable data={data} options={options as TablePanelOptions | undefined} />
+    renderComponent: ({ data, options, onExportCsv }) => (
+      <DataTable
+        data={data}
+        options={options as TablePanelOptions | undefined}
+        onExportCsv={onExportCsv}
+      />
     ),
     OptionsEditor: TableOptionsEditor,
   },
