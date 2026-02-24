@@ -14,14 +14,11 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import {
-  ElasticsearchClient,
-  isElasticsearchError,
-  type SecurityRole,
-  type SecurityUser,
-} from "../services/es";
+import { ElasticsearchClient, type SecurityRole, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+
+import { loadSecurityResource } from "./securityResourceLoader";
 
 type RoleEntry = { name: string; role: SecurityRole };
 
@@ -49,32 +46,33 @@ export default function RolesPage() {
     setAccessNotice(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const [capsResult, rolesResult, usersResult] = await Promise.allSettled([
-        client.getCapabilities(),
-        client.getSecurityRoles(),
+      const [rolesResult, usersResult] = await Promise.allSettled([
+        loadSecurityResource({
+          client,
+          fetchResource: (c) => c.getSecurityRoles(),
+          canRead: (caps) => caps.canReadSecurityRoles,
+          authDeniedNotice: "Your credentials cannot read all Roles data.",
+        }),
         client.getSecurityUsers(),
       ]);
-      if (capsResult.status === "fulfilled" && !capsResult.value.canReadSecurityRoles) {
-        setAccessNotice("Your credentials may have partial access to security APIs.");
-      }
       if (rolesResult.status === "fulfilled") {
-        const nextRoles = Object.entries(rolesResult.value)
-          .map(([name, role]) => ({ name, role }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setRoles(nextRoles);
-        setSelectedRoleName((current) =>
-          current && nextRoles.some((entry) => entry.name === current)
-            ? current
-            : (nextRoles[0]?.name ?? null),
-        );
-      } else {
-        const reason = rolesResult.reason;
-        if (isElasticsearchError(reason) && (reason.status === 401 || reason.status === 403)) {
-          setAccessNotice("Your credentials cannot read all Roles data.");
+        const result = rolesResult.value;
+        setAccessNotice(result.notice);
+        if (result.error !== null) {
+          setError(result.error);
+        } else if (result.data !== null) {
+          const nextRoles = Object.entries(result.data)
+            .map(([name, role]) => ({ name, role }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+          setRoles(nextRoles);
+          setSelectedRoleName((current) =>
+            current && nextRoles.some((entry) => entry.name === current)
+              ? current
+              : (nextRoles[0]?.name ?? null),
+          );
+        } else {
           setRoles([]);
           setSelectedRoleName(null);
-        } else {
-          setError(isElasticsearchError(reason) ? reason.message : String(reason));
         }
       }
       if (usersResult.status === "fulfilled") {

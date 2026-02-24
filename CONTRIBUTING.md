@@ -44,9 +44,7 @@ from ES|QL aggregations like STATS ... BY bucket1, bucket2.
    - Use ECharts heatmap series type
 
 2. **Register the visualization**:
-   - Add "heatmap" to VisualizationType in `peek/src/types.ts`
-   - Add case in `Visualization.tsx`
-   - Add toggle in `PanelEditor.tsx`
+   - Add "heatmap" to `VISUALIZATION_TYPES` and `vizRegistryEntries` in `peek/src/components/visualizations/vizRegistry.tsx`
 
 3. **Verify**:
    - Run `make check` to run lint, unit tests, and build
