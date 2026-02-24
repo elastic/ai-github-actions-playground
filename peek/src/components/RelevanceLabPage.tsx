@@ -92,13 +92,17 @@ function sourcePreview(source: Record<string, unknown> | null): string {
   }
 }
 
-function compareHits(lexicalHits: SearchHit[], vectorHits: SearchHit[]): ComparisonMetrics {
+function compareHits(
+  lexicalHits: SearchHit[],
+  vectorHits: SearchHit[],
+  requestedTopK: number,
+): ComparisonMetrics {
   const lexicalIds = new Set(lexicalHits.map((hit) => hit._id));
   const vectorIds = new Set(vectorHits.map((hit) => hit._id));
   const sharedCount = [...lexicalIds].filter((id) => vectorIds.has(id)).length;
   const lexicalOnlyCount = lexicalIds.size - sharedCount;
   const vectorOnlyCount = vectorIds.size - sharedCount;
-  const topK = Math.min(lexicalHits.length, vectorHits.length);
+  const topK = Math.max(0, requestedTopK);
   if (topK === 0) {
     return { sharedCount, lexicalOnlyCount, vectorOnlyCount, topKIntersectionRate: 0 };
   }
@@ -144,12 +148,18 @@ export default function RelevanceLabPage() {
       const parsedVector = JSON.parse(vectorQuery);
       if (!isRecord(parsedLexical) || !isRecord(parsedVector)) {
         setError("Retriever query bodies must be valid JSON objects.");
+        setLexicalHits([]);
+        setVectorHits([]);
+        setMetrics(null);
         return;
       }
       lexicalBody = { ...parsedLexical, size };
       vectorBody = { ...parsedVector, size };
     } catch {
       setError("Retriever query bodies must be valid JSON.");
+      setLexicalHits([]);
+      setVectorHits([]);
+      setMetrics(null);
       return;
     }
 
@@ -182,7 +192,7 @@ export default function RelevanceLabPage() {
       const nextVectorHits = parseHits(vectorResponse.body);
       setLexicalHits(nextLexicalHits);
       setVectorHits(nextVectorHits);
-      setMetrics(compareHits(nextLexicalHits, nextVectorHits));
+      setMetrics(compareHits(nextLexicalHits, nextVectorHits, size));
     } catch (err) {
       if (controller.signal.aborted) return;
       const message = isElasticsearchError(err)
