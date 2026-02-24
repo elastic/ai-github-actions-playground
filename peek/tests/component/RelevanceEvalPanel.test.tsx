@@ -165,6 +165,22 @@ describe("RelevanceEvalPanel", () => {
     expect(screen.getByRole("button", { name: /run evaluation/i })).toBeDisabled();
   });
 
+  it("shows a parse error when relevant contains non-string IDs", async () => {
+    const user = userEvent.setup();
+
+    useEvalStore
+      .getState()
+      .setJudgedSetJson(JSON.stringify([{ query: "FROM idx | LIMIT 10", relevant: [123] }]));
+
+    render(<RelevanceEvalPanel connection={TEST_CONNECTION} />);
+    await user.click(screen.getByRole("button", { name: /expand evaluation panel/i }));
+
+    expect(
+      screen.getByText('Each entry must have "query" (string) and "relevant" (string[]) fields'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /run evaluation/i })).toBeDisabled();
+  });
+
   it("clears runs when 'Clear runs' button is clicked", async () => {
     const user = userEvent.setup();
 

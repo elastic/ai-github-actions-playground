@@ -23,6 +23,10 @@ describe("recallAtK", () => {
   it("returns 0 when no relevant docs appear in top-k", () => {
     expect(recallAtK(["x", "y", "z"], ["a", "b"], 3)).toBe(0);
   });
+
+  it("does not count duplicate retrieved IDs more than once", () => {
+    expect(recallAtK(["a", "a"], ["a"], 2)).toBe(1);
+  });
 });
 
 describe("precisionAtK", () => {
@@ -75,5 +79,9 @@ describe("ndcgAtK", () => {
 
   it("respects the k cutoff (relevant doc beyond k counts as miss)", () => {
     expect(ndcgAtK(["x", "y", "a"], ["a"], 2)).toBe(0);
+  });
+
+  it("does not exceed 1 when top-k contains duplicate relevant IDs", () => {
+    expect(ndcgAtK(["a", "a"], ["a"], 2)).toBe(1);
   });
 });

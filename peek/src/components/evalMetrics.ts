@@ -11,7 +11,8 @@
 export function recallAtK(retrievedIds: string[], relevantIds: string[], k: number): number {
   if (relevantIds.length === 0) return 0;
   const relevantSet = new Set(relevantIds);
-  const hits = retrievedIds.slice(0, k).filter((id) => relevantSet.has(id)).length;
+  const uniqueTopK = Array.from(new Set(retrievedIds.slice(0, k)));
+  const hits = uniqueTopK.filter((id) => relevantSet.has(id)).length;
   return hits / relevantIds.length;
 }
 
@@ -31,7 +32,7 @@ export function precisionAtK(retrievedIds: string[], relevantIds: string[], k: n
  */
 export function ndcgAtK(retrievedIds: string[], relevantIds: string[], k: number): number {
   const relevantSet = new Set(relevantIds);
-  const topK = retrievedIds.slice(0, k);
+  const topK = Array.from(new Set(retrievedIds.slice(0, k)));
 
   let dcg = 0;
   for (const [i, id] of topK.entries()) {

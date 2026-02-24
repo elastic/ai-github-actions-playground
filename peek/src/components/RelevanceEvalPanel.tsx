@@ -86,11 +86,13 @@ export default function RelevanceEvalPanel({ connection }: RelevanceEvalPanelPro
         return { parsed: null, error: "Judged set must be a JSON array" };
       }
       for (const entry of parsed) {
+        const relevant = (entry as Record<string, unknown>).relevant;
         if (
           typeof entry !== "object" ||
           entry === null ||
           typeof (entry as Record<string, unknown>).query !== "string" ||
-          !Array.isArray((entry as Record<string, unknown>).relevant)
+          !Array.isArray(relevant) ||
+          !relevant.every((id) => typeof id === "string")
         ) {
           return {
             parsed: null,
