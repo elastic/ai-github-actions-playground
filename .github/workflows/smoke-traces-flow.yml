@@ -1,7 +1,7 @@
-name: Smoke Welcome Flow
+name: "Smoke: Connect → Traces → Service Map → Query Lab"
 on:
   schedule:
-    - cron: "0 9 * * 1-5"
+    - cron: "0 11 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -13,22 +13,23 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      issue-title-prefix: "[smoke-welcome-flow]"
+      issue-title-prefix: "[smoke-traces-flow]"
       additional-instructions: |
-        You are the Playwright Smoke Agent for the welcome flow.
+        You are the Playwright Smoke Agent for the traces persona flow.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `onboarding user reaches the connect entrypoint from the welcome screen`
+        - `traces user opens a trace and pivots from service map context into Query Lab`
 
         User flow to validate in detail:
-        - Start on the landing page as a first-time operator.
-        - Confirm the Elastic Peek welcome heading is visible.
-        - Confirm the "Connect to Elasticsearch" call-to-action is visible and ready.
-        - Treat this as the hard gate to all deeper product flows.
+        1. Connect using mocked Elasticsearch responses.
+        2. Navigate to Traces and run search to load trace rows.
+        3. Click a trace row to load span details.
+        4. Switch to Service Map to validate trace topology rendering.
+        5. Click "Open in Query Lab" to pivot investigation into query workflow.
 
         Run:
         1. `make setup`
         2. `cd peek && npx playwright install chromium`
-        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "onboarding user reaches the connect entrypoint from the welcome screen"`
+        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "traces user opens a trace and pivots from service map context into Query Lab"`
 
         If the check fails, create/update one issue with:
         - the failing test title and assertion/locator output

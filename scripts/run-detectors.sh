@@ -37,6 +37,7 @@ fi
 
 # Detector / Auditor workflows that support workflow_dispatch
 WORKFLOWS=(
+  "agent-suggestions.yml"
   "autonomy-atomicity-analyzer.yml"
   "breaking-change-detector.yml"
   "bug-hunter.yml"
@@ -49,13 +50,16 @@ WORKFLOWS=(
   "iterative-ideas-man.yml"
   "medium-ideas-man.yml"
   "newbie-contributor-patrol.yml"
+  "observability-ideas-man.yml"
   "performance-profiler.yml"
-  "project-summary.yml"
   "product-manager-impersonator.yml"
+  "project-summary.yml"
   "refactor-opportunist.yml"
+  "security-ideas-man.yml"
   "stale-issues.yml"
   "text-auditor.yml"
   "ux-design-patrol.yml"
+  "vector-search-ideas-man.yml"
 )
 
 # Verify gh is available
