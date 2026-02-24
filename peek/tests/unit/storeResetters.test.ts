@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { storeResetters } from "../../src/store/storeResetters";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useEvalStore } from "../../src/store/useEvalStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
 import { useFleetStore } from "../../src/store/useFleetStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
@@ -18,6 +19,7 @@ import { useUIStore } from "../../src/store/useUIStore";
 const STORES_WITH_RESET_API = [
   { name: "useConnectionStore", store: useConnectionStore, method: "resetConnectionState" },
   { name: "useDashboardStore", store: useDashboardStore, method: "resetDashboardState" },
+  { name: "useEvalStore", store: useEvalStore, method: "resetEvalState" },
   { name: "useExplorerStore", store: useExplorerStore, method: "reset" },
   { name: "useFleetStore", store: useFleetStore, method: "resetFilters" },
   { name: "useLLMStore", store: useLLMStore, method: "resetLLMState" },

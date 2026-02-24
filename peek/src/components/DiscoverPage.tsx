@@ -18,6 +18,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -44,6 +45,7 @@ import {
 } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
+import RelevanceEvalPanel from "./RelevanceEvalPanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { isNumericType } from "./visualizations/chartUtils";
@@ -80,6 +82,7 @@ export default function DiscoverPage() {
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
+  const [showEvalPanel, setShowEvalPanel] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
 
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
@@ -405,6 +408,16 @@ export default function DiscoverPage() {
               </Button>
             </span>
           </Tooltip>
+          <Tooltip title="Open relevance evaluation harness">
+            <Button
+              variant={showEvalPanel ? "contained" : "outlined"}
+              size="small"
+              startIcon={<AssessmentIcon />}
+              onClick={() => setShowEvalPanel((prev) => !prev)}
+            >
+              Evaluate
+            </Button>
+          </Tooltip>
         </Box>
       </Paper>
 
@@ -422,6 +435,9 @@ export default function DiscoverPage() {
 
       {/* Profile panel */}
       {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
+
+      {/* Relevance evaluation panel */}
+      {showEvalPanel && <RelevanceEvalPanel connection={connection} />}
 
       {/* Content area: field picker + table */}
       <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>

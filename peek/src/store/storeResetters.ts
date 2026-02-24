@@ -10,6 +10,7 @@
 
 import { useConnectionStore } from "./useConnectionStore";
 import { useDashboardStore } from "./useDashboardStore";
+import { useEvalStore } from "./useEvalStore";
 import { useExplorerStore } from "./useExplorerStore";
 import { useFleetStore } from "./useFleetStore";
 import { useLLMStore } from "./useLLMStore";
@@ -20,6 +21,7 @@ import { useUIStore } from "./useUIStore";
 export const storeResetters: ReadonlyArray<() => void> = [
   () => useConnectionStore.getState().resetConnectionState(),
   () => useDashboardStore.getState().resetDashboardState(),
+  () => useEvalStore.getState().resetEvalState(),
   () => useExplorerStore.getState().reset(),
   () => useFleetStore.getState().resetFilters(),
   () => useLLMStore.getState().resetLLMState(),
