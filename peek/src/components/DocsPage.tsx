@@ -1,10 +1,11 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import sections from "../docs/sections";
 
@@ -14,7 +15,17 @@ function normalizeText(text: string): string {
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
-  const [activeSection, setActiveSection] = useState<string>(sections[0]?.id ?? "");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Read the target section from the ?section= query param (set by command palette shortcuts)
+  const sectionFromUrl = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("section");
+  }, [location.search]);
+
+  // Active section is always URL-driven so sidebar and URL stay in sync
+  const activeSection = sectionFromUrl ?? sections[0]?.id ?? "";
 
   const filteredSections = useMemo(() => {
     const query = normalizeText(search.trim());
@@ -24,11 +35,22 @@ export default function DocsPage() {
     );
   }, [search]);
 
-  const jumpToSection = useCallback((sectionId: string) => {
-    setActiveSection(sectionId);
-    const target = document.getElementById(sectionId);
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  const jumpToSection = useCallback(
+    (sectionId: string) => {
+      navigate(`?section=${sectionId}`, { replace: true });
+      const target = document.getElementById(sectionId);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    [navigate],
+  );
+
+  // Scroll to the section specified by the URL param (DOM-only side-effect, no setState)
+  useEffect(() => {
+    if (sectionFromUrl) {
+      const target = document.getElementById(sectionFromUrl);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [sectionFromUrl]);
 
   return (
     <Box sx={{ display: "flex", flex: 1, minHeight: 0, gap: 1.5 }}>

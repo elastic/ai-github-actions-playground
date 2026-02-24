@@ -19,6 +19,7 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
@@ -26,6 +27,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useDashboardStore } from "../store/useDashboardStore";
+import sections from "../docs/sections";
 
 interface Command {
   id: string;
@@ -149,6 +151,21 @@ function useCommands(): Command[] {
           setCommandPaletteOpen(false);
           setDiscoverQueryDraft(query);
           navigate(PAGE_MANIFEST.discover.path);
+        },
+      });
+    }
+
+    // Docs section shortcuts
+    for (const section of sections) {
+      commands.push({
+        id: `docs:${section.id}`,
+        label: section.title,
+        group: "Docs",
+        icon: <MenuBookIcon fontSize="small" />,
+        keywords: `docs documentation help ${section.id}`,
+        onExecute: () => {
+          setCommandPaletteOpen(false);
+          navigate(`${PAGE_MANIFEST.docs.path}?section=${section.id}`);
         },
       });
     }
