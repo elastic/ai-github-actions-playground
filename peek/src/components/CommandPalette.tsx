@@ -18,13 +18,14 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
-import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
+import { useDashboardStore } from "../store/useDashboardStore";
 
 interface Command {
   id: string;
@@ -53,6 +54,7 @@ function useCommands(): Command[] {
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
     })),
   );
+  const dashboards = useDashboardStore((s) => s.dashboards);
 
   return useMemo(() => {
     const commands: Command[] = [];
@@ -119,17 +121,20 @@ function useCommands(): Command[] {
         },
       });
 
-      commands.push({
-        id: "action:dashboard-management",
-        label: "Dashboard Management",
-        group: "Actions",
-        icon: <DashboardCustomizeIcon fontSize="small" />,
-        keywords: "dashboard manage import export",
-        onExecute: () => {
-          setCommandPaletteOpen(false);
-          navigate(PAGE_MANIFEST.dashboardManagement.path);
-        },
-      });
+      // Per-dashboard quick navigation
+      for (const dash of dashboards) {
+        commands.push({
+          id: `dashboard:${dash.id}`,
+          label: dash.title,
+          group: "Dashboards",
+          icon: <DashboardIcon fontSize="small" />,
+          keywords: `dashboard open ${dash.title}`,
+          onExecute: () => {
+            setCommandPaletteOpen(false);
+            navigate(`/dashboards/${dash.id}`);
+          },
+        });
+      }
     }
 
     // Recent queries
@@ -154,6 +159,7 @@ function useCommands(): Command[] {
     location.pathname,
     themeMode,
     queryHistory,
+    dashboards,
     navigate,
     setConnectionDialogOpen,
     setThemeMode,

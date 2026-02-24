@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import AppHeader from "../../src/components/AppHeader";
 import { PAGE_MANIFEST } from "../../src/routes/manifest";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -34,8 +35,9 @@ describe("AppHeader", () => {
     expect(screen.getByRole("img", { name: "Peek" })).toBeInTheDocument();
   });
 
-  it("shows Add Panel button on the dashboard page", () => {
-    renderHeader(PAGE_MANIFEST.dashboard.path);
+  it("shows Add Panel button on a dashboard view page", () => {
+    const dashboardId = useDashboardStore.getState().activeDashboardId;
+    renderHeader(`/dashboards/${dashboardId}`);
 
     expect(screen.getByRole("button", { name: /add panel/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
