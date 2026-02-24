@@ -303,6 +303,27 @@ describe("buildDimensionOverviewQuery", () => {
     expect(result.esql).toContain("LIMIT 60");
   });
 
+  it("returns LIMIT 0 when maxSeries is 0", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ maxSeries: 0 }));
+    expect(result.esql).toContain("LIMIT 0");
+  });
+
+  it("returns LIMIT 0 when bucketCount is 0", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ bucketCount: 0 }));
+    expect(result.esql).toContain("LIMIT 0");
+    expect(result.esql).toContain("BUCKET(@timestamp, 1,");
+  });
+  it("clamps negative max series to zero rows", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ maxSeries: -1 }));
+    expect(result.esql).toContain("LIMIT 0");
+  });
+
+  it("clamps negative bucket count to zero rows", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ bucketCount: -10 }));
+    expect(result.esql).toContain("LIMIT 0");
+    expect(result.esql).toContain("BUCKET(@timestamp, 1,");
+  });
+
   it("returns a meaningful y-axis label", () => {
     const result = buildDimensionOverviewQuery(makeDimensionQuery());
     expect(result.yAxisLabel).toBe("Avg pct");
