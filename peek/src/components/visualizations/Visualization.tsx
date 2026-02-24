@@ -15,6 +15,7 @@ interface Props {
   data: EsqlResponse;
   options?: VisualizationOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  onExportCsv?: () => void;
   query?: string;
   connection?: ElasticsearchConnection | null;
   timeRange?: TimeRange;
@@ -26,6 +27,7 @@ export default function Visualization({
   data,
   options,
   onExportReady,
+  onExportCsv,
   query,
   connection,
   timeRange,
@@ -37,6 +39,7 @@ export default function Visualization({
       data,
       options,
       onExportReady,
+      onExportCsv,
       query,
       connection,
       timeRange,

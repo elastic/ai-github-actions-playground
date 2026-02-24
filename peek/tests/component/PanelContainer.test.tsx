@@ -25,6 +25,7 @@ function MockVisualization({
   onExportReady,
 }: {
   onExportReady?: (exportFn: (() => string) | null) => void;
+  onExportCsv?: () => void;
 }) {
   useEffect(() => {
     onExportReady?.(() => "data:image/png;base64,ZmFrZQ==");
@@ -89,6 +90,40 @@ describe("PanelContainer", () => {
     expect(click).toHaveBeenCalledTimes(1);
     expect(anchor.href).toContain("data:image/png;base64,ZmFrZQ==");
     expect(anchor.download).toMatch(/^test-panel-\d{4}-\d{2}-\d{2}T/);
+
+    createElementSpy.mockRestore();
+  });
+
+  it("exports CSV when the Export CSV button is clicked on a table panel", async () => {
+    const user = userEvent.setup();
+    const click = vi.fn();
+    const anchor = { href: "", download: "", click } as unknown as HTMLAnchorElement;
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi.spyOn(document, "createElement").mockImplementation((tag) => {
+      if (tag === "a") return anchor;
+      return originalCreateElement(tag);
+    });
+    const createObjectURL = vi.fn().mockReturnValue("blob:fake-url");
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+
+    const panel: PanelDefinition = {
+      id: "panel-csv",
+      title: "My Table",
+      query: "FROM logs-* | LIMIT 10",
+      visualization: "table",
+      layout: { x: 0, y: 0, w: 12, h: 4 },
+    };
+
+    render(<PanelContainer panel={panel} />);
+    await screen.findByText("Visualization mock");
+
+    const exportButton = screen.getByRole("button", { name: /export csv/i });
+    await waitFor(() => expect(exportButton).toBeEnabled());
+    await user.click(exportButton);
+
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(anchor.download).toMatch(/^my-table-.*\.csv$/);
 
     createElementSpy.mockRestore();
   });

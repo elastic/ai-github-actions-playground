@@ -75,9 +75,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  const isSettingsPath =
-    location.pathname === PAGE_MANIFEST.settings.path ||
-    location.pathname === PAGE_MANIFEST.dashboardManagement.path;
+  const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
 
   return (
     <Box
@@ -136,9 +134,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
             {section.items.map((item) => {
               const itemPath = PAGE_MANIFEST[item.page].path;
               const isActive =
-                itemPath === "/"
-                  ? location.pathname === itemPath
-                  : location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+                location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
               const isDisabled = item.requiresConnection && !connected;
               const navButton = (
                 <ListItemButton
@@ -239,15 +235,6 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           }}
         >
           LLM Settings
-        </MenuItem>
-        <MenuItem
-          selected={location.pathname === PAGE_MANIFEST.dashboardManagement.path}
-          onClick={() => {
-            navigate(PAGE_MANIFEST.dashboardManagement.path);
-            setSettingsAnchor(null);
-          }}
-        >
-          Dashboard Management
         </MenuItem>
       </Menu>
     </Box>

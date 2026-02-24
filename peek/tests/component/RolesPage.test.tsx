@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route, Link } from "react-router-dom";
 
 import RolesPage from "../../src/components/RolesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -267,5 +267,32 @@ describe("RolesPage", () => {
     await waitFor(() => {
       expect(screen.getByText("elastic")).toBeInTheDocument();
     });
+  });
+
+  it("updates selected role when ?role query param changes on same route", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/roles?role=superuser"]}>
+        <Routes>
+          <Route
+            path="/roles"
+            element={
+              <>
+                <Link to="/roles?role=viewer">Switch to viewer</Link>
+                <RolesPage />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "superuser" });
+    await user.click(screen.getByRole("link", { name: "Switch to viewer" }));
+
+    expect(await screen.findByRole("heading", { level: 6, name: "viewer" })).toBeInTheDocument();
   });
 });

@@ -58,11 +58,12 @@ function metricNamespaceOf(metricName: string): string {
 
 export default function ExplorePage() {
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
-  const { dashboard, addPanel, setTimeRange } = useDashboardStore(
+  const { dashboard, addPanel, setTimeRange, activeDashboardId } = useDashboardStore(
     useShallow((s) => ({
       dashboard: s.dashboard,
       addPanel: s.addPanel,
       setTimeRange: s.setTimeRange,
+      activeDashboardId: s.activeDashboardId,
     })),
   );
   const connection = useConnectionStore((s) => s.connection);
@@ -343,8 +344,8 @@ export default function ExplorePage() {
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
-    navigate(PAGE_MANIFEST.dashboard.path);
-  }, [queryResult.esql, selectedMetric, addPanel, setEditingPanelId, navigate]);
+    navigate(`/dashboards/${activeDashboardId}`);
+  }, [queryResult.esql, selectedMetric, addPanel, setEditingPanelId, navigate, activeDashboardId]);
 
   const handleAddFilter = useCallback(
     (filter: ExplorerFilter) => {

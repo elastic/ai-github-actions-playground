@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -33,7 +33,7 @@ import { fetchCapabilitiesForConnection, isElasticsearchError } from "../service
 import type { ProfileHealth } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
-import { DASHBOARD_TIME_PRESETS } from "./timePresets";
+import DateRangePicker from "./DateRangePicker";
 
 const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
   { label: "Off", seconds: 0 },
@@ -116,7 +116,7 @@ export default function AppHeader() {
   );
 
   const location = useLocation();
-  const [timeAnchor, setTimeAnchor] = useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
   const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [switchingProfile, setSwitchingProfile] = useState(false);
@@ -126,7 +126,9 @@ export default function AppHeader() {
     severity: "success" | "error";
   } | null>(null);
   const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
-  const showTimeControls = connected && Boolean(activePage?.showTimeControls);
+  const isDashboardView =
+    location.pathname.startsWith("/dashboards/") && location.pathname !== "/dashboards";
+  const showTimeControls = connected && (Boolean(activePage?.showTimeControls) || isDashboardView);
 
   const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
 
@@ -264,11 +266,45 @@ export default function AppHeader() {
             color: "transparent",
             WebkitTextFillColor: "transparent",
             lineHeight: 1,
-            mr: 2,
+            mr: 1,
           }}
         >
           Peek
         </Typography>
+        {isDashboardView ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+            <Chip
+              label="Dashboards"
+              size="small"
+              variant="outlined"
+              clickable
+              onClick={() => navigate("/dashboards")}
+            />
+            <Typography variant="body2" color="text.secondary">
+              /
+            </Typography>
+            <Chip
+              label={dashboard.title}
+              size="small"
+              variant="outlined"
+              sx={{
+                maxWidth: 220,
+                "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+              }}
+            />
+          </Box>
+        ) : (
+          <Chip
+            label={dashboard.title}
+            size="small"
+            variant="outlined"
+            sx={{
+              maxWidth: 220,
+              mr: 1,
+              "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+            }}
+          />
+        )}
 
         {connected && connectionProfiles.length > 0 && (
           <>
@@ -397,35 +433,7 @@ export default function AppHeader() {
 
         {showTimeControls && (
           <>
-            <Button size="small" variant="outlined" onClick={(e) => setTimeAnchor(e.currentTarget)}>
-              {DASHBOARD_TIME_PRESETS.find(
-                (p) =>
-                  p.range.from === dashboard.timeRange.from &&
-                  p.range.to === dashboard.timeRange.to,
-              )?.label ?? `${dashboard.timeRange.from} → ${dashboard.timeRange.to}`}
-            </Button>
-            <Menu
-              anchorEl={timeAnchor}
-              open={Boolean(timeAnchor)}
-              onClose={() => setTimeAnchor(null)}
-            >
-              {DASHBOARD_TIME_PRESETS.map((preset) => (
-                <MenuItem
-                  key={preset.label}
-                  selected={
-                    preset.range.from === dashboard.timeRange.from &&
-                    preset.range.to === dashboard.timeRange.to
-                  }
-                  onClick={() => {
-                    setTimeRange(preset.range);
-                    setTimeAnchor(null);
-                  }}
-                >
-                  {preset.label}
-                </MenuItem>
-              ))}
-            </Menu>
-
+            <DateRangePicker value={dashboard.timeRange} onChange={setTimeRange} />
             <Button
               size="small"
               variant="outlined"
@@ -453,7 +461,7 @@ export default function AppHeader() {
               ))}
             </Menu>
 
-            {location.pathname === PAGE_MANIFEST.dashboard.path && (
+            {isDashboardView && (
               <>
                 <Tooltip
                   title={

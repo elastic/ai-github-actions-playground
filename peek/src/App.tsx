@@ -18,6 +18,7 @@ import ParameterBar from "./components/ParameterBar";
 import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
 import CommandPalette from "./components/CommandPalette";
+import DashboardViewPage from "./components/DashboardViewPage";
 import WelcomeScreen from "./components/WelcomeScreen";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
@@ -29,7 +30,7 @@ export default function App() {
   const resetState = useResetAllStores();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
-  const isDashboard = Boolean(useMatch("/"));
+  const isDashboardView = Boolean(useMatch("/dashboards/:id"));
 
   const undoDashboardChange = useDashboardStore((s) => s.undoDashboardChange);
   const redoDashboardChange = useDashboardStore((s) => s.redoDashboardChange);
@@ -70,7 +71,7 @@ export default function App() {
             />
           )}
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-            {connected && isDashboard && <ParameterBar />}
+            {connected && isDashboardView && <ParameterBar />}
             <Box
               component="main"
               sx={{
@@ -99,7 +100,12 @@ export default function App() {
                     />
                   );
                 })}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route
+                  path="/dashboards/:id"
+                  element={!connected ? <WelcomeScreen /> : <DashboardViewPage />}
+                />
+                <Route path="/" element={<Navigate to="/dashboards" replace />} />
+                <Route path="*" element={<Navigate to="/dashboards" replace />} />
               </Routes>
             </Box>
             <Box
