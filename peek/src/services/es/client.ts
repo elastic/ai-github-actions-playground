@@ -229,12 +229,22 @@ export class ElasticsearchClient {
     if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
       // Electron: route through the main process — no CORS restrictions apply
       if (signal?.aborted) throw signal.reason;
-      const ipcResp = await window.electronAPI.fetchES({
+      const ipcPromise = window.electronAPI.fetchES({
         url,
         method: options?.method as string | undefined,
         headers: mergedHeaders,
         body: options?.body as string | undefined,
       });
+      const abortPromise =
+        signal &&
+        new Promise<never>((_, reject) => {
+          const onAbort = () => {
+            reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+          };
+          signal.addEventListener("abort", onAbort, { once: true });
+          ipcPromise.finally(() => signal.removeEventListener("abort", onAbort));
+        });
+      const ipcResp = await (abortPromise ? Promise.race([ipcPromise, abortPromise]) : ipcPromise);
       if (signal?.aborted) throw signal.reason;
       return new Response(ipcResp.body, {
         status: ipcResp.status,
