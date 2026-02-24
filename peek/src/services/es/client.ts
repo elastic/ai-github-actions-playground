@@ -117,8 +117,6 @@ export interface ElasticsearchConnection {
   username?: string;
   password?: string;
   proxyUrl?: string;
-  proxyHost?: string;
-  proxyApiKey?: string;
 }
 
 export interface ElasticsearchError {
@@ -187,11 +185,8 @@ export class ElasticsearchClient {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
-    if (connection.proxyHost) {
-      this.headers["X-Elastic-Peek-Proxy-Host"] = connection.proxyHost;
-    }
-    if (connection.proxyApiKey) {
-      this.headers["X-Elastic-Peek-Proxy-Api-Key"] = connection.proxyApiKey;
+    if (connection.proxyUrl) {
+      this.headers["X-Elastic-Peek-Proxy-Host"] = connection.url;
     }
 
     if (connection.username && connection.password) {

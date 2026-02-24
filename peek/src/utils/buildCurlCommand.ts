@@ -30,13 +30,8 @@ export function buildCurlCommand(
     const pass = shellEscapeSingleQuote(connection.password);
     parts.push(`-u '${user}:${pass}'`);
   }
-  if (connection.proxyHost) {
-    parts.push(`-H 'X-Elastic-Peek-Proxy-Host: ${shellEscapeSingleQuote(connection.proxyHost)}'`);
-  }
-  if (connection.proxyApiKey) {
-    parts.push(
-      `-H 'X-Elastic-Peek-Proxy-Api-Key: ${shellEscapeSingleQuote(connection.proxyApiKey)}'`,
-    );
+  if (connection.proxyUrl) {
+    parts.push(`-H 'X-Elastic-Peek-Proxy-Host: ${shellEscapeSingleQuote(connection.url)}'`);
   }
 
   if (body.trim()) {

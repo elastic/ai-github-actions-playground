@@ -41,9 +41,7 @@ describe("ConnectionDialog", () => {
 
     expect(screen.getByLabelText(/elasticsearch url/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^api key$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/proxy url/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/proxy host/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/proxy api key/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /proxy settings/i })).toBeInTheDocument();
   });
 
   it('disables "Connect" button when URL is empty', () => {
@@ -105,9 +103,8 @@ describe("ConnectionDialog", () => {
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
     await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
+    await user.click(screen.getByRole("button", { name: /proxy settings/i }));
     await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
-    await user.type(screen.getByLabelText(/proxy host/i), "https://dev.example.com:443");
-    await user.type(screen.getByLabelText(/proxy api key/i), "proxy-key");
     await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
@@ -117,8 +114,6 @@ describe("ConnectionDialog", () => {
     expect(profiles[0].connection.url).toBe("https://dev.example.com");
     expect(profiles[0].connection.apiKey).toBe("dev-key");
     expect(profiles[0].connection.proxyUrl).toBe("http://localhost:3000/_es");
-    expect(profiles[0].connection.proxyHost).toBe("https://dev.example.com:443");
-    expect(profiles[0].connection.proxyApiKey).toBe("proxy-key");
   });
 
   it("displays saved profiles in the dialog", () => {

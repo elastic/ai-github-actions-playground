@@ -77,21 +77,18 @@ describe("auth headers", () => {
     expect((init.headers as Record<string, string>)["Authorization"]).toBeUndefined();
   });
 
-  it("sends proxy routing headers when configured", async () => {
+  it("sends proxy host header derived from url when proxyUrl is configured", async () => {
     const fetchSpy = mockFetchOnce({ cluster_name: "test" });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({
       proxyUrl: "http://localhost:3000/_es",
-      proxyHost: "https://cluster.example:443",
-      proxyApiKey: "proxy-key",
     });
     await client.getClusterInfo();
 
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
-    expect(headers["X-Elastic-Peek-Proxy-Host"]).toBe("https://cluster.example:443");
-    expect(headers["X-Elastic-Peek-Proxy-Api-Key"]).toBe("proxy-key");
+    expect(headers["X-Elastic-Peek-Proxy-Host"]).toBe(BASE_URL);
   });
 });
 

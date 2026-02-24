@@ -29,8 +29,6 @@ const PROXY_CONN = {
   url: "https://es.example.com:9200",
   apiKey: "test-key",
   proxyUrl: "https://proxy.example.com",
-  proxyHost: "cluster-id.es.europe-west1.gcp.elastic-cloud.com",
-  proxyApiKey: "proxy-key",
 };
 const MANUAL_CAPS = {
   canManageDataStreams: false,

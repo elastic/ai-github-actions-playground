@@ -17,9 +17,12 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
+import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import ExpandLess from "@mui/icons-material/ExpandLess";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { useShallow } from "zustand/react/shallow";
@@ -72,8 +75,7 @@ export default function ConnectionDialog() {
   const [username, setUsername] = useState(savedConn?.username ?? "");
   const [password, setPassword] = useState(savedConn?.password ?? "");
   const [proxyUrl, setProxyUrl] = useState(savedConn?.proxyUrl ?? "");
-  const [proxyHost, setProxyHost] = useState(savedConn?.proxyHost ?? "");
-  const [proxyApiKey, setProxyApiKey] = useState(savedConn?.proxyApiKey ?? "");
+  const [showProxy, setShowProxy] = useState(Boolean(savedConn?.proxyUrl));
   const [showSecret, setShowSecret] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -89,8 +91,7 @@ export default function ConnectionDialog() {
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
     setProxyUrl(savedConn?.proxyUrl ?? "");
-    setProxyHost(savedConn?.proxyHost ?? "");
-    setProxyApiKey(savedConn?.proxyApiKey ?? "");
+    setShowProxy(Boolean(savedConn?.proxyUrl));
   }, [savedConn]);
 
   const buildConnection = useCallback((): ElasticsearchConnection => {
@@ -100,18 +101,14 @@ export default function ConnectionDialog() {
         username: username.trim(),
         password: password.trim(),
         proxyUrl: proxyUrl.trim(),
-        proxyHost: proxyHost.trim(),
-        proxyApiKey: proxyApiKey.trim(),
       };
     }
     return {
       url: url.trim(),
       apiKey: apiKey.trim(),
       proxyUrl: proxyUrl.trim(),
-      proxyHost: proxyHost.trim(),
-      proxyApiKey: proxyApiKey.trim(),
     };
-  }, [url, authType, apiKey, username, password, proxyUrl, proxyHost, proxyApiKey]);
+  }, [url, authType, apiKey, username, password, proxyUrl]);
 
   const handleTest = useCallback(async () => {
     setTesting(true);
@@ -174,8 +171,7 @@ export default function ConnectionDialog() {
       setUsername(conn.username ?? "");
       setPassword(conn.password ?? "");
       setProxyUrl(conn.proxyUrl ?? "");
-      setProxyHost(conn.proxyHost ?? "");
-      setProxyApiKey(conn.proxyApiKey ?? "");
+      setShowProxy(Boolean(conn.proxyUrl));
       setActiveProfileId(profileId);
       setResult(null);
     },
@@ -307,39 +303,27 @@ export default function ConnectionDialog() {
             }}
             helperText="The full URL including protocol and port"
           />
-          <TextField
-            label="Proxy URL (optional)"
-            placeholder="http://localhost:3000/_es"
-            fullWidth
-            value={proxyUrl}
-            onChange={(e) => {
-              setProxyUrl(e.target.value);
-              setActiveProfileId(null);
-            }}
-            helperText="If provided, requests are sent to this proxy URL instead of the Elasticsearch URL"
-          />
-          <TextField
-            label="Proxy Host (optional)"
-            placeholder="https://my-cluster.es.us-east-1.aws.elastic.cloud:443"
-            fullWidth
-            value={proxyHost}
-            onChange={(e) => {
-              setProxyHost(e.target.value);
-              setActiveProfileId(null);
-            }}
-            helperText="Sent as X-Elastic-Peek-Proxy-Host for proxy routing"
-          />
-          <TextField
-            label="Proxy API Key (optional)"
-            fullWidth
-            type={showSecret ? "text" : "password"}
-            value={proxyApiKey}
-            onChange={(e) => {
-              setProxyApiKey(e.target.value);
-              setActiveProfileId(null);
-            }}
-            helperText="Sent as X-Elastic-Peek-Proxy-Api-Key"
-          />
+          <Button
+            size="small"
+            onClick={() => setShowProxy(!showProxy)}
+            endIcon={showProxy ? <ExpandLess /> : <ExpandMore />}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            Proxy Settings
+          </Button>
+          <Collapse in={showProxy}>
+            <TextField
+              label="Proxy URL"
+              placeholder="http://localhost:3000/_es"
+              fullWidth
+              value={proxyUrl}
+              onChange={(e) => {
+                setProxyUrl(e.target.value);
+                setActiveProfileId(null);
+              }}
+              helperText="Requests are sent to this URL; the Elasticsearch URL is forwarded as a header"
+            />
+          </Collapse>
           <Tabs
             value={authType}
             onChange={(_, v: AuthType) => {
