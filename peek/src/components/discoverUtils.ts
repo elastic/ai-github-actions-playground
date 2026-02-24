@@ -101,7 +101,7 @@ function escapeCsvCell(value: unknown): string {
 /**
  * Splits an ES|QL query on top-level pipe characters, respecting double-quoted
  * strings (`"..."` with `""` escaping), triple-quoted strings (`"""..."""`),
- * and backtick-quoted identifiers (`` `...` ``).
+ * backtick-quoted identifiers (`` `...` ``), and line/block comments.
  *
  * Returns an array of trimmed pipeline stage strings.  Returns an empty array
  * for a blank query, and a single-element array when no pipes are present.
@@ -159,6 +159,30 @@ export function splitEsqlPipeline(query: string): string[] {
         current += c;
         i++;
         if (c === "`") break;
+      }
+    } else if (ch === "/" && trimmed[i + 1] === "/") {
+      // Line comment: // ...
+      current += "//";
+      i += 2;
+      while (i < trimmed.length) {
+        const c = trimmed[i]!;
+        current += c;
+        i++;
+        if (c === "\n") break;
+      }
+    } else if (ch === "/" && trimmed[i + 1] === "*") {
+      // Block comment: /* ... */
+      current += "/*";
+      i += 2;
+      while (i < trimmed.length) {
+        const c = trimmed[i]!;
+        current += c;
+        i++;
+        if (c === "*" && trimmed[i] === "/") {
+          current += "/";
+          i++;
+          break;
+        }
       }
     } else if (ch === "|") {
       const step = current.trim();
@@ -256,6 +280,24 @@ export function buildColumnInsightsQuery(
     "SORT value_count DESC",
     `LIMIT ${COLUMN_INSIGHTS_TOP_N}`,
   ].join(" | ");
+}
+
+/**
+ * Formats an ES|QL query into a clean, consistent style:
+ * - Uppercases the leading command keyword of each pipeline stage.
+ * - Joins multiple stages with a newline + "| " prefix for readability.
+ *
+ * Returns the original query unchanged if it has no pipeline steps.
+ */
+export function formatEsqlQuery(query: string): string {
+  const steps = splitEsqlPipeline(query);
+  if (steps.length === 0) return query;
+
+  const formattedSteps = steps.map((step) =>
+    step.replace(/^([A-Za-z]+)/, (match) => match.toUpperCase()),
+  );
+
+  return formattedSteps.join("\n| ");
 }
 
 /**

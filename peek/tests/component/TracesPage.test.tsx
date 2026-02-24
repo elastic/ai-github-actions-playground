@@ -10,7 +10,10 @@ import { EMPTY_FILTERS } from "../../src/components/traces/traceQueryBuilder";
 vi.mock("@uiw/react-codemirror", () => ({
   default: ({ value }: { value: string }) => <div data-testid="codemirror-mock">{value}</div>,
 }));
-vi.mock("@codemirror/lang-sql", () => ({ sql: () => [] }));
+vi.mock("@codemirror/lang-sql", () => ({
+  sql: () => [],
+  SQLDialect: { define: () => ({ language: [] }) },
+}));
 vi.mock("../../src/components/llmCompletionExtension", () => ({
   makeLLMCompletionExtension: () => [],
 }));

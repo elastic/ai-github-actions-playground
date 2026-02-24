@@ -193,8 +193,10 @@ describe("CommandPalette", () => {
 
     await user.type(screen.getByLabelText("Search commands"), "keyboard");
 
-    expect(screen.getByText("Tips & Shortcuts")).toBeInTheDocument();
-    expect(screen.queryByText("About Elastic Peek")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Tips & Shortcuts")).toBeInTheDocument();
+      expect(screen.queryByText("About Elastic Peek")).not.toBeInTheDocument();
+    });
   });
 
   it("opens with Ctrl+K keyboard shortcut", async () => {
