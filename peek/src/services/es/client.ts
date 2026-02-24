@@ -100,6 +100,18 @@ export interface SecurityRole {
 }
 export type GetSecurityUsersResponse = Record<string, SecurityUser>;
 export type GetSecurityRolesResponse = Record<string, SecurityRole>;
+export interface ProfilingTopFunctionsRequest {
+  limit: number;
+  query: {
+    bool: {
+      filter: Array<Record<string, unknown>>;
+    };
+  };
+}
+export interface ProfilingFlamegraphRequest {
+  sample_size: number;
+  query: ProfilingTopFunctionsRequest["query"];
+}
 
 /**
  * Backward-compatible alias — matches the shape components were already using.
@@ -331,6 +343,25 @@ export class ElasticsearchClient {
 
   async getSecurityRoles(signal?: AbortSignal): Promise<GetSecurityRolesResponse> {
     return this._fetch<GetSecurityRolesResponse>("/_security/role", { signal });
+  }
+
+  async getTopFunctions(
+    body: ProfilingTopFunctionsRequest,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    return this._fetch<unknown>("/_profiling/topn/functions", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
+  }
+
+  async getFlamegraph(body: ProfilingFlamegraphRequest, signal?: AbortSignal): Promise<unknown> {
+    return this._fetch<unknown>("/_profiling/flamegraph", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
   }
 
   // -------------------------------------------------------------------------
