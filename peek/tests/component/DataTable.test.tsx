@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import DataTable from "../../src/components/visualizations/DataTable";
@@ -195,6 +195,21 @@ describe("DataTable", () => {
     await user.click(screen.getByRole("button", { name: /collapse cell value/i }));
     expect(screen.queryByText(longValue)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /expand cell value/i })).toBeInTheDocument();
+  });
+
+  it("does not open row inspector when toggling truncated cell with keyboard", async () => {
+    const longValue = "c".repeat(300);
+    const longData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [[longValue]],
+    };
+    render(<DataTable data={longData} />);
+
+    const expandButton = screen.getByRole("button", { name: /expand cell value/i });
+    fireEvent.keyDown(expandButton, { key: "Enter" });
+
+    expect(screen.getByRole("button", { name: /expand cell value/i })).toBeInTheDocument();
+    expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument();
   });
 
   it("calls onSortChange on first header click with asc direction", async () => {

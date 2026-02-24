@@ -44,6 +44,11 @@ function TruncatedCell({ value }: { value: string }) {
           e.stopPropagation();
           setExpanded((v) => !v);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.stopPropagation();
+          }
+        }}
         aria-label={expanded ? "Collapse cell value" : "Expand cell value"}
         sx={{ ml: 0.5, minWidth: 0, p: 0, fontSize: "0.7rem", verticalAlign: "baseline" }}
       >
