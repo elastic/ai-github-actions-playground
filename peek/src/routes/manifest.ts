@@ -5,6 +5,7 @@ import ExploreIcon from "@mui/icons-material/Explore";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import InfoIcon from "@mui/icons-material/Info";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import PeopleIcon from "@mui/icons-material/People";
@@ -23,6 +24,7 @@ import DocsPage from "../components/DocsPage";
 import ExplorePage from "../components/ExplorePage";
 import FleetAgentPage from "../components/FleetAgentPage";
 import FleetPage from "../components/FleetPage";
+import RelevanceLabPage from "../components/RelevanceLabPage";
 import RolesPage from "../components/RolesPage";
 import SettingsPage from "../components/SettingsPage";
 import TracesPage from "../components/traces/TracesPage";
@@ -69,6 +71,19 @@ export const PAGE_MANIFEST = {
       order: 20,
       showInSidebar: true,
       icon: createElement(SearchIcon, { fontSize: "small" }),
+    },
+  },
+  relevance: {
+    path: "/relevance",
+    component: RelevanceLabPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Relevance Lab",
+      group: "Workspace",
+      order: 25,
+      showInSidebar: true,
+      icon: createElement(CompareArrowsIcon, { fontSize: "small" }),
     },
   },
   explore: {
