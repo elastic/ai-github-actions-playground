@@ -17,6 +17,11 @@ import Divider from "@mui/material/Divider";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Tooltip from "@mui/material/Tooltip";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
@@ -70,6 +75,10 @@ export default function DashboardsLandingPage() {
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [recentlyDeleted, setRecentlyDeleted] = useState<DashboardDefinition | null>(null);
   const deleteTimeoutRef = useRef<number | null>(null);
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [nameDialogMode, setNameDialogMode] = useState<"create" | "rename">("create");
+  const [nameDialogValue, setNameDialogValue] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(
     () => () => {
@@ -83,11 +92,10 @@ export default function DashboardsLandingPage() {
   const visibleDashboards = showArchived ? dashboards : dashboards.filter((d) => !d.archived);
 
   const handleCreate = useCallback(() => {
-    const title = window.prompt("Dashboard name", `Dashboard ${dashboards.length + 1}`);
-    if (!title) return;
-    const id = createDashboard(title);
-    navigate(`/dashboards/${id}`);
-  }, [createDashboard, dashboards.length, navigate]);
+    setNameDialogMode("create");
+    setNameDialogValue(`Dashboard ${dashboards.length + 1}`);
+    setNameDialogOpen(true);
+  }, [dashboards.length]);
 
   const handleOpenMenu = useCallback(
     (event: React.MouseEvent<HTMLElement>, entry: DashboardDefinition) => {
@@ -101,18 +109,15 @@ export default function DashboardsLandingPage() {
   const handleCloseMenu = useCallback(() => {
     setMenuAnchor(null);
     setMenuDashboard(null);
+    setConfirmDeleteId(null);
   }, []);
 
   const handleRename = useCallback(() => {
     if (!menuDashboard) return;
-    const title = window.prompt("Rename dashboard", menuDashboard.title);
-    if (!title || title.trim() === menuDashboard.title) {
-      handleCloseMenu();
-      return;
-    }
-    renameDashboard(menuDashboard.id, title);
-    handleCloseMenu();
-  }, [menuDashboard, renameDashboard, handleCloseMenu]);
+    setNameDialogMode("rename");
+    setNameDialogValue(menuDashboard.title);
+    setNameDialogOpen(true);
+  }, [menuDashboard]);
 
   const handleDuplicate = useCallback(() => {
     if (!menuDashboard) return;
@@ -129,8 +134,8 @@ export default function DashboardsLandingPage() {
 
   const handleDelete = useCallback(() => {
     if (!menuDashboard) return;
-    if (!window.confirm(`Delete dashboard "${menuDashboard.title}"?`)) {
-      handleCloseMenu();
+    if (confirmDeleteId !== menuDashboard.id) {
+      setConfirmDeleteId(menuDashboard.id);
       return;
     }
     const deleted = deleteDashboard(menuDashboard.id);
@@ -147,7 +152,7 @@ export default function DashboardsLandingPage() {
       deleteTimeoutRef.current = null;
     }, 8000);
     handleCloseMenu();
-  }, [menuDashboard, deleteDashboard, handleCloseMenu]);
+  }, [menuDashboard, confirmDeleteId, deleteDashboard, handleCloseMenu]);
 
   const handleUndoDelete = useCallback(() => {
     if (!recentlyDeleted) return;
@@ -158,6 +163,35 @@ export default function DashboardsLandingPage() {
       deleteTimeoutRef.current = null;
     }
   }, [recentlyDeleted, restoreDashboard]);
+
+  const handleNameDialogConfirm = useCallback(() => {
+    const trimmed = nameDialogValue.trim();
+    if (!trimmed) return;
+    if (nameDialogMode === "create") {
+      const id = createDashboard(trimmed);
+      setNameDialogOpen(false);
+      navigate(`/dashboards/${id}`);
+    } else {
+      if (menuDashboard && trimmed !== menuDashboard.title) {
+        renameDashboard(menuDashboard.id, trimmed);
+      }
+      setNameDialogOpen(false);
+      handleCloseMenu();
+    }
+  }, [
+    nameDialogValue,
+    nameDialogMode,
+    createDashboard,
+    navigate,
+    menuDashboard,
+    renameDashboard,
+    handleCloseMenu,
+  ]);
+
+  const handleNameDialogCancel = useCallback(() => {
+    setNameDialogOpen(false);
+    if (nameDialogMode === "rename") handleCloseMenu();
+  }, [nameDialogMode, handleCloseMenu]);
 
   const handleExportDashboard = useCallback(() => {
     if (!menuDashboard) return;
@@ -403,17 +437,59 @@ export default function DashboardsLandingPage() {
           <ListItemText>Export</ListItemText>
         </MenuItem>
         <Divider />
-        <MenuItem
-          onClick={handleDelete}
-          disabled={dashboards.length <= 1}
-          sx={{ color: "error.main" }}
-        >
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
-        </MenuItem>
+        {confirmDeleteId === menuDashboard?.id ? (
+          <Box sx={{ px: 2, py: 1, display: "flex", gap: 1 }}>
+            <Button size="small" color="error" variant="contained" onClick={handleDelete}>
+              Confirm Delete
+            </Button>
+            <Button size="small" onClick={() => setConfirmDeleteId(null)}>
+              Cancel
+            </Button>
+          </Box>
+        ) : (
+          <MenuItem
+            onClick={handleDelete}
+            disabled={dashboards.length <= 1}
+            sx={{ color: "error.main" }}
+          >
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Delete</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
+
+      <Dialog open={nameDialogOpen} onClose={handleNameDialogCancel} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {nameDialogMode === "create" ? "New Dashboard" : "Rename Dashboard"}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered create/rename
+            autoFocus
+            label="Dashboard name"
+            fullWidth
+            value={nameDialogValue}
+            onChange={(e) => setNameDialogValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleNameDialogConfirm();
+              if (e.key === "Escape") handleNameDialogCancel();
+            }}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleNameDialogCancel}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleNameDialogConfirm}
+            disabled={!nameDialogValue.trim()}
+          >
+            {nameDialogMode === "create" ? "Create" : "Rename"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={Boolean(recentlyDeleted)}
