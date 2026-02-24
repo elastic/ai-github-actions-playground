@@ -66,13 +66,35 @@ export function paginateRows(values: unknown[][], page: number, rowsPerPage: num
 function escapeCsvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
   let asString = String(value);
+  const len = asString.length;
+
+  // Single-pass scan: detect a leading formula trigger and any CSV-special characters.
+  // Formula trigger: /^[\t\r ]*[=+\-@]/ — leading tabs/CR/spaces followed by =, +, -, or @.
+  // CSV-special: any of  "  ,  \n  \r  that require the cell to be quoted.
+  let isFormula = false;
+  let needsQuote = false;
+  let seenNonLeadingWhitespace = false;
+  for (let i = 0; i < len; i++) {
+    const c = asString.charCodeAt(i);
+    if (!seenNonLeadingWhitespace) {
+      if (c === 9 /* \t */ || c === 13 /* \r */ || c === 32 /* space */) {
+        // still in leading whitespace — keep scanning
+      } else {
+        seenNonLeadingWhitespace = true;
+        if (c === 61 /* = */ || c === 43 /* + */ || c === 45 /* - */ || c === 64 /* @ */) {
+          isFormula = true;
+        }
+      }
+    }
+    if (c === 34 /* " */ || c === 44 /* , */ || c === 10 /* \n */ || c === 13 /* \r */) {
+      needsQuote = true;
+    }
+    if (isFormula && needsQuote) break; // both flags set — no need to scan further
+  }
+
   // Prevent CSV formula injection in spreadsheet software.
-  if (/^[\t\r ]*[=+\-@]/.test(asString)) {
-    asString = `'${asString}`;
-  }
-  if (/[",\n\r]/.test(asString)) {
-    return `"${asString.replace(/"/g, '""')}"`;
-  }
+  if (isFormula) asString = `'${asString}`;
+  if (needsQuote) return `"${asString.replace(/"/g, '""')}"`;
   return asString;
 }
 
@@ -156,9 +178,24 @@ export function splitEsqlPipeline(query: string): string[] {
 }
 
 export function toCsv(data: EsqlResponse): string {
-  const header = data.columns.map((column) => escapeCsvCell(column.name)).join(",");
-  const rows = data.values.map((row) => row.map((cell) => escapeCsvCell(cell)).join(","));
-  return [header, ...rows].join("\r\n");
+  // Pre-allocate the lines array (1 header + N data rows) to avoid dynamic resizing
+  // and eliminate the [header, ...rows] spread copy.
+  const lines = new Array<string>(data.values.length + 1);
+  const cols = data.columns;
+  const headerCells = new Array<string>(cols.length);
+  for (let j = 0; j < cols.length; j++) {
+    headerCells[j] = escapeCsvCell(cols[j]?.name);
+  }
+  lines[0] = headerCells.join(",");
+  for (let i = 0; i < data.values.length; i++) {
+    const row = data.values[i] ?? [];
+    const cells = new Array<string>(row.length);
+    for (let j = 0; j < row.length; j++) {
+      cells[j] = escapeCsvCell(row[j]);
+    }
+    lines[i + 1] = cells.join(",");
+  }
+  return lines.join("\r\n");
 }
 
 /**
