@@ -13,7 +13,7 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      issue-title-prefix: "[smoke-metrics-flow]"
+      issue-title-prefix: "[smoke-connection-dialog] [smoke-metrics-flow]"
       additional-instructions: |
         You are the Playwright Smoke Agent for the metrics persona flow.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
