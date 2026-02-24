@@ -6,12 +6,15 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
 import { useUIStore } from "./store/useUIStore";
 import { useDashboardStore } from "./store/useDashboardStore";
 import { useResetAllStores } from "./hooks/useResetAllStores";
+import { useSessionResume } from "./hooks/useSessionResume";
 import AppHeader from "./components/AppHeader";
 import AppSidebar from "./components/AppSidebar";
 import ParameterBar from "./components/ParameterBar";
@@ -26,11 +29,13 @@ const currentYear = new Date().getFullYear();
 
 export default function App() {
   const themeMode = useUIStore((s) => s.themeMode);
+  const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
   const connected = useConnectionStore((s) => s.connected);
   const resetState = useResetAllStores();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
+  const { resumeError, clearResumeError } = useSessionResume();
 
   const undoDashboardChange = useDashboardStore((s) => s.undoDashboardChange);
   const redoDashboardChange = useDashboardStore((s) => s.redoDashboardChange);
@@ -173,6 +178,31 @@ export default function App() {
       <ConnectionDialog />
       <PanelEditor />
       <CommandPalette />
+      <Snackbar
+        open={Boolean(resumeError)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        onClose={clearResumeError}
+      >
+        <Alert
+          severity="warning"
+          onClose={clearResumeError}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                clearResumeError();
+                setConnectionDialogOpen(true);
+              }}
+            >
+              Reconnect
+            </Button>
+          }
+          sx={{ width: "100%" }}
+        >
+          Could not resume session: {resumeError}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 }
