@@ -78,11 +78,15 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
         ...(tzDateFormatter
           ? {
               formatter: (
-                params: Array<{ marker: string; seriesName: string; value: [number, number] }>,
+                params: Array<{
+                  marker: string;
+                  seriesName: string;
+                  value: [number | null, number];
+                }>,
               ) => {
                 if (!Array.isArray(params) || params.length === 0) return "";
                 const time = params[0]?.value[0];
-                if (time === undefined) return "";
+                if (time == null) return "";
                 const timeStr = tzDateFormatter(time);
                 const lines = params.map((p) => `${p.marker}${p.seriesName}: ${p.value[1]}`);
                 return `${timeStr}<br/>${lines.join("<br/>")}`;
