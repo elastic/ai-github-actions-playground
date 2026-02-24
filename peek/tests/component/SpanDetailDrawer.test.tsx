@@ -286,7 +286,7 @@ describe("SpanDetailDrawer – copy action", () => {
       );
 
       const copyButtons = screen.getAllByRole("button", { name: /copy/i });
-      await expect(user.click(copyButtons[0])).resolves.not.toThrow();
+      await expect(user.click(copyButtons[0])).resolves.toBeUndefined();
     } finally {
       // Always restore the original clipboard descriptor
       if (originalClipboard) {
