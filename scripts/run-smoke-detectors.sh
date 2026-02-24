@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# run-detectors.sh
+# run-smoke-detectors.sh
 #
-# Helper script to manually trigger all Detector/Auditor workflows in this
+# Helper script to manually trigger all Smoke test workflows in this
 # repository via the GitHub CLI (gh).
 #
 # Prerequisites:
 #   - gh CLI installed and authenticated (gh auth login)
 #
 # Usage:
-#   ./scripts/run-detectors.sh
-#   ./scripts/run-detectors.sh --repo elastic/ai-github-actions-playground
+#   ./scripts/run-smoke-detectors.sh
+#   ./scripts/run-smoke-detectors.sh --repo elastic/ai-github-actions-playground
 
 set -euo pipefail
 
@@ -35,31 +35,13 @@ if [[ -n "$REPO" ]]; then
   REPO_ARGS=(--repo "$REPO")
 fi
 
-# Detector / Auditor workflows that support workflow_dispatch
+# Smoke test workflows that support workflow_dispatch
 WORKFLOWS=(
-  "agent-suggestions.yml"
-  "autonomy-atomicity-analyzer.yml"
-  "breaking-change-detector.yml"
-  "bug-hunter.yml"
-  "code-duplication-detector.yml"
-  "docs-patrol.yml"
-  "duplicate-issue-detector.yml"
-  "flaky-test-investigator.yml"
-  "framework-best-practices.yml"
-  "information-architecture.yml"
-  "iterative-ideas-man.yml"
-  "medium-ideas-man.yml"
-  "newbie-contributor-patrol.yml"
-  "observability-ideas-man.yml"
-  "performance-profiler.yml"
-  "product-manager-impersonator.yml"
-  "project-summary.yml"
-  "refactor-opportunist.yml"
-  "security-ideas-man.yml"
-  "stale-issues.yml"
-  "text-auditor.yml"
-  "ux-design-patrol.yml"
-  "vector-search-ideas-man.yml"
+  "smoke-auth-tab-switch.yml"
+  "smoke-metrics-flow.yml"
+  "smoke-reset-visibility.yml"
+  "smoke-traces-flow.yml"
+  "smoke-welcome-flow.yml"
 )
 
 # Verify gh is available
@@ -68,7 +50,7 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
-echo "Triggering Detector/Auditor workflows..."
+echo "Triggering Smoke test workflows..."
 echo ""
 
 FAILED=()
@@ -85,7 +67,7 @@ done
 
 echo ""
 if [[ ${#FAILED[@]} -eq 0 ]]; then
-  echo "All workflows triggered successfully."
+  echo "All smoke workflows triggered successfully."
 else
   echo "The following workflows could not be triggered:" >&2
   for w in "${FAILED[@]}"; do
