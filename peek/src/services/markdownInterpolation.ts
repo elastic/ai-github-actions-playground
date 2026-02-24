@@ -10,10 +10,10 @@ export function interpolateParameters(
   parameters: DashboardParameter[] | undefined,
 ): string {
   if (!parameters || parameters.length === 0) return content;
+  const parameterValues = new Map(parameters.map((p) => [p.name, String(p.value)]));
 
   return content.replace(/\{\{(\w+)\}\}/g, (match, name: string) => {
-    const param = parameters.find((p) => p.name === name);
-    return param !== undefined ? String(param.value) : match;
+    return parameterValues.get(name) ?? match;
   });
 }
 
