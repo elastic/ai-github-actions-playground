@@ -51,6 +51,19 @@ describe("ConnectionDialog", () => {
     expect(connectButton).toBeDisabled();
   });
 
+  it("keeps Connect/Test/Save Profile disabled when only proxy URL is provided", async () => {
+    const user = userEvent.setup();
+    render(<ConnectionDialog />);
+
+    await user.click(screen.getByRole("button", { name: /proxy settings/i }));
+    await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
+    await user.type(screen.getByLabelText(/profile name/i), "Proxy only");
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
+  });
+
   it("enables Connect button after entering a URL", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);

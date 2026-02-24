@@ -426,7 +426,7 @@ export default function ConnectionDialog() {
                 size="small"
                 variant="outlined"
                 onClick={handleSaveProfile}
-                disabled={!profileName.trim() || (!url && !proxyUrl) || isDuplicateProfileName}
+                disabled={!profileName.trim() || !url || isDuplicateProfileName}
               >
                 Save Profile
               </Button>
@@ -440,14 +440,10 @@ export default function ConnectionDialog() {
         </Button>
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={handleTest} disabled={testing || (!url && !proxyUrl)}>
+        <Button onClick={handleTest} disabled={testing || !url}>
           {testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
-        <Button
-          variant="contained"
-          onClick={handleConnect}
-          disabled={testing || (!url && !proxyUrl)}
-        >
+        <Button variant="contained" onClick={handleConnect} disabled={testing || !url}>
           {testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
       </DialogActions>
