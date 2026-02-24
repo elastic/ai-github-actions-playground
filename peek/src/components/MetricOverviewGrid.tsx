@@ -101,7 +101,15 @@ export default function MetricOverviewGrid({
     );
   }, [fields, namespace]);
 
-  const scopeKey = `${namespace}|${indexPattern}|${timeRange.from}|${timeRange.to}`;
+  const scopeFieldKey = useMemo(
+    () =>
+      namespaceMetrics
+        .map((field) => field.name)
+        .sort((a, b) => a.localeCompare(b))
+        .join(","),
+    [namespaceMetrics],
+  );
+  const scopeKey = `${namespace}|${indexPattern}|${timeRange.from}|${timeRange.to}|${scopeFieldKey}`;
 
   const buildQuery = useCallback(
     (field: FieldInfo) => {
