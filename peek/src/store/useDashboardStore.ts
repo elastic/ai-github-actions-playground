@@ -39,6 +39,7 @@ interface DashboardState {
 
   setTimeRange: (range: TimeRange) => void;
   setRefreshInterval: (interval: number) => void;
+  setTimeZone: (tz: string | undefined) => void;
   setDashboardTitle: (title: string) => void;
 
   addPanel: (panel: PanelDefinition) => void;
@@ -320,6 +321,16 @@ export const useDashboardStore = create<DashboardState>()(
           return replaceActiveDashboard(s, {
             ...active,
             refreshInterval: interval,
+            updatedAt: nowIso(),
+          });
+        }),
+
+      setTimeZone: (tz) =>
+        set((s) => {
+          const active = getActiveDashboard(s);
+          return replaceActiveDashboard(s, {
+            ...active,
+            timeZone: tz || undefined,
             updatedAt: nowIso(),
           });
         }),

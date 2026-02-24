@@ -30,6 +30,21 @@ const timeRangeSchema = z.object({
   to: z.string(),
 });
 
+/** Well-known IANA timezone values offered in the dashboard timezone selector. */
+export const DASHBOARD_TIMEZONE_OPTIONS = [
+  { label: "Browser local", value: "" },
+  { label: "UTC", value: "UTC" },
+  { label: "New York (ET)", value: "America/New_York" },
+  { label: "Chicago (CT)", value: "America/Chicago" },
+  { label: "Denver (MT)", value: "America/Denver" },
+  { label: "Los Angeles (PT)", value: "America/Los_Angeles" },
+  { label: "London (GMT/BST)", value: "Europe/London" },
+  { label: "Paris (CET/CEST)", value: "Europe/Paris" },
+  { label: "Tokyo (JST)", value: "Asia/Tokyo" },
+  { label: "Shanghai (CST)", value: "Asia/Shanghai" },
+  { label: "Sydney (AEST/AEDT)", value: "Australia/Sydney" },
+] as const;
+
 export const panelDefinitionSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
@@ -105,6 +120,7 @@ export const dashboardDefinitionSchema = z.object({
   panels: z.array(panelDefinitionSchema),
   parameters: z.array(dashboardParameterSchema).optional(),
   timeRange: timeRangeSchema,
+  timeZone: z.string().optional(),
   refreshInterval: z.number().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
