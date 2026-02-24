@@ -166,7 +166,7 @@ otel-profiling-logs:
 
 profiling-seed:
 	@echo "Running synthetic profiling data seeder..."
-	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-profiling.yml run --rm profgen
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-profiling.yml run --rm -e MAX_BATCHES=1 profgen
 	@echo "✓ Profiling data seeded."
 
 fleet-harness-up:

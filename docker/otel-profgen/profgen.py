@@ -30,6 +30,7 @@ logger = logging.getLogger("profgen")
 ES_URL = os.environ.get("ES_URL", "http://localhost:9200")
 ES_API_KEY = os.environ.get("ES_API_KEY", "")
 RATE = float(os.environ.get("RATE", "2"))  # batches per second
+MAX_BATCHES = int(os.environ.get("MAX_BATCHES", "0"))  # 0 = continuous
 
 # ---------------------------------------------------------------------------
 # Realistic stack frame definitions grouped by service/executable
@@ -317,9 +318,13 @@ def main() -> None:
     seed_static_data(es)
 
     interval = 1.0 / RATE
-    logger.info("Generating profiling events at %.1f batches/sec", RATE)
+    if MAX_BATCHES > 0:
+        logger.info("Generating %d profiling event batch(es) at %.1f batches/sec", MAX_BATCHES, RATE)
+    else:
+        logger.info("Generating profiling events at %.1f batches/sec", RATE)
 
-    while True:
+    batches_sent = 0
+    while MAX_BATCHES <= 0 or batches_sent < MAX_BATCHES:
         try:
             batch = generate_event_batch()
             success, errors = bulk(es, batch, raise_on_error=False)
@@ -327,7 +332,9 @@ def main() -> None:
                 logger.warning("Bulk errors: %d", len(errors))
         except Exception:
             logger.exception("Error sending batch")
-        time.sleep(interval)
+        batches_sent += 1
+        if MAX_BATCHES <= 0 or batches_sent < MAX_BATCHES:
+            time.sleep(interval)
 
 
 if __name__ == "__main__":

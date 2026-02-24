@@ -134,6 +134,8 @@ export default function ProfilingPage() {
       const stacktraceIds = [...new Set(events.map((event) => event.stacktraceId))];
       if (stacktraceIds.length === 0) {
         setStacktraces([]);
+        setTopFunctionsRows([]);
+        setTimelineResult(null);
         return;
       }
 
