@@ -166,7 +166,7 @@ const DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES = 5;
 export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): ExplorerQueryResult {
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
   const maxSeries = q.maxSeries ?? DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES;
-  const maxRows = Math.max(1, buckets * Math.max(1, maxSeries));
+  const maxRows = buckets * maxSeries;
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);

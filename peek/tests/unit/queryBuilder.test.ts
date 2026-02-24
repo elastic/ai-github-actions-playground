@@ -313,4 +313,14 @@ describe("buildDimensionOverviewQuery", () => {
     expect(result.esql).toContain("?_tstart");
     expect(result.esql).toContain("?_tend");
   });
+
+  it("returns LIMIT 0 when maxSeries is 0", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ maxSeries: 0 }));
+    expect(result.esql).toContain("LIMIT 0");
+  });
+
+  it("returns LIMIT 0 when bucketCount is 0", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ bucketCount: 0 }));
+    expect(result.esql).toContain("LIMIT 0");
+  });
 });
