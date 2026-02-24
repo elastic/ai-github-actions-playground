@@ -16,7 +16,7 @@ Stat — a single large number, ideal for KPIs and counters.
 
 Gauge — a value shown on a radial gauge with configurable min/max range.
 
-Table — raw tabular output, useful for detailed inspection of query results.
+Table — raw tabular output, useful for detailed inspection of query results. Table panels include an **Export CSV** button in the panel controls that downloads the currently loaded rows as a `.csv` file named `{panel-title}-{timestamp}.csv`. The export covers only the rows returned by the panel's last query execution.
 
 Markdown — rich-text panel rendered from Markdown. Supports **parameterized tokens**: use `{{name}}` to insert the current value of a dashboard variable. For example, if you have a parameter called `service`, writing `Owner: {{service}}` will render the current value of that parameter. Unknown tokens are left as-is. This lets you build dynamic runbook notes, escalation links, and context panels that follow the current dashboard state.
 

@@ -16,6 +16,8 @@ Use dashboard variables in panel queries to reuse one dashboard across environme
 
 When a panel shows errors, re-run its query in Query Lab first to isolate query syntax issues from visualization configuration issues.
 
+Table panels include an **Export CSV** button in the panel toolbar. It downloads the rows currently loaded in that panel as a `.csv` file named `{panel-title}-{timestamp}.csv`. Use this for a quick snapshot of one panel's data. For a full result set or iterative query work, use the **Download CSV** action in Query Lab instead.
+
 ## Multi-Dashboard UX
 
 Peek supports a workspace library with `dashboards[]` and one active dashboard.
