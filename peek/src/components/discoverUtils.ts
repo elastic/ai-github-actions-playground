@@ -1,5 +1,7 @@
 import type { EsqlColumn, EsqlResponse } from "../types";
 
+import { isNumericType } from "./visualizations/chartUtils";
+
 export function filterEsqlResult(
   result: EsqlResponse | null,
   selectedFields: Set<string>,
@@ -168,6 +170,55 @@ function quoteEsqlIdentifier(name: string): string {
   if (/^[A-Za-z_@][A-Za-z0-9_@.]*$/.test(name)) return name;
   // Escape backslashes first, then backticks, to produce a valid backtick-quoted identifier.
   return "`" + name.replace(/\\/g, "\\\\").replace(/`/g, "\\`") + "`";
+}
+
+/** Maximum number of top values returned by a keyword column insights query. */
+const COLUMN_INSIGHTS_TOP_N = 10;
+
+/** Maximum number of rows sampled for column insights (keeps queries fast). */
+const COLUMN_INSIGHTS_SAMPLE_LIMIT = 500;
+
+/**
+ * Builds an ES|QL query to profile a specific column's value distribution.
+ *
+ * For numeric columns: returns min / max / avg / total_count / null_count statistics.
+ * For all other column types: returns the top-N values with their occurrence counts.
+ *
+ * Any existing SORT, LIMIT, and STATS steps are stripped from the base query.
+ * A sample LIMIT of 500 rows is added before the aggregation to keep queries fast.
+ */
+export function buildColumnInsightsQuery(
+  baseQuery: string,
+  columnName: string,
+  columnType: string,
+): string {
+  const steps = splitEsqlPipeline(baseQuery);
+  if (steps.length === 0) return "";
+
+  // Strip SORT/LIMIT and stop at STATS so post-aggregation stages are not preserved.
+  const filteredSteps: string[] = [];
+  for (const step of steps) {
+    if (/^SORT\s+/i.test(step) || /^LIMIT\s+/i.test(step)) continue;
+    if (/^STATS\s+/i.test(step)) break;
+    filteredSteps.push(step);
+  }
+
+  const quotedCol = quoteEsqlIdentifier(columnName);
+  const sampledSteps = [...filteredSteps, `LIMIT ${COLUMN_INSIGHTS_SAMPLE_LIMIT}`];
+
+  if (isNumericType(columnType)) {
+    return [
+      ...sampledSteps,
+      `STATS MIN(${quotedCol}) AS min_value, MAX(${quotedCol}) AS max_value, AVG(${quotedCol}) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(${quotedCol}) AS null_count`,
+    ].join(" | ");
+  }
+
+  return [
+    ...sampledSteps,
+    `STATS value_count = COUNT(*) BY ${quotedCol}`,
+    "SORT value_count DESC",
+    `LIMIT ${COLUMN_INSIGHTS_TOP_N}`,
+  ].join(" | ");
 }
 
 /**

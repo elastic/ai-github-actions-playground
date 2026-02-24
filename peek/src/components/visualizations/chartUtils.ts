@@ -47,6 +47,61 @@ export function isNumericType(type: string): boolean {
   return NUMERIC_TYPES.has(type);
 }
 
+export interface SeriesDescriptor {
+  name: string;
+  colIdx: number;
+  rows: number[];
+}
+
+/**
+ * Build series descriptors that split data by a group column.
+ *
+ * When `groupIdx >= 0` each unique value in that column becomes its own
+ * series.  With a single numeric column the series name is the group value;
+ * with multiple numeric columns it is "colName (groupValue)".
+ *
+ * When there is no group column (`groupIdx < 0`) falls back to one series
+ * per numeric column, named after the column.
+ */
+export function buildGroupedSeries(
+  data: EsqlResponse,
+  numericIdxs: number[],
+  groupIdx: number,
+): SeriesDescriptor[] {
+  if (groupIdx < 0) {
+    const allRows = Array.from({ length: data.values.length }, (_, i) => i);
+    return numericIdxs.map((colIdx) => ({
+      name: data.columns[colIdx]!.name,
+      colIdx,
+      rows: allRows,
+    }));
+  }
+
+  const NULL_GROUP_KEY = Symbol("null-group");
+  const groupedRows = new Map<unknown, number[]>();
+  const groupValues = getColumnValues(data, groupIdx);
+  for (let i = 0; i < groupValues.length; i++) {
+    const key = groupValues[i] == null ? NULL_GROUP_KEY : groupValues[i];
+    const rows = groupedRows.get(key);
+    if (rows) {
+      rows.push(i);
+    } else {
+      groupedRows.set(key, [i]);
+    }
+  }
+
+  const result: SeriesDescriptor[] = [];
+  for (const [groupValue, rows] of groupedRows) {
+    const groupName = groupValue === NULL_GROUP_KEY ? "(empty)" : String(groupValue);
+    for (const colIdx of numericIdxs) {
+      const colName = data.columns[colIdx]!.name;
+      const name = numericIdxs.length > 1 ? `${colName} (${groupName})` : groupName;
+      result.push({ name, colIdx, rows });
+    }
+  }
+  return result;
+}
+
 export function formatNumber(value: unknown): string {
   if (value === null || value === undefined) return "—";
   const num = Number(value);

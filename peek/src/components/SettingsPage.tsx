@@ -62,8 +62,22 @@ export default function SettingsPage() {
   );
 
   const [showApiKey, setShowApiKey] = useState(false);
+  const [useCustomModel, setUseCustomModel] = useState(() => {
+    const presets = MODELS[config.provider] ?? [];
+    return !presets.some((model) => model.value === config.model);
+  });
+
+  const PROVIDER_HINT: Record<LLMProvider, string> = {
+    openai: "e.g. gpt-4o, o3-mini",
+    openrouter: "e.g. anthropic/claude-3.5-sonnet",
+  };
 
   const configured = isConfigured();
+  const isModelEmpty = config.model.trim() === "";
+  const handleResetLLMSettings = () => {
+    resetLLMState();
+    setUseCustomModel(false);
+  };
 
   return (
     <Box sx={{ maxWidth: 640, mx: "auto", width: "100%", py: 2 }}>
@@ -95,6 +109,7 @@ export default function SettingsPage() {
               const provider = e.target.value as LLMProvider;
               setProvider(provider);
               setModel(MODELS[provider]?.[0]?.value ?? "");
+              setUseCustomModel(false);
             }}
             size="small"
             fullWidth
@@ -132,20 +147,56 @@ export default function SettingsPage() {
             }}
           />
 
-          <TextField
-            select
-            label="Model"
-            value={config.model}
-            onChange={(e) => setModel(e.target.value)}
-            size="small"
-            fullWidth
-          >
-            {(MODELS[config.provider] ?? []).map((m) => (
-              <MenuItem key={m.value} value={m.value}>
-                {m.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={useCustomModel}
+                onChange={(_, checked) => {
+                  setUseCustomModel(checked);
+                  if (!checked) {
+                    const presets = MODELS[config.provider] ?? [];
+                    const inPresets = presets.some((m) => m.value === config.model);
+                    if (!inPresets) {
+                      setModel(presets[0]?.value ?? "");
+                    }
+                  }
+                }}
+              />
+            }
+            label="Use custom model ID"
+          />
+
+          {useCustomModel ? (
+            <TextField
+              label="Model ID"
+              value={config.model}
+              onChange={(e) => setModel(e.target.value)}
+              size="small"
+              fullWidth
+              placeholder={PROVIDER_HINT[config.provider]}
+              error={isModelEmpty}
+              helperText={
+                isModelEmpty
+                  ? "Model ID is required"
+                  : `Enter any model ID supported by ${PROVIDERS.find((p) => p.value === config.provider)?.label ?? config.provider}`
+              }
+            />
+          ) : (
+            <TextField
+              select
+              label="Model"
+              value={config.model}
+              onChange={(e) => setModel(e.target.value)}
+              size="small"
+              fullWidth
+            >
+              {(MODELS[config.provider] ?? []).map((m) => (
+                <MenuItem key={m.value} value={m.value}>
+                  {m.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
 
           <FormControlLabel
             control={
@@ -159,7 +210,7 @@ export default function SettingsPage() {
         </Box>
       </Paper>
 
-      <Button variant="outlined" color="error" onClick={resetLLMState}>
+      <Button variant="outlined" color="error" onClick={handleResetLLMSettings}>
         Reset LLM Settings
       </Button>
     </Box>

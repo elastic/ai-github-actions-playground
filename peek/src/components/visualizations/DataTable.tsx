@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -49,7 +49,7 @@ interface Props {
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
 }
 
-export default function DataTable({
+export default memo(function DataTable({
   data,
   options,
   onExportCsv,
@@ -476,4 +476,4 @@ export default function DataTable({
       </Menu>
     </Box>
   );
-}
+});
