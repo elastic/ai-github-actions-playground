@@ -1,14 +1,10 @@
-import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { useUIStore } from "../../src/store/useUIStore";
-import { useQueryStore } from "../../src/store/useQueryStore";
-import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { storeResetters } from "../../src/store/storeResetters";
 
 /** Reset all domain stores — use in test `beforeEach` blocks. */
 export function resetAllStores() {
-  useConnectionStore.getState().resetConnectionState();
-  useUIStore.getState().resetUIState();
-  useQueryStore.getState().resetQueryState();
-  useDashboardStore.getState().resetDashboardState();
+  for (const reset of storeResetters) {
+    reset();
+  }
 }
 
 export function makeStorageMock() {

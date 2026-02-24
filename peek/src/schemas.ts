@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import { VISUALIZATION_TYPES } from "./components/visualizations/vizRegistry";
+
+export { VISUALIZATION_TYPES };
+
 const thresholdColor = z.enum(["success", "warning", "error"]);
 
 const thresholdStep = z.object({
@@ -11,19 +15,6 @@ export const thresholdsSchema = z.object({
   steps: z.array(thresholdStep),
   baseColor: thresholdColor.optional(),
 });
-
-export const VISUALIZATION_TYPES = [
-  "timeseries",
-  "bar",
-  "table",
-  "stat",
-  "gauge",
-  "pie",
-  "heatmap",
-  "scatter",
-  "histogram",
-  "markdown",
-] as const;
 
 export const visualizationTypeSchema = z.enum(VISUALIZATION_TYPES);
 

@@ -15,9 +15,11 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, isElasticsearchError, type SecurityUser } from "../services/es";
+import { ElasticsearchClient, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+
+import { loadSecurityResource } from "./securityResourceLoader";
 
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -42,15 +44,17 @@ export default function UsersPage() {
     setAccessNotice(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const [capsResult, usersResult] = await Promise.allSettled([
-        client.getCapabilities(),
-        client.getSecurityUsers(),
-      ]);
-      if (capsResult.status === "fulfilled" && !capsResult.value.canReadSecurityUsers) {
-        setAccessNotice("Your credentials may have partial access to security APIs.");
-      }
-      if (usersResult.status === "fulfilled") {
-        const nextUsers = Object.entries(usersResult.value)
+      const result = await loadSecurityResource({
+        client,
+        fetchResource: (c) => c.getSecurityUsers(),
+        canRead: (caps) => caps.canReadSecurityUsers,
+        authDeniedNotice: "Your credentials cannot read all Users data.",
+      });
+      setAccessNotice(result.notice);
+      if (result.error !== null) {
+        setError(result.error);
+      } else if (result.data !== null) {
+        const nextUsers = Object.entries(result.data)
           .map(([username, user]) => ({
             username: user.username ?? username,
             enabled: user.enabled,
@@ -67,14 +71,8 @@ export default function UsersPage() {
             : (nextUsers[0]?.username ?? null),
         );
       } else {
-        const reason = usersResult.reason;
-        if (isElasticsearchError(reason) && (reason.status === 401 || reason.status === 403)) {
-          setAccessNotice("Your credentials cannot read all Users data.");
-          setUsers([]);
-          setSelectedUsername(null);
-        } else {
-          setError(isElasticsearchError(reason) ? reason.message : String(reason));
-        }
+        setUsers([]);
+        setSelectedUsername(null);
       }
     } finally {
       setLoading(false);
