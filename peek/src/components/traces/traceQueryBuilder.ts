@@ -3,6 +3,8 @@
  * Centralizes field names so queries aren't brittle to schema differences
  * between EDOT, OTel Collector with Elastic exporter, and APM Server.
  */
+import { escapeEsqlString, validateEsqlIdentifier } from "../../services/es/esqlUtils";
+
 export interface TraceFieldMapping {
   traceId: string;
   spanId: string;
@@ -36,20 +38,6 @@ export const DEFAULT_FIELD_MAPPING: TraceFieldMapping = {
   events: "events",
   index: "traces-*",
 };
-
-/** Escape a string value for use inside ES|QL double-quoted literals */
-function escapeEsqlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-/** Validate an ES|QL identifier (field name) to prevent injection */
-const SAFE_IDENTIFIER_RE = /^[A-Za-z_@][A-Za-z0-9_.@-]*$/;
-function validateEsqlIdentifier(key: string): string {
-  if (!SAFE_IDENTIFIER_RE.test(key)) {
-    throw new Error(`Invalid field name: ${key}`);
-  }
-  return key;
-}
 
 /** Structured filters for trace search */
 export interface TraceFilters {
