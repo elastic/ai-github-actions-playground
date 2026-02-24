@@ -35,11 +35,10 @@ type PersistedState = {
 const STORE_NAME = "elastic-peek-connection";
 const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
-const PROXY_API_KEY_SESSION_SUFFIX = ":proxyApiKey";
 const PROFILE_SESSION_PREFIX = ":profile:";
 
 function stripCredentials(conn: ElasticsearchConnection): ElasticsearchConnection {
-  return { ...conn, apiKey: "", password: "", proxyApiKey: "" };
+  return { ...conn, apiKey: "", password: "" };
 }
 
 function stripProfileCredentials(profiles: ConnectionProfile[]): ConnectionProfile[] {
@@ -52,8 +51,7 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
     if (restored.connection) {
       const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
       const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
-      const proxyApiKey = sessionStorage.getItem(name + PROXY_API_KEY_SESSION_SUFFIX) ?? "";
-      restored.connection = { ...restored.connection, apiKey, password, proxyApiKey };
+      restored.connection = { ...restored.connection, apiKey, password };
     }
     if (restored.connectionProfiles) {
       restored.connectionProfiles = restored.connectionProfiles.map((profile) => {
@@ -65,17 +63,12 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
           sessionStorage.getItem(
             name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
           ) ?? "";
-        const pProxyApiKey =
-          sessionStorage.getItem(
-            name + PROFILE_SESSION_PREFIX + profile.id + PROXY_API_KEY_SESSION_SUFFIX,
-          ) ?? "";
         return {
           ...profile,
           connection: {
             ...profile.connection,
             apiKey: pApiKey,
             password: pPassword,
-            proxyApiKey: pProxyApiKey,
           },
         };
       });
@@ -85,10 +78,6 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
   persistSecrets: (name, state) => {
     sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, state.connection?.apiKey ?? "");
     sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
-    sessionStorage.setItem(
-      name + PROXY_API_KEY_SESSION_SUFFIX,
-      state.connection?.proxyApiKey ?? "",
-    );
     for (const profile of state.connectionProfiles ?? []) {
       sessionStorage.setItem(
         name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
@@ -97,10 +86,6 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
       sessionStorage.setItem(
         name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
         profile.connection.password ?? "",
-      );
-      sessionStorage.setItem(
-        name + PROFILE_SESSION_PREFIX + profile.id + PROXY_API_KEY_SESSION_SUFFIX,
-        profile.connection.proxyApiKey ?? "",
       );
     }
   },
@@ -123,9 +108,6 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
           sessionStorage.removeItem(
             name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
           );
-          sessionStorage.removeItem(
-            name + PROFILE_SESSION_PREFIX + profile.id + PROXY_API_KEY_SESSION_SUFFIX,
-          );
         }
       } catch {
         /* ignore parse errors during cleanup */
@@ -133,7 +115,6 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
     }
     sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
     sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
-    sessionStorage.removeItem(name + PROXY_API_KEY_SESSION_SUFFIX);
   },
 });
 
@@ -167,9 +148,6 @@ export const useConnectionStore = create<ConnectionState>()(
           );
           sessionStorage.removeItem(
             STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
-          );
-          sessionStorage.removeItem(
-            STORE_NAME + PROFILE_SESSION_PREFIX + id + PROXY_API_KEY_SESSION_SUFFIX,
           );
           const filtered = s.connectionProfiles.filter((p) => p.id !== id);
           return {

@@ -30,18 +30,6 @@ const PROXY_CONN = {
   apiKey: "test-key",
   proxyUrl: "https://proxy.example.com",
 };
-const PROXY_HOST_CONN = {
-  url: "https://es.example.com:9200",
-  apiKey: "test-key",
-  proxyUrl: "https://proxy.example.com",
-  proxyHost: "https://other-target.example.com:9200",
-};
-const PROXY_API_KEY_CONN = {
-  url: "https://es.example.com:9200",
-  apiKey: "test-key",
-  proxyUrl: "https://proxy.example.com",
-  proxyApiKey: "new-proxy-key",
-};
 const MANUAL_CAPS = {
   canManageDataStreams: false,
   canReadSecurityUsers: true,
@@ -124,48 +112,6 @@ describe("useSessionResume", () => {
     deferred.resolve(CAPS);
 
     await waitFor(() => expect(useConnectionStore.getState().connection).toEqual(PROXY_CONN));
-    expect(useConnectionStore.getState().connected).toBe(false);
-    expect(useConnectionStore.getState().capabilities).toBeNull();
-  });
-
-  it("does not apply stale capabilities when proxy host changes", async () => {
-    useConnectionStore.setState({ connection: PROXY_CONN, connected: false });
-    const deferred = createDeferred<typeof CAPS>();
-    mockFetch.mockReturnValue(deferred.promise);
-
-    renderHook(() => useSessionResume());
-
-    useConnectionStore.setState({
-      connection: PROXY_HOST_CONN,
-      connected: false,
-      capabilities: null,
-    });
-
-    deferred.resolve(CAPS);
-
-    await waitFor(() => expect(useConnectionStore.getState().connection).toEqual(PROXY_HOST_CONN));
-    expect(useConnectionStore.getState().connected).toBe(false);
-    expect(useConnectionStore.getState().capabilities).toBeNull();
-  });
-
-  it("does not apply stale capabilities when proxy API key changes", async () => {
-    useConnectionStore.setState({ connection: PROXY_CONN, connected: false });
-    const deferred = createDeferred<typeof CAPS>();
-    mockFetch.mockReturnValue(deferred.promise);
-
-    renderHook(() => useSessionResume());
-
-    useConnectionStore.setState({
-      connection: PROXY_API_KEY_CONN,
-      connected: false,
-      capabilities: null,
-    });
-
-    deferred.resolve(CAPS);
-
-    await waitFor(() =>
-      expect(useConnectionStore.getState().connection).toEqual(PROXY_API_KEY_CONN),
-    );
     expect(useConnectionStore.getState().connected).toBe(false);
     expect(useConnectionStore.getState().capabilities).toBeNull();
   });

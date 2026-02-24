@@ -105,8 +105,6 @@ describe("ConnectionDialog", () => {
     await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
     await user.click(screen.getByRole("button", { name: /proxy settings/i }));
     await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
-    await user.type(screen.getByLabelText(/proxy host/i), "https://proxy-target.example.com:9200");
-    await user.type(screen.getByLabelText(/proxy api key/i), "proxy-secret");
     await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
@@ -116,19 +114,6 @@ describe("ConnectionDialog", () => {
     expect(profiles[0].connection.url).toBe("https://dev.example.com");
     expect(profiles[0].connection.apiKey).toBe("dev-key");
     expect(profiles[0].connection.proxyUrl).toBe("http://localhost:3000/_es");
-    expect(profiles[0].connection.proxyHost).toBe("https://proxy-target.example.com:9200");
-    expect(profiles[0].connection.proxyApiKey).toBe("proxy-secret");
-  });
-
-  it("keeps Connect disabled when only proxy URL is provided", async () => {
-    const user = userEvent.setup();
-    render(<ConnectionDialog />);
-
-    await user.click(screen.getByRole("button", { name: /proxy settings/i }));
-    await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
-
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
   });
 
   it("displays saved profiles in the dialog", () => {

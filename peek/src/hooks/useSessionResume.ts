@@ -10,9 +10,7 @@ function isSameConnection(a: ElasticsearchConnection, b: ElasticsearchConnection
     (a.apiKey ?? "") === (b.apiKey ?? "") &&
     (a.username ?? "") === (b.username ?? "") &&
     (a.password ?? "") === (b.password ?? "") &&
-    (a.proxyUrl ?? "") === (b.proxyUrl ?? "") &&
-    (a.proxyHost ?? "") === (b.proxyHost ?? "") &&
-    (a.proxyApiKey ?? "") === (b.proxyApiKey ?? "")
+    (a.proxyUrl ?? "") === (b.proxyUrl ?? "")
   );
 }
 
