@@ -44,7 +44,13 @@ interface Props {
   option: Record<string, unknown>;
   style?: React.CSSProperties;
   onExportReady?: (exportFn: (() => string) | null) => void;
-  onClick?: (params: { dataIndex: number; seriesIndex?: number; data: unknown }) => void;
+  onClick?: (params: {
+    dataIndex: number;
+    seriesIndex?: number;
+    seriesName?: string;
+    name?: string;
+    data: unknown;
+  }) => void;
 }
 
 /**
@@ -79,7 +85,13 @@ export default function EChartWrapper({ option, style, onExportReady, onClick }:
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart || !onClick) return;
-    const handler = (params: { dataIndex: number; seriesIndex?: number; data: unknown }) => {
+    const handler = (params: {
+      dataIndex: number;
+      seriesIndex?: number;
+      seriesName?: string;
+      name?: string;
+      data: unknown;
+    }) => {
       onClick(params);
     };
     chart.on("click", handler);

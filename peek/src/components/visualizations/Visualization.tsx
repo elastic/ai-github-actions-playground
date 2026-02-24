@@ -16,6 +16,7 @@ interface Props {
   options?: VisualizationOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
   onExportCsv?: () => void;
+  onFilterIntent?: (field: string, value: string) => void;
   query?: string;
   connection?: ElasticsearchConnection | null;
   timeRange?: TimeRange;
@@ -28,6 +29,7 @@ export default function Visualization({
   options,
   onExportReady,
   onExportCsv,
+  onFilterIntent,
   query,
   connection,
   timeRange,
@@ -40,6 +42,7 @@ export default function Visualization({
       options,
       onExportReady,
       onExportCsv,
+      onFilterIntent,
       query,
       connection,
       timeRange,

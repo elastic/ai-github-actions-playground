@@ -13,8 +13,8 @@ const descriptor: VizRegistryDescriptor = {
     supportsOptions: false,
     supportsQuery: true,
     defaultOptions: () => ({}) satisfies PieChartOptions,
-    renderComponent: ({ data, onExportReady }) => (
-      <PieChart data={data} onExportReady={onExportReady} />
+    renderComponent: ({ data, onExportReady, onFilterIntent }) => (
+      <PieChart data={data} onExportReady={onExportReady} onFilterIntent={onFilterIntent} />
     ),
   },
 };

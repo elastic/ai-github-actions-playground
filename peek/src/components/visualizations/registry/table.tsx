@@ -14,11 +14,12 @@ const descriptor: VizRegistryDescriptor = {
     supportsOptions: true,
     supportsQuery: true,
     defaultOptions: () => ({}) satisfies TablePanelOptions,
-    renderComponent: ({ data, options, onExportCsv }) => (
+    renderComponent: ({ data, options, onExportCsv, onFilterIntent }) => (
       <DataTable
         data={data}
         options={options as TablePanelOptions | undefined}
         onExportCsv={onExportCsv}
+        onFilterIntent={onFilterIntent}
       />
     ),
     OptionsEditor: TableOptionsEditor,

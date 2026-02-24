@@ -21,6 +21,26 @@ interface DashboardState {
   dashboards: DashboardDefinition[];
   activeDashboardId: string;
 
+  /**
+   * Parameters currently set via click-to-filter interactions.
+   * Maps parameter name → the value the parameter held *before* the filter was applied.
+   * Session-only: not persisted to localStorage.
+   */
+  interactionFilters: Record<string, DashboardParameter["value"]>;
+
+  /**
+   * Apply a click-to-filter: update a named parameter's value and record the
+   * previous value so it can be restored with clearInteractionFilter.
+   * No-ops silently when no matching parameter exists.
+   */
+  setInteractionFilter: (name: string, value: DashboardParameter["value"]) => void;
+
+  /** Restore a single interaction-filtered parameter to its pre-filter value. */
+  clearInteractionFilter: (name: string) => void;
+
+  /** Restore all interaction-filtered parameters to their pre-filter values. */
+  clearAllInteractionFilters: () => void;
+
   setActiveDashboard: (id: string) => void;
   createDashboard: (title?: string) => string;
   renameDashboard: (id: string, title: string) => void;
@@ -166,6 +186,67 @@ export const useDashboardStore = create<DashboardState>()(
       activeDashboardId: initialDashboard.id,
       historyPast: [],
       historyFuture: [],
+      interactionFilters: {},
+
+      // -- Interaction filters (click-to-filter) --
+
+      setInteractionFilter: (name, value) =>
+        set((s) => {
+          const active = getActiveDashboard(s);
+          const param = (active.parameters ?? []).find((p) => p.name === name);
+          if (!param) return {};
+          // Remember the previous value only the first time (don't overwrite the original).
+          const prevValue =
+            name in s.interactionFilters ? s.interactionFilters[name]! : param.value;
+          return {
+            interactionFilters: { ...s.interactionFilters, [name]: prevValue },
+            ...replaceActiveDashboard(s, {
+              ...active,
+              parameters: (active.parameters ?? []).map((p) =>
+                p.name === name ? { ...p, value } : p,
+              ),
+              updatedAt: nowIso(),
+            }),
+          };
+        }),
+
+      clearInteractionFilter: (name) =>
+        set((s) => {
+          if (!(name in s.interactionFilters)) return {};
+          const prevValue = s.interactionFilters[name]!;
+          const remaining = Object.fromEntries(
+            Object.entries(s.interactionFilters).filter(([k]) => k !== name),
+          );
+          const active = getActiveDashboard(s);
+          return {
+            interactionFilters: remaining,
+            ...replaceActiveDashboard(s, {
+              ...active,
+              parameters: (active.parameters ?? []).map((p) =>
+                p.name === name ? { ...p, value: prevValue } : p,
+              ),
+              updatedAt: nowIso(),
+            }),
+          };
+        }),
+
+      clearAllInteractionFilters: () =>
+        set((s) => {
+          const names = Object.keys(s.interactionFilters);
+          if (names.length === 0) return {};
+          const active = getActiveDashboard(s);
+          return {
+            interactionFilters: {},
+            ...replaceActiveDashboard(s, {
+              ...active,
+              parameters: (active.parameters ?? []).map((p) => {
+                const prev = s.interactionFilters[p.name];
+                return prev !== undefined ? { ...p, value: prev } : p;
+              }),
+              updatedAt: nowIso(),
+            }),
+          };
+        }),
 
       // -- Multi-dashboard management --
 
@@ -174,7 +255,12 @@ export const useDashboardStore = create<DashboardState>()(
           if (!s.dashboards.some((dashboard) => dashboard.id === id)) {
             return {};
           }
-          return { ...syncActiveState(s.dashboards, id), historyPast: [], historyFuture: [] };
+          return {
+            ...syncActiveState(s.dashboards, id),
+            historyPast: [],
+            historyFuture: [],
+            interactionFilters: {},
+          };
         }),
 
       createDashboard: (title) => {
@@ -575,6 +661,7 @@ export const useDashboardStore = create<DashboardState>()(
           activeDashboardId: fresh.id,
           historyPast: [],
           historyFuture: [],
+          interactionFilters: {},
         });
       },
 

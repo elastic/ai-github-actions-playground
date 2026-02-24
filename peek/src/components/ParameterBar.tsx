@@ -20,6 +20,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import TuneIcon from "@mui/icons-material/Tune";
 import { useShallow } from "zustand/react/shallow";
 
@@ -76,16 +77,27 @@ function formatValueForInput(
 }
 
 export default function ParameterBar() {
-  const { parameters, setParameterValue, addParameter, updateParameter, removeParameter } =
-    useDashboardStore(
-      useShallow((s) => ({
-        parameters: s.dashboard.parameters ?? EMPTY_PARAMETERS,
-        setParameterValue: s.setParameterValue,
-        addParameter: s.addParameter,
-        updateParameter: s.updateParameter,
-        removeParameter: s.removeParameter,
-      })),
-    );
+  const {
+    parameters,
+    setParameterValue,
+    addParameter,
+    updateParameter,
+    removeParameter,
+    interactionFilters,
+    clearInteractionFilter,
+    clearAllInteractionFilters,
+  } = useDashboardStore(
+    useShallow((s) => ({
+      parameters: s.dashboard.parameters ?? EMPTY_PARAMETERS,
+      setParameterValue: s.setParameterValue,
+      addParameter: s.addParameter,
+      updateParameter: s.updateParameter,
+      removeParameter: s.removeParameter,
+      interactionFilters: s.interactionFilters,
+      clearInteractionFilter: s.clearInteractionFilter,
+      clearAllInteractionFilters: s.clearAllInteractionFilters,
+    })),
+  );
   const connection = useConnectionStore((s) => s.connection);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -228,6 +240,8 @@ export default function ParameterBar() {
     draftValueValidation.value !== undefined &&
     !optionsValidationError;
 
+  const activeFilterEntries = Object.entries(interactionFilters);
+
   if (parameters.length === 0 && !dialogOpen) {
     return (
       <Box
@@ -263,7 +277,7 @@ export default function ParameterBar() {
           alignItems: "center",
           px: 2,
           py: 0.5,
-          borderBottom: 1,
+          borderBottom: activeFilterEntries.length > 0 ? 0 : 1,
           borderColor: "divider",
           bgcolor: "background.paper",
           gap: 1,
@@ -292,6 +306,54 @@ export default function ParameterBar() {
           </IconButton>
         </Tooltip>
       </Box>
+
+      {activeFilterEntries.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            px: 2,
+            py: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+          aria-label="Active filters"
+        >
+          <FilterAltIcon sx={{ fontSize: 16, color: "primary.main" }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+            Active filters:
+          </Typography>
+          {activeFilterEntries.map(([name]) => {
+            const param = parameters.find((p) => p.name === name);
+            const label = param?.label || name;
+            const currentValue = param ? String(param.value) : "";
+            return (
+              <Chip
+                key={name}
+                label={`${label} = ${currentValue}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                onDelete={() => clearInteractionFilter(name)}
+                aria-label={`Remove filter: ${label} = ${currentValue}`}
+              />
+            );
+          })}
+          <Tooltip title="Clear all filters">
+            <Button
+              size="small"
+              variant="text"
+              onClick={clearAllInteractionFilters}
+              sx={{ fontSize: "0.7rem", py: 0.25, px: 0.75, minWidth: 0 }}
+            >
+              Clear all
+            </Button>
+          </Tooltip>
+        </Box>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editing ? "Edit Variable" : "Add Variable"}</DialogTitle>

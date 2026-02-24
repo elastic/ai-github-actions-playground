@@ -47,6 +47,7 @@ interface Props {
   onRemoveColumn?: (name: string) => void;
   currentSort?: SortState | null;
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
+  onFilterIntent?: (field: string, value: string) => void;
 }
 
 export default memo(function DataTable({
@@ -56,6 +57,7 @@ export default memo(function DataTable({
   onRemoveColumn,
   currentSort,
   onSortChange,
+  onFilterIntent,
 }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -312,14 +314,24 @@ export default memo(function DataTable({
                       : undefined;
                     const isPinned = pinnedColumns.has(colIdx);
                     const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
+                    const isFilterable = Boolean(onFilterIntent && col && cell !== null);
                     return (
                       <TableCell
                         key={colIdx}
+                        onClick={
+                          isFilterable
+                            ? (e) => {
+                                e.stopPropagation();
+                                onFilterIntent!(col!.name, String(cell));
+                              }
+                            : undefined
+                        }
                         sx={{
                           whiteSpace: "nowrap",
                           fontSize: "0.75rem",
                           fontFamily: numeric ? "monospace" : "inherit",
                           textAlign: numeric ? "right" : "left",
+                          ...(isFilterable ? { cursor: "pointer" } : {}),
                           ...(bgColor ? { backgroundColor: bgColor } : {}),
                           ...(isPinned
                             ? {

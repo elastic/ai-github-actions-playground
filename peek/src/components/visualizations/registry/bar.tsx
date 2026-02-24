@@ -14,11 +14,12 @@ const descriptor: VizRegistryDescriptor = {
     supportsOptions: true,
     supportsQuery: true,
     defaultOptions: () => ({ stacked: false, horizontal: false }) satisfies BarChartOptions,
-    renderComponent: ({ data, options, onExportReady }) => (
+    renderComponent: ({ data, options, onExportReady, onFilterIntent }) => (
       <BarChart
         data={data}
         options={options as BarChartOptions | undefined}
         onExportReady={onExportReady}
+        onFilterIntent={onFilterIntent}
       />
     ),
     OptionsEditor: BarChartOptionsEditor,

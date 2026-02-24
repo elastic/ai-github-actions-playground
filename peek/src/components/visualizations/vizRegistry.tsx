@@ -12,6 +12,12 @@ export interface VizRendererProps {
   options?: VisualizationOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
   onExportCsv?: () => void;
+  /**
+   * Emitted when the user clicks a value in the visualization to apply a
+   * cross-panel filter. `field` is the column/dimension name; `value` is the
+   * string representation of the clicked value.
+   */
+  onFilterIntent?: (field: string, value: string) => void;
   query?: string;
   connection?: ElasticsearchConnection | null;
   timeRange?: TimeRange;

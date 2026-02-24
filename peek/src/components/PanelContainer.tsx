@@ -32,11 +32,12 @@ interface Props {
 
 export default function PanelContainer({ panel }: Props) {
   const connection = useConnectionStore((s) => s.connection);
-  const { timeRange, parameters, duplicatePanel } = useDashboardStore(
+  const { timeRange, parameters, duplicatePanel, setInteractionFilter } = useDashboardStore(
     useShallow((s) => ({
       timeRange: s.dashboard.timeRange,
       parameters: s.dashboard.parameters,
       duplicatePanel: s.duplicatePanel,
+      setInteractionFilter: s.setInteractionFilter,
     })),
   );
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
@@ -105,6 +106,13 @@ export default function PanelContainer({ panel }: Props) {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [data, panel.title]);
+
+  const handleFilterIntent = useCallback(
+    (field: string, value: string) => {
+      setInteractionFilter(field, value);
+    },
+    [setInteractionFilter],
+  );
 
   const fetchData = useCallback(async () => {
     if (!supportsQuery) {
@@ -334,6 +342,7 @@ export default function PanelContainer({ panel }: Props) {
             options={panel.options}
             onExportReady={handleExportReady}
             onExportCsv={supportsCSVExport ? handleExportCsv : undefined}
+            onFilterIntent={handleFilterIntent}
           />
         ) : (
           <Box

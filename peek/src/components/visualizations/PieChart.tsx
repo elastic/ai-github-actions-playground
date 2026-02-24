@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import type { EsqlResponse } from "../../types";
 
@@ -9,17 +9,21 @@ import EChartWrapper from "./EChartWrapper";
 interface Props {
   data: EsqlResponse;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  onFilterIntent?: (field: string, value: string) => void;
 }
 
-export default function PieChart({ data, onExportReady }: Props) {
+export default function PieChart({ data, onExportReady, onFilterIntent }: Props) {
   const theme = useEChartTheme();
 
-  const option = useMemo(() => {
+  const { option, nameColName } = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
     const stringIdxs = findStringColumnIndices(data);
 
     if (numericIdxs.length === 0) {
-      return { title: { text: "No numeric data to display", left: "center", top: "center" } };
+      return {
+        option: { title: { text: "No numeric data to display", left: "center", top: "center" } },
+        nameColName: null,
+      };
     }
 
     const nameIdx = stringIdxs[0] ?? -1;
@@ -36,37 +40,57 @@ export default function PieChart({ data, onExportReady }: Props) {
     }));
 
     return {
-      ...theme,
-      tooltip: {
-        ...theme.tooltip,
-        trigger: "item",
-        formatter: "{b}: {c} ({d}%)",
-      },
-      legend: {
-        ...theme.legend,
-        type: "scroll" as const,
-        orient: "vertical" as const,
-        right: 8,
-        top: "middle",
-      },
-      series: [
-        {
-          type: "pie" as const,
-          radius: ["40%", "70%"],
-          center: ["40%", "50%"],
-          data: pieData,
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.3)",
-            },
-          },
-          label: { show: false },
+      option: {
+        ...theme,
+        tooltip: {
+          ...theme.tooltip,
+          trigger: "item",
+          formatter: "{b}: {c} ({d}%)",
         },
-      ],
+        legend: {
+          ...theme.legend,
+          type: "scroll" as const,
+          orient: "vertical" as const,
+          right: 8,
+          top: "middle",
+        },
+        series: [
+          {
+            type: "pie" as const,
+            radius: ["40%", "70%"],
+            center: ["40%", "50%"],
+            data: pieData,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: "rgba(0, 0, 0, 0.3)",
+              },
+            },
+            label: { show: false },
+          },
+        ],
+      },
+      nameColName: nameIdx >= 0 && data.columns[nameIdx] ? data.columns[nameIdx]!.name : null,
     };
   }, [data, theme]);
 
-  return <EChartWrapper option={option} onExportReady={onExportReady} />;
+  const handleClick = useCallback(
+    (params: { name?: string; seriesName?: string; data: unknown }) => {
+      if (!onFilterIntent || !nameColName) return;
+      const name = params.name;
+      if (name !== undefined && name !== "") {
+        onFilterIntent(nameColName, name);
+      }
+    },
+    [onFilterIntent, nameColName],
+  );
+
+  return (
+    <EChartWrapper
+      option={option}
+      onExportReady={onExportReady}
+      onClick={onFilterIntent ? handleClick : undefined}
+    />
+  );
 }

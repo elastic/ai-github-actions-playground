@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
 
 import type { EsqlResponse, BarChartOptions } from "../../types";
@@ -16,20 +16,24 @@ interface Props {
   data: EsqlResponse;
   options?: BarChartOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
+  onFilterIntent?: (field: string, value: string) => void;
 }
 
-export default function BarChart({ data, options, onExportReady }: Props) {
+export default function BarChart({ data, options, onExportReady, onFilterIntent }: Props) {
   const theme = useEChartTheme();
   const stacked = options?.stacked === true;
   const horizontal = options?.horizontal === true;
   const format = options?.format;
 
-  const option = useMemo(() => {
+  const { option, categoryColName } = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
     const stringIdxs = findStringColumnIndices(data);
 
     if (numericIdxs.length === 0) {
-      return { title: { text: "No numeric data to display", left: "center", top: "center" } };
+      return {
+        option: { title: { text: "No numeric data to display", left: "center", top: "center" } },
+        categoryColName: null,
+      };
     }
 
     const categoryIdx = stringIdxs[0] ?? -1;
@@ -102,23 +106,44 @@ export default function BarChart({ data, options, onExportReady }: Props) {
     };
 
     return {
-      ...theme,
-      grid: { left: 48, right: 16, top: 32, bottom: 40 },
-      tooltip: {
-        ...theme.tooltip,
-        trigger: "axis",
+      option: {
+        ...theme,
+        grid: { left: 48, right: 16, top: 32, bottom: 40 },
+        tooltip: {
+          ...theme.tooltip,
+          trigger: "axis",
+        },
+        legend: {
+          ...theme.legend,
+          show: series.length > 1,
+          bottom: 0,
+          type: "scroll" as const,
+        },
+        xAxis: horizontal ? { ...valueAxis } : { ...theme.xAxis, ...categoryAxis },
+        yAxis: horizontal ? { ...theme.yAxis, ...categoryAxis } : valueAxis,
+        series,
       },
-      legend: {
-        ...theme.legend,
-        show: series.length > 1,
-        bottom: 0,
-        type: "scroll" as const,
-      },
-      xAxis: horizontal ? { ...valueAxis } : { ...theme.xAxis, ...categoryAxis },
-      yAxis: horizontal ? { ...theme.yAxis, ...categoryAxis } : valueAxis,
-      series,
+      categoryColName:
+        categoryIdx >= 0 && data.columns[categoryIdx] ? data.columns[categoryIdx]!.name : null,
     };
   }, [data, theme, stacked, horizontal, format]);
 
-  return <EChartWrapper option={option} onExportReady={onExportReady} />;
+  const handleClick = useCallback(
+    (params: { name?: string; seriesName?: string; data: unknown }) => {
+      if (!onFilterIntent || !categoryColName) return;
+      const name = params.name;
+      if (name !== undefined && name !== "") {
+        onFilterIntent(categoryColName, name);
+      }
+    },
+    [onFilterIntent, categoryColName],
+  );
+
+  return (
+    <EChartWrapper
+      option={option}
+      onExportReady={onExportReady}
+      onClick={onFilterIntent ? handleClick : undefined}
+    />
+  );
 }
