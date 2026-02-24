@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -8,8 +8,8 @@ import { useTheme } from "@mui/material/styles";
 
 import type { FieldInfo, ElasticsearchClient } from "../services/es";
 import { buildOverviewQuery } from "../services/es";
-import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse, TimeRange } from "../types";
+import { useBatchedOverviewQueries } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -17,11 +17,6 @@ import EChartWrapper from "./visualizations/EChartWrapper";
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface MetricCardResult {
-  status: "idle" | "loading" | "success" | "error";
-  data?: EsqlResponse;
-}
 
 interface Props {
   fields: FieldInfo[];
@@ -31,13 +26,6 @@ interface Props {
   client: ElasticsearchClient | null;
   onSelectMetric: (field: FieldInfo) => void;
 }
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/** Max metrics to query in one batch to avoid overwhelming ES. */
-const BATCH_SIZE = 6;
 
 // ---------------------------------------------------------------------------
 // Sparkline option builder — pure function
@@ -113,107 +101,23 @@ export default function MetricOverviewGrid({
     );
   }, [fields, namespace]);
 
-  const [results, setResults] = useState<Record<string, MetricCardResult>>({});
-  const abortRef = useRef<AbortController | null>(null);
-  // Track which metrics have had data so refreshes only re-query those
-  const knownWithDataRef = useRef<Set<string> | null>(null);
+  const scopeKey = `${namespace}|${indexPattern}|${timeRange.from}|${timeRange.to}`;
 
-  const prevScopeRef = useRef<string | null>(null);
+  const buildQuery = useCallback(
+    (field: FieldInfo) => {
+      const metricType = field.metricType === "counter" ? "counter" : "gauge";
+      return buildOverviewQuery({ indexPattern, metricField: field.name, metricType, timeRange });
+    },
+    [indexPattern, timeRange],
+  );
 
-  // Fetch sparkline data for all namespace metrics in batches
-  useEffect(() => {
-    if (!client || namespaceMetrics.length === 0) return;
-
-    // When the data scope changes, clear the cache so we do full discovery
-    const scopeKey = `${namespace}|${indexPattern}|${timeRange.from}|${timeRange.to}`;
-    if (scopeKey !== prevScopeRef.current) {
-      prevScopeRef.current = scopeKey;
-      knownWithDataRef.current = null;
-    }
-
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-    const signal = abortRef.current.signal;
-
-    // On first load (or after namespace change) query everything;
-    // on subsequent refreshes only re-query metrics that previously had data.
-    const isRefresh = (knownWithDataRef.current?.size ?? 0) > 0;
-    const metricsToQuery = isRefresh
-      ? namespaceMetrics.filter((m) => knownWithDataRef.current!.has(m.name))
-      : namespaceMetrics;
-
-    const runBatches = async () => {
-      // Mark queried metrics as loading but keep previous data for display continuity
-      setResults((prev) => {
-        const next = { ...prev };
-        for (const m of metricsToQuery) {
-          next[m.name] = { status: "loading", data: prev[m.name]?.data };
-        }
-        return next;
-      });
-
-      for (let i = 0; i < metricsToQuery.length; i += BATCH_SIZE) {
-        if (signal.aborted) return;
-        const batch = metricsToQuery.slice(i, i + BATCH_SIZE);
-        const promises = batch.map(async (field) => {
-          const metricType = field.metricType === "counter" ? "counter" : "gauge";
-          const queryDef = buildOverviewQuery({
-            indexPattern,
-            metricField: field.name,
-            metricType,
-            timeRange,
-          });
-          try {
-            const params = buildTimeParams(queryDef.esql, timeRange);
-            const result = await client.query(
-              params.length > 0 ? { query: queryDef.esql, params } : { query: queryDef.esql },
-              signal,
-            );
-            return { name: field.name, status: "success" as const, data: result as EsqlResponse };
-          } catch {
-            if (signal.aborted) return null;
-            return { name: field.name, status: "error" as const };
-          }
-        });
-
-        const batchResults = await Promise.all(promises);
-        if (signal.aborted) return;
-
-        setResults((prev) => {
-          const next = { ...prev };
-          for (const r of batchResults) {
-            if (r) {
-              next[r.name] = { status: r.status, data: r.data };
-            }
-          }
-          return next;
-        });
-      }
-
-      // After a full discovery pass, record which metrics had data
-      if (!isRefresh) {
-        setResults((current) => {
-          const withData = new Set<string>();
-          for (const [name, r] of Object.entries(current)) {
-            if (r.status === "success" && r.data && r.data.values.length > 0) {
-              const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
-              if (metricIdx >= 0 && r.data.values.some((row) => row[metricIdx] != null)) {
-                withData.add(name);
-              }
-            }
-          }
-          knownWithDataRef.current = withData;
-          return current;
-        });
-      }
-    };
-
-    void runBatches();
-
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, [client, namespace, namespaceMetrics, indexPattern, timeRange]);
+  const results = useBatchedOverviewQueries({
+    items: namespaceMetrics,
+    client,
+    scopeKey,
+    buildQuery,
+    timeRange,
+  });
 
   // Filter to only metrics with non-null data points (include loading cards with stale data)
   const metricsWithData = useMemo(() => {
