@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import useResizeObserver from "use-resize-observer";
 import * as echarts from "echarts/core";
 import {
   LineChart,
@@ -54,6 +55,11 @@ export default function EChartWrapper({ option, style, onExportReady, onClick }:
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
 
+  useResizeObserver<HTMLDivElement>({
+    ref: containerRef,
+    onResize: () => chartRef.current?.resize(),
+  });
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -64,14 +70,7 @@ export default function EChartWrapper({ option, style, onExportReady, onClick }:
   }, [option]);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver(() => chartRef.current?.resize());
-    ro.observe(el);
-
     return () => {
-      ro.disconnect();
       chartRef.current?.dispose();
       chartRef.current = null;
     };
