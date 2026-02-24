@@ -439,17 +439,17 @@ FROM logs-*
 
 ## 10. Command Pipeline Pattern
 
-FROM <index-pattern>                          -- Source: what data to read
-| WHERE <time_filter> AND <conditions>        -- Filter: narrow early
-| EVAL <new_col> = <expression>               -- Transform: compute new fields
-| GROK/DISSECT <field> "<pattern>"            -- Parse: extract from strings
-| LOOKUP JOIN <lookup_index> ON <field>       -- Enrich: add reference data
-| STATS <agg> = <func>(<field>) BY <groups>   -- Aggregate: summarize
-| EVAL <derived> = <expression>               -- Post-process aggregates
-| WHERE <filter_on_aggregates>                -- Filter aggregated results
-| SORT <field> DESC                           -- Order results
-| KEEP <fields>                               -- Select output columns
-| LIMIT <n>                                   -- Cap output
+FROM <index-pattern>                          // Source: what data to read
+| WHERE <time_filter> AND <conditions>        // Filter: narrow early
+| EVAL <new_col> = <expression>               // Transform: compute new fields
+| GROK/DISSECT <field> "<pattern>"            // Parse: extract from strings
+| LOOKUP JOIN <lookup_index> ON <field>       // Enrich: add reference data
+| STATS <agg> = <func>(<field>) BY <groups>   // Aggregate: summarize
+| EVAL <derived> = <expression>               // Post-process aggregates
+| WHERE <filter_on_aggregates>                // Filter aggregated results
+| SORT <field> DESC                           // Order results
+| KEEP <fields>                               // Select output columns
+| LIMIT <n>                                   // Cap output
 
 ---
 

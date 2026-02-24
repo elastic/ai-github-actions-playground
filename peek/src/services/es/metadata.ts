@@ -1,4 +1,5 @@
 import type { ElasticsearchClient, EsqlColumn } from "./client";
+import { escapeEsqlIdentifier } from "./esqlUtils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -15,10 +16,6 @@ export interface FieldInfo {
 export interface FieldValueEntry {
   value: string;
   count: number;
-}
-
-function escapeEsqlIdentifier(identifier: string): string {
-  return `\`${identifier.replace(/`/g, "``")}\``;
 }
 
 // ---------------------------------------------------------------------------
