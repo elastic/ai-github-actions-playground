@@ -278,6 +278,7 @@ describe("buildDimensionOverviewQuery", () => {
     expect(result.esql).toContain("AVG(`system.cpu.total.pct`)");
     expect(result.esql).toContain("BUCKET(@timestamp, 20,");
     expect(result.esql).toContain(", `host.name`");
+    expect(result.esql).toContain("LIMIT 100");
     expect(result.esql).toContain("SORT timestamp");
   });
 
@@ -294,6 +295,12 @@ describe("buildDimensionOverviewQuery", () => {
   it("uses custom bucket count", () => {
     const result = buildDimensionOverviewQuery(makeDimensionQuery({ bucketCount: 10 }));
     expect(result.esql).toContain("BUCKET(@timestamp, 10,");
+    expect(result.esql).toContain("LIMIT 50");
+  });
+
+  it("uses custom max series for cardinality guard", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ maxSeries: 3 }));
+    expect(result.esql).toContain("LIMIT 60");
   });
 
   it("returns a meaningful y-axis label", () => {

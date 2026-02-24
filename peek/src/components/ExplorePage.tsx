@@ -230,7 +230,7 @@ export default function ExplorePage() {
 
   // Run query when metric/aggregation/filters/groupBy/timeRange change
   useEffect(() => {
-    if (!client || !selectedMetric || !indexPattern) return;
+    if (!client || !selectedMetric || !indexPattern || showDimensionOverview) return;
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -279,6 +279,7 @@ export default function ExplorePage() {
     client,
     indexPattern,
     selectedMetric,
+    showDimensionOverview,
     metricType,
     aggregation,
     filters,

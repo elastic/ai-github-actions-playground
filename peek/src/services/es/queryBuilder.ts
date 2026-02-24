@@ -158,10 +158,15 @@ export interface DimensionOverviewQuery {
   dimensionField: string;
   timeRange: TimeRange;
   bucketCount?: number;
+  maxSeries?: number;
 }
+
+const DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES = 5;
 
 export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): ExplorerQueryResult {
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
+  const maxSeries = q.maxSeries ?? DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES;
+  const maxRows = Math.max(1, buckets * Math.max(1, maxSeries));
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);
@@ -169,6 +174,8 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
     `FROM ${q.indexPattern}`,
     `WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend`,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend), ${escapedDim}`,
+    `SORT metric DESC`,
+    `LIMIT ${maxRows}`,
     `SORT timestamp`,
   ];
   const esql = parts.join(" | ");
