@@ -1,5 +1,5 @@
 import { keymap } from "@codemirror/view";
-import { EditorState, type Extension } from "@codemirror/state";
+import { EditorState, Prec, type Extension } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
@@ -33,9 +33,11 @@ const ESQL_COMPLETION_PROMPT =
 export function createEsqlQueryEditorExtensions(runQuery: () => void): Extension[] {
   return [
     esqlDialect.language,
-    EditorState.languageData.of(() => [
-      { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
-    ]),
+    Prec.highest(
+      EditorState.languageData.of(() => [
+        { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
+      ]),
+    ),
     runQueryShortcutExtension(runQuery),
     makeLLMCompletionExtension({ prompt: ESQL_COMPLETION_PROMPT, esqlGuide: true }),
   ];

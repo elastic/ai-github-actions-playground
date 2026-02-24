@@ -13,7 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 import { useShallow } from "zustand/react/shallow";
 
@@ -261,9 +261,11 @@ export default function TracesPage() {
   const queryEditorExtensions = useMemo(
     () => [
       SQLDialect.define({ slashComments: true }).language,
-      EditorState.languageData.of(() => [
-        { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
-      ]),
+      Prec.highest(
+        EditorState.languageData.of(() => [
+          { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
+        ]),
+      ),
       EditorView.lineWrapping,
       makeLLMCompletionExtension({
         prompt:
