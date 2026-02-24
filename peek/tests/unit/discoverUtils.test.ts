@@ -81,6 +81,20 @@ describe("splitEsqlPipeline", () => {
   it("ignores a trailing pipe without adding empty stages", () => {
     expect(splitEsqlPipeline("FROM logs-* | LIMIT 10 |")).toEqual(["FROM logs-*", "LIMIT 10"]);
   });
+
+  it("does not split on pipes inside // line comments", () => {
+    expect(splitEsqlPipeline("FROM logs-* // note with | pipe\n| LIMIT 5")).toEqual([
+      "FROM logs-* // note with | pipe",
+      "LIMIT 5",
+    ]);
+  });
+
+  it("does not split on pipes inside /* block comments */", () => {
+    expect(splitEsqlPipeline("FROM logs-* /* note with | pipe */ | LIMIT 5")).toEqual([
+      "FROM logs-* /* note with | pipe */",
+      "LIMIT 5",
+    ]);
+  });
 });
 
 describe("getEmptyColumnIndices", () => {
@@ -262,6 +276,12 @@ describe("formatEsqlQuery", () => {
   it("does not alter non-keyword content in each stage", () => {
     expect(formatEsqlQuery('FROM logs-* | WHERE message == "hello|world"')).toBe(
       'FROM logs-*\n| WHERE message == "hello|world"',
+    );
+  });
+
+  it("preserves comments containing pipes", () => {
+    expect(formatEsqlQuery("from logs-* // note with | pipe\n| limit 5")).toBe(
+      "FROM logs-* // note with | pipe\n| LIMIT 5",
     );
   });
 });

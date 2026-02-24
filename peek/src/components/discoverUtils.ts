@@ -79,7 +79,7 @@ function escapeCsvCell(value: unknown): string {
 /**
  * Splits an ES|QL query on top-level pipe characters, respecting double-quoted
  * strings (`"..."` with `""` escaping), triple-quoted strings (`"""..."""`),
- * and backtick-quoted identifiers (`` `...` ``).
+ * backtick-quoted identifiers (`` `...` ``), and line/block comments.
  *
  * Returns an array of trimmed pipeline stage strings.  Returns an empty array
  * for a blank query, and a single-element array when no pipes are present.
@@ -137,6 +137,30 @@ export function splitEsqlPipeline(query: string): string[] {
         current += c;
         i++;
         if (c === "`") break;
+      }
+    } else if (ch === "/" && trimmed[i + 1] === "/") {
+      // Line comment: // ...
+      current += "//";
+      i += 2;
+      while (i < trimmed.length) {
+        const c = trimmed[i]!;
+        current += c;
+        i++;
+        if (c === "\n") break;
+      }
+    } else if (ch === "/" && trimmed[i + 1] === "*") {
+      // Block comment: /* ... */
+      current += "/*";
+      i += 2;
+      while (i < trimmed.length) {
+        const c = trimmed[i]!;
+        current += c;
+        i++;
+        if (c === "*" && trimmed[i] === "/") {
+          current += "/";
+          i++;
+          break;
+        }
       }
     } else if (ch === "|") {
       const step = current.trim();
