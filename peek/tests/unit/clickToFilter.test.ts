@@ -126,6 +126,29 @@ describe("useDashboardStore interaction filter (click-to-filter)", () => {
     expect(useDashboardStore.getState().interactionFilters).toEqual({});
   });
 
+  it("removing a parameter clears its interaction filter snapshot", () => {
+    useDashboardStore.getState().addParameter(serviceParam);
+    useDashboardStore.getState().setInteractionFilter("service", "checkout");
+    useDashboardStore.getState().removeParameter("service");
+    useDashboardStore.getState().addParameter({ ...serviceParam, value: "inventory" });
+    useDashboardStore.getState().setInteractionFilter("service", "orders");
+    useDashboardStore.getState().clearInteractionFilter("service");
+
+    expect(useDashboardStore.getState().dashboard.parameters?.[0]?.value).toBe("inventory");
+  });
+
+  it("renaming a parameter realigns its interaction filter snapshot", () => {
+    useDashboardStore.getState().addParameter(serviceParam);
+    useDashboardStore.getState().setInteractionFilter("service", "checkout");
+    useDashboardStore.getState().updateParameter("service", { name: "service_name" });
+    useDashboardStore.getState().clearInteractionFilter("service_name");
+
+    const params = useDashboardStore.getState().dashboard.parameters!;
+    expect(params[0]?.name).toBe("service_name");
+    expect(params[0]?.value).toBe("web");
+    expect(useDashboardStore.getState().interactionFilters).toEqual({});
+  });
+
   it("setInteractionFilter for multiple parameters tracks each independently", () => {
     useDashboardStore.getState().addParameter(serviceParam);
     useDashboardStore.getState().addParameter(hostParam);

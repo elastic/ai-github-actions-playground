@@ -129,6 +129,15 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+function removeInteractionFilter(
+  interactionFilters: Record<string, DashboardParameter["value"]>,
+  name: string,
+): Record<string, DashboardParameter["value"]> {
+  const remaining = { ...interactionFilters };
+  delete remaining[name];
+  return remaining;
+}
+
 function getActiveDashboard(
   state: Pick<DashboardState, "dashboard" | "dashboards" | "activeDashboardId">,
 ) {
@@ -527,26 +536,41 @@ export const useDashboardStore = create<DashboardState>()(
           }
           const nextName = updates.name ?? name;
           const next = { ...target, ...updates, name: nextName };
-          return replaceActiveDashboard(s, {
-            ...active,
-            parameters: [
-              ...parameters.filter(
-                (parameter) => parameter.name !== name && parameter.name !== nextName,
-              ),
-              next,
-            ],
-            updatedAt: nowIso(),
-          });
+          const interactionFilters =
+            nextName === name
+              ? s.interactionFilters
+              : name in s.interactionFilters
+                ? {
+                    ...removeInteractionFilter(s.interactionFilters, name),
+                    [nextName]: s.interactionFilters[name]!,
+                  }
+                : removeInteractionFilter(s.interactionFilters, nextName);
+          return {
+            interactionFilters,
+            ...replaceActiveDashboard(s, {
+              ...active,
+              parameters: [
+                ...parameters.filter(
+                  (parameter) => parameter.name !== name && parameter.name !== nextName,
+                ),
+                next,
+              ],
+              updatedAt: nowIso(),
+            }),
+          };
         }),
 
       removeParameter: (name) =>
         set((s) => {
           const active = getActiveDashboard(s);
-          return replaceActiveDashboard(s, {
-            ...active,
-            parameters: (active.parameters ?? []).filter((parameter) => parameter.name !== name),
-            updatedAt: nowIso(),
-          });
+          return {
+            interactionFilters: removeInteractionFilter(s.interactionFilters, name),
+            ...replaceActiveDashboard(s, {
+              ...active,
+              parameters: (active.parameters ?? []).filter((parameter) => parameter.name !== name),
+              updatedAt: nowIso(),
+            }),
+          };
         }),
 
       setParameterValue: (name, value) =>
