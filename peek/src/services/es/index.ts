@@ -29,6 +29,8 @@ export type {
   GetSecurityUsersResponse,
   GetSecurityRolesResponse,
   UserCapabilities,
+  ProfilingTopFunctionsRequest,
+  ProfilingFlamegraphRequest,
 } from "./client";
 
 export {
