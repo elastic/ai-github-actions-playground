@@ -158,16 +158,18 @@ export interface DimensionOverviewQuery {
 const DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES = 5;
 
 export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): ExplorerQueryResult {
-  const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
-  const maxSeries = q.maxSeries ?? DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES;
-  const maxRows = Math.max(1, buckets * Math.max(1, maxSeries));
+  const rawBuckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
+  const buckets = Math.max(0, rawBuckets);
+  const bucketSize = Math.max(1, buckets);
+  const maxSeries = Math.max(0, q.maxSeries ?? DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES);
+  const maxRows = buckets * maxSeries;
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);
   const parts: string[] = [
     `FROM ${q.indexPattern}`,
     `WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend`,
-    `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend), ${escapedDim}`,
+    `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${bucketSize}, ?_tstart, ?_tend), ${escapedDim}`,
     `SORT metric DESC`,
     `LIMIT ${maxRows}`,
     `SORT timestamp`,
