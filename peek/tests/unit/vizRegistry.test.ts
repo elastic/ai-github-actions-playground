@@ -1,24 +1,31 @@
 import { describe, it, expect } from "vitest";
 
-import { getAllVizEntries, getVizEntry } from "../../src/components/visualizations/vizRegistry";
-import { VISUALIZATION_TYPES } from "../../src/schemas";
+import {
+  getAllVizEntries,
+  getVizEntry,
+  VISUALIZATION_TYPES,
+} from "../../src/components/visualizations/vizRegistry";
 import type { VisualizationType } from "../../src/types";
-
-const ALL_VIZ_TYPES: VisualizationType[] = [...VISUALIZATION_TYPES];
 
 describe("vizRegistry", () => {
   describe("getAllVizEntries", () => {
     it("returns an entry for every known visualization type", () => {
       const entries = getAllVizEntries();
       const registeredTypes = entries.map((e) => e.type);
-      for (const type of ALL_VIZ_TYPES) {
+      for (const type of VISUALIZATION_TYPES) {
         expect(registeredTypes).toContain(type);
       }
     });
 
-    it("returns entries in the expected display order", () => {
+    it("contains no duplicate type keys", () => {
       const entries = getAllVizEntries();
-      expect(entries.map((e) => e.type)).toEqual(ALL_VIZ_TYPES);
+      const types = entries.map((e) => e.type);
+      expect(new Set(types).size).toBe(types.length);
+    });
+
+    it("VISUALIZATION_TYPES matches the registry entry order", () => {
+      const entries = getAllVizEntries();
+      expect(entries.map((e) => e.type)).toEqual([...VISUALIZATION_TYPES]);
     });
 
     it("every entry has a non-empty label and icon", () => {
@@ -31,7 +38,7 @@ describe("vizRegistry", () => {
 
   describe("getVizEntry", () => {
     it("returns the correct entry for each registered type", () => {
-      for (const type of ALL_VIZ_TYPES) {
+      for (const type of VISUALIZATION_TYPES) {
         const entry = getVizEntry(type);
         expect(entry).toBeDefined();
         expect(entry?.type).toBe(type);
@@ -45,7 +52,7 @@ describe("vizRegistry", () => {
 
   describe("defaultOptions", () => {
     it("returns defaults for every registered type without throwing", () => {
-      for (const type of ALL_VIZ_TYPES) {
+      for (const type of VISUALIZATION_TYPES) {
         const entry = getVizEntry(type);
         expect(() => entry?.defaultOptions()).not.toThrow();
       }
@@ -119,7 +126,7 @@ describe("vizRegistry", () => {
     });
 
     it("all other types support query", () => {
-      const queryTypes = ALL_VIZ_TYPES.filter((type) => type !== "markdown");
+      const queryTypes = VISUALIZATION_TYPES.filter((type) => type !== "markdown");
       for (const type of queryTypes) {
         expect(getVizEntry(type)?.supportsQuery).toBe(true);
       }
