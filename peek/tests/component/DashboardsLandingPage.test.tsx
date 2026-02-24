@@ -12,7 +12,7 @@ vi.stubGlobal("sessionStorage", makeStorageMock());
 
 function LocationDisplay() {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 }
 
 function renderLanding() {
@@ -355,6 +355,16 @@ describe("DashboardsLandingPage", () => {
 
       expect(screen.getByText("Prod SLA")).toBeInTheDocument();
       expect(screen.queryByText("Dev Board")).not.toBeInTheDocument();
+    });
+
+    it("does not flip archived=false to archived=true when resetting filters", async () => {
+      const user = userEvent.setup();
+      renderLandingWithUrl("/dashboards?q=nomatch&archived=false");
+
+      await user.click(screen.getAllByRole("button", { name: /reset filters/i })[0]);
+
+      expect(screen.getByTestId("location")).toHaveTextContent("/dashboards");
+      expect(screen.getByTestId("location")).not.toHaveTextContent("archived=true");
     });
   });
 });

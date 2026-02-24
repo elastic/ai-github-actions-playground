@@ -167,7 +167,7 @@ export default function DashboardsLandingPage() {
       (prev) => {
         const next = new URLSearchParams();
         // Preserve the archived param since it has its own dedicated toggle
-        if (prev.get("archived")) next.set("archived", "true");
+        if (prev.get("archived") === "true") next.set("archived", "true");
         return next;
       },
       { replace: true },
