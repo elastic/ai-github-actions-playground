@@ -10,8 +10,8 @@ import {
 describe("profilingQueryBuilder", () => {
   it("builds hotspots query by default", () => {
     const query = buildProfilingQuery("hotspots", EMPTY_PROFILING_FILTERS);
-    expect(query).toContain("FROM profiling-*");
-    expect(query).toContain("STATS samples = COUNT(*)");
+    expect(query).toContain("FROM profiling-events*");
+    expect(query).toContain("STATS samples = SUM(Stacktrace.count)");
     expect(query).toContain("LIMIT 100");
   });
 
@@ -30,6 +30,6 @@ describe("profilingQueryBuilder", () => {
     });
     expect(query).toContain('service.name == "api\\"service"');
     expect(query).toContain('host.name == "host\\\\name"');
-    expect(query).toContain('profiling.stacktrace.frame.function.name == "run"');
+    expect(query).toContain('Stackframe.function.name == "run"');
   });
 });

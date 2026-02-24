@@ -1,17 +1,19 @@
 export interface ProfilingFieldMapping {
   index: string;
   timestamp: string;
+  sampleCount: string;
   serviceName: string;
   hostName: string;
   functionName: string;
 }
 
 export const DEFAULT_PROFILING_FIELD_MAPPING: ProfilingFieldMapping = {
-  index: "profiling-*",
+  index: "profiling-events*",
   timestamp: "@timestamp",
+  sampleCount: "Stacktrace.count",
   serviceName: "service.name",
   hostName: "host.name",
-  functionName: "profiling.stacktrace.frame.function.name",
+  functionName: "Stackframe.function.name",
 };
 
 export interface ProfilingFilters {
@@ -63,7 +65,7 @@ export function buildProfilingHotspotsQuery(
   return [
     `FROM ${fields.index}`,
     `WHERE ${whereClauses(filters, fields).join(" AND ")}`,
-    `STATS samples = COUNT(*) BY ${fields.serviceName}, ${fields.hostName}, ${fields.functionName}`,
+    `STATS samples = SUM(${fields.sampleCount}) BY ${fields.serviceName}, ${fields.hostName}, ${fields.functionName}`,
     "SORT samples DESC",
     "LIMIT 100",
   ].join(" | ");
@@ -76,7 +78,7 @@ export function buildProfilingTimelineQuery(
   return [
     `FROM ${fields.index}`,
     `WHERE ${whereClauses(filters, fields).join(" AND ")}`,
-    `STATS samples = COUNT(*) BY BUCKET(${fields.timestamp}, 40, ${filters.from}, ${filters.to}), ${fields.serviceName}`,
+    `STATS samples = SUM(${fields.sampleCount}) BY BUCKET(${fields.timestamp}, 40, ${filters.from}, ${filters.to}), ${fields.serviceName}`,
     `SORT ${fields.timestamp} ASC`,
     "LIMIT 2000",
   ].join(" | ");

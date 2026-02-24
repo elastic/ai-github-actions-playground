@@ -2,7 +2,7 @@
 
 Use the Profiling workspace page to explore sampled profiling signals with guided ES|QL templates.
 
-Start in **Hotspots** to rank service/host/function combinations by sample count over the last hour.
+Start in **Hotspots** to rank service/host/function combinations by weighted sample count (`Stacktrace.count`) over the last hour.
 
 Switch to **Timeline** to inspect sample volume changes over time and narrow by service, host, or function filters.
 
