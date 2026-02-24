@@ -78,8 +78,8 @@ export function buildProfilingTimelineQuery(
   return [
     `FROM ${fields.index}`,
     `WHERE ${whereClauses(filters, fields).join(" AND ")}`,
-    `STATS samples = SUM(${fields.sampleCount}) BY BUCKET(${fields.timestamp}, 40, ${filters.from}, ${filters.to}), ${fields.serviceName}`,
-    `SORT ${fields.timestamp} ASC`,
+    `STATS samples = SUM(${fields.sampleCount}) BY timestamp = BUCKET(${fields.timestamp}, 40, ${filters.from}, ${filters.to}), ${fields.serviceName}`,
+    "SORT timestamp ASC",
     "LIMIT 2000",
   ].join(" | ");
 }

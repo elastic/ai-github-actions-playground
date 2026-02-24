@@ -18,7 +18,7 @@ describe("profilingQueryBuilder", () => {
   it("builds timeline query with bucket aggregation", () => {
     const query = buildProfilingTimelineQuery(EMPTY_PROFILING_FILTERS);
     expect(query).toContain("BUCKET(@timestamp, 40, NOW() - 1 hour, NOW())");
-    expect(query).toContain("SORT @timestamp ASC");
+    expect(query).toContain("SORT timestamp ASC");
   });
 
   it("escapes user-provided filter values", () => {
