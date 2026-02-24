@@ -105,9 +105,8 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 ## Adding a Visualization Type
 
 1. Create a new component in `peek/src/components/visualizations/`
-2. Add the type to the `VisualizationType` union in `peek/src/types.ts`
-3. Register it in `peek/src/components/visualizations/Visualization.tsx`
-4. Add the toggle option in `peek/src/components/PanelEditor.tsx`
+2. Add the type key to `VISUALIZATION_TYPES` in `peek/src/components/visualizations/vizRegistry.tsx`
+3. Add a registry entry in the same file's `vizRegistryEntries` array
 
 ## Docker
 
