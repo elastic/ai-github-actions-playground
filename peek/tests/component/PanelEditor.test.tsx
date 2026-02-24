@@ -31,6 +31,7 @@ vi.mock("@uiw/react-codemirror", () => ({
 }));
 vi.mock("@codemirror/lang-sql", () => ({
   sql: () => [],
+  SQLDialect: { define: () => ({ language: [] }) },
 }));
 
 // Mock Visualization component to avoid chart rendering
