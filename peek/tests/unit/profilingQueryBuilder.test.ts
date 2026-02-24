@@ -44,7 +44,35 @@ describe("profilingQueryBuilder", () => {
     expect(request.limit).toBe(20);
     expect(request.query.bool.filter).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          range: {
+            "@timestamp": {
+              gte: "now-1h",
+              lt: "now",
+            },
+          },
+        }),
         expect.objectContaining({ term: { "process.executable.name": "node" } }),
+      ]),
+    );
+  });
+
+  it("normalizes ES|QL and absolute timestamps for Query DSL ranges", () => {
+    const request = buildTopFunctionsRequest({
+      ...EMPTY_FILTERS,
+      timeFrom: "NOW() - 15 minutes",
+      timeTo: "2026-02-24T03:00:00.000Z",
+    });
+    expect(request.query.bool.filter).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          range: {
+            "@timestamp": {
+              gte: "now-15m",
+              lt: "2026-02-24T03:00:00.000Z",
+            },
+          },
+        }),
       ]),
     );
   });

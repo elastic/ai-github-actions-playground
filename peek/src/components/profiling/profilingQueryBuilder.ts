@@ -98,7 +98,32 @@ export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
 }
 
 function normalizeRangeTimestamp(expr: string): string {
-  if (expr === "NOW()") return new Date().toISOString();
+  const trimmed = expr.trim();
+  if (trimmed.toUpperCase() === "NOW()") return "now";
+  const dateMathMatch = trimmed.match(
+    /^NOW\(\)\s*([+-])\s*(\d+)\s*(minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)$/i,
+  );
+  if (dateMathMatch) {
+    const [, operator, amount, rawUnit] = dateMathMatch;
+    if (!rawUnit) return expr;
+    const unit = {
+      minute: "m",
+      minutes: "m",
+      hour: "h",
+      hours: "h",
+      day: "d",
+      days: "d",
+      week: "w",
+      weeks: "w",
+      month: "M",
+      months: "M",
+      year: "y",
+      years: "y",
+    }[rawUnit.toLowerCase()];
+    if (unit) return `now${operator}${amount}${unit}`;
+  }
+  const parsed = Date.parse(trimmed);
+  if (!Number.isNaN(parsed)) return new Date(parsed).toISOString();
   return expr;
 }
 
