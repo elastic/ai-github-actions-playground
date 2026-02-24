@@ -145,6 +145,21 @@ export function buildTopFunctionsRequest(filters: ProfilingFilters): ProfilingTo
       term: { "process.executable.name": filters.executableName },
     });
   }
+  if (filters.threadName) {
+    request.query.bool.filter.push({
+      term: { "process.thread.name": filters.threadName },
+    });
+  }
+  if (filters.serviceName) {
+    request.query.bool.filter.push({
+      term: { "service.name": filters.serviceName },
+    });
+  }
+  if (filters.hostName) {
+    request.query.bool.filter.push({
+      term: { "host.name": filters.hostName },
+    });
+  }
   return request;
 }
 

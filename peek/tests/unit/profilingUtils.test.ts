@@ -7,7 +7,7 @@ describe("profilingUtils", () => {
     const joined = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     expect(parseFrameIds(joined)).toEqual([
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     ]);
   });
 

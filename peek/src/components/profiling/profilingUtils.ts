@@ -40,7 +40,7 @@ export function parseFrameIds(frameIdsString: string): string[] {
     return frameIdsString.split(",").filter((id) => id.length > 0);
   }
   // Legacy Universal Profiling format: underscore-concatenated 32-char hex IDs
-  const normalized = frameIdsString.replace(/_/g, "-");
+  const normalized = frameIdsString.replace(/_/g, "");
   const ids: string[] = [];
   for (let i = 0; i < normalized.length; i += 32) {
     const chunk = normalized.slice(i, i + 32);

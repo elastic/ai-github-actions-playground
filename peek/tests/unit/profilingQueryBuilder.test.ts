@@ -57,6 +57,22 @@ describe("profilingQueryBuilder", () => {
     );
   });
 
+  it("applies non-executable filters in top functions request", () => {
+    const request = buildTopFunctionsRequest({
+      ...EMPTY_FILTERS,
+      threadName: "worker-thread",
+      serviceName: "checkout-service",
+      hostName: "host-a",
+    });
+    expect(request.query.bool.filter).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ term: { "process.thread.name": "worker-thread" } }),
+        expect.objectContaining({ term: { "service.name": "checkout-service" } }),
+        expect.objectContaining({ term: { "host.name": "host-a" } }),
+      ]),
+    );
+  });
+
   it("normalizes ES|QL and absolute timestamps for Query DSL ranges", () => {
     const request = buildTopFunctionsRequest({
       ...EMPTY_FILTERS,
