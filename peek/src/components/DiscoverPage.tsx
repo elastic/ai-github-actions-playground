@@ -19,6 +19,7 @@ import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CodeMirror from "@uiw/react-codemirror";
@@ -38,6 +39,7 @@ import { buildQueryParams } from "../services/datemath";
 import {
   filterColumnsByName,
   filterEsqlResult,
+  formatEsqlQuery,
   toCsv,
   applyEsqlSort,
   buildColumnInsightsQuery,
@@ -189,6 +191,9 @@ export default function DiscoverPage() {
     },
     [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
   );
+  const handleFormatQuery = useCallback(() => {
+    handleQueryChange(formatEsqlQuery(effectiveQuery));
+  }, [effectiveQuery, handleQueryChange]);
 
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
@@ -226,7 +231,10 @@ export default function DiscoverPage() {
     ],
     [],
   );
-  const basicSetup = useMemo(() => ({ lineNumbers: true, foldGutter: false }), []);
+  const basicSetup = useMemo(
+    () => ({ lineNumbers: true, foldGutter: false, indentOnInput: false }),
+    [],
+  );
   const handleCreateEditor = useCallback((view: EditorView) => setQueryContextView(view), []);
   useEffect(() => {
     if (!connection || !refreshInterval || !effectiveQuery.trim()) return;
@@ -392,6 +400,19 @@ export default function DiscoverPage() {
             />
           </Tooltip>
           <Box sx={{ flex: 1 }} />
+          <Tooltip title="Format query: uppercase keywords and normalize whitespace">
+            <span>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AutoFixHighIcon />}
+                onClick={handleFormatQuery}
+                disabled={!effectiveQuery.trim()}
+              >
+                Format
+              </Button>
+            </span>
+          </Tooltip>
           <Tooltip title="Create a dashboard panel from this query">
             <span>
               <Button

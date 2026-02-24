@@ -1,0 +1,39 @@
+# Adds eBPF profiling and synthetic profiling data to the OTel stack.
+# Layers on top of docker-compose.otel.yml (and optionally docker-compose.otel-es.yml).
+#
+# Usage (local ES):
+#   docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml \
+#     -f docker-compose.otel-profiling.yml up -d
+#
+# The eBPF profiler requires Linux kernel 5.4+ and runs in privileged mode.
+# On macOS Docker Desktop it profiles the Linux VM's processes, not the host.
+services:
+  otel-collector:
+    volumes:
+      - ./docker/otel-collector/config-profiling.yaml:/etc/otelcol/config.yaml:ro
+
+  ebpf-profiler:
+    image: ghcr.io/open-telemetry/opentelemetry-ebpf-profiler:latest
+    command:
+      - -collection-agent=otel-collector:4317
+      - -disable-tls
+      - -reporter-interval=5s
+    privileged: true
+    pid: host
+    volumes:
+      - /sys/kernel/debug:/sys/kernel/debug:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /proc:/proc:ro
+    depends_on:
+      otel-collector:
+        condition: service_healthy
+
+  profgen:
+    build: ./docker/otel-profgen
+    environment:
+      - ES_URL=${ES_URL:-http://elasticsearch:9200}
+      - ES_API_KEY=${ES_API_KEY:-}
+      - RATE=${PROFGEN_RATE:-2}
+    depends_on:
+      otel-collector:
+        condition: service_healthy
