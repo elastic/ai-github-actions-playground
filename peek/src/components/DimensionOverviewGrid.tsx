@@ -187,7 +187,7 @@ export default function DimensionOverviewGrid({
     abortRef.current = new AbortController();
     const signal = abortRef.current.signal;
 
-    const isRefresh = knownWithDataRef.current !== null;
+    const isRefresh = (knownWithDataRef.current?.size ?? 0) > 0;
     const dimsToQuery = isRefresh
       ? dimensionFields.filter((f) => knownWithDataRef.current!.has(f.name))
       : dimensionFields;

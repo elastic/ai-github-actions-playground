@@ -137,7 +137,7 @@ export default function MetricOverviewGrid({
 
     // On first load (or after namespace change) query everything;
     // on subsequent refreshes only re-query metrics that previously had data.
-    const isRefresh = knownWithDataRef.current !== null;
+    const isRefresh = (knownWithDataRef.current?.size ?? 0) > 0;
     const metricsToQuery = isRefresh
       ? namespaceMetrics.filter((m) => knownWithDataRef.current!.has(m.name))
       : namespaceMetrics;
