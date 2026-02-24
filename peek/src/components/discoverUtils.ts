@@ -222,6 +222,24 @@ export function buildColumnInsightsQuery(
 }
 
 /**
+ * Formats an ES|QL query into a clean, consistent style:
+ * - Uppercases the leading command keyword of each pipeline stage.
+ * - Joins multiple stages with a newline + "| " prefix for readability.
+ *
+ * Returns the original query unchanged if it has no pipeline steps.
+ */
+export function formatEsqlQuery(query: string): string {
+  const steps = splitEsqlPipeline(query);
+  if (steps.length === 0) return query;
+
+  const formattedSteps = steps.map((step) =>
+    step.replace(/^([A-Za-z]+)/, (match) => match.toUpperCase()),
+  );
+
+  return formattedSteps.join("\n| ");
+}
+
+/**
  * Modifies an ES|QL query to add, update, or remove a top-level SORT clause.
  *
  * - Any existing top-level `SORT` steps are removed.

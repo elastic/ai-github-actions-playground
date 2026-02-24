@@ -16,6 +16,8 @@ import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
@@ -42,6 +44,7 @@ import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import { getAllVizEntries, getVizEntry } from "./visualizations/vizRegistry";
+import { formatEsqlQuery } from "./discoverUtils";
 
 export default function PanelEditor() {
   const editingId = useUIStore((s) => s.editingPanelId);
@@ -130,6 +133,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   );
 
   const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
+  const handleFormatQuery = useCallback(() => setQuery(formatEsqlQuery(query)), [query, setQuery]);
 
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
@@ -283,6 +287,19 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
               {loading && <CircularProgress size={14} sx={{ mr: 1 }} />}
               Run Query (Ctrl/Cmd+Enter)
             </Button>
+            <Tooltip title="Format query: uppercase keywords and normalize whitespace">
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AutoFixHighIcon />}
+                  onClick={handleFormatQuery}
+                  disabled={!query.trim()}
+                >
+                  Format
+                </Button>
+              </span>
+            </Tooltip>
             {preview && (
               <Typography variant="caption" color="text.secondary">
                 {preview.values.length} rows × {preview.columns.length} columns

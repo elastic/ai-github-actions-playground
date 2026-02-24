@@ -4,6 +4,7 @@ import type { EsqlResponse } from "../../src/types";
 import {
   filterColumnsByName,
   filterEsqlResult,
+  formatEsqlQuery,
   getEmptyColumnIndices,
   paginateRows,
   splitEsqlPipeline,
@@ -221,6 +222,47 @@ describe("toCsv", () => {
     };
 
     expect(toCsv(data)).toBe("value\r\n\"'=SUM(1,2)\"\r\n'+10\r\n'-5\r\n'@cmd\r\n\"' =SUM(3,4)\"");
+  });
+});
+
+describe("formatEsqlQuery", () => {
+  it("uppercases the leading keyword of each pipeline stage", () => {
+    expect(formatEsqlQuery("from logs-* | sort @timestamp | limit 50")).toBe(
+      "FROM logs-*\n| SORT @timestamp\n| LIMIT 50",
+    );
+  });
+
+  it("uppercases mixed-case leading keywords", () => {
+    expect(formatEsqlQuery('From logs-* | Where level == "error"')).toBe(
+      'FROM logs-*\n| WHERE level == "error"',
+    );
+  });
+
+  it("joins multiple stages with newline + pipe prefix", () => {
+    expect(formatEsqlQuery("FROM logs-* | STATS count(*) | SORT count DESC")).toBe(
+      "FROM logs-*\n| STATS count(*)\n| SORT count DESC",
+    );
+  });
+
+  it("returns a single stage without a pipe prefix", () => {
+    expect(formatEsqlQuery("FROM logs-*")).toBe("FROM logs-*");
+  });
+
+  it("returns the original query unchanged for a blank input", () => {
+    expect(formatEsqlQuery("")).toBe("");
+    expect(formatEsqlQuery("   ")).toBe("   ");
+  });
+
+  it("preserves already-uppercase keywords", () => {
+    expect(formatEsqlQuery("FROM logs-* | SORT @timestamp DESC | LIMIT 50")).toBe(
+      "FROM logs-*\n| SORT @timestamp DESC\n| LIMIT 50",
+    );
+  });
+
+  it("does not alter non-keyword content in each stage", () => {
+    expect(formatEsqlQuery('FROM logs-* | WHERE message == "hello|world"')).toBe(
+      'FROM logs-*\n| WHERE message == "hello|world"',
+    );
   });
 });
 
