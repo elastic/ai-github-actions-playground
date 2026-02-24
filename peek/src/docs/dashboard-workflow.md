@@ -29,3 +29,19 @@ Keep `/` as the live canvas for the active dashboard so existing build/edit habi
 Each dashboard supports organization metadata (name, description, tags, last updated, archived flag) to make larger workspaces manageable.
 
 Use sidebar and command palette navigation to move quickly between the active dashboard and dashboard management.
+
+## Searching and Filtering Dashboards
+
+The dashboard library includes a search bar and tag filters to quickly narrow large workspaces.
+
+Use the search box to filter by title or description — results update as you type.
+
+Click any tag chip in the filter bar to toggle it as an active filter. Multiple tags are combined with AND logic, so only dashboards that carry all selected tags are shown. Tag chips on individual cards also toggle the same filter when clicked.
+
+Use the Sort control to order results by **Last updated** (default) or **Title**.
+
+The Show/Hide archived toggle in the toolbar controls whether archived dashboards appear alongside active ones.
+
+All active filters are reflected in the URL as query parameters (`?q=latency&tags=prod,api&sort=title`). Share or bookmark these links to open a pre-filtered view from a runbook or Slack message.
+
+When no dashboards match the current filters, a contextual empty state is shown with a **Reset filters** button to clear all active criteria in one click.
