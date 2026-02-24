@@ -1,5 +1,7 @@
 import type { TimeRange } from "../../types";
 
+import { escapeEsqlString, escapeEsqlIdentifier } from "./esqlUtils";
+
 // ---------------------------------------------------------------------------
 // Explorer query types
 // ---------------------------------------------------------------------------
@@ -59,14 +61,6 @@ export function getAggregationOptions(metricType: MetricType): AggregationType[]
 // ---------------------------------------------------------------------------
 // Query builder — pure function, no side effects
 // ---------------------------------------------------------------------------
-
-function escapeEsqlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function escapeEsqlIdentifier(identifier: string): string {
-  return `\`${identifier.replace(/`/g, "``")}\``;
-}
 
 function buildFilterClause(filters: ExplorerFilter[]): string {
   if (filters.length === 0) return "";
