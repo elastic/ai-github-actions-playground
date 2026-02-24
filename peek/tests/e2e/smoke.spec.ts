@@ -202,7 +202,7 @@ async function connectToMockCluster(page: Page) {
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(ELASTICSEARCH_URL);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Metrics" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
 }
 
 test.describe("smoke – site navigation", () => {
@@ -218,10 +218,11 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: "Metrics" }).click();
+    await page.getByRole("button", { name: "Metrics", exact: true }).click();
     const metricSearch = page.getByLabel("Search metrics");
     await metricSearch.fill("system.cpu");
     await page.locator("li.MuiAutocomplete-option").first().click();
+    await page.getByRole("button", { name: "View ungrouped" }).click();
     await expect(page.getByText("Save to Dashboard")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Query took")).toBeVisible({ timeout: 15_000 });
   });
@@ -230,7 +231,7 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: "Traces" }).click();
+    await page.getByRole("button", { name: "Traces", exact: true }).click();
     await page.getByRole("button", { name: "Search Traces" }).click();
     await expect(page.getByText("1 traces found")).toBeVisible();
     await page.getByText("GET /checkout").click();
