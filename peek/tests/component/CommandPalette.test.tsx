@@ -15,7 +15,12 @@ vi.stubGlobal("sessionStorage", makeStorageMock());
 /** Helper to capture the current router location inside tests. */
 function LocationDisplay() {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
+  return (
+    <div data-testid="location">
+      {location.pathname}
+      {location.search}
+    </div>
+  );
 }
 
 function renderPalette(initialPath = "/") {
@@ -53,17 +58,20 @@ describe("CommandPalette", () => {
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
-    expect(screen.getByText("Query Lab")).toBeInTheDocument();
-    expect(screen.getByText("Metrics")).toBeInTheDocument();
-    expect(screen.getByText("Console")).toBeInTheDocument();
+    // These titles also appear in the Docs group, so use getAllByText
+    expect(screen.getAllByText("Query Lab").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Metrics").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Console").length).toBeGreaterThanOrEqual(1);
   });
 
   it("hides connection-required nav commands when disconnected", () => {
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
-    expect(screen.queryByText("Cluster Overview")).not.toBeInTheDocument();
-    expect(screen.queryByText("Data Streams")).not.toBeInTheDocument();
+    // These titles still appear once from Docs shortcuts; the nav commands are hidden.
+    // When disconnected: 1 instance each (docs only). When connected: 2 instances (nav + docs).
+    expect(screen.queryAllByText("Cluster Overview")).toHaveLength(1);
+    expect(screen.queryAllByText("Data Streams")).toHaveLength(1);
   });
 
   it("filters commands based on search input", async () => {
@@ -74,7 +82,8 @@ describe("CommandPalette", () => {
 
     await user.type(screen.getByLabelText("Search commands"), "query");
 
-    expect(screen.getByText("Query Lab")).toBeInTheDocument();
+    // "Query Lab" appears from both Navigation and Docs groups after filtering
+    expect(screen.getAllByText("Query Lab").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Traces")).not.toBeInTheDocument();
   });
 
@@ -96,7 +105,8 @@ describe("CommandPalette", () => {
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
-    await user.click(screen.getByText("Query Lab"));
+    // Navigation command appears first (before Docs), click the first "Query Lab"
+    await user.click(screen.getAllByText("Query Lab")[0]);
 
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");
     expect(useUIStore.getState().commandPaletteOpen).toBe(false);
@@ -155,6 +165,38 @@ describe("CommandPalette", () => {
     expect(useUIStore.getState().commandPaletteOpen).toBe(false);
   });
 
+  it("shows Docs group with section shortcuts", () => {
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // "Docs" appears as both a nav item label and a group heading
+    expect(screen.getAllByText("Docs").length).toBeGreaterThanOrEqual(1);
+    // First docs section title (unique to docs, not a nav label)
+    expect(screen.getByText("About Elastic Peek")).toBeInTheDocument();
+  });
+
+  it("navigates to /docs?section=<id> when a docs command is clicked", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.click(screen.getByText("Connecting to Elasticsearch"));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/docs?section=connecting");
+    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+  });
+
+  it("filters docs commands by section title", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.type(screen.getByLabelText("Search commands"), "keyboard");
+
+    expect(screen.getByText("Tips & Shortcuts")).toBeInTheDocument();
+    expect(screen.queryByText("About Elastic Peek")).not.toBeInTheDocument();
+  });
+
   it("opens with Ctrl+K keyboard shortcut", async () => {
     const user = userEvent.setup();
     renderPalette();
@@ -171,8 +213,9 @@ describe("CommandPalette", () => {
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette("/discover");
 
-    // Query Lab maps to /discover — should not appear since we're on that page
-    expect(screen.queryByText("Query Lab")).not.toBeInTheDocument();
+    // Query Lab nav command is excluded when on /discover, but the Docs shortcut still shows it.
+    // So exactly one "Query Lab" remains (from Docs group).
+    expect(screen.queryAllByText("Query Lab")).toHaveLength(1);
     // But other pages should appear (may appear as both nav command and group heading)
     expect(screen.getAllByText("Dashboards").length).toBeGreaterThanOrEqual(1);
   });
