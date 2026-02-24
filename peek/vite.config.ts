@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
             "/_es": {
               target: esUrl,
               changeOrigin: true,
+              secure: false,
               rewrite: rewriteEsProxyPath,
             },
           }

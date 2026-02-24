@@ -45,9 +45,9 @@ serve: setup
 
 serve-proxy: setup
 	@echo "Starting dev server with Elasticsearch proxy..."
-	@echo "  Proxying /_es/* → $${ES_URL:-http://localhost:9200}"
+	@echo "  ES_URL from environment or .env: $${ES_URL:-<loaded from .env>}"
 	@echo "  Enter http://localhost:3000/_es as the Elasticsearch URL"
-	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npm run dev
+	@cd $(PEEK_DIR) && npm run dev
 
 build:
 	@echo "Building for production..."
