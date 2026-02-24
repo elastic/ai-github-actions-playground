@@ -104,9 +104,11 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 ## Adding a Visualization Type
 
-1. Create a new component in `peek/src/components/visualizations/`
-2. Add the type key to `VISUALIZATION_TYPES` in `peek/src/components/visualizations/vizRegistry.tsx`
-3. Add a registry entry in the same file's `vizRegistryEntries` array
+1. Create a new component in `peek/src/components/visualizations/`.
+2. Add a descriptor module in `peek/src/components/visualizations/registry/` that exports a default `VizRegistryDescriptor`.
+3. Give the descriptor a unique `order` value so it appears in the desired picker order.
+
+`vizRegistry.tsx` discovers descriptor modules automatically with `import.meta.glob`, so no central registration file edits are required for new visualization types.
 
 ## Docker
 
