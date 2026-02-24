@@ -19,6 +19,7 @@ import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CodeMirror from "@uiw/react-codemirror";
@@ -34,6 +35,8 @@ import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { buildQueryParams } from "../services/datemath";
+import { buildCurlCommand } from "../utils/buildCurlCommand";
+import { copyToClipboard } from "../utils/copyToClipboard";
 
 import {
   filterColumnsByName,
@@ -80,6 +83,7 @@ export default function DiscoverPage() {
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
+  const [copiedCurl, setCopiedCurl] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
 
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
@@ -268,6 +272,22 @@ export default function DiscoverPage() {
     [result, selectedFields],
   );
 
+  const handleCopyCurl = useCallback(async () => {
+    if (!connection || !effectiveQuery.trim()) return;
+    const requestBody = buildRequest(effectiveQuery.trim());
+    const finalBody = profileMode ? { ...requestBody, profile: true } : requestBody;
+    const cmd = buildCurlCommand(
+      connection,
+      "POST",
+      "/_query?format=json",
+      JSON.stringify(finalBody, null, 2),
+    );
+    const copied = await copyToClipboard(cmd);
+    if (!copied) return;
+    setCopiedCurl(true);
+    setTimeout(() => setCopiedCurl(false), 2000);
+  }, [connection, effectiveQuery, buildRequest, profileMode]);
+
   const handleExportCsv = useCallback(() => {
     if (!filteredResult || filteredResult.columns.length === 0) return;
     const csv = toCsv(filteredResult);
@@ -392,6 +412,19 @@ export default function DiscoverPage() {
             />
           </Tooltip>
           <Box sx={{ flex: 1 }} />
+          <Tooltip title="Copy the current query as a cURL command">
+            <span>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ContentCopyIcon />}
+                onClick={() => void handleCopyCurl()}
+                disabled={!connection || !effectiveQuery.trim()}
+              >
+                {copiedCurl ? "Copied!" : "Copy as cURL"}
+              </Button>
+            </span>
+          </Tooltip>
           <Tooltip title="Create a dashboard panel from this query">
             <span>
               <Button

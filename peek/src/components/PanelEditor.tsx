@@ -16,6 +16,8 @@ import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
@@ -34,6 +36,8 @@ import type {
   PanelDefinition,
 } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
+import { buildCurlCommand } from "../utils/buildCurlCommand";
+import { copyToClipboard } from "../utils/copyToClipboard";
 
 import Visualization from "./visualizations/Visualization";
 import MarkdownPanel from "./visualizations/MarkdownPanel";
@@ -87,6 +91,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
+  const [copiedCurl, setCopiedCurl] = useState(false);
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
       const body: EsqlQueryParams = { query: queryText };
@@ -130,6 +135,21 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   );
 
   const handleRunQuery = useCallback(() => runQuery(query), [runQuery, query]);
+
+  const handleCopyCurl = useCallback(async () => {
+    if (!connection || !query.trim()) return;
+    const requestBody = buildRequest(query.trim());
+    const cmd = buildCurlCommand(
+      connection,
+      "POST",
+      "/_query?format=json",
+      JSON.stringify(requestBody, null, 2),
+    );
+    const copied = await copyToClipboard(cmd);
+    if (!copied) return;
+    setCopiedCurl(true);
+    setTimeout(() => setCopiedCurl(false), 2000);
+  }, [connection, query, buildRequest]);
 
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
@@ -307,6 +327,20 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
                 </MenuItem>
               ))}
             </Menu>
+            <Box sx={{ flex: 1 }} />
+            <Tooltip title="Copy the current query as a cURL command">
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={() => void handleCopyCurl()}
+                  disabled={!connection || !query.trim()}
+                >
+                  {copiedCurl ? "Copied!" : "Copy as cURL"}
+                </Button>
+              </span>
+            </Tooltip>
           </Box>
         )}
 
