@@ -79,9 +79,9 @@ export function buildGroupedSeries(
 
   const NULL_GROUP_KEY = Symbol("null-group");
   const groupedRows = new Map<unknown, number[]>();
-  const groupValues = getColumnValues(data, groupIdx);
-  for (let i = 0; i < groupValues.length; i++) {
-    const key = groupValues[i] == null ? NULL_GROUP_KEY : groupValues[i];
+  for (let i = 0; i < data.values.length; i++) {
+    const groupValue = data.values[i]?.[groupIdx];
+    const key = groupValue == null ? NULL_GROUP_KEY : groupValue;
     const rows = groupedRows.get(key);
     if (rows) {
       rows.push(i);
