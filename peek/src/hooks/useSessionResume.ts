@@ -2,6 +2,16 @@ import { useEffect, useState } from "react";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
+import type { ElasticsearchConnection } from "../services/es";
+
+function isSameConnection(a: ElasticsearchConnection, b: ElasticsearchConnection): boolean {
+  return (
+    a.url === b.url &&
+    (a.apiKey ?? "") === (b.apiKey ?? "") &&
+    (a.username ?? "") === (b.username ?? "") &&
+    (a.password ?? "") === (b.password ?? "")
+  );
+}
 
 /**
  * Attempts to resume the last-used connection on app startup.
@@ -21,7 +31,7 @@ export function useSessionResume() {
     // `cancelled` flag handles React 18 Strict Mode double-invocation: the
     // cleanup from the first invocation cancels any in-flight request, and the
     // second invocation reads fresh state from the store.
-    const { connection, connected, setConnected, setCapabilities } = useConnectionStore.getState();
+    const { connection, connected } = useConnectionStore.getState();
 
     if (connected || !connection) return;
 
@@ -30,11 +40,31 @@ export function useSessionResume() {
     fetchCapabilitiesForConnection(connection)
       .then((caps) => {
         if (cancelled) return;
-        setConnected(true);
-        setCapabilities(caps);
+
+        const latest = useConnectionStore.getState();
+        if (
+          latest.connected ||
+          !latest.connection ||
+          !isSameConnection(latest.connection, connection)
+        ) {
+          return;
+        }
+
+        latest.setConnected(true);
+        latest.setCapabilities(caps);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+
+        const latest = useConnectionStore.getState();
+        if (
+          latest.connected ||
+          !latest.connection ||
+          !isSameConnection(latest.connection, connection)
+        ) {
+          return;
+        }
+
         const message = isElasticsearchError(err) ? err.message : String(err);
         setResumeError(message);
       });

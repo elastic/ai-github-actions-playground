@@ -24,6 +24,22 @@ const CAPS = {
 };
 
 const CONN = { url: "https://es.example.com:9200", apiKey: "test-key" };
+const MANUAL_CONN = { url: "https://manual.example.com:9200", apiKey: "manual-key" };
+const MANUAL_CAPS = {
+  canManageDataStreams: false,
+  canReadSecurityUsers: true,
+  canReadSecurityRoles: true,
+};
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 describe("useSessionResume", () => {
   beforeEach(() => {
@@ -57,6 +73,26 @@ describe("useSessionResume", () => {
 
     await waitFor(() => expect(useConnectionStore.getState().connected).toBe(true));
     expect(useConnectionStore.getState().capabilities).toEqual(CAPS);
+  });
+
+  it("does not apply stale capabilities after a manual reconnect", async () => {
+    useConnectionStore.setState({ connection: CONN, connected: false });
+    const deferred = createDeferred<typeof CAPS>();
+    mockFetch.mockReturnValue(deferred.promise);
+
+    renderHook(() => useSessionResume());
+
+    useConnectionStore.setState({
+      connection: MANUAL_CONN,
+      connected: true,
+      capabilities: MANUAL_CAPS,
+    });
+
+    deferred.resolve(CAPS);
+
+    await waitFor(() => expect(useConnectionStore.getState().connection).toEqual(MANUAL_CONN));
+    expect(useConnectionStore.getState().connected).toBe(true);
+    expect(useConnectionStore.getState().capabilities).toEqual(MANUAL_CAPS);
   });
 
   it("surfaces resumeError on validation failure", async () => {
