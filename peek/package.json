@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "main": "dist-electron/main.cjs",
+  "main": "dist-electron/main.js",
   "build": {
     "appId": "co.elastic.peek",
     "productName": "Elastic Peek",

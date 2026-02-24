@@ -33,6 +33,13 @@ export default defineConfig(({ mode }) => {
               main: {
                 // Electron main process entry point
                 entry: "electron/main.ts",
+                onstart(args) {
+                  // IDEs like Cursor/VS Code set ELECTRON_RUN_AS_NODE=1 which
+                  // causes Electron to run as plain Node.js instead of as a
+                  // browser process. Remove it before spawning the Electron app.
+                  delete process.env.ELECTRON_RUN_AS_NODE;
+                  args.startup();
+                },
               },
               preload: {
                 // Preload script that exposes the IPC bridge to the renderer
