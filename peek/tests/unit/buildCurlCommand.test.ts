@@ -69,6 +69,22 @@ describe("buildCurlCommand", () => {
     expect(cmd).not.toContain("///");
   });
 
+  it("uses proxy URL and includes proxy headers when configured", () => {
+    const cmd = buildCurlCommand(
+      makeConnection({
+        proxyUrl: "http://localhost:3000/_es/",
+        proxyHost: "https://cluster.example:443",
+        proxyApiKey: "proxy-key",
+      }),
+      "GET",
+      "/",
+      "",
+    );
+    expect(cmd).toContain(`'http://localhost:3000/_es/'`);
+    expect(cmd).toContain(`-H 'X-Elastic-Peek-Proxy-Host: https://cluster.example:443'`);
+    expect(cmd).toContain(`-H 'X-Elastic-Peek-Proxy-Api-Key: proxy-key'`);
+  });
+
   it("escapes single quotes in the body to keep the shell command valid", () => {
     const body = `{"query":"it's a test"}`;
     const cmd = buildCurlCommand(makeConnection(), "POST", "/_search", body);

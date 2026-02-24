@@ -76,6 +76,23 @@ describe("auth headers", () => {
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect((init.headers as Record<string, string>)["Authorization"]).toBeUndefined();
   });
+
+  it("sends proxy routing headers when configured", async () => {
+    const fetchSpy = mockFetchOnce({ cluster_name: "test" });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({
+      proxyUrl: "http://localhost:3000/_es",
+      proxyHost: "https://cluster.example:443",
+      proxyApiKey: "proxy-key",
+    });
+    await client.getClusterInfo();
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["X-Elastic-Peek-Proxy-Host"]).toBe("https://cluster.example:443");
+    expect(headers["X-Elastic-Peek-Proxy-Api-Key"]).toBe("proxy-key");
+  });
 });
 
 // ── Request construction ──────────────────────────────────────────────────
@@ -186,6 +203,17 @@ describe("request construction", () => {
 
     const [url] = fetchSpy.mock.calls[0] as [string];
     expect(url).toBe(`${BASE_URL}/`);
+  });
+
+  it("uses proxyUrl as base URL when provided", async () => {
+    const fetchSpy = mockFetchOnce({ cluster_name: "test" });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ proxyUrl: "http://localhost:3000/_es/" });
+    await client.getClusterInfo();
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe("http://localhost:3000/_es/");
   });
 });
 

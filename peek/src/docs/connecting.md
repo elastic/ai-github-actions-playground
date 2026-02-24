@@ -5,6 +5,8 @@ Click the connection chip or gear icon in the header to open connection settings
 Enter your Elasticsearch URL and choose API Key or Username/Password authentication.
 
 Use `http://localhost:3000/_es` when running with the local proxy in development, or your direct cluster URL when CORS is configured for browser access.
+If you need per-profile proxy routing, set **Proxy URL**, **Proxy Host**, and optional
+**Proxy API Key** in the connection dialog; Peek will send proxy metadata headers on each request.
 
 Use API keys for least-privilege access in shared environments, and reserve username/password auth for development or dedicated operator workflows.
 
