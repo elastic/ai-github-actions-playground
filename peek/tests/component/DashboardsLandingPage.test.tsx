@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
@@ -128,5 +128,102 @@ describe("DashboardsLandingPage", () => {
 
     expect(screen.getByText("Hidden")).toBeInTheDocument();
     expect(screen.getByText("Archived")).toBeInTheDocument();
+  });
+
+  it("opens in-app dialog when New Dashboard is clicked", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    await user.click(screen.getByRole("button", { name: /new dashboard/i }));
+
+    expect(screen.getByRole("dialog", { name: /new dashboard/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/dashboard name/i)).toBeInTheDocument();
+  });
+
+  it("creates a dashboard via the in-app dialog and navigates to it", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    await user.click(screen.getByRole("button", { name: /new dashboard/i }));
+
+    const dialog = screen.getByRole("dialog", { name: /new dashboard/i });
+    const input = within(dialog).getByLabelText(/dashboard name/i);
+    await user.clear(input);
+    await user.type(input, "My New Dashboard");
+    await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(
+      useDashboardStore.getState().dashboards.some((d) => d.title === "My New Dashboard"),
+    ).toBe(true);
+  });
+
+  it("cancels dashboard creation without creating a dashboard", async () => {
+    const user = userEvent.setup();
+    const countBefore = useDashboardStore.getState().dashboards.length;
+    renderLanding();
+
+    await user.click(screen.getByRole("button", { name: /new dashboard/i }));
+    await user.click(screen.getByRole("button", { name: /^cancel$/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(useDashboardStore.getState().dashboards.length).toBe(countBefore);
+  });
+
+  it("opens in-app dialog when Rename is clicked from the menu", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    const title = useDashboardStore.getState().dashboard.title;
+    await user.click(screen.getByLabelText(`Actions for ${title}`));
+    await user.click(screen.getByText("Rename"));
+
+    expect(screen.getByRole("dialog", { name: /rename dashboard/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/dashboard name/i)).toHaveValue(title);
+  });
+
+  it("renames a dashboard via the in-app dialog", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    const title = useDashboardStore.getState().dashboard.title;
+    await user.click(screen.getByLabelText(`Actions for ${title}`));
+    await user.click(screen.getByText("Rename"));
+
+    const dialog = screen.getByRole("dialog", { name: /rename dashboard/i });
+    const input = within(dialog).getByLabelText(/dashboard name/i);
+    await user.clear(input);
+    await user.type(input, "Renamed Dashboard");
+    await user.click(within(dialog).getByRole("button", { name: /^rename$/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(
+      useDashboardStore.getState().dashboards.some((d) => d.title === "Renamed Dashboard"),
+    ).toBe(true);
+  });
+
+  it("shows inline confirm/cancel when Delete is clicked from the menu", async () => {
+    useDashboardStore.getState().createDashboard("Extra");
+    const user = userEvent.setup();
+    renderLanding();
+
+    const title = useDashboardStore.getState().dashboards[0].title;
+    await user.click(screen.getByLabelText(`Actions for ${title}`));
+    await user.click(screen.getByText("Delete"));
+
+    expect(screen.getByRole("button", { name: /confirm delete/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^cancel$/i })).toBeInTheDocument();
+  });
+
+  it("deletes a dashboard after confirming in the menu", async () => {
+    const extraId = useDashboardStore.getState().createDashboard("To Delete");
+    const user = userEvent.setup();
+    renderLanding();
+
+    await user.click(screen.getByLabelText("Actions for To Delete"));
+    await user.click(screen.getByText("Delete"));
+    await user.click(screen.getByRole("button", { name: /confirm delete/i }));
+
+    expect(useDashboardStore.getState().dashboards.some((d) => d.id === extraId)).toBe(false);
   });
 });

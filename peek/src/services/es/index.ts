@@ -34,6 +34,7 @@ export type {
 export {
   buildExplorerQuery,
   buildOverviewQuery,
+  buildDimensionOverviewQuery,
   getDefaultAggregation,
   getAggregationOptions,
 } from "./queryBuilder";
@@ -44,6 +45,7 @@ export type {
   ExplorerQuery,
   ExplorerQueryResult,
   OverviewQuery,
+  DimensionOverviewQuery,
 } from "./queryBuilder";
 
 export { classifyMetricType, listFields, getFieldValues, getFieldCardinality } from "./metadata";
