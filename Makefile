@@ -1,7 +1,7 @@
 PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run
-.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs fleet-harness-up fleet-harness-down fleet-harness-logs
+.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs fleet-harness-up fleet-harness-down fleet-harness-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -30,6 +30,10 @@ help:
 	@echo "  otel-cloud-up    - Send OTel data to a remote cluster (set ES_URL, ES_API_KEY)"
 	@echo "  otel-cloud-down  - Stop remote OTel stack"
 	@echo "  otel-cloud-logs  - Tail remote EDOT collector logs"
+	@echo "  otel-profiling-up  - Start local ES + EDOT + eBPF profiler + synthetic profgen"
+	@echo "  otel-profiling-down - Stop profiling stack"
+	@echo "  otel-profiling-logs - Tail EDOT collector logs (profiling stack)"
+	@echo "  profiling-seed     - Run synthetic profiling data seeder once then exit"
 	@echo "  fleet-harness-up - Start Fleet Server + enrolled agents harness"
 	@echo "  fleet-harness-down - Stop and remove Fleet harness"
 	@echo "  fleet-harness-logs - Tail Fleet Server logs"
@@ -145,6 +149,25 @@ otel-cloud-down:
 
 otel-cloud-logs:
 	@docker compose -f docker-compose.otel.yml logs -f otel-collector
+
+otel-profiling-up:
+	@echo "Starting local ES + EDOT collector + eBPF profiler + synthetic profgen..."
+	@echo "  Note: eBPF profiler requires Linux kernel 5.4+. On macOS it profiles the Docker VM."
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-profiling.yml up -d
+	@echo "✓ Profiling stack running. Elasticsearch: http://localhost:9200"
+
+otel-profiling-down:
+	@echo "Stopping profiling stack..."
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-profiling.yml down -v
+	@echo "✓ Stopped."
+
+otel-profiling-logs:
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-profiling.yml logs -f otel-collector
+
+profiling-seed:
+	@echo "Running synthetic profiling data seeder..."
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-profiling.yml run --rm -e MAX_BATCHES=1 profgen
+	@echo "✓ Profiling data seeded."
 
 fleet-harness-up:
 	@echo "Starting Fleet Server harness (ES + Kibana + Fleet Server + 2 agents)..."

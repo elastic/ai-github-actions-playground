@@ -12,6 +12,7 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SpeedIcon from "@mui/icons-material/Speed";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
@@ -26,6 +27,7 @@ import FleetPage from "../components/FleetPage";
 import RolesPage from "../components/RolesPage";
 import SettingsPage from "../components/SettingsPage";
 import TracesPage from "../components/traces/TracesPage";
+import ProfilingPage from "../components/profiling/ProfilingPage";
 import UsersPage from "../components/UsersPage";
 
 export type NavGroup = "Workspace" | "System" | "Help" | "Settings";
@@ -95,6 +97,19 @@ export const PAGE_MANIFEST = {
       order: 40,
       showInSidebar: true,
       icon: createElement(TimelineIcon, { fontSize: "small" }),
+    },
+  },
+  profiling: {
+    path: "/profiling",
+    component: ProfilingPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Profiling",
+      group: "Workspace",
+      order: 45,
+      showInSidebar: true,
+      icon: createElement(SpeedIcon, { fontSize: "small" }),
     },
   },
   console: {
