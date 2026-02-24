@@ -40,6 +40,10 @@ function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
   return [...kept, ...missing];
 }
 
+function pluralColumns(count: number): string {
+  return `${count} ${count === 1 ? "column" : "columns"}`;
+}
+
 interface Props {
   data: EsqlResponse;
   options?: TablePanelOptions;
@@ -61,10 +65,28 @@ export default memo(function DataTable({
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
-  const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
+  const [columnOrder, setColumnOrder] = useState<number[]>(() => {
+    const defaultOrder = data.columns.map((_, i) => i);
+    if (!options?.selectedColumns || options.selectedColumns.length === 0) return defaultOrder;
+    const nameToIndex = new Map(data.columns.map((c, i) => [c.name, i]));
+    const selectedIndices = options.selectedColumns
+      .map((name) => nameToIndex.get(name))
+      .filter((i): i is number => i !== undefined);
+    const selectedSet = new Set(selectedIndices);
+    const rest = defaultOrder.filter((i) => !selectedSet.has(i));
+    return [...selectedIndices, ...rest];
+  });
+  const [hiddenColumns, setHiddenColumns] = useState<Set<number>>(() => {
+    if (!options?.selectedColumns || options.selectedColumns.length === 0) return new Set();
+    const selectedSet = new Set(options.selectedColumns);
+    return new Set(
+      data.columns.map((_, i) => i).filter((i) => !selectedSet.has(data.columns[i]!.name)),
+    );
+  });
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuColumnIndex, setMenuColumnIndex] = useState<number | null>(null);
   const [pinnedColumns, setPinnedColumns] = useState<Set<number>>(new Set());
+  const effectiveSort = currentSort ?? options?.sortState ?? null;
   const allColumnIndices = useMemo(() => data.columns.map((_, i) => i), [data.columns]);
   const resolvedColumnOrder = useMemo(
     () => reconcileColumnOrder(columnOrder, allColumnIndices),
@@ -74,14 +96,21 @@ export default memo(function DataTable({
   const emptyColumnIndices = useMemo(() => getEmptyColumnIndices(data), [data]);
 
   const orderedVisibleColumnIndices = useMemo(() => {
-    const visible = showEmptyColumns
-      ? allColumnIndices
-      : allColumnIndices.filter((i) => !emptyColumnIndices.has(i));
+    const visible = allColumnIndices.filter(
+      (i) => !hiddenColumns.has(i) && (showEmptyColumns || !emptyColumnIndices.has(i)),
+    );
     const ordered = resolvedColumnOrder.filter((i) => visible.includes(i));
     const pinned = ordered.filter((i) => pinnedColumns.has(i));
     const unpinned = ordered.filter((i) => !pinnedColumns.has(i));
     return [...pinned, ...unpinned];
-  }, [allColumnIndices, emptyColumnIndices, showEmptyColumns, resolvedColumnOrder, pinnedColumns]);
+  }, [
+    allColumnIndices,
+    emptyColumnIndices,
+    showEmptyColumns,
+    resolvedColumnOrder,
+    pinnedColumns,
+    hiddenColumns,
+  ]);
 
   const pinnedLeftOffsets = useMemo(() => {
     const offsets = new Map<number, number>();
@@ -110,16 +139,16 @@ export default memo(function DataTable({
   const handleSortToggle = useCallback(
     (columnName: string) => {
       if (!onSortChange) return;
-      if (!currentSort || currentSort.columnName !== columnName) {
+      if (!effectiveSort || effectiveSort.columnName !== columnName) {
         onSortChange(columnName, "asc");
-      } else if (currentSort.direction === "asc") {
+      } else if (effectiveSort.direction === "asc") {
         onSortChange(columnName, "desc");
       } else {
         onSortChange(columnName, null);
       }
       setPage(0);
     },
-    [currentSort, onSortChange],
+    [effectiveSort, onSortChange],
   );
 
   const moveColumn = useCallback(
@@ -153,9 +182,35 @@ export default memo(function DataTable({
   }
 
   const hiddenCount = emptyColumnIndices.size;
+  const panelHiddenCount = hiddenColumns.size;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {panelHiddenCount > 0 && (
+        <Box
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            {`${pluralColumns(panelHiddenCount)} hidden by view`}
+          </Typography>
+          <Link
+            component="button"
+            variant="caption"
+            onClick={() => setHiddenColumns(new Set())}
+            sx={{ cursor: "pointer" }}
+          >
+            Show
+          </Link>
+        </Box>
+      )}
       {hiddenCount > 0 && (
         <Box
           sx={{
@@ -170,8 +225,8 @@ export default memo(function DataTable({
         >
           <Typography variant="caption" color="text.secondary">
             {showEmptyColumns
-              ? `${hiddenCount} empty ${hiddenCount === 1 ? "column" : "columns"}`
-              : `${hiddenCount} empty ${hiddenCount === 1 ? "column" : "columns"} hidden`}
+              ? `${pluralColumns(hiddenCount)} empty`
+              : `${pluralColumns(hiddenCount)} empty hidden`}
           </Typography>
           <Link
             component="button"
@@ -189,12 +244,13 @@ export default memo(function DataTable({
             <TableRow>
               {orderedVisibleColumnIndices.map((colIdx) => {
                 const col = data.columns[colIdx]!;
-                const isSorted = currentSort?.columnName === col.name;
+                const isSorted = effectiveSort?.columnName === col.name;
                 const isPinned = pinnedColumns.has(colIdx);
                 const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
                 return (
                   <TableCell
                     key={col.name}
+                    sortDirection={isSorted ? effectiveSort!.direction : false}
                     sx={{
                       fontWeight: 600,
                       whiteSpace: "nowrap",
@@ -232,7 +288,7 @@ export default memo(function DataTable({
                       >
                         <TableSortLabel
                           active={isSorted}
-                          direction={isSorted ? currentSort!.direction : "asc"}
+                          direction={isSorted ? effectiveSort!.direction : "asc"}
                           onClick={() => handleSortToggle(col.name)}
                           sx={
                             isPinned

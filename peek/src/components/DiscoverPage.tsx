@@ -29,7 +29,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
-import type { EsqlColumn, EsqlResponse } from "../types";
+import type { EsqlColumn, EsqlResponse, TablePanelOptions } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
@@ -267,17 +267,37 @@ export default function DiscoverPage() {
   }, []);
 
   const handleCreatePanel = useCallback(() => {
+    const tableOptions: TablePanelOptions = {};
+    const allColumns = result?.columns ?? [];
+    if (selectedFields.size > 0 && selectedFields.size < allColumns.length) {
+      tableOptions.selectedColumns = allColumns
+        .filter((c) => selectedFields.has(c.name))
+        .map((c) => c.name);
+    }
+    if (currentSort) {
+      tableOptions.sortState = currentSort;
+    }
     const newPanel = {
       id: crypto.randomUUID(),
       title: "Discover Panel",
       query: effectiveQuery.trim(),
       visualization: "table" as const,
       layout: { x: 0, y: Infinity, w: 12, h: 5 },
+      ...(Object.keys(tableOptions).length > 0 ? { options: tableOptions } : {}),
     };
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
     navigate(`/dashboards/${activeDashboardId}`);
-  }, [effectiveQuery, addPanel, setEditingPanelId, navigate, activeDashboardId]);
+  }, [
+    effectiveQuery,
+    selectedFields,
+    currentSort,
+    result,
+    addPanel,
+    setEditingPanelId,
+    navigate,
+    activeDashboardId,
+  ]);
 
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),
@@ -509,6 +529,7 @@ export default function DiscoverPage() {
                         checked={selectedFields.has(col.name)}
                         onChange={() => toggleField(col.name)}
                         onClick={(e) => e.stopPropagation()}
+                        inputProps={{ "aria-label": `Toggle field ${col.name}` }}
                         sx={{ p: 0.5 }}
                       />
                       <Box sx={{ flex: 1, minWidth: 0 }}>

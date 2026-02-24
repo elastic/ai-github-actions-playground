@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import DataTable from "../../src/components/visualizations/DataTable";
-import type { EsqlResponse } from "../../src/types";
+import type { EsqlResponse, TablePanelOptions } from "../../src/types";
 
 const mockData: EsqlResponse = {
   columns: [
@@ -262,6 +262,83 @@ describe("DataTable", () => {
 
     expect(screen.getByRole("cell", { name: "hello world" })).not.toHaveStyle({
       position: "sticky",
+    });
+  });
+
+  describe("selectedColumns option (Discover-to-Dashboard fidelity)", () => {
+    it("hides columns not in selectedColumns and shows a banner", () => {
+      const options: TablePanelOptions = { selectedColumns: ["message", "count"] };
+      render(<DataTable data={mockData} options={options} />);
+
+      // Hidden column should not appear as a header
+      expect(screen.queryByRole("columnheader", { name: /@timestamp/i })).not.toBeInTheDocument();
+      // Selected columns should be visible
+      expect(screen.getByRole("columnheader", { name: /message/i })).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: /count/i })).toBeInTheDocument();
+      // Banner should note the hidden column count
+      expect(screen.getByText(/1 column hidden by view/i)).toBeInTheDocument();
+    });
+
+    it("shows hidden columns when the Show link is clicked", async () => {
+      const user = userEvent.setup();
+      const options: TablePanelOptions = { selectedColumns: ["message"] };
+      render(<DataTable data={mockData} options={options} />);
+
+      expect(screen.queryByRole("columnheader", { name: /@timestamp/i })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /show/i }));
+
+      expect(screen.getByRole("columnheader", { name: /@timestamp/i })).toBeInTheDocument();
+    });
+
+    it("preserves the order defined by selectedColumns", () => {
+      const options: TablePanelOptions = { selectedColumns: ["count", "message"] };
+      render(<DataTable data={mockData} options={options} />);
+
+      const headers = screen.getAllByRole("columnheader");
+      const names = headers.map((h) => h.textContent?.replace(/\s+/g, " ").trim());
+      const countIdx = names.findIndex((n) => n?.includes("count"));
+      const messageIdx = names.findIndex((n) => n?.includes("message"));
+      expect(countIdx).toBeLessThan(messageIdx);
+    });
+
+    it("shows all columns when selectedColumns is empty", () => {
+      const options: TablePanelOptions = { selectedColumns: [] };
+      render(<DataTable data={mockData} options={options} />);
+
+      expect(screen.getByRole("columnheader", { name: /@timestamp/i })).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: /message/i })).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: /count/i })).toBeInTheDocument();
+      expect(screen.queryByText(/hidden by view/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("sortState option (Discover-to-Dashboard fidelity)", () => {
+    it("displays the sort indicator from options.sortState when no currentSort prop is provided", () => {
+      const options: TablePanelOptions = { sortState: { columnName: "count", direction: "desc" } };
+      render(<DataTable data={mockData} options={options} />);
+
+      // The column header for 'count' should have aria-sort="descending"
+      const countHeader = screen.getByRole("columnheader", { name: /count/i });
+      expect(countHeader).toHaveAttribute("aria-sort", "descending");
+    });
+
+    it("currentSort prop takes precedence over options.sortState", () => {
+      const options: TablePanelOptions = { sortState: { columnName: "count", direction: "desc" } };
+      render(
+        <DataTable
+          data={mockData}
+          options={options}
+          currentSort={{ columnName: "message", direction: "asc" }}
+        />,
+      );
+
+      const messageHeader = screen.getByRole("columnheader", { name: /message/i });
+      expect(messageHeader).toHaveAttribute("aria-sort", "ascending");
+
+      // count should NOT have active sort
+      const countHeader = screen.getByRole("columnheader", { name: /count/i });
+      expect(countHeader).not.toHaveAttribute("aria-sort");
     });
   });
 });

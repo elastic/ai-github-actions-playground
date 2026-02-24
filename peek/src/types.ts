@@ -77,6 +77,10 @@ export interface TablePanelOptions {
   /** Column names for which threshold highlighting is applied; if omitted, all numeric columns */
   thresholdColumns?: string[];
   thresholds?: Thresholds;
+  /** Ordered list of column names to show; columns not in this list are hidden by default */
+  selectedColumns?: string[];
+  /** Sort state carried over from Discover — used as the initial sort indicator */
+  sortState?: { columnName: string; direction: "asc" | "desc" };
 }
 
 export interface PieChartOptions {

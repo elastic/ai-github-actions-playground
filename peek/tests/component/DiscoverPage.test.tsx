@@ -359,4 +359,60 @@ describe("DiscoverPage", () => {
       expect.any(AbortSignal),
     );
   });
+
+  it("includes selectedColumns in the panel options when fields are selected", async () => {
+    const user = userEvent.setup();
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "message", type: "keyword" },
+      ],
+      values: [["2025-06-15T12:00:00.000Z", "hello"]],
+      executionTimeMs: 1,
+    });
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    // All columns are auto-selected; deselect "@timestamp" so only "message" remains
+    const checkbox = await screen.findByRole("checkbox", { name: /toggle field @timestamp/i });
+    await user.click(checkbox);
+
+    const panelsBefore = useDashboardStore.getState().dashboard.panels.length;
+    await user.click(screen.getByRole("button", { name: /convert to visualization/i }));
+
+    const panels = useDashboardStore.getState().dashboard.panels;
+    expect(panels).toHaveLength(panelsBefore + 1);
+    const newPanel = panels[panels.length - 1];
+    expect(newPanel?.options).toMatchObject({
+      selectedColumns: ["message"],
+    });
+  });
+
+  it("creates a panel without selectedColumns when all fields remain selected (default)", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const panelsBefore = useDashboardStore.getState().dashboard.panels.length;
+    await user.click(screen.getByRole("button", { name: /convert to visualization/i }));
+
+    const panels = useDashboardStore.getState().dashboard.panels;
+    expect(panels).toHaveLength(panelsBefore + 1);
+    const newPanel = panels[panels.length - 1];
+    // Single-column result: selectedFields.size === allColumns.length → no selectedColumns stored
+    expect(newPanel?.options).toBeUndefined();
+  });
 });
