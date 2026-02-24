@@ -24,6 +24,7 @@ import { useUIStore } from "../store/useUIStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../services/es";
 import { buildCurlCommand } from "../utils/buildCurlCommand";
+import { copyToClipboard } from "../utils/copyToClipboard";
 
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
 
@@ -118,18 +119,20 @@ function RequestCard({
     }
   }, []);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback(async () => {
     if (!entry.response || entry.response.status !== "success") return;
     const text = serializedResponse(entry.response.body);
-    void navigator.clipboard.writeText(text);
+    const copied = await copyToClipboard(text);
+    if (!copied) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [entry.response, serializedResponse]);
 
-  const handleCopyCurl = useCallback(() => {
+  const handleCopyCurl = useCallback(async () => {
     if (!connection) return;
     const cmd = buildCurlCommand(connection, entry.method, entry.path, entry.body);
-    void navigator.clipboard.writeText(cmd);
+    const copied = await copyToClipboard(cmd);
+    if (!copied) return;
     setCopiedCurl(true);
     setTimeout(() => setCopiedCurl(false), 2000);
   }, [connection, entry.method, entry.path, entry.body]);
@@ -198,7 +201,7 @@ function RequestCard({
           <span>
             <IconButton
               size="small"
-              onClick={handleCopyCurl}
+              onClick={() => void handleCopyCurl()}
               disabled={!connection || !entry.path.trim()}
               aria-label="Copy as cURL"
             >
@@ -265,7 +268,7 @@ function RequestCard({
                   </Typography>
                   <Box sx={{ flex: 1 }} />
                   <Tooltip title={copied ? "Copied!" : "Copy response"}>
-                    <IconButton size="small" onClick={handleCopy}>
+                    <IconButton size="small" onClick={() => void handleCopy()}>
                       <ContentCopyIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
