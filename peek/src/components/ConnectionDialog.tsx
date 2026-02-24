@@ -22,6 +22,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import LockIcon from "@mui/icons-material/Lock";
 import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -49,6 +50,8 @@ export default function ConnectionDialog() {
     deleteConnectionProfile,
     renameConnectionProfile,
     setActiveProfileId,
+    lockProfile,
+    unlockProfile,
   } = useConnectionStore(
     useShallow((s) => ({
       connection: s.connection,
@@ -61,6 +64,8 @@ export default function ConnectionDialog() {
       deleteConnectionProfile: s.deleteConnectionProfile,
       renameConnectionProfile: s.renameConnectionProfile,
       setActiveProfileId: s.setActiveProfileId,
+      lockProfile: s.lockProfile,
+      unlockProfile: s.unlockProfile,
     })),
   );
 
@@ -75,9 +80,13 @@ export default function ConnectionDialog() {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [profileName, setProfileName] = useState("");
+  const [savePin, setSavePin] = useState("");
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [editingProfileName, setEditingProfileName] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
+  const [unlockPin, setUnlockPin] = useState("");
+  const [unlockError, setUnlockError] = useState<string | null>(null);
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
@@ -137,12 +146,18 @@ export default function ConnectionDialog() {
     ? connectionProfiles.some((p) => p.name === profileName.trim())
     : false;
 
-  const handleSaveProfile = useCallback(() => {
+  const handleSaveProfile = useCallback(async () => {
     const trimmed = profileName.trim();
     if (!trimmed) return;
     const id = saveConnectionProfile(trimmed, buildConnection());
-    if (id) setProfileName("");
-  }, [profileName, saveConnectionProfile, buildConnection]);
+    if (id) {
+      if (savePin.trim()) {
+        await lockProfile(id, savePin.trim());
+      }
+      setProfileName("");
+      setSavePin("");
+    }
+  }, [profileName, savePin, saveConnectionProfile, buildConnection, lockProfile]);
 
   const handleLoadProfile = useCallback(
     (profileId: string) => {
@@ -158,6 +173,21 @@ export default function ConnectionDialog() {
       setResult(null);
     },
     [connectionProfiles, setActiveProfileId],
+  );
+
+  const handleUnlockProfile = useCallback(
+    async (profileId: string) => {
+      const ok = await unlockProfile(profileId, unlockPin);
+      if (ok) {
+        setUnlockingProfileId(null);
+        setUnlockPin("");
+        setUnlockError(null);
+        handleLoadProfile(profileId);
+      } else {
+        setUnlockError("Incorrect PIN");
+      }
+    },
+    [unlockProfile, unlockPin, handleLoadProfile],
   );
 
   const handleRenameProfile = useCallback(
@@ -196,7 +226,15 @@ export default function ConnectionDialog() {
                   <ListItemButton
                     key={profile.id}
                     selected={profile.id === activeProfileId}
-                    onClick={() => handleLoadProfile(profile.id)}
+                    onClick={() => {
+                      if (profile.encrypted && unlockingProfileId !== profile.id) {
+                        setUnlockingProfileId(profile.id);
+                        setUnlockPin("");
+                        setUnlockError(null);
+                      } else if (!profile.encrypted) {
+                        handleLoadProfile(profile.id);
+                      }
+                    }}
                     data-testid={`profile-${profile.id}`}
                   >
                     {editingProfileId === profile.id ? (
@@ -214,9 +252,64 @@ export default function ConnectionDialog() {
                         autoFocus
                         sx={{ mr: 1 }}
                       />
+                    ) : unlockingProfileId === profile.id ? (
+                      <Box
+                        sx={{ display: "flex", alignItems: "flex-start", gap: 1, flex: 1, py: 0.5 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <TextField
+                          size="small"
+                          type="password"
+                          label="Enter PIN"
+                          value={unlockPin}
+                          onChange={(e) => {
+                            setUnlockPin(e.target.value);
+                            setUnlockError(null);
+                          }}
+                          error={!!unlockError}
+                          helperText={unlockError ?? undefined}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              void handleUnlockProfile(profile.id);
+                            }
+                            if (e.key === "Escape") {
+                              setUnlockingProfileId(null);
+                              setUnlockError(null);
+                            }
+                          }}
+                          // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline PIN entry
+                          autoFocus
+                          sx={{ flex: 1 }}
+                        />
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => void handleUnlockProfile(profile.id)}
+                          sx={{ mt: 0.5 }}
+                        >
+                          Unlock
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            setUnlockingProfileId(null);
+                            setUnlockError(null);
+                          }}
+                          sx={{ mt: 0.5 }}
+                        >
+                          Cancel
+                        </Button>
+                      </Box>
                     ) : (
                       <ListItemText
-                        primary={profile.name}
+                        primary={
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            {profile.encrypted && (
+                              <LockIcon fontSize="small" color="action" aria-label="Encrypted" />
+                            )}
+                            {profile.name}
+                          </Box>
+                        }
                         secondary={profile.connection.url}
                         onDoubleClick={() => {
                           setEditingProfileId(profile.id);
@@ -224,49 +317,51 @@ export default function ConnectionDialog() {
                         }}
                       />
                     )}
-                    <ListItemSecondaryAction>
-                      {confirmDeleteId === profile.id ? (
-                        <Button
-                          size="small"
-                          color="error"
-                          variant="contained"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteConnectionProfile(profile.id);
-                            setConfirmDeleteId(null);
-                          }}
-                          onBlur={() => setConfirmDeleteId(null)}
-                        >
-                          Confirm
-                        </Button>
-                      ) : (
-                        <>
-                          <IconButton
-                            edge="end"
+                    {unlockingProfileId !== profile.id && (
+                      <ListItemSecondaryAction>
+                        {confirmDeleteId === profile.id ? (
+                          <Button
                             size="small"
-                            aria-label={`Rename profile ${profile.name}`}
+                            color="error"
+                            variant="contained"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingProfileId(profile.id);
-                              setEditingProfileName(profile.name);
+                              deleteConnectionProfile(profile.id);
+                              setConfirmDeleteId(null);
                             }}
+                            onBlur={() => setConfirmDeleteId(null)}
                           >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            edge="end"
-                            size="small"
-                            aria-label={`Delete profile ${profile.name}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDeleteId(profile.id);
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </>
-                      )}
-                    </ListItemSecondaryAction>
+                            Confirm
+                          </Button>
+                        ) : (
+                          <>
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              aria-label={`Rename profile ${profile.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingProfileId(profile.id);
+                                setEditingProfileName(profile.name);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              aria-label={`Delete profile ${profile.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDeleteId(profile.id);
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </>
+                        )}
+                      </ListItemSecondaryAction>
+                    )}
                   </ListItemButton>
                 ))}
               </List>
@@ -367,30 +462,50 @@ export default function ConnectionDialog() {
           {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
 
           {url && (
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-              <TextField
-                size="small"
-                label="Profile name"
-                placeholder="e.g. Production"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                }}
-                error={isDuplicateProfileName}
-                helperText={
-                  isDuplicateProfileName ? "A profile with this name already exists" : undefined
-                }
-                sx={{ flex: 1 }}
-              />
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={handleSaveProfile}
-                disabled={!profileName.trim() || !url || isDuplicateProfileName}
-              >
-                Save Profile
-              </Button>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <TextField
+                  size="small"
+                  label="Profile name"
+                  placeholder="e.g. Production"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void handleSaveProfile();
+                  }}
+                  error={isDuplicateProfileName}
+                  helperText={
+                    isDuplicateProfileName ? "A profile with this name already exists" : undefined
+                  }
+                  sx={{ flex: 1 }}
+                />
+                <TextField
+                  size="small"
+                  label="PIN (optional)"
+                  type="password"
+                  placeholder="Encrypt with PIN"
+                  value={savePin}
+                  onChange={(e) => setSavePin(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void handleSaveProfile();
+                  }}
+                  helperText={
+                    savePin.trim()
+                      ? "Credentials will be encrypted and stored locally"
+                      : "Leave blank to use session storage only"
+                  }
+                  sx={{ flex: 1 }}
+                />
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => void handleSaveProfile()}
+                  disabled={!profileName.trim() || !url || isDuplicateProfileName}
+                  sx={{ mt: 0.5 }}
+                >
+                  Save Profile
+                </Button>
+              </Box>
             </Box>
           )}
         </Box>
