@@ -30,6 +30,18 @@ const timeRangeSchema = z.object({
   to: z.string(),
 });
 
+function isValidTimeZone(timeZone: string): boolean {
+  if (typeof Intl.supportedValuesOf === "function") {
+    return timeZone === "UTC" || Intl.supportedValuesOf("timeZone").includes(timeZone);
+  }
+  try {
+    new Intl.DateTimeFormat("en", { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Well-known IANA timezone values offered in the dashboard timezone selector. */
 export const DASHBOARD_TIMEZONE_OPTIONS = [
   { label: "Browser local", value: "" },
@@ -120,7 +132,12 @@ export const dashboardDefinitionSchema = z.object({
   panels: z.array(panelDefinitionSchema),
   parameters: z.array(dashboardParameterSchema).optional(),
   timeRange: timeRangeSchema,
-  timeZone: z.string().optional(),
+  timeZone: z
+    .string()
+    .optional()
+    .refine((tz) => !tz || isValidTimeZone(tz), {
+      message: "timeZone must be a valid IANA timezone identifier",
+    }),
   refreshInterval: z.number().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
