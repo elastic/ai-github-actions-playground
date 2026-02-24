@@ -303,6 +303,16 @@ describe("buildDimensionOverviewQuery", () => {
     expect(result.esql).toContain("LIMIT 60");
   });
 
+  it("clamps negative max series to zero rows", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ maxSeries: -1 }));
+    expect(result.esql).toContain("LIMIT 0");
+  });
+
+  it("clamps negative bucket count to zero rows", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery({ bucketCount: -10 }));
+    expect(result.esql).toContain("LIMIT 0");
+  });
+
   it("returns a meaningful y-axis label", () => {
     const result = buildDimensionOverviewQuery(makeDimensionQuery());
     expect(result.yAxisLabel).toBe("Avg pct");
