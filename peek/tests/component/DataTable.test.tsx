@@ -147,6 +147,56 @@ describe("DataTable", () => {
     expect(screen.getByText("No data")).toBeInTheDocument();
   });
 
+  it("does not show expand button for short cell values", () => {
+    render(<DataTable data={mockData} />);
+
+    expect(screen.queryByRole("button", { name: /expand cell value/i })).not.toBeInTheDocument();
+  });
+
+  it("truncates long cell values and shows a 'more' expand button", () => {
+    const longValue = "a".repeat(300);
+    const longData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [[longValue]],
+    };
+    render(<DataTable data={longData} />);
+
+    expect(screen.getByRole("button", { name: /expand cell value/i })).toBeInTheDocument();
+    expect(screen.queryByText(longValue)).not.toBeInTheDocument();
+  });
+
+  it("expands a truncated cell value when the 'more' button is clicked", async () => {
+    const user = userEvent.setup();
+    const longValue = "a".repeat(300);
+    const longData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [[longValue]],
+    };
+    render(<DataTable data={longData} />);
+
+    await user.click(screen.getByRole("button", { name: /expand cell value/i }));
+
+    expect(screen.getByText(longValue)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /collapse cell value/i })).toBeInTheDocument();
+  });
+
+  it("collapses an expanded cell value when the 'less' button is clicked", async () => {
+    const user = userEvent.setup();
+    const longValue = "b".repeat(300);
+    const longData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [[longValue]],
+    };
+    render(<DataTable data={longData} />);
+
+    await user.click(screen.getByRole("button", { name: /expand cell value/i }));
+    expect(screen.getByText(longValue)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /collapse cell value/i }));
+    expect(screen.queryByText(longValue)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /expand cell value/i })).toBeInTheDocument();
+  });
+
   it("calls onSortChange on first header click with asc direction", async () => {
     const user = userEvent.setup();
     const onSortChange = vi.fn();

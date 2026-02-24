@@ -28,6 +28,30 @@ import RowInspectorFlyout from "./RowInspectorFlyout";
 type SortDirection = "asc" | "desc";
 
 const PINNED_COLUMN_MIN_WIDTH = 120;
+const CELL_TRUNCATE_LENGTH = 200;
+
+function TruncatedCell({ value }: { value: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const needsTruncation = value.length > CELL_TRUNCATE_LENGTH;
+  if (!needsTruncation) return <>{value}</>;
+  return (
+    <span title={expanded ? undefined : value}>
+      {expanded ? value : value.slice(0, CELL_TRUNCATE_LENGTH) + "…"}
+      <Button
+        size="small"
+        variant="text"
+        onClick={(e) => {
+          e.stopPropagation();
+          setExpanded((v) => !v);
+        }}
+        aria-label={expanded ? "Collapse cell value" : "Expand cell value"}
+        sx={{ ml: 0.5, minWidth: 0, p: 0, fontSize: "0.7rem", verticalAlign: "baseline" }}
+      >
+        {expanded ? "less" : "more"}
+      </Button>
+    </span>
+  );
+}
 
 export interface SortState {
   columnName: string;
@@ -316,7 +340,9 @@ export default memo(function DataTable({
                       <TableCell
                         key={colIdx}
                         sx={{
-                          whiteSpace: "nowrap",
+                          whiteSpace: isPinned ? "nowrap" : "normal",
+                          wordBreak: isPinned ? "normal" : "break-word",
+                          maxWidth: isPinned ? undefined : 400,
                           fontSize: "0.75rem",
                           fontFamily: numeric ? "monospace" : "inherit",
                           textAlign: numeric ? "right" : "left",
@@ -343,7 +369,7 @@ export default memo(function DataTable({
                             null
                           </Typography>
                         ) : (
-                          String(cell)
+                          <TruncatedCell value={String(cell)} />
                         )}
                       </TableCell>
                     );
