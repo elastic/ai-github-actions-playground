@@ -20,6 +20,7 @@ interface Props {
   connection?: ElasticsearchConnection | null;
   timeRange?: TimeRange;
   parameters?: DashboardParameter[];
+  timeZone?: string;
 }
 
 export default function Visualization({
@@ -32,6 +33,7 @@ export default function Visualization({
   connection,
   timeRange,
   parameters,
+  timeZone,
 }: Props) {
   const entry = getVizEntry(type);
   return (
@@ -44,6 +46,7 @@ export default function Visualization({
       connection,
       timeRange,
       parameters,
+      timeZone,
     }) ?? <DataTable data={data} />
   );
 }

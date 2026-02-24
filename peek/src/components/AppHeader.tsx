@@ -34,6 +34,7 @@ import type { ProfileHealth } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
 import DateRangePicker from "./DateRangePicker";
+import TimeZonePicker from "./TimeZonePicker";
 
 const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
   { label: "Off", seconds: 0 },
@@ -67,6 +68,7 @@ export default function AppHeader() {
     dashboard,
     setTimeRange,
     setRefreshInterval,
+    setTimeZone,
     addPanel,
     historyPast,
     historyFuture,
@@ -77,6 +79,7 @@ export default function AppHeader() {
       dashboard: s.dashboard,
       setTimeRange: s.setTimeRange,
       setRefreshInterval: s.setRefreshInterval,
+      setTimeZone: s.setTimeZone,
       addPanel: s.addPanel,
       historyPast: s.historyPast,
       historyFuture: s.historyFuture,
@@ -433,7 +436,12 @@ export default function AppHeader() {
 
         {showTimeControls && (
           <>
-            <DateRangePicker value={dashboard.timeRange} onChange={setTimeRange} />
+            <DateRangePicker
+              value={dashboard.timeRange}
+              onChange={setTimeRange}
+              timeZone={dashboard.timeZone}
+            />
+            <TimeZonePicker value={dashboard.timeZone} onChange={setTimeZone} />
             <Button
               size="small"
               variant="outlined"
