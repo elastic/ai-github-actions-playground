@@ -74,6 +74,10 @@ export default function SettingsPage() {
 
   const configured = isConfigured();
   const isModelEmpty = config.model.trim() === "";
+  const handleResetLLMSettings = () => {
+    resetLLMState();
+    setUseCustomModel(false);
+  };
 
   return (
     <Box sx={{ maxWidth: 640, mx: "auto", width: "100%", py: 2 }}>
@@ -206,7 +210,7 @@ export default function SettingsPage() {
         </Box>
       </Paper>
 
-      <Button variant="outlined" color="error" onClick={resetLLMState}>
+      <Button variant="outlined" color="error" onClick={handleResetLLMSettings}>
         Reset LLM Settings
       </Button>
     </Box>

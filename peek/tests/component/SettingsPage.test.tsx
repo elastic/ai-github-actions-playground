@@ -151,4 +151,14 @@ describe("SettingsPage", () => {
     expect(screen.queryByLabelText("Model ID")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Model")).toBeInTheDocument();
   });
+
+  it("resetting LLM settings turns custom model mode off", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+    await user.click(screen.getByRole("checkbox", { name: /use custom model id/i }));
+    expect(screen.getByLabelText("Model ID")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /reset llm settings/i }));
+    expect(screen.queryByLabelText("Model ID")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Model")).toBeInTheDocument();
+  });
 });
