@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
@@ -22,6 +22,10 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import Select from "@mui/material/Select";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
@@ -33,6 +37,8 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import { useShallow } from "zustand/react/shallow";
 
 import type { DashboardDefinition } from "../types";
@@ -40,6 +46,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 
 export default function DashboardsLandingPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     dashboards,
     activeDashboardId,
@@ -68,7 +75,114 @@ export default function DashboardsLandingPage() {
     })),
   );
 
-  const [showArchived, setShowArchived] = useState(false);
+  // Filter / sort state persisted in URL query params
+  const searchQuery = searchParams.get("q") ?? "";
+  const selectedTags = useMemo(() => {
+    const raw = searchParams.get("tags");
+    return raw ? raw.split(",").filter(Boolean) : [];
+  }, [searchParams]);
+  const sortField = (searchParams.get("sort") ?? "updated") as "updated" | "title";
+  const showArchived = searchParams.get("archived") === "true";
+
+  const setShowArchived = useCallback(
+    (value: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value) {
+            next.set("archived", "true");
+          } else {
+            next.delete("archived");
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setSearchQuery = useCallback(
+    (value: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value) {
+            next.set("q", value);
+          } else {
+            next.delete("q");
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const toggleTag = useCallback(
+    (tag: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          const current = (prev.get("tags") ?? "").split(",").filter(Boolean);
+          const updated = current.includes(tag)
+            ? current.filter((t) => t !== tag)
+            : [...current, tag];
+          if (updated.length > 0) {
+            next.set("tags", updated.join(","));
+          } else {
+            next.delete("tags");
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setSortField = useCallback(
+    (value: "updated" | "title") => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value === "updated") {
+            next.delete("sort");
+          } else {
+            next.set("sort", value);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const hasActiveFilters = searchQuery !== "" || selectedTags.length > 0;
+
+  const resetFilters = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams();
+        // Preserve the archived param since it has its own dedicated toggle
+        if (prev.get("archived")) next.set("archived", "true");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
+  // Collect all unique tags from all dashboards for the filter bar
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    for (const d of dashboards) {
+      for (const t of d.tags ?? []) tagSet.add(t);
+    }
+    return Array.from(tagSet).sort();
+  }, [dashboards]);
+
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [menuDashboard, setMenuDashboard] = useState<DashboardDefinition | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -89,7 +203,26 @@ export default function DashboardsLandingPage() {
     [],
   );
 
-  const visibleDashboards = showArchived ? dashboards : dashboards.filter((d) => !d.archived);
+  const visibleDashboards = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    let result = dashboards.filter((d) => {
+      if (!showArchived && d.archived) return false;
+      if (
+        q &&
+        !d.title.toLowerCase().includes(q) &&
+        !(d.description ?? "").toLowerCase().includes(q)
+      )
+        return false;
+      if (selectedTags.length > 0 && !selectedTags.every((t) => (d.tags ?? []).includes(t)))
+        return false;
+      return true;
+    });
+    result = [...result].sort((a, b) => {
+      if (sortField === "title") return a.title.localeCompare(b.title);
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    return result;
+  }, [dashboards, showArchived, searchQuery, selectedTags, sortField]);
 
   const handleCreate = useCallback(() => {
     setNameDialogMode("create");
@@ -266,7 +399,7 @@ export default function DashboardsLandingPage() {
         <Stack direction="row" spacing={1}>
           {archivedCount > 0 && (
             <Tooltip title={showArchived ? "Hide archived" : "Show archived"}>
-              <IconButton size="small" onClick={() => setShowArchived((v) => !v)}>
+              <IconButton size="small" onClick={() => setShowArchived(!showArchived)}>
                 {showArchived ? (
                   <VisibilityOffIcon fontSize="small" />
                 ) : (
@@ -304,6 +437,80 @@ export default function DashboardsLandingPage() {
           </Button>
         </Stack>
       </Box>
+
+      {/* Search and filter bar */}
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        sx={{ mb: 1.5 }}
+        flexWrap="wrap"
+        useFlexGap
+      >
+        <TextField
+          size="small"
+          placeholder="Search dashboards…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          inputProps={{ "aria-label": "Search dashboards" }}
+          sx={{ minWidth: 220 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            },
+          }}
+        />
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel id="sort-select-label">Sort by</InputLabel>
+          <Select
+            labelId="sort-select-label"
+            label="Sort by"
+            value={sortField}
+            onChange={(e) => setSortField(e.target.value as "updated" | "title")}
+          >
+            <MenuItem value="updated">Last updated</MenuItem>
+            <MenuItem value="title">Title</MenuItem>
+          </Select>
+        </FormControl>
+        {hasActiveFilters && (
+          <Button size="small" variant="outlined" onClick={resetFilters} startIcon={<ClearIcon />}>
+            Reset filters
+          </Button>
+        )}
+      </Stack>
+
+      {/* Available tag filters */}
+      {allTags.length > 0 && (
+        <Stack direction="row" spacing={0.5} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+          {allTags.map((tag) => (
+            <Chip
+              key={tag}
+              label={tag}
+              size="small"
+              variant={selectedTags.includes(tag) ? "filled" : "outlined"}
+              color={selectedTags.includes(tag) ? "primary" : "default"}
+              onClick={() => toggleTag(tag)}
+              aria-label={`Filter by tag ${tag}`}
+              aria-pressed={selectedTags.includes(tag)}
+            />
+          ))}
+        </Stack>
+      )}
 
       {importError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setImportError(null)}>
@@ -374,7 +581,19 @@ export default function DashboardsLandingPage() {
                   {entry.tags && entry.tags.length > 0 && (
                     <Stack direction="row" spacing={0.5} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
                       {entry.tags.map((tag) => (
-                        <Chip key={tag} label={tag} size="small" variant="outlined" />
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          variant={selectedTags.includes(tag) ? "filled" : "outlined"}
+                          color={selectedTags.includes(tag) ? "primary" : "default"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTag(tag);
+                          }}
+                          aria-label={`Filter by tag ${tag}`}
+                          aria-pressed={selectedTags.includes(tag)}
+                        />
                       ))}
                     </Stack>
                   )}
@@ -395,15 +614,31 @@ export default function DashboardsLandingPage() {
 
       {visibleDashboards.length === 0 && (
         <Box sx={{ textAlign: "center", py: 8 }}>
-          <Typography variant="h6" color="text.secondary">
-            No dashboards yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Create a new dashboard to get started.
-          </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
-            New Dashboard
-          </Button>
+          {hasActiveFilters ? (
+            <>
+              <Typography variant="h6" color="text.secondary">
+                No dashboards match your filters
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Try adjusting your search or tag filters.
+              </Typography>
+              <Button variant="outlined" startIcon={<ClearIcon />} onClick={resetFilters}>
+                Reset filters
+              </Button>
+            </>
+          ) : (
+            <>
+              <Typography variant="h6" color="text.secondary">
+                No dashboards yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Create a new dashboard to get started.
+              </Typography>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+                New Dashboard
+              </Button>
+            </>
+          )}
         </Box>
       )}
 

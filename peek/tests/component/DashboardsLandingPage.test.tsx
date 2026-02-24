@@ -226,4 +226,135 @@ describe("DashboardsLandingPage", () => {
 
     expect(useDashboardStore.getState().dashboards.some((d) => d.id === extraId)).toBe(false);
   });
+
+  describe("search and filter", () => {
+    function renderLandingWithUrl(url = "/dashboards") {
+      return render(
+        <MemoryRouter initialEntries={[url]}>
+          <DashboardsLandingPage />
+          <LocationDisplay />
+        </MemoryRouter>,
+      );
+    }
+
+    it("renders search input and sort control", () => {
+      renderLanding();
+      expect(screen.getByRole("textbox", { name: /search dashboards/i })).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: /sort by/i })).toBeInTheDocument();
+    });
+
+    it("filters dashboards by search query matching title", async () => {
+      const user = userEvent.setup();
+      useDashboardStore.getState().createDashboard("Latency Monitor");
+      useDashboardStore.getState().createDashboard("Error Rate");
+      renderLanding();
+
+      const search = screen.getByRole("textbox", { name: /search dashboards/i });
+      await user.type(search, "Latency");
+
+      expect(screen.getByText("Latency Monitor")).toBeInTheDocument();
+      expect(screen.queryByText("Error Rate")).not.toBeInTheDocument();
+    });
+
+    it("shows filtered empty state and reset button when query matches nothing", async () => {
+      const user = userEvent.setup();
+      renderLanding();
+
+      const search = screen.getByRole("textbox", { name: /search dashboards/i });
+      await user.type(search, "zzznomatch");
+
+      expect(screen.getByText("No dashboards match your filters")).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /reset filters/i }).length).toBeGreaterThan(0);
+      expect(screen.queryByText("No dashboards yet")).not.toBeInTheDocument();
+    });
+
+    it("resets filters via the Reset filters button in empty state", async () => {
+      const user = userEvent.setup();
+      renderLanding();
+
+      const title = useDashboardStore.getState().dashboard.title;
+      const search = screen.getByRole("textbox", { name: /search dashboards/i });
+      await user.type(search, "zzznomatch");
+
+      expect(screen.getByText("No dashboards match your filters")).toBeInTheDocument();
+      // Click the first Reset filters button (toolbar button)
+      await user.click(screen.getAllByRole("button", { name: /reset filters/i })[0]);
+
+      expect(screen.getByText(title)).toBeInTheDocument();
+      expect(screen.queryByText("No dashboards match your filters")).not.toBeInTheDocument();
+    });
+
+    it("shows tag chips in the filter bar when dashboards have tags", () => {
+      const id = useDashboardStore.getState().createDashboard("Tagged");
+      useDashboardStore.setState((s) => ({
+        dashboards: s.dashboards.map((d) =>
+          d.id === id ? { ...d, tags: ["prod", "latency"] } : d,
+        ),
+      }));
+
+      renderLanding();
+
+      // Tags appear in the filter bar (and possibly on the card); at least one instance expected
+      expect(screen.getAllByRole("button", { name: /filter by tag prod/i }).length).toBeGreaterThan(
+        0,
+      );
+      expect(
+        screen.getAllByRole("button", { name: /filter by tag latency/i }).length,
+      ).toBeGreaterThan(0);
+    });
+
+    it("filters dashboards by clicking a tag chip in the filter bar", async () => {
+      const user = userEvent.setup();
+      const id1 = useDashboardStore.getState().createDashboard("Prod Dashboard");
+      const id2 = useDashboardStore.getState().createDashboard("Dev Dashboard");
+      useDashboardStore.setState((s) => ({
+        dashboards: s.dashboards.map((d) => {
+          if (d.id === id1) return { ...d, tags: ["prod"] };
+          if (d.id === id2) return { ...d, tags: ["dev"] };
+          return d;
+        }),
+      }));
+
+      renderLanding();
+
+      // Click the first "prod" tag chip (in the filter bar)
+      await user.click(screen.getAllByRole("button", { name: /filter by tag prod/i })[0]);
+
+      expect(screen.getByText("Prod Dashboard")).toBeInTheDocument();
+      expect(screen.queryByText("Dev Dashboard")).not.toBeInTheDocument();
+    });
+
+    it("shows Reset filters button in toolbar when a filter is active", async () => {
+      const user = userEvent.setup();
+      renderLanding();
+
+      const search = screen.getByRole("textbox", { name: /search dashboards/i });
+      await user.type(search, "something");
+
+      expect(screen.getAllByRole("button", { name: /reset filters/i }).length).toBeGreaterThan(0);
+    });
+
+    it("reads initial filter from URL search params", () => {
+      useDashboardStore.getState().createDashboard("Latency Ops");
+      useDashboardStore.getState().createDashboard("Error Budget");
+
+      renderLandingWithUrl("/dashboards?q=Latency");
+
+      expect(screen.getByText("Latency Ops")).toBeInTheDocument();
+      expect(screen.queryByText("Error Budget")).not.toBeInTheDocument();
+    });
+
+    it("reads initial tag filter from URL search params", () => {
+      const id = useDashboardStore.getState().createDashboard("Prod SLA");
+      useDashboardStore.setState((s) => ({
+        dashboards: s.dashboards.map((d) => (d.id === id ? { ...d, tags: ["prod"] } : d)),
+      }));
+      useDashboardStore.getState().createDashboard("Dev Board");
+
+      renderLandingWithUrl("/dashboards?tags=prod");
+
+      expect(screen.getByText("Prod SLA")).toBeInTheDocument();
+      expect(screen.queryByText("Dev Board")).not.toBeInTheDocument();
+    });
+  });
 });
