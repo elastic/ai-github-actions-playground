@@ -155,7 +155,10 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     ],
     [],
   );
-  const basicSetup = useMemo(() => ({ lineNumbers: true, foldGutter: false }), []);
+  const basicSetup = useMemo(
+    () => ({ lineNumbers: true, foldGutter: false, indentOnInput: false }),
+    [],
+  );
   const handleCreateEditor = useCallback((view: EditorView) => setQueryContextView(view), []);
 
   const handleSave = useCallback(() => {

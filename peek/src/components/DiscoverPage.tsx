@@ -231,7 +231,10 @@ export default function DiscoverPage() {
     ],
     [],
   );
-  const basicSetup = useMemo(() => ({ lineNumbers: true, foldGutter: false }), []);
+  const basicSetup = useMemo(
+    () => ({ lineNumbers: true, foldGutter: false, indentOnInput: false }),
+    [],
+  );
   const handleCreateEditor = useCallback((view: EditorView) => setQueryContextView(view), []);
   useEffect(() => {
     if (!connection || !refreshInterval || !effectiveQuery.trim()) return;

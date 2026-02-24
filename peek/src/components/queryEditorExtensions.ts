@@ -1,8 +1,10 @@
 import { keymap } from "@codemirror/view";
-import type { Extension } from "@codemirror/state";
-import { sql } from "@codemirror/lang-sql";
+import { EditorState, type Extension } from "@codemirror/state";
+import { SQLDialect } from "@codemirror/lang-sql";
 
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
+
+const esqlDialect = SQLDialect.define({ slashComments: true });
 
 export function runQueryShortcutExtension(runQuery: () => void): Extension {
   return keymap.of([
@@ -25,12 +27,15 @@ const ESQL_COMPLETION_PROMPT =
 
 /**
  * Build the standard ES|QL editor extension stack used by query editors:
- * SQL language mode, Mod/Cmd+Enter run-query shortcut, and LLM ghost-text
- * completions with the default ES|QL prompt.
+ * SQL-based syntax highlighting (no autocomplete), ES|QL comment syntax (//),
+ * Mod/Cmd+Enter run-query shortcut, and LLM ghost-text completions.
  */
 export function createEsqlQueryEditorExtensions(runQuery: () => void): Extension[] {
   return [
-    sql(),
+    esqlDialect.language,
+    EditorState.languageData.of(() => [
+      { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
+    ]),
     runQueryShortcutExtension(runQuery),
     makeLLMCompletionExtension({ prompt: ESQL_COMPLETION_PROMPT, esqlGuide: true }),
   ];

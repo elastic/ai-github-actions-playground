@@ -12,8 +12,9 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
-import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import { SQLDialect } from "@codemirror/lang-sql";
 import { useShallow } from "zustand/react/shallow";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
@@ -259,7 +260,10 @@ export default function TracesPage() {
 
   const queryEditorExtensions = useMemo(
     () => [
-      sql(),
+      SQLDialect.define({ slashComments: true }).language,
+      EditorState.languageData.of(() => [
+        { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
+      ]),
       EditorView.lineWrapping,
       makeLLMCompletionExtension({
         prompt:
@@ -445,7 +449,7 @@ export default function TracesPage() {
             extensions={queryEditorExtensions}
             theme={themeMode}
             height="120px"
-            basicSetup={{ lineNumbers: true, foldGutter: false }}
+            basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
           />
         </Box>
 
