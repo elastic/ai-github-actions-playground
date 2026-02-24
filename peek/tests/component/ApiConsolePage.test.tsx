@@ -64,6 +64,24 @@ describe("ApiConsolePage", () => {
     );
   });
 
+  it("does not crash when Clipboard API is unavailable for Copy as cURL", async () => {
+    const user = userEvent.setup();
+    const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+
+    try {
+      render(<ApiConsolePage />);
+      await user.click(screen.getByRole("button", { name: /copy as curl/i }));
+      expect(screen.getByRole("button", { name: /run all/i })).toBeInTheDocument();
+    } finally {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, "clipboard", originalClipboard);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
+  });
+
   it("sends a request and renders response status/body", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ ok: true }), {

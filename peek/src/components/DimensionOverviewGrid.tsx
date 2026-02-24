@@ -4,10 +4,12 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Chip from "@mui/material/Chip";
+import Button from "@mui/material/Button";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useTheme } from "@mui/material/styles";
 
-import type { FieldInfo, ElasticsearchClient } from "../services/es";
-import { buildOverviewQuery } from "../services/es";
+import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
+import { buildDimensionOverviewQuery } from "../services/es";
 import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse, TimeRange } from "../types";
 
@@ -18,32 +20,36 @@ import EChartWrapper from "./visualizations/EChartWrapper";
 // Types
 // ---------------------------------------------------------------------------
 
-interface MetricCardResult {
+interface DimensionCardResult {
   status: "idle" | "loading" | "success" | "error";
   data?: EsqlResponse;
 }
 
 interface Props {
   fields: FieldInfo[];
-  namespace: string;
+  metricField: string;
+  metricType: MetricType;
+  metricNamespace: string | null;
   indexPattern: string;
   timeRange: TimeRange;
   client: ElasticsearchClient | null;
-  onSelectMetric: (field: FieldInfo) => void;
+  onSelectDimension: (dimensionField: string) => void;
+  onBackToOverview: () => void;
+  onViewUngrouped: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Max metrics to query in one batch to avoid overwhelming ES. */
 const BATCH_SIZE = 6;
+const MAX_SERIES = 5;
 
 // ---------------------------------------------------------------------------
-// Sparkline option builder — pure function
+// Multi-series sparkline option builder
 // ---------------------------------------------------------------------------
 
-function buildSparklineOption(
+function buildMultiSeriesSparkline(
   data: EsqlResponse,
   themeOpts: ReturnType<typeof useEChartTheme>,
 ): Record<string, unknown> {
@@ -51,41 +57,71 @@ function buildSparklineOption(
     (c) => c.type === "date" || c.type === "date_nanos" || c.name === "@timestamp",
   );
   const metricIdx = data.columns.findIndex((c) => c.name === "metric");
+  // Dimension column is the third column (not timestamp, not metric)
+  const dimIdx = data.columns.findIndex((_, i) => i !== dateIdx && i !== metricIdx);
 
   if (metricIdx < 0) {
     return { title: { text: "No data", left: "center", top: "center" } };
   }
 
-  const xData =
-    dateIdx >= 0
-      ? data.values.map((row) => (row[dateIdx] ? new Date(row[dateIdx] as string).getTime() : null))
-      : data.values.map((_, i) => i);
+  // Group rows by dimension value
+  const grouped = new Map<string, [number | null, unknown][]>();
+  for (const row of data.values) {
+    const dimVal = dimIdx >= 0 ? String(row[dimIdx] ?? "unknown") : "all";
+    const ts = dateIdx >= 0 && row[dateIdx] ? new Date(row[dateIdx] as string).getTime() : null;
+    if (!grouped.has(dimVal)) grouped.set(dimVal, []);
+    grouped.get(dimVal)!.push([ts, row[metricIdx]]);
+  }
 
-  const yData = data.values.map((row) => row[metricIdx]);
+  // Take top N series by number of data points (proxy for frequency)
+  const sortedKeys = [...grouped.keys()]
+    .sort((a, b) => grouped.get(b)!.length - grouped.get(a)!.length)
+    .slice(0, MAX_SERIES);
+
+  const totalKeys = grouped.size;
+
+  const colors =
+    themeOpts.color.length > 0
+      ? themeOpts.color
+      : ["#0077CC", "#FF6B6B", "#4ECB71", "#FFD93D", "#6C5CE7"];
+
+  const series = sortedKeys.map((key, i) => ({
+    type: "line" as const,
+    name: key,
+    data: grouped.get(key)!,
+    smooth: true,
+    showSymbol: false,
+    lineStyle: { width: 1.5 },
+    areaStyle: { opacity: 0.1 },
+    itemStyle: { color: colors[i % colors.length] },
+  }));
 
   return {
     ...themeOpts,
-    grid: { left: 4, right: 4, top: 8, bottom: 4, containLabel: false },
-    xAxis: {
-      type: dateIdx >= 0 ? "time" : "category",
-      show: false,
-      data: dateIdx < 0 ? xData : undefined,
-    },
+    grid: { left: 4, right: 4, top: 4, bottom: 24, containLabel: false },
+    xAxis: { type: "time", show: false },
     yAxis: { type: "value", show: false },
-    tooltip: { show: false },
-    series: [
-      {
-        type: "line",
-        data: xData.map((x, i) => [x, yData[i]]),
-        smooth: true,
-        showSymbol: false,
-        lineStyle: { width: 1.5 },
-        areaStyle: { opacity: 0.15 },
-        itemStyle: {
-          color: themeOpts.color.length ? themeOpts.color[0] : "#0077CC",
-        },
+    tooltip: {
+      trigger: "axis",
+      confine: true,
+      textStyle: { fontSize: 11 },
+    },
+    legend: {
+      show: true,
+      bottom: 0,
+      left: "center",
+      type: "scroll",
+      itemWidth: 12,
+      itemHeight: 8,
+      textStyle: { fontSize: 10 },
+      formatter: (name: string) => {
+        const short = name.length > 20 ? name.slice(0, 18) + "..." : name;
+        return totalKeys > MAX_SERIES && name === sortedKeys[sortedKeys.length - 1]
+          ? `${short} (+${totalKeys - MAX_SERIES})`
+          : short;
       },
-    ],
+    },
+    series,
   };
 }
 
@@ -93,39 +129,55 @@ function buildSparklineOption(
 // Component
 // ---------------------------------------------------------------------------
 
-export default function MetricOverviewGrid({
+export default function DimensionOverviewGrid({
   fields,
-  namespace,
+  metricField,
+  metricType,
+  metricNamespace,
   indexPattern,
   timeRange,
   client,
-  onSelectMetric,
+  onSelectDimension,
+  onBackToOverview,
+  onViewUngrouped,
 }: Props) {
   const theme = useTheme();
   const echartsTheme = useEChartTheme();
 
-  // Filter to only metric fields in the selected namespace
-  const namespaceMetrics = useMemo(() => {
-    return fields.filter(
+  // Discover dimension fields — same logic as DimensionSidebar
+  const dimensionFields = useMemo(() => {
+    const base = fields.filter(
       (f) =>
-        f.metricType !== "unknown" &&
-        (f.name.startsWith(`${namespace}.`) || f.name.startsWith(`${namespace}_`)),
+        f.metricType === "unknown" &&
+        f.type !== "date" &&
+        f.type !== "date_nanos" &&
+        f.name !== "@timestamp",
     );
-  }, [fields, namespace]);
+    if (metricNamespace === null) return base;
+    const scoped = base.filter(
+      (f) => f.name === metricNamespace || f.name.startsWith(`${metricNamespace}.`),
+    );
+    return scoped.length > 0 ? scoped : base;
+  }, [fields, metricNamespace]);
 
-  const [results, setResults] = useState<Record<string, MetricCardResult>>({});
+  const [results, setResults] = useState<Record<string, DimensionCardResult>>({});
   const abortRef = useRef<AbortController | null>(null);
-  // Track which metrics have had data so refreshes only re-query those
   const knownWithDataRef = useRef<Set<string> | null>(null);
-
   const prevScopeRef = useRef<string | null>(null);
 
-  // Fetch sparkline data for all namespace metrics in batches
+  // Fetch sparkline data for all dimensions in batches
   useEffect(() => {
-    if (!client || namespaceMetrics.length === 0) return;
+    if (!client || dimensionFields.length === 0) return;
 
     // When the data scope changes, clear the cache so we do full discovery
-    const scopeKey = `${namespace}|${indexPattern}|${timeRange.from}|${timeRange.to}`;
+    const scopeKey = [
+      metricField,
+      metricType,
+      indexPattern,
+      timeRange.from,
+      timeRange.to,
+      dimensionFields.map((f) => f.name).join(","),
+    ].join("|");
     if (scopeKey !== prevScopeRef.current) {
       prevScopeRef.current = scopeKey;
       knownWithDataRef.current = null;
@@ -135,32 +187,29 @@ export default function MetricOverviewGrid({
     abortRef.current = new AbortController();
     const signal = abortRef.current.signal;
 
-    // On first load (or after namespace change) query everything;
-    // on subsequent refreshes only re-query metrics that previously had data.
     const isRefresh = (knownWithDataRef.current?.size ?? 0) > 0;
-    const metricsToQuery = isRefresh
-      ? namespaceMetrics.filter((m) => knownWithDataRef.current!.has(m.name))
-      : namespaceMetrics;
+    const dimsToQuery = isRefresh
+      ? dimensionFields.filter((f) => knownWithDataRef.current!.has(f.name))
+      : dimensionFields;
 
     const runBatches = async () => {
-      // Mark queried metrics as loading but keep previous data for display continuity
       setResults((prev) => {
         const next = { ...prev };
-        for (const m of metricsToQuery) {
-          next[m.name] = { status: "loading", data: prev[m.name]?.data };
+        for (const f of dimsToQuery) {
+          next[f.name] = { status: "loading", data: prev[f.name]?.data };
         }
         return next;
       });
 
-      for (let i = 0; i < metricsToQuery.length; i += BATCH_SIZE) {
+      for (let i = 0; i < dimsToQuery.length; i += BATCH_SIZE) {
         if (signal.aborted) return;
-        const batch = metricsToQuery.slice(i, i + BATCH_SIZE);
+        const batch = dimsToQuery.slice(i, i + BATCH_SIZE);
         const promises = batch.map(async (field) => {
-          const metricType = field.metricType === "counter" ? "counter" : "gauge";
-          const queryDef = buildOverviewQuery({
+          const queryDef = buildDimensionOverviewQuery({
             indexPattern,
-            metricField: field.name,
+            metricField,
             metricType,
+            dimensionField: field.name,
             timeRange,
           });
           try {
@@ -190,7 +239,6 @@ export default function MetricOverviewGrid({
         });
       }
 
-      // After a full discovery pass, record which metrics had data
       if (!isRefresh) {
         setResults((current) => {
           const withData = new Set<string>();
@@ -213,33 +261,36 @@ export default function MetricOverviewGrid({
     return () => {
       abortRef.current?.abort();
     };
-  }, [client, namespace, namespaceMetrics, indexPattern, timeRange]);
+  }, [client, dimensionFields, indexPattern, metricField, metricType, timeRange]);
 
-  // Filter to only metrics with non-null data points (include loading cards with stale data)
-  const metricsWithData = useMemo(() => {
-    return namespaceMetrics.filter((m) => {
-      const r = results[m.name];
+  const dimsWithData = useMemo(() => {
+    return dimensionFields.filter((f) => {
+      const r = results[f.name];
       if (!r?.data || r.data.values.length === 0) return false;
       if (r.status !== "success" && r.status !== "loading") return false;
       const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
       if (metricIdx < 0) return false;
       return r.data.values.some((row) => row[metricIdx] != null);
     });
-  }, [namespaceMetrics, results]);
+  }, [dimensionFields, results]);
 
   const isLoading = useMemo(
-    () => namespaceMetrics.some((m) => results[m.name]?.status === "loading"),
-    [namespaceMetrics, results],
+    () => dimensionFields.some((f) => results[f.name]?.status === "loading"),
+    [dimensionFields, results],
   );
 
   const handleCardClick = useCallback(
-    (field: FieldInfo) => {
-      onSelectMetric(field);
+    (fieldName: string) => {
+      onSelectDimension(fieldName);
     },
-    [onSelectMetric],
+    [onSelectDimension],
   );
 
-  if (namespaceMetrics.length === 0) {
+  const shortMetric = metricField.includes(".")
+    ? metricField.split(".").slice(-2).join(".")
+    : metricField;
+
+  if (dimensionFields.length === 0) {
     return (
       <Box
         sx={{
@@ -252,11 +303,11 @@ export default function MetricOverviewGrid({
         }}
       >
         <Typography variant="body2" color="text.secondary">
-          No metrics found in the <strong>{namespace}</strong> namespace
+          No dimension fields found for <strong>{shortMetric}</strong>
         </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Try selecting a different namespace or adjusting the index pattern
-        </Typography>
+        <Button size="small" onClick={onViewUngrouped}>
+          View ungrouped metric
+        </Button>
       </Box>
     );
   }
@@ -264,16 +315,24 @@ export default function MetricOverviewGrid({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-        <Typography variant="subtitle2">{namespace} namespace</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "wrap" }}>
+        <Button size="small" startIcon={<ArrowBackIcon />} onClick={onBackToOverview}>
+          Back to overview
+        </Button>
+        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+          {shortMetric} — dimensions
+        </Typography>
         {isLoading && <CircularProgress size={16} />}
         {!isLoading && (
           <Chip
-            label={`${metricsWithData.length} of ${namespaceMetrics.length} metrics with data`}
+            label={`${dimsWithData.length} of ${dimensionFields.length} dimensions with data`}
             size="small"
             variant="outlined"
           />
         )}
+        <Button size="small" variant="outlined" onClick={onViewUngrouped}>
+          View ungrouped
+        </Button>
       </Box>
 
       {/* Grid of mini charts */}
@@ -284,12 +343,12 @@ export default function MetricOverviewGrid({
           gap: 1,
         }}
       >
-        {metricsWithData.map((field) => {
+        {dimsWithData.map((field) => {
           const result = results[field.name];
-          const metricBadgeColor = field.metricType === "counter" ? "warning" : "info";
-          const displayName = field.name.startsWith(`${namespace}.`)
-            ? field.name.slice(namespace.length + 1)
-            : field.name;
+          const displayName =
+            metricNamespace && field.name.startsWith(`${metricNamespace}.`)
+              ? field.name.slice(metricNamespace.length + 1)
+              : field.name;
 
           return (
             <Paper
@@ -297,12 +356,12 @@ export default function MetricOverviewGrid({
               variant="outlined"
               role="button"
               tabIndex={0}
-              aria-label={`View details for ${field.name}`}
-              onClick={() => handleCardClick(field)}
+              aria-label={`Group by ${field.name}`}
+              onClick={() => handleCardClick(field.name)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  handleCardClick(field);
+                  handleCardClick(field.name);
                 }
               }}
               sx={{
@@ -319,7 +378,7 @@ export default function MetricOverviewGrid({
                 },
                 display: "flex",
                 flexDirection: "column",
-                minHeight: 140,
+                minHeight: 180,
               }}
             >
               {/* Card header */}
@@ -333,9 +392,8 @@ export default function MetricOverviewGrid({
                   {displayName}
                 </Typography>
                 <Chip
-                  label={field.metricType}
+                  label={field.type}
                   size="small"
-                  color={metricBadgeColor}
                   variant="outlined"
                   sx={{
                     height: 16,
@@ -345,10 +403,10 @@ export default function MetricOverviewGrid({
                 />
               </Box>
 
-              {/* Sparkline chart */}
-              <Box sx={{ flex: 1, minHeight: 80 }}>
+              {/* Multi-series sparkline */}
+              <Box sx={{ flex: 1, minHeight: 120 }}>
                 {result?.data ? (
-                  <EChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
+                  <EChartWrapper option={buildMultiSeriesSparkline(result.data, echartsTheme)} />
                 ) : (
                   <Box
                     sx={{
@@ -366,10 +424,10 @@ export default function MetricOverviewGrid({
           );
         })}
 
-        {/* Show loading placeholders while still fetching */}
+        {/* Loading placeholders */}
         {isLoading &&
-          metricsWithData.length === 0 &&
-          namespaceMetrics.slice(0, 6).map((field) => (
+          dimsWithData.length === 0 &&
+          dimensionFields.slice(0, 6).map((field) => (
             <Paper
               key={`loading-${field.name}`}
               variant="outlined"
@@ -378,7 +436,7 @@ export default function MetricOverviewGrid({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                minHeight: 140,
+                minHeight: 180,
               }}
             >
               <CircularProgress size={24} />
@@ -387,7 +445,7 @@ export default function MetricOverviewGrid({
       </Box>
 
       {/* Empty state after loading */}
-      {!isLoading && metricsWithData.length === 0 && namespaceMetrics.length > 0 && (
+      {!isLoading && dimsWithData.length === 0 && dimensionFields.length > 0 && (
         <Box
           sx={{
             display: "flex",
@@ -399,11 +457,11 @@ export default function MetricOverviewGrid({
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            No metrics with data found in the selected time range
+            No dimensions with data found in the selected time range
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Try expanding the time range or verifying that data is being ingested
-          </Typography>
+          <Button size="small" onClick={onViewUngrouped}>
+            View ungrouped metric
+          </Button>
         </Box>
       )}
     </Box>
