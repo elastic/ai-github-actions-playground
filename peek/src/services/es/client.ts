@@ -202,23 +202,56 @@ export class ElasticsearchClient {
   // Internal helpers
   // -------------------------------------------------------------------------
 
+  /**
+   * Execute a single HTTP request, routing through the Electron main process
+   * when running inside the Electron shell (bypasses CORS) or falling back to
+   * browser fetch for the web build.
+   */
+  private async _doFetch(
+    url: string,
+    mergedHeaders: Record<string, string>,
+    options?: RequestInit & { signal?: AbortSignal },
+  ): Promise<Response> {
+    const signal = options?.signal;
+
+    if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
+      // Electron: route through the main process — no CORS restrictions apply
+      if (signal?.aborted) throw signal.reason;
+      const ipcResp = await window.electronAPI.fetchES({
+        url,
+        method: options?.method as string | undefined,
+        headers: mergedHeaders,
+        body: options?.body as string | undefined,
+      });
+      if (signal?.aborted) throw signal.reason;
+      return new Response(ipcResp.body, {
+        status: ipcResp.status,
+        statusText: ipcResp.statusText,
+        headers: { "content-type": ipcResp.contentType },
+      });
+    }
+
+    // Web: standard browser fetch (may require the /_es proxy for CORS)
+    return fetch(url, { ...options, headers: mergedHeaders });
+  }
+
   private async _fetch<T>(
     path: string,
     options?: RequestInit & { signal?: AbortSignal },
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const init: RequestInit = {
-      ...options,
-      headers: { ...this.headers, ...(options?.headers as Record<string, string>) },
+    const mergedHeaders = {
+      ...this.headers,
+      ...(options?.headers as Record<string, string>),
     };
 
     let lastError: ElasticsearchError | undefined;
-    const signal = init.signal;
+    const signal = options?.signal;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       let response: Response;
       try {
-        response = await fetch(url, init);
+        response = await this._doFetch(url, mergedHeaders, options);
       } catch (err) {
         throw {
           status: 0,
@@ -393,17 +426,18 @@ export class ElasticsearchClient {
     } else {
       signal?.addEventListener("abort", onAbort, { once: true });
     }
-    const init: RequestInit = {
-      method,
-      headers: { ...this.headers },
-      signal: controller.signal,
-    };
-    if (body && body.trim()) {
-      init.body = body;
-    }
+    const rawBody = body && body.trim() ? body : undefined;
     let response: Response;
     try {
-      response = await fetch(url, init);
+      response = await this._doFetch(
+        url,
+        { ...this.headers },
+        {
+          method,
+          body: rawBody,
+          signal: controller.signal,
+        },
+      );
     } catch (err) {
       clearTimeout(timeoutId);
       signal?.removeEventListener("abort", onAbort);
