@@ -17,7 +17,7 @@ import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import CodeMirror from "@uiw/react-codemirror";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -144,11 +144,15 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
-    () =>
+    () => [
+      EditorView.lineWrapping,
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
-      createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+      ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+    ],
     [],
   );
+  const basicSetup = useMemo(() => ({ lineNumbers: true, foldGutter: false }), []);
+  const handleCreateEditor = useCallback((view: EditorView) => setQueryContextView(view), []);
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
@@ -250,11 +254,11 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
                 <CodeMirror
                   value={query}
                   onChange={setQuery}
-                  onCreateEditor={(view) => setQueryContextView(view)}
+                  onCreateEditor={handleCreateEditor}
                   extensions={queryEditorExtensions}
                   theme={themeMode}
                   height="120px"
-                  basicSetup={{ lineNumbers: true, foldGutter: false }}
+                  basicSetup={basicSetup}
                 />
               </Box>
               <QueryPipelineSteps

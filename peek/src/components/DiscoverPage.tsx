@@ -18,7 +18,7 @@ import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
@@ -100,6 +100,7 @@ export default function DiscoverPage() {
     [timeRange],
   );
 
+  const timingsCleared = useRef(false);
   const {
     runQuery,
     loading,
@@ -121,6 +122,7 @@ export default function DiscoverPage() {
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
       appendQueryToHistory(executedQuery);
+      timingsCleared.current = false;
     },
     onFailure: () => setResult(null),
   });
@@ -131,7 +133,10 @@ export default function DiscoverPage() {
       if (discoverQueryDraft) {
         setDiscoverQueryDraft(null);
       }
-      clearTimings();
+      if (!timingsCleared.current) {
+        clearTimings();
+        timingsCleared.current = true;
+      }
       setQuery(nextQuery);
       setCurrentSort(null);
     },
@@ -167,11 +172,15 @@ export default function DiscoverPage() {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
   const queryEditorExtensions = useMemo(
-    () =>
+    () => [
+      EditorView.lineWrapping,
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
-      createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+      ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+    ],
     [],
   );
+  const basicSetup = useMemo(() => ({ lineNumbers: true, foldGutter: false }), []);
+  const handleCreateEditor = useCallback((view: EditorView) => setQueryContextView(view), []);
   useEffect(() => {
     if (!connection || !refreshInterval || !effectiveQuery.trim()) return;
     const id = setInterval(() => {
@@ -298,11 +307,11 @@ export default function DiscoverPage() {
           <CodeMirror
             value={effectiveQuery}
             onChange={handleQueryChange}
-            onCreateEditor={(view) => setQueryContextView(view)}
+            onCreateEditor={handleCreateEditor}
             extensions={queryEditorExtensions}
             theme={themeMode}
             height="100px"
-            basicSetup={{ lineNumbers: true, foldGutter: false }}
+            basicSetup={basicSetup}
           />
         </Box>
         <QueryPipelineSteps
