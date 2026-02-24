@@ -245,6 +245,25 @@ describe("SpanDetailDrawer – Events tab", () => {
   });
 });
 
+describe("SpanDetailDrawer – invalid timestamp", () => {
+  it("renders without crashing and shows the raw value when span.timestamp is invalid", () => {
+    const span = makeSpan({ timestamp: "not-a-date" });
+    expect(() =>
+      render(
+        <SpanDetailDrawer
+          span={span}
+          open
+          onClose={vi.fn()}
+          onFilterBy={vi.fn()}
+          onExclude={vi.fn()}
+        />,
+      ),
+    ).not.toThrow();
+
+    expect(screen.getByText("not-a-date")).toBeInTheDocument();
+  });
+});
+
 describe("SpanDetailDrawer – Footer actions", () => {
   it("calls query lab callback with span context", async () => {
     const user = userEvent.setup();
