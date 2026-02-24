@@ -56,18 +56,21 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
       itemStyle: { color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC" },
     }));
 
-    const tzDateFormatter =
+    const tzFormatter =
       dateIdx >= 0 && timeZone
-        ? (value: number) =>
-            new Intl.DateTimeFormat("en", {
-              timeZone,
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            }).format(new Date(value))
+        ? new Intl.DateTimeFormat("en", {
+            timeZone,
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
         : undefined;
+
+    const tzDateFormatter = tzFormatter
+      ? (value: number) => tzFormatter.format(new Date(value))
+      : undefined;
 
     return {
       ...theme,
