@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import type { ESFetchRequest, ESFetchResponse } from "./ipcHandlers.js";
+import type { ESFetchRequest, ESFetchResponse } from "./ipcTypes.js";
 
 /**
  * Expose a minimal, typed IPC bridge to the renderer process.

@@ -1,3 +1,10 @@
+import type {
+  ProfilingTopFunctionsRequest,
+  ProfilingFlamegraphRequest,
+} from "../../services/es/client";
+
+export type { ProfilingTopFunctionsRequest, ProfilingFlamegraphRequest };
+
 export interface ProfilingFilters {
   executableName: string | null;
   threadName: string | null;
@@ -17,20 +24,6 @@ export const EMPTY_FILTERS: ProfilingFilters = {
   timeTo: "NOW()",
   limit: 100,
 };
-
-export interface ProfilingTopFunctionsRequest {
-  limit: number;
-  query: {
-    bool: {
-      filter: Array<Record<string, unknown>>;
-    };
-  };
-}
-
-export interface ProfilingFlamegraphRequest {
-  sample_size: number;
-  query: ProfilingTopFunctionsRequest["query"];
-}
 
 function escapeEsqlString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
