@@ -196,10 +196,14 @@ export default function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const commands = useCommands();
 
-  // Reset state when dialog opens and focus the input
+  // Focus the input once the dialog enter transition completes
   const handleDialogEntered = useCallback(() => {
-    setSearch("");
     inputRef.current?.focus();
+  }, []);
+
+  // Reset search after the dialog has fully exited so it is clean for the next open
+  const handleDialogExited = useCallback(() => {
+    setSearch("");
   }, []);
 
   // Global Ctrl/Cmd+K shortcut
@@ -223,7 +227,7 @@ export default function CommandPalette() {
     <Dialog
       open={open}
       onClose={() => setOpen(false)}
-      TransitionProps={{ onEntered: handleDialogEntered }}
+      TransitionProps={{ onEntered: handleDialogEntered, onExited: handleDialogExited }}
       maxWidth="sm"
       fullWidth
       aria-label="Command palette"
