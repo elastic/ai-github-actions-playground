@@ -245,6 +245,57 @@ describe("SpanDetailDrawer – Events tab", () => {
   });
 });
 
+describe("SpanDetailDrawer – invalid timestamp", () => {
+  it("renders without crashing and shows the raw value when span.timestamp is invalid", () => {
+    const span = makeSpan({ timestamp: "not-a-date" });
+    expect(() =>
+      render(
+        <SpanDetailDrawer
+          span={span}
+          open
+          onClose={vi.fn()}
+          onFilterBy={vi.fn()}
+          onExclude={vi.fn()}
+        />,
+      ),
+    ).not.toThrow();
+
+    expect(screen.getByText("not-a-date")).toBeInTheDocument();
+  });
+});
+
+describe("SpanDetailDrawer – copy action", () => {
+  it("does not throw when navigator.clipboard is unavailable", async () => {
+    const user = userEvent.setup();
+    const span = makeSpan({
+      attributes: { "http.method": "GET" },
+    });
+    // Simulate environment without Clipboard API
+    const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+
+    try {
+      render(
+        <SpanDetailDrawer
+          span={span}
+          open
+          onClose={vi.fn()}
+          onFilterBy={vi.fn()}
+          onExclude={vi.fn()}
+        />,
+      );
+
+      const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+      await expect(user.click(copyButtons[0])).resolves.toBeUndefined();
+    } finally {
+      // Always restore the original clipboard descriptor
+      if (originalClipboard) {
+        Object.defineProperty(navigator, "clipboard", originalClipboard);
+      }
+    }
+  });
+});
+
 describe("SpanDetailDrawer – Footer actions", () => {
   it("calls query lab callback with span context", async () => {
     const user = userEvent.setup();

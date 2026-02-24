@@ -12,6 +12,8 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
+import { copyToClipboard } from "../../utils/copyToClipboard";
+
 import type { Span, SpanLink } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
 import { getServiceColor } from "./traceColors";
@@ -106,7 +108,7 @@ export default function SpanDetailDrawer({
   const [tabIndex, setTabIndex] = useState(0);
 
   const handleCopy = useCallback((value: string) => {
-    void navigator.clipboard.writeText(value);
+    void copyToClipboard(value);
   }, []);
 
   const attributes = useMemo(() => {
@@ -133,7 +135,7 @@ export default function SpanDetailDrawer({
   }, [attributes]);
 
   if (!span) return null;
-  const tsDisplay = span.timestamp ? new Date(span.timestamp).toISOString() : "—";
+  const tsDisplay = span.timestamp ? formatEventTimestamp(span.timestamp) : "—";
 
   return (
     <Drawer

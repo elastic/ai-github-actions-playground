@@ -1,11 +1,7 @@
 import type { FormatOptions } from "@perses-dev/core";
 import type { z } from "zod";
 
-import type {
-  dashboardDefinitionSchema,
-  panelDefinitionSchema,
-  visualizationTypeSchema,
-} from "./schemas";
+import type { dashboardDefinitionSchema, panelDefinitionSchema } from "./schemas";
 import type { ElasticsearchConnection, EsqlResponse, EsqlError } from "./services/es";
 
 export type { FormatOptions };
@@ -29,7 +25,17 @@ export interface ProfileHealth {
   errorSummary: string | null;
 }
 
-export type VisualizationType = z.infer<typeof visualizationTypeSchema>;
+export type VisualizationType =
+  | "timeseries"
+  | "bar"
+  | "table"
+  | "stat"
+  | "gauge"
+  | "pie"
+  | "heatmap"
+  | "scatter"
+  | "histogram"
+  | "markdown";
 
 export interface TimeSeriesOptions {
   format?: FormatOptions;

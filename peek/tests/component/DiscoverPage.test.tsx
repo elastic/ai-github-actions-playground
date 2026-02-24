@@ -30,6 +30,7 @@ vi.mock("@uiw/react-codemirror", () => ({
 }));
 vi.mock("@codemirror/lang-sql", () => ({
   sql: () => [],
+  SQLDialect: { define: () => ({ language: [] }) },
 }));
 vi.mock("../../src/components/visualizations/DataTable", () => ({
   default: () => <div data-testid="datatable-mock" />,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -10,8 +10,8 @@ import { useTheme } from "@mui/material/styles";
 
 import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
 import { buildDimensionOverviewQuery } from "../services/es";
-import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse, TimeRange } from "../types";
+import { useBatchedOverviewQueries } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -19,11 +19,6 @@ import EChartWrapper from "./visualizations/EChartWrapper";
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface DimensionCardResult {
-  status: "idle" | "loading" | "success" | "error";
-  data?: EsqlResponse;
-}
 
 interface Props {
   fields: FieldInfo[];
@@ -42,7 +37,6 @@ interface Props {
 // Constants
 // ---------------------------------------------------------------------------
 
-const BATCH_SIZE = 6;
 const MAX_SERIES = 5;
 
 // ---------------------------------------------------------------------------
@@ -160,108 +154,34 @@ export default function DimensionOverviewGrid({
     return scoped.length > 0 ? scoped : base;
   }, [fields, metricNamespace]);
 
-  const [results, setResults] = useState<Record<string, DimensionCardResult>>({});
-  const abortRef = useRef<AbortController | null>(null);
-  const knownWithDataRef = useRef<Set<string> | null>(null);
-  const prevScopeRef = useRef<string | null>(null);
+  const scopeKey = [
+    metricField,
+    metricType,
+    indexPattern,
+    timeRange.from,
+    timeRange.to,
+    dimensionFields.map((f) => f.name).join(","),
+  ].join("|");
 
-  // Fetch sparkline data for all dimensions in batches
-  useEffect(() => {
-    if (!client || dimensionFields.length === 0) return;
+  const buildQuery = useCallback(
+    (field: FieldInfo) =>
+      buildDimensionOverviewQuery({
+        indexPattern,
+        metricField,
+        metricType,
+        dimensionField: field.name,
+        timeRange,
+      }),
+    [indexPattern, metricField, metricType, timeRange],
+  );
 
-    // When the data scope changes, clear the cache so we do full discovery
-    const scopeKey = [
-      metricField,
-      metricType,
-      indexPattern,
-      timeRange.from,
-      timeRange.to,
-      dimensionFields.map((f) => f.name).join(","),
-    ].join("|");
-    if (scopeKey !== prevScopeRef.current) {
-      prevScopeRef.current = scopeKey;
-      knownWithDataRef.current = null;
-    }
-
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-    const signal = abortRef.current.signal;
-
-    const isRefresh = (knownWithDataRef.current?.size ?? 0) > 0;
-    const dimsToQuery = isRefresh
-      ? dimensionFields.filter((f) => knownWithDataRef.current!.has(f.name))
-      : dimensionFields;
-
-    const runBatches = async () => {
-      setResults((prev) => {
-        const next = { ...prev };
-        for (const f of dimsToQuery) {
-          next[f.name] = { status: "loading", data: prev[f.name]?.data };
-        }
-        return next;
-      });
-
-      for (let i = 0; i < dimsToQuery.length; i += BATCH_SIZE) {
-        if (signal.aborted) return;
-        const batch = dimsToQuery.slice(i, i + BATCH_SIZE);
-        const promises = batch.map(async (field) => {
-          const queryDef = buildDimensionOverviewQuery({
-            indexPattern,
-            metricField,
-            metricType,
-            dimensionField: field.name,
-            timeRange,
-          });
-          try {
-            const params = buildTimeParams(queryDef.esql, timeRange);
-            const result = await client.query(
-              params.length > 0 ? { query: queryDef.esql, params } : { query: queryDef.esql },
-              signal,
-            );
-            return { name: field.name, status: "success" as const, data: result as EsqlResponse };
-          } catch {
-            if (signal.aborted) return null;
-            return { name: field.name, status: "error" as const };
-          }
-        });
-
-        const batchResults = await Promise.all(promises);
-        if (signal.aborted) return;
-
-        setResults((prev) => {
-          const next = { ...prev };
-          for (const r of batchResults) {
-            if (r) {
-              next[r.name] = { status: r.status, data: r.data };
-            }
-          }
-          return next;
-        });
-      }
-
-      if (!isRefresh) {
-        setResults((current) => {
-          const withData = new Set<string>();
-          for (const [name, r] of Object.entries(current)) {
-            if (r.status === "success" && r.data && r.data.values.length > 0) {
-              const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
-              if (metricIdx >= 0 && r.data.values.some((row) => row[metricIdx] != null)) {
-                withData.add(name);
-              }
-            }
-          }
-          knownWithDataRef.current = withData;
-          return current;
-        });
-      }
-    };
-
-    void runBatches();
-
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, [client, dimensionFields, indexPattern, metricField, metricType, timeRange]);
+  const results = useBatchedOverviewQueries({
+    items: dimensionFields,
+    client,
+    scopeKey,
+    buildQuery,
+    timeRange,
+  });
 
   const dimsWithData = useMemo(() => {
     return dimensionFields.filter((f) => {

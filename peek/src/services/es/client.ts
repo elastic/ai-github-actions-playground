@@ -100,6 +100,18 @@ export interface SecurityRole {
 }
 export type GetSecurityUsersResponse = Record<string, SecurityUser>;
 export type GetSecurityRolesResponse = Record<string, SecurityRole>;
+export interface ProfilingTopFunctionsRequest {
+  limit: number;
+  query: {
+    bool: {
+      filter: Array<Record<string, unknown>>;
+    };
+  };
+}
+export interface ProfilingFlamegraphRequest {
+  sample_size: number;
+  query: ProfilingTopFunctionsRequest["query"];
+}
 
 /**
  * Backward-compatible alias — matches the shape components were already using.
@@ -202,23 +214,66 @@ export class ElasticsearchClient {
   // Internal helpers
   // -------------------------------------------------------------------------
 
+  /**
+   * Execute a single HTTP request, routing through the Electron main process
+   * when running inside the Electron shell (bypasses CORS) or falling back to
+   * browser fetch for the web build.
+   */
+  private async _doFetch(
+    url: string,
+    mergedHeaders: Record<string, string>,
+    options?: RequestInit & { signal?: AbortSignal },
+  ): Promise<Response> {
+    const signal = options?.signal;
+
+    if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
+      // Electron: route through the main process — no CORS restrictions apply
+      if (signal?.aborted) throw signal.reason;
+      const ipcPromise = window.electronAPI.fetchES({
+        url,
+        method: options?.method as string | undefined,
+        headers: mergedHeaders,
+        body: options?.body as string | undefined,
+      });
+      const abortPromise =
+        signal &&
+        new Promise<never>((_, reject) => {
+          const onAbort = () => {
+            reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+          };
+          signal.addEventListener("abort", onAbort, { once: true });
+          ipcPromise.finally(() => signal.removeEventListener("abort", onAbort));
+        });
+      const ipcResp = await (abortPromise ? Promise.race([ipcPromise, abortPromise]) : ipcPromise);
+      if (signal?.aborted) throw signal.reason;
+      return new Response(ipcResp.body, {
+        status: ipcResp.status,
+        statusText: ipcResp.statusText,
+        headers: { "content-type": ipcResp.contentType },
+      });
+    }
+
+    // Web: standard browser fetch (may require the /_es proxy for CORS)
+    return fetch(url, { ...options, headers: mergedHeaders });
+  }
+
   private async _fetch<T>(
     path: string,
     options?: RequestInit & { signal?: AbortSignal },
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const init: RequestInit = {
-      ...options,
-      headers: { ...this.headers, ...(options?.headers as Record<string, string>) },
+    const mergedHeaders = {
+      ...this.headers,
+      ...(options?.headers as Record<string, string>),
     };
 
     let lastError: ElasticsearchError | undefined;
-    const signal = init.signal;
+    const signal = options?.signal;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       let response: Response;
       try {
-        response = await fetch(url, init);
+        response = await this._doFetch(url, mergedHeaders, options);
       } catch (err) {
         throw {
           status: 0,
@@ -333,6 +388,25 @@ export class ElasticsearchClient {
     return this._fetch<GetSecurityRolesResponse>("/_security/role", { signal });
   }
 
+  async getTopFunctions(
+    body: ProfilingTopFunctionsRequest,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    return this._fetch<unknown>("/_profiling/topn/functions", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
+  }
+
+  async getFlamegraph(body: ProfilingFlamegraphRequest, signal?: AbortSignal): Promise<unknown> {
+    return this._fetch<unknown>("/_profiling/flamegraph", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
+  }
+
   // -------------------------------------------------------------------------
   // Security / capabilities
   // -------------------------------------------------------------------------
@@ -393,17 +467,18 @@ export class ElasticsearchClient {
     } else {
       signal?.addEventListener("abort", onAbort, { once: true });
     }
-    const init: RequestInit = {
-      method,
-      headers: { ...this.headers },
-      signal: controller.signal,
-    };
-    if (body && body.trim()) {
-      init.body = body;
-    }
+    const rawBody = body && body.trim() ? body : undefined;
     let response: Response;
     try {
-      response = await fetch(url, init);
+      response = await this._doFetch(
+        url,
+        { ...this.headers },
+        {
+          method,
+          body: rawBody,
+          signal: controller.signal,
+        },
+      );
     } catch (err) {
       clearTimeout(timeoutId);
       signal?.removeEventListener("abort", onAbort);
