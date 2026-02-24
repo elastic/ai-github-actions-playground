@@ -5,6 +5,10 @@
  * options factory, renderer component, and an optional type-specific options
  * editor.  Adding a new visualization only requires adding one entry here plus
  * its implementation file; no other files need edits.
+ *
+ * `VISUALIZATION_TYPES` is the canonical ordered list and is exported for use
+ * by the Zod schema in `schemas.ts`.  This avoids maintaining a parallel
+ * hard-coded array elsewhere.
  */
 
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -55,6 +59,28 @@ import {
   TableOptionsEditor,
   TimeSeriesOptionsEditor,
 } from "./vizOptionsEditors";
+
+// ---------------------------------------------------------------------------
+// Canonical type list (single source of truth)
+// ---------------------------------------------------------------------------
+
+/**
+ * Ordered list of all visualization type keys.  This is THE single source of
+ * truth — `schemas.ts` imports it to build the Zod enum, so adding a new
+ * visualization type only requires editing this file.
+ */
+export const VISUALIZATION_TYPES = [
+  "timeseries",
+  "bar",
+  "table",
+  "stat",
+  "gauge",
+  "pie",
+  "heatmap",
+  "scatter",
+  "histogram",
+  "markdown",
+] as const;
 
 // ---------------------------------------------------------------------------
 // Shared prop shapes
