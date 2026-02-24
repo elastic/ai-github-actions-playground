@@ -106,7 +106,8 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 
 1. Create a new component in `peek/src/components/visualizations/`.
 2. Add a descriptor module in `peek/src/components/visualizations/registry/` that exports a default `VizRegistryDescriptor`.
-3. Give the descriptor a unique `order` value so it appears in the desired picker order.
+3. Add the descriptor's `type` string to the `VisualizationType` union in `peek/src/types.ts` (the string must exactly match the descriptor's exported `type` value).
+4. Give the descriptor a unique `order` value so it appears in the desired picker order.
 
 `vizRegistry.tsx` discovers descriptor modules automatically with `import.meta.glob`, so no central registration file edits are required for new visualization types.
 
