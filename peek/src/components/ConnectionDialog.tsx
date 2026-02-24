@@ -75,6 +75,8 @@ export default function ConnectionDialog() {
   const [username, setUsername] = useState(savedConn?.username ?? "");
   const [password, setPassword] = useState(savedConn?.password ?? "");
   const [proxyUrl, setProxyUrl] = useState(savedConn?.proxyUrl ?? "");
+  const [proxyHost, setProxyHost] = useState(savedConn?.proxyHost ?? "");
+  const [proxyApiKey, setProxyApiKey] = useState(savedConn?.proxyApiKey ?? "");
   const [showProxy, setShowProxy] = useState(Boolean(savedConn?.proxyUrl));
   const [showSecret, setShowSecret] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -91,6 +93,8 @@ export default function ConnectionDialog() {
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
     setProxyUrl(savedConn?.proxyUrl ?? "");
+    setProxyHost(savedConn?.proxyHost ?? "");
+    setProxyApiKey(savedConn?.proxyApiKey ?? "");
     setShowProxy(Boolean(savedConn?.proxyUrl));
   }, [savedConn]);
 
@@ -101,14 +105,18 @@ export default function ConnectionDialog() {
         username: username.trim(),
         password: password.trim(),
         proxyUrl: proxyUrl.trim(),
+        proxyHost: proxyHost.trim(),
+        proxyApiKey: proxyApiKey.trim(),
       };
     }
     return {
       url: url.trim(),
       apiKey: apiKey.trim(),
       proxyUrl: proxyUrl.trim(),
+      proxyHost: proxyHost.trim(),
+      proxyApiKey: proxyApiKey.trim(),
     };
-  }, [url, authType, apiKey, username, password, proxyUrl]);
+  }, [url, authType, apiKey, username, password, proxyUrl, proxyHost, proxyApiKey]);
 
   const handleTest = useCallback(async () => {
     setTesting(true);
@@ -171,6 +179,8 @@ export default function ConnectionDialog() {
       setUsername(conn.username ?? "");
       setPassword(conn.password ?? "");
       setProxyUrl(conn.proxyUrl ?? "");
+      setProxyHost(conn.proxyHost ?? "");
+      setProxyApiKey(conn.proxyApiKey ?? "");
       setShowProxy(Boolean(conn.proxyUrl));
       setActiveProfileId(profileId);
       setResult(null);
@@ -323,6 +333,31 @@ export default function ConnectionDialog() {
               }}
               helperText="Requests are sent to this URL; the Elasticsearch URL is forwarded as a header"
             />
+            <TextField
+              label="Proxy Host"
+              placeholder="https://my-cluster.es.us-east-1.aws.elastic.cloud:443"
+              fullWidth
+              value={proxyHost}
+              onChange={(e) => {
+                setProxyHost(e.target.value);
+                setActiveProfileId(null);
+              }}
+              helperText="Optional override for X-Elastic-Peek-Proxy-Host; defaults to Elasticsearch URL"
+              sx={{ mt: 2 }}
+            />
+            <TextField
+              label="Proxy API Key"
+              placeholder="proxy api key"
+              fullWidth
+              type={showSecret ? "text" : "password"}
+              value={proxyApiKey}
+              onChange={(e) => {
+                setProxyApiKey(e.target.value);
+                setActiveProfileId(null);
+              }}
+              helperText="Stored in session storage — cleared when the browser tab closes"
+              sx={{ mt: 2 }}
+            />
           </Collapse>
           <Tabs
             value={authType}
@@ -405,7 +440,7 @@ export default function ConnectionDialog() {
           )}
           {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
 
-          {(url || proxyUrl) && (
+          {url && (
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               <TextField
                 size="small"
@@ -426,7 +461,7 @@ export default function ConnectionDialog() {
                 size="small"
                 variant="outlined"
                 onClick={handleSaveProfile}
-                disabled={!profileName.trim() || (!url && !proxyUrl) || isDuplicateProfileName}
+                disabled={!profileName.trim() || !url || isDuplicateProfileName}
               >
                 Save Profile
               </Button>
@@ -440,14 +475,10 @@ export default function ConnectionDialog() {
         </Button>
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={handleTest} disabled={testing || (!url && !proxyUrl)}>
+        <Button onClick={handleTest} disabled={testing || !url}>
           {testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
-        <Button
-          variant="contained"
-          onClick={handleConnect}
-          disabled={testing || (!url && !proxyUrl)}
-        >
+        <Button variant="contained" onClick={handleConnect} disabled={testing || !url}>
           {testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
       </DialogActions>

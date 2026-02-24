@@ -31,7 +31,14 @@ export function buildCurlCommand(
     parts.push(`-u '${user}:${pass}'`);
   }
   if (connection.proxyUrl) {
-    parts.push(`-H 'X-Elastic-Peek-Proxy-Host: ${shellEscapeSingleQuote(connection.url)}'`);
+    parts.push(
+      `-H 'X-Elastic-Peek-Proxy-Host: ${shellEscapeSingleQuote(connection.proxyHost || connection.url)}'`,
+    );
+    if (connection.proxyApiKey) {
+      parts.push(
+        `-H 'X-Elastic-Peek-Proxy-Api-Key: ${shellEscapeSingleQuote(connection.proxyApiKey)}'`,
+      );
+    }
   }
 
   if (body.trim()) {

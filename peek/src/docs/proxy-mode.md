@@ -5,7 +5,8 @@ Proxy mode routes all Elasticsearch API requests through a local server so your 
 Start the dev server with: ES_URL=http://localhost:9200 make serve-proxy
 
 Then expand **Proxy Settings** in the connection dialog and enter http://localhost:3000/\_es as the **Proxy URL**.
-Peek automatically sends the Elasticsearch URL as `X-Elastic-Peek-Proxy-Host` on every request so the proxy knows which cluster to forward to.
+Peek automatically sends the Elasticsearch URL as `X-Elastic-Peek-Proxy-Host` on every request (or **Proxy Host** if you provide an override), so the proxy knows which cluster to forward to.
+If your proxy requires credentials, set **Proxy API Key** and Peek will send it as `X-Elastic-Peek-Proxy-Api-Key`.
 The /\_es prefix proxies all requests (connection validation, queries, cluster health, etc.)
 to the upstream Elasticsearch cluster.
 

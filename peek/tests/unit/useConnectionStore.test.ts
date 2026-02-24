@@ -155,13 +155,16 @@ describe("useConnectionStore connection profiles", () => {
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
     const apiKeyKey = `elastic-peek-connection:profile:${id}:apiKey`;
     const passwordKey = `elastic-peek-connection:profile:${id}:password`;
+    const proxyApiKeyKey = `elastic-peek-connection:profile:${id}:proxyApiKey`;
     sessionStorageMock.setItem(apiKeyKey, "dev-key");
     sessionStorageMock.setItem(passwordKey, "dev-pass");
+    sessionStorageMock.setItem(proxyApiKeyKey, "proxy-key");
 
     useConnectionStore.getState().deleteConnectionProfile(id!);
 
     expect(sessionStorageMock.getItem(apiKeyKey)).toBeNull();
     expect(sessionStorageMock.getItem(passwordKey)).toBeNull();
+    expect(sessionStorageMock.getItem(proxyApiKeyKey)).toBeNull();
   });
 
   it("resetConnectionState clears connection profiles", () => {
