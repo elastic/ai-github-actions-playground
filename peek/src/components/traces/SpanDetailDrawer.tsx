@@ -133,7 +133,7 @@ export default function SpanDetailDrawer({
   }, [attributes]);
 
   if (!span) return null;
-  const tsDisplay = span.timestamp ? new Date(span.timestamp).toISOString() : "—";
+  const tsDisplay = span.timestamp ? formatEventTimestamp(span.timestamp) : "—";
 
   return (
     <Drawer
