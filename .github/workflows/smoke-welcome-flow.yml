@@ -1,4 +1,4 @@
-name: Smoke Welcome Flow
+name: "Smoke: Welcome → Connect Entrypoint"
 on:
   schedule:
     - cron: "0 9 * * 1-5"
@@ -20,10 +20,10 @@ jobs:
         - `onboarding user reaches the connect entrypoint from the welcome screen`
 
         User flow to validate in detail:
-        - Start on the landing page as a first-time operator.
-        - Confirm the Elastic Peek welcome heading is visible.
-        - Confirm the "Connect to Elasticsearch" call-to-action is visible and ready.
-        - Treat this as the hard gate to all deeper product flows.
+        1. Start on the landing page as a first-time operator.
+        2. Confirm the Elastic Peek welcome heading is visible.
+        3. Confirm the "Connect to Elasticsearch" call-to-action is visible and ready.
+        4. Treat this as the hard gate to all deeper product flows.
 
         Run:
         1. `make setup`

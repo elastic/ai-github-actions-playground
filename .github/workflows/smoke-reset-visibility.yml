@@ -1,4 +1,4 @@
-name: Smoke Reset Visibility
+name: "Smoke: Connect → Guardrails → Reset to Landing"
 on:
   schedule:
     - cron: "0 13 * * 1-5"
@@ -20,11 +20,11 @@ jobs:
         - `ops user confirms connection guardrails and can reset back to the landing state`
 
         User flow to validate in detail:
-        - Open the connection dialog and verify connect stays disabled without a URL.
-        - Provide a URL and verify connect enablement toggles on.
-        - Cancel, then perform a mocked connection.
-        - Use the global Reset control in the footer.
-        - Verify the app returns to the landing state with welcome heading visible.
+        1. Open the connection dialog and verify connect stays disabled without a URL.
+        2. Provide a URL and verify connect enablement toggles on.
+        3. Cancel, then perform a mocked connection.
+        4. Use the global Reset control in the footer.
+        5. Verify the app returns to the landing state with welcome heading visible.
 
         Run:
         1. `make setup`
