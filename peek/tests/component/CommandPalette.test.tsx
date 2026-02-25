@@ -222,3 +222,105 @@ describe("CommandPalette", () => {
     expect(screen.getAllByText("Dashboards").length).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe("CommandPalette — Connection Profiles group", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    resetAllStores();
+  });
+
+  it("does not show Connection Profiles group when disconnected", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore.getState().setActiveProfileId(id!);
+    // Not connected
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.queryByText("Connection Profiles")).not.toBeInTheDocument();
+  });
+
+  it("does not show Connection Profiles group when no profiles exist", () => {
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.queryByText("Connection Profiles")).not.toBeInTheDocument();
+  });
+
+  it("shows Re-test command for the active profile", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.getByText("Re-test Dev")).toBeInTheDocument();
+    expect(screen.queryByText("Switch to Dev")).not.toBeInTheDocument();
+  });
+
+  it("shows Switch and Re-test commands for non-active profiles", () => {
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    const id2 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // Active profile (Dev): only Re-test, no Switch
+    expect(screen.queryByText("Switch to Dev")).not.toBeInTheDocument();
+    expect(screen.getByText("Re-test Dev")).toBeInTheDocument();
+
+    // Non-active profile (Prod): both Switch and Re-test
+    expect(screen.getByText("Switch to Prod")).toBeInTheDocument();
+    expect(screen.getByText("Re-test Prod")).toBeInTheDocument();
+
+    void id2;
+  });
+
+  it("shows Connection Profiles group heading when profiles exist and connected", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Staging", { url: "https://staging.example.com", apiKey: "k" });
+    const id2 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "k2" });
+    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.getByText("Connection Profiles")).toBeInTheDocument();
+    void id2;
+  });
+
+  it("filters profile commands by profile name", async () => {
+    const user = userEvent.setup();
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.type(screen.getByLabelText("Search commands"), "prod");
+
+    await waitFor(() => {
+      expect(screen.getByText("Switch to Prod")).toBeInTheDocument();
+      expect(screen.getByText("Re-test Prod")).toBeInTheDocument();
+      expect(screen.queryByText("Re-test Dev")).not.toBeInTheDocument();
+    });
+  });
+});
