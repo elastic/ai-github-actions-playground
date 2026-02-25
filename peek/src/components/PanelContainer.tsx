@@ -16,9 +16,10 @@ import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { isElasticsearchError } from "../services/es";
 import type { EsqlQueryParams } from "../services/es";
 import { buildQueryParams } from "../services/datemath";
+import { createPersesEsqlDatasource } from "../services/perses/esqlDatasource";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import { toCsv } from "./discoverUtils";
@@ -124,7 +125,7 @@ export default function PanelContainer({ panel }: Props) {
     setError(null);
 
     try {
-      const client = new ElasticsearchClient(connection);
+      const datasource = createPersesEsqlDatasource(connection);
       const query = panel.query.trim();
       const body: EsqlQueryParams = { query };
       if (timeRange) {
@@ -141,7 +142,7 @@ export default function PanelContainer({ panel }: Props) {
           body.params = queryParams;
         }
       }
-      const result = await client.query(body, ctrl.signal);
+      const result = await datasource.execute(body, ctrl.signal);
       if (!ctrl.signal.aborted) {
         setData(result);
         setExecutionTimeMs(result.executionTimeMs);
