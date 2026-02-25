@@ -15,7 +15,7 @@ export function buildCurlCommand(
   path: string,
   body: string,
 ): string {
-  const baseUrl = connection.url.replace(/\/+$/, "");
+  const baseUrl = (connection.proxyUrl || connection.url).replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const url = `${baseUrl}${normalizedPath}`;
 
@@ -29,6 +29,9 @@ export function buildCurlCommand(
     const user = shellEscapeSingleQuote(connection.username);
     const pass = shellEscapeSingleQuote(connection.password);
     parts.push(`-u '${user}:${pass}'`);
+  }
+  if (connection.proxyUrl) {
+    parts.push(`-H 'X-Elastic-Peek-Proxy-Host: ${shellEscapeSingleQuote(connection.url)}'`);
   }
 
   if (body.trim()) {

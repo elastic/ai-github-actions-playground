@@ -25,6 +25,11 @@ const CAPS = {
 
 const CONN = { url: "https://es.example.com:9200", apiKey: "test-key" };
 const MANUAL_CONN = { url: "https://manual.example.com:9200", apiKey: "manual-key" };
+const PROXY_CONN = {
+  url: "https://es.example.com:9200",
+  apiKey: "test-key",
+  proxyUrl: "https://proxy.example.com",
+};
 const MANUAL_CAPS = {
   canManageDataStreams: false,
   canReadSecurityUsers: true,
@@ -93,6 +98,22 @@ describe("useSessionResume", () => {
     await waitFor(() => expect(useConnectionStore.getState().connection).toEqual(MANUAL_CONN));
     expect(useConnectionStore.getState().connected).toBe(true);
     expect(useConnectionStore.getState().capabilities).toEqual(MANUAL_CAPS);
+  });
+
+  it("does not apply stale capabilities when proxy settings change", async () => {
+    useConnectionStore.setState({ connection: CONN, connected: false });
+    const deferred = createDeferred<typeof CAPS>();
+    mockFetch.mockReturnValue(deferred.promise);
+
+    renderHook(() => useSessionResume());
+
+    useConnectionStore.setState({ connection: PROXY_CONN, connected: false, capabilities: null });
+
+    deferred.resolve(CAPS);
+
+    await waitFor(() => expect(useConnectionStore.getState().connection).toEqual(PROXY_CONN));
+    expect(useConnectionStore.getState().connected).toBe(false);
+    expect(useConnectionStore.getState().capabilities).toBeNull();
   });
 
   it("surfaces resumeError on validation failure", async () => {
