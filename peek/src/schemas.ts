@@ -128,6 +128,7 @@ export const dashboardDefinitionSchema = z.object({
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   archived: z.boolean().optional(),
+  favoritedAt: z.string().optional(),
   preferredProfileId: z.string().min(1).optional(),
   panels: z.array(panelDefinitionSchema),
   parameters: z.array(dashboardParameterSchema).optional(),
