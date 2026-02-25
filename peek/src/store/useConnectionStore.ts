@@ -66,7 +66,11 @@ const splitStorage = createSplitSecretStorage<PersistedState>({
           ) ?? "";
         return {
           ...profile,
-          connection: { ...profile.connection, apiKey: pApiKey, password: pPassword },
+          connection: {
+            ...profile.connection,
+            apiKey: pApiKey,
+            password: pPassword,
+          },
         };
       });
     }

@@ -4,7 +4,10 @@ Proxy mode routes all Elasticsearch API requests through a local server so your 
 
 Start the dev server with: ES_URL=http://localhost:9200 make serve-proxy
 
-Then enter http://localhost:3000/\_es as the Elasticsearch URL in the connection dialog. The /\_es prefix proxies all requests (connection validation, queries, cluster health, etc.) to the upstream Elasticsearch cluster.
+Then expand **Proxy Settings** in the connection dialog and enter http://localhost:3000/\_es as the **Proxy URL**.
+Peek automatically sends the Elasticsearch URL as `X-Elastic-Peek-Proxy-Host` on every request so the proxy knows which cluster to forward to.
+The /\_es prefix proxies all requests (connection validation, queries, cluster health, etc.)
+to the upstream Elasticsearch cluster.
 
 The Docker image also includes a built-in nginx proxy — set the ES_URL environment variable when running the container and enter http://localhost:8080/\_es as the Elasticsearch URL.
 

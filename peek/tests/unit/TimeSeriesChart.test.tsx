@@ -113,4 +113,58 @@ describe("TimeSeriesChart", () => {
     const option = getLastSetOptionCall();
     expect(option.title).toEqual(expect.objectContaining({ text: "No numeric data to display" }));
   });
+
+  it("sets custom axisLabel formatter when timeZone is provided and data has a date column", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "doc_count", type: "long" },
+        { name: "time_bucket", type: "date" },
+      ],
+      values: [
+        [100, "2024-06-01T12:00:00Z"],
+        [200, "2024-06-02T12:00:00Z"],
+      ],
+    };
+    render(<TimeSeriesChart data={data} timeZone="UTC" />);
+    const option = getLastSetOptionCall();
+    const xAxis = option.xAxis as { axisLabel?: { formatter?: unknown } };
+    expect(typeof xAxis.axisLabel?.formatter).toBe("function");
+  });
+
+  it("does not set custom axisLabel formatter when no timeZone is provided", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "doc_count", type: "long" },
+        { name: "time_bucket", type: "date" },
+      ],
+      values: [
+        [100, "2024-06-01T12:00:00Z"],
+        [200, "2024-06-02T12:00:00Z"],
+      ],
+    };
+    render(<TimeSeriesChart data={data} />);
+    const option = getLastSetOptionCall();
+    const xAxis = option.xAxis as { axisLabel?: { formatter?: unknown } };
+    expect(xAxis.axisLabel?.formatter).toBeUndefined();
+  });
+
+  it("formats axis labels consistently regardless of local timezone when timeZone is UTC", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "doc_count", type: "long" },
+        { name: "time_bucket", type: "date" },
+      ],
+      values: [[42, "2024-01-15T06:30:00Z"]],
+    };
+    render(<TimeSeriesChart data={data} timeZone="UTC" />);
+    const option = getLastSetOptionCall();
+    const xAxis = option.xAxis as { axisLabel?: { formatter?: (v: number) => string } };
+    const formatter = xAxis.axisLabel?.formatter;
+    expect(formatter).toBeDefined();
+    const formatted = formatter?.(new Date("2024-01-15T06:30:00Z").getTime());
+    // UTC should show Jan 15, 06:30
+    expect(formatted).toContain("Jan");
+    expect(formatted).toContain("15");
+    expect(formatted).toContain("06:30");
+  });
 });
