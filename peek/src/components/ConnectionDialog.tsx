@@ -53,6 +53,7 @@ export default function ConnectionDialog() {
     deleteConnectionProfile,
     renameConnectionProfile,
     setActiveProfileId,
+    getConnectionProfile,
     lockProfile,
     unlockProfile,
   } = useConnectionStore(
@@ -67,6 +68,7 @@ export default function ConnectionDialog() {
       deleteConnectionProfile: s.deleteConnectionProfile,
       renameConnectionProfile: s.renameConnectionProfile,
       setActiveProfileId: s.setActiveProfileId,
+      getConnectionProfile: s.getConnectionProfile,
       lockProfile: s.lockProfile,
       unlockProfile: s.unlockProfile,
     })),
@@ -92,6 +94,7 @@ export default function ConnectionDialog() {
   const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
   const [unlockPin, setUnlockPin] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [unlockedProfileIds, setUnlockedProfileIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
@@ -177,7 +180,7 @@ export default function ConnectionDialog() {
 
   const handleLoadProfile = useCallback(
     (profileId: string) => {
-      const profile = connectionProfiles.find((p) => p.id === profileId);
+      const profile = getConnectionProfile(profileId);
       if (!profile) return;
       const conn = profile.connection;
       setUrl(conn.url);
@@ -190,13 +193,14 @@ export default function ConnectionDialog() {
       setActiveProfileId(profileId);
       setResult(null);
     },
-    [connectionProfiles, setActiveProfileId],
+    [getConnectionProfile, setActiveProfileId],
   );
 
   const handleUnlockProfile = useCallback(
     async (profileId: string) => {
       const ok = await unlockProfile(profileId, unlockPin);
       if (ok) {
+        setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
         setUnlockingProfileId(null);
         setUnlockPin("");
         setUnlockError(null);
@@ -245,11 +249,15 @@ export default function ConnectionDialog() {
                     key={profile.id}
                     selected={profile.id === activeProfileId}
                     onClick={() => {
-                      if (profile.encrypted && unlockingProfileId !== profile.id) {
+                      if (
+                        profile.encrypted &&
+                        !unlockedProfileIds.has(profile.id) &&
+                        unlockingProfileId !== profile.id
+                      ) {
                         setUnlockingProfileId(profile.id);
                         setUnlockPin("");
                         setUnlockError(null);
-                      } else if (!profile.encrypted) {
+                      } else {
                         handleLoadProfile(profile.id);
                       }
                     }}
