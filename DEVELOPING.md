@@ -37,6 +37,9 @@ make format       # auto-format code with Prettier
 make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
+make electron-dev   # start Electron app in dev mode (hot-reloads)
+make electron-build # build Electron app (renderer + main process)
+make electron-dist  # package Electron app for distribution (dmg/exe/AppImage)
 make otel-up           # start local ES + EDOT collector + telemetry generators
 make otel-logs         # tail EDOT collector logs
 make otel-down         # stop and remove local OTel stack
@@ -54,6 +57,9 @@ npm run dev        # start dev server (replaces make serve)
 npm run build      # production build (replaces make build)
 npm run lint       # lint (replaces make lint)
 npm run format     # format (replaces make format)
+npm run electron:dev   # start Electron dev mode (replaces make electron-dev)
+npm run electron:build # build Electron app (replaces make electron-build)
+npm run electron:dist  # package for distribution (replaces make electron-dist)
 ```
 
 > **Pre-commit hook:** `make setup` (or `npm install` inside `peek/`) also installs a [husky](https://typicode.github.io/husky/) pre-commit hook that automatically runs Prettier (format) and ESLint (lint) on staged files via [lint-staged](https://github.com/lint-staged/lint-staged). This keeps committed code consistently formatted and lint-free.
@@ -73,6 +79,52 @@ Then enter `http://localhost:3000/_es` as the Elasticsearch URL when connecting 
 │   Browser    │ ─────────────▶  │  Vite dev server  │ ─────────────▶  │   Elasticsearch    │
 │              │ ◀─────────────  │  (localhost:3000) │ ◀─────────────  │   cluster          │
 └─────────────┘    JSON          └──────────────────┘    JSON          └────────────────────┘
+```
+
+## Electron Mode
+
+Electron mode packages Peek as a native desktop application. The Electron main process handles Elasticsearch requests over IPC, which means the browser-side CORS restriction no longer applies — no proxy or CORS configuration is required. Use this runtime when:
+
+- You cannot or do not want to add CORS headers to Elasticsearch.
+- You want a native desktop app rather than a browser tab.
+- You are distributing Peek to users who should not need to manage a local proxy.
+
+### When to choose each runtime
+
+| Runtime | Requires CORS on ES? | Requires local proxy? | Distribution |
+| --- | --- | --- | --- |
+| Browser (direct) | Yes | No | Static site / GitHub Pages |
+| Browser + proxy (`make serve-proxy`) | No | Yes (Vite or nginx) | Docker image |
+| Electron (`make electron-dev`) | No | No | Native desktop app |
+
+### Running in Electron
+
+```bash
+make electron-dev   # start Electron app in dev mode (Vite hot-reload + DevTools)
+```
+
+Enter your Elasticsearch URL and credentials in the connection dialog just as you would in browser mode. The app automatically uses the IPC transport instead of `fetch` when running inside Electron.
+
+### Building and distributing
+
+```bash
+make electron-build  # compile renderer (peek/dist/) + main process (peek/dist-electron/)
+make electron-dist   # package distributable: macOS .dmg / Windows .exe / Linux .AppImage
+                     # output written to peek/dist-packages/
+```
+
+The packaged app is self-contained — users do not need Node.js, npm, or a proxy server installed.
+
+**Architecture (Electron mode):**
+```
+┌─────────────────────────────────────────────────┐
+│  Electron app                                    │
+│  ┌──────────────┐  IPC   ┌────────────────────┐ │
+│  │  Renderer    │ ─────▶  │  Main process      │ │     ┌────────────────────┐
+│  │  (React UI)  │ ◀─────  │  (Node.js / IPC    │ │────▶│   Elasticsearch    │
+│  └──────────────┘        │   handlers)         │ │◀────│   cluster          │
+│                           └────────────────────┘ │     └────────────────────┘
+└─────────────────────────────────────────────────┘
 ```
 
 ## Architecture
@@ -237,14 +289,14 @@ The smoke agent plan runs five scheduled checks, each mapped to one Playwright s
 
 | Scenario | Playwright test (`peek/tests/e2e/smoke.spec.ts`) | Workflow spec |
 | --- | --- | --- |
-| Welcome onboarding entry flow | `onboarding user reaches the connect entrypoint from the welcome screen` | `github/workflows/smoke-welcome-flow.yml` |
-| Metrics user path to chart-ready state | `metrics user connects, picks a metric, and gets a line chart-ready result` | `github/workflows/smoke-connection-dialog.yml` |
-| Credential mode switching guardrail | `security-focused user validates auth tab switching before submitting credentials` | `github/workflows/smoke-auth-tab-switch.yml` |
-| Traces investigation to Query Lab pivot | `traces user opens a trace and pivots from service map context into Query Lab` | `github/workflows/smoke-connect-button-enablement.yml` |
-| Connection guardrail + reset recovery | `ops user confirms connection guardrails and can reset back to the landing state` | `github/workflows/smoke-reset-visibility.yml` |
+| Welcome onboarding entry flow | `onboarding user reaches the connect entrypoint from the welcome screen` | `.github/workflows/smoke-welcome-flow.yml` |
+| Metrics user path to chart-ready state | `metrics user connects, picks a metric, and gets a line chart-ready result` | `.github/workflows/smoke-metrics-flow.yml` |
+| Credential mode switching guardrail | `security-focused user validates auth tab switching before submitting credentials` | `.github/workflows/smoke-auth-tab-switch.yml` |
+| Traces investigation to Query Lab pivot | `traces user opens a trace and pivots from service map context into Query Lab` | `.github/workflows/smoke-traces-flow.yml` |
+| Connection guardrail + reset recovery | `ops user confirms connection guardrails and can reset back to the landing state` | `.github/workflows/smoke-reset-visibility.yml` |
 
 Each scheduled workflow asks the audit agent to run only its assigned smoke test with Playwright and open an issue when it fails, including failing test output plus screenshot/preflight diagnostics where available.
-Workflow files are placed in `github/workflows/` so maintainers can relocate them into `.github/workflows/`.
+Workflow files are placed in `.github/workflows/`.
 
 ### Testing Philosophy
 

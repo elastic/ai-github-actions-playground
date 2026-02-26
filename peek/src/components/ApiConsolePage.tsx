@@ -21,6 +21,7 @@ import { json } from "@codemirror/lang-json";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
+import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection } from "../services/es";
 import { buildCurlCommand } from "../utils/buildCurlCommand";
@@ -309,13 +310,25 @@ export default function ApiConsolePage() {
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
 
-  const [entries, setEntries] = useState<RequestEntry[]>(() => [makeEntry()]);
+  const persistedEntries = useApiConsoleStore((s) => s.entries);
+  const setPersistedEntries = useApiConsoleStore((s) => s.setEntries);
+
+  const [entries, setEntries] = useState<RequestEntry[]>(() =>
+    persistedEntries.length > 0
+      ? persistedEntries.map((p) => ({ ...p, method: p.method as HttpMethod, response: null }))
+      : [makeEntry()],
+  );
   const entriesRef = useRef(entries);
   const abortRefs = useRef<Map<string, AbortController>>(new Map());
 
   useEffect(() => {
     entriesRef.current = entries;
   }, [entries]);
+
+  // Sync serializable fields to the persisted store after every entries change
+  useEffect(() => {
+    setPersistedEntries(entries.map(({ id, method, path, body }) => ({ id, method, path, body })));
+  }, [entries, setPersistedEntries]);
 
   useEffect(
     () => () => {
@@ -339,6 +352,14 @@ export default function ApiConsolePage() {
 
   const addEntry = useCallback(() => {
     setEntries((prev) => [...prev, makeEntry()]);
+  }, []);
+
+  const clearSession = useCallback(() => {
+    for (const controller of abortRefs.current.values()) {
+      controller.abort();
+    }
+    abortRefs.current.clear();
+    setEntries([makeEntry()]);
   }, []);
 
   const sendRequest = useCallback(
@@ -400,6 +421,15 @@ export default function ApiConsolePage() {
         </Button>
         <Button variant="outlined" size="small" startIcon={<PlayArrowIcon />} onClick={sendAll}>
           Run All
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          color="error"
+          startIcon={<DeleteIcon />}
+          onClick={clearSession}
+        >
+          Clear Session
         </Button>
       </Box>
 

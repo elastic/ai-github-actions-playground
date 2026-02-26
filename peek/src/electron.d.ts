@@ -6,22 +6,9 @@
  * check `window.electronAPI?.isElectron === true`.
  */
 
-export interface ESFetchRequest {
-  url: string;
-  method?: string;
-  headers?: Record<string, string>;
-  body?: string;
-  timeoutMs?: number;
-}
+import type { ESFetchRequest, ESFetchResponse } from "./ipcTypes";
 
-export interface ESFetchResponse {
-  ok: boolean;
-  status: number;
-  statusText: string;
-  /** Raw response body as a UTF-8 string.  Parse as JSON when needed. */
-  body: string;
-  contentType: string;
-}
+export type { ESFetchRequest, ESFetchResponse };
 
 export interface ElectronAPI {
   readonly isElectron: true;

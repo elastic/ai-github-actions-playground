@@ -26,6 +26,7 @@ interface DashboardState {
   renameDashboard: (id: string, title: string) => void;
   duplicateDashboard: (id: string) => string | null;
   archiveDashboard: (id: string, archived: boolean) => void;
+  toggleFavoriteDashboard: (id: string) => void;
   deleteDashboard: (id: string) => boolean;
   restoreDashboard: (dashboard: DashboardDefinition, makeActive?: boolean) => void;
 
@@ -242,6 +243,20 @@ export const useDashboardStore = create<DashboardState>()(
         set((s) => {
           const dashboards = s.dashboards.map((dashboard) =>
             dashboard.id === id ? { ...dashboard, archived, updatedAt: nowIso() } : dashboard,
+          );
+          return syncActiveState(dashboards, s.activeDashboardId);
+        }),
+
+      toggleFavoriteDashboard: (id) =>
+        set((s) => {
+          const dashboards = s.dashboards.map((dashboard) =>
+            dashboard.id === id
+              ? {
+                  ...dashboard,
+                  favoritedAt: dashboard.favoritedAt ? undefined : nowIso(),
+                  updatedAt: nowIso(),
+                }
+              : dashboard,
           );
           return syncActiveState(dashboards, s.activeDashboardId);
         }),
