@@ -6,6 +6,7 @@ import dashboardWorkflowRaw from "./dashboard-workflow.md?raw";
 import discoverWorkflowRaw from "./discover-workflow.md?raw";
 import metricsWorkflowRaw from "./metrics-workflow.md?raw";
 import tracesWorkflowRaw from "./traces-workflow.md?raw";
+import profilingWorkflowRaw from "./profiling-workflow.md?raw";
 import visualizationsRaw from "./visualizations.md?raw";
 import keyboardShortcutsRaw from "./keyboard-shortcuts.md?raw";
 import consoleRaw from "./console.md?raw";
@@ -55,6 +56,7 @@ const sections: DocSection[] = [
   parseDocSection("discover-workflow", discoverWorkflowRaw),
   parseDocSection("metrics-workflow", metricsWorkflowRaw),
   parseDocSection("traces-workflow", tracesWorkflowRaw),
+  parseDocSection("profiling-workflow", profilingWorkflowRaw),
   parseDocSection("visualizations", visualizationsRaw),
   parseDocSection("keyboard-shortcuts", keyboardShortcutsRaw),
   parseDocSection("console", consoleRaw),
