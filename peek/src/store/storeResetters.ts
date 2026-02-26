@@ -16,6 +16,7 @@ import { useLLMStore } from "./useLLMStore";
 import { useQueryStore } from "./useQueryStore";
 import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
+import { useApiConsoleStore } from "./useApiConsoleStore";
 
 export const storeResetters: ReadonlyArray<() => void> = [
   () => useConnectionStore.getState().resetConnectionState(),
@@ -26,4 +27,5 @@ export const storeResetters: ReadonlyArray<() => void> = [
   () => useQueryStore.getState().resetQueryState(),
   () => useTracesStore.getState().resetFilters(),
   () => useUIStore.getState().resetUIState(),
+  () => useApiConsoleStore.getState().resetApiConsoleState(),
 ];

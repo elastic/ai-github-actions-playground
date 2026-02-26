@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ApiConsolePage from "../../src/components/ApiConsolePage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -176,5 +177,44 @@ describe("ApiConsolePage", () => {
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it("persists entries to the store when path is updated", async () => {
+    const user = userEvent.setup();
+    render(<ApiConsolePage />);
+
+    const pathInput = screen.getByPlaceholderText("/_cat/indices?v");
+    await user.clear(pathInput);
+    await user.type(pathInput, "/_cat/health");
+
+    await waitFor(() => {
+      const stored = useApiConsoleStore.getState().entries;
+      expect(stored[0]?.path).toBe("/_cat/health");
+    });
+  });
+
+  it("restores persisted entries on mount", () => {
+    act(() => {
+      useApiConsoleStore
+        .getState()
+        .setEntries([{ id: "test-id", method: "POST", path: "/_search", body: '{"query":{}}' }]);
+    });
+
+    render(<ApiConsolePage />);
+
+    expect(screen.getByDisplayValue("/_search")).toBeInTheDocument();
+  });
+
+  it("clears all entries and resets to a single blank entry when Clear Session is clicked", async () => {
+    const user = userEvent.setup();
+    render(<ApiConsolePage />);
+
+    // Add a second request so we have two
+    await user.click(screen.getByRole("button", { name: /add request/i }));
+    expect(screen.getAllByRole("button", { name: /send/i })).toHaveLength(2);
+
+    await user.click(screen.getByRole("button", { name: /clear session/i }));
+
+    expect(screen.getAllByRole("button", { name: /send/i })).toHaveLength(1);
   });
 });
