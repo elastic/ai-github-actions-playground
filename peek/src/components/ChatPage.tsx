@@ -13,9 +13,11 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useShallow } from "zustand/react/shallow";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
+import type { ToolSet } from "ai";
 
 import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
+import { getElasticDocsTools, resetMcpSession } from "../services/elasticDocsMcp";
 import { PAGE_MANIFEST } from "../routes/manifest";
 
 export default function ChatPage() {
@@ -69,7 +71,7 @@ export default function ChatPage() {
     setLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
 
     try {
       const openai = createOpenAI({
@@ -78,16 +80,35 @@ export default function ChatPage() {
       });
       const model =
         config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
+
+      let tools: ToolSet | undefined;
+      if (config.elasticDocsEnabled) {
+        try {
+          tools = await getElasticDocsTools(controller.signal);
+        } catch {
+          // If MCP tool discovery fails, fall through without tools.
+          resetMcpSession();
+        }
+      }
+
+      const hasTools = tools !== undefined && Object.keys(tools).length > 0;
+
       const result = await generateText({
         model,
         system:
           "You are a helpful assistant for the Elastic Peek dashboard application. " +
           "You help users with Elasticsearch ES|QL queries, dashboard configuration, " +
-          "and data analysis. Keep your responses concise and helpful.",
+          "and data analysis. Keep your responses concise and helpful." +
+          (hasTools
+            ? " You have access to Elastic documentation search tools. " +
+              "Use them to look up relevant Elastic docs when the user asks about " +
+              "Elasticsearch features, APIs, ES|QL syntax, or configuration."
+            : ""),
         messages: [
           ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
           { role: "user" as const, content: trimmed },
         ],
+        ...(hasTools ? { tools, stopWhen: stepCountIs(3) } : {}),
         abortSignal: controller.signal,
       });
 

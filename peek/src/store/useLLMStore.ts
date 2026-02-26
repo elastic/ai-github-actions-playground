@@ -10,6 +10,7 @@ export interface LLMConfig {
   apiKey: string;
   model: string;
   tabAutocompleteEnabled: boolean;
+  elasticDocsEnabled: boolean;
 }
 
 export interface ChatMessage {
@@ -26,6 +27,7 @@ interface LLMState {
   setApiKey: (apiKey: string) => void;
   setModel: (model: string) => void;
   setTabAutocompleteEnabled: (enabled: boolean) => void;
+  setElasticDocsEnabled: (enabled: boolean) => void;
   isConfigured: () => boolean;
 
   addMessage: (message: ChatMessage) => void;
@@ -40,6 +42,7 @@ const DEFAULT_CONFIG: LLMConfig = {
   apiKey: "",
   model: "gpt-4o-mini",
   tabAutocompleteEnabled: false,
+  elasticDocsEnabled: false,
 };
 
 const DEFAULT_MODEL_BY_PROVIDER: Record<LLMProvider, string> = {
@@ -94,6 +97,8 @@ export const useLLMStore = create<LLMState>()(
       setModel: (model) => set((s) => ({ config: { ...s.config, model } })),
       setTabAutocompleteEnabled: (enabled) =>
         set((s) => ({ config: { ...s.config, tabAutocompleteEnabled: enabled } })),
+      setElasticDocsEnabled: (enabled) =>
+        set((s) => ({ config: { ...s.config, elasticDocsEnabled: enabled } })),
       isConfigured: () => {
         const { config } = get();
         return config.apiKey.trim().length > 0;
