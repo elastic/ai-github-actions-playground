@@ -32,14 +32,16 @@ interface Props {
 
 export default function PanelContainer({ panel }: Props) {
   const connection = useConnectionStore((s) => s.connection);
-  const { timeRange, parameters, duplicatePanel, setInteractionFilter } = useDashboardStore(
-    useShallow((s) => ({
-      timeRange: s.dashboard.timeRange,
-      parameters: s.dashboard.parameters,
-      duplicatePanel: s.duplicatePanel,
-      setInteractionFilter: s.setInteractionFilter,
-    })),
-  );
+  const { timeRange, timeZone, parameters, duplicatePanel, setInteractionFilter } =
+    useDashboardStore(
+      useShallow((s) => ({
+        timeRange: s.dashboard.timeRange,
+        timeZone: s.dashboard.timeZone,
+        parameters: s.dashboard.parameters,
+        duplicatePanel: s.duplicatePanel,
+        setInteractionFilter: s.setInteractionFilter,
+      })),
+    );
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
 
   const vizEntry = getVizEntry(panel.visualization);
@@ -306,6 +308,7 @@ export default function PanelContainer({ panel }: Props) {
             connection={connection}
             timeRange={timeRange}
             parameters={parameters}
+            timeZone={timeZone}
           />
         ) : error ? (
           <Box
@@ -343,6 +346,7 @@ export default function PanelContainer({ panel }: Props) {
             onExportReady={handleExportReady}
             onExportCsv={supportsCSVExport ? handleExportCsv : undefined}
             onFilterIntent={handleFilterIntent}
+            timeZone={timeZone}
           />
         ) : (
           <Box

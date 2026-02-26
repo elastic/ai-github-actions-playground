@@ -28,7 +28,7 @@ function toDatetimeLocal(value: string): string {
 }
 
 /** Return a human-readable label for the current time range. */
-function formatRangeLabel(range: TimeRange): string {
+function formatRangeLabel(range: TimeRange, timeZone?: string): string {
   const preset = DASHBOARD_TIME_PRESETS.find(
     (p) => p.range.from === range.from && p.range.to === range.to,
   );
@@ -38,6 +38,7 @@ function formatRangeLabel(range: TimeRange): string {
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return v;
     return d.toLocaleString(undefined, {
+      timeZone: timeZone || undefined,
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -50,9 +51,10 @@ function formatRangeLabel(range: TimeRange): string {
 interface Props {
   value: TimeRange;
   onChange: (range: TimeRange) => void;
+  timeZone?: string;
 }
 
-export default function DateRangePicker({ value, onChange }: Props) {
+export default function DateRangePicker({ value, onChange, timeZone }: Props) {
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -98,11 +100,11 @@ export default function DateRangePicker({ value, onChange }: Props) {
         variant="outlined"
         startIcon={<AccessTimeIcon fontSize="small" />}
         onClick={handleOpen}
-        aria-label={`Time range: ${formatRangeLabel(value)}`}
+        aria-label={`Time range: ${formatRangeLabel(value, timeZone)}`}
         aria-haspopup="true"
         aria-expanded={open}
       >
-        {formatRangeLabel(value)}
+        {formatRangeLabel(value, timeZone)}
       </Button>
 
       <Popover

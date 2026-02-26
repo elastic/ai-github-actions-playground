@@ -367,4 +367,96 @@ describe("DashboardsLandingPage", () => {
       expect(screen.getByTestId("location")).not.toHaveTextContent("archived=true");
     });
   });
+
+  describe("favorites", () => {
+    it("renders a star button on each dashboard card", () => {
+      renderLanding();
+
+      const title = useDashboardStore.getState().dashboard.title;
+      expect(
+        screen.getByRole("button", { name: new RegExp(`Add ${title} to favorites`, "i") }),
+      ).toBeInTheDocument();
+    });
+
+    it("toggles favorite state when star button is clicked", async () => {
+      const user = userEvent.setup();
+      renderLanding();
+
+      const id = useDashboardStore.getState().activeDashboardId;
+      const title = useDashboardStore.getState().dashboard.title;
+
+      await user.click(
+        screen.getByRole("button", { name: new RegExp(`Add ${title} to favorites`, "i") }),
+      );
+
+      expect(
+        useDashboardStore.getState().dashboards.find((d) => d.id === id)?.favoritedAt,
+      ).toBeTruthy();
+    });
+
+    it("shows Favorites filter chip when at least one dashboard is favorited", async () => {
+      const user = userEvent.setup();
+      renderLanding();
+
+      const title = useDashboardStore.getState().dashboard.title;
+      await user.click(
+        screen.getByRole("button", { name: new RegExp(`Add ${title} to favorites`, "i") }),
+      );
+
+      expect(screen.getByRole("button", { name: /filter by favorites/i })).toBeInTheDocument();
+    });
+
+    it("filters to favorites only when Favorites chip is clicked", async () => {
+      const user = userEvent.setup();
+      useDashboardStore.getState().createDashboard("Second Dashboard");
+      const firstId = useDashboardStore.getState().dashboards[0].id;
+      useDashboardStore.getState().toggleFavoriteDashboard(firstId);
+
+      renderLanding();
+
+      await user.click(screen.getByRole("button", { name: /filter by favorites/i }));
+
+      expect(
+        screen.getByText(useDashboardStore.getState().dashboards[0].title),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Second Dashboard")).not.toBeInTheDocument();
+    });
+
+    it("ranks favorited dashboards first when sorted by last updated", () => {
+      useDashboardStore.getState().createDashboard("Alpha");
+      const id2 = useDashboardStore.getState().createDashboard("Beta");
+      // Favorite the second-created dashboard
+      useDashboardStore.getState().toggleFavoriteDashboard(id2);
+
+      renderLanding();
+
+      const cards = screen.getAllByRole("heading", { level: 6 });
+      // Beta is favorited so should appear before Alpha
+      const betaIndex = cards.findIndex((el) => el.textContent === "Beta");
+      const alphaIndex = cards.findIndex((el) => el.textContent === "Alpha");
+      expect(betaIndex).toBeLessThan(alphaIndex);
+    });
+
+    it("clears favorites filter via Reset filters button", async () => {
+      const user = userEvent.setup();
+      const id = useDashboardStore.getState().activeDashboardId;
+      useDashboardStore.getState().toggleFavoriteDashboard(id);
+      useDashboardStore.getState().createDashboard("Non-favorite");
+
+      render(
+        <MemoryRouter initialEntries={["/dashboards?favorites=true"]}>
+          <DashboardsLandingPage />
+          <LocationDisplay />
+        </MemoryRouter>,
+      );
+
+      // Only the favorite dashboard is visible
+      expect(screen.queryByText("Non-favorite")).not.toBeInTheDocument();
+
+      await user.click(screen.getAllByRole("button", { name: /reset filters/i })[0]);
+
+      // Non-favorite is now visible again
+      expect(screen.getByText("Non-favorite")).toBeInTheDocument();
+    });
+  });
 });

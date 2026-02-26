@@ -403,6 +403,22 @@ describe("useDashboardStore importDashboard", () => {
     expect(state.dashboard.panels[0].id).toBe("panel-1");
   });
 
+  it("imports a valid dashboard with a valid timezone", () => {
+    const dashboard = makeValidDashboard({ timeZone: "UTC" });
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+
+    expect(result).toEqual({ success: true });
+    expect(useDashboardStore.getState().dashboard.timeZone).toBe("UTC");
+  });
+
+  it("rejects a dashboard with an invalid timezone", () => {
+    const dashboard = makeValidDashboard({ timeZone: "Mars/Olympus" });
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(dashboard));
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("timeZone");
+  });
+
   it("rejects invalid JSON", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const originalTitle = useDashboardStore.getState().dashboard.title;

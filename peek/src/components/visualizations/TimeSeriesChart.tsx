@@ -18,9 +18,16 @@ interface Props {
   options?: TimeSeriesOptions;
   onExportReady?: (exportFn: (() => string) | null) => void;
   onFilterIntent?: (field: string, value: string) => void;
+  timeZone?: string;
 }
 
-export default function TimeSeriesChart({ data, options, onExportReady, onFilterIntent }: Props) {
+export default function TimeSeriesChart({
+  data,
+  options,
+  onExportReady,
+  onFilterIntent,
+  timeZone,
+}: Props) {
   const theme = useEChartTheme();
   const smooth = options?.smooth !== false;
   const showArea = options?.showArea !== false;
@@ -59,6 +66,22 @@ export default function TimeSeriesChart({ data, options, onExportReady, onFilter
       itemStyle: { color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC" },
     }));
 
+    const tzFormatter =
+      dateIdx >= 0 && timeZone
+        ? new Intl.DateTimeFormat("en", {
+            timeZone,
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+        : undefined;
+
+    const tzDateFormatter = tzFormatter
+      ? (value: number) => tzFormatter.format(new Date(value))
+      : undefined;
+
     return {
       option: {
         ...theme,
@@ -66,6 +89,24 @@ export default function TimeSeriesChart({ data, options, onExportReady, onFilter
         tooltip: {
           ...theme.tooltip,
           trigger: "axis",
+          ...(tzDateFormatter
+            ? {
+                formatter: (
+                  params: Array<{
+                    marker: string;
+                    seriesName: string;
+                    value: [number | null, number];
+                  }>,
+                ) => {
+                  if (!Array.isArray(params) || params.length === 0) return "";
+                  const time = params[0]?.value[0];
+                  if (time == null) return "";
+                  const timeStr = tzDateFormatter(time);
+                  const lines = params.map((p) => `${p.marker}${p.seriesName}: ${p.value[1]}`);
+                  return `${timeStr}<br/>${lines.join("<br/>")}`;
+                },
+              }
+            : {}),
         },
         legend: {
           ...theme.legend,
@@ -77,6 +118,9 @@ export default function TimeSeriesChart({ data, options, onExportReady, onFilter
           ...theme.xAxis,
           type: dateIdx >= 0 ? "time" : "category",
           data: dateIdx < 0 ? xData : undefined,
+          ...(tzDateFormatter
+            ? { axisLabel: { ...theme.xAxis.axisLabel, formatter: tzDateFormatter } }
+            : {}),
         },
         yAxis: {
           ...theme.yAxis,
@@ -91,7 +135,7 @@ export default function TimeSeriesChart({ data, options, onExportReady, onFilter
       },
       groupColName: groupIdx >= 0 && data.columns[groupIdx] ? data.columns[groupIdx]!.name : null,
     };
-  }, [data, theme, smooth, showArea, stacked, format]);
+  }, [data, theme, smooth, showArea, stacked, format, timeZone]);
 
   const handleClick = useCallback(
     (params: { seriesName?: string; name?: string; data: unknown }) => {

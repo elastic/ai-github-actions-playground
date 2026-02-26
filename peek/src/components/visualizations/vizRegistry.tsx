@@ -22,6 +22,8 @@ export interface VizRendererProps {
   connection?: ElasticsearchConnection | null;
   timeRange?: TimeRange;
   parameters?: DashboardParameter[];
+  /** Dashboard timezone (IANA zone or undefined for browser local). */
+  timeZone?: string;
 }
 
 export interface VizOptionsEditorProps {
