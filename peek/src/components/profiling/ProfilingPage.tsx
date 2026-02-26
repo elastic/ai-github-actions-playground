@@ -17,9 +17,10 @@ import Typography from "@mui/material/Typography";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
+import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
-import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
+import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useProfilingStore } from "../../store/useProfilingStore";
@@ -208,7 +209,8 @@ export default function ProfilingPage() {
   const handleFrameClick = useCallback(
     (frameName: string) => {
       if (frameName === "(unknown)") return;
-      const draft = `${effectiveQuery}\n| WHERE Stackframe.function.name == "${frameName}"`;
+      const draft = `${effectiveQuery}\n| WHERE Stackframe.function.name == "${escapeEsqlString(frameName)}"`;
+
       setDiscoverQueryDraft(draft);
       navigate(PAGE_MANIFEST.discover.path);
     },

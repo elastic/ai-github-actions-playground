@@ -6,6 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import type { FlamegraphNode } from "../profiling/profilingUtils";
 
 import EChartWrapper from "./EChartWrapper";
+import { escapeHtml } from "./htmlUtils";
 
 interface Props {
   tree: FlamegraphNode;
@@ -71,7 +72,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
         formatter: (params: { data: { rect: FlatRect } }) => {
           const rect = params.data.rect;
           const pct = ((rect.width / totalSamples) * 100).toFixed(1);
-          return `<b>${rect.name}</b><br/>Samples: ${rect.width} (${pct}%)`;
+          return `<b>${escapeHtml(rect.name)}</b><br/>Samples: ${rect.width} (${pct}%)`;
         },
       },
       xAxis: {
@@ -136,8 +137,8 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
   const handleClick = useCallback(
     (params: { data: unknown }) => {
-      const data = params.data as { rect?: FlatRect };
-      if (data.rect && onFrameClick) {
+      const data = params.data as { rect?: FlatRect } | undefined;
+      if (data?.rect && onFrameClick) {
         onFrameClick(data.rect.name);
       }
     },
