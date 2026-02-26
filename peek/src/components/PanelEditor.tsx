@@ -26,8 +26,6 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
-import type { EsqlQueryParams } from "../services/es";
-import { buildQueryParams } from "../services/datemath";
 import type {
   VisualizationType,
   EsqlResponse,
@@ -36,6 +34,7 @@ import type {
   PanelDefinition,
 } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
+import { buildPersesEsqlRequest } from "../services/perses/esqlDatasource";
 
 import Visualization from "./visualizations/Visualization";
 import MarkdownPanel from "./visualizations/MarkdownPanel";
@@ -91,23 +90,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const buildRequest = useCallback(
-    (queryText: string): EsqlQueryParams => {
-      const body: EsqlQueryParams = { query: queryText };
-      if (!timeRange) return body;
-      body.filter = {
-        range: {
-          "@timestamp": {
-            gte: timeRange.from,
-            lte: timeRange.to,
-          },
-        },
-      };
-      const queryParams = buildQueryParams(queryText, timeRange, parameters);
-      if (queryParams.length > 0) {
-        body.params = queryParams;
-      }
-      return body;
-    },
+    (queryText: string) => buildPersesEsqlRequest(queryText, { timeRange, parameters }),
     [timeRange, parameters],
   );
   const { runQuery, loading, error, activeStep } = useEsqlQuery({

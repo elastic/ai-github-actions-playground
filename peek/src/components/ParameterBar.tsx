@@ -25,8 +25,11 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
-import { ElasticsearchClient } from "../services/es";
 import type { DashboardParameter, ParameterSource } from "../types";
+import {
+  buildPersesEsqlRequest,
+  createPersesEsqlDatasource,
+} from "../services/perses/esqlDatasource";
 
 const EMPTY_PARAM: DashboardParameter = {
   name: "",
@@ -149,8 +152,9 @@ export default function ParameterBar() {
     setEsqlError(null);
 
     try {
-      const client = new ElasticsearchClient(connection);
-      const result = await client.query({ query: draft.source.query.trim() }, ctrl.signal);
+      const datasource = createPersesEsqlDatasource(connection);
+      const request = buildPersesEsqlRequest(draft.source.query, { parameters });
+      const result = await datasource.execute(request, ctrl.signal);
       if (!ctrl.signal.aborted && result.values) {
         const opts = result.values.map((row) => String(row[0] ?? "")).filter(Boolean);
         setEsqlOptions(opts);
@@ -162,7 +166,7 @@ export default function ParameterBar() {
     } finally {
       if (!ctrl.signal.aborted) setEsqlLoading(false);
     }
-  }, [draft.source, connection]);
+  }, [draft.source, connection, parameters]);
 
   // Clean up abort controller on unmount
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -280,6 +284,7 @@ export default function ParameterBar() {
             key={`${param.name}:${param.type}:${String(param.value)}`}
             param={param}
             connection={connection}
+            parameters={parameters}
             onChange={(val) => setParameterValue(param.name, val)}
             onEdit={() => openEdit(param)}
             onDelete={() => removeParameter(param.name)}
@@ -447,6 +452,7 @@ export default function ParameterBar() {
 interface ParameterControlProps {
   param: DashboardParameter;
   connection: ReturnType<typeof useConnectionStore.getState>["connection"];
+  parameters: DashboardParameter[];
   onChange: (value: DashboardParameter["value"]) => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -455,6 +461,7 @@ interface ParameterControlProps {
 function ParameterControl({
   param,
   connection,
+  parameters,
   onChange,
   onEdit,
   onDelete,
@@ -473,9 +480,10 @@ function ParameterControl({
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
-    const client = new ElasticsearchClient(connection);
-    client
-      .query({ query: param.source.query.trim() }, ctrl.signal)
+    const datasource = createPersesEsqlDatasource(connection);
+    const request = buildPersesEsqlRequest(param.source.query, { parameters });
+    datasource
+      .execute(request, ctrl.signal)
       .then((result) => {
         if (!ctrl.signal.aborted && result.values) {
           setEsqlOptions(result.values.map((row) => String(row[0] ?? "")).filter(Boolean));
@@ -488,7 +496,7 @@ function ParameterControl({
       });
 
     return () => ctrl.abort();
-  }, [param.source, connection, hasQueryableEsqlSource]);
+  }, [param.source, connection, hasQueryableEsqlSource, parameters]);
 
   const optionStrings =
     param.source.mode === "options"
