@@ -8,6 +8,8 @@ import {
   buildTraceTimeseriesQuery,
   buildServiceSuggestionsQuery,
   buildOperationSuggestionsQuery,
+  buildDriftRadarQuery,
+  shiftTimeRangeBack,
   EMPTY_FILTERS,
   DEFAULT_FIELD_MAPPING,
 } from "../../src/components/traces/traceQueryBuilder";
@@ -351,5 +353,71 @@ describe("buildTraceSearchQuery time range filter", () => {
     const query = buildTraceSearchQuery(EMPTY_FILTERS);
     expect(query).not.toContain("@timestamp >=");
     expect(query).not.toContain("@timestamp <=");
+  });
+});
+
+describe("buildDriftRadarQuery", () => {
+  it("fetches all spans (not root-only) by default", () => {
+    const query = buildDriftRadarQuery(EMPTY_FILTERS);
+    expect(query).not.toContain("parent.id IS NULL");
+    expect(query).toContain("FROM traces-*");
+    expect(query).not.toContain("LIMIT");
+  });
+
+  it("applies service filters", () => {
+    const filters: TraceFilters = { ...EMPTY_FILTERS, services: ["checkout"] };
+    const query = buildDriftRadarQuery(filters);
+    expect(query).toContain('service.name IN ("checkout")');
+  });
+
+  it("applies time range filters", () => {
+    const filters: TraceFilters = {
+      ...EMPTY_FILTERS,
+      timeFrom: "NOW() - 1 hour",
+      timeTo: "NOW()",
+    };
+    const query = buildDriftRadarQuery(filters);
+    expect(query).toContain("@timestamp >= NOW() - 1 hour");
+    expect(query).toContain("@timestamp <= NOW()");
+  });
+
+  it("respects a custom limit", () => {
+    const query = buildDriftRadarQuery(EMPTY_FILTERS, DEFAULT_FIELD_MAPPING, { limit: 1000 });
+    expect(query).toContain("LIMIT 1000");
+  });
+
+  it("includes SORT before LIMIT when custom limit is set", () => {
+    const query = buildDriftRadarQuery(EMPTY_FILTERS, DEFAULT_FIELD_MAPPING, { limit: 1000 });
+    const sortIdx = query.indexOf("SORT");
+    const limitIdx = query.indexOf("LIMIT");
+    expect(sortIdx).toBeGreaterThan(-1);
+    expect(limitIdx).toBeGreaterThan(sortIdx);
+  });
+});
+
+describe("shiftTimeRangeBack", () => {
+  it("doubles the offset for a 1-hour window", () => {
+    const result = shiftTimeRangeBack("NOW() - 1 hour", "NOW()");
+    expect(result).toEqual({ timeFrom: "NOW() - 2 hour", timeTo: "NOW() - 1 hour" });
+  });
+
+  it("doubles the offset for a 15-minutes window", () => {
+    const result = shiftTimeRangeBack("NOW() - 15 minutes", "NOW()");
+    expect(result).toEqual({ timeFrom: "NOW() - 30 minutes", timeTo: "NOW() - 15 minutes" });
+  });
+
+  it("doubles the offset for a 7-day window", () => {
+    const result = shiftTimeRangeBack("NOW() - 7 days", "NOW()");
+    expect(result).toEqual({ timeFrom: "NOW() - 14 days", timeTo: "NOW() - 7 days" });
+  });
+
+  it("returns null when timeTo is not NOW()", () => {
+    const result = shiftTimeRangeBack("NOW() - 1 hour", "NOW() - 30 minutes");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when timeFrom does not match the expected pattern", () => {
+    const result = shiftTimeRangeBack("2026-01-01T00:00:00.000Z", "NOW()");
+    expect(result).toBeNull();
   });
 });
