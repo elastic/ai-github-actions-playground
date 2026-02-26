@@ -37,7 +37,7 @@ describe("App shell visibility", () => {
     );
 
     expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
-    expect(screen.queryByText(/llm settings/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reset llm settings/i })).not.toBeInTheDocument();
   });
 
   it("shows welcome screen when disconnected and current page is dashboards", () => {
@@ -48,7 +48,7 @@ describe("App shell visibility", () => {
     );
 
     expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
-    expect(screen.queryByText("Dashboards")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /new dashboard/i })).not.toBeInTheDocument();
   });
 
   it("shows welcome screen when disconnected and current page is cluster overview", () => {
@@ -59,7 +59,7 @@ describe("App shell visibility", () => {
     );
 
     expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
-    expect(screen.queryByText("Cluster Overview")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /refresh/i })).not.toBeInTheDocument();
   });
 
   it("shows welcome screen when disconnected and current page is console", () => {

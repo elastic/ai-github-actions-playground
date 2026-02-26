@@ -257,6 +257,16 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("textbox", { name: "API Key" })).toBeVisible();
   });
 
+  test("header chip reflects current page label on non-dashboard routes", async ({ page }) => {
+    await connectToMockCluster(page);
+    // Navigate to a non-dashboard page (Query Lab / discover)
+    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await expect(page).toHaveURL(/\/discover$/);
+    // The global header (banner) must show the current page label chip
+    const header = page.getByRole("banner");
+    await expect(header.getByText("Query Lab")).toBeVisible();
+  });
+
   test("ops user confirms connection guardrails and can reset back to the landing state", async ({
     page,
   }) => {
