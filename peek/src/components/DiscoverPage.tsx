@@ -455,7 +455,7 @@ export default function DiscoverPage() {
       )}
 
       {/* Partial-result blast radius panel */}
-      {lastRunIsPartial && lastRunPartialMetadata !== null && (
+      {result && lastRunIsPartial && lastRunPartialMetadata !== null && (
         <PartialResultPanel
           metadata={lastRunPartialMetadata}
           onRerunHealthyClusters={handleRerunHealthyClusters}
