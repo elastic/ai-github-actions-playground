@@ -13,10 +13,42 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useShallow } from "zustand/react/shallow";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
+import { generateText, tool } from "ai";
+import { z } from "zod";
 
 import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
+import { ElasticsearchClient, type EsqlQueryParams } from "../services/es";
+import { useConnectionStore } from "../store/useConnectionStore";
+
+const CHAT_TOOL_TIMEOUT_MS = 12000;
+const DEFAULT_TOOL_ROW_LIMIT = 50;
+const MAX_TOOL_ROW_LIMIT = 200;
+const MAX_TOOL_ROWS_RETURNED = 50;
+const MAX_TOOL_COLUMNS_RETURNED = 20;
+const MAX_TOOL_CELL_LENGTH = 500;
+
+function clampToolRowLimit(rowLimit?: number): number {
+  if (typeof rowLimit !== "number" || Number.isNaN(rowLimit)) {
+    return DEFAULT_TOOL_ROW_LIMIT;
+  }
+  return Math.max(1, Math.min(MAX_TOOL_ROW_LIMIT, Math.floor(rowLimit)));
+}
+
+function ensureQueryLimit(query: string, rowLimit: number): string {
+  if (/\|\s*LIMIT\s+\d+/i.test(query)) return query;
+  return `${query} | LIMIT ${rowLimit}`;
+}
+
+function truncateCellValue(value: unknown): { value: unknown; truncated: boolean } {
+  if (typeof value !== "string" || value.length <= MAX_TOOL_CELL_LENGTH) {
+    return { value, truncated: false };
+  }
+  return {
+    value: `${value.slice(0, MAX_TOOL_CELL_LENGTH)}…`,
+    truncated: true,
+  };
+}
 
 export default function ChatPage() {
   const {
@@ -40,6 +72,7 @@ export default function ChatPage() {
   );
 
   const navigate = useNavigate();
+  const connection = useConnectionStore((s) => s.connection);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,6 +121,59 @@ export default function ChatPage() {
           ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
           { role: "user" as const, content: trimmed },
         ],
+        tools: {
+          run_esql_query: tool({
+            description:
+              "Run an ES|QL query against the active Elasticsearch connection and return bounded results.",
+            inputSchema: z.object({
+              query: z.string().min(1),
+              profile: z.boolean().optional(),
+              rowLimit: z.number().int().min(1).max(MAX_TOOL_ROW_LIMIT).optional(),
+            }),
+            execute: async ({ query, profile, rowLimit }) => {
+              if (!connection) throw new Error("No active Elasticsearch connection.");
+
+              const boundedQuery = ensureQueryLimit(query.trim(), clampToolRowLimit(rowLimit));
+              const client = new ElasticsearchClient(connection);
+              const request: EsqlQueryParams = { query: boundedQuery };
+              if (profile) request.profile = true;
+
+              const queryController = new AbortController();
+              const queryTimeoutId = window.setTimeout(
+                () => queryController.abort(),
+                CHAT_TOOL_TIMEOUT_MS,
+              );
+
+              try {
+                const response = await client.query(request, queryController.signal);
+                let truncated =
+                  response.values.length > MAX_TOOL_ROWS_RETURNED ||
+                  response.columns.length > MAX_TOOL_COLUMNS_RETURNED ||
+                  response.values.some((row) => row.length > MAX_TOOL_COLUMNS_RETURNED);
+
+                const columns = response.columns.slice(0, MAX_TOOL_COLUMNS_RETURNED);
+                const values = response.values.slice(0, MAX_TOOL_ROWS_RETURNED).map((row) =>
+                  row.slice(0, MAX_TOOL_COLUMNS_RETURNED).map((cell) => {
+                    const next = truncateCellValue(cell);
+                    if (next.truncated) truncated = true;
+                    return next.value;
+                  }),
+                );
+
+                return {
+                  query: boundedQuery,
+                  columns,
+                  values,
+                  rowCount: response.values.length,
+                  executionTimeMs: response.executionTimeMs,
+                  truncated,
+                };
+              } finally {
+                clearTimeout(queryTimeoutId);
+              }
+            },
+          }),
+        },
         abortSignal: controller.signal,
       });
 
@@ -105,7 +191,17 @@ export default function ChatPage() {
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [input, loading, configured, config, messages, addMessage, updateMessage, removeMessage]);
+  }, [
+    input,
+    loading,
+    configured,
+    config,
+    messages,
+    addMessage,
+    updateMessage,
+    removeMessage,
+    connection,
+  ]);
 
   if (!configured) {
     return (
