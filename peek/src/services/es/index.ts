@@ -58,5 +58,6 @@ export {
   buildTopValuesQuery,
   buildMinMaxQuery,
   fetchFieldStats,
+  computeConfidenceLevel,
 } from "./fieldStats";
-export type { FieldTopValue, FieldStats } from "./fieldStats";
+export type { FieldTopValue, FieldStats, ConfidenceLevel } from "./fieldStats";

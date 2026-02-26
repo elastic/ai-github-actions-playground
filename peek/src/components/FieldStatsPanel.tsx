@@ -8,6 +8,7 @@ import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -21,7 +22,7 @@ import {
   isKeywordLikeType,
   isNumericOrDateType,
 } from "../services/es";
-import type { ElasticsearchConnection, FieldStats } from "../services/es";
+import type { ElasticsearchConnection, FieldStats, ConfidenceLevel } from "../services/es";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -43,6 +44,25 @@ interface FieldStatsPanelProps {
 function formatNullPercent(pct: number): string {
   return `${pct.toFixed(1)}%`;
 }
+
+const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
+  high: "High confidence",
+  medium: "Medium confidence",
+  low: "Low confidence",
+};
+
+const CONFIDENCE_COLOR: Record<ConfidenceLevel, "success" | "warning" | "error"> = {
+  high: "success",
+  medium: "warning",
+  low: "error",
+};
+
+const CONFIDENCE_TOOLTIP: Record<ConfidenceLevel, string> = {
+  high: "All documents in this stream were analysed — stats are exact.",
+  medium:
+    "Stats are complete but the stream is approaching the sample limit. Results may vary for larger time windows.",
+  low: "The sample limit was reached. Stats reflect only a subset of documents in this stream.",
+};
 
 function buildQueryLabQuery(streamName: string, fieldName: string, fieldType: string): string {
   if (isKeywordLikeType(fieldType)) {
@@ -136,6 +156,17 @@ export default function FieldStatsPanel({
 
         {!loading && stats && (
           <>
+            {/* Confidence badge */}
+            <Tooltip title={CONFIDENCE_TOOLTIP[stats.confidence]} placement="top">
+              <Chip
+                size="small"
+                label={CONFIDENCE_LABEL[stats.confidence]}
+                color={CONFIDENCE_COLOR[stats.confidence]}
+                data-testid="field-stats-confidence-badge"
+                sx={{ alignSelf: "flex-start" }}
+              />
+            </Tooltip>
+
             {/* Counts grid */}
             <Box
               sx={{
