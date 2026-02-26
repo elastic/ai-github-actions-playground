@@ -4,6 +4,7 @@ import {
   buildFlamegraphTree,
   countMatchingFrames,
   findSubtreeByPath,
+  inferFrameType,
   joinStacktraces,
   normalizeTopFunctions,
   parseFrameIds,
@@ -388,5 +389,74 @@ describe("countMatchingFrames", () => {
     ];
     const tree = buildFlamegraphTree(stacks);
     expect(countMatchingFrames(tree, "Request")).toBe(1);
+  });
+});
+
+describe("inferFrameType", () => {
+  it("detects kernel frames from function name prefixes", () => {
+    expect(inferFrameType("do_syscall_64", "")).toBe("kernel");
+    expect(inferFrameType("sys_read", "")).toBe("kernel");
+    expect(inferFrameType("__schedule", "")).toBe("kernel");
+  });
+
+  it("detects kernel frames from file paths", () => {
+    expect(inferFrameType("entry_SYSCALL_64", "/kernel/entry.S")).toBe("kernel");
+    expect(inferFrameType("some_func", "/arch/x86/entry.S")).toBe("kernel");
+  });
+
+  it("detects runtime frames", () => {
+    expect(inferFrameType("runtime.schedule", "")).toBe("runtime");
+    expect(inferFrameType("runtime/pprof.Do", "")).toBe("runtime");
+    expect(inferFrameType("gcDrain", "")).toBe("runtime");
+    expect(inferFrameType("some_func", "/runtime/proc.go")).toBe("runtime");
+  });
+
+  it("detects interpreted language frames", () => {
+    expect(inferFrameType("handle", "app.py")).toBe("interpreted");
+    expect(inferFrameType("render", "component.tsx")).toBe("interpreted");
+    expect(inferFrameType("process", "node_modules/express/index.js")).toBe("interpreted");
+  });
+
+  it("detects native frames", () => {
+    expect(inferFrameType("malloc", "malloc.c")).toBe("native");
+    expect(inferFrameType("std::vector::push_back", "vector.h")).toBe("native");
+    expect(inferFrameType("some_func", "lib.rs")).toBe("native");
+  });
+
+  it("defaults to app for unrecognized frames", () => {
+    expect(inferFrameType("handleRequest", "")).toBe("app");
+    expect(inferFrameType("myFunction", "MyService.java")).toBe("app");
+  });
+});
+
+describe("buildFlamegraphTree frameType", () => {
+  it("assigns frameType based on function and file names", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "1",
+            functionName: "runtime.schedule",
+            fileName: "runtime/proc.go",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "2",
+            functionName: "handleRequest",
+            fileName: "server.go",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(tree.children[0]!.frameType).toBe("runtime");
+    expect(tree.children[0]!.children[0]!.frameType).toBe("app");
   });
 });

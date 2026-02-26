@@ -12,7 +12,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 
-import type { FlamegraphNode } from "../profiling/profilingUtils";
+import type { FlamegraphNode, FrameType } from "../profiling/profilingUtils";
 import { findSubtreeByPath } from "../profiling/profilingUtils";
 
 import EChartWrapper from "./EChartWrapper";
@@ -28,42 +28,52 @@ interface FlatRect {
   depth: number;
   start: number;
   width: number;
+  path: string[];
+  frameType: FrameType;
 }
 
-function flattenTree(node: FlamegraphNode, depth: number, start: number): FlatRect[] {
+function flattenTree(
+  node: FlamegraphNode,
+  depth: number,
+  start: number,
+  pathPrefix: string[],
+): FlatRect[] {
   const rects: FlatRect[] = [];
   if (depth > 0) {
-    rects.push({ name: node.name, depth, start, width: node.value });
+    rects.push({
+      name: node.name,
+      depth,
+      start,
+      width: node.value,
+      path: pathPrefix,
+      frameType: node.frameType ?? "app",
+    });
   }
   let offset = start;
   for (const child of node.children) {
-    rects.push(...flattenTree(child, depth + 1, offset));
+    rects.push(...flattenTree(child, depth + 1, offset, [...pathPrefix, child.name]));
     offset += child.value;
   }
   return rects;
 }
 
-const FLAMEGRAPH_COLORS = [
-  "#e25822",
-  "#e8702a",
-  "#ed8733",
-  "#f29d3b",
-  "#f7b344",
-  "#fcc94c",
-  "#d64f1f",
-  "#c14618",
-  "#f0a030",
-  "#e06020",
-];
+const FRAME_TYPE_COLORS: Record<FrameType, string[]> = {
+  kernel: ["#e25822", "#d64f1f", "#c14618", "#b03d12"],
+  runtime: ["#f7b344", "#fcc94c", "#f0a030", "#e8972a"],
+  native: ["#e8702a", "#ed8733", "#f29d3b", "#e06020"],
+  interpreted: ["#5b9bd5", "#4a8bc4", "#6aabdf", "#3a7bb4"],
+  app: ["#6cc644", "#5cb534", "#7cd654", "#4ca624"],
+};
 
 const DIMMED_OPACITY = 0.25;
 
-function getFlameColor(name: string): string {
+function getFlameColor(name: string, frameType: FrameType): string {
+  const palette = FRAME_TYPE_COLORS[frameType];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash * 31 + name.charCodeAt(i)) | 0;
   }
-  return FLAMEGRAPH_COLORS[Math.abs(hash) % FLAMEGRAPH_COLORS.length]!;
+  return palette[Math.abs(hash) % palette.length]!;
 }
 
 const MIN_LABEL_WIDTH = 30;
@@ -78,7 +88,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
   const option = useMemo(() => {
     if (visibleTree.value === 0) return null;
-    const rects = flattenTree(visibleTree, 0, 0);
+    const rects = flattenTree(visibleTree, 0, 0, zoomPath);
     const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
     const totalSamples = visibleTree.value;
     const lowerSearch = searchTerm.toLowerCase();
@@ -120,6 +130,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
             const widthVal = api.value(1) as number;
             const depthVal = api.value(2) as number;
             const name = api.value(3) as unknown as string;
+            const frameType = api.value(4) as unknown as FrameType;
             const [x, y] = api.coord([startVal, depthVal]);
             const [w, h] = api.size([widthVal, 1]);
 
@@ -131,7 +142,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
               type: "rect" as const,
               shape: { x, y, width: Math.max(w - 1, 1), height: Math.max(h - 2, 1) },
               style: api.style({
-                fill: getFlameColor(String(name)),
+                fill: getFlameColor(String(name), frameType),
                 stroke: isMatch ? muiTheme.palette.primary.main : muiTheme.palette.background.paper,
                 lineWidth: isMatch ? 2 : 0.5,
                 opacity: isDimmed ? DIMMED_OPACITY : 1,
@@ -151,18 +162,24 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
           },
           encode: { x: [0, 1], y: 2 },
           data: rects.map((rect) => ({
-            value: [rect.start, rect.width, rect.depth, rect.name],
+            value: [rect.start, rect.width, rect.depth, rect.name, rect.frameType],
             rect,
           })),
         },
       ],
     };
-  }, [visibleTree, muiTheme.palette.background.paper, muiTheme.palette.primary.main, searchTerm]);
+  }, [
+    visibleTree,
+    muiTheme.palette.background.paper,
+    muiTheme.palette.primary.main,
+    searchTerm,
+    zoomPath,
+  ]);
 
   const handleClick = useCallback((params: { data: unknown }) => {
     const data = params.data as { rect?: FlatRect } | undefined;
     if (!data?.rect) return;
-    setZoomPath((prev) => [...prev, data.rect!.name]);
+    setZoomPath(data.rect.path);
   }, []);
 
   const handleBreadcrumbClick = useCallback((index: number) => {

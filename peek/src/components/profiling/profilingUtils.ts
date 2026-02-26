@@ -49,10 +49,75 @@ export function parseFrameIds(frameIdsString: string): string[] {
   return ids;
 }
 
+export type FrameType = "kernel" | "runtime" | "native" | "interpreted" | "app";
+
+export function inferFrameType(functionName: string, fileName: string): FrameType {
+  const fn = functionName.toLowerCase();
+  const file = fileName.toLowerCase();
+
+  // Kernel: Linux/OS kernel frames
+  if (
+    fn.startsWith("do_") ||
+    fn.startsWith("sys_") ||
+    fn.startsWith("__") ||
+    file.includes("/kernel/") ||
+    file.includes("/arch/") ||
+    file.endsWith(".S")
+  ) {
+    return "kernel";
+  }
+
+  // Runtime/VM: Go runtime, JVM, V8, Python runtime, .NET CLR
+  if (
+    fn.startsWith("runtime.") ||
+    fn.startsWith("runtime/") ||
+    fn.startsWith("gc") ||
+    fn.startsWith("jit_") ||
+    fn.includes("::GC") ||
+    file.includes("/runtime/") ||
+    file.includes("/vm/") ||
+    file.includes("/gc/")
+  ) {
+    return "runtime";
+  }
+
+  // Interpreted: Python, JS, Ruby, PHP
+  if (
+    file.endsWith(".py") ||
+    file.endsWith(".js") ||
+    file.endsWith(".ts") ||
+    file.endsWith(".tsx") ||
+    file.endsWith(".jsx") ||
+    file.endsWith(".rb") ||
+    file.endsWith(".php") ||
+    file.includes("node_modules/")
+  ) {
+    return "interpreted";
+  }
+
+  // Native: C/C++/Rust system libraries
+  if (
+    file.endsWith(".c") ||
+    file.endsWith(".cpp") ||
+    file.endsWith(".cc") ||
+    file.endsWith(".h") ||
+    file.endsWith(".rs") ||
+    file.includes("/lib/") ||
+    file.includes("/usr/lib/") ||
+    fn.startsWith("std::") ||
+    fn.startsWith("std/")
+  ) {
+    return "native";
+  }
+
+  return "app";
+}
+
 export interface FlamegraphNode {
   name: string;
   value: number;
   children: FlamegraphNode[];
+  frameType?: FrameType;
 }
 
 /**
@@ -71,7 +136,12 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
       const name = frame.functionName || "(unknown)";
       let child = current.children.find((c) => c.name === name);
       if (!child) {
-        child = { name, value: 0, children: [] };
+        child = {
+          name,
+          value: 0,
+          children: [],
+          frameType: inferFrameType(frame.functionName, frame.fileName),
+        };
         current.children.push(child);
       }
       child.value += st.count;
