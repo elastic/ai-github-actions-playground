@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import {
-  createElectronStorage,
-  isElectronAvailable,
-} from "../../src/store/createElectronStorage";
+import { createElectronStorage, isElectronAvailable } from "../../src/store/createElectronStorage";
 import { makeStorageMock } from "../fixtures/test-utils";
 
 // ---------------------------------------------------------------------------
