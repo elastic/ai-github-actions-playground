@@ -209,10 +209,6 @@ function useCommands(): Command[] {
                   });
                 } catch (err: unknown) {
                   const message = isElasticsearchError(err) ? err.message : String(err);
-                  setConnected(false);
-                  setCapabilities(null);
-                  setConnection(conn);
-                  setActiveProfileId(profile.id);
                   setProfileHealth(profile.id, {
                     status: "needs_attention",
                     checkedAt: new Date().toISOString(),

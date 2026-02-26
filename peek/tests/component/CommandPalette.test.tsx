@@ -375,4 +375,44 @@ describe("CommandPalette — Connection Profiles group", () => {
     });
     fetchCapsSpy.mockRestore();
   });
+
+  it("keeps the current profile active when switching to another profile fails", async () => {
+    const user = userEvent.setup();
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    const id2 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnection({ url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+    });
+    useUIStore.getState().setCommandPaletteOpen(true);
+    const fetchCapsSpy = vi
+      .spyOn(esService, "fetchCapabilitiesForConnection")
+      .mockRejectedValue(new Error("switch failed"));
+    renderPalette();
+
+    await user.click(screen.getByText("Switch to Prod"));
+
+    await waitFor(() => {
+      expect(useUIStore.getState().connectionDialogOpen).toBe(true);
+    });
+    expect(useConnectionStore.getState().activeProfileId).toBe(id1);
+    expect(useConnectionStore.getState().connection?.url).toBe("https://dev.example.com");
+    expect(useConnectionStore.getState().connected).toBe(true);
+    expect(useConnectionStore.getState().capabilities).toEqual({
+      canManageDataStreams: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+    });
+    expect(useConnectionStore.getState().profileHealthMap[id2!]?.status).toBe("needs_attention");
+
+    fetchCapsSpy.mockRestore();
+  });
 });
