@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFlamegraphTree,
+  countMatchingFrames,
+  findSubtreeByPath,
+  inferFrameType,
   joinStacktraces,
   normalizeTopFunctions,
   parseFrameIds,
@@ -226,5 +229,235 @@ describe("normalizeTopFunctions", () => {
     const payload = { topn: [{ count: 77, frame: { function_name: "fn" } }] };
     const rows = normalizeTopFunctions(payload);
     expect(rows[0]!.totalCount).toBe(77);
+  });
+});
+
+describe("findSubtreeByPath", () => {
+  function buildTestTree(): ReturnType<typeof buildFlamegraphTree> {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 5,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "main",
+            functionName: "main",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "foo",
+            functionName: "foo",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "bar",
+            functionName: "bar",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+      {
+        stacktraceId: "st2",
+        count: 3,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "main",
+            functionName: "main",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "baz",
+            functionName: "baz",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    return buildFlamegraphTree(stacks);
+  }
+
+  it("returns the root when the path is empty", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, []);
+    expect(result.name).toBe("root");
+    expect(result.value).toBe(8);
+  });
+
+  it("navigates to a single-level child", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["main"]);
+    expect(result.name).toBe("main");
+    expect(result.value).toBe(8);
+    expect(result.children).toHaveLength(2);
+  });
+
+  it("navigates to a deeply nested child", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["main", "foo", "bar"]);
+    expect(result.name).toBe("bar");
+    expect(result.value).toBe(5);
+    expect(result.children).toHaveLength(0);
+  });
+
+  it("stops at the last valid segment when path is invalid", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["main", "nonexistent"]);
+    expect(result.name).toBe("main");
+  });
+
+  it("returns root when the first segment is invalid", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["nonexistent"]);
+    expect(result.name).toBe("root");
+  });
+});
+
+describe("countMatchingFrames", () => {
+  it("returns 0 for an empty tree with no match", () => {
+    const tree = buildFlamegraphTree([]);
+    expect(countMatchingFrames(tree, "foo")).toBe(0);
+  });
+
+  it("counts matching frames case-insensitively", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "main",
+            functionName: "main",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "fooBar",
+            functionName: "fooBar",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "foo",
+            functionName: "foo",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    // "foo" matches "fooBar" and "foo" but not "main" or "root"
+    expect(countMatchingFrames(tree, "foo")).toBe(2);
+  });
+
+  it("matches partial function names", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "handleRequest",
+            functionName: "handleRequest",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(countMatchingFrames(tree, "Request")).toBe(1);
+  });
+});
+
+describe("inferFrameType", () => {
+  it("detects kernel frames from function name prefixes", () => {
+    expect(inferFrameType("do_syscall_64", "")).toBe("kernel");
+    expect(inferFrameType("sys_read", "")).toBe("kernel");
+    expect(inferFrameType("__schedule", "")).toBe("kernel");
+  });
+
+  it("detects kernel frames from file paths", () => {
+    expect(inferFrameType("entry_SYSCALL_64", "/kernel/entry.S")).toBe("kernel");
+    expect(inferFrameType("some_func", "/arch/x86/entry.s")).toBe("kernel");
+    expect(inferFrameType("trampoline", "trampoline.S")).toBe("kernel");
+  });
+
+  it("detects runtime frames", () => {
+    expect(inferFrameType("runtime.schedule", "")).toBe("runtime");
+    expect(inferFrameType("runtime/pprof.Do", "")).toBe("runtime");
+    expect(inferFrameType("gcDrain", "")).toBe("runtime");
+    expect(inferFrameType("some_func", "/runtime/proc.go")).toBe("runtime");
+  });
+
+  it("detects interpreted language frames", () => {
+    expect(inferFrameType("handle", "app.py")).toBe("interpreted");
+    expect(inferFrameType("render", "component.tsx")).toBe("interpreted");
+    expect(inferFrameType("process", "node_modules/express/index.js")).toBe("interpreted");
+  });
+
+  it("detects native frames", () => {
+    expect(inferFrameType("malloc", "malloc.c")).toBe("native");
+    expect(inferFrameType("std::vector::push_back", "vector.h")).toBe("native");
+    expect(inferFrameType("some_func", "lib.rs")).toBe("native");
+  });
+
+  it("defaults to app for unrecognized frames", () => {
+    expect(inferFrameType("handleRequest", "")).toBe("app");
+    expect(inferFrameType("myFunction", "MyService.java")).toBe("app");
+  });
+});
+
+describe("buildFlamegraphTree frameType", () => {
+  it("assigns frameType based on function and file names", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "1",
+            functionName: "runtime.schedule",
+            fileName: "runtime/proc.go",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "2",
+            functionName: "handleRequest",
+            fileName: "server.go",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(tree.children[0]!.frameType).toBe("runtime");
+    expect(tree.children[0]!.children[0]!.frameType).toBe("app");
   });
 });

@@ -108,10 +108,6 @@ export interface ProfilingTopFunctionsRequest {
     };
   };
 }
-export interface ProfilingFlamegraphRequest {
-  sample_size: number;
-  query: ProfilingTopFunctionsRequest["query"];
-}
 
 /**
  * Backward-compatible alias — matches the shape components were already using.
@@ -397,14 +393,6 @@ export class ElasticsearchClient {
     signal?: AbortSignal,
   ): Promise<unknown> {
     return this._fetch<unknown>("/_profiling/topn/functions", {
-      method: "POST",
-      body: JSON.stringify(body),
-      signal,
-    });
-  }
-
-  async getFlamegraph(body: ProfilingFlamegraphRequest, signal?: AbortSignal): Promise<unknown> {
-    return this._fetch<unknown>("/_profiling/flamegraph", {
       method: "POST",
       body: JSON.stringify(body),
       signal,
