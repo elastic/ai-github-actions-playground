@@ -49,10 +49,75 @@ export function parseFrameIds(frameIdsString: string): string[] {
   return ids;
 }
 
+export type FrameType = "kernel" | "runtime" | "native" | "interpreted" | "app";
+
+export function inferFrameType(functionName: string, fileName: string): FrameType {
+  const fn = functionName.toLowerCase();
+  const file = fileName.toLowerCase();
+
+  // Kernel: Linux/OS kernel frames
+  if (
+    fn.startsWith("do_") ||
+    fn.startsWith("sys_") ||
+    fn.startsWith("__") ||
+    file.includes("/kernel/") ||
+    file.includes("/arch/") ||
+    file.endsWith(".s")
+  ) {
+    return "kernel";
+  }
+
+  // Runtime/VM: Go runtime, JVM, V8, Python runtime, .NET CLR
+  if (
+    fn.startsWith("runtime.") ||
+    fn.startsWith("runtime/") ||
+    fn.startsWith("gc") ||
+    fn.startsWith("jit_") ||
+    fn.includes("::gc") ||
+    file.includes("/runtime/") ||
+    file.includes("/vm/") ||
+    file.includes("/gc/")
+  ) {
+    return "runtime";
+  }
+
+  // Interpreted: Python, JS, Ruby, PHP
+  if (
+    file.endsWith(".py") ||
+    file.endsWith(".js") ||
+    file.endsWith(".ts") ||
+    file.endsWith(".tsx") ||
+    file.endsWith(".jsx") ||
+    file.endsWith(".rb") ||
+    file.endsWith(".php") ||
+    file.includes("node_modules/")
+  ) {
+    return "interpreted";
+  }
+
+  // Native: C/C++/Rust system libraries
+  if (
+    file.endsWith(".c") ||
+    file.endsWith(".cpp") ||
+    file.endsWith(".cc") ||
+    file.endsWith(".h") ||
+    file.endsWith(".rs") ||
+    file.includes("/lib/") ||
+    file.includes("/usr/lib/") ||
+    fn.startsWith("std::") ||
+    fn.startsWith("std/")
+  ) {
+    return "native";
+  }
+
+  return "app";
+}
+
 export interface FlamegraphNode {
   name: string;
   value: number;
   children: FlamegraphNode[];
+  frameType?: FrameType;
 }
 
 /**
@@ -71,7 +136,12 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
       const name = frame.functionName || "(unknown)";
       let child = current.children.find((c) => c.name === name);
       if (!child) {
-        child = { name, value: 0, children: [] };
+        child = {
+          name,
+          value: 0,
+          children: [],
+          frameType: inferFrameType(frame.functionName, frame.fileName),
+        };
         current.children.push(child);
       }
       child.value += st.count;
@@ -130,6 +200,37 @@ export function normalizeTopFunctions(payload: unknown): TopFunctionRow[] {
       } satisfies TopFunctionRow;
     })
     .filter((row): row is TopFunctionRow => row !== null);
+}
+
+/**
+ * Find a subtree node by following a path of frame names from the root.
+ * Returns the node at the end of the path, or the root if the path is empty
+ * or a segment is not found.
+ */
+export function findSubtreeByPath(root: FlamegraphNode, path: string[]): FlamegraphNode {
+  let current = root;
+  for (const name of path) {
+    const child = current.children.find((c) => c.name === name);
+    if (!child) return current;
+    current = child;
+  }
+  return current;
+}
+
+/**
+ * Count nodes in a flamegraph tree whose name matches a search term (case-insensitive).
+ */
+export function countMatchingFrames(node: FlamegraphNode, term: string): number {
+  const lower = term.toLowerCase();
+  return countMatchingFramesLower(node, lower);
+}
+
+function countMatchingFramesLower(node: FlamegraphNode, lowerTerm: string): number {
+  let count = node.name.toLowerCase().includes(lowerTerm) ? 1 : 0;
+  for (const child of node.children) {
+    count += countMatchingFramesLower(child, lowerTerm);
+  }
+  return count;
 }
 
 export function joinStacktraces(

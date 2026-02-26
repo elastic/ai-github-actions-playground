@@ -30,7 +30,6 @@ export type {
   GetSecurityRolesResponse,
   UserCapabilities,
   ProfilingTopFunctionsRequest,
-  ProfilingFlamegraphRequest,
 } from "./client";
 
 export {

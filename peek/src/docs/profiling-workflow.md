@@ -8,13 +8,15 @@ Set the Time range dropdown to control the window of profiling data to query. Th
 
 ## View modes
 
-Switch between **Top Functions**, **Stacktraces**, and **Timeline** using the chips at the top of the filters panel.
+Switch between **Top Functions**, **Stacktraces**, **Timeline**, and **Flamegraph** using the chips at the top of the filters panel.
 
 **Top Functions** calls the Universal Profiling top-functions API and returns a ranked table of function names, their self counts, and total counts. The query preview panel shows the JSON request body sent to the API. This view is read-only; the query body cannot be edited manually.
 
 **Stacktraces** queries the `profiling-events-all` index to retrieve raw stacktrace IDs, then resolves each stacktrace against `profiling-stacktraces` and symbolizes the resulting frames using `profiling-stackframes`. Results are displayed as a table of stacktrace IDs with their sample count, service name, and host. Click any row to expand it and see the symbolized frame list.
 
 **Timeline** queries `profiling-events-all` and aggregates `Stacktrace.count` into time buckets so you can see profiling activity over time as a line chart.
+
+**Flamegraph** displays the same stacktrace data as a hierarchical flame graph visualization. Click any frame to zoom into that subtree and explore deeper call paths. A breadcrumb trail appears above the chart showing the current zoom path — click any segment to jump back. Use the search box to find and highlight specific function names; matching frames are highlighted while others are dimmed. When zoomed into a frame, click **Open in Query Lab** to pivot to Query Lab with a filtered ES|QL query for that function.
 
 ## Query editor
 
