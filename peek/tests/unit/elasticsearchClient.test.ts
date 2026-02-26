@@ -558,7 +558,13 @@ describe("getCapabilities", () => {
     expect(url).toBe(`${BASE_URL}/_security/user/_has_privileges`);
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body as string)).toEqual({
-      cluster: ["manage_data_stream", "read_security", "manage_security"],
+      cluster: [
+        "manage_data_stream",
+        "read_security",
+        "manage_security",
+        "manage_own_api_key",
+        "manage_api_key",
+      ],
     });
   });
 });

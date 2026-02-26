@@ -210,6 +210,8 @@ export type EsqlError = ElasticsearchError;
 export interface UserCapabilities {
   /** Whether the user can manage data streams (create, delete, rollover, etc.) */
   canManageDataStreams: boolean;
+  /** Whether the user can create API keys for collector onboarding flows. */
+  canCreateApiKeys: boolean;
   /** Whether the user can read user definitions from the security API. */
   canReadSecurityUsers: boolean;
   /** Whether the user can read role definitions from the security API. */
@@ -219,6 +221,13 @@ export interface UserCapabilities {
 /** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
 interface HasPrivilegesResponse {
   cluster?: Record<string, boolean>;
+}
+
+interface CreateApiKeyResponse {
+  id: string;
+  name: string;
+  api_key: string;
+  encoded?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -505,15 +514,25 @@ export class ElasticsearchClient {
       const response = await this._fetch<HasPrivilegesResponse>("/_security/user/_has_privileges", {
         method: "POST",
         body: JSON.stringify({
-          cluster: ["manage_data_stream", "read_security", "manage_security"],
+          cluster: [
+            "manage_data_stream",
+            "read_security",
+            "manage_security",
+            "manage_own_api_key",
+            "manage_api_key",
+          ],
         }),
         signal,
       });
       const canReadSecurity = Boolean(
         response.cluster?.["read_security"] || response.cluster?.["manage_security"],
       );
+      const canCreateApiKeys = Boolean(
+        response.cluster?.["manage_own_api_key"] || response.cluster?.["manage_api_key"],
+      );
       return {
         canManageDataStreams: response.cluster?.["manage_data_stream"] ?? false,
+        canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
       };
@@ -521,10 +540,24 @@ export class ElasticsearchClient {
       // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
       return {
         canManageDataStreams: false,
+        canCreateApiKeys: false,
         canReadSecurityUsers: false,
         canReadSecurityRoles: false,
       };
     }
+  }
+
+  async createApiKey(
+    body: { name: string; expiration?: string; metadata?: Record<string, unknown> },
+    signal?: AbortSignal,
+  ): Promise<CreateApiKeyResponse & { encodedApiKey: string }> {
+    const response = await this._fetch<CreateApiKeyResponse>("/_security/api_key", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
+    const encodedApiKey = response.encoded ?? btoa(`${response.id}:${response.api_key}`);
+    return { ...response, encodedApiKey };
   }
 
   // -------------------------------------------------------------------------
