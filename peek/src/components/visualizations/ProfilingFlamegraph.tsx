@@ -174,7 +174,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   }, []);
 
   const handleOpenInQueryLab = useCallback(() => {
-    const frameName = zoomPath.length > 0 ? zoomPath[zoomPath.length - 1]! : null;
+    const frameName = zoomPath.length > 0 ? (zoomPath.at(-1) ?? null) : null;
     if (frameName && onFrameClick) {
       onFrameClick(frameName);
     }
