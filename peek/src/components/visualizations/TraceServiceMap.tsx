@@ -7,6 +7,7 @@ import { buildServiceMapData } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
 
 import EChartWrapper from "./EChartWrapper";
+import { escapeHtml } from "./htmlUtils";
 
 interface Props {
   spans: Span[];
@@ -20,18 +21,6 @@ const US_TO_MS = 1000;
 const MIN_EDGE_WIDTH = 1.5;
 const EDGE_WIDTH_SCALE = 0.4;
 const MAX_EDGE_WIDTH = 5;
-
-const HTML_ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char] ?? char);
-}
 
 export default function TraceServiceMap({ spans, onNodeClick }: Props) {
   const mapData = useMemo(() => buildServiceMapData(spans), [spans]);
