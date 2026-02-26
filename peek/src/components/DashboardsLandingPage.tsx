@@ -39,6 +39,8 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { useShallow } from "zustand/react/shallow";
 
 import type { DashboardDefinition } from "../types";
@@ -54,6 +56,7 @@ export default function DashboardsLandingPage() {
     renameDashboard,
     duplicateDashboard,
     archiveDashboard,
+    toggleFavoriteDashboard,
     deleteDashboard,
     restoreDashboard,
     exportWorkspace,
@@ -67,6 +70,7 @@ export default function DashboardsLandingPage() {
       renameDashboard: s.renameDashboard,
       duplicateDashboard: s.duplicateDashboard,
       archiveDashboard: s.archiveDashboard,
+      toggleFavoriteDashboard: s.toggleFavoriteDashboard,
       deleteDashboard: s.deleteDashboard,
       restoreDashboard: s.restoreDashboard,
       exportWorkspace: s.exportWorkspace,
@@ -83,6 +87,7 @@ export default function DashboardsLandingPage() {
   }, [searchParams]);
   const sortField = (searchParams.get("sort") ?? "updated") as "updated" | "title";
   const showArchived = searchParams.get("archived") === "true";
+  const showFavoritesOnly = searchParams.get("favorites") === "true";
 
   const setShowArchived = useCallback(
     (value: boolean) => {
@@ -93,6 +98,24 @@ export default function DashboardsLandingPage() {
             next.set("archived", "true");
           } else {
             next.delete("archived");
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setShowFavoritesOnly = useCallback(
+    (value: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value) {
+            next.set("favorites", "true");
+          } else {
+            next.delete("favorites");
           }
           return next;
         },
@@ -160,7 +183,7 @@ export default function DashboardsLandingPage() {
     [setSearchParams],
   );
 
-  const hasActiveFilters = searchQuery !== "" || selectedTags.length > 0;
+  const hasActiveFilters = searchQuery !== "" || selectedTags.length > 0 || showFavoritesOnly;
 
   const resetFilters = useCallback(() => {
     setSearchParams(
@@ -174,7 +197,9 @@ export default function DashboardsLandingPage() {
     );
   }, [setSearchParams]);
 
-  // Collect all unique tags from all dashboards for the filter bar
+  // Derived: whether any dashboard is favorited
+  const hasFavorites = useMemo(() => dashboards.some((d) => d.favoritedAt), [dashboards]);
+
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     for (const d of dashboards) {
@@ -207,6 +232,7 @@ export default function DashboardsLandingPage() {
     const q = searchQuery.toLowerCase().trim();
     let result = dashboards.filter((d) => {
       if (!showArchived && d.archived) return false;
+      if (showFavoritesOnly && !d.favoritedAt) return false;
       if (
         q &&
         !d.title.toLowerCase().includes(q) &&
@@ -218,11 +244,14 @@ export default function DashboardsLandingPage() {
       return true;
     });
     result = [...result].sort((a, b) => {
+      // Favorites always rank first
+      if (a.favoritedAt && !b.favoritedAt) return -1;
+      if (!a.favoritedAt && b.favoritedAt) return 1;
       if (sortField === "title") return a.title.localeCompare(b.title);
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
     return result;
-  }, [dashboards, showArchived, searchQuery, selectedTags, sortField]);
+  }, [dashboards, showArchived, showFavoritesOnly, searchQuery, selectedTags, sortField]);
 
   const handleCreate = useCallback(() => {
     setNameDialogMode("create");
@@ -264,6 +293,14 @@ export default function DashboardsLandingPage() {
     archiveDashboard(menuDashboard.id, !menuDashboard.archived);
     handleCloseMenu();
   }, [menuDashboard, archiveDashboard, handleCloseMenu]);
+
+  const handleToggleFavorite = useCallback(
+    (event: React.MouseEvent<HTMLElement>, id: string) => {
+      event.stopPropagation();
+      toggleFavoriteDashboard(id);
+    },
+    [toggleFavoriteDashboard],
+  );
 
   const handleDelete = useCallback(() => {
     if (!menuDashboard) return;
@@ -494,9 +531,21 @@ export default function DashboardsLandingPage() {
         )}
       </Stack>
 
-      {/* Available tag filters */}
-      {allTags.length > 0 && (
+      {/* Favorites and tag filter chips */}
+      {(hasFavorites || allTags.length > 0) && (
         <Stack direction="row" spacing={0.5} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+          {hasFavorites && (
+            <Chip
+              label="Favorites"
+              size="small"
+              icon={<StarIcon fontSize="small" />}
+              variant={showFavoritesOnly ? "filled" : "outlined"}
+              color={showFavoritesOnly ? "primary" : "default"}
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              aria-label="Filter by favorites"
+              aria-pressed={showFavoritesOnly}
+            />
+          )}
           {allTags.map((tag) => (
             <Chip
               key={tag}
@@ -547,7 +596,7 @@ export default function DashboardsLandingPage() {
             >
               <CardActionArea onClick={() => navigate(`/dashboards/${entry.id}`)}>
                 <CardContent sx={{ pb: 1 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, pr: 4 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, pr: 8 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }} noWrap>
                       {entry.title}
                     </Typography>
@@ -607,6 +656,25 @@ export default function DashboardsLandingPage() {
               >
                 <MoreVertIcon fontSize="small" />
               </IconButton>
+              <Tooltip title={entry.favoritedAt ? "Remove from favorites" : "Add to favorites"}>
+                <IconButton
+                  size="small"
+                  sx={{ position: "absolute", top: 8, right: 36 }}
+                  onClick={(e) => handleToggleFavorite(e, entry.id)}
+                  aria-label={
+                    entry.favoritedAt
+                      ? `Remove ${entry.title} from favorites`
+                      : `Add ${entry.title} to favorites`
+                  }
+                  aria-pressed={Boolean(entry.favoritedAt)}
+                >
+                  {entry.favoritedAt ? (
+                    <StarIcon fontSize="small" color="warning" />
+                  ) : (
+                    <StarBorderIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
             </Card>
           );
         })}
