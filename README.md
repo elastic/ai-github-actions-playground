@@ -87,6 +87,14 @@ ES_URL=http://localhost:9200 make serve-proxy
 cd peek && ES_URL=http://localhost:9200 npm run dev
 ```
 
+Or run as a native desktop app via Electron — no CORS configuration or proxy required (see [DEVELOPING.md](DEVELOPING.md#electron-mode)):
+
+```bash
+make electron-dev    # start Electron app in dev mode (hot-reloads)
+make electron-build  # compile renderer + main process
+make electron-dist   # package as a distributable app (dmg / exe / AppImage)
+```
+
 ### In-Product Docs
 
 Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting, CORS/proxy setup, Query Lab, Metrics, Traces, dashboard workflows, Console, Data Streams, Chat, LLM settings, Cluster Overview, and dashboard management.
