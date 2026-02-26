@@ -73,7 +73,7 @@ export function inferFrameType(functionName: string, fileName: string): FrameTyp
     fn.startsWith("runtime/") ||
     fn.startsWith("gc") ||
     fn.startsWith("jit_") ||
-    fn.includes("::GC") ||
+    fn.includes("::gc") ||
     file.includes("/runtime/") ||
     file.includes("/vm/") ||
     file.includes("/gc/")

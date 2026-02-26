@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -13,6 +13,7 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -70,6 +71,7 @@ export default function ProfilingPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [topFunctionsRows, setTopFunctionsRows] = useState<TopFunctionRow[]>([]);
   const [timelineResult, setTimelineResult] = useState<EsqlResponse | null>(null);
   const [stacktraces, setStacktraces] = useState<SymbolizedStacktrace[]>([]);
@@ -81,8 +83,8 @@ export default function ProfilingPage() {
   const effectiveQuery = rawQuery ?? generatedQuery;
 
   const runTopFunctions = useCallback(
-    async (client: ElasticsearchClient) => {
-      const response = await client.getTopFunctions(buildTopFunctionsRequest(filters));
+    async (client: ElasticsearchClient, signal: AbortSignal) => {
+      const response = await client.getTopFunctions(buildTopFunctionsRequest(filters), signal);
       setTopFunctionsRows(normalizeTopFunctions(response));
       setTimelineResult(null);
       setStacktraces([]);
@@ -91,8 +93,8 @@ export default function ProfilingPage() {
   );
 
   const runTimeline = useCallback(
-    async (client: ElasticsearchClient) => {
-      const result = await client.query({ query: effectiveQuery });
+    async (client: ElasticsearchClient, signal: AbortSignal) => {
+      const result = await client.query({ query: effectiveQuery }, signal);
       setTimelineResult(result);
       setTopFunctionsRows([]);
       setStacktraces([]);
@@ -101,8 +103,8 @@ export default function ProfilingPage() {
   );
 
   const runStacktraces = useCallback(
-    async (client: ElasticsearchClient) => {
-      const eventsResponse = await client.query({ query: effectiveQuery });
+    async (client: ElasticsearchClient, signal: AbortSignal) => {
+      const eventsResponse = await client.query({ query: effectiveQuery }, signal);
       const events: ProfilingEvent[] = eventsResponse.values
         .map((row) => ({
           stacktraceId: String(readColumn(row, eventsResponse.columns, "Stacktrace.id") ?? ""),
@@ -119,9 +121,12 @@ export default function ProfilingPage() {
         return;
       }
 
-      const stacktraceResponse = await client.query({
-        query: buildStacktraceLookupQuery(stacktraceIds),
-      });
+      const stacktraceResponse = await client.query(
+        {
+          query: buildStacktraceLookupQuery(stacktraceIds),
+        },
+        signal,
+      );
       const stacktraceRows: StacktraceFrameMap[] = stacktraceResponse.values
         .map((row) => ({
           id: String(readColumn(row, stacktraceResponse.columns, "_id") ?? ""),
@@ -132,9 +137,12 @@ export default function ProfilingPage() {
         .filter((item) => item.id.length > 0);
 
       const frameIds = [...new Set(stacktraceRows.flatMap((row) => parseFrameIds(row.frameIds)))];
-      const frameResponse = await client.query({
-        query: buildStackframeLookupQuery(frameIds),
-      });
+      const frameResponse = await client.query(
+        {
+          query: buildStackframeLookupQuery(frameIds),
+        },
+        signal,
+      );
       const frames: FrameSymbol[] = frameResponse.values
         .map((row) => ({
           id: String(readColumn(row, frameResponse.columns, "_id") ?? ""),
@@ -162,21 +170,25 @@ export default function ProfilingPage() {
 
   const handleRun = useCallback(async () => {
     if (!connection) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     const client = new ElasticsearchClient(connection);
     setLoading(true);
     setError(null);
     try {
       if (viewMode === "topFunctions") {
-        await runTopFunctions(client);
+        await runTopFunctions(client, controller.signal);
       } else if (viewMode === "timeline") {
-        await runTimeline(client);
+        await runTimeline(client, controller.signal);
       } else {
-        await runStacktraces(client);
+        await runStacktraces(client, controller.signal);
       }
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [connection, runTopFunctions, runTimeline, runStacktraces, viewMode]);
 
@@ -280,10 +292,10 @@ export default function ProfilingPage() {
             }}
             sx={{ minWidth: 160 }}
           >
-            {TRACE_TIME_RANGE_OPTIONS.filter((option) => option.from !== null).map((option) => (
-              <option key={option.label} value={option.from ?? ""}>
-                {option.label}
-              </option>
+            {TRACE_TIME_RANGE_OPTIONS.filter((opt) => opt.from !== null).map((opt) => (
+              <MenuItem key={opt.label} value={opt.from ?? ""}>
+                {opt.label}
+              </MenuItem>
             ))}
           </TextField>
         </Box>

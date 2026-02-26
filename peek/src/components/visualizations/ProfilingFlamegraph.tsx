@@ -50,7 +50,8 @@ function flattenTreeInto(
   start: number,
   pathPrefix: string[],
 ): void {
-  if (depth > 0) {
+  const isZoomedRoot = depth === 0 && pathPrefix.length > 0;
+  if (depth > 0 || isZoomedRoot) {
     rects.push({
       name: node.name,
       depth,

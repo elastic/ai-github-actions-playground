@@ -1,7 +1,4 @@
-import type {
-  ProfilingTopFunctionsRequest,
-  ProfilingFlamegraphRequest,
-} from "../../services/es/client";
+import type { ProfilingTopFunctionsRequest } from "../../services/es/client";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
 export interface ProfilingFilters {
@@ -142,11 +139,4 @@ export function buildTopFunctionsRequest(filters: ProfilingFilters): ProfilingTo
     });
   }
   return request;
-}
-
-export function buildFlamegraphRequest(filters: ProfilingFilters): ProfilingFlamegraphRequest {
-  return {
-    sample_size: Math.max(1, Math.min(100000, filters.limit * 100)),
-    query: buildTopFunctionsRequest(filters).query,
-  };
 }
