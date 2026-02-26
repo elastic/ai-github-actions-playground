@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -24,6 +24,7 @@ import {
   isElasticsearchError,
   type CatIndexRecord,
   type IndexStatsResponse,
+  type DiskUsageIndexEntry,
 } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
@@ -33,7 +34,7 @@ import { PAGE_MANIFEST } from "../routes/manifest";
 // Types
 // ---------------------------------------------------------------------------
 
-type IndexTab = "overview" | "mappings" | "settings" | "stats";
+type IndexTab = "overview" | "mappings" | "settings" | "stats" | "disk_usage";
 
 interface MappingField {
   name: string;
@@ -187,6 +188,9 @@ export default function IndicesPage() {
   const [mappings, setMappings] = useState<Record<string, unknown> | null>(null);
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
   const [indexStats, setIndexStats] = useState<IndexStatsResponse | null>(null);
+  const [diskUsage, setDiskUsage] = useState<DiskUsageIndexEntry | null>(null);
+  const [diskUsageLoading, setDiskUsageLoading] = useState(false);
+  const [diskUsageError, setDiskUsageError] = useState<string | null>(null);
 
   const detailRequestRef = useRef(0);
 
@@ -219,6 +223,8 @@ export default function IndicesPage() {
       setMappings(null);
       setSettings(null);
       setIndexStats(null);
+      setDiskUsage(null);
+      setDiskUsageError(null);
       try {
         const client = new ElasticsearchClient(connection);
         const [mappingsResult, settingsResult, statsResult] = await Promise.allSettled([
@@ -248,6 +254,8 @@ export default function IndicesPage() {
       setMappings(null);
       setSettings(null);
       setIndexStats(null);
+      setDiskUsage(null);
+      setDiskUsageError(null);
       return;
     }
     void loadDetail(selectedIndex);
@@ -274,6 +282,23 @@ export default function IndicesPage() {
     setDiscoverQueryDraft(`FROM ${selectedIndex} | LIMIT 50`);
     navigate(PAGE_MANIFEST.discover.path);
   }, [selectedIndex, navigate, setDiscoverQueryDraft]);
+
+  const handleAnalyzeDiskUsage = useCallback(async () => {
+    if (!connection || !selectedIndex) return;
+    setDiskUsageLoading(true);
+    setDiskUsageError(null);
+    setDiskUsage(null);
+    try {
+      const client = new ElasticsearchClient(connection);
+      const response = await client.getIndexDiskUsage(selectedIndex);
+      const entry = response[selectedIndex] as DiskUsageIndexEntry | undefined;
+      setDiskUsage(entry ?? null);
+    } catch (err) {
+      setDiskUsageError(isElasticsearchError(err) ? err.message : String(err));
+    } finally {
+      setDiskUsageLoading(false);
+    }
+  }, [connection, selectedIndex]);
 
   // ----- Tab panel ids -------------------------------------------------------
   const tabPanelId = (tab: IndexTab) => `index-tabpanel-${tab}`;
@@ -381,23 +406,18 @@ export default function IndicesPage() {
           }}
         >
           {settingRows.map(({ key, value }) => (
-            <>
+            <Fragment key={key}>
               <Typography
-                key={`k-${key}`}
                 variant="caption"
                 color="text.secondary"
                 sx={{ wordBreak: "break-all", py: 0.25 }}
               >
                 {key}
               </Typography>
-              <Typography
-                key={`v-${key}`}
-                variant="body2"
-                sx={{ wordBreak: "break-all", py: 0.25 }}
-              >
+              <Typography variant="body2" sx={{ wordBreak: "break-all", py: 0.25 }}>
                 {value}
               </Typography>
-            </>
+            </Fragment>
           ))}
         </Box>
       )}
@@ -468,6 +488,75 @@ export default function IndicesPage() {
         </Typography>
       )}
     </MetaGrid>
+  );
+
+  // ----- Disk Usage tab -------------------------------------------------------
+  const diskUsageFields = diskUsage
+    ? Object.entries(diskUsage.fields)
+        .map(([name, stats]) => ({ name, totalBytes: stats.total_in_bytes, ...stats }))
+        .sort((a, b) => b.totalBytes - a.totalBytes)
+    : [];
+
+  const diskUsageContent = (
+    <Box>
+      {!diskUsage && !diskUsageLoading && !diskUsageError && (
+        <Stack spacing={1.5} alignItems="flex-start">
+          <Alert severity="info">
+            Disk usage analysis runs <code>POST /{"{index}"}/_disk_usage</code> which is resource
+            intensive. Click the button below to analyze field-level storage consumption.
+          </Alert>
+          <Button size="small" variant="contained" onClick={() => void handleAnalyzeDiskUsage()}>
+            Analyze disk usage
+          </Button>
+        </Stack>
+      )}
+      {diskUsageLoading && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={24} />
+        </Box>
+      )}
+      {diskUsageError && <Alert severity="error">{diskUsageError}</Alert>}
+      {diskUsage && (
+        <Stack spacing={1.5}>
+          <MetaGrid>
+            <MetaLabel>Total analyzed size</MetaLabel>
+            <MetaValue data-testid="disk-usage-total">
+              {formatBytes(diskUsage.store_size_in_bytes)}
+            </MetaValue>
+            <MetaLabel>All fields (combined)</MetaLabel>
+            <MetaValue data-testid="disk-usage-all-fields">
+              {formatBytes(diskUsage.all_fields.total_in_bytes)}
+            </MetaValue>
+          </MetaGrid>
+          <Divider />
+          <Typography variant="subtitle2">
+            Per-field breakdown ({diskUsageFields.length} fields)
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto",
+              rowGap: 0.25,
+              columnGap: 2,
+            }}
+          >
+            {diskUsageFields.map(({ name, totalBytes }) => (
+              <Box key={name} sx={{ display: "contents" }}>
+                <Typography variant="body2" sx={{ wordBreak: "break-all", py: 0.25 }}>
+                  {name}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ textAlign: "right", whiteSpace: "nowrap", py: 0.25 }}
+                >
+                  {formatBytes(totalBytes)}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Stack>
+      )}
+    </Box>
   );
 
   // ---------------------------------------------------------------------------
@@ -616,6 +705,12 @@ export default function IndicesPage() {
                   id={tabId("stats")}
                   aria-controls={tabPanelId("stats")}
                 />
+                <Tab
+                  label="Disk Usage"
+                  value="disk_usage"
+                  id={tabId("disk_usage")}
+                  aria-controls={tabPanelId("disk_usage")}
+                />
               </Tabs>
               <Box
                 role="tabpanel"
@@ -633,6 +728,7 @@ export default function IndicesPage() {
                     {activeTab === "mappings" && mappingsContent}
                     {activeTab === "settings" && settingsContent}
                     {activeTab === "stats" && statsContent}
+                    {activeTab === "disk_usage" && diskUsageContent}
                   </>
                 )}
               </Box>

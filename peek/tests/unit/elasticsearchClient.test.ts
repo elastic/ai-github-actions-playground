@@ -249,6 +249,21 @@ describe("request construction", () => {
     expect(url).toBe(`${BASE_URL}/my-index/_settings`);
   });
 
+  it("getIndexDiskUsage() POSTs /{index}/_disk_usage?run_expensive_tasks=true", async () => {
+    const fetchSpy = mockFetchOnce({
+      _shards: { total: 1 },
+      "my-index": { store_size_in_bytes: 1024, fields: {} },
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getIndexDiskUsage("my-index");
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/my-index/_disk_usage?run_expensive_tasks=true`);
+    expect(init.method).toBe("POST");
+  });
+
   it("strips trailing slashes from the base URL", async () => {
     const fetchSpy = mockFetchOnce({ cluster_name: "test" });
     vi.stubGlobal("fetch", fetchSpy);

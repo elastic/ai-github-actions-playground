@@ -140,6 +140,31 @@ export interface IndexStatsResponse {
   };
 }
 
+/** Storage breakdown for a single field from POST /{index}/_disk_usage */
+export interface DiskUsageFieldStats {
+  total_in_bytes: number;
+  inverted_index?: { total_in_bytes: number };
+  stored_fields_in_bytes?: number;
+  doc_values_in_bytes?: number;
+  points_in_bytes?: number;
+  norms_in_bytes?: number;
+  term_vectors_in_bytes?: number;
+  knn_vectors_in_bytes?: number;
+}
+
+/** Per-index entry in the disk usage response */
+export interface DiskUsageIndexEntry {
+  store_size_in_bytes: number;
+  all_fields: DiskUsageFieldStats;
+  fields: Record<string, DiskUsageFieldStats>;
+}
+
+/** Response from POST /{index}/_disk_usage?run_expensive_tasks=true */
+export interface DiskUsageResponse {
+  _shards?: { total?: number; successful?: number; failed?: number };
+  [index: string]: DiskUsageIndexEntry | DiskUsageResponse["_shards"] | undefined;
+}
+
 export interface ProfilingTopFunctionsRequest {
   limit: number;
   query: {
@@ -438,6 +463,13 @@ export class ElasticsearchClient {
     return this._fetch<Record<string, unknown>>(`/${encodeURIComponent(index)}/_settings`, {
       signal,
     });
+  }
+
+  async getIndexDiskUsage(index: string, signal?: AbortSignal): Promise<DiskUsageResponse> {
+    return this._fetch<DiskUsageResponse>(
+      `/${encodeURIComponent(index)}/_disk_usage?run_expensive_tasks=true`,
+      { method: "POST", signal },
+    );
   }
 
   async getSecurityUsers(signal?: AbortSignal): Promise<GetSecurityUsersResponse> {

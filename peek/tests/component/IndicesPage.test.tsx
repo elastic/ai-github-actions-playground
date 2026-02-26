@@ -8,13 +8,19 @@ import IndicesPage from "../../src/components/IndicesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
-const { getCatIndicesMock, getIndexMappingsMock, getIndexSettingsMock, getIndexStatsMock } =
-  vi.hoisted(() => ({
-    getCatIndicesMock: vi.fn(),
-    getIndexMappingsMock: vi.fn(),
-    getIndexSettingsMock: vi.fn(),
-    getIndexStatsMock: vi.fn(),
-  }));
+const {
+  getCatIndicesMock,
+  getIndexMappingsMock,
+  getIndexSettingsMock,
+  getIndexStatsMock,
+  getIndexDiskUsageMock,
+} = vi.hoisted(() => ({
+  getCatIndicesMock: vi.fn(),
+  getIndexMappingsMock: vi.fn(),
+  getIndexSettingsMock: vi.fn(),
+  getIndexStatsMock: vi.fn(),
+  getIndexDiskUsageMock: vi.fn(),
+}));
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -22,6 +28,7 @@ vi.mock("../../src/services/es", () => ({
     getIndexMappings: getIndexMappingsMock,
     getIndexSettings: getIndexSettingsMock,
     getIndexStats: getIndexStatsMock,
+    getIndexDiskUsage: getIndexDiskUsageMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -239,5 +246,34 @@ describe("IndicesPage", () => {
 
     const results = await axe(container);
     expect(results.violations).toHaveLength(0);
+  });
+
+  it("shows Disk Usage tab with analyze button and renders field breakdown", async () => {
+    const user = userEvent.setup();
+    getIndexDiskUsageMock.mockResolvedValue({
+      _shards: { total: 1, successful: 1, failed: 0 },
+      "logs-app": {
+        store_size_in_bytes: 524288,
+        all_fields: { total_in_bytes: 500000 },
+        fields: {
+          message: { total_in_bytes: 300000, inverted_index: { total_in_bytes: 200000 } },
+          "@timestamp": { total_in_bytes: 200000, doc_values_in_bytes: 150000 },
+        },
+      },
+    });
+
+    renderPage();
+    await screen.findByTestId("index-meta-health");
+
+    await user.click(screen.getByRole("tab", { name: /disk usage/i }));
+    // Should show the analyze button (lazy load since it's expensive)
+    const analyzeBtn = await screen.findByRole("button", { name: /analyze disk usage/i });
+    await user.click(analyzeBtn);
+
+    // Verify field-level results render
+    expect(await screen.findByTestId("disk-usage-total")).toHaveTextContent("512 KB");
+    expect(screen.getByTestId("disk-usage-all-fields")).toHaveTextContent("488 KB");
+    expect(screen.getByText("message")).toBeInTheDocument();
+    expect(screen.getByText("@timestamp")).toBeInTheDocument();
   });
 });

@@ -33,6 +33,9 @@ export type {
   CatIndexRecord,
   IndexStatsData,
   IndexStatsResponse,
+  DiskUsageFieldStats,
+  DiskUsageIndexEntry,
+  DiskUsageResponse,
 } from "./client";
 
 export {
