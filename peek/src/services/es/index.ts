@@ -30,6 +30,9 @@ export type {
   GetSecurityRolesResponse,
   UserCapabilities,
   ProfilingTopFunctionsRequest,
+  CatIndexRecord,
+  IndexStatsData,
+  IndexStatsResponse,
 } from "./client";
 
 export {

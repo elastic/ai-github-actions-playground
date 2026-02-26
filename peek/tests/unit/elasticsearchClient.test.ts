@@ -204,6 +204,51 @@ describe("request construction", () => {
     expect(url).toBe(`${BASE_URL}/logs-*/_field_caps?fields=*`);
   });
 
+  it("getCatIndices() GETs /_cat/indices?format=json&bytes=b", async () => {
+    const fetchSpy = mockFetchOnce([]);
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getCatIndices();
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${BASE_URL}/_cat/indices?format=json&bytes=b`);
+    expect(init.method).toBeUndefined();
+  });
+
+  it("getIndexStats() GETs /{index}/_stats with encoded name", async () => {
+    const fetchSpy = mockFetchOnce({ _all: {} });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getIndexStats("my-index");
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/my-index/_stats`);
+  });
+
+  it("getIndexMappings() GETs /{index}/_mapping", async () => {
+    const fetchSpy = mockFetchOnce({ "my-index": { mappings: {} } });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getIndexMappings("my-index");
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/my-index/_mapping`);
+  });
+
+  it("getIndexSettings() GETs /{index}/_settings", async () => {
+    const fetchSpy = mockFetchOnce({ "my-index": { settings: {} } });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.getIndexSettings("my-index");
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/my-index/_settings`);
+  });
+
   it("strips trailing slashes from the base URL", async () => {
     const fetchSpy = mockFetchOnce({ cluster_name: "test" });
     vi.stubGlobal("fetch", fetchSpy);
