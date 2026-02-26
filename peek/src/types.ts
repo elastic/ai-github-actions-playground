@@ -150,6 +150,7 @@ export type DashboardDefinition = Omit<InferredDashboardDefinition, "panels"> & 
   panels: PanelDefinition[];
   tags?: string[];
   archived?: boolean;
+  favoritedAt?: string;
   preferredProfileId?: string;
 };
 
