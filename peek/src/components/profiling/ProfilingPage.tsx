@@ -38,40 +38,18 @@ import type {
   ProfilingEvent,
   StacktraceFrameMap,
   SymbolizedStacktrace,
+  TopFunctionRow,
 } from "./profilingUtils";
-import { buildFlamegraphTree, joinStacktraces, parseFrameIds } from "./profilingUtils";
-
-interface TopFunctionRow {
-  functionName: string;
-  selfCount: number | null;
-  totalCount: number | null;
-}
+import {
+  buildFlamegraphTree,
+  joinStacktraces,
+  normalizeTopFunctions,
+  parseFrameIds,
+} from "./profilingUtils";
 
 function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
   const index = columns.findIndex((column) => column.name === field);
   return index >= 0 ? row[index] : null;
-}
-
-function normalizeTopFunctions(payload: unknown): TopFunctionRow[] {
-  const arrayPayload = Array.isArray(payload)
-    ? payload
-    : typeof payload === "object" && payload !== null
-      ? Object.values(payload).find((value) => Array.isArray(value))
-      : null;
-  if (!Array.isArray(arrayPayload)) return [];
-  return arrayPayload
-    .map((item) => {
-      if (typeof item !== "object" || item === null) return null;
-      const record = item as Record<string, unknown>;
-      return {
-        functionName: String(
-          record.function_name ?? record["Stackframe.function.name"] ?? record.name ?? "(unknown)",
-        ),
-        selfCount: typeof record.self_count === "number" ? record.self_count : null,
-        totalCount: typeof record.total_count === "number" ? record.total_count : null,
-      } satisfies TopFunctionRow;
-    })
-    .filter((row): row is TopFunctionRow => row !== null);
 }
 
 export default function ProfilingPage() {
