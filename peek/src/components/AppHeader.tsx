@@ -165,9 +165,9 @@ export default function AppHeader() {
               }}
             />
           </Box>
-        ) : (
+        ) : activePage ? (
           <Chip
-            label={dashboard.title}
+            label={activePage.nav.label}
             size="small"
             variant="outlined"
             sx={{
@@ -176,7 +176,7 @@ export default function AppHeader() {
               "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
             }}
           />
-        )}
+        ) : null}
 
         <ConnectionProfileSwitcher />
 
