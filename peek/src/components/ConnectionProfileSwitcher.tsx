@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type MouseEvent } from "react";
 import Chip from "@mui/material/Chip";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -124,7 +124,7 @@ export default function ConnectionProfileSwitcher() {
   );
 
   const handleRetestProfile = useCallback(
-    async (profileId: string, e: React.MouseEvent) => {
+    async (profileId: string, e: MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       if (retestingProfileId) return;
       const profile = connectionProfiles.find((p) => p.id === profileId);
