@@ -16,6 +16,7 @@ import llmSettingsRaw from "./llm-settings.md?raw";
 import clusterOverviewRaw from "./cluster-overview.md?raw";
 import dashboardManagementRaw from "./dashboard-management.md?raw";
 import usersRolesRaw from "./users-roles.md?raw";
+import addDataRaw from "./add-data.md?raw";
 
 export interface DocSection {
   id: string;
@@ -66,6 +67,7 @@ const sections: DocSection[] = [
   parseDocSection("cluster-overview", clusterOverviewRaw),
   parseDocSection("dashboard-management", dashboardManagementRaw),
   parseDocSection("users-roles", usersRolesRaw),
+  parseDocSection("add-data", addDataRaw),
 ];
 
 export default sections;

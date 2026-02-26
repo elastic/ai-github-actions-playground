@@ -6,6 +6,7 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
 import InfoIcon from "@mui/icons-material/Info";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -21,6 +22,7 @@ import ChatPage from "../components/ChatPage";
 import ClusterOverviewPage from "../components/ClusterOverviewPage";
 import DashboardsLandingPage from "../components/DashboardsLandingPage";
 import DataStreamsPage from "../components/DataStreamsPage";
+import AddDataPage from "../components/AddDataPage";
 import DiscoverPage from "../components/DiscoverPage";
 import DocsPage from "../components/DocsPage";
 import ExplorePage from "../components/ExplorePage";
@@ -153,6 +155,19 @@ export const PAGE_MANIFEST = {
       order: 10,
       showInSidebar: true,
       icon: createElement(InfoIcon, { fontSize: "small" }),
+    },
+  },
+  addData: {
+    path: "/add-data",
+    component: AddDataPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Add Data",
+      group: "System",
+      order: 12,
+      showInSidebar: true,
+      icon: createElement(AddCircleOutlineIcon, { fontSize: "small" }),
     },
   },
   dataStreams: {

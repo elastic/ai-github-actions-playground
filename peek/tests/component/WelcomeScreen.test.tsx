@@ -91,6 +91,7 @@ describe("WelcomeScreen", () => {
     });
     expect(useConnectionStore.getState().capabilities).toEqual({
       canManageDataStreams: true,
+      canCreateApiKeys: false,
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
     });
