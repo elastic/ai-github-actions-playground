@@ -60,6 +60,7 @@ const NUMERIC_TYPES = new Set([
 ]);
 
 const DATE_TYPES = new Set(["date", "date_nanos"]);
+const DEFAULT_SAMPLE_SIZE = 50000;
 
 export function isKeywordLikeType(type: string): boolean {
   return KEYWORD_LIKE_TYPES.has(type);
@@ -74,10 +75,14 @@ export function isNumericOrDateType(type: string): boolean {
 // ---------------------------------------------------------------------------
 
 /** Build the ES|QL query to fetch total count, non-null count, and cardinality for a field. */
-export function buildFieldStatsQuery(indexPattern: string, field: string): string {
+export function buildFieldStatsQuery(
+  indexPattern: string,
+  field: string,
+  sampleSize: number = DEFAULT_SAMPLE_SIZE,
+): string {
   const escapedField = escapeEsqlIdentifier(field);
   return (
-    `FROM ${indexPattern} | ` +
+    `FROM ${indexPattern} | LIMIT ${sampleSize} | ` +
     `STATS total = COUNT(*), non_null = COUNT(${escapedField}), ` +
     `cardinality = COUNT_DISTINCT(${escapedField})`
   );
@@ -88,20 +93,25 @@ export function buildTopValuesQuery(
   indexPattern: string,
   field: string,
   limit: number = 10,
+  sampleSize: number = DEFAULT_SAMPLE_SIZE,
 ): string {
   const escapedField = escapeEsqlIdentifier(field);
   return (
-    `FROM ${indexPattern} | ` +
+    `FROM ${indexPattern} | LIMIT ${sampleSize} | ` +
     `STATS count = COUNT(*) BY ${escapedField} | ` +
     `SORT count DESC | LIMIT ${limit}`
   );
 }
 
 /** Build the ES|QL query to fetch min and max for a numeric or date field. */
-export function buildMinMaxQuery(indexPattern: string, field: string): string {
+export function buildMinMaxQuery(
+  indexPattern: string,
+  field: string,
+  sampleSize: number = DEFAULT_SAMPLE_SIZE,
+): string {
   const escapedField = escapeEsqlIdentifier(field);
   return (
-    `FROM ${indexPattern} | ` +
+    `FROM ${indexPattern} | LIMIT ${sampleSize} | ` +
     `STATS min_val = MIN(${escapedField}), max_val = MAX(${escapedField})`
   );
 }

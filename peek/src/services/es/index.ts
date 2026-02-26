@@ -52,7 +52,6 @@ export type {
 
 export { classifyMetricType, listFields, getFieldValues, getFieldCardinality } from "./metadata";
 export type { MetricTypeClassification, FieldInfo, FieldValueEntry } from "./metadata";
-
 export {
   isKeywordLikeType,
   isNumericOrDateType,
@@ -61,4 +60,4 @@ export {
   buildMinMaxQuery,
   fetchFieldStats,
 } from "./fieldStats";
-export type { FieldStats, FieldTopValue } from "./fieldStats";
+export type { FieldTopValue, FieldStats } from "./fieldStats";

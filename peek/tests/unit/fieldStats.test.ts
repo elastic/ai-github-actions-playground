@@ -75,6 +75,7 @@ describe("buildFieldStatsQuery", () => {
   it("builds a STATS query with total, non_null, and cardinality", () => {
     const q = buildFieldStatsQuery("logs-*", "host.name");
     expect(q).toContain("FROM logs-*");
+    expect(q).toContain("LIMIT 50000");
     expect(q).toContain("COUNT(*)");
     expect(q).toContain("COUNT(`host.name`)");
     expect(q).toContain("COUNT_DISTINCT(`host.name`)");
@@ -88,6 +89,7 @@ describe("buildTopValuesQuery", () => {
   it("builds a top-values query with COUNT BY and SORT", () => {
     const q = buildTopValuesQuery("logs-*", "host.name");
     expect(q).toContain("FROM logs-*");
+    expect(q).toContain("LIMIT 50000");
     expect(q).toContain("COUNT(*) BY `host.name`");
     expect(q).toContain("SORT count DESC");
     expect(q).toContain("LIMIT 10");
@@ -103,6 +105,7 @@ describe("buildMinMaxQuery", () => {
   it("builds a MIN/MAX query for a numeric field", () => {
     const q = buildMinMaxQuery("logs-*", "event.duration");
     expect(q).toContain("FROM logs-*");
+    expect(q).toContain("LIMIT 50000");
     expect(q).toContain("MIN(`event.duration`)");
     expect(q).toContain("MAX(`event.duration`)");
     expect(q).toContain("min_val");

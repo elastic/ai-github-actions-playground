@@ -373,10 +373,10 @@ export default function DataStreamsPage() {
           </Box>
         </Paper>
 
-        {selectedField && connection && (
+        {selectedField && connection && selectedName && (
           <FieldStatsPanel
             connection={connection}
-            streamName={selectedName!}
+            streamName={selectedName}
             fieldName={selectedField.name}
             fieldType={selectedField.type}
             onClose={() => setSelectedField(null)}
