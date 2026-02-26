@@ -501,8 +501,8 @@ export default function ConnectionDialog() {
           {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
 
           {(url || proxyUrl) && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+            <>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 <TextField
                   size="small"
                   label="Profile name"
@@ -518,34 +518,32 @@ export default function ConnectionDialog() {
                   }
                   sx={{ flex: 1 }}
                 />
-                <TextField
-                  size="small"
-                  label="PIN (optional)"
-                  type="password"
-                  placeholder="Encrypt with PIN"
-                  value={savePin}
-                  onChange={(e) => setSavePin(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void handleSaveProfile();
-                  }}
-                  helperText={
-                    savePin.trim()
-                      ? "Credentials will be encrypted and stored locally"
-                      : "Leave blank to use session storage only"
-                  }
-                  sx={{ flex: 1 }}
-                />
                 <Button
                   size="small"
                   variant="outlined"
                   onClick={() => void handleSaveProfile()}
                   disabled={!profileName.trim() || !url || isDuplicateProfileName}
-                  sx={{ mt: 0.5 }}
                 >
                   Save Profile
                 </Button>
               </Box>
-            </Box>
+              <TextField
+                size="small"
+                label="PIN (optional)"
+                type="password"
+                placeholder="Encrypt with PIN"
+                value={savePin}
+                onChange={(e) => setSavePin(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void handleSaveProfile();
+                }}
+                helperText={
+                  savePin.trim()
+                    ? "Credentials will be encrypted and stored locally"
+                    : "Leave blank to use session storage only"
+                }
+              />
+            </>
           )}
         </Box>
       </DialogContent>
