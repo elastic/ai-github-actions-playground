@@ -9,6 +9,7 @@ import { useLLMStore } from "../../src/store/useLLMStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { useUIStore } from "../../src/store/useUIStore";
+import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 
 /**
  * Each entry pairs a store's display name with the reset method name it exposes.
@@ -24,6 +25,7 @@ const STORES_WITH_RESET_API = [
   { name: "useQueryStore", store: useQueryStore, method: "resetQueryState" },
   { name: "useTracesStore", store: useTracesStore, method: "resetFilters" },
   { name: "useUIStore", store: useUIStore, method: "resetUIState" },
+  { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },
 ] as const;
 
 describe("storeResetters registry", () => {

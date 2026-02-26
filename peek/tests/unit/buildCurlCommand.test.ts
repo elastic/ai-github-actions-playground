@@ -69,6 +69,19 @@ describe("buildCurlCommand", () => {
     expect(cmd).not.toContain("///");
   });
 
+  it("uses proxy URL and derives proxy host header from connection url", () => {
+    const cmd = buildCurlCommand(
+      makeConnection({
+        proxyUrl: "http://localhost:3000/_es/",
+      }),
+      "GET",
+      "/",
+      "",
+    );
+    expect(cmd).toContain(`'http://localhost:3000/_es/'`);
+    expect(cmd).toContain(`-H 'X-Elastic-Peek-Proxy-Host: ${BASE_URL}'`);
+  });
+
   it("escapes single quotes in the body to keep the shell command valid", () => {
     const body = `{"query":"it's a test"}`;
     const cmd = buildCurlCommand(makeConnection(), "POST", "/_search", body);

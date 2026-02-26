@@ -32,9 +32,10 @@ interface Props {
 
 export default function PanelContainer({ panel }: Props) {
   const connection = useConnectionStore((s) => s.connection);
-  const { timeRange, parameters, duplicatePanel } = useDashboardStore(
+  const { timeRange, timeZone, parameters, duplicatePanel } = useDashboardStore(
     useShallow((s) => ({
       timeRange: s.dashboard.timeRange,
+      timeZone: s.dashboard.timeZone,
       parameters: s.dashboard.parameters,
       duplicatePanel: s.duplicatePanel,
     })),
@@ -298,6 +299,7 @@ export default function PanelContainer({ panel }: Props) {
             connection={connection}
             timeRange={timeRange}
             parameters={parameters}
+            timeZone={timeZone}
           />
         ) : error ? (
           <Box
@@ -334,6 +336,7 @@ export default function PanelContainer({ panel }: Props) {
             options={panel.options}
             onExportReady={handleExportReady}
             onExportCsv={supportsCSVExport ? handleExportCsv : undefined}
+            timeZone={timeZone}
           />
         ) : (
           <Box

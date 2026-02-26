@@ -15,11 +15,12 @@ const descriptor: VizRegistryDescriptor = {
     supportsQuery: true,
     defaultOptions: () =>
       ({ smooth: true, showArea: true, stacked: false }) satisfies TimeSeriesOptions,
-    renderComponent: ({ data, options, onExportReady }) => (
+    renderComponent: ({ data, options, onExportReady, timeZone }) => (
       <TimeSeriesChart
         data={data}
         options={options as TimeSeriesOptions | undefined}
         onExportReady={onExportReady}
+        timeZone={timeZone}
       />
     ),
     OptionsEditor: TimeSeriesOptionsEditor,

@@ -40,7 +40,8 @@ describe("ConnectionDialog", () => {
     render(<ConnectionDialog />);
 
     expect(screen.getByLabelText(/elasticsearch url/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/api key/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^api key$/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /proxy settings/i })).toBeInTheDocument();
   });
 
   it('disables "Connect" button when URL is empty', () => {
@@ -48,6 +49,19 @@ describe("ConnectionDialog", () => {
 
     const connectButton = screen.getByRole("button", { name: /^connect$/i });
     expect(connectButton).toBeDisabled();
+  });
+
+  it("keeps Connect/Test/Save Profile disabled when only proxy URL is provided", async () => {
+    const user = userEvent.setup();
+    render(<ConnectionDialog />);
+
+    await user.click(screen.getByRole("button", { name: /proxy settings/i }));
+    await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
+    await user.type(screen.getByLabelText(/profile name/i), "Proxy only");
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
   });
 
   it("enables Connect button after entering a URL", async () => {
@@ -101,7 +115,9 @@ describe("ConnectionDialog", () => {
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
-    await user.type(screen.getByLabelText(/api key/i), "dev-key");
+    await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
+    await user.click(screen.getByRole("button", { name: /proxy settings/i }));
+    await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
     await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
@@ -110,6 +126,7 @@ describe("ConnectionDialog", () => {
     expect(profiles[0].name).toBe("Dev Cluster");
     expect(profiles[0].connection.url).toBe("https://dev.example.com");
     expect(profiles[0].connection.apiKey).toBe("dev-key");
+    expect(profiles[0].connection.proxyUrl).toBe("http://localhost:3000/_es");
   });
 
   it("displays saved profiles in the dialog", () => {

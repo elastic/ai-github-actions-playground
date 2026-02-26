@@ -1,3 +1,9 @@
+import type {
+  ProfilingTopFunctionsRequest,
+  ProfilingFlamegraphRequest,
+} from "../../services/es/client";
+import { escapeEsqlString } from "../../services/es/esqlUtils";
+
 export interface ProfilingFilters {
   executableName: string | null;
   threadName: string | null;
@@ -18,29 +24,11 @@ export const EMPTY_FILTERS: ProfilingFilters = {
   limit: 100,
 };
 
-export interface ProfilingTopFunctionsRequest {
-  limit: number;
-  query: {
-    bool: {
-      filter: Array<Record<string, unknown>>;
-    };
-  };
-}
-
-export interface ProfilingFlamegraphRequest {
-  sample_size: number;
-  query: ProfilingTopFunctionsRequest["query"];
-}
-
-function escapeEsqlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
 function quoteList(values: string[]): string {
   return values.map((value) => `"${escapeEsqlString(value)}"`).join(", ");
 }
 
-export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
+function buildProfilingWhereClause(filters: ProfilingFilters): string[] {
   const where: string[] = [`@timestamp >= ${filters.timeFrom}`, `@timestamp <= ${filters.timeTo}`];
   if (filters.executableName) {
     where.push(`process.executable.name == "${escapeEsqlString(filters.executableName)}"`);
@@ -54,6 +42,11 @@ export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
   if (filters.hostName) {
     where.push(`host.name == "${escapeEsqlString(filters.hostName)}"`);
   }
+  return where;
+}
+
+export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
+  const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
     `WHERE ${where.join(" AND ")}`,
@@ -76,19 +69,7 @@ export function buildStackframeLookupQuery(frameIds: string[]): string {
 }
 
 export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
-  const where: string[] = [`@timestamp >= ${filters.timeFrom}`, `@timestamp <= ${filters.timeTo}`];
-  if (filters.executableName) {
-    where.push(`process.executable.name == "${escapeEsqlString(filters.executableName)}"`);
-  }
-  if (filters.threadName) {
-    where.push(`process.thread.name == "${escapeEsqlString(filters.threadName)}"`);
-  }
-  if (filters.serviceName) {
-    where.push(`service.name == "${escapeEsqlString(filters.serviceName)}"`);
-  }
-  if (filters.hostName) {
-    where.push(`host.name == "${escapeEsqlString(filters.hostName)}"`);
-  }
+  const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
     `WHERE ${where.join(" AND ")}`,

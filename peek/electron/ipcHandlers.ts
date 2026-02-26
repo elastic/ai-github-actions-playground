@@ -3,25 +3,7 @@ import path from "path";
 
 import { app, ipcMain, net, safeStorage } from "electron";
 
-// ---------------------------------------------------------------------------
-// Types shared between main process and renderer (via preload)
-// ---------------------------------------------------------------------------
-
-export interface ESFetchRequest {
-  url: string;
-  method?: string;
-  headers?: Record<string, string>;
-  body?: string;
-  timeoutMs?: number;
-}
-
-export interface ESFetchResponse {
-  ok: boolean;
-  status: number;
-  statusText: string;
-  body: string;
-  contentType: string;
-}
+import type { ESFetchRequest, ESFetchResponse } from "../src/ipcTypes.js";
 
 // ---------------------------------------------------------------------------
 // ES HTTP transport — uses Electron's net module (no CORS restrictions)
