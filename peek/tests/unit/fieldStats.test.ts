@@ -7,6 +7,7 @@ import {
   buildTopValuesQuery,
   buildMinMaxQuery,
   fetchFieldStats,
+  computeConfidenceLevel,
 } from "../../src/services/es/fieldStats";
 import type { ElasticsearchClient } from "../../src/services/es/client";
 
@@ -64,6 +65,36 @@ describe("isNumericOrDateType", () => {
     expect(isNumericOrDateType("text")).toBe(false);
     expect(isNumericOrDateType("boolean")).toBe(false);
     expect(isNumericOrDateType("geo_point")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeConfidenceLevel
+// ---------------------------------------------------------------------------
+
+describe("computeConfidenceLevel", () => {
+  it('returns "high" when totalCount is well below the sample limit', () => {
+    // 1,000 docs against default 50,000 sample → clearly full coverage
+    expect(computeConfidenceLevel(1000)).toBe("high");
+    expect(computeConfidenceLevel(0)).toBe("high");
+    expect(computeConfidenceLevel(24999)).toBe("high");
+  });
+
+  it('returns "medium" when totalCount is between 50% and 100% of the sample limit', () => {
+    expect(computeConfidenceLevel(25000)).toBe("medium");
+    expect(computeConfidenceLevel(40000)).toBe("medium");
+    expect(computeConfidenceLevel(49999)).toBe("medium");
+  });
+
+  it('returns "low" when the sample limit is reached', () => {
+    expect(computeConfidenceLevel(50000)).toBe("low");
+    expect(computeConfidenceLevel(99999)).toBe("low");
+  });
+
+  it("respects a custom sampleSize", () => {
+    expect(computeConfidenceLevel(600, 1000)).toBe("medium"); // 60% of 1000
+    expect(computeConfidenceLevel(200, 1000)).toBe("high"); // 20% of 1000
+    expect(computeConfidenceLevel(1000, 1000)).toBe("low"); // at cap
   });
 });
 
@@ -153,6 +184,8 @@ describe("fetchFieldStats — keyword field", () => {
     ]);
     expect(result.min).toBeUndefined();
     expect(result.max).toBeUndefined();
+    expect(result.sampleCoverage).toBeCloseTo(1000 / 50000);
+    expect(result.confidence).toBe("high");
   });
 
   it("returns empty topValues when no rows are returned", async () => {
