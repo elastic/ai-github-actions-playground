@@ -10,6 +10,14 @@ Use Recent queries in the panel editor to re-apply a query that previously ran s
 
 Use the time picker and refresh interval controls in the header to control the query time range.
 
+Use the timezone picker (globe icon) in the header to lock all time-series charts on the dashboard to a specific IANA timezone (for example, UTC or America/New_York).
+
+When a timezone is locked, axis labels and tooltip timestamps in every time-series panel render in that timezone instead of the browser's local time.
+
+The selected timezone is saved with the dashboard and travels with export/import, so collaborators see timestamps in the same timezone regardless of their browser locale.
+
+To return to browser-local time, select **Browser local** from the timezone picker.
+
 Export your dashboard as a JSON file from the overflow menu, and import it on another machine.
 
 Use dashboard variables in panel queries to reuse one dashboard across environments and drill-down contexts without duplicating panels.
