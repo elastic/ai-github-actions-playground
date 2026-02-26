@@ -401,7 +401,8 @@ describe("inferFrameType", () => {
 
   it("detects kernel frames from file paths", () => {
     expect(inferFrameType("entry_SYSCALL_64", "/kernel/entry.S")).toBe("kernel");
-    expect(inferFrameType("some_func", "/arch/x86/entry.S")).toBe("kernel");
+    expect(inferFrameType("some_func", "/arch/x86/entry.s")).toBe("kernel");
+    expect(inferFrameType("trampoline", "trampoline.S")).toBe("kernel");
   });
 
   it("detects runtime frames", () => {

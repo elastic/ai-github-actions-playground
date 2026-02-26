@@ -62,7 +62,7 @@ export function inferFrameType(functionName: string, fileName: string): FrameTyp
     fn.startsWith("__") ||
     file.includes("/kernel/") ||
     file.includes("/arch/") ||
-    file.endsWith(".S")
+    file.endsWith(".s")
   ) {
     return "kernel";
   }

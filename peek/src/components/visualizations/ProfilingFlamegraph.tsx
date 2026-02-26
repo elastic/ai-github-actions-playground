@@ -39,6 +39,17 @@ function flattenTree(
   pathPrefix: string[],
 ): FlatRect[] {
   const rects: FlatRect[] = [];
+  flattenTreeInto(rects, node, depth, start, pathPrefix);
+  return rects;
+}
+
+function flattenTreeInto(
+  rects: FlatRect[],
+  node: FlamegraphNode,
+  depth: number,
+  start: number,
+  pathPrefix: string[],
+): void {
   if (depth > 0) {
     rects.push({
       name: node.name,
@@ -51,10 +62,10 @@ function flattenTree(
   }
   let offset = start;
   for (const child of node.children) {
-    rects.push(...flattenTree(child, depth + 1, offset, [...pathPrefix, child.name]));
+    const childPath = [...pathPrefix, child.name];
+    flattenTreeInto(rects, child, depth + 1, offset, childPath);
     offset += child.value;
   }
-  return rects;
 }
 
 const FRAME_TYPE_COLORS: Record<FrameType, string[]> = {
@@ -83,6 +94,11 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const muiTheme = useTheme();
   const [zoomPath, setZoomPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [prevTree, setPrevTree] = useState(tree);
+  if (prevTree !== tree) {
+    setPrevTree(tree);
+    setZoomPath([]);
+  }
 
   const visibleTree = useMemo(() => findSubtreeByPath(tree, zoomPath), [tree, zoomPath]);
 
@@ -197,7 +213,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     }
   }, [zoomPath, onFrameClick]);
 
-  if (tree.value === 0) {
+  if (tree.value === 0 || !option) {
     return (
       <Box sx={{ p: 3 }}>
         <Typography variant="body2" color="text.secondary">

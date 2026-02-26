@@ -142,10 +142,14 @@ export default function ProfilingPage() {
             readColumn(row, frameResponse.columns, "Stackframe.function.name") ?? "(unknown)",
           ),
           fileName: String(readColumn(row, frameResponse.columns, "Stackframe.file.name") ?? ""),
-          lineNumber: Number(readColumn(row, frameResponse.columns, "Stackframe.line.number") ?? 0),
-          functionOffset: Number(
-            readColumn(row, frameResponse.columns, "Stackframe.function.offset") ?? 0,
-          ),
+          lineNumber: (() => {
+            const v = readColumn(row, frameResponse.columns, "Stackframe.line.number");
+            return v != null ? Number(v) : null;
+          })(),
+          functionOffset: (() => {
+            const v = readColumn(row, frameResponse.columns, "Stackframe.function.offset");
+            return v != null ? Number(v) : null;
+          })(),
         }))
         .filter((frame) => frame.id.length > 0);
 
