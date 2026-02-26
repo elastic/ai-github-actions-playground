@@ -109,9 +109,9 @@ else
     [[ -z "$pr_number" ]] && continue
     echo "  PR #$pr_number: $pr_title"
 
-    ACTION_REQUIRED_RUNS=$(gh run list "${REPO_ARGS[@]}" --limit 200 --commit "$pr_sha" \
-      --json databaseId,status,workflowName,event \
-      --jq '.[] | select(.event == "pull_request" and .status == "action_required") | "\(.databaseId)\t\(.workflowName)"')
+    ACTION_REQUIRED_RUNS=$(gh run list "${REPO_ARGS[@]}" --limit 200 \
+      --json databaseId,status,workflowName,event,headSha \
+      --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$pr_sha"'") | "\(.databaseId)\t\(.workflowName)"')
 
     if [[ -z "$ACTION_REQUIRED_RUNS" ]]; then
       echo "    No runs awaiting approval."

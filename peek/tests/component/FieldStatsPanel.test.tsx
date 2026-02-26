@@ -63,6 +63,8 @@ function keywordStats(overrides: Partial<FieldStats> = {}): FieldStats {
       { value: "web-01", count: 600 },
       { value: "web-02", count: 300 },
     ],
+    sampleCoverage: 0.02,
+    confidence: "high",
     ...overrides,
   };
 }
@@ -77,6 +79,8 @@ function numericStats(overrides: Partial<FieldStats> = {}): FieldStats {
     cardinality: 200,
     min: 0,
     max: 99999,
+    sampleCoverage: 0.1,
+    confidence: "high",
     ...overrides,
   };
 }
@@ -309,5 +313,73 @@ describe("FieldStatsPanel", () => {
 
     expect(screen.getByText("host.name")).toBeInTheDocument();
     expect(screen.getByText("keyword")).toBeInTheDocument();
+  });
+
+  it('renders a "High confidence" badge for a small stream', async () => {
+    fetchFieldStatsMock.mockResolvedValue(
+      keywordStats({ totalCount: 1000, sampleCoverage: 0.02, confidence: "high" }),
+    );
+
+    render(
+      <MemoryRouter>
+        <FieldStatsPanel
+          connection={connection}
+          streamName="logs-app"
+          fieldName="host.name"
+          fieldType="keyword"
+          onClose={noop}
+          onOpenInQueryLab={noop}
+        />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId("field-stats-confidence-badge");
+    expect(screen.getByTestId("field-stats-confidence-badge")).toHaveTextContent("High confidence");
+  });
+
+  it('renders a "Medium confidence" badge when the stream approaches the sample limit', async () => {
+    fetchFieldStatsMock.mockResolvedValue(
+      keywordStats({ totalCount: 40000, sampleCoverage: 0.8, confidence: "medium" }),
+    );
+
+    render(
+      <MemoryRouter>
+        <FieldStatsPanel
+          connection={connection}
+          streamName="logs-app"
+          fieldName="host.name"
+          fieldType="keyword"
+          onClose={noop}
+          onOpenInQueryLab={noop}
+        />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId("field-stats-confidence-badge");
+    expect(screen.getByTestId("field-stats-confidence-badge")).toHaveTextContent(
+      "Medium confidence",
+    );
+  });
+
+  it('renders a "Low confidence" badge when the sample limit is reached', async () => {
+    fetchFieldStatsMock.mockResolvedValue(
+      keywordStats({ totalCount: 50000, sampleCoverage: 1.0, confidence: "low" }),
+    );
+
+    render(
+      <MemoryRouter>
+        <FieldStatsPanel
+          connection={connection}
+          streamName="logs-app"
+          fieldName="host.name"
+          fieldType="keyword"
+          onClose={noop}
+          onOpenInQueryLab={noop}
+        />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId("field-stats-confidence-badge");
+    expect(screen.getByTestId("field-stats-confidence-badge")).toHaveTextContent("Low confidence");
   });
 });

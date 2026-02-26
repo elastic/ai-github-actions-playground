@@ -10,6 +10,9 @@ export interface FieldTopValue {
   count: number;
 }
 
+/** Confidence level for field stats derived from sample coverage. */
+export type ConfidenceLevel = "high" | "medium" | "low";
+
 export interface FieldStats {
   fieldName: string;
   fieldType: string;
@@ -27,6 +30,10 @@ export interface FieldStats {
   min?: string | number | null;
   /** Maximum value — populated for numeric and date types. */
   max?: string | number | null;
+  /** Ratio of sampled documents to the sample limit (0–1). A value of 1 means the limit was reached. */
+  sampleCoverage: number;
+  /** Confidence level derived from sample coverage. */
+  confidence: ConfidenceLevel;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +75,25 @@ export function isKeywordLikeType(type: string): boolean {
 
 export function isNumericOrDateType(type: string): boolean {
   return NUMERIC_TYPES.has(type) || DATE_TYPES.has(type);
+}
+
+/**
+ * Derive a confidence level from how much of the sample limit was consumed.
+ *
+ * - **high** – fewer than half the sample slots were used, meaning the stream is
+ *   small enough that all documents were analysed.
+ * - **medium** – between 50 % and 100 % of the sample was consumed; stats are
+ *   complete but the stream is approaching the cap.
+ * - **low** – the sample limit was reached; the stream has more data than the
+ *   sample covers, so stats reflect only a subset of documents.
+ */
+export function computeConfidenceLevel(
+  totalCount: number,
+  sampleSize: number = DEFAULT_SAMPLE_SIZE,
+): ConfidenceLevel {
+  if (totalCount >= sampleSize) return "low";
+  if (totalCount >= sampleSize * 0.5) return "medium";
+  return "high";
 }
 
 // ---------------------------------------------------------------------------
@@ -154,6 +180,8 @@ export async function fetchFieldStats(
     nonNullCount,
     nullPercent,
     cardinality,
+    sampleCoverage: totalCount / DEFAULT_SAMPLE_SIZE,
+    confidence: computeConfidenceLevel(totalCount),
   };
 
   if (isKeywordLikeType(fieldType)) {
