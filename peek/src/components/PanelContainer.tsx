@@ -23,8 +23,8 @@ import { createPersesEsqlDatasource } from "../services/perses/esqlDatasource";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import { toCsv } from "./discoverUtils";
-import Visualization from "./visualizations/Visualization";
-import { getVizEntry } from "./visualizations/vizRegistry";
+import PersesPanelRenderer from "./perses/PersesPanelRenderer";
+import { getPersesPanelEntry } from "./perses/panelRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
 
 interface Props {
@@ -43,7 +43,7 @@ export default function PanelContainer({ panel }: Props) {
   );
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
 
-  const vizEntry = getVizEntry(panel.visualization);
+  const vizEntry = getPersesPanelEntry(panel.visualization);
   const supportsQuery = vizEntry?.supportsQuery ?? true;
 
   const [data, setData] = useState<EsqlResponse | null>(null);
@@ -292,7 +292,7 @@ export default function PanelContainer({ panel }: Props) {
 
       <Box sx={{ flex: 1, overflow: "auto", position: "relative", p: 1 }}>
         {!supportsQuery ? (
-          <Visualization
+          <PersesPanelRenderer
             type={panel.visualization}
             query={panel.query}
             data={{ columns: [], values: [] } as EsqlResponse}
@@ -331,7 +331,7 @@ export default function PanelContainer({ panel }: Props) {
             <CircularProgress size={32} />
           </Box>
         ) : data ? (
-          <Visualization
+          <PersesPanelRenderer
             type={panel.visualization}
             data={data}
             options={panel.options}

@@ -34,7 +34,7 @@ function MockVisualization({
   return <div>Visualization mock</div>;
 }
 
-vi.mock("../../src/components/visualizations/Visualization", () => ({
+vi.mock("../../src/components/perses/PersesPanelRenderer", () => ({
   default: MockVisualization,
 }));
 

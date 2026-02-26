@@ -5,6 +5,7 @@ import { createPersesEsqlDatasource } from "../../src/services/perses/esqlDataso
 describe("createPersesEsqlDatasource", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("delegates query execution to ElasticsearchClient.query", async () => {
