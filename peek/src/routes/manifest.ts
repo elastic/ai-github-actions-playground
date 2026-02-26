@@ -14,6 +14,7 @@ import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SpeedIcon from "@mui/icons-material/Speed";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import StorageIcon from "@mui/icons-material/Storage";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
@@ -26,6 +27,7 @@ import ExplorePage from "../components/ExplorePage";
 import FleetAgentPage from "../components/FleetAgentPage";
 import FleetPage from "../components/FleetPage";
 import IngestPipelinesPage from "../components/IngestPipelinesPage";
+import IndicesPage from "../components/IndicesPage";
 import RolesPage from "../components/RolesPage";
 import SettingsPage from "../components/SettingsPage";
 import TracesPage from "../components/traces/TracesPage";
@@ -166,6 +168,19 @@ export const PAGE_MANIFEST = {
       icon: createElement(DatasetIcon, { fontSize: "small" }),
     },
   },
+  indices: {
+    path: "/indices",
+    component: IndicesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Indices",
+      group: "System",
+      order: 25,
+      showInSidebar: true,
+      icon: createElement(StorageIcon, { fontSize: "small" }),
+    },
+  },
   ingestPipelines: {
     path: "/ingest-pipelines",
     component: IngestPipelinesPage,
@@ -174,7 +189,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Ingest Pipelines",
       group: "System",
-      order: 25,
+      order: 26,
       showInSidebar: true,
       icon: createElement(AccountTreeIcon, { fontSize: "small" }),
     },
