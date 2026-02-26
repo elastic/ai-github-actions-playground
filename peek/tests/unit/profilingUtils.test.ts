@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { joinStacktraces, parseFrameIds } from "../../src/components/profiling/profilingUtils";
+import {
+  buildFlamegraphTree,
+  joinStacktraces,
+  parseFrameIds,
+} from "../../src/components/profiling/profilingUtils";
+import type { SymbolizedStacktrace } from "../../src/components/profiling/profilingUtils";
 
 describe("profilingUtils", () => {
   it("parses frame IDs from compact payload (legacy format)", () => {
@@ -46,5 +51,109 @@ describe("profilingUtils", () => {
     expect(result).toHaveLength(1);
     expect(result[0]!.frames[0]!.functionName).toBe("main");
     expect(result[0]!.count).toBe(12);
+  });
+});
+
+describe("buildFlamegraphTree", () => {
+  const makeFrame = (functionName: string) => ({
+    frameId: functionName,
+    functionName,
+    fileName: "",
+    lineNumber: null,
+    functionOffset: null,
+  });
+
+  it("returns an empty root for no stacktraces", () => {
+    const tree = buildFlamegraphTree([]);
+    expect(tree.name).toBe("root");
+    expect(tree.value).toBe(0);
+    expect(tree.children).toHaveLength(0);
+  });
+
+  it("builds a single-path tree from one stacktrace", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 5,
+        serviceName: "svc",
+        hostName: "host",
+        frames: [makeFrame("main"), makeFrame("foo"), makeFrame("bar")],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(tree.value).toBe(5);
+    expect(tree.children).toHaveLength(1);
+    expect(tree.children[0]!.name).toBe("main");
+    expect(tree.children[0]!.value).toBe(5);
+    expect(tree.children[0]!.children[0]!.name).toBe("foo");
+    expect(tree.children[0]!.children[0]!.children[0]!.name).toBe("bar");
+    expect(tree.children[0]!.children[0]!.children[0]!.value).toBe(5);
+  });
+
+  it("merges shared prefixes from multiple stacktraces", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 3,
+        serviceName: "",
+        hostName: "",
+        frames: [makeFrame("main"), makeFrame("foo")],
+      },
+      {
+        stacktraceId: "st2",
+        count: 7,
+        serviceName: "",
+        hostName: "",
+        frames: [makeFrame("main"), makeFrame("bar")],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(tree.value).toBe(10);
+    const mainNode = tree.children[0]!;
+    expect(mainNode.name).toBe("main");
+    expect(mainNode.value).toBe(10);
+    expect(mainNode.children).toHaveLength(2);
+    const fooNode = mainNode.children.find((c) => c.name === "foo")!;
+    const barNode = mainNode.children.find((c) => c.name === "bar")!;
+    expect(fooNode.value).toBe(3);
+    expect(barNode.value).toBe(7);
+  });
+
+  it("handles stacktraces with unknown frames gracefully", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 2,
+        serviceName: "",
+        hostName: "",
+        frames: [makeFrame("main"), makeFrame("(unknown)"), makeFrame("leaf")],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(tree.value).toBe(2);
+    expect(tree.children[0]!.children[0]!.name).toBe("(unknown)");
+    expect(tree.children[0]!.children[0]!.children[0]!.name).toBe("leaf");
+  });
+
+  it("handles multiple roots (different top-level functions)", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [makeFrame("main")],
+      },
+      {
+        stacktraceId: "st2",
+        count: 2,
+        serviceName: "",
+        hostName: "",
+        frames: [makeFrame("init")],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(tree.value).toBe(3);
+    expect(tree.children).toHaveLength(2);
   });
 });
