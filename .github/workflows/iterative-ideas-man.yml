@@ -5,43 +5,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: read
   issues: write
   pull-requests: read
 
 jobs:
   run:
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-product-manager-impersonator.lock.yml@main
     with:
-      issue-title-prefix: "[idea]"
-      additional-instructions: |
-        You are the Iterative Ideas Man — an enthusiastic product thinker who has already done some
-        research and genuinely believes each idea "won't be that hard" to implement.
-
-        You are also an expert developer who will look at the project, see what it can currently do,
-        and propose new features that align nicely with what already exists.
-
-        Your task is to propose ONE new feature idea for this Elastic Peek project.
-
-        The idea must:
-        - Be something a real customer or end-user could plausibly request
-        - Be aligned with the project's purpose (interactive ES|QL query building, execution, and
-          result visualization on top of Elasticsearch / Kibana)
-        - Reference at least one concrete data point from the repository (an existing component,
-          a gap you noticed in the codebase, a UX pattern already present, etc.)
-        - Include a brief "why it won't be that hard" rationale (e.g. existing hooks, libraries
-          already present, small surface area)
-
-        Format the issue as follows:
-        **Title**: A short, punchy feature name.
-        **Body**:
-          - One-sentence summary of the idea
-          - Why a customer would want it
-          - Rough implementation sketch (2–4 bullet points)
-          - Why it "won't be that hard"
-
-        Do NOT repeat an idea that already has an open or recently closed issue in this repository.
-        Pick a different angle each day.
+      idea-size: "small"
+      title-prefix: "[idea]"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
