@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildFlamegraphTree,
   joinStacktraces,
+  normalizeTopFunctions,
   parseFrameIds,
 } from "../../src/components/profiling/profilingUtils";
 import type { SymbolizedStacktrace } from "../../src/components/profiling/profilingUtils";
@@ -155,5 +156,75 @@ describe("buildFlamegraphTree", () => {
     const tree = buildFlamegraphTree(stacks);
     expect(tree.value).toBe(3);
     expect(tree.children).toHaveLength(2);
+  });
+});
+
+describe("normalizeTopFunctions", () => {
+  it("returns empty array for non-array payloads", () => {
+    expect(normalizeTopFunctions(null)).toEqual([]);
+    expect(normalizeTopFunctions(undefined)).toEqual([]);
+    expect(normalizeTopFunctions("string")).toEqual([]);
+    expect(normalizeTopFunctions({})).toEqual([]);
+  });
+
+  it("parses canonical API response with frame.function_name", () => {
+    const payload = {
+      topn: [
+        { count: 123, frame: { function_name: "runtime.schedule" } },
+        { count: 50, frame: { function_name: "main.main" } },
+      ],
+    };
+    const rows = normalizeTopFunctions(payload);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.functionName).toBe("runtime.schedule");
+    expect(rows[0]!.totalCount).toBe(123);
+    expect(rows[1]!.functionName).toBe("main.main");
+  });
+
+  it("parses canonical API response with self_count and total_count", () => {
+    const payload = {
+      topn: [{ self_count: 10, total_count: 100, frame: { function_name: "foo" } }],
+    };
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.selfCount).toBe(10);
+    expect(rows[0]!.totalCount).toBe(100);
+  });
+
+  it("falls back to flat function_name key (legacy shape)", () => {
+    const payload = [{ function_name: "legacyFn", self_count: 5, total_count: 20 }];
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.functionName).toBe("legacyFn");
+    expect(rows[0]!.selfCount).toBe(5);
+    expect(rows[0]!.totalCount).toBe(20);
+  });
+
+  it("falls back to Stackframe.function.name key", () => {
+    const payload = [{ "Stackframe.function.name": "stackframeFn" }];
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.functionName).toBe("stackframeFn");
+  });
+
+  it("falls back to name key", () => {
+    const payload = [{ name: "namedFn" }];
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.functionName).toBe("namedFn");
+  });
+
+  it("uses (unknown) when no name field is present", () => {
+    const payload = [{ count: 5 }];
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.functionName).toBe("(unknown)");
+  });
+
+  it("frame.function_name takes priority over flat function_name", () => {
+    const payload = [{ function_name: "flat", frame: { function_name: "nested" } }];
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.functionName).toBe("nested");
+  });
+
+  it("falls back to count when total_count is absent", () => {
+    const payload = { topn: [{ count: 77, frame: { function_name: "fn" } }] };
+    const rows = normalizeTopFunctions(payload);
+    expect(rows[0]!.totalCount).toBe(77);
   });
 });

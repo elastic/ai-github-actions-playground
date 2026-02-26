@@ -81,6 +81,57 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
   return root;
 }
 
+export interface TopFunctionRow {
+  functionName: string;
+  selfCount: number | null;
+  totalCount: number | null;
+}
+
+/**
+ * Normalize the response from the `/_profiling/topn/functions` API into a
+ * flat list of {@link TopFunctionRow}.
+ *
+ * The canonical API response nests the function name under
+ * `topn[].frame.function_name`, but older / alternative payloads may surface
+ * it as a flat key (`function_name`, `Stackframe.function.name`, or `name`).
+ * Both shapes are supported so that legacy data and the current API format
+ * both work without changes to callers.
+ */
+export function normalizeTopFunctions(payload: unknown): TopFunctionRow[] {
+  const arrayPayload = Array.isArray(payload)
+    ? payload
+    : typeof payload === "object" && payload !== null
+      ? Object.values(payload).find((value) => Array.isArray(value))
+      : null;
+  if (!Array.isArray(arrayPayload)) return [];
+  return arrayPayload
+    .map((item) => {
+      if (typeof item !== "object" || item === null) return null;
+      const record = item as Record<string, unknown>;
+      const frame =
+        typeof record.frame === "object" && record.frame !== null
+          ? (record.frame as Record<string, unknown>)
+          : null;
+      return {
+        functionName: String(
+          frame?.function_name ??
+            record.function_name ??
+            record["Stackframe.function.name"] ??
+            record.name ??
+            "(unknown)",
+        ),
+        selfCount: typeof record.self_count === "number" ? record.self_count : null,
+        totalCount:
+          typeof record.total_count === "number"
+            ? record.total_count
+            : typeof record.count === "number"
+              ? record.count
+              : null,
+      } satisfies TopFunctionRow;
+    })
+    .filter((row): row is TopFunctionRow => row !== null);
+}
+
 export function joinStacktraces(
   events: ProfilingEvent[],
   stacktraces: StacktraceFrameMap[],
