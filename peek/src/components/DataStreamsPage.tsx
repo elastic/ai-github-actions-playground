@@ -22,6 +22,8 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 
+import FieldStatsPanel from "./FieldStatsPanel";
+
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
     .flatMap(([name, capabilities]) =>
@@ -44,6 +46,7 @@ export default function DataStreamsPage() {
   const [dataStreams, setDataStreams] = useState<DataStreamInfo[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [fieldCaps, setFieldCaps] = useState<FieldCapsResponse | null>(null);
+  const [selectedField, setSelectedField] = useState<{ name: string; type: string } | null>(null);
   const fieldRequestIdRef = useRef(0);
 
   const selectedDataStream = useMemo(
@@ -126,6 +129,11 @@ export default function DataStreamsPage() {
     setSelectedName(firstVisible?.name ?? null);
   }, [showSystemStreams, selectedName, dataStreams]);
 
+  // Clear selected field when the active stream changes.
+  useEffect(() => {
+    setSelectedField(null);
+  }, [selectedName]);
+
   const filteredStreams = useMemo(() => {
     const term = search.trim().toLowerCase();
     return dataStreams.filter((stream) => {
@@ -147,6 +155,14 @@ export default function DataStreamsPage() {
     setDiscoverQueryDraft(`FROM ${selectedName} | SORT @timestamp DESC | LIMIT 50`);
     navigate(PAGE_MANIFEST.discover.path);
   }, [selectedName, navigate, setDiscoverQueryDraft]);
+
+  const handleFieldStatsQuery = useCallback(
+    (query: string) => {
+      setDiscoverQueryDraft(query);
+      navigate(PAGE_MANIFEST.discover.path);
+    },
+    [navigate, setDiscoverQueryDraft],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
@@ -317,9 +333,29 @@ export default function DataStreamsPage() {
                 {fieldRows.map((field) => (
                   <Stack
                     key={`${field.name}:${field.type}`}
+                    component="button"
                     direction="row"
                     spacing={1}
-                    sx={{ py: 0.5 }}
+                    onClick={() => setSelectedField({ name: field.name, type: field.type })}
+                    aria-pressed={
+                      selectedField?.name === field.name && selectedField?.type === field.type
+                    }
+                    sx={{
+                      py: 0.5,
+                      px: 0.5,
+                      width: "100%",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderRadius: 1,
+                      alignItems: "center",
+                      bgcolor:
+                        selectedField?.name === field.name && selectedField?.type === field.type
+                          ? "action.selected"
+                          : "transparent",
+                      "&:hover": { bgcolor: "action.hover" },
+                    }}
                   >
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {field.name}
@@ -336,6 +372,17 @@ export default function DataStreamsPage() {
             )}
           </Box>
         </Paper>
+
+        {selectedField && connection && selectedName && (
+          <FieldStatsPanel
+            connection={connection}
+            streamName={selectedName}
+            fieldName={selectedField.name}
+            fieldType={selectedField.type}
+            onClose={() => setSelectedField(null)}
+            onOpenInQueryLab={handleFieldStatsQuery}
+          />
+        )}
       </Box>
     </Box>
   );
