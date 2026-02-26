@@ -21,3 +21,5 @@ Import and export support two scopes: active dashboard JSON for sharing one view
 Reset behavior is also scoped: reset the active dashboard (safe local rollback) or reset the full workspace (explicit destructive action).
 
 Connection profiles remain workspace-level by default. Dashboards can optionally store a preferred profile hint without forcing automatic profile switches.
+
+The timezone lock setting is stored inside the dashboard definition and travels with export/import. When sharing a dashboard JSON, recipients see time-series charts in the same fixed timezone that was active when the dashboard was exported, regardless of their own browser locale. Reset the active dashboard or import a fresh copy to clear a locked timezone.
