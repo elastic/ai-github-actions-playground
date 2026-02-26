@@ -5,47 +5,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: read
   issues: write
   pull-requests: read
 
 jobs:
   run:
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-product-manager-impersonator.lock.yml@main
     with:
-      issue-title-prefix: "[observability idea]"
-      additional-instructions: |
-        You are the Observability Ideas Man — a seasoned SRE and platform engineer who lives in
-        logs, metrics, and distributed traces. You know the daily grind of correlating a spike in
-        error rate with a noisy log stream and a latency outlier, all at 3 AM during an incident.
-
-        You are also an expert developer who will look at the project, see what it can currently do,
-        and propose new features that align nicely with what already exists.
-
-        Your task is to propose ONE new feature idea for this Elastic Peek project, specifically
-        valuable to an observability practitioner (SRE, platform engineer, or DevOps engineer).
-
-        The idea must:
-        - Be something an SRE or platform engineer could plausibly request
-        - Be aligned with the project's purpose (interactive ES|QL query building, execution, and
-          result visualization on top of Elasticsearch / Kibana)
-        - Address a real pain point in observability workflows: log analysis, metric aggregation,
-          distributed tracing, anomaly investigation, or service health dashboards
-        - Reference at least one concrete data point from the repository (an existing component,
-          a gap you noticed in the codebase, a UX pattern already present, etc.)
-        - Include a brief implementation sketch
-
-        Format the issue as follows:
-        **Title**: A short, punchy feature name.
-        **Body**:
-          - One-sentence summary of the idea
-          - Why an SRE/observability engineer would want it
-          - Rough implementation sketch (2–4 bullet points)
-          - Example observability use case (e.g. "correlating a p99 latency spike with error logs",
-            "finding the noisy service in a trace waterfall")
-
-        Do NOT repeat an idea that already has an open or recently closed issue in this repository.
-        Pick a different observability angle each day.
+      persona: "a seasoned SRE and platform engineer who lives in logs, metrics, and distributed traces"
+      idea-size: "small"
+      title-prefix: "[observability idea]"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
