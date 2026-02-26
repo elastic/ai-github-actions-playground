@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import PanelEditor from "../../src/components/PanelEditor";
@@ -188,13 +188,14 @@ describe("PanelEditor", () => {
   });
 
   it("can select a recent query and run it", async () => {
-    const user = userEvent.setup();
     useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
     render(<PanelEditor />);
 
-    await user.click(screen.getByRole("button", { name: /recent queries/i }));
-    await user.click(await screen.findByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
-    await user.click(screen.getByRole("button", { name: /run query/i }));
+    // Use fireEvent to bypass userEvent pointer-event simulation overhead that
+    // compounds with MUI Menu transition animations on slow CI runners.
+    fireEvent.click(screen.getByRole("button", { name: /recent queries/i }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
+    fireEvent.click(screen.getByRole("button", { name: /run query/i }));
 
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
     expect(queryMock).toHaveBeenCalledWith(

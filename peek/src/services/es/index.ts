@@ -36,6 +36,9 @@ export type {
   DiskUsageFieldStats,
   DiskUsageIndexEntry,
   DiskUsageResponse,
+  IngestPipeline,
+  GetIngestPipelinesResponse,
+  SimulateIngestPipelineResponse,
 } from "./client";
 
 export {
