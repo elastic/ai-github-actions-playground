@@ -19,6 +19,7 @@ import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
+import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useProfilingStore } from "../../store/useProfilingStore";
@@ -37,7 +38,7 @@ import type {
   StacktraceFrameMap,
   SymbolizedStacktrace,
 } from "./profilingUtils";
-import { joinStacktraces, parseFrameIds } from "./profilingUtils";
+import { buildFlamegraphTree, joinStacktraces, parseFrameIds } from "./profilingUtils";
 
 interface TopFunctionRow {
   functionName: string;
@@ -202,6 +203,15 @@ export default function ProfilingPage() {
     navigate(PAGE_MANIFEST.discover.path);
   }, [effectiveQuery, navigate, setDiscoverQueryDraft, viewMode]);
 
+  const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
+
+  const handleFrameClick = useCallback(
+    (frameName: string) => {
+      updateFilters({ executableName: frameName });
+    },
+    [updateFilters],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -224,7 +234,7 @@ export default function ProfilingPage() {
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
-          {(["topFunctions", "stacktraces", "timeline"] as const).map((mode) => (
+          {(["topFunctions", "stacktraces", "timeline", "flamegraph"] as const).map((mode) => (
             <Chip
               key={mode}
               label={
@@ -232,7 +242,9 @@ export default function ProfilingPage() {
                   ? "Top Functions"
                   : mode === "stacktraces"
                     ? "Stacktraces"
-                    : "Timeline"
+                    : mode === "timeline"
+                      ? "Timeline"
+                      : "Flamegraph"
               }
               size="small"
               variant={viewMode === mode ? "filled" : "outlined"}
@@ -401,6 +413,11 @@ export default function ProfilingPage() {
               ))}
             </TableBody>
           </Table>
+        )}
+        {viewMode === "flamegraph" && stacktraces.length > 0 && (
+          <Box sx={{ height: 480 }}>
+            <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
+          </Box>
         )}
       </Paper>
     </Box>
