@@ -10,6 +10,9 @@ import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Tooltip from "@mui/material/Tooltip";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
@@ -31,14 +34,18 @@ import WaterfallChart from "../visualizations/WaterfallChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
+import DriftRadarMap from "../visualizations/DriftRadarMap";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
+import type { Span } from "./traceUtils";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
   buildTraceTimeseriesQuery,
   buildTraceQueryLabDraft,
+  buildDriftRadarQuery,
+  shiftTimeRangeBack,
   DEFAULT_FIELD_MAPPING,
 } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
@@ -102,6 +109,11 @@ export default function TracesPage() {
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
 
+  // Drift Radar state
+  const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
+  const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[]>([]);
+  const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
+
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
 
@@ -145,6 +157,34 @@ export default function TracesPage() {
     onFailure: () => setTimeseriesResult(null),
   });
 
+  // Drift Radar query — fetches all spans in the window for aggregated service map
+  const {
+    runQuery: runDriftRadarQuery,
+    loading: driftRadarLoading,
+    error: driftRadarError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => {
+      const spans = parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
+      setDriftRadarSpans(spans);
+    },
+    onFailure: () => setDriftRadarSpans([]),
+  });
+
+  // Drift Radar baseline query — same span fetch for the previous equal window
+  const {
+    runQuery: runDriftRadarBaselineQuery,
+    loading: driftRadarBaselineLoading,
+    error: driftRadarBaselineError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: (data) => {
+      const spans = parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
+      setDriftRadarBaselineSpans(spans);
+    },
+    onFailure: () => setDriftRadarBaselineSpans([]),
+  });
+
   const runTraceQueries = useCallback(
     (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
       setTimeseriesResult(null);
@@ -158,7 +198,33 @@ export default function TracesPage() {
 
   const handleSearch = useCallback(() => {
     runTraceQueries(effectiveQuery, filters, rawQuery == null);
-  }, [runTraceQueries, effectiveQuery, filters, rawQuery]);
+    if (viewMode === "driftRadar" && rawQuery == null) {
+      setDriftRadarSpans([]);
+      setDriftRadarBaselineSpans([]);
+      runDriftRadarQuery(buildDriftRadarQuery(filters));
+      if (driftRadarBaselineEnabled && filters.timeFrom) {
+        const shifted = shiftTimeRangeBack(filters.timeFrom, filters.timeTo ?? "NOW()");
+        if (shifted) {
+          runDriftRadarBaselineQuery(
+            buildDriftRadarQuery({
+              ...filters,
+              timeFrom: shifted.timeFrom,
+              timeTo: shifted.timeTo,
+            }),
+          );
+        }
+      }
+    }
+  }, [
+    runTraceQueries,
+    effectiveQuery,
+    filters,
+    rawQuery,
+    viewMode,
+    driftRadarBaselineEnabled,
+    runDriftRadarQuery,
+    runDriftRadarBaselineQuery,
+  ]);
 
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
@@ -478,6 +544,8 @@ export default function TracesPage() {
       {searchError && <Alert severity="error">{searchError}</Alert>}
       {detailError && <Alert severity="error">{detailError}</Alert>}
       {timeseriesError && <Alert severity="error">{timeseriesError}</Alert>}
+      {driftRadarError && <Alert severity="error">{driftRadarError}</Alert>}
+      {driftRadarBaselineError && <Alert severity="error">{driftRadarBaselineError}</Alert>}
 
       {/* Content area */}
       <Box
@@ -498,8 +566,10 @@ export default function TracesPage() {
           }}
         >
           {/* View switcher */}
-          <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
-            {(["list", "timeseries", "scatter", "serviceMap"] as TracesViewMode[]).map((mode) => (
+          <Box sx={{ display: "flex", gap: 0.5, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
+            {(
+              ["list", "timeseries", "scatter", "serviceMap", "driftRadar"] as TracesViewMode[]
+            ).map((mode) => (
               <Chip
                 key={mode}
                 label={
@@ -509,7 +579,9 @@ export default function TracesPage() {
                       ? "Time Series"
                       : mode === "scatter"
                         ? "Scatter"
-                        : "Service Map"
+                        : mode === "serviceMap"
+                          ? "Service Map"
+                          : "Drift Radar"
                 }
                 size="small"
                 variant={viewMode === mode ? "filled" : "outlined"}
@@ -517,6 +589,21 @@ export default function TracesPage() {
                 onClick={() => setViewMode(mode)}
               />
             ))}
+            {viewMode === "driftRadar" && filters.timeFrom && rawQuery == null && (
+              <Tooltip title="Compare with the previous equal time window to highlight new, regressed, or improved edges">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={driftRadarBaselineEnabled}
+                      onChange={(e) => setDriftRadarBaselineEnabled(e.target.checked)}
+                    />
+                  }
+                  label={<Typography variant="caption">Compare with previous window</Typography>}
+                  sx={{ ml: 0.5 }}
+                />
+              </Tooltip>
+            )}
           </Box>
 
           {/* Results view */}
@@ -773,6 +860,67 @@ export default function TracesPage() {
                 )}
               </Box>
             )}
+            {viewMode === "driftRadar" &&
+              (rawQuery ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Drift Radar is not available for custom queries. Use filter chips to scope the
+                    window.
+                  </Typography>
+                </Box>
+              ) : driftRadarLoading || driftRadarBaselineLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <CircularProgress size={32} />
+                </Box>
+              ) : driftRadarSpans.length > 0 ? (
+                <Box sx={{ height: "100%" }}>
+                  <DriftRadarMap
+                    currentSpans={driftRadarSpans}
+                    baselineSpans={driftRadarBaselineEnabled ? driftRadarBaselineSpans : undefined}
+                    onNodeClick={handleServiceMapNodeClick}
+                  />
+                </Box>
+              ) : result !== null ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Run search to load the window service map.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Search for traces to load the Drift Radar service map.
+                  </Typography>
+                </Box>
+              ))}
           </Paper>
 
           {/* Trace Detail */}

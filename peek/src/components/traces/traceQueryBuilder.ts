@@ -203,6 +203,51 @@ export function buildTraceTimeseriesQuery(
 }
 
 /**
+ * Generates an ES|QL query to fetch all spans (not just root spans) in the
+ * current filter window for the Drift Radar aggregated service-map.
+ * Client-side `buildServiceMapData` is used to compute the dependency graph.
+ */
+export function buildDriftRadarQuery(
+  filters: TraceFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  options: { limit?: number } = {},
+): string {
+  const { limit = 5000 } = options;
+  const { body } = buildTraceSearchQueryParts(filters, fields, {
+    limit,
+    rootSpansOnly: false,
+  });
+  return `${body} | SORT ${fields.timestamp} DESC | LIMIT ${limit}`;
+}
+
+/**
+ * Shifts an ES|QL relative time range backward by one window duration so the
+ * previous equal window can be used as a drift baseline.
+ *
+ * Supports the `"NOW() - N unit"` patterns produced by TRACE_TIME_RANGE_OPTIONS.
+ * Returns `null` when the pattern cannot be parsed (e.g. absolute timestamps).
+ *
+ * @example
+ *   shiftTimeRangeBack("NOW() - 1 hour", "NOW()")
+ *   // → { timeFrom: "NOW() - 2 hour", timeTo: "NOW() - 1 hour" }
+ */
+export function shiftTimeRangeBack(
+  timeFrom: string,
+  timeTo: string,
+): { timeFrom: string; timeTo: string } | null {
+  if (timeTo.trim() !== "NOW()") return null;
+  const match = timeFrom.trim().match(/^NOW\(\)\s*-\s*(\d+)\s+(\w+)$/);
+  if (!match) return null;
+  // match[1] and match[2] are always defined when the regex matches (groups 1 and 2 are required).
+  const n = parseInt(match[1]!, 10);
+  const unit = match[2]!;
+  return {
+    timeFrom: `NOW() - ${n * 2} ${unit}`,
+    timeTo: timeFrom,
+  };
+}
+
+/**
  * Generates an ES|QL query for service name value suggestions.
  */
 export function buildServiceSuggestionsQuery(
