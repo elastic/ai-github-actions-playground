@@ -212,12 +212,12 @@ export function buildDriftRadarQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
   options: { limit?: number } = {},
 ): string {
-  const { limit = 5000 } = options;
+  const { limit } = options;
   const { body } = buildTraceSearchQueryParts(filters, fields, {
-    limit,
     rootSpansOnly: false,
   });
-  return `${body} | SORT ${fields.timestamp} DESC | LIMIT ${limit}`;
+  const limitClause = typeof limit === "number" ? ` | LIMIT ${limit}` : "";
+  return `${body} | SORT ${fields.timestamp} DESC${limitClause}`;
 }
 
 /**

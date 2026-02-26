@@ -111,7 +111,7 @@ export default function TracesPage() {
 
   // Drift Radar state
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
-  const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[]>([]);
+  const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
@@ -182,7 +182,7 @@ export default function TracesPage() {
       const spans = parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
       setDriftRadarBaselineSpans(spans);
     },
-    onFailure: () => setDriftRadarBaselineSpans([]),
+    onFailure: () => setDriftRadarBaselineSpans(null),
   });
 
   const runTraceQueries = useCallback(
@@ -200,7 +200,7 @@ export default function TracesPage() {
     runTraceQueries(effectiveQuery, filters, rawQuery == null);
     if (viewMode === "driftRadar" && rawQuery == null) {
       setDriftRadarSpans([]);
-      setDriftRadarBaselineSpans([]);
+      setDriftRadarBaselineSpans(null);
       runDriftRadarQuery(buildDriftRadarQuery(filters));
       if (driftRadarBaselineEnabled && filters.timeFrom) {
         const shifted = shiftTimeRangeBack(filters.timeFrom, filters.timeTo ?? "NOW()");
@@ -890,7 +890,9 @@ export default function TracesPage() {
                 <Box sx={{ height: "100%" }}>
                   <DriftRadarMap
                     currentSpans={driftRadarSpans}
-                    baselineSpans={driftRadarBaselineEnabled ? driftRadarBaselineSpans : undefined}
+                    baselineSpans={
+                      driftRadarBaselineEnabled ? (driftRadarBaselineSpans ?? undefined) : undefined
+                    }
                     onNodeClick={handleServiceMapNodeClick}
                   />
                 </Box>

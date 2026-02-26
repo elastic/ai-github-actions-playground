@@ -361,7 +361,7 @@ describe("buildDriftRadarQuery", () => {
     const query = buildDriftRadarQuery(EMPTY_FILTERS);
     expect(query).not.toContain("parent.id IS NULL");
     expect(query).toContain("FROM traces-*");
-    expect(query).toContain("LIMIT 5000");
+    expect(query).not.toContain("LIMIT");
   });
 
   it("applies service filters", () => {
@@ -386,8 +386,8 @@ describe("buildDriftRadarQuery", () => {
     expect(query).toContain("LIMIT 1000");
   });
 
-  it("includes SORT before LIMIT", () => {
-    const query = buildDriftRadarQuery(EMPTY_FILTERS);
+  it("includes SORT before LIMIT when custom limit is set", () => {
+    const query = buildDriftRadarQuery(EMPTY_FILTERS, DEFAULT_FIELD_MAPPING, { limit: 1000 });
     const sortIdx = query.indexOf("SORT");
     const limitIdx = query.indexOf("LIMIT");
     expect(sortIdx).toBeGreaterThan(-1);
