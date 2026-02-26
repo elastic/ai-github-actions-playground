@@ -8,6 +8,7 @@ import { buildServiceMapData } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
 
 import EChartWrapper from "./EChartWrapper";
+import { escapeHtml } from "./htmlUtils";
 
 interface Props {
   currentSpans: Span[];
@@ -33,18 +34,6 @@ const EDGE_STATUS_COLOR: Record<EdgeStatus, string> = {
   improved: "#00BFB3",
   stable: "#888888",
 };
-
-const HTML_ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char] ?? char);
-}
 
 function classifyEdge(current: ServiceMapEdge, baseline?: ServiceMapEdge): EdgeStatus {
   if (!baseline) return "new";
