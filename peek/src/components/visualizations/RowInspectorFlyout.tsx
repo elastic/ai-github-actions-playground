@@ -12,6 +12,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 
 import type { EsqlColumn } from "../../types";
+import { copyToClipboard } from "../../utils/copyToClipboard";
 
 interface Props {
   open: boolean;
@@ -39,19 +40,18 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
 
   const handleCopyJson = useCallback(() => {
     setCopyError(null);
-    void navigator.clipboard
-      .writeText(JSON.stringify(rowObject, null, 2))
-      .then(() => {
+    void copyToClipboard(JSON.stringify(rowObject, null, 2)).then((success) => {
+      if (success) {
         setCopied(true);
         if (copyTimeoutRef.current) {
           clearTimeout(copyTimeoutRef.current);
         }
         copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {
+      } else {
         setCopied(false);
         setCopyError("Failed to copy JSON.");
-      });
+      }
+    });
   }, [rowObject]);
 
   const handleClose = useCallback(() => {
