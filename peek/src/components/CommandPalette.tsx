@@ -81,6 +81,7 @@ function useCommands(): Command[] {
     })),
   );
   const dashboards = useDashboardStore((s) => s.dashboards);
+  const switchingProfileRef = useRef(false);
 
   return useMemo(() => {
     const commands: Command[] = [];
@@ -190,8 +191,10 @@ function useCommands(): Command[] {
             icon: <AccountCircleIcon fontSize="small" />,
             keywords: `profile switch connect ${profile.name} ${profile.connection.url}`,
             onExecute: () => {
+              if (switchingProfileRef.current) return;
               setCommandPaletteOpen(false);
               const conn = profile.connection;
+              switchingProfileRef.current = true;
               void (async () => {
                 try {
                   const caps = await fetchCapabilitiesForConnection(conn);
@@ -216,6 +219,8 @@ function useCommands(): Command[] {
                     errorSummary: message,
                   });
                   setConnectionDialogOpen(true);
+                } finally {
+                  switchingProfileRef.current = false;
                 }
               })();
             },
