@@ -19,6 +19,11 @@ REPO="${REPO:-}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --repo)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "Error: --repo requires a value (e.g. owner/repo)" >&2
+        echo "Usage: $0 [--repo <owner/repo>]" >&2
+        exit 1
+      fi
       REPO="$2"
       shift 2
       ;;
