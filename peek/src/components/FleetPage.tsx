@@ -10,6 +10,7 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import { useShallow } from "zustand/react/shallow";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import {
@@ -43,29 +44,61 @@ export default function FleetPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
 
-  const activeTab = useFleetStore((s) => s.activeTab);
-  const setActiveTab = useFleetStore((s) => s.setActiveTab);
-  const loading = useFleetStore((s) => s.loading);
-  const error = useFleetStore((s) => s.error);
-  const partialErrors = useFleetStore((s) => s.partialErrors);
-  const serverStatus = useFleetStore((s) => s.serverStatus);
-  const agentVersions = useFleetStore((s) => s.agentVersions);
-  const outputHealth = useFleetStore((s) => s.outputHealth);
-  const agentInventory = useFleetStore((s) => s.agentInventory);
-  const agentInventoryTotal = useFleetStore((s) => s.agentInventoryTotal);
-  const actions = useFleetStore((s) => s.actions);
-  const actionResults = useFleetStore((s) => s.actionResults);
+  const {
+    activeTab,
+    loading,
+    error,
+    partialErrors,
+    serverStatus,
+    agentVersions,
+    outputHealth,
+    agentInventory,
+    agentInventoryTotal,
+    actions,
+    actionResults,
+  } = useFleetStore(
+    useShallow((s) => ({
+      activeTab: s.activeTab,
+      loading: s.loading,
+      error: s.error,
+      partialErrors: s.partialErrors,
+      serverStatus: s.serverStatus,
+      agentVersions: s.agentVersions,
+      outputHealth: s.outputHealth,
+      agentInventory: s.agentInventory,
+      agentInventoryTotal: s.agentInventoryTotal,
+      actions: s.actions,
+      actionResults: s.actionResults,
+    })),
+  );
 
-  const setServerStatus = useFleetStore((s) => s.setServerStatus);
-  const setAgentVersions = useFleetStore((s) => s.setAgentVersions);
-  const setOutputHealth = useFleetStore((s) => s.setOutputHealth);
-  const setAgentInventory = useFleetStore((s) => s.setAgentInventory);
-  const setAgentInventoryTotal = useFleetStore((s) => s.setAgentInventoryTotal);
-  const setActions = useFleetStore((s) => s.setActions);
-  const setActionResults = useFleetStore((s) => s.setActionResults);
-  const setLoading = useFleetStore((s) => s.setLoading);
-  const setError = useFleetStore((s) => s.setError);
-  const setPartialErrors = useFleetStore((s) => s.setPartialErrors);
+  const {
+    setActiveTab,
+    setServerStatus,
+    setAgentVersions,
+    setOutputHealth,
+    setAgentInventory,
+    setAgentInventoryTotal,
+    setActions,
+    setActionResults,
+    setLoading,
+    setError,
+    setPartialErrors,
+  } = useFleetStore(
+    useShallow((s) => ({
+      setActiveTab: s.setActiveTab,
+      setServerStatus: s.setServerStatus,
+      setAgentVersions: s.setAgentVersions,
+      setOutputHealth: s.setOutputHealth,
+      setAgentInventory: s.setAgentInventory,
+      setAgentInventoryTotal: s.setAgentInventoryTotal,
+      setActions: s.setActions,
+      setActionResults: s.setActionResults,
+      setLoading: s.setLoading,
+      setError: s.setError,
+      setPartialErrors: s.setPartialErrors,
+    })),
+  );
 
   const loadFleetData = useCallback(async () => {
     if (!connection) return;
