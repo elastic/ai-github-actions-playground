@@ -3,6 +3,8 @@ import { persist } from "zustand/middleware";
 
 import type { ConnectionProfile, ElasticsearchConnection, ProfileHealth } from "../types";
 import type { UserCapabilities } from "../services/es";
+import type { EncryptedPayload } from "../utils/crypto";
+import { encryptWithPin, decryptWithPin } from "../utils/crypto";
 
 import { createSplitSecretStorage } from "./createSplitSecretStorage";
 import { createElectronStorage, isElectronAvailable } from "./createElectronStorage";
@@ -24,6 +26,17 @@ interface ConnectionState {
   setActiveProfileId: (id: string | null) => void;
   getConnectionProfile: (id: string) => ConnectionProfile | undefined;
   setProfileHealth: (id: string, health: ProfileHealth) => void;
+  /**
+   * Encrypt the profile's credentials with a PIN and persist them to localStorage.
+   * After this call the profile is marked `encrypted: true`; credentials remain
+   * available in memory for the remainder of the session.
+   */
+  lockProfile: (id: string, pin: string) => Promise<void>;
+  /**
+   * Decrypt the profile's credentials from localStorage using the supplied PIN.
+   * Returns `true` on success, `false` if the PIN is wrong or no encrypted data exists.
+   */
+  unlockProfile: (id: string, pin: string) => Promise<boolean>;
   resetConnectionState: () => void;
 }
 
@@ -37,6 +50,7 @@ const STORE_NAME = "elastic-peek-connection";
 const API_KEY_SESSION_SUFFIX = ":apiKey";
 const PASSWORD_SESSION_SUFFIX = ":password";
 const PROFILE_SESSION_PREFIX = ":profile:";
+const ENCRYPTED_STORE_SUFFIX = ":enc";
 
 function stripCredentials(conn: ElasticsearchConnection): ElasticsearchConnection {
   return { ...conn, apiKey: "", password: "" };
@@ -244,6 +258,9 @@ export const useConnectionStore = create<ConnectionState>()(
               STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
             );
           }
+          localStorage.removeItem(
+            STORE_NAME + PROFILE_SESSION_PREFIX + id + ENCRYPTED_STORE_SUFFIX,
+          );
           const filtered = s.connectionProfiles.filter((p) => p.id !== id);
           return {
             connectionProfiles: filtered,
@@ -265,7 +282,53 @@ export const useConnectionStore = create<ConnectionState>()(
       setProfileHealth: (id, health) =>
         set((s) => ({ profileHealthMap: { ...s.profileHealthMap, [id]: health } })),
 
+      lockProfile: async (id, pin) => {
+        const profile = get().connectionProfiles.find((p) => p.id === id);
+        if (!profile) return;
+        const { apiKey = "", password = "" } = profile.connection;
+        const payload = await encryptWithPin(pin, JSON.stringify({ apiKey, password }));
+        localStorage.setItem(
+          STORE_NAME + PROFILE_SESSION_PREFIX + id + ENCRYPTED_STORE_SUFFIX,
+          JSON.stringify(payload),
+        );
+        set((s) => ({
+          connectionProfiles: s.connectionProfiles.map((p) =>
+            p.id === id ? { ...p, encrypted: true } : p,
+          ),
+        }));
+      },
+
+      unlockProfile: async (id, pin) => {
+        const raw = localStorage.getItem(
+          STORE_NAME + PROFILE_SESSION_PREFIX + id + ENCRYPTED_STORE_SUFFIX,
+        );
+        if (!raw) return false;
+        try {
+          const payload = JSON.parse(raw) as EncryptedPayload;
+          const plaintext = await decryptWithPin(pin, payload);
+          if (plaintext === null) return false;
+          const parsed: unknown = JSON.parse(plaintext);
+          if (typeof parsed !== "object" || parsed === null) return false;
+          const creds = parsed as Record<string, unknown>;
+          const apiKey = typeof creds.apiKey === "string" ? creds.apiKey : "";
+          const password = typeof creds.password === "string" ? creds.password : "";
+          set((s) => ({
+            connectionProfiles: s.connectionProfiles.map((p) =>
+              p.id === id ? { ...p, connection: { ...p.connection, apiKey, password } } : p,
+            ),
+          }));
+          return true;
+        } catch {
+          return false;
+        }
+      },
+
       resetConnectionState: () => {
+        for (const profile of get().connectionProfiles) {
+          localStorage.removeItem(
+            STORE_NAME + PROFILE_SESSION_PREFIX + profile.id + ENCRYPTED_STORE_SUFFIX,
+          );
+        }
         void storage.removeItem(STORE_NAME);
         set({
           connection: null,
