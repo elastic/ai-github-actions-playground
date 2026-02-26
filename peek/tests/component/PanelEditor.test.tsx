@@ -193,7 +193,7 @@ describe("PanelEditor", () => {
     render(<PanelEditor />);
 
     await user.click(screen.getByRole("button", { name: /recent queries/i }));
-    await user.click(screen.getByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
+    await user.click(await screen.findByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
     await user.click(screen.getByRole("button", { name: /run query/i }));
 
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
