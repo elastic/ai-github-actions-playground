@@ -54,6 +54,7 @@ WORKFLOWS=(
   "performance-profiler.yml"
   "product-manager-impersonator.yml"
   "project-summary.yml"
+  "react-state-bug-hunter.yml"
   "refactor-opportunist.yml"
   "security-ideas-man.yml"
   "stale-issues.yml"
