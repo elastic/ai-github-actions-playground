@@ -83,8 +83,12 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
     const result = new Map<string, EdgeStatus>();
     for (const edge of mapData.edges) {
       const key = `${edge.source}→${edge.target}`;
+      if (!baselineEdgeMap) {
+        result.set(key, "stable");
+        continue;
+      }
       const baselineEdge = baselineEdgeMap?.get(key);
-      result.set(key, classifyEdge(edge, baselineEdgeMap ? baselineEdge : undefined));
+      result.set(key, classifyEdge(edge, baselineEdge));
     }
     return result;
   }, [mapData.edges, baselineEdgeMap]);
