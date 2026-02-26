@@ -53,6 +53,9 @@ function getFlameColor(name: string): string {
   return FLAMEGRAPH_COLORS[Math.abs(hash) % FLAMEGRAPH_COLORS.length]!;
 }
 
+const MIN_LABEL_WIDTH = 30;
+const TEXT_PADDING = 6;
+
 export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const muiTheme = useTheme();
 
@@ -112,10 +115,10 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
               textContent: {
                 type: "text" as const,
                 style: {
-                  text: w > 30 ? String(name) : "",
+                  text: w > MIN_LABEL_WIDTH ? String(name) : "",
                   fill: "#fff",
                   fontSize: 11,
-                  truncate: { outerWidth: Math.max(w - 6, 0) },
+                  truncate: { outerWidth: Math.max(w - TEXT_PADDING, 0) },
                 },
               },
               textConfig: { position: "inside" as const, inside: true },

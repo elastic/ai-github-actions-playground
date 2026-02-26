@@ -207,9 +207,12 @@ export default function ProfilingPage() {
 
   const handleFrameClick = useCallback(
     (frameName: string) => {
-      updateFilters({ executableName: frameName });
+      if (frameName === "(unknown)") return;
+      const draft = `${effectiveQuery}\n| WHERE Stackframe.function.name == "${frameName}"`;
+      setDiscoverQueryDraft(draft);
+      navigate(PAGE_MANIFEST.discover.path);
     },
-    [updateFilters],
+    [effectiveQuery, navigate, setDiscoverQueryDraft],
   );
 
   return (
