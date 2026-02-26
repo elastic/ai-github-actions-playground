@@ -19,6 +19,7 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import StarIcon from "@mui/icons-material/Star";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -145,6 +146,22 @@ function useCommands(): Command[] {
           navigate(PAGE_MANIFEST.settings.path);
         },
       });
+
+      // Favorite dashboards group (listed before all dashboards)
+      const favoriteDashboards = dashboards.filter((dash) => dash.favoritedAt);
+      for (const dash of favoriteDashboards) {
+        commands.push({
+          id: `favorite-dashboard:${dash.id}`,
+          label: dash.title,
+          group: "Favorite Dashboards",
+          icon: <StarIcon fontSize="small" />,
+          keywords: `favorite dashboard open ${dash.title}`,
+          onExecute: () => {
+            setCommandPaletteOpen(false);
+            navigate(`/dashboards/${dash.id}`);
+          },
+        });
+      }
 
       // Per-dashboard quick navigation
       for (const dash of dashboards) {

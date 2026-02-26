@@ -7,6 +7,7 @@ import CommandPalette from "../../src/components/CommandPalette";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
+import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -220,6 +221,26 @@ describe("CommandPalette", () => {
     expect(screen.queryAllByText("Query Lab")).toHaveLength(1);
     // But other pages should appear (may appear as both nav command and group heading)
     expect(screen.getAllByText("Dashboards").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows Favorite Dashboards group when a dashboard is favorited", () => {
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    const id = useDashboardStore.getState().activeDashboardId;
+    useDashboardStore.getState().toggleFavoriteDashboard(id);
+
+    renderPalette();
+
+    expect(screen.getByText("Favorite Dashboards")).toBeInTheDocument();
+  });
+
+  it("does not show Favorite Dashboards group when no dashboard is favorited", () => {
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+
+    renderPalette();
+
+    expect(screen.queryByText("Favorite Dashboards")).not.toBeInTheDocument();
   });
 });
 
