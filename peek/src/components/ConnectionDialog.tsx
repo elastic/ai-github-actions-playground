@@ -501,32 +501,30 @@ export default function ConnectionDialog() {
           {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
 
           {(url || proxyUrl) && (
-            <>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                <TextField
-                  size="small"
-                  label="Profile name"
-                  placeholder="e.g. Production"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void handleSaveProfile();
-                  }}
-                  error={isDuplicateProfileName}
-                  helperText={
-                    isDuplicateProfileName ? "A profile with this name already exists" : undefined
-                  }
-                  sx={{ flex: 1 }}
-                />
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => void handleSaveProfile()}
-                  disabled={!profileName.trim() || !url || isDuplicateProfileName}
-                >
-                  Save Profile
-                </Button>
-              </Box>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <TextField
+                size="small"
+                label="Profile name"
+                placeholder="e.g. Production"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void handleSaveProfile();
+                }}
+                error={isDuplicateProfileName}
+                helperText={
+                  isDuplicateProfileName ? "A profile with this name already exists" : undefined
+                }
+                sx={{ flex: 1 }}
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => void handleSaveProfile()}
+                disabled={!profileName.trim() || !url || isDuplicateProfileName}
+              >
+                Save Profile
+              </Button>
               <TextField
                 size="small"
                 label="PIN (optional)"
@@ -542,8 +540,9 @@ export default function ConnectionDialog() {
                     ? "Credentials will be encrypted and stored locally"
                     : "Leave blank to use session storage only"
                 }
+                sx={{ flex: 1 }}
               />
-            </>
+            </Box>
           )}
         </Box>
       </DialogContent>
