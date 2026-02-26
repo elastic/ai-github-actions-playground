@@ -39,7 +39,12 @@ import type {
   StacktraceFrameMap,
   SymbolizedStacktrace,
 } from "./profilingUtils";
-import { buildFlamegraphTree, joinStacktraces, parseFrameIds } from "./profilingUtils";
+import {
+  buildFlamegraphTree,
+  buildSandwichData,
+  joinStacktraces,
+  parseFrameIds,
+} from "./profilingUtils";
 
 interface TopFunctionRow {
   functionName: string;
@@ -83,10 +88,12 @@ export default function ProfilingPage() {
     rawQuery,
     viewMode,
     expandedStacktraceIds,
+    sandwichFunctionName,
     updateFilters,
     setRawQuery,
     setViewMode,
     toggleExpandedStacktraceId,
+    setSandwichFunctionName,
     resetFilters,
   } = useProfilingStore();
 
@@ -206,6 +213,14 @@ export default function ProfilingPage() {
 
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
 
+  const sandwichData = useMemo(
+    () =>
+      viewMode === "sandwich" && sandwichFunctionName
+        ? buildSandwichData(stacktraces, sandwichFunctionName)
+        : null,
+    [viewMode, sandwichFunctionName, stacktraces],
+  );
+
   const handleFrameClick = useCallback(
     (frameName: string) => {
       if (frameName === "(unknown)") return;
@@ -239,24 +254,28 @@ export default function ProfilingPage() {
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
-          {(["topFunctions", "stacktraces", "timeline", "flamegraph"] as const).map((mode) => (
-            <Chip
-              key={mode}
-              label={
-                mode === "topFunctions"
-                  ? "Top Functions"
-                  : mode === "stacktraces"
-                    ? "Stacktraces"
-                    : mode === "timeline"
-                      ? "Timeline"
-                      : "Flamegraph"
-              }
-              size="small"
-              variant={viewMode === mode ? "filled" : "outlined"}
-              color={viewMode === mode ? "primary" : "default"}
-              onClick={() => setViewMode(mode)}
-            />
-          ))}
+          {(["topFunctions", "stacktraces", "timeline", "flamegraph", "sandwich"] as const).map(
+            (mode) => (
+              <Chip
+                key={mode}
+                label={
+                  mode === "topFunctions"
+                    ? "Top Functions"
+                    : mode === "stacktraces"
+                      ? "Stacktraces"
+                      : mode === "timeline"
+                        ? "Timeline"
+                        : mode === "flamegraph"
+                          ? "Flamegraph"
+                          : "Sandwich"
+                }
+                size="small"
+                variant={viewMode === mode ? "filled" : "outlined"}
+                color={viewMode === mode ? "primary" : "default"}
+                onClick={() => setViewMode(mode)}
+              />
+            ),
+          )}
         </Box>
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
           <TextField
@@ -305,6 +324,16 @@ export default function ProfilingPage() {
             ))}
           </TextField>
         </Box>
+        {viewMode === "sandwich" && (
+          <TextField
+            size="small"
+            label="Function name"
+            placeholder="Enter exact function name"
+            value={sandwichFunctionName ?? ""}
+            onChange={(event) => setSandwichFunctionName(event.target.value || null)}
+            sx={{ mb: 1, minWidth: 320 }}
+          />
+        )}
         <TextField
           fullWidth
           multiline
@@ -335,6 +364,7 @@ export default function ProfilingPage() {
 
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
         {!loading &&
+          viewMode !== "sandwich" &&
           topFunctionsRows.length === 0 &&
           stacktraces.length === 0 &&
           !timelineResult && (
@@ -422,6 +452,119 @@ export default function ProfilingPage() {
         {viewMode === "flamegraph" && stacktraces.length > 0 && (
           <Box sx={{ height: 480 }}>
             <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
+          </Box>
+        )}
+        {viewMode === "sandwich" && sandwichData && (
+          <Box>
+            <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}
+              >
+                Callers
+              </Typography>
+              {sandwichData.callers.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  No callers found
+                </Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Function</TableCell>
+                      <TableCell align="right">Count</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sandwichData.callers.map((row) => (
+                      <TableRow key={row.functionName}>
+                        <TableCell sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+                          {row.functionName}
+                        </TableCell>
+                        <TableCell align="right">{row.count}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
+            <Box
+              sx={{ p: 1.5, bgcolor: "action.selected", borderBottom: 1, borderColor: "divider" }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}
+              >
+                Selected function
+              </Typography>
+              {sandwichData.self ? (
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell
+                        sx={{ fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 700 }}
+                      >
+                        {sandwichData.self.functionName}
+                      </TableCell>
+                      <TableCell align="right">{sandwichData.self.count}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  Function not found in loaded stacktraces
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ p: 1.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}
+              >
+                Callees
+              </Typography>
+              {sandwichData.callees.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  No callees found
+                </Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Function</TableCell>
+                      <TableCell align="right">Count</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sandwichData.callees.map((row) => (
+                      <TableRow key={row.functionName}>
+                        <TableCell sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+                          {row.functionName}
+                        </TableCell>
+                        <TableCell align="right">{row.count}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
+          </Box>
+        )}
+        {viewMode === "sandwich" && !sandwichData && stacktraces.length === 0 && !loading && (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              Enter a function name above and run to load the sandwich view.
+            </Typography>
+          </Box>
+        )}
+        {viewMode === "sandwich" && !sandwichData && stacktraces.length > 0 && !loading && (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              Enter a function name above to see callers and callees.
+            </Typography>
           </Box>
         )}
       </Paper>

@@ -81,6 +81,61 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
   return root;
 }
 
+export interface SandwichRow {
+  functionName: string;
+  count: number;
+}
+
+export interface SandwichData {
+  callers: SandwichRow[];
+  self: SandwichRow | null;
+  callees: SandwichRow[];
+}
+
+/**
+ * Build sandwich view data for a selected function.
+ * For every occurrence of the function in each stacktrace, accumulate:
+ *  - callers: the frame immediately above the selected function
+ *  - self: total sample count for the selected function
+ *  - callees: the frame immediately below the selected function
+ */
+export function buildSandwichData(
+  stacktraces: SymbolizedStacktrace[],
+  functionName: string,
+): SandwichData {
+  const callerCounts = new Map<string, number>();
+  const calleeCounts = new Map<string, number>();
+  let selfCount = 0;
+
+  for (const st of stacktraces) {
+    const { frames, count } = st;
+    for (let i = 0; i < frames.length; i++) {
+      if (frames[i]!.functionName === functionName) {
+        selfCount += count;
+        if (i > 0) {
+          const caller = frames[i - 1]!.functionName;
+          callerCounts.set(caller, (callerCounts.get(caller) ?? 0) + count);
+        }
+        if (i < frames.length - 1) {
+          const callee = frames[i + 1]!.functionName;
+          calleeCounts.set(callee, (calleeCounts.get(callee) ?? 0) + count);
+        }
+      }
+    }
+  }
+
+  const toSortedRows = (counts: Map<string, number>): SandwichRow[] =>
+    Array.from(counts.entries())
+      .map(([fn, count]) => ({ functionName: fn, count }))
+      .sort((a, b) => b.count - a.count);
+
+  return {
+    callers: toSortedRows(callerCounts),
+    self: selfCount > 0 ? { functionName, count: selfCount } : null,
+    callees: toSortedRows(calleeCounts),
+  };
+}
+
 export function joinStacktraces(
   events: ProfilingEvent[],
   stacktraces: StacktraceFrameMap[],

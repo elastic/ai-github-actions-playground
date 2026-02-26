@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFlamegraphTree,
+  buildSandwichData,
   joinStacktraces,
   parseFrameIds,
 } from "../../src/components/profiling/profilingUtils";
@@ -155,5 +156,77 @@ describe("buildFlamegraphTree", () => {
     const tree = buildFlamegraphTree(stacks);
     expect(tree.value).toBe(3);
     expect(tree.children).toHaveLength(2);
+  });
+});
+
+describe("buildSandwichData", () => {
+  const makeFrame = (functionName: string) => ({
+    frameId: functionName,
+    functionName,
+    fileName: "",
+    lineNumber: null,
+    functionOffset: null,
+  });
+
+  const makeStack = (id: string, count: number, ...fns: string[]): SymbolizedStacktrace => ({
+    stacktraceId: id,
+    count,
+    serviceName: "",
+    hostName: "",
+    frames: fns.map(makeFrame),
+  });
+
+  it("returns null self when function is not found", () => {
+    const result = buildSandwichData([makeStack("st1", 5, "main", "foo")], "missing");
+    expect(result.self).toBeNull();
+    expect(result.callers).toHaveLength(0);
+    expect(result.callees).toHaveLength(0);
+  });
+
+  it("identifies caller and callee for a middle frame", () => {
+    const result = buildSandwichData([makeStack("st1", 3, "main", "foo", "bar")], "foo");
+    expect(result.self).toEqual({ functionName: "foo", count: 3 });
+    expect(result.callers).toEqual([{ functionName: "main", count: 3 }]);
+    expect(result.callees).toEqual([{ functionName: "bar", count: 3 }]);
+  });
+
+  it("has no caller for a top-level frame", () => {
+    const result = buildSandwichData([makeStack("st1", 2, "main", "foo")], "main");
+    expect(result.self).toEqual({ functionName: "main", count: 2 });
+    expect(result.callers).toHaveLength(0);
+    expect(result.callees).toEqual([{ functionName: "foo", count: 2 }]);
+  });
+
+  it("has no callee for a leaf frame", () => {
+    const result = buildSandwichData([makeStack("st1", 4, "main", "foo")], "foo");
+    expect(result.self).toEqual({ functionName: "foo", count: 4 });
+    expect(result.callers).toEqual([{ functionName: "main", count: 4 }]);
+    expect(result.callees).toHaveLength(0);
+  });
+
+  it("accumulates counts from multiple stacktraces", () => {
+    const stacks = [makeStack("st1", 5, "a", "foo", "b"), makeStack("st2", 3, "c", "foo", "d")];
+    const result = buildSandwichData(stacks, "foo");
+    expect(result.self).toEqual({ functionName: "foo", count: 8 });
+    const callerA = result.callers.find((r) => r.functionName === "a");
+    const callerC = result.callers.find((r) => r.functionName === "c");
+    expect(callerA?.count).toBe(5);
+    expect(callerC?.count).toBe(3);
+    const calleeB = result.callees.find((r) => r.functionName === "b");
+    const calleeD = result.callees.find((r) => r.functionName === "d");
+    expect(calleeB?.count).toBe(5);
+    expect(calleeD?.count).toBe(3);
+  });
+
+  it("sorts callers and callees by count descending", () => {
+    const stacks = [makeStack("st1", 10, "a", "foo", "x"), makeStack("st2", 2, "b", "foo", "y")];
+    const result = buildSandwichData(stacks, "foo");
+    expect(result.callers[0]!.functionName).toBe("a");
+    expect(result.callers[1]!.functionName).toBe("b");
+  });
+
+  it("counts each occurrence of the function in a single stacktrace", () => {
+    const result = buildSandwichData([makeStack("st1", 1, "foo", "bar", "foo")], "foo");
+    expect(result.self!.count).toBe(2);
   });
 });
