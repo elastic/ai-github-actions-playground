@@ -30,6 +30,9 @@ export type {
   GetSecurityRolesResponse,
   UserCapabilities,
   ProfilingTopFunctionsRequest,
+  IngestPipeline,
+  GetIngestPipelinesResponse,
+  SimulateIngestPipelineResponse,
 } from "./client";
 
 export {

@@ -109,6 +109,32 @@ export interface ProfilingTopFunctionsRequest {
   };
 }
 
+export interface IngestPipeline {
+  description?: string;
+  version?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  processors?: Array<Record<string, any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on_failure?: Array<Record<string, any>>;
+}
+
+export type GetIngestPipelinesResponse = Record<string, IngestPipeline>;
+
+export interface SimulateIngestPipelineResponse {
+  docs?: Array<{
+    doc?: {
+      _source?: Record<string, unknown>;
+      _ingest?: { timestamp?: string };
+      error?: { type?: string; reason?: string };
+    };
+    processor_results?: Array<{
+      processor_type?: string;
+      status?: string;
+      doc?: { _source?: Record<string, unknown> };
+    }>;
+  }>;
+}
+
 /**
  * Backward-compatible alias — matches the shape components were already using.
  * `EsqlResult` has `columns` and `values` which is what `EsqlResponse` was.
@@ -397,6 +423,25 @@ export class ElasticsearchClient {
       body: JSON.stringify(body),
       signal,
     });
+  }
+
+  async getIngestPipelines(signal?: AbortSignal): Promise<GetIngestPipelinesResponse> {
+    return this._fetch<GetIngestPipelinesResponse>("/_ingest/pipeline", { signal });
+  }
+
+  async simulateIngestPipeline(
+    pipelineId: string,
+    docs: Array<Record<string, unknown>>,
+    signal?: AbortSignal,
+  ): Promise<SimulateIngestPipelineResponse> {
+    return this._fetch<SimulateIngestPipelineResponse>(
+      `/_ingest/pipeline/${encodeURIComponent(pipelineId)}/_simulate`,
+      {
+        method: "POST",
+        body: JSON.stringify({ docs }),
+        signal,
+      },
+    );
   }
 
   // -------------------------------------------------------------------------
