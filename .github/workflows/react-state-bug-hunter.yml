@@ -1,0 +1,66 @@
+name: React State Bug Hunter
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
+    with:
+      additional-instructions: |
+        Focus your investigation on React/Zustand state management bugs in this repository.
+
+        This project (Elastic Peek) uses Zustand v5 for all state management. Every store lives
+        in `peek/src/store/` and follows the `use<Feature>Store` naming convention.
+
+        The stores to investigate:
+        - useConnectionStore.ts — ES connection profiles, auth credentials (uses split secret storage)
+        - useDashboardStore.ts — Dashboard CRUD, layout, undo/redo history (50-entry ring buffer)
+        - useUIStore.ts — Theme mode, panel editing, dialog visibility
+        - useExplorerStore.ts — Index patterns, fields, metrics, aggregations, filters, query results
+        - useFleetStore.ts — Fleet server metrics, agent inventory, loading/error states
+        - useLLMStore.ts — LLM provider/model config, API key (split secret storage), chat messages
+        - useQueryStore.ts — Discover query draft and execution history (10-item limit)
+        - useTracesStore.ts — Trace filtering, view modes (list/timeseries/scatter/serviceMap)
+        - useProfilingStore.ts — Profiling filters, view modes, expanded stacktrace IDs (Set-based)
+        - useApiConsoleStore.ts — Persisted API console request cards
+        - storeResetters.ts — Centralized registry of all store reset functions
+
+        Specifically look for these categories of Zustand state bugs:
+
+        1. **Stale closures** — Actions that capture stale values via closure instead of using
+           `get()` inside the action body.
+
+        2. **Missing or broken resets** — Stores that fail to reset all fields, or stores missing
+           from the centralized `storeResetters.ts` registry.
+
+        3. **Selector instability** — Components using inline object/array selectors
+           (e.g. `useStore((s) => ({ a: s.a, b: s.b }))`) without `shallow` equality,
+           causing unnecessary re-renders.
+
+        4. **Race conditions in async actions** — Actions that call `set()` after an `await`
+           without re-reading state via `get()`, potentially overwriting concurrent updates.
+
+        5. **Persist / hydration mismatches** — Fields added after the initial `persist` config,
+           missing from `partialize` and silently lost on reload.
+
+        6. **Unbounded growth** — Arrays or maps that grow without limit (chat history, query
+           history, undo stacks) with no eviction or cap.
+
+        7. **Cross-store consistency** — Multi-store updates that lack transactional guarantees.
+
+        8. **Derived state duplication** — Values duplicated in state that risk staleness when
+           only one copy is updated.
+
+        When writing reproduction scripts, use the project's existing test infrastructure
+        (Vitest + React Testing Library). Install dependencies with `npm ci` from the `peek/`
+        directory before running tests.
+      setup-commands: "cd peek && npm ci"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

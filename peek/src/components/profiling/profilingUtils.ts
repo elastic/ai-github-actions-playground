@@ -49,6 +49,38 @@ export function parseFrameIds(frameIdsString: string): string[] {
   return ids;
 }
 
+export interface FlamegraphNode {
+  name: string;
+  value: number;
+  children: FlamegraphNode[];
+}
+
+/**
+ * Aggregate symbolized stacktraces into a hierarchical tree for flamegraph rendering.
+ * Each stacktrace's frames are walked root-to-leaf (bottom-up in call order) and
+ * merged into a shared tree, with `value` accumulating the sample count.
+ */
+export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): FlamegraphNode {
+  const root: FlamegraphNode = { name: "root", value: 0, children: [] };
+  for (const st of stacktraces) {
+    // Frames are ordered caller→callee (deepest last); walk from root (first) to leaf (last)
+    const frames = st.frames;
+    let current = root;
+    current.value += st.count;
+    for (const frame of frames) {
+      const name = frame.functionName || "(unknown)";
+      let child = current.children.find((c) => c.name === name);
+      if (!child) {
+        child = { name, value: 0, children: [] };
+        current.children.push(child);
+      }
+      child.value += st.count;
+      current = child;
+    }
+  }
+  return root;
+}
+
 export function joinStacktraces(
   events: ProfilingEvent[],
   stacktraces: StacktraceFrameMap[],

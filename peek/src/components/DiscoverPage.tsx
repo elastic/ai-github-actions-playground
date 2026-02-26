@@ -46,6 +46,7 @@ import {
 } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
+import PartialResultPanel from "./PartialResultPanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { isNumericType } from "./visualizations/chartUtils";
@@ -113,6 +114,7 @@ export default function DiscoverPage() {
     lastRunDurationMs,
     lastRunProfile,
     lastRunIsPartial,
+    lastRunPartialMetadata,
   } = useEsqlQuery({
     connection,
     queryContextView,
@@ -194,6 +196,20 @@ export default function DiscoverPage() {
   const handleFormatQuery = useCallback(() => {
     handleQueryChange(formatEsqlQuery(effectiveQuery));
   }, [effectiveQuery, handleQueryChange]);
+
+  const handleRerunHealthyClusters = useCallback(
+    (healthyClusters: string[]) => {
+      // Best-effort: replace cross-cluster wildcard `*:pattern` in FROM with
+      // specific healthy cluster names so the query targets only healthy data.
+      const scoped = effectiveQuery.replace(
+        /\bFROM\s+\*:([^\s,|]+)/gi,
+        (_, pattern: string) => `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
+      );
+      handleQueryChange(scoped);
+      void runQuery(scoped);
+    },
+    [effectiveQuery, handleQueryChange, runQuery],
+  );
 
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
@@ -431,14 +447,19 @@ export default function DiscoverPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {/* Summary strip: timing and partial-result indicator */}
-      {result && (lastRunDurationMs !== null || lastRunIsPartial) && (
+      {/* Summary strip: timing chip */}
+      {result && lastRunDurationMs !== null && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-          {lastRunDurationMs !== null && (
-            <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
-          )}
-          {lastRunIsPartial && <Chip size="small" color="warning" label="partial results" />}
+          <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
         </Box>
+      )}
+
+      {/* Partial-result blast radius panel */}
+      {result && lastRunIsPartial && lastRunPartialMetadata !== null && (
+        <PartialResultPanel
+          metadata={lastRunPartialMetadata}
+          onRerunHealthyClusters={handleRerunHealthyClusters}
+        />
       )}
 
       {/* Profile panel */}

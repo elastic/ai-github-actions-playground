@@ -8,8 +8,11 @@ import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
-const getDataStreamsMock = vi.fn();
-const getFieldCapsMock = vi.fn();
+const { getDataStreamsMock, getFieldCapsMock, fetchFieldStatsMock } = vi.hoisted(() => ({
+  getDataStreamsMock: vi.fn(),
+  getFieldCapsMock: vi.fn(),
+  fetchFieldStatsMock: vi.fn(),
+}));
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -21,6 +24,33 @@ vi.mock("../../src/services/es", () => ({
     const obj = err as Record<string, unknown>;
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
+  fetchFieldStats: fetchFieldStatsMock,
+  buildFieldStatsQuery: (index: string, field: string) =>
+    `FROM ${index} | STATS total = COUNT(*), non_null = COUNT(\`${field}\`), cardinality = COUNT_DISTINCT(\`${field}\`)`,
+  buildTopValuesQuery: (index: string, field: string) =>
+    `FROM ${index} | STATS count = COUNT(*) BY \`${field}\` | SORT count DESC | LIMIT 10`,
+  buildMinMaxQuery: (index: string, field: string) =>
+    `FROM ${index} | STATS min_val = MIN(\`${field}\`), max_val = MAX(\`${field}\`)`,
+  isKeywordLikeType: (type: string) =>
+    ["keyword", "constant_keyword", "wildcard", "text", "ip", "boolean", "version"].includes(type),
+  isNumericOrDateType: (type: string) =>
+    [
+      "integer",
+      "long",
+      "short",
+      "byte",
+      "double",
+      "float",
+      "half_float",
+      "scaled_float",
+      "unsigned_long",
+      "counter_long",
+      "counter_double",
+      "counter_integer",
+      "aggregate_metric_double",
+      "date",
+      "date_nanos",
+    ].includes(type),
 }));
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -281,6 +311,96 @@ describe("DataStreamsPage", () => {
     await waitFor(() => {
       expect(screen.getByText("field-b")).toBeInTheDocument();
       expect(screen.queryByText("field-a")).not.toBeInTheDocument();
+    });
+  });
+
+  it("opens the Field Stats panel when a field row is clicked", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({
+      fields: { "host.name": { keyword: { type: "keyword" } } },
+    });
+    fetchFieldStatsMock.mockReturnValue(new Promise(() => {})); // keep loading
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
+
+    // Wait for field list to render
+    await screen.findByText("host.name");
+
+    // Click the field row
+    await user.click(screen.getByRole("button", { name: /host\.name/i }));
+
+    // Field Stats panel should appear with the field name and a close button
+    expect(screen.getAllByText("host.name").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /close field stats/i })).toBeInTheDocument();
+  });
+
+  it("closes the Field Stats panel when the close button is clicked", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({
+      fields: { "host.name": { keyword: { type: "keyword" } } },
+    });
+    fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("host.name");
+    await user.click(screen.getByRole("button", { name: /host\.name/i }));
+
+    const closeButton = screen.getByRole("button", { name: /close field stats/i });
+    await user.click(closeButton);
+
+    expect(screen.queryByRole("button", { name: /close field stats/i })).not.toBeInTheDocument();
+  });
+
+  it("clears the Field Stats panel when a different stream is selected", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+        { name: "logs-b", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({
+      fields: { "host.name": { keyword: { type: "keyword" } } },
+    });
+    fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("host.name");
+    await user.click(screen.getByRole("button", { name: /host\.name/i }));
+    expect(screen.getByRole("button", { name: /close field stats/i })).toBeInTheDocument();
+
+    // Switch to a different stream
+    await user.click(screen.getByRole("button", { name: /logs-b/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /close field stats/i })).not.toBeInTheDocument();
     });
   });
 });

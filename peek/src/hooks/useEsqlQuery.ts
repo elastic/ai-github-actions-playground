@@ -36,6 +36,7 @@ export function useEsqlQuery({
   const [lastRunDurationMs, setLastRunDurationMs] = useState<number | null>(null);
   const [lastRunProfile, setLastRunProfile] = useState<unknown>(null);
   const [lastRunIsPartial, setLastRunIsPartial] = useState<boolean | null>(null);
+  const [lastRunPartialMetadata, setLastRunPartialMetadata] = useState<unknown>(null);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const clearError = useCallback(() => setError(null), []);
@@ -44,6 +45,7 @@ export function useEsqlQuery({
     setLastRunDurationMs(null);
     setLastRunProfile(null);
     setLastRunIsPartial(null);
+    setLastRunPartialMetadata(null);
   }, []);
 
   useEffect(
@@ -78,10 +80,21 @@ export function useEsqlQuery({
               profileMode ? ((data as { profile?: unknown }).profile ?? null) : null,
             );
             setLastRunIsPartial((data as { is_partial?: boolean }).is_partial ?? null);
+            const partialMeta = data as {
+              is_partial?: boolean;
+              _shards?: unknown;
+              _clusters?: unknown;
+            };
+            setLastRunPartialMetadata(
+              partialMeta.is_partial
+                ? { _shards: partialMeta._shards, _clusters: partialMeta._clusters }
+                : null,
+            );
           } else {
             setLastRunDurationMs(null);
             setLastRunProfile(null);
             setLastRunIsPartial(null);
+            setLastRunPartialMetadata(null);
             if (serverDurationMs !== null) {
               setStepDurationsMs((prev) => ({ ...prev, [stepIndex]: serverDurationMs }));
             } else {
@@ -129,6 +142,7 @@ export function useEsqlQuery({
     lastRunDurationMs,
     lastRunProfile,
     lastRunIsPartial,
+    lastRunPartialMetadata,
     clearError,
     clearTimings,
   };
