@@ -71,7 +71,9 @@ export default function ChatPage() {
     setLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+    // Allow extra time when Elastic Docs tools are enabled (MCP handshake + tool calls).
+    const timeoutMs = config.elasticDocsEnabled ? 30_000 : 15_000;
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const openai = createOpenAI({
@@ -85,8 +87,9 @@ export default function ChatPage() {
       if (config.elasticDocsEnabled) {
         try {
           tools = await getElasticDocsTools(controller.signal);
-        } catch {
+        } catch (mcpError) {
           // If MCP tool discovery fails, fall through without tools.
+          console.warn("Elastic Docs MCP tool discovery failed:", mcpError);
           resetMcpSession();
         }
       }
@@ -108,6 +111,8 @@ export default function ChatPage() {
           ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
           { role: "user" as const, content: trimmed },
         ],
+        // Allow up to 3 LLM round-trips so the model can call a search tool,
+        // read the result, and then produce a final answer.
         ...(hasTools ? { tools, stopWhen: stepCountIs(3) } : {}),
         abortSignal: controller.signal,
       });

@@ -249,7 +249,7 @@ function convertToAiTools(mcpTools: McpToolDefinition[], signal?: AbortSignal): 
  * Fetch the Elastic Docs MCP tools and return them as an AI SDK `ToolSet`
  * ready to be passed to `generateText` / `streamText`.
  *
- * The underlying MCP session is initialised lazily on the first call and
+ * The underlying MCP session is initialized lazily on the first call and
  * tool definitions are cached for subsequent invocations.
  */
 export async function getElasticDocsTools(signal?: AbortSignal): Promise<ToolSet> {
@@ -259,7 +259,7 @@ export async function getElasticDocsTools(signal?: AbortSignal): Promise<ToolSet
 
 /**
  * Reset the cached MCP session so the next call to `getElasticDocsTools`
- * re-initialises from scratch.
+ * re-initializes from scratch.
  */
 export function resetMcpSession(): void {
   sessionId = undefined;
