@@ -44,5 +44,9 @@ jobs:
 
         Do NOT repeat an idea that already has an open or recently closed issue in this repository.
         Pick a different angle each day.
+
+        Use 3 sub-agents to each come up with a different idea (give each one a slight variation on the prompt)
+        and verify that the idea is not a duplicate of an already open or recently closed issue in this repository.
+        Then you will pick the best idea that has not already been covered by an open or closed issue.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
