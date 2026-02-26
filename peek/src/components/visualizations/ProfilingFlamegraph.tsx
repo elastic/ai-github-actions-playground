@@ -1,9 +1,19 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import Box from "@mui/material/Box";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Link from "@mui/material/Link";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
+import ClearIcon from "@mui/icons-material/Clear";
+import SearchIcon from "@mui/icons-material/Search";
+import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 
 import type { FlamegraphNode } from "../profiling/profilingUtils";
+import { findSubtreeByPath } from "../profiling/profilingUtils";
 
 import EChartWrapper from "./EChartWrapper";
 import { escapeHtml } from "./htmlUtils";
@@ -46,6 +56,8 @@ const FLAMEGRAPH_COLORS = [
   "#e06020",
 ];
 
+const DIMMED_OPACITY = 0.25;
+
 function getFlameColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -59,12 +71,17 @@ const TEXT_PADDING = 6;
 
 export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const muiTheme = useTheme();
+  const [zoomPath, setZoomPath] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const visibleTree = useMemo(() => findSubtreeByPath(tree, zoomPath), [tree, zoomPath]);
 
   const option = useMemo(() => {
-    if (tree.value === 0) return null;
-    const rects = flattenTree(tree, 0, 0);
+    if (visibleTree.value === 0) return null;
+    const rects = flattenTree(visibleTree, 0, 0);
     const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
-    const totalSamples = tree.value;
+    const totalSamples = visibleTree.value;
+    const lowerSearch = searchTerm.toLowerCase();
 
     return {
       tooltip: {
@@ -72,7 +89,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
         formatter: (params: { data: { rect: FlatRect } }) => {
           const rect = params.data.rect;
           const pct = ((rect.width / totalSamples) * 100).toFixed(1);
-          return `<b>${escapeHtml(rect.name)}</b><br/>Samples: ${rect.width} (${pct}%)`;
+          return `<b>${escapeHtml(rect.name)}</b><br/>Samples: ${rect.width.toLocaleString()} (${pct}%)<br/><span style="color:#999">Click to zoom in</span>`;
         },
       },
       xAxis: {
@@ -105,13 +122,19 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
             const name = api.value(3) as unknown as string;
             const [x, y] = api.coord([startVal, depthVal]);
             const [w, h] = api.size([widthVal, 1]);
+
+            const isMatch =
+              lowerSearch.length > 0 && String(name).toLowerCase().includes(lowerSearch);
+            const isDimmed = lowerSearch.length > 0 && !isMatch;
+
             return {
               type: "rect" as const,
               shape: { x, y, width: Math.max(w - 1, 1), height: Math.max(h - 2, 1) },
               style: api.style({
                 fill: getFlameColor(String(name)),
-                stroke: muiTheme.palette.background.paper,
-                lineWidth: 0.5,
+                stroke: isMatch ? muiTheme.palette.primary.main : muiTheme.palette.background.paper,
+                lineWidth: isMatch ? 2 : 0.5,
+                opacity: isDimmed ? DIMMED_OPACITY : 1,
               }),
               textContent: {
                 type: "text" as const,
@@ -120,6 +143,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
                   fill: "#fff",
                   fontSize: 11,
                   truncate: { outerWidth: Math.max(w - TEXT_PADDING, 0) },
+                  opacity: isDimmed ? DIMMED_OPACITY : 1,
                 },
               },
               textConfig: { position: "inside" as const, inside: true },
@@ -133,17 +157,28 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
         },
       ],
     };
-  }, [tree, muiTheme.palette.background.paper]);
+  }, [visibleTree, muiTheme.palette.background.paper, muiTheme.palette.primary.main, searchTerm]);
 
-  const handleClick = useCallback(
-    (params: { data: unknown }) => {
-      const data = params.data as { rect?: FlatRect } | undefined;
-      if (data?.rect && onFrameClick) {
-        onFrameClick(data.rect.name);
-      }
-    },
-    [onFrameClick],
-  );
+  const handleClick = useCallback((params: { data: unknown }) => {
+    const data = params.data as { rect?: FlatRect } | undefined;
+    if (!data?.rect) return;
+    setZoomPath((prev) => [...prev, data.rect!.name]);
+  }, []);
+
+  const handleBreadcrumbClick = useCallback((index: number) => {
+    setZoomPath((prev) => prev.slice(0, index));
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoomPath([]);
+  }, []);
+
+  const handleOpenInQueryLab = useCallback(() => {
+    const frameName = zoomPath.length > 0 ? zoomPath[zoomPath.length - 1]! : null;
+    if (frameName && onFrameClick) {
+      onFrameClick(frameName);
+    }
+  }, [zoomPath, onFrameClick]);
 
   if (tree.value === 0) {
     return (
@@ -156,11 +191,126 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   }
 
   return (
-    <Box sx={{ width: "100%", height: "100%" }}>
-      <EChartWrapper
-        option={option as Record<string, unknown>}
-        onClick={handleClick as (params: { dataIndex: number; data: unknown }) => void}
-      />
+    <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+      {/* Toolbar */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          px: 1,
+          py: 0.5,
+          borderBottom: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder="Search frames…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: searchTerm ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchTerm("")}
+                    aria-label="Clear search"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            },
+          }}
+          sx={{ width: 240 }}
+        />
+        {zoomPath.length > 0 && (
+          <Tooltip title="Reset zoom to show the full flamegraph">
+            <IconButton size="small" onClick={handleResetZoom} aria-label="Reset zoom">
+              <ZoomOutMapIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+        {zoomPath.length > 0 && onFrameClick && (
+          <Tooltip title="Open the zoomed frame in Query Lab">
+            <Typography
+              variant="caption"
+              component="button"
+              onClick={handleOpenInQueryLab}
+              sx={{
+                ml: "auto",
+                cursor: "pointer",
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                px: 1,
+                py: 0.25,
+                bgcolor: "transparent",
+                color: "primary.main",
+                "&:hover": { bgcolor: "action.hover" },
+              }}
+            >
+              Open in Query Lab
+            </Typography>
+          </Tooltip>
+        )}
+      </Box>
+
+      {/* Breadcrumb */}
+      {zoomPath.length > 0 && (
+        <Box sx={{ px: 1, py: 0.5, flexShrink: 0, borderBottom: 1, borderColor: "divider" }}>
+          <Breadcrumbs separator="›" sx={{ fontSize: "0.75rem" }}>
+            <Link
+              component="button"
+              variant="caption"
+              underline="hover"
+              onClick={() => handleBreadcrumbClick(0)}
+              sx={{ fontFamily: "monospace" }}
+            >
+              root
+            </Link>
+            {zoomPath.map((name, i) =>
+              i < zoomPath.length - 1 ? (
+                <Link
+                  key={i}
+                  component="button"
+                  variant="caption"
+                  underline="hover"
+                  onClick={() => handleBreadcrumbClick(i + 1)}
+                  sx={{ fontFamily: "monospace" }}
+                >
+                  {name}
+                </Link>
+              ) : (
+                <Typography
+                  key={i}
+                  variant="caption"
+                  color="text.primary"
+                  sx={{ fontFamily: "monospace" }}
+                >
+                  {name}
+                </Typography>
+              ),
+            )}
+          </Breadcrumbs>
+        </Box>
+      )}
+
+      {/* Chart */}
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        <EChartWrapper
+          option={option as Record<string, unknown>}
+          onClick={handleClick as (params: { dataIndex: number; data: unknown }) => void}
+        />
+      </Box>
     </Box>
   );
 }

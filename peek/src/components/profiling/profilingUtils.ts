@@ -132,6 +132,37 @@ export function normalizeTopFunctions(payload: unknown): TopFunctionRow[] {
     .filter((row): row is TopFunctionRow => row !== null);
 }
 
+/**
+ * Find a subtree node by following a path of frame names from the root.
+ * Returns the node at the end of the path, or the root if the path is empty
+ * or a segment is not found.
+ */
+export function findSubtreeByPath(root: FlamegraphNode, path: string[]): FlamegraphNode {
+  let current = root;
+  for (const name of path) {
+    const child = current.children.find((c) => c.name === name);
+    if (!child) return current;
+    current = child;
+  }
+  return current;
+}
+
+/**
+ * Count nodes in a flamegraph tree whose name matches a search term (case-insensitive).
+ */
+export function countMatchingFrames(node: FlamegraphNode, term: string): number {
+  const lower = term.toLowerCase();
+  return countMatchingFramesLower(node, lower);
+}
+
+function countMatchingFramesLower(node: FlamegraphNode, lowerTerm: string): number {
+  let count = node.name.toLowerCase().includes(lowerTerm) ? 1 : 0;
+  for (const child of node.children) {
+    count += countMatchingFramesLower(child, lowerTerm);
+  }
+  return count;
+}
+
 export function joinStacktraces(
   events: ProfilingEvent[],
   stacktraces: StacktraceFrameMap[],

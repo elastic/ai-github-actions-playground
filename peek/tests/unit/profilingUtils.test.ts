@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFlamegraphTree,
+  countMatchingFrames,
+  findSubtreeByPath,
   joinStacktraces,
   normalizeTopFunctions,
   parseFrameIds,
@@ -226,5 +228,165 @@ describe("normalizeTopFunctions", () => {
     const payload = { topn: [{ count: 77, frame: { function_name: "fn" } }] };
     const rows = normalizeTopFunctions(payload);
     expect(rows[0]!.totalCount).toBe(77);
+  });
+});
+
+describe("findSubtreeByPath", () => {
+  function buildTestTree(): ReturnType<typeof buildFlamegraphTree> {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 5,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "main",
+            functionName: "main",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "foo",
+            functionName: "foo",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "bar",
+            functionName: "bar",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+      {
+        stacktraceId: "st2",
+        count: 3,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "main",
+            functionName: "main",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "baz",
+            functionName: "baz",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    return buildFlamegraphTree(stacks);
+  }
+
+  it("returns the root when the path is empty", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, []);
+    expect(result.name).toBe("root");
+    expect(result.value).toBe(8);
+  });
+
+  it("navigates to a single-level child", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["main"]);
+    expect(result.name).toBe("main");
+    expect(result.value).toBe(8);
+    expect(result.children).toHaveLength(2);
+  });
+
+  it("navigates to a deeply nested child", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["main", "foo", "bar"]);
+    expect(result.name).toBe("bar");
+    expect(result.value).toBe(5);
+    expect(result.children).toHaveLength(0);
+  });
+
+  it("stops at the last valid segment when path is invalid", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["main", "nonexistent"]);
+    expect(result.name).toBe("main");
+  });
+
+  it("returns root when the first segment is invalid", () => {
+    const tree = buildTestTree();
+    const result = findSubtreeByPath(tree, ["nonexistent"]);
+    expect(result.name).toBe("root");
+  });
+});
+
+describe("countMatchingFrames", () => {
+  it("returns 0 for an empty tree with no match", () => {
+    const tree = buildFlamegraphTree([]);
+    expect(countMatchingFrames(tree, "foo")).toBe(0);
+  });
+
+  it("counts matching frames case-insensitively", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "main",
+            functionName: "main",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "fooBar",
+            functionName: "fooBar",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+          {
+            frameId: "foo",
+            functionName: "foo",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    // "foo" matches "fooBar" and "foo" but not "main" or "root"
+    expect(countMatchingFrames(tree, "foo")).toBe(2);
+  });
+
+  it("matches partial function names", () => {
+    const stacks: SymbolizedStacktrace[] = [
+      {
+        stacktraceId: "st1",
+        count: 1,
+        serviceName: "",
+        hostName: "",
+        frames: [
+          {
+            frameId: "handleRequest",
+            functionName: "handleRequest",
+            fileName: "",
+            lineNumber: null,
+            functionOffset: null,
+          },
+        ],
+      },
+    ];
+    const tree = buildFlamegraphTree(stacks);
+    expect(countMatchingFrames(tree, "Request")).toBe(1);
   });
 });
