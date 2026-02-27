@@ -315,7 +315,7 @@ export default function AddDataPage() {
                 {creatingApiKey ? <CircularProgress size={16} /> : "Generate API key"}
               </Button>
               <Typography variant="body2" color="text.secondary">
-                Generates a one-time API key for collector setup.
+                Generates an API key for collector setup.
               </Typography>
             </Stack>
             {apiKeyValue && (

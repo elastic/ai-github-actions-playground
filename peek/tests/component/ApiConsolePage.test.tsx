@@ -205,7 +205,7 @@ describe("ApiConsolePage", () => {
     expect(screen.getByDisplayValue("/_search")).toBeInTheDocument();
   });
 
-  it("clears all entries and resets to a single blank entry when Clear Session is clicked", async () => {
+  it("clears all entries and resets to a single blank entry when Clear Session is confirmed", async () => {
     const user = userEvent.setup();
     render(<ApiConsolePage />);
 
@@ -213,7 +213,12 @@ describe("ApiConsolePage", () => {
     await user.click(screen.getByRole("button", { name: /add request/i }));
     expect(screen.getAllByRole("button", { name: /send/i })).toHaveLength(2);
 
-    await user.click(screen.getByRole("button", { name: /clear session/i }));
+    await user.click(screen.getByRole("button", { name: /more actions/i }));
+    await user.click(screen.getByRole("menuitem", { name: /clear session/i }));
+    await user.click(await screen.findByRole("button", { name: /^clear session$/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: /clear session\?/i })).not.toBeInTheDocument();
+    });
 
     expect(screen.getAllByRole("button", { name: /send/i })).toHaveLength(1);
   });
