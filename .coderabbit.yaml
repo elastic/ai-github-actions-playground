@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Repo-level overrides — inherits everything else from the org config.
+inheritance: true
+reviews:
+  profile: assertive
+  path_instructions:
+    - path: '**/*'
+      instructions: >
+        Review thoroughly. Do not suppress findings — report all confirmed issues you find
+        including style, correctness, security, performance, and maintainability.
