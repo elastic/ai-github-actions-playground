@@ -61,10 +61,10 @@ node scripts/screenshot-feature.mjs \
 kill $DEV_PID
 ```
 
-### Diagnostics Preflight (Landing Page Only)
+### Diagnostics Preflight
 
-The preflight script is a **diagnostics tool** — it navigates to the root URL
-(the landing/connect page) and checks for console errors, page errors, and
+The preflight script is a **diagnostics tool** — it navigates to the URL provided via --url
+and checks for console errors, page errors, and
 UI alert components. Use it to verify the app loads cleanly, not to demonstrate
 features.
 
