@@ -152,6 +152,7 @@ export async function registerElasticsearchMocks(
     data = {},
     queryResolver,
     fallback = {},
+    fallbackStatus = 404,
   } = {},
 ) {
   const resolved = withDefaults(data);
@@ -201,6 +202,6 @@ export async function registerElasticsearchMocks(
       return json(resolved.esqlDefault);
     }
 
-    return json(fallback);
+    return json(fallback, fallbackStatus);
   });
 }
