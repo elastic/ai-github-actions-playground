@@ -22,6 +22,14 @@ export function buildWhereClause(clauses: string[]): string {
  * include the result in a pipe chain without extra guards.
  */
 export function buildWherePipe(clauses: string[]): string {
-  if (clauses.length === 0) return "";
-  return `WHERE ${clauses.join(" AND ")}`;
+  const whereClause = buildWhereClause(clauses);
+  if (!whereClause) return "";
+  return `WHERE ${whereClause}`;
+}
+
+/**
+ * Builds a reusable inclusive timestamp range clause.
+ */
+export function buildTimeRangeClause(field: string, fromExpr: string, toExpr: string): string {
+  return `${field} >= ${fromExpr} AND ${field} <= ${toExpr}`;
 }

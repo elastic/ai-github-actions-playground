@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { buildWhereClause, buildWherePipe } from "../../src/services/es/queryParts";
+import {
+  buildTimeRangeClause,
+  buildWhereClause,
+  buildWherePipe,
+} from "../../src/services/es/queryParts";
 
 describe("buildWhereClause", () => {
   it("returns empty string for empty array", () => {
@@ -27,5 +31,19 @@ describe("buildWherePipe", () => {
 
   it("returns WHERE with multiple AND-joined clauses", () => {
     expect(buildWherePipe(["a == 1", "b == 2"])).toBe("WHERE a == 1 AND b == 2");
+  });
+});
+
+describe("buildTimeRangeClause", () => {
+  it("returns an inclusive time range clause", () => {
+    expect(buildTimeRangeClause("@timestamp", "?_tstart", "?_tend")).toBe(
+      "@timestamp >= ?_tstart AND @timestamp <= ?_tend",
+    );
+  });
+
+  it("supports custom fields and expressions", () => {
+    expect(buildTimeRangeClause("event.ingested", "NOW() - 1 hour", "NOW()")).toBe(
+      "event.ingested >= NOW() - 1 hour AND event.ingested <= NOW()",
+    );
   });
 });
