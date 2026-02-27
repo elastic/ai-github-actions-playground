@@ -14,7 +14,6 @@ import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import {
   computeCheckinStaleness,
-  formatFleetTime,
   loadElasticAgentInfo,
   loadElasticAgentLogs,
   loadElasticAgentMetrics,
@@ -25,6 +24,7 @@ import {
 import { useConnectionStore } from "../store/useConnectionStore";
 import { formatBytes } from "../utils/formatBytes";
 
+import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
 
@@ -195,13 +195,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
             <Chip
               size="small"
               label={`Last seen: ${staleness.label}`}
-              color={
-                staleness.severity === "fresh"
-                  ? "success"
-                  : staleness.severity === "stale"
-                    ? "warning"
-                    : "error"
-              }
+              color={stalenessSeverityToColor(staleness.severity)}
               variant="outlined"
             />
           </Stack>
