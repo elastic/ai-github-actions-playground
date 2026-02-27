@@ -101,4 +101,23 @@ describe("profilingQueryBuilder", () => {
       ]),
     );
   });
+
+  it("quotes custom absolute timestamps in ES|QL filters", () => {
+    const query = buildProfilingEventsQuery({
+      ...EMPTY_FILTERS,
+      timeFrom: "2026-02-24T03:00:00.000Z",
+      timeTo: "2026-02-24T04:00:00.000Z",
+    });
+    expect(query).toContain('@timestamp >= "2026-02-24T03:00:00.000Z"');
+    expect(query).toContain('@timestamp <= "2026-02-24T04:00:00.000Z"');
+
+    const timeline = buildProfilingTimelineQuery({
+      ...EMPTY_FILTERS,
+      timeFrom: "2026-02-24T03:00:00.000Z",
+      timeTo: "2026-02-24T04:00:00.000Z",
+    });
+    expect(timeline).toContain(
+      'BUCKET(@timestamp, 50, "2026-02-24T03:00:00.000Z", "2026-02-24T04:00:00.000Z")',
+    );
+  });
 });
