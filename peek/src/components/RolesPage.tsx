@@ -55,7 +55,7 @@ export default function RolesPage() {
               client,
               fetchResource: (c) => c.getSecurityRoles(),
               canRead: (caps) => caps.canReadSecurityRoles,
-              authDeniedNotice: "Your credentials cannot read all Roles data.",
+              authDeniedNotice: "Your credentials cannot read all role data.",
             }),
             client.getSecurityUsers(),
           ]),
