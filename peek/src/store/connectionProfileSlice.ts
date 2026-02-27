@@ -24,8 +24,8 @@ import {
 } from "./connectionStorageAdapters";
 
 const credentialsSchema = z.object({
-  apiKey: z.string().default(""),
-  password: z.string().default(""),
+  apiKey: z.string().catch(""),
+  password: z.string().catch(""),
 });
 
 export interface ConnectionProfileSlice {
