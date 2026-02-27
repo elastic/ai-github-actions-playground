@@ -23,10 +23,12 @@ import {
   ENCRYPTED_STORE_SUFFIX,
 } from "./connectionStorageAdapters";
 
-const credentialsSchema = z.object({
-  apiKey: z.string().catch(""),
-  password: z.string().catch(""),
-});
+const credentialsSchema = z
+  .object({
+    apiKey: z.unknown().optional(),
+    password: z.unknown().optional(),
+  })
+  .strict();
 
 export interface ConnectionProfileSlice {
   connectionProfiles: ConnectionProfile[];
@@ -145,7 +147,8 @@ export const createConnectionProfileSlice: StateCreator<
       if (plaintext === null) return false;
       const result = credentialsSchema.safeParse(JSON.parse(plaintext));
       if (!result.success) return false;
-      const { apiKey, password } = result.data;
+      const apiKey = typeof result.data.apiKey === "string" ? result.data.apiKey : "";
+      const password = typeof result.data.password === "string" ? result.data.password : "";
       set((s) => ({
         connectionProfiles: s.connectionProfiles.map((p) =>
           p.id === id ? { ...p, connection: { ...p.connection, apiKey, password } } : p,
