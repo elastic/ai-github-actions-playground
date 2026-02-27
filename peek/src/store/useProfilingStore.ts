@@ -3,7 +3,12 @@ import { create } from "zustand";
 import type { ProfilingFilters } from "../components/profiling/profilingQueryBuilder";
 import { EMPTY_FILTERS } from "../components/profiling/profilingQueryBuilder";
 
-export type ProfilingViewMode = "topFunctions" | "stacktraces" | "timeline" | "flamegraph";
+export type ProfilingViewMode =
+  | "topFunctions"
+  | "stacktraces"
+  | "timeline"
+  | "flamegraph"
+  | "flamescope";
 
 interface ProfilingState {
   filters: ProfilingFilters;

@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFlamegraphTree,
+  buildFlamescopeHeatmap,
   countMatchingFrames,
   findSubtreeByPath,
   inferFrameType,
   joinStacktraces,
   normalizeTopFunctions,
   parseFrameIds,
+  parseFrameTypes,
 } from "../../src/components/profiling/profilingUtils";
 import type { SymbolizedStacktrace } from "../../src/components/profiling/profilingUtils";
 
@@ -38,10 +40,37 @@ describe("profilingUtils", () => {
     expect(parseFrameIds("abc123,,def456,")).toEqual(["abc123", "def456"]);
   });
 
+  it("parses base64url-encoded frame IDs (Universal Profiling format)", () => {
+    // Two 32-char base64url frame IDs concatenated (contains - and _ chars)
+    const base64url = "-CuF6ClfJ_bJKJ5gbymXgAAAAAAAANAg7tVf6cnW3QYomyYxp7t2mQAAAAAAAp1k";
+    expect(parseFrameIds(base64url)).toEqual([
+      "-CuF6ClfJ_bJKJ5gbymXgAAAAAAAANAg",
+      "7tVf6cnW3QYomyYxp7t2mQAAAAAAAp1k",
+    ]);
+  });
+
+  it("preserves underscores in base64url frame IDs", () => {
+    // A single 32-char base64url ID with underscore — must not be stripped
+    const singleId = "HNnwHz_1UCtzVNTfRC4e8gAAAAAABfAe";
+    expect(parseFrameIds(singleId)).toEqual([singleId]);
+  });
+
+  it("returns empty array for empty or falsy input", () => {
+    expect(parseFrameIds("")).toEqual([]);
+  });
+
   it("joins events stacktraces and symbols", () => {
     const result = joinStacktraces(
-      [{ stacktraceId: "st1", count: 12, serviceName: "svc", hostName: "host" }],
-      [{ id: "st1", frameIds: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }],
+      [
+        {
+          stacktraceId: "st1",
+          count: 12,
+          serviceName: "svc",
+          hostName: "host",
+          timestamp: "2026-02-27T00:00:00.000Z",
+        },
+      ],
+      [{ id: "st1", frameIds: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", frameTypes: "" }],
       [
         {
           id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -55,6 +84,102 @@ describe("profilingUtils", () => {
     expect(result).toHaveLength(1);
     expect(result[0]!.frames[0]!.functionName).toBe("main");
     expect(result[0]!.count).toBe(12);
+    expect(result[0]!.timestamp).toBe("2026-02-27T00:00:00.000Z");
+  });
+
+  it("uses decoded frame types from Stacktrace.frame.types", () => {
+    // "AQM" = base64([1, 3]) = 1 native frame
+    const result = joinStacktraces(
+      [
+        {
+          stacktraceId: "st1",
+          count: 5,
+          serviceName: "",
+          hostName: "",
+          timestamp: "2026-02-27T00:00:00.000Z",
+        },
+      ],
+      [{ id: "st1", frameIds: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", frameTypes: "AQM" }],
+      [
+        {
+          id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          functionName: "some_func",
+          fileName: "",
+          lineNumber: null,
+          functionOffset: null,
+        },
+      ],
+    );
+    expect(result[0]!.frames[0]!.frameType).toBe("native");
+  });
+});
+
+describe("parseFrameTypes", () => {
+  it("returns empty array for empty string", () => {
+    expect(parseFrameTypes("")).toEqual([]);
+  });
+
+  it("decodes single RLE pair", () => {
+    // btoa(String.fromCharCode(2, 3)) = "AgM=" → 2 native frames
+    expect(parseFrameTypes("AgM=")).toEqual(["native", "native"]);
+  });
+
+  it("decodes multiple RLE pairs", () => {
+    // "IQMGBA" = base64([0x21, 0x03, 0x06, 0x04]) = 33 native + 6 kernel
+    const result = parseFrameTypes("IQMGBA");
+    expect(result).toHaveLength(39);
+    expect(result.slice(0, 33).every((t) => t === "native")).toBe(true);
+    expect(result.slice(33).every((t) => t === "kernel")).toBe(true);
+  });
+
+  it("decodes Go + kernel types", () => {
+    // "CAsEBA" = base64([0x08, 0x0b, 0x04, 0x04]) = 8 Go(runtime) + 4 kernel
+    const result = parseFrameTypes("CAsEBA");
+    expect(result).toHaveLength(12);
+    expect(result.slice(0, 8).every((t) => t === "runtime")).toBe(true);
+    expect(result.slice(8).every((t) => t === "kernel")).toBe(true);
+  });
+
+  it("decodes Python type", () => {
+    // btoa(String.fromCharCode(3, 1)) = "AwE=" → 3 Python(interpreted) frames
+    expect(parseFrameTypes("AwE=")).toEqual(["interpreted", "interpreted", "interpreted"]);
+  });
+});
+
+describe("buildFlamescopeHeatmap", () => {
+  const makeStacktrace = (
+    stacktraceId: string,
+    timestamp: string,
+    count: number,
+    frames: string[],
+  ): SymbolizedStacktrace => ({
+    stacktraceId,
+    count,
+    serviceName: "svc",
+    hostName: "host",
+    timestamp,
+    frames: frames.map((name) => ({
+      frameId: name,
+      functionName: name,
+      fileName: "",
+      lineNumber: null,
+      functionOffset: null,
+    })),
+  });
+
+  it("builds heatmap points and bucket windows", () => {
+    const model = buildFlamescopeHeatmap(
+      [
+        makeStacktrace("st1", "2026-02-27T00:00:00.000Z", 4, ["main", "foo"]),
+        makeStacktrace("st2", "2026-02-27T00:00:01.000Z", 3, ["main", "bar"]),
+      ],
+      2,
+      10,
+    );
+    expect(model.xLabels).toHaveLength(2);
+    expect(model.bucketWindows).toHaveLength(2);
+    expect(model.yLabels).toContain("main → foo");
+    expect(model.points.length).toBeGreaterThan(0);
   });
 });
 
@@ -81,6 +206,7 @@ describe("buildFlamegraphTree", () => {
         count: 5,
         serviceName: "svc",
         hostName: "host",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main"), makeFrame("foo"), makeFrame("bar")],
       },
     ];
@@ -101,6 +227,7 @@ describe("buildFlamegraphTree", () => {
         count: 3,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main"), makeFrame("foo")],
       },
       {
@@ -108,6 +235,7 @@ describe("buildFlamegraphTree", () => {
         count: 7,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:01.000Z",
         frames: [makeFrame("main"), makeFrame("bar")],
       },
     ];
@@ -130,6 +258,7 @@ describe("buildFlamegraphTree", () => {
         count: 2,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main"), makeFrame("(unknown)"), makeFrame("leaf")],
       },
     ];
@@ -146,6 +275,7 @@ describe("buildFlamegraphTree", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main")],
       },
       {
@@ -153,6 +283,7 @@ describe("buildFlamegraphTree", () => {
         count: 2,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:01.000Z",
         frames: [makeFrame("init")],
       },
     ];
@@ -240,6 +371,7 @@ describe("findSubtreeByPath", () => {
         count: 5,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "main",
@@ -269,6 +401,7 @@ describe("findSubtreeByPath", () => {
         count: 3,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:01.000Z",
         frames: [
           {
             frameId: "main",
@@ -339,6 +472,7 @@ describe("countMatchingFrames", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "main",
@@ -376,6 +510,7 @@ describe("countMatchingFrames", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "handleRequest",
@@ -438,6 +573,7 @@ describe("buildFlamegraphTree frameType", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "1",
