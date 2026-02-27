@@ -11,9 +11,16 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
+import Menu from "@mui/material/Menu";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CodeMirror from "@uiw/react-codemirror";
@@ -322,6 +329,9 @@ export default function ApiConsolePage() {
   const entriesRef = useRef(entries);
   const abortRefs = useRef<Map<string, AbortController>>(new Map());
 
+  const [overflowMenuAnchor, setOverflowMenuAnchor] = useState<null | HTMLElement>(null);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
   useEffect(() => {
     entriesRef.current = entries;
   }, [entries]);
@@ -423,15 +433,61 @@ export default function ApiConsolePage() {
         <Button variant="outlined" size="small" startIcon={<PlayArrowIcon />} onClick={sendAll}>
           Run All
         </Button>
-        <Button
-          variant="outlined"
+        <IconButton
           size="small"
-          color="error"
-          startIcon={<DeleteIcon />}
-          onClick={clearSession}
+          aria-label="More actions"
+          aria-controls={overflowMenuAnchor ? "console-overflow-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={overflowMenuAnchor ? "true" : undefined}
+          onClick={(e) => setOverflowMenuAnchor(e.currentTarget)}
         >
-          Clear Session
-        </Button>
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
+        <Menu
+          id="console-overflow-menu"
+          anchorEl={overflowMenuAnchor}
+          open={Boolean(overflowMenuAnchor)}
+          onClose={() => setOverflowMenuAnchor(null)}
+        >
+          <MenuItem
+            aria-label="Clear session"
+            onClick={() => {
+              setOverflowMenuAnchor(null);
+              setConfirmClearOpen(true);
+            }}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+            Clear Session
+          </MenuItem>
+        </Menu>
+        <Dialog
+          open={confirmClearOpen}
+          onClose={() => setConfirmClearOpen(false)}
+          aria-labelledby="clear-session-dialog-title"
+        >
+          <DialogTitle id="clear-session-dialog-title">Clear Session?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This will cancel all in-flight requests and remove all requests from the session. This
+              action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmClearOpen(false)}>Cancel</Button>
+            <Button
+              color="error"
+              variant="contained"
+              startIcon={<DeleteIcon />}
+              onClick={() => {
+                setConfirmClearOpen(false);
+                clearSession();
+              }}
+            >
+              Clear Session
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
 
       {entries.map((entry) => (
