@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -213,20 +213,10 @@ export default function DashboardsLandingPage() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [recentlyDeleted, setRecentlyDeleted] = useState<DashboardDefinition | null>(null);
-  const deleteTimeoutRef = useRef<number | null>(null);
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [nameDialogMode, setNameDialogMode] = useState<"create" | "rename">("create");
   const [nameDialogValue, setNameDialogValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  useEffect(
-    () => () => {
-      if (deleteTimeoutRef.current !== null) {
-        window.clearTimeout(deleteTimeoutRef.current);
-      }
-    },
-    [],
-  );
 
   const visibleDashboards = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -313,14 +303,7 @@ export default function DashboardsLandingPage() {
       handleCloseMenu();
       return;
     }
-    if (deleteTimeoutRef.current !== null) {
-      window.clearTimeout(deleteTimeoutRef.current);
-    }
     setRecentlyDeleted(menuDashboard);
-    deleteTimeoutRef.current = window.setTimeout(() => {
-      setRecentlyDeleted(null);
-      deleteTimeoutRef.current = null;
-    }, 8000);
     handleCloseMenu();
   }, [menuDashboard, confirmDeleteId, deleteDashboard, handleCloseMenu]);
 
@@ -328,10 +311,6 @@ export default function DashboardsLandingPage() {
     if (!recentlyDeleted) return;
     restoreDashboard(recentlyDeleted, false);
     setRecentlyDeleted(null);
-    if (deleteTimeoutRef.current !== null) {
-      window.clearTimeout(deleteTimeoutRef.current);
-      deleteTimeoutRef.current = null;
-    }
   }, [recentlyDeleted, restoreDashboard]);
 
   const handleNameDialogConfirm = useCallback(() => {
