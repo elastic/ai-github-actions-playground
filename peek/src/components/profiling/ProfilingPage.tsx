@@ -21,6 +21,7 @@ import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
+import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
@@ -29,6 +30,7 @@ import type { EsqlResponse } from "../../types";
 
 import {
   buildProfilingEventsQuery,
+  buildProfilingFlamescopeQuery,
   buildProfilingTimelineQuery,
   buildStackframeLookupQuery,
   buildStacktraceLookupQuery,
@@ -75,9 +77,13 @@ export default function ProfilingPage() {
   const [topFunctionsRows, setTopFunctionsRows] = useState<TopFunctionRow[]>([]);
   const [timelineResult, setTimelineResult] = useState<EsqlResponse | null>(null);
   const [stacktraces, setStacktraces] = useState<SymbolizedStacktrace[]>([]);
+  const [flamescopeWindow, setFlamescopeWindow] = useState<{ from: string; to: string } | null>(
+    null,
+  );
 
   const generatedQuery = useMemo(() => {
     if (viewMode === "timeline") return buildProfilingTimelineQuery(filters);
+    if (viewMode === "flamescope") return buildProfilingFlamescopeQuery(filters);
     return buildProfilingEventsQuery(filters);
   }, [viewMode, filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
@@ -107,6 +113,7 @@ export default function ProfilingPage() {
       const eventsResponse = await client.query({ query: effectiveQuery }, signal);
       const events: ProfilingEvent[] = eventsResponse.values
         .map((row) => ({
+          timestamp: String(readColumn(row, eventsResponse.columns, "@timestamp") ?? ""),
           stacktraceId: String(readColumn(row, eventsResponse.columns, "Stacktrace.id") ?? ""),
           count: Number(readColumn(row, eventsResponse.columns, "Stacktrace.count") ?? 0),
           serviceName: String(readColumn(row, eventsResponse.columns, "service.name") ?? ""),
@@ -164,6 +171,7 @@ export default function ProfilingPage() {
       setStacktraces(joinStacktraces(events, stacktraceRows, frames));
       setTopFunctionsRows([]);
       setTimelineResult(null);
+      setFlamescopeWindow(null);
     },
     [effectiveQuery],
   );
@@ -194,9 +202,13 @@ export default function ProfilingPage() {
 
   const handleOpenInQueryLab = useCallback(() => {
     if (viewMode === "topFunctions") return;
-    setDiscoverQueryDraft(effectiveQuery);
+    const draft =
+      viewMode === "flamescope" && flamescopeWindow
+        ? `${effectiveQuery}\n| WHERE @timestamp >= "${escapeEsqlString(flamescopeWindow.from)}" AND @timestamp < "${escapeEsqlString(flamescopeWindow.to)}"`
+        : effectiveQuery;
+    setDiscoverQueryDraft(draft);
     navigate(PAGE_MANIFEST.discover.path);
-  }, [effectiveQuery, navigate, setDiscoverQueryDraft, viewMode]);
+  }, [effectiveQuery, flamescopeWindow, navigate, setDiscoverQueryDraft, viewMode]);
 
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
 
@@ -233,24 +245,28 @@ export default function ProfilingPage() {
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
-          {(["topFunctions", "stacktraces", "timeline", "flamegraph"] as const).map((mode) => (
-            <Chip
-              key={mode}
-              label={
-                mode === "topFunctions"
-                  ? "Top Functions"
-                  : mode === "stacktraces"
-                    ? "Stacktraces"
-                    : mode === "timeline"
-                      ? "Timeline"
-                      : "Flamegraph"
-              }
-              size="small"
-              variant={viewMode === mode ? "filled" : "outlined"}
-              color={viewMode === mode ? "primary" : "default"}
-              onClick={() => setViewMode(mode)}
-            />
-          ))}
+          {(["topFunctions", "stacktraces", "timeline", "flamegraph", "flamescope"] as const).map(
+            (mode) => (
+              <Chip
+                key={mode}
+                label={
+                  mode === "topFunctions"
+                    ? "Top Functions"
+                    : mode === "stacktraces"
+                      ? "Stacktraces"
+                      : mode === "timeline"
+                        ? "Timeline"
+                        : mode === "flamegraph"
+                          ? "Flamegraph"
+                          : "Flamescope"
+                }
+                size="small"
+                variant={viewMode === mode ? "filled" : "outlined"}
+                color={viewMode === mode ? "primary" : "default"}
+                onClick={() => setViewMode(mode)}
+              />
+            ),
+          )}
         </Box>
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
           <TextField
@@ -417,6 +433,13 @@ export default function ProfilingPage() {
           <Box sx={{ height: 480 }}>
             <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
           </Box>
+        )}
+        {viewMode === "flamescope" && stacktraces.length > 0 && (
+          <ProfilingFlamescope
+            stacktraces={stacktraces}
+            onWindowChange={setFlamescopeWindow}
+            onFrameClick={handleFrameClick}
+          />
         )}
       </Paper>
     </Box>

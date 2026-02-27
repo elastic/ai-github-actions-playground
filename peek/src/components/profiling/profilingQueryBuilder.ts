@@ -51,6 +51,17 @@ export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
   ].join(" | ");
 }
 
+export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string {
+  const where = buildProfilingWhereClause(filters);
+  return [
+    "FROM profiling-events-all",
+    `WHERE ${where.join(" AND ")}`,
+    "KEEP @timestamp, Stacktrace.id, Stacktrace.count, service.name, host.name",
+    "SORT @timestamp ASC",
+    `LIMIT ${Math.max(1, Math.min(5000, filters.limit * 20))}`,
+  ].join(" | ");
+}
+
 export function buildStacktraceLookupQuery(ids: string[]): string {
   if (ids.length === 0) {
     return 'FROM profiling-stacktraces METADATA _id | WHERE _id IN ("")';

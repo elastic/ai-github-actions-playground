@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildProfilingEventsQuery,
+  buildProfilingFlamescopeQuery,
   buildProfilingTimelineQuery,
   buildStackframeLookupQuery,
   buildStacktraceLookupQuery,
@@ -55,6 +56,14 @@ describe("profilingQueryBuilder", () => {
         expect.objectContaining({ term: { "process.executable.name": "node" } }),
       ]),
     );
+  });
+
+  it("builds flamescope query with explicit fields and sort", () => {
+    const query = buildProfilingFlamescopeQuery(EMPTY_FILTERS);
+    expect(query).toContain(
+      "KEEP @timestamp, Stacktrace.id, Stacktrace.count, service.name, host.name",
+    );
+    expect(query).toContain("SORT @timestamp ASC");
   });
 
   it("applies non-executable filters in top functions request", () => {

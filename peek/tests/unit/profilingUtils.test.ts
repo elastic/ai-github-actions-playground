@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFlamegraphTree,
+  buildFlamescopeHeatmap,
   countMatchingFrames,
   findSubtreeByPath,
   inferFrameType,
@@ -40,7 +41,15 @@ describe("profilingUtils", () => {
 
   it("joins events stacktraces and symbols", () => {
     const result = joinStacktraces(
-      [{ stacktraceId: "st1", count: 12, serviceName: "svc", hostName: "host" }],
+      [
+        {
+          stacktraceId: "st1",
+          count: 12,
+          serviceName: "svc",
+          hostName: "host",
+          timestamp: "2026-02-27T00:00:00.000Z",
+        },
+      ],
       [{ id: "st1", frameIds: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }],
       [
         {
@@ -55,6 +64,44 @@ describe("profilingUtils", () => {
     expect(result).toHaveLength(1);
     expect(result[0]!.frames[0]!.functionName).toBe("main");
     expect(result[0]!.count).toBe(12);
+    expect(result[0]!.timestamp).toBe("2026-02-27T00:00:00.000Z");
+  });
+});
+
+describe("buildFlamescopeHeatmap", () => {
+  const makeStacktrace = (
+    stacktraceId: string,
+    timestamp: string,
+    count: number,
+    frames: string[],
+  ): SymbolizedStacktrace => ({
+    stacktraceId,
+    count,
+    serviceName: "svc",
+    hostName: "host",
+    timestamp,
+    frames: frames.map((name) => ({
+      frameId: name,
+      functionName: name,
+      fileName: "",
+      lineNumber: null,
+      functionOffset: null,
+    })),
+  });
+
+  it("builds heatmap points and bucket windows", () => {
+    const model = buildFlamescopeHeatmap(
+      [
+        makeStacktrace("st1", "2026-02-27T00:00:00.000Z", 4, ["main", "foo"]),
+        makeStacktrace("st2", "2026-02-27T00:00:01.000Z", 3, ["main", "bar"]),
+      ],
+      2,
+      10,
+    );
+    expect(model.xLabels).toHaveLength(2);
+    expect(model.bucketWindows).toHaveLength(2);
+    expect(model.yLabels).toContain("main → foo");
+    expect(model.points.length).toBeGreaterThan(0);
   });
 });
 
@@ -81,6 +128,7 @@ describe("buildFlamegraphTree", () => {
         count: 5,
         serviceName: "svc",
         hostName: "host",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main"), makeFrame("foo"), makeFrame("bar")],
       },
     ];
@@ -101,6 +149,7 @@ describe("buildFlamegraphTree", () => {
         count: 3,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main"), makeFrame("foo")],
       },
       {
@@ -108,6 +157,7 @@ describe("buildFlamegraphTree", () => {
         count: 7,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:01.000Z",
         frames: [makeFrame("main"), makeFrame("bar")],
       },
     ];
@@ -130,6 +180,7 @@ describe("buildFlamegraphTree", () => {
         count: 2,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main"), makeFrame("(unknown)"), makeFrame("leaf")],
       },
     ];
@@ -146,6 +197,7 @@ describe("buildFlamegraphTree", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [makeFrame("main")],
       },
       {
@@ -153,6 +205,7 @@ describe("buildFlamegraphTree", () => {
         count: 2,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:01.000Z",
         frames: [makeFrame("init")],
       },
     ];
@@ -240,6 +293,7 @@ describe("findSubtreeByPath", () => {
         count: 5,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "main",
@@ -269,6 +323,7 @@ describe("findSubtreeByPath", () => {
         count: 3,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:01.000Z",
         frames: [
           {
             frameId: "main",
@@ -339,6 +394,7 @@ describe("countMatchingFrames", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "main",
@@ -376,6 +432,7 @@ describe("countMatchingFrames", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "handleRequest",
@@ -438,6 +495,7 @@ describe("buildFlamegraphTree frameType", () => {
         count: 1,
         serviceName: "",
         hostName: "",
+        timestamp: "2026-02-27T00:00:00.000Z",
         frames: [
           {
             frameId: "1",

@@ -3,6 +3,7 @@ export interface ProfilingEvent {
   count: number;
   serviceName: string;
   hostName: string;
+  timestamp: string;
 }
 
 export interface StacktraceFrameMap {
@@ -31,6 +32,7 @@ export interface SymbolizedStacktrace {
   count: number;
   serviceName: string;
   hostName: string;
+  timestamp: string;
   frames: SymbolizedFrame[];
 }
 
@@ -266,7 +268,118 @@ export function joinStacktraces(
       count: event.count,
       serviceName: event.serviceName,
       hostName: event.hostName,
+      timestamp: event.timestamp,
       frames,
     };
   });
+}
+
+export interface FlamescopeWindow {
+  from: string;
+  to: string;
+}
+
+export interface FlamescopeHeatmapModel {
+  xLabels: string[];
+  yLabels: string[];
+  points: Array<[number, number, number]>;
+  bucketStacktraces: SymbolizedStacktrace[][];
+  bucketWindows: FlamescopeWindow[];
+}
+
+function getStacktraceSignature(stacktrace: SymbolizedStacktrace): string {
+  const head = stacktrace.frames
+    .slice(0, 3)
+    .map((frame) => frame.functionName || "(unknown)")
+    .join(" → ");
+  return head.length > 0 ? head : stacktrace.stacktraceId;
+}
+
+function formatBucketLabel(timestamp: number): string {
+  return new Date(timestamp).toISOString().slice(11, 19);
+}
+
+export function buildFlamescopeHeatmap(
+  stacktraces: SymbolizedStacktrace[],
+  bucketCount = 48,
+  rowLimit = 30,
+): FlamescopeHeatmapModel {
+  const tracesWithTs = stacktraces
+    .map((stacktrace) => ({
+      stacktrace,
+      timestampMs: Date.parse(stacktrace.timestamp),
+    }))
+    .filter((item) => Number.isFinite(item.timestampMs));
+  if (tracesWithTs.length === 0) {
+    return {
+      xLabels: [],
+      yLabels: [],
+      points: [],
+      bucketStacktraces: [],
+      bucketWindows: [],
+    };
+  }
+
+  const minTs = Math.min(...tracesWithTs.map((item) => item.timestampMs));
+  const maxTs = Math.max(...tracesWithTs.map((item) => item.timestampMs));
+  const safeBucketCount = Math.max(1, bucketCount);
+  const bucketSizeMs = Math.max(1, Math.ceil((maxTs - minTs + 1) / safeBucketCount));
+
+  const bucketStacktraces: SymbolizedStacktrace[][] = Array.from(
+    { length: safeBucketCount },
+    () => [],
+  );
+  const bucketsBySignature: Map<string, number>[] = Array.from(
+    { length: safeBucketCount },
+    () => new Map(),
+  );
+  const totalBySignature = new Map<string, number>();
+
+  for (const item of tracesWithTs) {
+    const bucket = Math.min(
+      safeBucketCount - 1,
+      Math.floor((item.timestampMs - minTs) / bucketSizeMs),
+    );
+    bucketStacktraces[bucket]!.push(item.stacktrace);
+    const signature = getStacktraceSignature(item.stacktrace);
+    const nextBucketCount =
+      (bucketsBySignature[bucket]!.get(signature) ?? 0) + item.stacktrace.count;
+    bucketsBySignature[bucket]!.set(signature, nextBucketCount);
+    totalBySignature.set(signature, (totalBySignature.get(signature) ?? 0) + item.stacktrace.count);
+  }
+
+  const yLabels = [...totalBySignature.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, Math.max(1, rowLimit))
+    .map(([signature]) => signature);
+  const yIndex = new Map(yLabels.map((label, index) => [label, index]));
+  const points: Array<[number, number, number]> = [];
+
+  for (let x = 0; x < bucketsBySignature.length; x++) {
+    for (const [signature, value] of bucketsBySignature[x]!.entries()) {
+      const row = yIndex.get(signature);
+      if (row == null) continue;
+      points.push([x, row, value]);
+    }
+  }
+
+  const xLabels = Array.from({ length: safeBucketCount }, (_, index) =>
+    formatBucketLabel(minTs + index * bucketSizeMs),
+  );
+  const bucketWindows: FlamescopeWindow[] = Array.from({ length: safeBucketCount }, (_, index) => {
+    const from = minTs + index * bucketSizeMs;
+    const to = Math.min(maxTs + 1, from + bucketSizeMs);
+    return {
+      from: new Date(from).toISOString(),
+      to: new Date(to).toISOString(),
+    };
+  });
+
+  return {
+    xLabels,
+    yLabels,
+    points,
+    bucketStacktraces,
+    bucketWindows,
+  };
 }
