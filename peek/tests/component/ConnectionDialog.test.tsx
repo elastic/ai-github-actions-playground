@@ -162,7 +162,7 @@ describe("ConnectionDialog", () => {
     // Profile should still exist after first click
     expect(useConnectionStore.getState().connectionProfiles).toHaveLength(1);
 
-    await user.click(screen.getByRole("button", { name: /^confirm$/i }));
+    await user.click(screen.getByRole("button", { name: /^confirm delete$/i }));
     expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
   });
 });

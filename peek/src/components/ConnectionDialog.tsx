@@ -346,19 +346,29 @@ export default function ConnectionDialog() {
                     {unlockingProfileId !== profile.id && (
                       <ListItemSecondaryAction>
                         {confirmDeleteId === profile.id ? (
-                          <Button
-                            size="small"
-                            color="error"
-                            variant="contained"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteConnectionProfile(profile.id);
-                              setConfirmDeleteId(null);
-                            }}
-                            onBlur={() => setConfirmDeleteId(null)}
-                          >
-                            Confirm
-                          </Button>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="contained"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteConnectionProfile(profile.id);
+                                setConfirmDeleteId(null);
+                              }}
+                            >
+                              Confirm Delete
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDeleteId(null);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </Box>
                         ) : (
                           <>
                             <IconButton
