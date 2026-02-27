@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { dashboardDefinitionSchema, panelDefinitionSchema } from "../schemas";
 import type { EsqlResponse, EsqlError } from "../services/es";
+import type { ParameterType } from "../contracts/dashboard/literals";
 
 import type { VisualizationOptions } from "./visualization";
 
@@ -24,7 +25,7 @@ export interface DashboardParameter {
   /** Human-readable label shown in the parameter bar. */
   label: string;
   /** ES|QL parameter type. */
-  type: "keyword" | "number" | "boolean" | "date";
+  type: ParameterType;
   /** How values are provided. */
   source: ParameterSource;
   /** Current value of the parameter. */
