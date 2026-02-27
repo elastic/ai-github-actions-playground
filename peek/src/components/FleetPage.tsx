@@ -194,7 +194,9 @@ export default function FleetPage() {
       {/* Errors */}
       {error && <Alert severity="error">{error}</Alert>}
       {partialErrors.length > 0 && (
-        <Alert severity="warning">Some data sources unavailable: {partialErrors.join("; ")}</Alert>
+        <Alert severity="warning">
+          Some data sources are unavailable: {partialErrors.join("; ")}
+        </Alert>
       )}
 
       {/* Tabs */}
