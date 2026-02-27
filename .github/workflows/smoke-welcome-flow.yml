@@ -14,7 +14,7 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      issue-title-prefix: "[smoke-welcome-flow]"
+      title-prefix: "[smoke-welcome-flow]"
       additional-instructions: |
         You are the Playwright Smoke Agent for the welcome flow.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
