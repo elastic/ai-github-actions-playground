@@ -4,6 +4,7 @@
  * between EDOT, OTel Collector with Elastic exporter, and APM Server.
  */
 import { escapeEsqlString, validateEsqlIdentifier } from "../../services/es/esqlUtils";
+import { buildWherePipe } from "../../services/es/queryParts";
 
 export interface TraceFieldMapping {
   traceId: string;
@@ -129,7 +130,7 @@ export function buildTraceSearchQueryParts(
   }
 
   if (whereClauses.length > 0) {
-    parts.push(`WHERE ${whereClauses.join(" AND ")}`);
+    parts.push(buildWherePipe(whereClauses));
   }
 
   return {
@@ -159,7 +160,8 @@ export function buildTraceDetailQuery(
   traceId: string,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
-  return `FROM ${fields.index} | WHERE ${fields.traceId} == "${escapeEsqlString(traceId)}" | LIMIT 10000`;
+  const where = buildWherePipe([`${fields.traceId} == "${escapeEsqlString(traceId)}"`]);
+  return `FROM ${fields.index} | ${where} | LIMIT 10000`;
 }
 
 export interface TraceQueryLabDraftContext {
@@ -182,7 +184,7 @@ export function buildTraceQueryLabDraft(
   if (context.timestamp) {
     whereClauses.push(`${fields.timestamp} == "${escapeEsqlString(context.timestamp)}"`);
   }
-  return `FROM ${fields.index} | WHERE ${whereClauses.join(" AND ")} | SORT ${fields.timestamp} DESC | LIMIT 200`;
+  return `FROM ${fields.index} | ${buildWherePipe(whereClauses)} | SORT ${fields.timestamp} DESC | LIMIT 200`;
 }
 
 /**
@@ -263,9 +265,9 @@ export function buildOperationSuggestionsQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
   serviceName?: string,
 ): string {
-  const base = `FROM ${fields.index}`;
   const where = serviceName
-    ? ` | WHERE ${fields.serviceName} == "${escapeEsqlString(serviceName)}"`
+    ? buildWherePipe([`${fields.serviceName} == "${escapeEsqlString(serviceName)}"`])
     : "";
-  return `${base}${where} | STATS count = COUNT(*) BY ${fields.spanName} | SORT count DESC | LIMIT 50`;
+  const wherePipe = where ? ` | ${where}` : "";
+  return `FROM ${fields.index}${wherePipe} | STATS count = COUNT(*) BY ${fields.spanName} | SORT count DESC | LIMIT 50`;
 }
