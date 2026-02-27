@@ -27,7 +27,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import type { EsqlQueryParams } from "../services/es";
-import { buildQueryParams } from "../services/datemath";
+import { buildEsqlRequest } from "../services/es";
 import type {
   VisualizationType,
   EsqlResponse,
@@ -92,21 +92,11 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
-      const body: EsqlQueryParams = { query: queryText };
-      if (!timeRange) return body;
-      body.filter = {
-        range: {
-          "@timestamp": {
-            gte: timeRange.from,
-            lte: timeRange.to,
-          },
-        },
-      };
-      const queryParams = buildQueryParams(queryText, timeRange, parameters);
-      if (queryParams.length > 0) {
-        body.params = queryParams;
-      }
-      return body;
+      return buildEsqlRequest(queryText, {
+        timeRange,
+        parameters,
+        includeTimeRangeFilter: true,
+      });
     },
     [timeRange, parameters],
   );

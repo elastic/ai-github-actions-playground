@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 
-import { ElasticsearchClient } from "../services/es";
-import type { EsqlQueryParams } from "../services/es";
+import { ElasticsearchClient, buildEsqlRequest } from "../services/es";
 import type {
   ElasticsearchConnection,
   EsqlResponse,
   DashboardParameter,
   TimeRange,
 } from "../types";
-import { buildQueryParams } from "../services/datemath";
 import {
   extractEsqlBlocks,
   replaceEsqlBlocks,
@@ -76,14 +74,11 @@ export function useMarkdownEsql({
         if (!connection) continue;
         try {
           const client = new ElasticsearchClient(connection);
-          const body: EsqlQueryParams = { query };
-          if (timeRange) {
-            body.filter = {
-              range: { "@timestamp": { gte: timeRange.from, lte: timeRange.to } },
-            };
-            const qp = buildQueryParams(query, timeRange, parameters);
-            if (qp.length > 0) body.params = qp;
-          }
+          const body = buildEsqlRequest(query, {
+            timeRange,
+            parameters,
+            includeTimeRangeFilter: true,
+          });
           const data = await client.query(body, ctrl.signal);
           if (!ctrl.signal.aborted) next.set(raw, data);
         } catch {

@@ -14,16 +14,20 @@ const queryMock = vi.fn();
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
 
-vi.mock("../../src/services/es", () => ({
-  ElasticsearchClient: vi.fn().mockImplementation(() => ({
-    query: queryMock,
-  })),
-  isElasticsearchError: (err: unknown) => {
-    if (typeof err !== "object" || err === null) return false;
-    const obj = err as Record<string, unknown>;
-    return typeof obj.status === "number" && typeof obj.message === "string";
-  },
-}));
+vi.mock("../../src/services/es", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    ElasticsearchClient: vi.fn().mockImplementation(() => ({
+      query: queryMock,
+    })),
+    isElasticsearchError: (err: unknown) => {
+      if (typeof err !== "object" || err === null) return false;
+      const obj = err as Record<string, unknown>;
+      return typeof obj.status === "number" && typeof obj.message === "string";
+    },
+  };
+});
 
 // Mock CodeMirror — it doesn't work in jsdom
 vi.mock("@uiw/react-codemirror", () => ({
