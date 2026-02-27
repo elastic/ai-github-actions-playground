@@ -18,4 +18,4 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-mention-in-issue-no-sandbox.lock.yml@main
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-      EXTRA_COMMIT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EXTRA_COMMIT_GITHUB_TOKEN: ${{ secrets. COMMIT_GITHUB_TOKEN }}
