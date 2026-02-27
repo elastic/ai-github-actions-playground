@@ -162,7 +162,7 @@ export default function RolesPage() {
                 >
                   <ListItemText
                     primary={entry.name}
-                    secondary={`${entry.role.cluster?.length ?? 0} cluster privs • ${entry.role.indices?.length ?? 0} index rules`}
+                    secondary={`${entry.role.cluster?.length ?? 0} cluster privileges • ${entry.role.indices?.length ?? 0} index rules`}
                   />
                 </ListItemButton>
               </ListItem>
