@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import sections from "../docs/sections";
 
@@ -15,14 +15,11 @@ function normalizeText(text: string): string {
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   // Read the target section from the ?section= query param (set by command palette shortcuts)
-  const sectionFromUrl = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get("section");
-  }, [location.search]);
+  const sectionFromUrl = searchParams.get("section");
 
   // Active section is always URL-driven so sidebar and URL stay in sync
   const activeSection = sectionFromUrl ?? sections[0]?.id ?? "";
