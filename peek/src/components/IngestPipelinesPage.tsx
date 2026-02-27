@@ -2,20 +2,66 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
+
+/**
+ * Parse the simulate input field into an array of Elasticsearch docs.
+ * Accepts a single JSON object, a JSON array of objects, or NDJSON.
+ * Returns null when the input cannot be parsed.
+ */
+function parseSimulateInput(input: string): Array<Record<string, unknown>> | null {
+  const trimmed = input.trim();
+
+  // Attempt standard JSON parse first (handles object and array inputs)
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((doc) =>
+          doc !== null && typeof doc === "object" && "_source" in (doc as object)
+            ? (doc as Record<string, unknown>)
+            : { _source: doc },
+        );
+      }
+      const doc = parsed as Record<string, unknown>;
+      return ["_source" in doc ? doc : { _source: doc }];
+    } catch {
+      // fall through to NDJSON attempt
+    }
+  }
+
+  // Attempt NDJSON: one JSON object per non-empty line
+  const lines = trimmed.split("\n").filter((l) => l.trim());
+  if (lines.length > 1) {
+    try {
+      return lines.map((line) => {
+        const doc = JSON.parse(line.trim()) as Record<string, unknown>;
+        return "_source" in doc ? doc : { _source: doc };
+      });
+    } catch {
+      // fall through
+    }
+  }
+
+  return null;
+}
 
 type PipelineEntry = { name: string; pipeline: IngestPipeline };
 
@@ -30,9 +76,11 @@ export default function IngestPipelinesPage() {
 
   // Simulate state
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
+  const [verbose, setVerbose] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [simulateError, setSimulateError] = useState<string | null>(null);
   const [simulateResult, setSimulateResult] = useState<SimulateIngestPipelineResponse | null>(null);
+  const [expandedDocs, setExpandedDocs] = useState<Set<number>>(new Set());
 
   const selectedPipeline = useMemo(
     () => pipelines.find((p) => p.name === selectedName) ?? null,
@@ -68,6 +116,7 @@ export default function IngestPipelinesPage() {
   useEffect(() => {
     setSimulateResult(null);
     setSimulateError(null);
+    setExpandedDocs(new Set());
   }, [selectedName]);
 
   const filteredPipelines = useMemo(() => {
@@ -81,28 +130,24 @@ export default function IngestPipelinesPage() {
     setSimulating(true);
     setSimulateError(null);
     setSimulateResult(null);
+    setExpandedDocs(new Set());
     try {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(simulateInput);
-      } catch {
-        setSimulateError("Invalid JSON: please enter a valid document object.");
+      const docs = parseSimulateInput(simulateInput);
+      if (!docs) {
+        setSimulateError(
+          "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
+        );
         return;
       }
-      // Accept either a raw _source object or a full doc wrapper
-      const doc =
-        parsed !== null && typeof parsed === "object" && "_source" in (parsed as object)
-          ? (parsed as Record<string, unknown>)
-          : { _source: parsed };
       const client = new ElasticsearchClient(connection);
-      const result = await client.simulateIngestPipeline(selectedName, [doc]);
+      const result = await client.simulateIngestPipeline(selectedName, docs, { verbose });
       setSimulateResult(result);
     } catch (err) {
       setSimulateError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
       setSimulating(false);
     }
-  }, [connection, selectedName, simulateInput]);
+  }, [connection, selectedName, simulateInput, verbose]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
@@ -238,7 +283,7 @@ export default function IngestPipelinesPage() {
               {/* Simulate section */}
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  Simulate — paste a document to test against this pipeline
+                  Simulate — paste one or more documents to test against this pipeline
                 </Typography>
                 <TextField
                   multiline
@@ -246,13 +291,13 @@ export default function IngestPipelinesPage() {
                   maxRows={10}
                   size="small"
                   fullWidth
-                  label="Input document (JSON)"
+                  label="Input documents (JSON, JSON array, or NDJSON)"
                   value={simulateInput}
                   onChange={(e) => setSimulateInput(e.target.value)}
-                  inputProps={{ "aria-label": "Input document (JSON)" }}
+                  inputProps={{ "aria-label": "Input documents (JSON, JSON array, or NDJSON)" }}
                   sx={{ fontFamily: "monospace" }}
                 />
-                <Box>
+                <Stack direction="row" spacing={2} alignItems="center">
                   <Button
                     size="small"
                     variant="contained"
@@ -262,7 +307,22 @@ export default function IngestPipelinesPage() {
                   >
                     {simulating ? "Simulating…" : "Simulate"}
                   </Button>
-                </Box>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={verbose}
+                        onChange={(e) => setVerbose(e.target.checked)}
+                        inputProps={{ "aria-label": "Verbose processor trace" }}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" color="text.secondary">
+                        Verbose trace
+                      </Typography>
+                    }
+                  />
+                </Stack>
                 {simulateError && <Alert severity="error">{simulateError}</Alert>}
                 {simulateResult && (
                   <Box>
@@ -272,24 +332,120 @@ export default function IngestPipelinesPage() {
                       gutterBottom
                       display="block"
                     >
-                      Result
+                      Results — {simulateResult.docs?.length ?? 0} document
+                      {(simulateResult.docs?.length ?? 0) !== 1 ? "s" : ""}
                     </Typography>
-                    <Typography
-                      component="pre"
-                      variant="body2"
+                    <Box
                       data-testid="simulate-result"
-                      sx={{
-                        m: 0,
-                        p: 1,
-                        bgcolor: "action.hover",
-                        borderRadius: 1,
-                        overflow: "auto",
-                        maxHeight: 320,
-                        fontSize: "0.75rem",
-                      }}
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
                     >
-                      {JSON.stringify(simulateResult, null, 2)}
-                    </Typography>
+                      {simulateResult.docs?.map((docResult, idx) => {
+                        const isError = !!docResult.doc?.error;
+                        const isExpanded = expandedDocs.has(idx);
+                        const hasTrace = (docResult.processor_results?.length ?? 0) > 0;
+                        return (
+                          <Paper key={idx} variant="outlined" sx={{ p: 1 }}>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Chip
+                                size="small"
+                                label={isError ? "Error" : "OK"}
+                                color={isError ? "error" : "success"}
+                                data-testid={`doc-result-status-${idx}`}
+                              />
+                              <Typography variant="body2" sx={{ flex: 1 }}>
+                                Doc {idx + 1}
+                                {isError &&
+                                  docResult.doc?.error &&
+                                  ` — ${docResult.doc.error.type}: ${docResult.doc.error.reason}`}
+                              </Typography>
+                              <Button
+                                size="small"
+                                onClick={() => {
+                                  setExpandedDocs((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(idx)) next.delete(idx);
+                                    else next.add(idx);
+                                    return next;
+                                  });
+                                }}
+                                aria-expanded={isExpanded}
+                                aria-label={`${isExpanded ? "Collapse" : "Expand"} Doc ${idx + 1}`}
+                              >
+                                {isExpanded ? "Collapse" : "Expand"}
+                              </Button>
+                            </Stack>
+                            <Collapse in={isExpanded}>
+                              <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    display="block"
+                                    gutterBottom
+                                  >
+                                    Output
+                                  </Typography>
+                                  <Typography
+                                    component="pre"
+                                    variant="body2"
+                                    sx={{
+                                      m: 0,
+                                      p: 1,
+                                      bgcolor: "action.hover",
+                                      borderRadius: 1,
+                                      overflow: "auto",
+                                      maxHeight: 200,
+                                      fontSize: "0.75rem",
+                                    }}
+                                  >
+                                    {JSON.stringify(docResult.doc?._source ?? {}, null, 2)}
+                                  </Typography>
+                                </Box>
+                                {hasTrace && (
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      display="block"
+                                      gutterBottom
+                                    >
+                                      Processor trace
+                                    </Typography>
+                                    <Box
+                                      sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                                    >
+                                      {docResult.processor_results?.map((pr, prIdx) => (
+                                        <Stack
+                                          key={prIdx}
+                                          direction="row"
+                                          spacing={1}
+                                          alignItems="center"
+                                        >
+                                          <Chip
+                                            size="small"
+                                            label={pr.status ?? "unknown"}
+                                            color={
+                                              pr.status === "success"
+                                                ? "success"
+                                                : pr.status === "error"
+                                                  ? "error"
+                                                  : "default"
+                                            }
+                                          />
+                                          <Typography variant="body2">
+                                            {pr.processor_type ?? "processor"}
+                                          </Typography>
+                                        </Stack>
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                )}
+                              </Box>
+                            </Collapse>
+                          </Paper>
+                        );
+                      })}
+                    </Box>
                   </Box>
                 )}
               </Box>
