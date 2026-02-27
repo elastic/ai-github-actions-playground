@@ -13,6 +13,7 @@ import { useDashboardStore } from "./useDashboardStore";
 import { useExplorerStore } from "./useExplorerStore";
 import { useFleetStore } from "./useFleetStore";
 import { useLLMStore } from "./useLLMStore";
+import { useProfilingStore } from "./useProfilingStore";
 import { useQueryStore } from "./useQueryStore";
 import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
@@ -24,6 +25,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   () => useExplorerStore.getState().reset(),
   () => useFleetStore.getState().resetFilters(),
   () => useLLMStore.getState().resetLLMState(),
+  () => useProfilingStore.getState().resetFilters(),
   () => useQueryStore.getState().resetQueryState(),
   () => useTracesStore.getState().resetFilters(),
   () => useUIStore.getState().resetUIState(),
