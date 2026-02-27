@@ -22,7 +22,7 @@ export const useApiConsoleStore = create<ApiConsoleState>()(
       entries: [],
       setEntries: (entries) => set({ entries }),
       resetApiConsoleState: () => {
-        localStorage.removeItem(STORE_NAME);
+        useApiConsoleStore.persist.clearStorage();
         set({ entries: [] });
       },
     }),
