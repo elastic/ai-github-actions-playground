@@ -288,7 +288,7 @@ function OverviewTab({
               value={serverStatus.offline}
               color="text.secondary"
               onClick={
-                serverStatus.offline > 0 ? () => onDrillIn({ staleness: "critical" }) : undefined
+                serverStatus.offline > 0 ? () => onDrillIn({ staleness: "stale" }) : undefined
               }
             />
             <FleetStatCard title="Updating" value={serverStatus.updating} color="info.main" />
@@ -307,8 +307,6 @@ function OverviewTab({
                   label={`Input: ${serverStatus.unhealthyReason.input}`}
                   color="warning"
                   variant="outlined"
-                  onClick={() => onDrillIn({ hasErrors: true })}
-                  sx={{ cursor: "pointer" }}
                 />
               )}
               {serverStatus.unhealthyReason.output > 0 && (
@@ -317,8 +315,6 @@ function OverviewTab({
                   label={`Output: ${serverStatus.unhealthyReason.output}`}
                   color="warning"
                   variant="outlined"
-                  onClick={() => onDrillIn({ hasErrors: true })}
-                  sx={{ cursor: "pointer" }}
                 />
               )}
               {serverStatus.unhealthyReason.other > 0 && (
@@ -327,8 +323,6 @@ function OverviewTab({
                   label={`Other: ${serverStatus.unhealthyReason.other}`}
                   color="warning"
                   variant="outlined"
-                  onClick={() => onDrillIn({ hasErrors: true })}
-                  sx={{ cursor: "pointer" }}
                 />
               )}
             </Stack>

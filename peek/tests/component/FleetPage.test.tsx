@@ -521,7 +521,7 @@ describe("Fleet pages", () => {
     expect(screen.queryByText("host-2")).not.toBeInTheDocument();
   });
 
-  it("clicking unhealthy reason chip switches to agents tab with hasErrors filter", async () => {
+  it("unhealthy reason chips are informational and do not trigger drill-in", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
     render(
@@ -538,11 +538,33 @@ describe("Fleet pages", () => {
     });
 
     await user.click(screen.getByText(/Input: 1/));
+    expect(screen.getByRole("tab", { name: "Overview", selected: true })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("table", { name: "Elastic Agent inventory" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clicking Offline stat card switches to agents tab with stale filter", async () => {
+    mockFleetResponses();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Offline/i })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /Offline/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
     });
-    expect(screen.getByText("Has errors")).toBeInTheDocument();
+    expect(screen.getByText("Stale")).toBeInTheDocument();
   });
 
   it("active filter chip can be cleared in agents table", async () => {
