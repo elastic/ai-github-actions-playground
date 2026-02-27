@@ -4,6 +4,7 @@
  * between EDOT, OTel Collector with Elastic exporter, and APM Server.
  */
 import { escapeEsqlString, validateEsqlIdentifier } from "../../services/es/esqlUtils";
+import { buildWherePipe } from "../../services/es/queryParts";
 
 export interface TraceFieldMapping {
   traceId: string;
@@ -129,7 +130,7 @@ export function buildTraceSearchQueryParts(
   }
 
   if (whereClauses.length > 0) {
-    parts.push(`WHERE ${whereClauses.join(" AND ")}`);
+    parts.push(buildWherePipe(whereClauses));
   }
 
   return {
@@ -182,7 +183,7 @@ export function buildTraceQueryLabDraft(
   if (context.timestamp) {
     whereClauses.push(`${fields.timestamp} == "${escapeEsqlString(context.timestamp)}"`);
   }
-  return `FROM ${fields.index} | WHERE ${whereClauses.join(" AND ")} | SORT ${fields.timestamp} DESC | LIMIT 200`;
+  return `FROM ${fields.index} | ${buildWherePipe(whereClauses)} | SORT ${fields.timestamp} DESC | LIMIT 200`;
 }
 
 /**

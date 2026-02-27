@@ -1,6 +1,7 @@
 import type { TimeRange } from "../../types";
 
 import { escapeEsqlString, escapeEsqlIdentifier } from "./esqlUtils";
+import { buildWherePipe } from "./queryParts";
 
 // ---------------------------------------------------------------------------
 // Explorer query types
@@ -197,7 +198,7 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   if (filterClause) {
     whereClauses.push(filterClause);
   }
-  parts.push(`WHERE ${whereClauses.join(" AND ")}`);
+  parts.push(buildWherePipe(whereClauses));
 
   // STATS ... BY BUCKET(...)
   const aggExpr = buildAggExpression(q.aggregation, q.metricField);

@@ -1,5 +1,6 @@
 import type { ProfilingTopFunctionsRequest } from "../../services/es/client";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
+import { buildWherePipe } from "../../services/es/queryParts";
 
 export interface ProfilingFilters {
   executableName: string | null;
@@ -46,7 +47,7 @@ export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
+    buildWherePipe(where),
     `LIMIT ${Math.max(1, Math.min(1000, filters.limit))}`,
   ].join(" | ");
 }
@@ -55,7 +56,7 @@ export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string
   const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
+    buildWherePipe(where),
     "KEEP @timestamp, Stacktrace.id, Stacktrace.count, service.name, host.name",
     "SORT @timestamp ASC",
     `LIMIT ${Math.max(1, Math.min(5000, filters.limit * 20))}`,
@@ -80,7 +81,7 @@ export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
+    buildWherePipe(where),
     `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${filters.timeFrom}, ${filters.timeTo})`,
     "SORT bucket",
   ].join(" | ");
