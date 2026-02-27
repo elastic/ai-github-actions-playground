@@ -28,6 +28,7 @@ import {
 } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
+import { formatBytes } from "../utils/formatBytes";
 import { PAGE_MANIFEST } from "../routes/manifest";
 
 // ---------------------------------------------------------------------------
@@ -44,15 +45,6 @@ interface MappingField {
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
-
-function formatBytes(value: number | null): string {
-  if (value === null) return "n/a";
-  if (value === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-  const exponent = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-  const normalized = value / Math.pow(1024, exponent);
-  return `${normalized.toFixed(normalized >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent!]!}`;
-}
 
 function parseIntOrNull(value: string | null | undefined): number | null {
   if (value == null) return null;

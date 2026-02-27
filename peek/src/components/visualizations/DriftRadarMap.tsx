@@ -5,10 +5,10 @@ import Typography from "@mui/material/Typography";
 
 import type { Span, ServiceMapEdge } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
-import { getServiceColor } from "../traces/traceColors";
 
 import EChartWrapper from "./EChartWrapper";
-import { escapeHtml } from "./htmlUtils";
+import { buildServiceGraphOption } from "./serviceGraphOptions";
+import type { EdgeExtras } from "./serviceGraphOptions";
 
 interface Props {
   currentSpans: Span[];
@@ -20,13 +20,6 @@ type EdgeStatus = "new" | "regressed" | "improved" | "stable";
 
 /** Display order for the legend chips and classification comparisons. */
 const EDGE_STATUS_ORDER: EdgeStatus[] = ["new", "regressed", "improved", "stable"];
-
-const MIN_NODE_SIZE = 36;
-const MAX_NODE_SIZE = 60;
-const US_TO_MS = 1000;
-const MIN_EDGE_WIDTH = 1.5;
-const EDGE_WIDTH_SCALE = 0.4;
-const MAX_EDGE_WIDTH = 5;
 
 const EDGE_STATUS_COLOR: Record<EdgeStatus, string> = {
   new: "#0077CC",
@@ -98,138 +91,21 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
   };
 
   const option = useMemo(() => {
-    const maxSpanCount = Math.max(1, ...mapData.nodes.map((node) => node.spanCount));
-
-    return {
-      tooltip: {
-        trigger: "item",
-        formatter: (params: {
-          dataType: string;
-          data: {
-            name?: string;
-            value?: number;
-            errorCount?: number;
-            callCount?: number;
-            avgLatencyMs?: number;
-            edgeStatus?: EdgeStatus;
-            source?: string;
-            target?: string;
-          };
-        }) => {
-          if (params.dataType === "node") {
-            const { name, value = 0, errorCount = 0 } = params.data;
-            const errorRate = value > 0 ? ((errorCount / value) * 100).toFixed(1) : "0.0";
-            const escapedName = escapeHtml(name ?? "");
-            return [
-              `<b>${escapedName}</b>`,
-              `Spans: ${value}`,
-              `Errors: ${errorCount} (${errorRate}%)`,
-            ].join("<br/>");
-          }
-          if (params.dataType === "edge") {
-            const { source, target, callCount = 0, avgLatencyMs = 0, edgeStatus } = params.data;
-            const escapedSource = escapeHtml(source ?? "");
-            const escapedTarget = escapeHtml(target ?? "");
-            const statusLabel = edgeStatus ? ` [${edgeStatus}]` : "";
-            return [
-              `<b>${escapedSource} → ${escapedTarget}${statusLabel}</b>`,
-              `Calls: ${callCount}`,
-              `Avg latency: ${avgLatencyMs.toFixed(1)} ms`,
-            ].join("<br/>");
-          }
-          return "";
-        },
+    return buildServiceGraphOption({
+      mapData,
+      errorColor: EDGE_STATUS_COLOR.regressed,
+      edgeExtras: (edge: ServiceMapEdge): EdgeExtras => {
+        const key = `${edge.source}→${edge.target}`;
+        const status = edgeStatuses.get(key) ?? "stable";
+        return {
+          tooltipSuffix: ` [${status}]`,
+          color: EDGE_STATUS_COLOR[status],
+          opacity: 0.85,
+          data: { edgeStatus: status },
+        };
       },
-      series: [
-        {
-          type: "graph",
-          layout: "force",
-          roam: true,
-          force: {
-            repulsion: 350,
-            edgeLength: [120, 200],
-            gravity: 0.12,
-            friction: 0.6,
-          },
-          label: {
-            show: true,
-            position: "bottom",
-            fontSize: 12,
-            fontWeight: 600,
-            distance: 6,
-            color: "inherit",
-          },
-          edgeSymbol: ["none", "arrow"],
-          edgeSymbolSize: 10,
-          data: mapData.nodes.map((node) => {
-            const hasErrors = node.errorCount > 0;
-            const baseColor = getServiceColor(node.serviceName);
-            const size =
-              MIN_NODE_SIZE + (node.spanCount / maxSpanCount) * (MAX_NODE_SIZE - MIN_NODE_SIZE);
-            return {
-              id: node.serviceName,
-              name: node.serviceName,
-              value: node.spanCount,
-              errorCount: node.errorCount,
-              symbolSize: size,
-              itemStyle: {
-                color: baseColor,
-                borderColor: hasErrors ? EDGE_STATUS_COLOR.regressed : "rgba(255,255,255,0.4)",
-                borderWidth: hasErrors ? 3 : 2,
-                shadowBlur: 8,
-                shadowColor: "rgba(0,0,0,0.25)",
-              },
-              emphasis: {
-                itemStyle: {
-                  borderWidth: 4,
-                  borderColor: hasErrors ? EDGE_STATUS_COLOR.regressed : "#FFFFFF",
-                  shadowBlur: 16,
-                },
-              },
-            };
-          }),
-          links: mapData.edges.map((edge) => {
-            const avgLatencyMs =
-              edge.callCount > 0 ? edge.totalDurationUs / edge.callCount / US_TO_MS : 0;
-            const key = `${edge.source}→${edge.target}`;
-            const status = edgeStatuses.get(key) ?? "stable";
-            const edgeColor = EDGE_STATUS_COLOR[status];
-            return {
-              source: edge.source,
-              target: edge.target,
-              value: edge.callCount,
-              callCount: edge.callCount,
-              avgLatencyMs,
-              edgeStatus: status,
-              lineStyle: {
-                width: Math.max(
-                  MIN_EDGE_WIDTH,
-                  Math.min(MIN_EDGE_WIDTH + edge.callCount * EDGE_WIDTH_SCALE, MAX_EDGE_WIDTH),
-                ),
-                color: edgeColor,
-                opacity: 0.85,
-                curveness: 0.2,
-              },
-              label: {
-                show: true,
-                formatter: String(edge.callCount),
-                fontSize: 11,
-                fontWeight: 500,
-                backgroundColor: "rgba(0,0,0,0.45)",
-                color: "#FFFFFF",
-                padding: [2, 5],
-                borderRadius: 4,
-              },
-            };
-          }),
-          emphasis: {
-            focus: "adjacency",
-            lineStyle: { width: 4 },
-          },
-        },
-      ],
-    };
-  }, [mapData.edges, mapData.nodes, edgeStatuses]);
+    });
+  }, [mapData, edgeStatuses]);
 
   const handleClick = useCallback(
     (params: { data: unknown }) => {

@@ -11,7 +11,7 @@ import { useTheme } from "@mui/material/styles";
 import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
 import { buildDimensionOverviewQuery } from "../services/es";
 import type { EsqlResponse, TimeRange } from "../types";
-import { useBatchedOverviewQueries } from "../hooks/useBatchedOverviewQueries";
+import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -184,14 +184,7 @@ export default function DimensionOverviewGrid({
   });
 
   const dimsWithData = useMemo(() => {
-    return dimensionFields.filter((f) => {
-      const r = results[f.name];
-      if (!r?.data || r.data.values.length === 0) return false;
-      if (r.status !== "success" && r.status !== "loading") return false;
-      const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
-      if (metricIdx < 0) return false;
-      return r.data.values.some((row) => row[metricIdx] != null);
-    });
+    return dimensionFields.filter((f) => hasOverviewData(results[f.name]));
   }, [dimensionFields, results]);
 
   const isLoading = useMemo(
