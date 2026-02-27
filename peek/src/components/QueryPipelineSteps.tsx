@@ -2,9 +2,11 @@ import { useMemo } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import { splitEsqlPipeline } from "./discoverUtils";
 import { formatDuration } from "./formatDuration";
@@ -15,6 +17,7 @@ interface QueryPipelineStepsProps {
   activeStep: number | null;
   stepDurationsMs?: Record<number, number>;
   onRunStep: (cumulativeQuery: string, stepIndex: number) => void;
+  onPreviewStep?: (cumulativeQuery: string, stepIndex: number) => void;
 }
 
 /**
@@ -30,6 +33,7 @@ export default function QueryPipelineSteps({
   activeStep,
   stepDurationsMs,
   onRunStep,
+  onPreviewStep,
 }: QueryPipelineStepsProps) {
   const steps = useMemo(() => splitEsqlPipeline(query), [query]);
 
@@ -45,44 +49,60 @@ export default function QueryPipelineSteps({
         const isRunning = loading && activeStep === idx;
         const durationMs = stepDurationsMs?.[idx];
         return (
-          <Tooltip
-            key={idx}
-            title={
-              durationMs !== undefined ? (
-                <>
-                  {cumulativeQuery}
-                  <br />
-                  <br />
-                  Duration: {formatDuration(durationMs)}
-                </>
-              ) : (
-                cumulativeQuery
-              )
-            }
-            placement="bottom-start"
-          >
-            <span>
-              <Chip
-                size="small"
-                icon={
-                  isRunning ? (
-                    <CircularProgress size={12} color="inherit" />
-                  ) : (
-                    <PlayArrowIcon sx={{ fontSize: "1rem !important" }} />
-                  )
-                }
-                label={`${idx + 1}. ${step}${durationMs !== undefined ? ` • ${formatDuration(durationMs)}` : ""}`}
-                onClick={() => onRunStep(cumulativeQuery, idx)}
-                disabled={loading}
-                variant="outlined"
-                color={isRunning ? "primary" : "default"}
-                sx={{
-                  maxWidth: 200,
-                  "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
-                }}
-              />
-            </span>
-          </Tooltip>
+          <Box key={idx} sx={{ display: "inline-flex", alignItems: "center" }}>
+            <Tooltip
+              title={
+                durationMs !== undefined ? (
+                  <>
+                    {cumulativeQuery}
+                    <br />
+                    <br />
+                    Duration: {formatDuration(durationMs)}
+                  </>
+                ) : (
+                  cumulativeQuery
+                )
+              }
+              placement="bottom-start"
+            >
+              <span>
+                <Chip
+                  size="small"
+                  icon={
+                    isRunning ? (
+                      <CircularProgress size={12} color="inherit" />
+                    ) : (
+                      <PlayArrowIcon sx={{ fontSize: "1rem !important" }} />
+                    )
+                  }
+                  label={`${idx + 1}. ${step}${durationMs !== undefined ? ` • ${formatDuration(durationMs)}` : ""}`}
+                  onClick={() => onRunStep(cumulativeQuery, idx)}
+                  disabled={loading}
+                  variant="outlined"
+                  color={isRunning ? "primary" : "default"}
+                  sx={{
+                    maxWidth: 200,
+                    "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+                  }}
+                />
+              </span>
+            </Tooltip>
+            {onPreviewStep && (
+              <Tooltip title="Preview step in side panel" placement="bottom">
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label={`Preview step ${idx + 1}`}
+                    onClick={() => onPreviewStep(cumulativeQuery, idx)}
+                    disabled={loading}
+                    sx={{ ml: 0.25, p: 0.25 }}
+                  >
+                    <VisibilityIcon sx={{ fontSize: "0.875rem" }} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </Box>
         );
       })}
     </Box>

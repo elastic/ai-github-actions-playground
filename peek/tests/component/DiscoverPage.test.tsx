@@ -36,10 +36,23 @@ vi.mock("../../src/components/visualizations/DataTable", () => ({
   default: () => <div data-testid="datatable-mock" />,
 }));
 vi.mock("../../src/components/QueryPipelineSteps", () => ({
-  default: ({ onRunStep }: { onRunStep: (query: string, stepIndex: number) => void }) => (
-    <button type="button" onClick={() => onRunStep("FROM step-* | LIMIT 1", 0)}>
-      Run step 1
-    </button>
+  default: ({
+    onRunStep,
+    onPreviewStep,
+  }: {
+    onRunStep: (query: string, stepIndex: number) => void;
+    onPreviewStep?: (query: string, stepIndex: number) => void;
+  }) => (
+    <>
+      <button type="button" onClick={() => onRunStep("FROM step-* | LIMIT 1", 0)}>
+        Run step 1
+      </button>
+      {onPreviewStep && (
+        <button type="button" onClick={() => onPreviewStep("FROM step-* | LIMIT 1", 0)}>
+          Preview step 1
+        </button>
+      )}
+    </>
   ),
 }));
 
@@ -359,5 +372,57 @@ describe("DiscoverPage", () => {
       }),
       expect.any(AbortSignal),
     );
+  });
+
+  it("opens step preview drawer when preview step is clicked", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /preview step 1/i }));
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "FROM step-* | LIMIT 1" }),
+      expect.any(AbortSignal),
+    );
+    expect(screen.getByText("Step Preview")).toBeInTheDocument();
+    expect(screen.getByText("FROM step-* | LIMIT 1")).toBeInTheDocument();
+  });
+
+  it("closes the step preview drawer", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /preview step 1/i }));
+    expect(await screen.findByText("Step Preview")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /close preview/i }));
+    await waitFor(() => expect(screen.queryByText("Step Preview")).not.toBeInTheDocument());
+  });
+
+  it("promotes preview result to main result", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /preview step 1/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole("button", { name: /promote to main result/i }));
+    // Drawer should close after promote
+    await waitFor(() => expect(screen.queryByText("Step Preview")).not.toBeInTheDocument());
+    // Main DataTable should be visible (the mock renders data-testid="datatable-mock")
+    expect(screen.getByTestId("datatable-mock")).toBeInTheDocument();
   });
 });

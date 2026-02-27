@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
 import QueryPipelineSteps from "../../src/components/QueryPipelineSteps";
 
 describe("QueryPipelineSteps", () => {
@@ -85,5 +86,53 @@ describe("QueryPipelineSteps", () => {
     expect(
       screen.getByRole("button", { name: /2\. SORT @timestamp DESC.*1\.2s/i }),
     ).toBeInTheDocument();
+  });
+
+  it("renders preview buttons when onPreviewStep is provided", () => {
+    render(
+      <QueryPipelineSteps
+        query="FROM logs-* | SORT @timestamp DESC | LIMIT 50"
+        loading={false}
+        activeStep={null}
+        onRunStep={vi.fn()}
+        onPreviewStep={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /preview step 1/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /preview step 2/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /preview step 3/i })).toBeInTheDocument();
+  });
+
+  it("does not render preview buttons when onPreviewStep is not provided", () => {
+    render(
+      <QueryPipelineSteps
+        query="FROM logs-* | SORT @timestamp DESC | LIMIT 50"
+        loading={false}
+        activeStep={null}
+        onRunStep={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /preview step/i })).not.toBeInTheDocument();
+  });
+
+  it("calls onPreviewStep with cumulative query when preview button is clicked", async () => {
+    const user = userEvent.setup();
+    const onPreviewStep = vi.fn();
+
+    render(
+      <QueryPipelineSteps
+        query="FROM logs-* | SORT @timestamp DESC | LIMIT 50"
+        loading={false}
+        activeStep={null}
+        onRunStep={vi.fn()}
+        onPreviewStep={onPreviewStep}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /preview step 2/i }));
+
+    expect(onPreviewStep).toHaveBeenCalledWith("FROM logs-*\n| SORT @timestamp DESC", 1);
   });
 });

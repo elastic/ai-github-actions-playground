@@ -16,8 +16,10 @@ import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -90,6 +92,9 @@ export default function DiscoverPage() {
     Record<string, { loading: boolean; error: string | null; data: EsqlResponse | null }>
   >({});
 
+  const [stepPreviewResult, setStepPreviewResult] = useState<EsqlResponse | null>(null);
+  const [stepPreviewQuery, setStepPreviewQuery] = useState<string | null>(null);
+
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
       const body: EsqlQueryParams = { query: queryText };
@@ -150,6 +155,17 @@ export default function DiscoverPage() {
         [col]: { loading: false, error: "Query failed", data: null },
       }));
     },
+  });
+
+  const {
+    runQuery: runPreviewQuery,
+    loading: previewLoading,
+    error: previewError,
+  } = useEsqlQuery({
+    connection,
+    buildRequest,
+    onSuccess: (data) => setStepPreviewResult(data),
+    onFailure: () => setStepPreviewResult(null),
   });
 
   const handleToggleInsight = useCallback(
@@ -215,6 +231,27 @@ export default function DiscoverPage() {
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
   );
+  const handlePreviewStep = useCallback(
+    (stepQuery: string) => {
+      setStepPreviewQuery(stepQuery);
+      setStepPreviewResult(null);
+      void runPreviewQuery(stepQuery);
+    },
+    [runPreviewQuery],
+  );
+  const handlePromotePreview = useCallback(() => {
+    if (stepPreviewResult) {
+      setResult(stepPreviewResult);
+      setSelectedFields(new Set(stepPreviewResult.columns.map((c) => c.name)));
+      setTableVersion((prev) => prev + 1);
+    }
+    setStepPreviewResult(null);
+    setStepPreviewQuery(null);
+  }, [stepPreviewResult]);
+  const handleClosePreview = useCallback(() => {
+    setStepPreviewResult(null);
+    setStepPreviewQuery(null);
+  }, []);
   const handleSortChange = useCallback(
     (columnName: string, direction: "asc" | "desc" | null) => {
       const newSort = direction ? { columnName, direction } : null;
@@ -392,6 +429,7 @@ export default function DiscoverPage() {
           activeStep={activeStep}
           stepDurationsMs={stepDurationsMs}
           onRunStep={handleRunStep}
+          onPreviewStep={handlePreviewStep}
         />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
           <Button
@@ -780,6 +818,97 @@ export default function DiscoverPage() {
           )}
         </Paper>
       </Box>
+
+      {/* Step preview drawer */}
+      <Drawer
+        anchor="right"
+        open={stepPreviewQuery !== null}
+        onClose={handleClosePreview}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", sm: "50%", md: "45%" },
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 2,
+            py: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
+          <Typography variant="subtitle1" fontWeight={600}>
+            Step Preview
+          </Typography>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handlePromotePreview}
+              disabled={!stepPreviewResult}
+            >
+              Promote to main result
+            </Button>
+            <IconButton size="small" onClick={handleClosePreview} aria-label="Close preview">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+        {stepPreviewQuery && (
+          <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontFamily: "monospace", whiteSpace: "pre-wrap" }}
+            >
+              {stepPreviewQuery}
+            </Typography>
+          </Box>
+        )}
+        {previewError && (
+          <Alert severity="error" sx={{ m: 1 }}>
+            {previewError}
+          </Alert>
+        )}
+        <Box sx={{ flex: 1, overflow: "auto" }}>
+          {previewLoading && !stepPreviewResult && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
+              <CircularProgress size={32} />
+            </Box>
+          )}
+          {stepPreviewResult && stepPreviewResult.columns.length > 0 && (
+            <DataTable data={stepPreviewResult} />
+          )}
+          {stepPreviewResult && stepPreviewResult.columns.length === 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                No columns in preview result
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Drawer>
     </Box>
   );
 }
