@@ -51,6 +51,7 @@ WORKFLOWS=(
   "duplicate-issue-detector.yml"
   "flaky-test-investigator.yml"
   "framework-best-practices.yml"
+  "give-it-some-love.yml"
   "information-architecture.yml"
   "iterative-ideas-man.yml"
   "medium-ideas-man.yml"
