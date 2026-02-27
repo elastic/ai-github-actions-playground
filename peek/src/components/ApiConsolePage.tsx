@@ -149,6 +149,7 @@ function RequestCard({
             onUpdate(entry.id, { method: e.target.value as HttpMethod, response: null })
           }
           sx={{ minWidth: 100 }}
+          inputProps={{ "aria-label": "HTTP method" }}
           renderValue={(v) => (
             <Chip
               label={v}
@@ -409,7 +410,7 @@ export default function ApiConsolePage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pb: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography variant="h6" component="h1" sx={{ fontWeight: 600 }}>
           API Console
         </Typography>
         <Typography variant="body2" color="text.secondary">

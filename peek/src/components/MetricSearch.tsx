@@ -71,8 +71,9 @@ export default function MetricSearch({
   return (
     <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
       <FormControl size="small" sx={{ minWidth: 180 }}>
-        <InputLabel>Namespace</InputLabel>
+        <InputLabel id="metric-namespace-label">Namespace</InputLabel>
         <Select
+          labelId="metric-namespace-label"
           value={
             selectedNamespace && namespaces.includes(selectedNamespace) ? selectedNamespace : ""
           }

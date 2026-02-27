@@ -103,7 +103,7 @@ export default function FleetAgentPage() {
           <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
             ← Fleet
           </Button>
-          <Typography variant="h6" sx={{ flex: 1 }} noWrap>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }} noWrap>
             {agentInfo?.hostname ?? decodedAgentId}
           </Typography>
           <Button

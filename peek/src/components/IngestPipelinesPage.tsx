@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
@@ -107,7 +108,7 @@ export default function IngestPipelinesPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Ingest Pipelines
           </Typography>
           <Button size="small" variant="outlined" onClick={loadPipelines} disabled={loading}>
@@ -136,18 +137,19 @@ export default function IngestPipelinesPage() {
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
             {filteredPipelines.map((entry) => (
-              <ListItemButton
-                key={entry.name}
-                selected={entry.name === selectedName}
-                onClick={() => setSelectedName(entry.name)}
-              >
-                <ListItemText
-                  primary={entry.name}
-                  secondary={`${entry.pipeline.processors?.length ?? 0} processor${
-                    (entry.pipeline.processors?.length ?? 0) === 1 ? "" : "s"
-                  }`}
-                />
-              </ListItemButton>
+              <ListItem key={entry.name} disablePadding>
+                <ListItemButton
+                  selected={entry.name === selectedName}
+                  onClick={() => setSelectedName(entry.name)}
+                >
+                  <ListItemText
+                    primary={entry.name}
+                    secondary={`${entry.pipeline.processors?.length ?? 0} processor${
+                      (entry.pipeline.processors?.length ?? 0) === 1 ? "" : "s"
+                    }`}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
             {!loading && filteredPipelines.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>

@@ -7,6 +7,7 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
@@ -122,7 +123,7 @@ export default function RolesPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Roles
           </Typography>
           <Button size="small" variant="outlined" onClick={loadRoles} disabled={loading}>
@@ -154,16 +155,17 @@ export default function RolesPage() {
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
             {filteredRoles.map((entry) => (
-              <ListItemButton
-                key={entry.name}
-                selected={entry.name === selectedRoleName}
-                onClick={() => setSelectedRoleName(entry.name)}
-              >
-                <ListItemText
-                  primary={entry.name}
-                  secondary={`${entry.role.cluster?.length ?? 0} cluster privs • ${entry.role.indices?.length ?? 0} index rules`}
-                />
-              </ListItemButton>
+              <ListItem key={entry.name} disablePadding>
+                <ListItemButton
+                  selected={entry.name === selectedRoleName}
+                  onClick={() => setSelectedRoleName(entry.name)}
+                >
+                  <ListItemText
+                    primary={entry.name}
+                    secondary={`${entry.role.cluster?.length ?? 0} cluster privs • ${entry.role.indices?.length ?? 0} index rules`}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
             {!loading && filteredRoles.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>

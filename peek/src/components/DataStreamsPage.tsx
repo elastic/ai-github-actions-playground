@@ -8,6 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
@@ -168,7 +169,7 @@ export default function DataStreamsPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Data Streams
           </Typography>
           <Button
@@ -225,18 +226,19 @@ export default function DataStreamsPage() {
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
             {filteredStreams.map((stream) => (
-              <ListItemButton
-                key={stream.name}
-                selected={stream.name === selectedName}
-                onClick={() => setSelectedName(stream.name)}
-              >
-                <ListItemText
-                  primary={stream.name}
-                  secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
-                    stream.indices.length === 1 ? "Index" : "Indices"
-                  }`}
-                />
-              </ListItemButton>
+              <ListItem key={stream.name} disablePadding>
+                <ListItemButton
+                  selected={stream.name === selectedName}
+                  onClick={() => setSelectedName(stream.name)}
+                >
+                  <ListItemText
+                    primary={stream.name}
+                    secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
+                      stream.indices.length === 1 ? "Index" : "Indices"
+                    }`}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
             {!loadingStreams && filteredStreams.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
