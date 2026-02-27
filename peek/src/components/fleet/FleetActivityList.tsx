@@ -5,11 +5,9 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {
-  formatFleetTimestamp,
-  type FleetAction,
-  type FleetActionResult,
-} from "../../services/fleet";
+import { type FleetAction, type FleetActionResult } from "../../services/fleet";
+
+import { formatFleetTimestamp } from "./fleetPresentation";
 
 interface Props {
   actions: FleetAction[];
