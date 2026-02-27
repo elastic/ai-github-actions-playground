@@ -16,6 +16,8 @@ import llmSettingsRaw from "./llm-settings.md?raw";
 import clusterOverviewRaw from "./cluster-overview.md?raw";
 import dashboardManagementRaw from "./dashboard-management.md?raw";
 import usersRolesRaw from "./users-roles.md?raw";
+import indicesRaw from "./indices.md?raw";
+import ingestPipelinesRaw from "./ingest-pipelines.md?raw";
 import addDataRaw from "./add-data.md?raw";
 
 export interface DocSection {
@@ -67,6 +69,8 @@ const sections: DocSection[] = [
   parseDocSection("cluster-overview", clusterOverviewRaw),
   parseDocSection("dashboard-management", dashboardManagementRaw),
   parseDocSection("users-roles", usersRolesRaw),
+  parseDocSection("indices", indicesRaw),
+  parseDocSection("ingest-pipelines", ingestPipelinesRaw),
   parseDocSection("add-data", addDataRaw),
 ];
 
