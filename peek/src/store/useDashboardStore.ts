@@ -593,7 +593,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       resetWorkspaceState: () => {
-        localStorage.removeItem(STORE_NAME);
+        useDashboardStore.persist.clearStorage();
         const fresh = createDefaultDashboard();
         set({
           dashboard: fresh,
