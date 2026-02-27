@@ -10,20 +10,13 @@
 import { expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
+import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
+
 import { COMMON_PAGES, registerLoveAuditTests } from "./fixtures/love-audit-helpers";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const ES_URL = "http://example.com:9200";
-
-const CORS_HEADERS = {
-  "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "access-control-allow-headers": "authorization,content-type",
-  "content-type": "application/json",
-};
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -338,58 +331,30 @@ const FIELD_CAPS = {
 // ---------------------------------------------------------------------------
 
 async function mockElasticsearch(page: Page) {
-  await page.route(`${ES_URL}/**`, async (route) => {
-    const req = route.request();
-    const method = req.method();
-    const url = new URL(req.url());
-    const path = url.pathname;
-
-    if (method === "OPTIONS") {
-      await route.fulfill({ status: 204, headers: CORS_HEADERS, body: "" });
-      return;
-    }
-
-    const json = (body: unknown) =>
-      route.fulfill({ status: 200, headers: CORS_HEADERS, body: JSON.stringify(body) });
-
-    // Cluster
-    if (path === "/" && method === "GET") return json(CLUSTER_INFO);
-    if (path === "/_cluster/health") return json(CLUSTER_HEALTH);
-    if (path === "/_cluster/stats") return json(CLUSTER_STATS);
-    if (path === "/_nodes" && method === "GET") return json(NODES_INFO);
-    if (path === "/_nodes/stats") return json(NODES_STATS);
-
-    // Security
-    if (path === "/_security/user/_has_privileges") return json(HAS_PRIVILEGES);
-    if (path === "/_security/user" && method === "GET") return json(SECURITY_USERS);
-    if (path === "/_security/role" && method === "GET") return json(SECURITY_ROLES);
-
-    // Indices
-    if (path === "/_cat/indices") return json(CAT_INDICES);
-    if (path.match(/^\/[^_][^/]*\/_mapping$/)) return json(INDEX_MAPPING);
-    if (path.match(/^\/[^_][^/]*\/_settings$/)) return json(INDEX_SETTINGS);
-    if (path.match(/^\/[^_][^/]*\/_stats$/)) return json(INDEX_STATS);
-
-    // Data streams
-    if (path === "/_data_stream") return json(DATA_STREAMS);
-    if (path.startsWith("/_resolve/index/")) return json(RESOLVE_INDEX);
-    if (path.match(/\/_field_caps/)) return json(FIELD_CAPS);
-
-    // Ingest pipelines
-    if (path === "/_ingest/pipeline") return json(INGEST_PIPELINES);
-
-    // ES|QL queries
-    if (path === "/_query" && method === "POST") {
-      const body = req.postDataJSON() as { query?: string } | null;
-      const query = body?.query ?? "";
-
-      if (query.includes("LIMIT 0")) return json(METRICS_COLUMNS);
-      if (query.includes("FROM metrics-*")) return json(METRICS_DATA);
-      return json(ESQL_QUERY_LAB);
-    }
-
-    // Fallback — return 200 with empty object to avoid UI errors on unmocked paths
-    return json({});
+  await registerElasticsearchMocks(page, {
+    esUrl: DEFAULT_ES_URL,
+    data: {
+      clusterInfo: CLUSTER_INFO,
+      clusterHealth: CLUSTER_HEALTH,
+      clusterStats: CLUSTER_STATS,
+      nodesInfo: NODES_INFO,
+      nodesStats: NODES_STATS,
+      hasPrivileges: HAS_PRIVILEGES,
+      securityUsers: SECURITY_USERS,
+      securityRoles: SECURITY_ROLES,
+      catIndices: CAT_INDICES,
+      indexMapping: INDEX_MAPPING,
+      indexSettings: INDEX_SETTINGS,
+      indexStats: INDEX_STATS,
+      dataStreams: DATA_STREAMS,
+      resolveIndex: RESOLVE_INDEX,
+      fieldCaps: FIELD_CAPS,
+      ingestPipelines: INGEST_PIPELINES,
+      esqlLimit0: METRICS_COLUMNS,
+      esqlMetrics: METRICS_DATA,
+      esqlDefault: ESQL_QUERY_LAB,
+    },
+    fallback: {},
   });
 }
 
@@ -397,7 +362,7 @@ async function connectToMockedCluster(page: Page) {
   await mockElasticsearch(page);
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
-  await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(ES_URL);
+  await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
 }
