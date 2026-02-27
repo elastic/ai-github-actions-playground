@@ -16,16 +16,12 @@ import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness } from "../../services/fleet";
 import { useFleetStore } from "../../store/useFleetStore";
 
+import { stalenessSeverityToColor } from "./fleetPresentation";
+
 interface Props {
   agents: ElasticAgentInfo[];
   onAgentClick: (agentId: string) => void;
 }
-
-const STALENESS_COLORS: Record<string, string> = {
-  fresh: "success.main",
-  stale: "warning.main",
-  critical: "error.main",
-};
 
 export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
   const agentFilter = useFleetStore((s) => s.agentFilter);
@@ -150,7 +146,7 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
                   <TableCell>
                     <Typography
                       variant="body2"
-                      sx={{ color: STALENESS_COLORS[staleness.severity] }}
+                      sx={{ color: `${stalenessSeverityToColor(staleness.severity)}.main` }}
                     >
                       {staleness.label}
                     </Typography>

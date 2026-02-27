@@ -4,7 +4,9 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { formatFleetTimestamp, type FleetOutputHealth } from "../../services/fleet";
+import { type FleetOutputHealth } from "../../services/fleet";
+
+import { formatFleetTimestamp } from "./fleetPresentation";
 
 interface Props {
   outputs: FleetOutputHealth[];
