@@ -125,7 +125,7 @@ export default function FleetAgentPage() {
         </Box>
       ) : !agentInfo && !loading ? (
         <Alert severity="warning">
-          Agent {decodedAgentId} not found in recent Elastic Agent logs (last hour).
+          Agent {decodedAgentId} not found in recent Elastic Agent logs.
         </Alert>
       ) : (
         <>
