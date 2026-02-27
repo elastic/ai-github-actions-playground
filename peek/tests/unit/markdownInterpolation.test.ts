@@ -170,6 +170,16 @@ describe("formatEsqlResult", () => {
     expect(formatEsqlResult(data)).toBe("");
   });
 
+  it("escapes pipe characters in table header column names", () => {
+    const data: EsqlResponse = {
+      columns: [col("service|name"), col("count")],
+      values: [["web-api", "42"]],
+    };
+    const result = formatEsqlResult(data);
+    const lines = result.split("\n");
+    expect(lines[0]).toBe("service\\|name | count");
+  });
+
   it("escapes pipe characters in table cell values", () => {
     const data: EsqlResponse = {
       columns: [col("service"), col("status")],
