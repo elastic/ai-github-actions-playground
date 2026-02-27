@@ -52,3 +52,27 @@ export const TRACE_TIME_RANGE_OPTIONS: Array<{
     to: preset.tracesRange.to,
   })),
 ];
+
+export function toDashboardTimeRange(traceRange: { from: string; to: string }): TimeRange {
+  const tracePreset = TRACE_TIME_RANGE_OPTIONS.find(
+    (option) => option.from === traceRange.from && option.to === traceRange.to,
+  );
+  if (!tracePreset) return traceRange;
+  const dashboardPreset = DASHBOARD_TIME_PRESETS.find(
+    (preset) => preset.label === tracePreset.label,
+  );
+  return dashboardPreset?.range ?? traceRange;
+}
+
+export function toTraceTimeRange(range: TimeRange): { from: string; to: string } {
+  const dashboardPreset = DASHBOARD_TIME_PRESETS.find(
+    (preset) => preset.range.from === range.from && preset.range.to === range.to,
+  );
+  if (!dashboardPreset) return range;
+  const tracePreset = TRACE_TIME_RANGE_OPTIONS.find(
+    (option) =>
+      option.label === dashboardPreset.label && option.from !== null && option.to !== null,
+  );
+  if (!tracePreset?.from || !tracePreset.to) return range;
+  return { from: tracePreset.from, to: tracePreset.to };
+}

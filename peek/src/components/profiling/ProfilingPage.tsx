@@ -13,13 +13,13 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
-import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
-import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
+import DateRangePicker from "../DateRangePicker";
+import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
@@ -296,27 +296,13 @@ export default function ProfilingPage() {
             value={filters.hostName ?? ""}
             onChange={(event) => updateFilters({ hostName: event.target.value || null })}
           />
-          <TextField
-            size="small"
-            select
-            label="Time range"
-            value={filters.timeFrom}
-            onChange={(event) => {
-              const selected = TRACE_TIME_RANGE_OPTIONS.find(
-                (option) => option.from === event.target.value,
-              );
-              if (selected?.from && selected.to) {
-                updateFilters({ timeFrom: selected.from, timeTo: selected.to });
-              }
+          <DateRangePicker
+            value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
+            onChange={(range) => {
+              const traceRange = toTraceTimeRange(range);
+              updateFilters({ timeFrom: traceRange.from, timeTo: traceRange.to });
             }}
-            sx={{ minWidth: 160 }}
-          >
-            {TRACE_TIME_RANGE_OPTIONS.filter((opt) => opt.from !== null).map((opt) => (
-              <MenuItem key={opt.label} value={opt.from ?? ""}>
-                {opt.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          />
         </Box>
         <TextField
           fullWidth
