@@ -32,7 +32,7 @@ export const useQueryStore = create<QueryState>()(
           };
         }),
       resetQueryState: () => {
-        localStorage.removeItem(STORE_NAME);
+        useQueryStore.persist.clearStorage();
         set({ discoverQueryDraft: null, queryHistory: [] });
       },
     }),

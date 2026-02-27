@@ -111,13 +111,13 @@ export const useLLMStore = create<LLMState>()(
         })),
       clearMessages: () => set({ messages: [] }),
       resetLLMConfig: () => {
-        llmSplitStorage.removeItem("elastic-peek-llm");
+        useLLMStore.persist.clearStorage();
         set({
           config: { ...DEFAULT_CONFIG },
         });
       },
       resetLLMState: () => {
-        llmSplitStorage.removeItem("elastic-peek-llm");
+        useLLMStore.persist.clearStorage();
         set({
           config: { ...DEFAULT_CONFIG },
           messages: [],
