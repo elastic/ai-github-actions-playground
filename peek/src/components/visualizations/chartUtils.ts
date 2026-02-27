@@ -1,21 +1,7 @@
 import type { EsqlColumn, EsqlResponse } from "../../types";
+import { DATE_TYPES, NUMERIC_TYPES } from "../../services/es/esFieldTypes";
 
-const DATE_TYPES = new Set(["date", "datetime", "date_nanos"]);
 const TIMESTAMP_FIELD = "@timestamp";
-const NUMERIC_TYPES = new Set([
-  "long",
-  "integer",
-  "short",
-  "byte",
-  "double",
-  "float",
-  "half_float",
-  "scaled_float",
-  "unsigned_long",
-  "counter_long",
-  "counter_integer",
-  "counter_double",
-]);
 
 export function isDateColumn(column: EsqlColumn): boolean {
   return DATE_TYPES.has(column.type) || column.name === TIMESTAMP_FIELD;
