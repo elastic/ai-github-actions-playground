@@ -329,7 +329,7 @@ export const useConnectionStore = create<ConnectionState>()(
             STORE_NAME + PROFILE_SESSION_PREFIX + profile.id + ENCRYPTED_STORE_SUFFIX,
           );
         }
-        void storage.removeItem(STORE_NAME);
+        void useConnectionStore.persist.clearStorage();
         set({
           connection: null,
           connected: false,
