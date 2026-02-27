@@ -608,7 +608,7 @@ export default function TracesPage() {
 
           {/* Results view */}
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-            {!result && !searchLoading && (
+            {!result && !searchLoading && viewMode !== "driftRadar" && (
               <Box
                 sx={{
                   display: "flex",
@@ -648,6 +648,19 @@ export default function TracesPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {traceRows.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          style={{ padding: "24px 12px", textAlign: "center", color: "inherit" }}
+                        >
+                          <Typography variant="body2" color="text.secondary">
+                            No traces matched current filters. Adjust filters or widen the time
+                            range.
+                          </Typography>
+                        </td>
+                      </tr>
+                    )}
                     {traceRows.map((row, idx) => (
                       <tr
                         key={`${row.traceId}-${idx}`}
