@@ -16,9 +16,10 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, type SecurityUser } from "../services/es";
+import { type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 import { loadSecurityResource } from "./securityResourceLoader";
 
@@ -44,36 +45,43 @@ export default function UsersPage() {
     setError(null);
     setAccessNotice(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const result = await loadSecurityResource({
-        client,
-        fetchResource: (c) => c.getSecurityUsers(),
-        canRead: (caps) => caps.canReadSecurityUsers,
-        authDeniedNotice: "Your credentials cannot read all Users data.",
+      const { data: result, error } = await runConnectionRequest({
+        connection,
+        run: (client) =>
+          loadSecurityResource({
+            client,
+            fetchResource: (c) => c.getSecurityUsers(),
+            canRead: (caps) => caps.canReadSecurityUsers,
+            authDeniedNotice: "Your credentials cannot read all Users data.",
+          }),
       });
-      setAccessNotice(result.notice);
-      if (result.error !== null) {
-        setError(result.error);
-      } else if (result.data !== null) {
-        const nextUsers = Object.entries(result.data)
-          .map(([username, user]) => ({
-            username: user.username ?? username,
-            enabled: user.enabled,
-            roles: user.roles ?? [],
-            full_name: user.full_name ?? null,
-            email: user.email ?? null,
-            metadata: user.metadata ?? {},
-          }))
-          .sort((a, b) => a.username.localeCompare(b.username));
-        setUsers(nextUsers);
-        setSelectedUsername((current) =>
-          current && nextUsers.some((user) => user.username === current)
-            ? current
-            : (nextUsers[0]?.username ?? null),
-        );
-      } else {
-        setUsers([]);
-        setSelectedUsername(null);
+      if (error !== null) {
+        setError(error);
+      } else if (result !== null) {
+        setAccessNotice(result.notice);
+        if (result.error !== null) {
+          setError(result.error);
+        } else if (result.data !== null) {
+          const nextUsers = Object.entries(result.data)
+            .map(([username, user]) => ({
+              username: user.username ?? username,
+              enabled: user.enabled,
+              roles: user.roles ?? [],
+              full_name: user.full_name ?? null,
+              email: user.email ?? null,
+              metadata: user.metadata ?? {},
+            }))
+            .sort((a, b) => a.username.localeCompare(b.username));
+          setUsers(nextUsers);
+          setSelectedUsername((current) =>
+            current && nextUsers.some((user) => user.username === current)
+              ? current
+              : (nextUsers[0]?.username ?? null),
+          );
+        } else {
+          setUsers([]);
+          setSelectedUsername(null);
+        }
       }
     } finally {
       setLoading(false);

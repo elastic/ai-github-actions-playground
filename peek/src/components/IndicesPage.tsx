@@ -20,8 +20,6 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import {
-  ElasticsearchClient,
-  isElasticsearchError,
   type CatIndexRecord,
   type IndexStatsResponse,
   type DiskUsageIndexEntry,
@@ -30,6 +28,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { formatBytes } from "../utils/formatBytes";
 import { PAGE_MANIFEST } from "../routes/manifest";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -191,17 +190,23 @@ export default function IndicesPage() {
     setLoadingIndices(true);
     setError(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const result = await client.getCatIndices();
-      const sorted = [...result].sort((a, b) => a.index.localeCompare(b.index));
-      setIndices(sorted);
-      setSelectedIndex((current) => {
-        if (current && sorted.some((i) => i.index === current)) return current;
-        const first = showSystemIndices ? sorted[0] : sorted.find((i) => !i.index.startsWith("."));
-        return first?.index ?? null;
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => client.getCatIndices(),
       });
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
+      if (error !== null) {
+        setError(error);
+      } else if (data !== null) {
+        const sorted = [...data].sort((a, b) => a.index.localeCompare(b.index));
+        setIndices(sorted);
+        setSelectedIndex((current) => {
+          if (current && sorted.some((i) => i.index === current)) return current;
+          const first = showSystemIndices
+            ? sorted[0]
+            : sorted.find((i) => !i.index.startsWith("."));
+          return first?.index ?? null;
+        });
+      }
     } finally {
       setLoadingIndices(false);
     }
@@ -218,16 +223,22 @@ export default function IndicesPage() {
       setDiskUsage(null);
       setDiskUsageError(null);
       try {
-        const client = new ElasticsearchClient(connection);
-        const [mappingsResult, settingsResult, statsResult] = await Promise.allSettled([
-          client.getIndexMappings(indexName),
-          client.getIndexSettings(indexName),
-          client.getIndexStats(indexName),
-        ]);
+        const { data: results } = await runConnectionRequest({
+          connection,
+          run: (client) =>
+            Promise.allSettled([
+              client.getIndexMappings(indexName),
+              client.getIndexSettings(indexName),
+              client.getIndexStats(indexName),
+            ]),
+        });
         if (reqId !== detailRequestRef.current) return;
-        setMappings(mappingsResult.status === "fulfilled" ? mappingsResult.value : null);
-        setSettings(settingsResult.status === "fulfilled" ? settingsResult.value : null);
-        setIndexStats(statsResult.status === "fulfilled" ? statsResult.value : null);
+        if (results !== null) {
+          const [mappingsResult, settingsResult, statsResult] = results;
+          setMappings(mappingsResult.status === "fulfilled" ? mappingsResult.value : null);
+          setSettings(settingsResult.status === "fulfilled" ? settingsResult.value : null);
+          setIndexStats(statsResult.status === "fulfilled" ? statsResult.value : null);
+        }
       } finally {
         if (reqId === detailRequestRef.current) {
           setLoadingDetail(false);
@@ -281,12 +292,16 @@ export default function IndicesPage() {
     setDiskUsageError(null);
     setDiskUsage(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const response = await client.getIndexDiskUsage(selectedIndex);
-      const entry = response[selectedIndex] as DiskUsageIndexEntry | undefined;
-      setDiskUsage(entry ?? null);
-    } catch (err) {
-      setDiskUsageError(isElasticsearchError(err) ? err.message : String(err));
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => client.getIndexDiskUsage(selectedIndex),
+      });
+      if (error !== null) {
+        setDiskUsageError(error);
+      } else if (data !== null) {
+        const entry = data[selectedIndex] as DiskUsageIndexEntry | undefined;
+        setDiskUsage(entry ?? null);
+      }
     } finally {
       setDiskUsageLoading(false);
     }

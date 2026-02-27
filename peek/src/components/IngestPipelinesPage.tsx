@@ -13,9 +13,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 type PipelineEntry = { name: string; pipeline: IngestPipeline };
 
@@ -44,17 +44,21 @@ export default function IngestPipelinesPage() {
     setLoading(true);
     setError(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const response = await client.getIngestPipelines();
-      const next = Object.entries(response)
-        .map(([name, pipeline]) => ({ name, pipeline }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      setPipelines(next);
-      setSelectedName((current) =>
-        current && next.some((p) => p.name === current) ? current : (next[0]?.name ?? null),
-      );
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => client.getIngestPipelines(),
+      });
+      if (error !== null) {
+        setError(error);
+      } else if (data !== null) {
+        const next = Object.entries(data)
+          .map(([name, pipeline]) => ({ name, pipeline }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setPipelines(next);
+        setSelectedName((current) =>
+          current && next.some((p) => p.name === current) ? current : (next[0]?.name ?? null),
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -94,11 +98,15 @@ export default function IngestPipelinesPage() {
         parsed !== null && typeof parsed === "object" && "_source" in (parsed as object)
           ? (parsed as Record<string, unknown>)
           : { _source: parsed };
-      const client = new ElasticsearchClient(connection);
-      const result = await client.simulateIngestPipeline(selectedName, [doc]);
-      setSimulateResult(result);
-    } catch (err) {
-      setSimulateError(isElasticsearchError(err) ? err.message : String(err));
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => client.simulateIngestPipeline(selectedName, [doc]),
+      });
+      if (error !== null) {
+        setSimulateError(error);
+      } else if (data !== null) {
+        setSimulateResult(data);
+      }
     } finally {
       setSimulating(false);
     }
