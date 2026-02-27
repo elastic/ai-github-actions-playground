@@ -8,6 +8,7 @@
  */
 
 import type { StateCreator } from "zustand";
+import { z } from "zod";
 
 import type { ConnectionProfile, ElasticsearchConnection, ProfileHealth } from "../types";
 import type { EncryptedPayload } from "../utils/crypto";
@@ -21,6 +22,13 @@ import {
   PROFILE_SESSION_PREFIX,
   ENCRYPTED_STORE_SUFFIX,
 } from "./connectionStorageAdapters";
+
+const credentialsSchema = z
+  .object({
+    apiKey: z.unknown().optional(),
+    password: z.unknown().optional(),
+  })
+  .strict();
 
 export interface ConnectionProfileSlice {
   connectionProfiles: ConnectionProfile[];
@@ -137,11 +145,10 @@ export const createConnectionProfileSlice: StateCreator<
       const payload = JSON.parse(raw) as EncryptedPayload;
       const plaintext = await decryptWithPin(pin, payload);
       if (plaintext === null) return false;
-      const parsed: unknown = JSON.parse(plaintext);
-      if (typeof parsed !== "object" || parsed === null) return false;
-      const creds = parsed as Record<string, unknown>;
-      const apiKey = typeof creds.apiKey === "string" ? creds.apiKey : "";
-      const password = typeof creds.password === "string" ? creds.password : "";
+      const result = credentialsSchema.safeParse(JSON.parse(plaintext));
+      if (!result.success) return false;
+      const apiKey = typeof result.data.apiKey === "string" ? result.data.apiKey : "";
+      const password = typeof result.data.password === "string" ? result.data.password : "";
       set((s) => ({
         connectionProfiles: s.connectionProfiles.map((p) =>
           p.id === id ? { ...p, connection: { ...p.connection, apiKey, password } } : p,
