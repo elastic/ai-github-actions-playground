@@ -23,6 +23,8 @@ export default function FleetStatCard({
     <Paper
       variant="outlined"
       onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       sx={{
         p: 1.5,
         minWidth: 100,

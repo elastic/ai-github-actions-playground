@@ -206,7 +206,7 @@ describe("Fleet pages", () => {
       actions: [],
       actionResults: [],
       activeTab: "overview",
-      agentFilter: { search: "", version: null },
+      agentFilter: { search: "", version: null, hasErrors: false, staleness: null },
       loading: false,
       error: null,
       partialErrors: [],
@@ -488,5 +488,91 @@ describe("Fleet pages", () => {
       expect(screen.getByText(/Some data sources unavailable:/)).toBeInTheDocument();
     });
     expect(screen.getByText(/Agent inventory: forbidden by role/)).toBeInTheDocument();
+  });
+
+  it("clicking Unhealthy stat card switches to agents tab with hasErrors filter", async () => {
+    mockFleetResponses();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Wait for stat cards to load
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Unhealthy/i })).toBeInTheDocument();
+    });
+
+    // Click the Unhealthy stat card (value is 1, so it's clickable)
+    await user.click(screen.getByRole("button", { name: /Unhealthy/i }));
+
+    // Should now be on Agents tab
+    await waitFor(() => {
+      expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
+    });
+
+    // The hasErrors filter chip should be visible
+    expect(screen.getByText("Has errors")).toBeInTheDocument();
+    // Only agent-1 has errors (errorCount: 2), agent-2 has 0
+    expect(screen.getByText("host-1")).toBeInTheDocument();
+    expect(screen.queryByText("host-2")).not.toBeInTheDocument();
+  });
+
+  it("clicking unhealthy reason chip switches to agents tab with hasErrors filter", async () => {
+    mockFleetResponses();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Wait for the unhealthy reason chip to appear (Input: 1 from mock data)
+    await waitFor(() => {
+      expect(screen.getByText(/Input: 1/)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText(/Input: 1/));
+
+    await waitFor(() => {
+      expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Has errors")).toBeInTheDocument();
+  });
+
+  it("active filter chip can be cleared in agents table", async () => {
+    mockFleetResponses();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Click the Unhealthy card to activate filter
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Unhealthy/i })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: /Unhealthy/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Has errors")).toBeInTheDocument();
+    });
+
+    // Clear the filter via the "Clear filters" chip
+    await user.click(screen.getByText("Clear filters"));
+
+    // Both agents should now be visible
+    await waitFor(() => {
+      expect(screen.getByText("host-2")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Has errors")).not.toBeInTheDocument();
   });
 });

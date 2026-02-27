@@ -30,6 +30,7 @@ const STALENESS_COLORS: Record<string, string> = {
 export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
   const agentFilter = useFleetStore((s) => s.agentFilter);
   const updateAgentFilter = useFleetStore((s) => s.updateAgentFilter);
+  const resetFilters = useFleetStore((s) => s.resetFilters);
 
   const uniqueVersions = useMemo(() => {
     const versions = new Set(agents.map((a) => a.version));
@@ -49,6 +50,14 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
     }
     if (agentFilter.version) {
       result = result.filter((a) => a.version === agentFilter.version);
+    }
+    if (agentFilter.hasErrors) {
+      result = result.filter((a) => a.errorCount > 0);
+    }
+    if (agentFilter.staleness) {
+      result = result.filter(
+        (a) => computeCheckinStaleness(a.lastSeen).severity === agentFilter.staleness,
+      );
     }
     return result;
   }, [agents, agentFilter]);
@@ -80,6 +89,25 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
             onClick={() => updateAgentFilter({ version: agentFilter.version === v ? null : v })}
           />
         ))}
+        {agentFilter.hasErrors && (
+          <Chip
+            size="small"
+            label="Has errors"
+            color="error"
+            onDelete={() => updateAgentFilter({ hasErrors: false })}
+          />
+        )}
+        {agentFilter.staleness && (
+          <Chip
+            size="small"
+            label={agentFilter.staleness === "critical" ? "Offline" : "Stale"}
+            color="warning"
+            onDelete={() => updateAgentFilter({ staleness: null })}
+          />
+        )}
+        {(agentFilter.hasErrors || agentFilter.staleness !== null) && (
+          <Chip size="small" label="Clear filters" variant="outlined" onClick={resetFilters} />
+        )}
         <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>
           {filtered.length} agent{filtered.length !== 1 ? "s" : ""}
         </Typography>
