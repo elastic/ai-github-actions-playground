@@ -4,14 +4,13 @@
  * to exercise real Universal Profiling data (base64url frame IDs, RLE frame
  * types, kernel frames, etc.).
  *
- * Credentials are read from environment variables:
- *   DEMO_ES_URL, DEMO_ES_USERNAME, DEMO_ES_PASSWORD
+ * Credentials are loaded from the published demo.json endpoint at
+ * https://elastic.github.io/ai-github-actions-playground/demo.json
  *
  * Usage:
- *   DEMO_ES_URL=https://… DEMO_ES_USERNAME=demo DEMO_ES_PASSWORD=readonlyuser \
- *     npx playwright test tests/e2e/love-audit-demo.spec.ts --reporter=list
+ *   npx playwright test tests/e2e/love-audit-demo.spec.ts --reporter=list
  */
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 import {
@@ -21,31 +20,42 @@ import {
 } from "./fixtures/love-audit-helpers";
 
 // ---------------------------------------------------------------------------
-// Environment
+// Demo credentials
 // ---------------------------------------------------------------------------
 
-const DEMO_URL = process.env.DEMO_ES_URL ?? "";
-const DEMO_USER = process.env.DEMO_ES_USERNAME ?? "";
-const DEMO_PASS = process.env.DEMO_ES_PASSWORD ?? "";
+const DEMO_JSON_URL = "https://elastic.github.io/ai-github-actions-playground/demo.json";
 
-test.skip(
-  !DEMO_URL || !DEMO_USER || !DEMO_PASS,
-  "Skipped: set DEMO_ES_URL, DEMO_ES_USERNAME, DEMO_ES_PASSWORD to run",
-);
+interface DemoCredentials {
+  url: string;
+  username: string;
+  password: string;
+}
+
+let demoCreds: DemoCredentials | null = null;
+
+async function loadDemoCredentials(): Promise<DemoCredentials> {
+  if (demoCreds) return demoCreds;
+  const res = await fetch(DEMO_JSON_URL);
+  if (!res.ok) throw new Error(`Failed to fetch demo credentials: ${res.status}`);
+  demoCreds = (await res.json()) as DemoCredentials;
+  return demoCreds;
+}
 
 // ---------------------------------------------------------------------------
 // Connection
 // ---------------------------------------------------------------------------
 
 async function connectToDemoCluster(page: Page) {
+  const creds = await loadDemoCredentials();
+
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
-  await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEMO_URL);
+  await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(creds.url);
 
   // Switch to Username / Password auth
   await page.getByRole("tab", { name: "Username / Password" }).click();
-  await page.getByRole("textbox", { name: "Username" }).fill(DEMO_USER);
-  await page.getByLabel("Password").fill(DEMO_PASS);
+  await page.getByRole("textbox", { name: "Username" }).fill(creds.username);
+  await page.getByLabel("Password").fill(creds.password);
 
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 
