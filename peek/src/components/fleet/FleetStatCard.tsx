@@ -25,6 +25,16 @@ export default function FleetStatCard({
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                if (event.key !== "Enter") event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       sx={{
         p: 1.5,
         minWidth: 100,
