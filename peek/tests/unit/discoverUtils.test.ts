@@ -289,17 +289,17 @@ describe("formatEsqlQuery", () => {
 describe("applyEsqlSort", () => {
   it("appends a SORT step before LIMIT when no SORT exists", () => {
     expect(applyEsqlSort("FROM logs-* | LIMIT 50", "message", "asc")).toBe(
-      "FROM logs-* | SORT message ASC | LIMIT 50",
+      "FROM logs-* | SORT `message` ASC | LIMIT 50",
     );
   });
 
   it("appends a SORT step at the end when no LIMIT exists", () => {
-    expect(applyEsqlSort("FROM logs-*", "message", "asc")).toBe("FROM logs-* | SORT message ASC");
+    expect(applyEsqlSort("FROM logs-*", "message", "asc")).toBe("FROM logs-* | SORT `message` ASC");
   });
 
   it("replaces an existing SORT step", () => {
     expect(applyEsqlSort("FROM logs-* | SORT @timestamp DESC | LIMIT 50", "message", "asc")).toBe(
-      "FROM logs-* | SORT message ASC | LIMIT 50",
+      "FROM logs-* | SORT `message` ASC | LIMIT 50",
     );
   });
 
@@ -315,15 +315,15 @@ describe("applyEsqlSort", () => {
     );
   });
 
-  it("escapes backslashes and backticks inside quoted identifiers", () => {
-    expect(applyEsqlSort("FROM logs-*", "field\\`name", "asc")).toBe(
-      "FROM logs-* | SORT `field\\\\\\`name` ASC",
+  it("escapes backticks inside quoted identifiers", () => {
+    expect(applyEsqlSort("FROM logs-*", "field`name", "asc")).toBe(
+      "FROM logs-* | SORT `field``name` ASC",
     );
   });
 
-  it("does not quote simple identifiers", () => {
+  it("always quotes identifiers with backticks", () => {
     expect(applyEsqlSort("FROM logs-*", "@timestamp", "asc")).toBe(
-      "FROM logs-* | SORT @timestamp ASC",
+      "FROM logs-* | SORT `@timestamp` ASC",
     );
   });
 });
@@ -331,19 +331,19 @@ describe("applyEsqlSort", () => {
 describe("buildColumnInsightsQuery", () => {
   it("generates a STATS min/max/avg query for a numeric column", () => {
     expect(buildColumnInsightsQuery("FROM logs-* | LIMIT 50", "count", "long")).toBe(
-      "FROM logs-* | LIMIT 500 | STATS MIN(count) AS min_value, MAX(count) AS max_value, AVG(count) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(count) AS null_count",
+      "FROM logs-* | LIMIT 500 | STATS MIN(`count`) AS min_value, MAX(`count`) AS max_value, AVG(`count`) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(`count`) AS null_count",
     );
   });
 
   it("generates a top-N values query for a keyword column", () => {
     expect(buildColumnInsightsQuery("FROM logs-* | LIMIT 50", "status", "keyword")).toBe(
-      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY status | SORT value_count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY `status` | SORT value_count DESC | LIMIT 10",
     );
   });
 
   it("generates a top-N values query for a text column", () => {
     expect(buildColumnInsightsQuery("FROM logs-*", "message", "text")).toBe(
-      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY message | SORT value_count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY `message` | SORT value_count DESC | LIMIT 10",
     );
   });
 
@@ -351,7 +351,7 @@ describe("buildColumnInsightsQuery", () => {
     expect(
       buildColumnInsightsQuery("FROM logs-* | SORT @timestamp DESC | LIMIT 50", "count", "long"),
     ).toBe(
-      "FROM logs-* | LIMIT 500 | STATS MIN(count) AS min_value, MAX(count) AS max_value, AVG(count) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(count) AS null_count",
+      "FROM logs-* | LIMIT 500 | STATS MIN(`count`) AS min_value, MAX(`count`) AS max_value, AVG(`count`) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(`count`) AS null_count",
     );
   });
 
@@ -363,7 +363,7 @@ describe("buildColumnInsightsQuery", () => {
         "double",
       ),
     ).toBe(
-      "FROM logs-* | LIMIT 500 | STATS MIN(response_time) AS min_value, MAX(response_time) AS max_value, AVG(response_time) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(response_time) AS null_count",
+      "FROM logs-* | LIMIT 500 | STATS MIN(`response_time`) AS min_value, MAX(`response_time`) AS max_value, AVG(`response_time`) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(`response_time`) AS null_count",
     );
   });
 
@@ -375,7 +375,7 @@ describe("buildColumnInsightsQuery", () => {
         "keyword",
       ),
     ).toBe(
-      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY status | SORT value_count DESC | LIMIT 10",
+      "FROM logs-* | LIMIT 500 | STATS value_count = COUNT(*) BY `status` | SORT value_count DESC | LIMIT 10",
     );
   });
 
@@ -387,7 +387,7 @@ describe("buildColumnInsightsQuery", () => {
         "integer",
       ),
     ).toBe(
-      'FROM logs-* | WHERE level == "error" | LIMIT 500 | STATS MIN(count) AS min_value, MAX(count) AS max_value, AVG(count) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(count) AS null_count',
+      'FROM logs-* | WHERE level == "error" | LIMIT 500 | STATS MIN(`count`) AS min_value, MAX(`count`) AS max_value, AVG(`count`) AS avg_value, COUNT(*) AS total_count, COUNT(*) - COUNT(`count`) AS null_count',
     );
   });
 

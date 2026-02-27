@@ -1,0 +1,200 @@
+/**
+ * Storage adapter configuration for the connection store.
+ *
+ * Extracts the persisted-state type, key constants, credential-stripping
+ * helpers, and both the browser split-secret and Electron IPC storage
+ * adapters so they can evolve independently of the domain state slices.
+ */
+
+import type { ConnectionProfile, ElasticsearchConnection } from "../types";
+
+import { createSplitSecretStorage } from "./createSplitSecretStorage";
+import { createElectronStorage, isElectronAvailable } from "./createElectronStorage";
+
+// ---------------------------------------------------------------------------
+// Persisted-state shape
+// ---------------------------------------------------------------------------
+
+export type PersistedConnectionState = {
+  connection?: ElasticsearchConnection | null;
+  connectionProfiles?: ConnectionProfile[];
+  activeProfileId?: string | null;
+};
+
+// ---------------------------------------------------------------------------
+// Storage key constants
+// ---------------------------------------------------------------------------
+
+export const CONNECTION_STORE_NAME = "elastic-peek-connection";
+export const API_KEY_SESSION_SUFFIX = ":apiKey";
+export const PASSWORD_SESSION_SUFFIX = ":password";
+export const PROFILE_SESSION_PREFIX = ":profile:";
+export const ENCRYPTED_STORE_SUFFIX = ":enc";
+
+// ---------------------------------------------------------------------------
+// Credential-stripping helpers (keep secrets out of localStorage)
+// ---------------------------------------------------------------------------
+
+export function stripCredentials(conn: ElasticsearchConnection): ElasticsearchConnection {
+  return { ...conn, apiKey: "", password: "" };
+}
+
+export function stripProfileCredentials(profiles: ConnectionProfile[]): ConnectionProfile[] {
+  return profiles.map((p) => ({ ...p, connection: stripCredentials(p.connection) }));
+}
+
+// ---------------------------------------------------------------------------
+// Browser split-secret storage — credentials in sessionStorage, rest in localStorage
+// ---------------------------------------------------------------------------
+
+export const splitStorage = createSplitSecretStorage<PersistedConnectionState>({
+  restoreSecrets: (name, state) => {
+    const restored = { ...state };
+    if (restored.connection) {
+      const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
+      const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
+      restored.connection = { ...restored.connection, apiKey, password };
+    }
+    if (restored.connectionProfiles) {
+      restored.connectionProfiles = restored.connectionProfiles.map((profile) => {
+        const pApiKey =
+          sessionStorage.getItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          ) ?? "";
+        const pPassword =
+          sessionStorage.getItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          ) ?? "";
+        return {
+          ...profile,
+          connection: {
+            ...profile.connection,
+            apiKey: pApiKey,
+            password: pPassword,
+          },
+        };
+      });
+    }
+    return restored;
+  },
+  persistSecrets: (name, state) => {
+    sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, state.connection?.apiKey ?? "");
+    sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
+    for (const profile of state.connectionProfiles ?? []) {
+      sessionStorage.setItem(
+        name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+        profile.connection.apiKey ?? "",
+      );
+      sessionStorage.setItem(
+        name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+        profile.connection.password ?? "",
+      );
+    }
+  },
+  stripSecrets: (state) => {
+    const profiles = state.connectionProfiles ?? [];
+    return {
+      ...state,
+      connection: state.connection ? stripCredentials(state.connection) : state.connection,
+      connectionProfiles: profiles.length > 0 ? stripProfileCredentials(profiles) : profiles,
+    };
+  },
+  clearSecrets: (name, localRaw) => {
+    if (localRaw) {
+      try {
+        const stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
+        for (const profile of stored.state.connectionProfiles ?? []) {
+          sessionStorage.removeItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          );
+          sessionStorage.removeItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          );
+        }
+      } catch {
+        /* ignore parse errors during cleanup */
+      }
+    }
+    sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
+    sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Electron storage — async, uses safeStorage via IPC instead of sessionStorage
+// ---------------------------------------------------------------------------
+
+export const electronStorage = createElectronStorage<PersistedConnectionState>({
+  restoreSecrets: async (name, state) => {
+    const api = window.electronAPI!;
+    const restored = { ...state };
+    if (restored.connection) {
+      const apiKey = await api.retrieveCredential(name + API_KEY_SESSION_SUFFIX);
+      const password = await api.retrieveCredential(name + PASSWORD_SESSION_SUFFIX);
+      restored.connection = { ...restored.connection, apiKey, password };
+    }
+    if (restored.connectionProfiles) {
+      restored.connectionProfiles = await Promise.all(
+        restored.connectionProfiles.map(async (profile) => {
+          const pApiKey = await api.retrieveCredential(
+            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          );
+          const pPassword = await api.retrieveCredential(
+            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          );
+          return {
+            ...profile,
+            connection: { ...profile.connection, apiKey: pApiKey, password: pPassword },
+          };
+        }),
+      );
+    }
+    return restored;
+  },
+  persistSecrets: async (name, state) => {
+    const api = window.electronAPI!;
+    await api.storeCredential(name + API_KEY_SESSION_SUFFIX, state.connection?.apiKey ?? "");
+    await api.storeCredential(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
+    for (const profile of state.connectionProfiles ?? []) {
+      await api.storeCredential(
+        name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+        profile.connection.apiKey ?? "",
+      );
+      await api.storeCredential(
+        name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+        profile.connection.password ?? "",
+      );
+    }
+  },
+  stripSecrets: (state) => {
+    const profiles = state.connectionProfiles ?? [];
+    return {
+      ...state,
+      connection: state.connection ? stripCredentials(state.connection) : state.connection,
+      connectionProfiles: profiles.length > 0 ? stripProfileCredentials(profiles) : profiles,
+    };
+  },
+  clearSecrets: async (name, localRaw) => {
+    const api = window.electronAPI!;
+    if (localRaw) {
+      try {
+        const stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
+        for (const profile of stored.state.connectionProfiles ?? []) {
+          await api.deleteCredential(
+            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          );
+          await api.deleteCredential(
+            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          );
+        }
+      } catch {
+        /* ignore parse errors during cleanup */
+      }
+    }
+    await api.deleteCredential(name + API_KEY_SESSION_SUFFIX);
+    await api.deleteCredential(name + PASSWORD_SESSION_SUFFIX);
+  },
+});
+
+// Use safeStorage-backed async storage in Electron; sessionStorage split in web browsers
+export const connectionStorage = isElectronAvailable() ? electronStorage : splitStorage;

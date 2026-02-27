@@ -1,4 +1,5 @@
 import type { ElasticsearchClient } from "./client";
+import { DATE_TYPES, KEYWORD_TYPES, NUMERIC_TYPES } from "./esFieldTypes";
 import { escapeEsqlIdentifier } from "./esqlUtils";
 
 // ---------------------------------------------------------------------------
@@ -40,37 +41,10 @@ export interface FieldStats {
 // Field type classification
 // ---------------------------------------------------------------------------
 
-const KEYWORD_LIKE_TYPES = new Set([
-  "keyword",
-  "constant_keyword",
-  "wildcard",
-  "text",
-  "ip",
-  "boolean",
-  "version",
-]);
-
-const NUMERIC_TYPES = new Set([
-  "integer",
-  "long",
-  "short",
-  "byte",
-  "double",
-  "float",
-  "half_float",
-  "scaled_float",
-  "unsigned_long",
-  "counter_long",
-  "counter_double",
-  "counter_integer",
-  "aggregate_metric_double",
-]);
-
-const DATE_TYPES = new Set(["date", "date_nanos"]);
 const DEFAULT_SAMPLE_SIZE = 50000;
 
 export function isKeywordLikeType(type: string): boolean {
-  return KEYWORD_LIKE_TYPES.has(type);
+  return KEYWORD_TYPES.has(type);
 }
 
 export function isNumericOrDateType(type: string): boolean {
