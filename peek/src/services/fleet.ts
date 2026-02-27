@@ -720,27 +720,3 @@ export async function loadFleetActionResults(
       (hit._source.completed_at as string) ?? readNestedString(hit._source, ["@timestamp"], ""),
   }));
 }
-
-// ---------------------------------------------------------------------------
-// Shared timestamp formatters
-// ---------------------------------------------------------------------------
-
-/** Format a timestamp as locale time only (e.g. "2:30:15 PM"). */
-export function formatFleetTime(ts: string): string {
-  if (!ts) return "";
-  try {
-    return new Date(ts).toLocaleTimeString();
-  } catch {
-    return ts;
-  }
-}
-
-/** Format a timestamp as full locale date+time (e.g. "2/23/2026, 2:30:15 PM"). */
-export function formatFleetTimestamp(ts: string): string {
-  if (!ts) return "";
-  try {
-    return new Date(ts).toLocaleString();
-  } catch {
-    return ts;
-  }
-}
