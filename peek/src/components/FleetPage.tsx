@@ -177,7 +177,7 @@ export default function FleetPage() {
       {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Fleet
           </Typography>
           <Button

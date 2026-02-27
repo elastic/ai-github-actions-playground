@@ -425,7 +425,7 @@ export default function DashboardsLandingPage() {
     <Box sx={{ maxWidth: 1200, mx: "auto", width: "100%", py: 1 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
             Dashboards
           </Typography>
           <Typography variant="body2" color="text.secondary">

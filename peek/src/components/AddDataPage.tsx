@@ -228,7 +228,9 @@ export default function AddDataPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6">Add Data</Typography>
+          <Typography variant="h6" component="h1">
+            Add Data
+          </Typography>
           {clusterVersion && (
             <Chip label={`EDOT Collector v${clusterVersion}`} size="small" variant="outlined" />
           )}

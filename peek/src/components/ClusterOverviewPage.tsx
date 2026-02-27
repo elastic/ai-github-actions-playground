@@ -275,7 +275,7 @@ export default function ClusterOverviewPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Cluster Overview
           </Typography>
           <Button size="small" variant="outlined" onClick={loadOverview} disabled={loading}>
@@ -305,7 +305,7 @@ export default function ClusterOverviewPage() {
                     <Typography variant="h5">{clusterInfo.cluster_name}</Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                       <Chip size="small" label={`UUID: ${clusterInfo.cluster_uuid}`} />
-                      <Chip size="small" label={`Node: ${clusterInfo.name}`} />
+                      <Chip size="small" label={`Node: ${clusterInfo.name ?? "unknown"}`} />
                       {clusterHealth?.number_of_nodes !== undefined && (
                         <Chip size="small" label={`Nodes: ${clusterHealth.number_of_nodes}`} />
                       )}
@@ -337,7 +337,10 @@ export default function ClusterOverviewPage() {
                   <Stack spacing={1}>
                     <Typography variant="h5">{clusterInfo.version.number}</Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      <Chip size="small" label={`Lucene: ${clusterInfo.version.lucene_version}`} />
+                      <Chip
+                        size="small"
+                        label={`Lucene: ${clusterInfo.version.lucene_version ?? "unknown"}`}
+                      />
                       <Chip
                         size="small"
                         label={`Build: ${clusterInfo.version.build_hash?.slice(0, 7) ?? "unknown"}`}

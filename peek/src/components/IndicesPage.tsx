@@ -567,7 +567,7 @@ export default function IndicesPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Indices
           </Typography>
           <Button size="small" variant="outlined" onClick={loadIndices} disabled={loadingIndices}>

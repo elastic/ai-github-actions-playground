@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -136,9 +137,8 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
               const isActive =
                 location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
               const isDisabled = item.requiresConnection && !connected;
-              const navButton = (
+              const button = (
                 <ListItemButton
-                  key={item.page}
                   selected={isActive}
                   disabled={isDisabled}
                   onClick={() => navigate(PAGE_MANIFEST[item.page].path)}
@@ -176,12 +176,16 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                   )}
                 </ListItemButton>
               );
-              return collapsed ? (
-                <Tooltip key={item.page} title={item.label} placement="right">
-                  {navButton}
-                </Tooltip>
-              ) : (
-                navButton
+              return (
+                <ListItem key={item.page} disablePadding>
+                  {collapsed ? (
+                    <Tooltip title={item.label} placement="right">
+                      {button}
+                    </Tooltip>
+                  ) : (
+                    button
+                  )}
+                </ListItem>
               );
             })}
           </List>
