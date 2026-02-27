@@ -140,6 +140,9 @@ export default function ProfilingPage() {
           frameIds: String(
             readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.ids") ?? "",
           ),
+          frameTypes: String(
+            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.types") ?? "",
+          ),
         }))
         .filter((item) => item.id.length > 0);
 
