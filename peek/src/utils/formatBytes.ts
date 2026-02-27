@@ -10,5 +10,5 @@ export function formatBytes(value: number | null, nullLabel = "n/a"): string {
   const units = ["B", "KB", "MB", "GB", "TB", "PB"];
   const exponent = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
   const normalized = value / Math.pow(1024, exponent);
-  return `${normalized.toFixed(normalized >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]!}`;
+  return `${normalized.toFixed(normalized >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
