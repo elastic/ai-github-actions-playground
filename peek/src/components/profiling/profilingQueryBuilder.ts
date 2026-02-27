@@ -26,8 +26,17 @@ function quoteList(values: string[]): string {
   return values.map((value) => `"${escapeEsqlString(value)}"`).join(", ");
 }
 
+function normalizeEsqlDateTimeExpression(expr: string): string {
+  const trimmed = expr.trim();
+  const parsed = Date.parse(trimmed);
+  if (Number.isNaN(parsed)) return expr;
+  return `"${escapeEsqlString(new Date(parsed).toISOString())}"`;
+}
+
 function buildProfilingWhereClause(filters: ProfilingFilters): string[] {
-  const where: string[] = [`@timestamp >= ${filters.timeFrom}`, `@timestamp <= ${filters.timeTo}`];
+  const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
+  const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
+  const where: string[] = [`@timestamp >= ${timeFrom}`, `@timestamp <= ${timeTo}`];
   if (filters.executableName) {
     where.push(`process.executable.name == "${escapeEsqlString(filters.executableName)}"`);
   }
@@ -79,10 +88,12 @@ export function buildStackframeLookupQuery(frameIds: string[]): string {
 
 export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
+  const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
+  const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
   return [
     "FROM profiling-events-all",
     buildWherePipe(where),
-    `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${filters.timeFrom}, ${filters.timeTo})`,
+    `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${timeFrom}, ${timeTo})`,
     "SORT bucket",
   ].join(" | ");
 }
