@@ -1,10 +1,15 @@
 import { z } from "zod";
 
+import {
+  THRESHOLD_COLORS,
+  PARAMETER_TYPES,
+  PARAMETER_SOURCE_MODES,
+} from "./contracts/dashboard/literals";
 import { VISUALIZATION_TYPES } from "./components/visualizations/vizRegistry";
 
 export { VISUALIZATION_TYPES };
 
-const thresholdColor = z.enum(["success", "warning", "error"]);
+const thresholdColor = z.enum(THRESHOLD_COLORS);
 
 const thresholdStep = z.object({
   value: z.number(),
@@ -68,16 +73,16 @@ export const panelDefinitionSchema = z.object({
 });
 
 const parameterSourceSchema = z.discriminatedUnion("mode", [
-  z.object({ mode: z.literal("text") }),
-  z.object({ mode: z.literal("options"), values: z.array(z.string()) }),
-  z.object({ mode: z.literal("esql"), query: z.string() }),
+  z.object({ mode: z.literal(PARAMETER_SOURCE_MODES.text) }),
+  z.object({ mode: z.literal(PARAMETER_SOURCE_MODES.options), values: z.array(z.string()) }),
+  z.object({ mode: z.literal(PARAMETER_SOURCE_MODES.esql), query: z.string() }),
 ]);
 
 const dashboardParameterSchema = z
   .object({
     name: z.string().min(1),
     label: z.string().min(1),
-    type: z.enum(["keyword", "number", "boolean", "date"]).default("keyword"),
+    type: z.enum(PARAMETER_TYPES).default("keyword"),
     source: parameterSourceSchema,
     value: z.union([z.string(), z.number(), z.boolean()]),
   })

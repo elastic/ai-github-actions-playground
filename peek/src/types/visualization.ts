@@ -1,6 +1,10 @@
 import type { FormatOptions } from "@perses-dev/core";
 
+import type { ThresholdColor } from "../contracts/dashboard/literals";
+
 export type { FormatOptions };
+
+export type { ThresholdColor };
 
 export type VisualizationType =
   | "timeseries"
@@ -26,9 +30,6 @@ export interface BarChartOptions {
   stacked?: boolean;
   horizontal?: boolean;
 }
-
-/** Semantic color used for threshold steps and base coloring */
-export type ThresholdColor = "success" | "warning" | "error";
 
 /** A single threshold boundary: value is the cutoff, color is applied when value >= this cutoff */
 export interface ThresholdStep {
