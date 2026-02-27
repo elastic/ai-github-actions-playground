@@ -178,7 +178,7 @@ describe("RolesPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Your credentials cannot read all Roles data.");
+    await screen.findByText("Your credentials cannot read all role data.");
     expect(screen.getByText("Select a role.")).toBeInTheDocument();
   });
 
