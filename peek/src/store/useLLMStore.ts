@@ -32,6 +32,7 @@ interface LLMState {
   updateMessage: (id: string, content: string) => void;
   removeMessage: (id: string) => void;
   clearMessages: () => void;
+  resetLLMConfig: () => void;
   resetLLMState: () => void;
 }
 
@@ -109,6 +110,12 @@ export const useLLMStore = create<LLMState>()(
           messages: s.messages.filter((m) => m.id !== id),
         })),
       clearMessages: () => set({ messages: [] }),
+      resetLLMConfig: () => {
+        llmSplitStorage.removeItem("elastic-peek-llm");
+        set({
+          config: { ...DEFAULT_CONFIG },
+        });
+      },
       resetLLMState: () => {
         llmSplitStorage.removeItem("elastic-peek-llm");
         set({
