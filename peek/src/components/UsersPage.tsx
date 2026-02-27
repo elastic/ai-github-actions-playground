@@ -49,7 +49,7 @@ export default function UsersPage() {
         client,
         fetchResource: (c) => c.getSecurityUsers(),
         canRead: (caps) => caps.canReadSecurityUsers,
-        authDeniedNotice: "Your credentials cannot read all Users data.",
+        authDeniedNotice: "Your credentials cannot read all user data.",
       });
       setAccessNotice(result.notice);
       if (result.error !== null) {
