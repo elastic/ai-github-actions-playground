@@ -32,6 +32,7 @@ import {
   type FleetServerStatusMetrics,
 } from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { formatBytes } from "../utils/formatBytes";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
@@ -73,15 +74,6 @@ function formatCompactNumber(value: number | null): string {
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(
     value,
   );
-}
-
-function formatBytes(value: number | null): string {
-  if (value === null) return "Unavailable";
-  if (value === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-  const exponent = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-  const normalized = value / Math.pow(1024, exponent);
-  return `${normalized.toFixed(normalized >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
 
 function formatPercent(value: number | null): string {
@@ -411,7 +403,9 @@ export default function ClusterOverviewPage() {
             </Box>
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Store Size">
-                <Typography variant="h4">{formatBytes(clusterStoreBytes)}</Typography>
+                <Typography variant="h4">
+                  {formatBytes(clusterStoreBytes, "Unavailable")}
+                </Typography>
               </InfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>

@@ -13,6 +13,19 @@ export interface OverviewQueryResult {
   data?: EsqlResponse;
 }
 
+/**
+ * Return `true` when an overview query result contains at least one non-null
+ * "metric" value.  Used by both MetricOverviewGrid and DimensionOverviewGrid
+ * to filter items that actually have displayable data.
+ */
+export function hasOverviewData(result: OverviewQueryResult | undefined): boolean {
+  if (!result?.data || result.data.values.length === 0) return false;
+  if (result.status !== "success" && result.status !== "loading") return false;
+  const metricIdx = result.data.columns.findIndex((c) => c.name === "metric");
+  if (metricIdx < 0) return false;
+  return result.data.values.some((row) => row[metricIdx] != null);
+}
+
 interface Options<T extends { name: string }> {
   /** Items to query (metrics or dimension fields). */
   items: T[];

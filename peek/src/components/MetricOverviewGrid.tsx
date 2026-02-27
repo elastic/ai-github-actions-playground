@@ -9,7 +9,7 @@ import { useTheme } from "@mui/material/styles";
 import type { FieldInfo, ElasticsearchClient } from "../services/es";
 import { buildOverviewQuery } from "../services/es";
 import type { EsqlResponse, TimeRange } from "../types";
-import { useBatchedOverviewQueries } from "../hooks/useBatchedOverviewQueries";
+import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -129,14 +129,7 @@ export default function MetricOverviewGrid({
 
   // Filter to only metrics with non-null data points (include loading cards with stale data)
   const metricsWithData = useMemo(() => {
-    return namespaceMetrics.filter((m) => {
-      const r = results[m.name];
-      if (!r?.data || r.data.values.length === 0) return false;
-      if (r.status !== "success" && r.status !== "loading") return false;
-      const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
-      if (metricIdx < 0) return false;
-      return r.data.values.some((row) => row[metricIdx] != null);
-    });
+    return namespaceMetrics.filter((m) => hasOverviewData(results[m.name]));
   }, [namespaceMetrics, results]);
 
   const isLoading = useMemo(
