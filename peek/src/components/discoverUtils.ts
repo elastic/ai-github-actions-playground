@@ -1,4 +1,5 @@
 import type { EsqlColumn, EsqlResponse } from "../types";
+import { escapeEsqlIdentifier } from "../services/es/esqlUtils";
 
 import { isNumericType } from "./visualizations/chartUtils";
 
@@ -222,17 +223,6 @@ export function toCsv(data: EsqlResponse): string {
   return lines.join("\r\n");
 }
 
-/**
- * Returns a backtick-quoted ES|QL identifier, escaping any literal backticks
- * inside the name as `\`` (the ES|QL escape sequence for backtick identifiers).
- */
-function quoteEsqlIdentifier(name: string): string {
-  // If the name is a simple identifier (letters, digits, _, @, .) it doesn't need quoting.
-  if (/^[A-Za-z_@][A-Za-z0-9_@.]*$/.test(name)) return name;
-  // Escape backslashes first, then backticks, to produce a valid backtick-quoted identifier.
-  return "`" + name.replace(/\\/g, "\\\\").replace(/`/g, "\\`") + "`";
-}
-
 /** Maximum number of top values returned by a keyword column insights query. */
 const COLUMN_INSIGHTS_TOP_N = 10;
 
@@ -264,7 +254,7 @@ export function buildColumnInsightsQuery(
     filteredSteps.push(step);
   }
 
-  const quotedCol = quoteEsqlIdentifier(columnName);
+  const quotedCol = escapeEsqlIdentifier(columnName);
   const sampledSteps = [...filteredSteps, `LIMIT ${COLUMN_INSIGHTS_SAMPLE_LIMIT}`];
 
   if (isNumericType(columnType)) {
@@ -323,7 +313,7 @@ export function applyEsqlSort(
     return withoutSort.join(" | ");
   }
 
-  const sortStep = `SORT ${quoteEsqlIdentifier(columnName)} ${direction.toUpperCase()}`;
+  const sortStep = `SORT ${escapeEsqlIdentifier(columnName)} ${direction.toUpperCase()}`;
 
   // Insert before the last LIMIT step if one exists.
   const lastLimitIdx = [...withoutSort].reduceRight(
