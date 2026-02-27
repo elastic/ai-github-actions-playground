@@ -88,7 +88,7 @@ ci:
 	@cd $(PEEK_DIR) && npm ci
 	@$(MAKE) lint test-unit-coverage build
 	@echo ""
-	@echo "✓ CI passed: lint + coverage gate + build all green."
+	@echo "✓ CI passed: lint + coverage gate + build all passed."
 
 check: ci
 

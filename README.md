@@ -36,7 +36,7 @@ The same setup applies to private repositories; just make sure the PAT is author
 
 ## The Product: Elastic Peek
 
-The codebase that the factory operates on is **Elastic Peek**, a lightweight, browser-only, backend-free, UI for interacting with Elasticsearch. It's powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
+The codebase that the factory operates on is **Elastic Peek**, a lightweight, browser-only, backend-free UI for interacting with Elasticsearch. It's powered by [Perses](https://perses.dev/) components and Elasticsearch [ES|QL](https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html).
 
 ### Live Demo
 
