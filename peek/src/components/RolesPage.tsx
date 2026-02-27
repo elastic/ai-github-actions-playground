@@ -15,10 +15,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { type SecurityRole, type SecurityUser } from "../services/es";
+import { ElasticsearchClient, type SecurityRole, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
-import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 import { loadSecurityResource } from "./securityResourceLoader";
 
@@ -47,54 +46,46 @@ export default function RolesPage() {
     setError(null);
     setAccessNotice(null);
     try {
-      const { data: results, error } = await runConnectionRequest({
-        connection,
-        run: (client) =>
-          Promise.allSettled([
-            loadSecurityResource({
-              client,
-              fetchResource: (c) => c.getSecurityRoles(),
-              canRead: (caps) => caps.canReadSecurityRoles,
-              authDeniedNotice: "Your credentials cannot read all role data.",
-            }),
-            client.getSecurityUsers(),
-          ]),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (results !== null) {
-        const [rolesResult, usersResult] = results;
-        if (rolesResult.status === "fulfilled") {
-          const result = rolesResult.value;
-          setAccessNotice(result.notice);
-          if (result.error !== null) {
-            setError(result.error);
-          } else if (result.data !== null) {
-            const nextRoles = Object.entries(result.data)
-              .map(([name, role]) => ({ name, role }))
-              .sort((a, b) => a.name.localeCompare(b.name));
-            setRoles(nextRoles);
-            setSelectedRoleName((current) =>
-              current && nextRoles.some((entry) => entry.name === current)
-                ? current
-                : (nextRoles[0]?.name ?? null),
-            );
-          } else {
-            setRoles([]);
-            setSelectedRoleName(null);
-          }
-        }
-        if (usersResult.status === "fulfilled") {
-          setUsers(
-            Object.entries(usersResult.value).map(([username, user]) => ({
-              username: user.username ?? username,
-              enabled: user.enabled,
-              roles: user.roles ?? [],
-            })),
+      const client = new ElasticsearchClient(connection);
+      const [rolesResult, usersResult] = await Promise.allSettled([
+        loadSecurityResource({
+          client,
+          fetchResource: (c) => c.getSecurityRoles(),
+          canRead: (caps) => caps.canReadSecurityRoles,
+          authDeniedNotice: "Your credentials cannot read all role data.",
+        }),
+        client.getSecurityUsers(),
+      ]);
+      if (rolesResult.status === "fulfilled") {
+        const result = rolesResult.value;
+        setAccessNotice(result.notice);
+        if (result.error !== null) {
+          setError(result.error);
+        } else if (result.data !== null) {
+          const nextRoles = Object.entries(result.data)
+            .map(([name, role]) => ({ name, role }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+          setRoles(nextRoles);
+          setSelectedRoleName((current) =>
+            current && nextRoles.some((entry) => entry.name === current)
+              ? current
+              : (nextRoles[0]?.name ?? null),
           );
         } else {
-          setUsers([]);
+          setRoles([]);
+          setSelectedRoleName(null);
         }
+      }
+      if (usersResult.status === "fulfilled") {
+        setUsers(
+          Object.entries(usersResult.value).map(([username, user]) => ({
+            username: user.username ?? username,
+            enabled: user.enabled,
+            roles: user.roles ?? [],
+          })),
+        );
+      } else {
+        setUsers([]);
       }
     } finally {
       setLoading(false);
