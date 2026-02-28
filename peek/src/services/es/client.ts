@@ -32,7 +32,9 @@ export type EsqlQueryResponse =
 export type ClusterInfoResponse =
   operations["info"]["responses"][200]["content"]["application/json"];
 export interface ClusterHealthResponse {
+  cluster_name?: string;
   status?: "green" | "yellow" | "red";
+  timed_out?: boolean;
   number_of_nodes?: number;
   number_of_data_nodes?: number;
   active_primary_shards?: number;
@@ -41,6 +43,8 @@ export interface ClusterHealthResponse {
   relocating_shards?: number;
   delayed_unassigned_shards?: number;
   unassigned_shards?: number;
+  number_of_in_flight_fetch?: number;
+  active_shards_percent_as_number?: number;
 }
 export interface ClusterPendingTask {
   insert_order?: number;
@@ -64,7 +68,10 @@ export interface CatShardRecord {
   shard?: string;
   prirep?: string;
   state?: string;
+  docs?: string;
+  store?: string;
   node?: string;
+  "unassigned.reason"?: string;
 }
 export interface ClusterStatsResponse {
   indices?: {
@@ -87,8 +94,22 @@ export interface NodesInfoResponse {
 }
 export interface NodeStatsNode {
   name?: string;
-  os?: { cpu?: { percent?: number } };
-  jvm?: { mem?: { heap_used_percent?: number } };
+  os?: {
+    cpu?: {
+      percent?: number;
+      load_average?: { "1m"?: number; "5m"?: number; "15m"?: number };
+    };
+    mem?: { used_percent?: number; total_in_bytes?: number; free_in_bytes?: number };
+  };
+  jvm?: {
+    mem?: { heap_used_percent?: number };
+    gc?: {
+      collectors?: {
+        young?: { collection_count?: number; collection_time_in_millis?: number };
+        old?: { collection_count?: number; collection_time_in_millis?: number };
+      };
+    };
+  };
   fs?: { total?: { total_in_bytes?: number; available_in_bytes?: number } };
   indices?: {
     docs?: { count?: number };
@@ -96,6 +117,15 @@ export interface NodeStatsNode {
     indexing?: { index_total?: number };
     search?: { query_total?: number; query_time_in_millis?: number };
   };
+  thread_pool?: Record<
+    string,
+    { active?: number; rejected?: number; completed?: number; queue?: number }
+  >;
+  breakers?: Record<
+    string,
+    { limit_size_in_bytes?: number; estimated_size_in_bytes?: number; tripped?: number }
+  >;
+  process?: { open_file_descriptors?: number; max_file_descriptors?: number };
 }
 export interface NodesStatsResponse {
   nodes?: Record<string, NodeStatsNode>;
@@ -146,6 +176,25 @@ export interface NodesIngestNodeStats {
 }
 export interface NodesIngestStatsResponse {
   nodes?: Record<string, NodesIngestNodeStats>;
+}
+export interface ClusterSettingsResponse {
+  persistent?: Record<string, unknown>;
+  transient?: Record<string, unknown>;
+  defaults?: Record<string, unknown>;
+}
+export interface ClusterAllocationExplainResponse {
+  index?: string;
+  shard?: number;
+  primary?: boolean;
+  current_state?: string;
+  unassigned_info?: { reason?: string; at?: string; details?: string };
+  can_allocate?: string;
+  allocate_explanation?: string;
+  node_allocation_decisions?: Array<{
+    node_name?: string;
+    node_decision?: string;
+    deciders?: Array<{ decider?: string; decision?: string; explanation?: string }>;
+  }>;
 }
 export type ResolveIndexResponse =
   operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
@@ -549,7 +598,10 @@ export class ElasticsearchClient {
   }
 
   async getCatShards(signal?: AbortSignal): Promise<CatShardRecord[]> {
-    return this._fetch<CatShardRecord[]>("/_cat/shards?format=json", { signal });
+    return this._fetch<CatShardRecord[]>(
+      "/_cat/shards?format=json&h=index,shard,prirep,state,docs,store,node,unassigned.reason",
+      { signal },
+    );
   }
 
   async getRecoveryStatus(signal?: AbortSignal): Promise<RecoveryResponse> {
@@ -566,6 +618,21 @@ export class ElasticsearchClient {
 
   async getSnapshotStatus(signal?: AbortSignal): Promise<SnapshotStatusResponse> {
     return this._fetch<SnapshotStatusResponse>("/_snapshot/_status", { signal });
+  }
+
+  async getClusterSettings(signal?: AbortSignal): Promise<ClusterSettingsResponse> {
+    return this._fetch<ClusterSettingsResponse>(
+      "/_cluster/settings?include_defaults=true&flat_settings=true",
+      { signal },
+    );
+  }
+
+  async getAllocationExplain(signal?: AbortSignal): Promise<ClusterAllocationExplainResponse> {
+    return this._fetch<ClusterAllocationExplainResponse>("/_cluster/allocation/explain", {
+      method: "POST",
+      body: JSON.stringify({}),
+      signal,
+    });
   }
 
   async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {

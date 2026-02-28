@@ -29,6 +29,8 @@ export type {
   SlmStatsResponse,
   SnapshotStatusResponse,
   NodesIngestStatsResponse,
+  ClusterSettingsResponse,
+  ClusterAllocationExplainResponse,
   ResolveIndexResponse,
   GetDataStreamsResponse,
   DataStreamInfo,

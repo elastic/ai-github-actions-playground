@@ -18,6 +18,8 @@ const getIlmExplainAllMock = vi.fn();
 const getSlmStatsMock = vi.fn();
 const getSnapshotStatusMock = vi.fn();
 const getNodeIngestStatsMock = vi.fn();
+const getClusterSettingsMock = vi.fn();
+const getAllocationExplainMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -32,6 +34,8 @@ vi.mock("../../src/services/es", () => ({
     getSlmStats: getSlmStatsMock,
     getSnapshotStatus: getSnapshotStatusMock,
     getNodeIngestStats: getNodeIngestStatsMock,
+    getClusterSettings: getClusterSettingsMock,
+    getAllocationExplain: getAllocationExplainMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -43,6 +47,14 @@ vi.mock("../../src/services/es", () => ({
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
 
+function renderHealth(defaultTab?: string) {
+  return render(
+    <MemoryRouter>
+      <ClusterHealthPage defaultTab={defaultTab as never} />
+    </MemoryRouter>,
+  );
+}
+
 describe("ClusterHealthPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,17 +63,39 @@ describe("ClusterHealthPage", () => {
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
 
-    getClusterHealthMock.mockResolvedValue({ status: "yellow" });
+    getClusterHealthMock.mockResolvedValue({
+      status: "yellow",
+      number_of_nodes: 3,
+      number_of_data_nodes: 2,
+      unassigned_shards: 0,
+      active_shards_percent_as_number: 100.0,
+    });
     getPendingTasksMock.mockResolvedValue({ tasks: [{}, {}] });
     getCatAllocationMock.mockResolvedValue([{ node: "n1", "disk.percent": "86" }]);
     getClusterStatsMock.mockResolvedValue({ indices: { count: 12 } });
     getNodeStatsMock.mockResolvedValue({
       nodes: {
-        a: { os: { cpu: { percent: 50 } }, jvm: { mem: { heap_used_percent: 60 } } },
-        b: { os: { cpu: { percent: 30 } }, jvm: { mem: { heap_used_percent: 40 } } },
+        a: {
+          name: "node-a",
+          os: { cpu: { percent: 50 } },
+          jvm: { mem: { heap_used_percent: 60 } },
+          thread_pool: { write: { rejected: 5 }, search: { rejected: 3 }, get: { rejected: 0 } },
+          breakers: { parent: { tripped: 1 } },
+        },
+        b: {
+          name: "node-b",
+          os: { cpu: { percent: 30 } },
+          jvm: { mem: { heap_used_percent: 40 } },
+          thread_pool: { write: { rejected: 0 }, search: { rejected: 0 }, get: { rejected: 0 } },
+          breakers: {},
+        },
       },
     });
-    getCatShardsMock.mockResolvedValue([{ node: "a" }, { node: "a" }, { node: "b" }]);
+    getCatShardsMock.mockResolvedValue([
+      { node: "a", state: "STARTED", prirep: "p" },
+      { node: "a", state: "STARTED", prirep: "r" },
+      { node: "b", state: "STARTED", prirep: "p" },
+    ]);
     getRecoveryStatusMock.mockResolvedValue({ "idx-a": { shards: [{ stage: "index" }] } });
     getIlmExplainAllMock.mockResolvedValue({ indices: { "idx-a": { failed_step: "error" } } });
     getSlmStatsMock.mockResolvedValue({ policy_stats: [{ snapshots_failed: 2 }] });
@@ -69,51 +103,137 @@ describe("ClusterHealthPage", () => {
     getNodeIngestStatsMock.mockResolvedValue({
       nodes: { a: { ingest: { total: { failed: 3 } } } },
     });
+    getClusterSettingsMock.mockResolvedValue({
+      persistent: {},
+      transient: {},
+      defaults: { "cluster.routing.allocation.enable": "all" },
+    });
+    getAllocationExplainMock.mockRejectedValue(new Error("no unassigned shards"));
   });
 
-  it("renders overview cards from API data", async () => {
-    render(
-      <MemoryRouter>
-        <ClusterHealthPage />
-      </MemoryRouter>,
-    );
+  it("renders overview with cluster status and key metrics", async () => {
+    renderHealth();
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Cluster Health Overview")).toBeInTheDocument();
-    expect(screen.getByText("Cluster status")).toBeInTheDocument();
-    expect(screen.getByText("Pending tasks")).toBeInTheDocument();
+    // Active shards percentage
+    expect(screen.getByText(/100\.0%/)).toBeInTheDocument();
+
+    // Pending tasks count
     expect(
       within(screen.getByRole("group", { name: "Pending tasks" })).getByText("2"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Avg CPU")).toBeInTheDocument();
+
+    // Avg CPU (avg of 50 and 30 = 40)
     expect(screen.getByText("40%")).toBeInTheDocument();
-    expect(screen.getByText("Active recoveries")).toBeInTheDocument();
+
+    // Thread pool rejections (5 + 3 = 8)
     expect(
-      within(screen.getByRole("group", { name: "Active recoveries" })).getByText("1"),
+      within(screen.getByRole("group", { name: "Thread pool rejections" })).getByText("8"),
     ).toBeInTheDocument();
+
+    // Circuit breaker trips (1)
+    expect(
+      within(screen.getByRole("group", { name: "Circuit breaker trips" })).getByText("1"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows allocation disabled warning when settings indicate", async () => {
+    getClusterSettingsMock.mockResolvedValue({
+      persistent: {},
+      transient: { "cluster.routing.allocation.enable": "none" },
+      defaults: {},
+    });
+
+    renderHealth();
+
+    await waitFor(() => {
+      expect(screen.getByText("YELLOW")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Shard allocation is disabled/)).toBeInTheDocument();
+  });
+
+  it("calls allocation explain when unassigned shards > 0", async () => {
+    getClusterHealthMock.mockResolvedValue({
+      status: "red",
+      unassigned_shards: 5,
+      active_shards_percent_as_number: 80.0,
+    });
+    getAllocationExplainMock.mockResolvedValue({
+      index: "my-index",
+      shard: 2,
+      primary: true,
+      unassigned_info: { reason: "NODE_LEFT" },
+      allocate_explanation: "cannot allocate because all nodes are full",
+    });
+
+    renderHealth();
+
+    await waitFor(() => {
+      expect(getAllocationExplainMock).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Allocation Explain")).toBeInTheDocument();
+    });
+    expect(screen.getByText(/NODE_LEFT/)).toBeInTheDocument();
+  });
+
+  it("does not call allocation explain when 0 unassigned shards", async () => {
+    renderHealth();
+
+    await waitFor(() => {
+      expect(screen.getByText("YELLOW")).toBeInTheDocument();
+    });
+
+    expect(getAllocationExplainMock).not.toHaveBeenCalled();
+  });
+
+  it("switches to Nodes tab and shows per-node table", async () => {
+    const user = userEvent.setup();
+    renderHealth();
+
+    await waitFor(() => {
+      expect(screen.getByText("YELLOW")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("tab", { name: /nodes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("node-a")).toBeInTheDocument();
+    });
+    expect(screen.getByText("node-b")).toBeInTheDocument();
   });
 
   it("refreshes when Refresh is clicked", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <ClusterHealthPage />
-      </MemoryRouter>,
-    );
+    renderHealth();
 
     await waitFor(() => {
       expect(getClusterHealthMock).toHaveBeenCalledTimes(1);
     });
-    expect(getClusterHealthMock).toHaveBeenNthCalledWith(1, "indices");
 
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
     await waitFor(() => {
       expect(getClusterHealthMock).toHaveBeenCalledTimes(2);
     });
-    expect(getClusterHealthMock).toHaveBeenNthCalledWith(2, "indices");
+  });
+
+  it("handles partial API failures gracefully", async () => {
+    getNodeStatsMock.mockRejectedValue(new Error("timeout"));
+    getSlmStatsMock.mockRejectedValue(new Error("forbidden"));
+
+    renderHealth();
+
+    await waitFor(() => {
+      expect(screen.getByText("YELLOW")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Partial data loaded/)).toBeInTheDocument();
+    expect(screen.getByText(/node stats/)).toBeInTheDocument();
   });
 });
