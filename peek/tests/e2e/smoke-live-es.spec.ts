@@ -22,7 +22,7 @@ import {
   logDiagnostics,
 } from "./fixtures/love-audit-helpers";
 
-const ES_PROXY_URL = process.env.ES_PROXY_URL ?? "http://localhost:3000/_es";
+const ES_PROXY_URL = process.env.ES_PROXY_URL || "http://localhost:3000/_es";
 
 async function connectToLiveCluster(page: Page) {
   await page.goto("");
