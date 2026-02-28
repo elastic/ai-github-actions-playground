@@ -3,11 +3,13 @@ export interface ProfilingEvent {
   count: number;
   serviceName: string;
   hostName: string;
+  timestamp: string;
 }
 
 export interface StacktraceFrameMap {
   id: string;
   frameIds: string;
+  frameTypes: string;
 }
 
 export interface FrameSymbol {
@@ -24,6 +26,7 @@ export interface SymbolizedFrame {
   fileName: string;
   lineNumber: number | null;
   functionOffset: number | null;
+  frameType?: FrameType;
 }
 
 export interface SymbolizedStacktrace {
@@ -31,25 +34,81 @@ export interface SymbolizedStacktrace {
   count: number;
   serviceName: string;
   hostName: string;
+  timestamp: string;
   frames: SymbolizedFrame[];
 }
 
 export function parseFrameIds(frameIdsString: string): string[] {
+  if (!frameIdsString) return [];
   // EDOT OTel exporter uses comma-separated frame IDs
   if (frameIdsString.includes(",")) {
     return frameIdsString.split(",").filter((id) => id.length > 0);
   }
-  // Legacy Universal Profiling format: underscore-concatenated 32-char hex IDs
-  const normalized = frameIdsString.replace(/_/g, "");
+  // Legacy hex format: underscore-separated 32-char hex IDs.
+  // Detect by checking if the string (minus underscores) is purely hex.
+  if (frameIdsString.includes("_")) {
+    const withoutSeparators = frameIdsString.replace(/_/g, "");
+    if (/^[0-9a-f]+$/i.test(withoutSeparators)) {
+      const ids: string[] = [];
+      for (let i = 0; i < withoutSeparators.length; i += 32) {
+        const chunk = withoutSeparators.slice(i, i + 32);
+        if (chunk.length === 32) ids.push(chunk);
+      }
+      return ids;
+    }
+  }
+  // Universal Profiling base64url format: concatenated 32-char base64url IDs
+  // (each ID is 16 bytes FileID + 8 bytes address = 24 bytes → 32 base64 chars).
+  // Split directly into 32-char chunks without any character removal.
   const ids: string[] = [];
-  for (let i = 0; i < normalized.length; i += 32) {
-    const chunk = normalized.slice(i, i + 32);
+  for (let i = 0; i < frameIdsString.length; i += 32) {
+    const chunk = frameIdsString.slice(i, i + 32);
     if (chunk.length === 32) ids.push(chunk);
   }
   return ids;
 }
 
 export type FrameType = "kernel" | "runtime" | "native" | "interpreted" | "app";
+
+/** Map Universal Profiling frame type IDs to our FrameType categories. */
+const PROFILING_TYPE_MAP: Record<number, FrameType> = {
+  1: "interpreted", // Python
+  2: "interpreted", // PHP
+  3: "native", // Native (C/C++/Rust)
+  4: "kernel", // Kernel
+  5: "runtime", // JVM/Hotspot
+  6: "interpreted", // APM JS
+  7: "interpreted", // Ruby
+  8: "interpreted", // Perl
+  9: "interpreted", // JavaScript
+  10: "interpreted", // JavaScript (unwinding)
+  11: "runtime", // Go
+  12: "native", // abort marker
+  13: "runtime", // .NET
+};
+
+/**
+ * Decode the base64-encoded RLE `Stacktrace.frame.types` field into a
+ * per-frame {@link FrameType} array.
+ *
+ * The encoding is: base64 → bytes read in (count, typeId) pairs, where each
+ * pair expands to `count` copies of that type.
+ */
+export function parseFrameTypes(encoded: string): FrameType[] {
+  if (!encoded) return [];
+  // Standard base64 decode (the field uses standard base64, not base64url)
+  const binary = atob(encoded);
+  const result: FrameType[] = [];
+  for (let i = 0; i + 1 < binary.length; i += 2) {
+    const count = binary.charCodeAt(i);
+    const typeId = binary.charCodeAt(i + 1);
+    const frameType = PROFILING_TYPE_MAP[typeId] ?? "app";
+    for (let j = 0; j < count; j++) {
+      result.push(frameType);
+    }
+  }
+  return result;
+}
 
 export function inferFrameType(functionName: string, fileName: string): FrameType {
   const fn = functionName.toLowerCase();
@@ -140,7 +199,7 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
           name,
           value: 0,
           children: [],
-          frameType: inferFrameType(frame.functionName, frame.fileName),
+          frameType: frame.frameType ?? inferFrameType(frame.functionName, frame.fileName),
         };
         current.children.push(child);
       }
@@ -251,14 +310,18 @@ export function joinStacktraces(
   return events.map((event) => {
     const stacktrace = stacktraceById.get(event.stacktraceId);
     const frameIds = stacktrace ? parseFrameIds(stacktrace.frameIds) : [];
-    const frames: SymbolizedFrame[] = frameIds.map((frameId) => {
+    const decodedTypes = stacktrace ? parseFrameTypes(stacktrace.frameTypes) : [];
+    const frames: SymbolizedFrame[] = frameIds.map((frameId, index) => {
       const symbol = frameById.get(frameId);
+      const functionName = symbol?.functionName ?? "(unknown)";
+      const fileName = symbol?.fileName ?? "";
       return {
         frameId,
-        functionName: symbol?.functionName ?? "(unknown)",
-        fileName: symbol?.fileName ?? "",
+        functionName,
+        fileName,
         lineNumber: symbol?.lineNumber ?? null,
         functionOffset: symbol?.functionOffset ?? null,
+        frameType: decodedTypes[index] ?? inferFrameType(functionName, fileName),
       };
     });
     return {
@@ -266,7 +329,118 @@ export function joinStacktraces(
       count: event.count,
       serviceName: event.serviceName,
       hostName: event.hostName,
+      timestamp: event.timestamp,
       frames,
     };
   });
+}
+
+export interface FlamescopeWindow {
+  from: string;
+  to: string;
+}
+
+export interface FlamescopeHeatmapModel {
+  xLabels: string[];
+  yLabels: string[];
+  points: Array<[number, number, number]>;
+  bucketStacktraces: SymbolizedStacktrace[][];
+  bucketWindows: FlamescopeWindow[];
+}
+
+function getStacktraceSignature(stacktrace: SymbolizedStacktrace): string {
+  const head = stacktrace.frames
+    .slice(0, 3)
+    .map((frame) => frame.functionName || "(unknown)")
+    .join(" → ");
+  return head.length > 0 ? head : stacktrace.stacktraceId;
+}
+
+function formatBucketLabel(timestamp: number): string {
+  return new Date(timestamp).toISOString().slice(11, 19);
+}
+
+export function buildFlamescopeHeatmap(
+  stacktraces: SymbolizedStacktrace[],
+  bucketCount = 48,
+  rowLimit = 30,
+): FlamescopeHeatmapModel {
+  const tracesWithTs = stacktraces
+    .map((stacktrace) => ({
+      stacktrace,
+      timestampMs: Date.parse(stacktrace.timestamp),
+    }))
+    .filter((item) => Number.isFinite(item.timestampMs));
+  if (tracesWithTs.length === 0) {
+    return {
+      xLabels: [],
+      yLabels: [],
+      points: [],
+      bucketStacktraces: [],
+      bucketWindows: [],
+    };
+  }
+
+  const minTs = Math.min(...tracesWithTs.map((item) => item.timestampMs));
+  const maxTs = Math.max(...tracesWithTs.map((item) => item.timestampMs));
+  const safeBucketCount = Math.max(1, bucketCount);
+  const bucketSizeMs = Math.max(1, Math.ceil((maxTs - minTs + 1) / safeBucketCount));
+
+  const bucketStacktraces: SymbolizedStacktrace[][] = Array.from(
+    { length: safeBucketCount },
+    () => [],
+  );
+  const bucketsBySignature: Map<string, number>[] = Array.from(
+    { length: safeBucketCount },
+    () => new Map(),
+  );
+  const totalBySignature = new Map<string, number>();
+
+  for (const item of tracesWithTs) {
+    const bucket = Math.min(
+      safeBucketCount - 1,
+      Math.floor((item.timestampMs - minTs) / bucketSizeMs),
+    );
+    bucketStacktraces[bucket]!.push(item.stacktrace);
+    const signature = getStacktraceSignature(item.stacktrace);
+    const nextBucketCount =
+      (bucketsBySignature[bucket]!.get(signature) ?? 0) + item.stacktrace.count;
+    bucketsBySignature[bucket]!.set(signature, nextBucketCount);
+    totalBySignature.set(signature, (totalBySignature.get(signature) ?? 0) + item.stacktrace.count);
+  }
+
+  const yLabels = [...totalBySignature.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, Math.max(1, rowLimit))
+    .map(([signature]) => signature);
+  const yIndex = new Map(yLabels.map((label, index) => [label, index]));
+  const points: Array<[number, number, number]> = [];
+
+  for (let x = 0; x < bucketsBySignature.length; x++) {
+    for (const [signature, value] of bucketsBySignature[x]!.entries()) {
+      const row = yIndex.get(signature);
+      if (row == null) continue;
+      points.push([x, row, value]);
+    }
+  }
+
+  const xLabels = Array.from({ length: safeBucketCount }, (_, index) =>
+    formatBucketLabel(minTs + index * bucketSizeMs),
+  );
+  const bucketWindows: FlamescopeWindow[] = Array.from({ length: safeBucketCount }, (_, index) => {
+    const from = minTs + index * bucketSizeMs;
+    const to = Math.min(maxTs + 1, from + bucketSizeMs);
+    return {
+      from: new Date(from).toISOString(),
+      to: new Date(to).toISOString(),
+    };
+  });
+
+  return {
+    xLabels,
+    yLabels,
+    points,
+    bucketStacktraces,
+    bucketWindows,
+  };
 }

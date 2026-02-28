@@ -51,6 +51,7 @@ WORKFLOWS=(
   "duplicate-issue-detector.yml"
   "flaky-test-investigator.yml"
   "framework-best-practices.yml"
+  "give-it-some-love.yml"
   "information-architecture.yml"
   "iterative-ideas-man.yml"
   "medium-ideas-man.yml"
@@ -80,7 +81,7 @@ echo ""
 FAILED=()
 for workflow in "${WORKFLOWS[@]}"; do
   printf "  %-45s" "$workflow"
-  if output=$(gh workflow run "$workflow" ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} 2>&1); then
+  if output=$(gh workflow run "$workflow" --ref main ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} 2>&1); then
     echo "✓ triggered"
   else
     echo "✗ failed"

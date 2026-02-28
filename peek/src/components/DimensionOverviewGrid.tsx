@@ -11,10 +11,11 @@ import { useTheme } from "@mui/material/styles";
 import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
 import { buildDimensionOverviewQuery } from "../services/es";
 import type { EsqlResponse, TimeRange } from "../types";
-import { useBatchedOverviewQueries } from "../hooks/useBatchedOverviewQueries";
+import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
+import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,6 +47,7 @@ const MAX_SERIES = 5;
 function buildMultiSeriesSparkline(
   data: EsqlResponse,
   themeOpts: ReturnType<typeof useEChartTheme>,
+  legendTextColor: string,
 ): Record<string, unknown> {
   const dateIdx = data.columns.findIndex(
     (c) => c.type === "date" || c.type === "date_nanos" || c.name === "@timestamp",
@@ -61,7 +63,7 @@ function buildMultiSeriesSparkline(
   // Group rows by dimension value
   const grouped = new Map<string, [number | null, unknown][]>();
   for (const row of data.values) {
-    const dimVal = dimIdx >= 0 ? String(row[dimIdx] ?? "unknown") : "all";
+    const dimVal = dimIdx >= 0 ? normalizeDimensionBucketLabel(row[dimIdx]) : "all";
     const ts = dateIdx >= 0 && row[dateIdx] ? new Date(row[dateIdx] as string).getTime() : null;
     if (!grouped.has(dimVal)) grouped.set(dimVal, []);
     grouped.get(dimVal)!.push([ts, row[metricIdx]]);
@@ -107,7 +109,7 @@ function buildMultiSeriesSparkline(
       type: "scroll",
       itemWidth: 12,
       itemHeight: 8,
-      textStyle: { fontSize: 10 },
+      textStyle: { fontSize: 10, color: legendTextColor },
       formatter: (name: string) => {
         const short = name.length > 20 ? name.slice(0, 18) + "..." : name;
         return totalKeys > MAX_SERIES && name === sortedKeys[sortedKeys.length - 1]
@@ -184,14 +186,7 @@ export default function DimensionOverviewGrid({
   });
 
   const dimsWithData = useMemo(() => {
-    return dimensionFields.filter((f) => {
-      const r = results[f.name];
-      if (!r?.data || r.data.values.length === 0) return false;
-      if (r.status !== "success" && r.status !== "loading") return false;
-      const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
-      if (metricIdx < 0) return false;
-      return r.data.values.some((row) => row[metricIdx] != null);
-    });
+    return dimensionFields.filter((f) => hasOverviewData(results[f.name]));
   }, [dimensionFields, results]);
 
   const isLoading = useMemo(
@@ -326,7 +321,13 @@ export default function DimensionOverviewGrid({
               {/* Multi-series sparkline */}
               <Box sx={{ flex: 1, minHeight: 120 }}>
                 {result?.data ? (
-                  <EChartWrapper option={buildMultiSeriesSparkline(result.data, echartsTheme)} />
+                  <EChartWrapper
+                    option={buildMultiSeriesSparkline(
+                      result.data,
+                      echartsTheme,
+                      theme.palette.text.primary,
+                    )}
+                  />
                 ) : (
                   <Box
                     sx={{

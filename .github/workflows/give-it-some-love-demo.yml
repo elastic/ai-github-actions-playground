@@ -1,0 +1,84 @@
+name: Give It Some Love (Demo)
+on:
+  schedule:
+    - cron: "0 16 * * 3"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    with:
+      title-prefix: "[love-demo]"
+      additional-instructions: |
+        You are the **Give It Some Love (Demo)** agent — the same meticulous UI
+        quality auditor as the regular love agent, but this variant connects to a
+        **live demo Elasticsearch cluster** with real Universal Profiling data
+        instead of mocks.
+
+        The purpose is to catch issues that only surface with real-world data:
+        base64url frame IDs, RLE-encoded frame types, kernel frames, unsymbolized
+        native code, large stacktraces, etc.
+
+        ## Setup
+
+        1. `make setup`
+        2. `cd peek && npx playwright install chromium`
+
+        ## Run the demo love audit
+
+        3. Run the Playwright spec against the demo cluster (credentials are
+           loaded automatically from the published demo.json endpoint):
+
+        ```bash
+        cd peek && \
+        npx playwright test tests/e2e/love-audit-demo.spec.ts --reporter=list 2>&1 \
+          | tee /tmp/love-audit-demo-output.txt
+        ```
+
+        ## Analyze
+
+        4. Read the test output from `/tmp/love-audit-demo-output.txt`.
+        5. **Read every screenshot** from `peek/test-results/love-audit-demo-*.png` and
+           **read the DOM dumps** from `peek/test-results/love-audit-demo-dom-*.html`.
+           Pay special attention to:
+           - **Profiling pages**: Are function names resolved or showing "(unknown)"?
+             Real data should show names like `finish_task_switch`, `recur_fibo`,
+             `__memmove_avx_unaligned_erms`, etc.
+           - **Flamegraph colors**: Are frames color-coded by type (red=kernel,
+             green=app, blue=interpreted, orange=native, yellow=runtime)?
+           - **Stacktrace expansion**: Do expanded stacktraces show resolved frames
+             with file names and line numbers?
+           - **Timeline**: Does the chart render with data points?
+           - **Flamescope heatmap**: Does the heatmap show time buckets with
+             stacktrace signatures?
+           - Layout issues, truncation, missing data, error alerts
+        6. Cross-reference the accessibility violations from the test output.
+        7. For any page that shows issues, read its source code under `peek/src/components/`
+           to understand the root cause and suggest a fix direction.
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue if you find genuine
+          problems. Do NOT file an issue for purely speculative or cosmetic nitpicks.
+        - If you find issues, create **one** GitHub issue that covers all pages.
+        - Structure the issue body with:
+          - A summary of pages audited and overall quality impression
+          - A checklist of findings grouped by page, each with:
+            - What the issue is (with screenshot reference if relevant)
+            - Severity (paper-cut, rough-edge, or bug)
+            - Suggested fix direction
+          - A **Profiling data quality** section noting:
+            - How many function names resolved vs "(unknown)"
+            - Whether kernel frames were correctly identified and colored
+            - Any frame type mismatches
+          - An accessibility section listing axe-core violations by page
+          - A console errors section if any were captured
+        - If all pages look good and no issues are found, do **not** open an issue.
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

@@ -1,4 +1,6 @@
 export { ElasticsearchClient, isElasticsearchError } from "./client";
+export { buildEsqlRequest } from "./buildEsqlRequest";
+export type { BuildEsqlRequestOptions } from "./buildEsqlRequest";
 export { fetchCapabilitiesForConnection } from "./connectionHandshake";
 export type {
   ElasticsearchConnection,
@@ -30,6 +32,15 @@ export type {
   GetSecurityRolesResponse,
   UserCapabilities,
   ProfilingTopFunctionsRequest,
+  CatIndexRecord,
+  IndexStatsData,
+  IndexStatsResponse,
+  DiskUsageFieldStats,
+  DiskUsageIndexEntry,
+  DiskUsageResponse,
+  IngestPipeline,
+  GetIngestPipelinesResponse,
+  SimulateIngestPipelineResponse,
 } from "./client";
 
 export {

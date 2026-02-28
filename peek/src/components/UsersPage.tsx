@@ -7,6 +7,7 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
@@ -48,7 +49,7 @@ export default function UsersPage() {
         client,
         fetchResource: (c) => c.getSecurityUsers(),
         canRead: (caps) => caps.canReadSecurityUsers,
-        authDeniedNotice: "Your credentials cannot read all Users data.",
+        authDeniedNotice: "Your credentials cannot read all user data.",
       });
       setAccessNotice(result.notice);
       if (result.error !== null) {
@@ -100,7 +101,7 @@ export default function UsersPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Users
           </Typography>
           <Button size="small" variant="outlined" onClick={loadUsers} disabled={loading}>
@@ -132,16 +133,17 @@ export default function UsersPage() {
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
             {filteredUsers.map((user) => (
-              <ListItemButton
-                key={user.username}
-                selected={user.username === selectedUsername}
-                onClick={() => setSelectedUsername(user.username)}
-              >
-                <ListItemText
-                  primary={user.username}
-                  secondary={`${user.enabled === false ? "Disabled" : "Enabled"} • ${user.roles?.length ?? 0} roles`}
-                />
-              </ListItemButton>
+              <ListItem key={user.username} disablePadding>
+                <ListItemButton
+                  selected={user.username === selectedUsername}
+                  onClick={() => setSelectedUsername(user.username)}
+                >
+                  <ListItemText
+                    primary={user.username}
+                    secondary={`${user.enabled === false ? "Disabled" : "Enabled"} • ${user.roles?.length ?? 0} roles`}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
             {!loading && filteredUsers.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>

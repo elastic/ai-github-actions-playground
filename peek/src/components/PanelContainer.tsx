@@ -16,9 +16,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
-import type { EsqlQueryParams } from "../services/es";
-import { buildQueryParams } from "../services/datemath";
+import { ElasticsearchClient, buildEsqlRequest, isElasticsearchError } from "../services/es";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import { toCsv } from "./discoverUtils";
@@ -126,21 +124,11 @@ export default function PanelContainer({ panel }: Props) {
     try {
       const client = new ElasticsearchClient(connection);
       const query = panel.query.trim();
-      const body: EsqlQueryParams = { query };
-      if (timeRange) {
-        body.filter = {
-          range: {
-            "@timestamp": {
-              gte: timeRange.from,
-              lte: timeRange.to,
-            },
-          },
-        };
-        const queryParams = buildQueryParams(query, timeRange, parameters);
-        if (queryParams.length > 0) {
-          body.params = queryParams;
-        }
-      }
+      const body = buildEsqlRequest(query, {
+        timeRange,
+        parameters,
+        includeTimeRangeFilter: true,
+      });
       const result = await client.query(body, ctrl.signal);
       if (!ctrl.signal.aborted) {
         setData(result);

@@ -29,7 +29,7 @@ export const useUIStore = create<UIState>()(
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
       resetUIState: () => {
-        localStorage.removeItem(STORE_NAME);
+        useUIStore.persist.clearStorage();
         set({
           themeMode: "dark",
           editingPanelId: null,

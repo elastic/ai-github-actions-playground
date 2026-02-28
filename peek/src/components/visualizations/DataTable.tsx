@@ -35,8 +35,10 @@ function TruncatedCell({ value }: { value: string }) {
   const needsTruncation = value.length > CELL_TRUNCATE_LENGTH;
   if (!needsTruncation) return <>{value}</>;
   return (
-    <span title={expanded ? undefined : value}>
-      {expanded ? value : value.slice(0, CELL_TRUNCATE_LENGTH) + "…"}
+    <span>
+      <Tooltip title={expanded ? "" : value}>
+        <span>{expanded ? value : value.slice(0, CELL_TRUNCATE_LENGTH) + "…"}</span>
+      </Tooltip>
       <Button
         size="small"
         variant="text"

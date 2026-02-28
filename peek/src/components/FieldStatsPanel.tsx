@@ -13,8 +13,6 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 
 import {
-  ElasticsearchClient,
-  isElasticsearchError,
   fetchFieldStats,
   buildFieldStatsQuery,
   buildTopValuesQuery,
@@ -23,6 +21,7 @@ import {
   isNumericOrDateType,
 } from "../services/es";
 import type { ElasticsearchConnection, FieldStats, ConfidenceLevel } from "../services/es";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -58,9 +57,9 @@ const CONFIDENCE_COLOR: Record<ConfidenceLevel, "success" | "warning" | "error">
 };
 
 const CONFIDENCE_TOOLTIP: Record<ConfidenceLevel, string> = {
-  high: "All documents in this stream were analysed — stats are exact.",
+  high: "All documents in this stream were analyzed — stats are exact.",
   medium:
-    "Stats are complete but the stream is approaching the sample limit. Results may vary for larger time windows.",
+    "Stats are nearly complete but the stream is approaching the sample limit. Results may become approximate for very large streams.",
   low: "The sample limit was reached. Stats reflect only a subset of documents in this stream.",
 };
 
@@ -98,14 +97,15 @@ export default function FieldStatsPanel({
     setError(null);
     setStats(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const result = await fetchFieldStats(client, streamName, fieldName, fieldType);
-      if (requestId === requestIdRef.current) {
-        setStats(result);
-      }
-    } catch (err) {
-      if (requestId === requestIdRef.current) {
-        setError(isElasticsearchError(err) ? err.message : String(err));
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => fetchFieldStats(client, streamName, fieldName, fieldType),
+      });
+      if (requestId !== requestIdRef.current) return;
+      if (error !== null) {
+        setError(error);
+      } else if (data !== null) {
+        setStats(data);
       }
     } finally {
       if (requestId === requestIdRef.current) {

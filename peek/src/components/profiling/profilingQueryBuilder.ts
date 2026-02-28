@@ -1,5 +1,6 @@
 import type { ProfilingTopFunctionsRequest } from "../../services/es/client";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
+import { buildWherePipe } from "../../services/es/queryParts";
 
 export interface ProfilingFilters {
   executableName: string | null;
@@ -25,8 +26,17 @@ function quoteList(values: string[]): string {
   return values.map((value) => `"${escapeEsqlString(value)}"`).join(", ");
 }
 
+function normalizeEsqlDateTimeExpression(expr: string): string {
+  const trimmed = expr.trim();
+  const parsed = Date.parse(trimmed);
+  if (Number.isNaN(parsed)) return expr;
+  return `"${escapeEsqlString(new Date(parsed).toISOString())}"`;
+}
+
 function buildProfilingWhereClause(filters: ProfilingFilters): string[] {
-  const where: string[] = [`@timestamp >= ${filters.timeFrom}`, `@timestamp <= ${filters.timeTo}`];
+  const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
+  const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
+  const where: string[] = [`@timestamp >= ${timeFrom}`, `@timestamp <= ${timeTo}`];
   if (filters.executableName) {
     where.push(`process.executable.name == "${escapeEsqlString(filters.executableName)}"`);
   }
@@ -46,8 +56,19 @@ export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
+    buildWherePipe(where),
     `LIMIT ${Math.max(1, Math.min(1000, filters.limit))}`,
+  ].join(" | ");
+}
+
+export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string {
+  const where = buildProfilingWhereClause(filters);
+  return [
+    "FROM profiling-events-all",
+    buildWherePipe(where),
+    "KEEP @timestamp, Stacktrace.id, Stacktrace.count, service.name, host.name",
+    "SORT @timestamp ASC",
+    `LIMIT ${Math.max(1, Math.min(5000, filters.limit * 20))}`,
   ].join(" | ");
 }
 
@@ -67,10 +88,12 @@ export function buildStackframeLookupQuery(frameIds: string[]): string {
 
 export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
+  const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
+  const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
-    `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${filters.timeFrom}, ${filters.timeTo})`,
+    buildWherePipe(where),
+    `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${timeFrom}, ${timeTo})`,
     "SORT bucket",
   ].join(" | ");
 }

@@ -34,7 +34,7 @@ import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
-import { buildQueryParams } from "../services/datemath";
+import { buildEsqlRequest } from "../services/es";
 
 import {
   filterColumnsByName,
@@ -92,13 +92,7 @@ export default function DiscoverPage() {
 
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
-      const body: EsqlQueryParams = { query: queryText };
-      if (!timeRange) return body;
-      const queryParams = buildQueryParams(queryText, timeRange);
-      if (queryParams.length > 0) {
-        body.params = queryParams;
-      }
-      return body;
+      return buildEsqlRequest(queryText, { timeRange });
     },
     [timeRange],
   );
@@ -335,7 +329,7 @@ export default function DiscoverPage() {
         <Box
           sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
         >
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="subtitle2" component="h1" color="text.secondary">
             ES|QL Query
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -383,6 +377,7 @@ export default function DiscoverPage() {
             theme={themeMode}
             height="100px"
             basicSetup={basicSetup}
+            aria-label="ES|QL query editor"
           />
         </Box>
         <QueryPipelineSteps

@@ -630,13 +630,13 @@ describe("useDashboardStore importWorkspace", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "dashboard ids must be unique within a workspace import",
+      error: "dashboard IDs must be unique within a workspace import",
     });
     expect(useDashboardStore.getState().dashboard.id).toBe(initial.dashboard.id);
     expect(useDashboardStore.getState().dashboards).toEqual(initial.dashboards);
     expect(spy).toHaveBeenCalledWith(
       "Workspace import failed:",
-      "dashboard ids must be unique within a workspace import",
+      "dashboard IDs must be unique within a workspace import",
     );
     spy.mockRestore();
   });

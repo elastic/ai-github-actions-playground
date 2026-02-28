@@ -364,6 +364,9 @@ export default function ExplorePage() {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
       {/* Top controls */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Typography variant="subtitle2" component="h1" color="text.secondary" sx={{ mb: 1 }}>
+          Metrics
+        </Typography>
         <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
           {/* Index pattern */}
           <TextField
@@ -399,8 +402,9 @@ export default function ExplorePage() {
           {/* Aggregation selector — only in full detail mode */}
           {selectedMetric && !showDimensionOverview && (
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Aggregation</InputLabel>
+              <InputLabel id="explore-aggregation-label">Aggregation</InputLabel>
               <Select
+                labelId="explore-aggregation-label"
                 value={aggregation}
                 label="Aggregation"
                 onChange={(e) => setAggregation(e.target.value as AggregationType)}

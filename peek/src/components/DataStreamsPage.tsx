@@ -8,6 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
@@ -16,11 +17,11 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 import FieldStatsPanel from "./FieldStatsPanel";
 
@@ -59,25 +60,29 @@ export default function DataStreamsPage() {
     setLoadingStreams(true);
     setError(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const response = await client.getDataStreams();
-      const nextStreams = response.data_streams ?? [];
-      setDataStreams(nextStreams);
-      setSelectedName((current) => {
-        if (
-          current &&
-          nextStreams.some((stream) => stream.name === current) &&
-          (showSystemStreams || !current.startsWith("."))
-        ) {
-          return current;
-        }
-        const firstVisible = showSystemStreams
-          ? nextStreams[0]
-          : nextStreams.find((stream) => !stream.name.startsWith("."));
-        return firstVisible?.name ?? null;
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => client.getDataStreams(),
       });
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
+      if (error !== null) {
+        setError(error);
+      } else if (data !== null) {
+        const nextStreams = data.data_streams ?? [];
+        setDataStreams(nextStreams);
+        setSelectedName((current) => {
+          if (
+            current &&
+            nextStreams.some((stream) => stream.name === current) &&
+            (showSystemStreams || !current.startsWith("."))
+          ) {
+            return current;
+          }
+          const firstVisible = showSystemStreams
+            ? nextStreams[0]
+            : nextStreams.find((stream) => !stream.name.startsWith("."));
+          return firstVisible?.name ?? null;
+        });
+      }
     } finally {
       setLoadingStreams(false);
     }
@@ -91,14 +96,15 @@ export default function DataStreamsPage() {
       setLoadingFields(true);
       setError(null);
       try {
-        const client = new ElasticsearchClient(connection);
-        const response = await client.getFieldCaps(dataStreamName);
-        if (requestId === fieldRequestIdRef.current) {
-          setFieldCaps(response);
-        }
-      } catch (err) {
-        if (requestId === fieldRequestIdRef.current) {
-          setError(isElasticsearchError(err) ? err.message : String(err));
+        const { data, error } = await runConnectionRequest({
+          connection,
+          run: (client) => client.getFieldCaps(dataStreamName),
+        });
+        if (requestId !== fieldRequestIdRef.current) return;
+        if (error !== null) {
+          setError(error);
+        } else if (data !== null) {
+          setFieldCaps(data);
         }
       } finally {
         if (requestId === fieldRequestIdRef.current) {
@@ -168,7 +174,7 @@ export default function DataStreamsPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Data Streams
           </Typography>
           <Button
@@ -225,18 +231,19 @@ export default function DataStreamsPage() {
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
             {filteredStreams.map((stream) => (
-              <ListItemButton
-                key={stream.name}
-                selected={stream.name === selectedName}
-                onClick={() => setSelectedName(stream.name)}
-              >
-                <ListItemText
-                  primary={stream.name}
-                  secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
-                    stream.indices.length === 1 ? "Index" : "Indices"
-                  }`}
-                />
-              </ListItemButton>
+              <ListItem key={stream.name} disablePadding>
+                <ListItemButton
+                  selected={stream.name === selectedName}
+                  onClick={() => setSelectedName(stream.name)}
+                >
+                  <ListItemText
+                    primary={stream.name}
+                    secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
+                      stream.indices.length === 1 ? "Index" : "Indices"
+                    }`}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
             {!loadingStreams && filteredStreams.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
