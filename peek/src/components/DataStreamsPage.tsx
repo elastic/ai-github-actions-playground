@@ -8,6 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
@@ -16,11 +17,13 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
+
+import FieldStatsPanel from "./FieldStatsPanel";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -44,6 +47,7 @@ export default function DataStreamsPage() {
   const [dataStreams, setDataStreams] = useState<DataStreamInfo[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [fieldCaps, setFieldCaps] = useState<FieldCapsResponse | null>(null);
+  const [selectedField, setSelectedField] = useState<{ name: string; type: string } | null>(null);
   const fieldRequestIdRef = useRef(0);
 
   const selectedDataStream = useMemo(
@@ -56,25 +60,29 @@ export default function DataStreamsPage() {
     setLoadingStreams(true);
     setError(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const response = await client.getDataStreams();
-      const nextStreams = response.data_streams ?? [];
-      setDataStreams(nextStreams);
-      setSelectedName((current) => {
-        if (
-          current &&
-          nextStreams.some((stream) => stream.name === current) &&
-          (showSystemStreams || !current.startsWith("."))
-        ) {
-          return current;
-        }
-        const firstVisible = showSystemStreams
-          ? nextStreams[0]
-          : nextStreams.find((stream) => !stream.name.startsWith("."));
-        return firstVisible?.name ?? null;
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => client.getDataStreams(),
       });
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
+      if (error !== null) {
+        setError(error);
+      } else if (data !== null) {
+        const nextStreams = data.data_streams ?? [];
+        setDataStreams(nextStreams);
+        setSelectedName((current) => {
+          if (
+            current &&
+            nextStreams.some((stream) => stream.name === current) &&
+            (showSystemStreams || !current.startsWith("."))
+          ) {
+            return current;
+          }
+          const firstVisible = showSystemStreams
+            ? nextStreams[0]
+            : nextStreams.find((stream) => !stream.name.startsWith("."));
+          return firstVisible?.name ?? null;
+        });
+      }
     } finally {
       setLoadingStreams(false);
     }
@@ -88,14 +96,15 @@ export default function DataStreamsPage() {
       setLoadingFields(true);
       setError(null);
       try {
-        const client = new ElasticsearchClient(connection);
-        const response = await client.getFieldCaps(dataStreamName);
-        if (requestId === fieldRequestIdRef.current) {
-          setFieldCaps(response);
-        }
-      } catch (err) {
-        if (requestId === fieldRequestIdRef.current) {
-          setError(isElasticsearchError(err) ? err.message : String(err));
+        const { data, error } = await runConnectionRequest({
+          connection,
+          run: (client) => client.getFieldCaps(dataStreamName),
+        });
+        if (requestId !== fieldRequestIdRef.current) return;
+        if (error !== null) {
+          setError(error);
+        } else if (data !== null) {
+          setFieldCaps(data);
         }
       } finally {
         if (requestId === fieldRequestIdRef.current) {
@@ -126,6 +135,11 @@ export default function DataStreamsPage() {
     setSelectedName(firstVisible?.name ?? null);
   }, [showSystemStreams, selectedName, dataStreams]);
 
+  // Clear selected field when the active stream changes.
+  useEffect(() => {
+    setSelectedField(null);
+  }, [selectedName]);
+
   const filteredStreams = useMemo(() => {
     const term = search.trim().toLowerCase();
     return dataStreams.filter((stream) => {
@@ -148,11 +162,19 @@ export default function DataStreamsPage() {
     navigate(PAGE_MANIFEST.discover.path);
   }, [selectedName, navigate, setDiscoverQueryDraft]);
 
+  const handleFieldStatsQuery = useCallback(
+    (query: string) => {
+      setDiscoverQueryDraft(query);
+      navigate(PAGE_MANIFEST.discover.path);
+    },
+    [navigate, setDiscoverQueryDraft],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Data Streams
           </Typography>
           <Button
@@ -209,18 +231,19 @@ export default function DataStreamsPage() {
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
             {filteredStreams.map((stream) => (
-              <ListItemButton
-                key={stream.name}
-                selected={stream.name === selectedName}
-                onClick={() => setSelectedName(stream.name)}
-              >
-                <ListItemText
-                  primary={stream.name}
-                  secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
-                    stream.indices.length === 1 ? "Index" : "Indices"
-                  }`}
-                />
-              </ListItemButton>
+              <ListItem key={stream.name} disablePadding>
+                <ListItemButton
+                  selected={stream.name === selectedName}
+                  onClick={() => setSelectedName(stream.name)}
+                >
+                  <ListItemText
+                    primary={stream.name}
+                    secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
+                      stream.indices.length === 1 ? "Index" : "Indices"
+                    }`}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
             {!loadingStreams && filteredStreams.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
@@ -317,9 +340,29 @@ export default function DataStreamsPage() {
                 {fieldRows.map((field) => (
                   <Stack
                     key={`${field.name}:${field.type}`}
+                    component="button"
                     direction="row"
                     spacing={1}
-                    sx={{ py: 0.5 }}
+                    onClick={() => setSelectedField({ name: field.name, type: field.type })}
+                    aria-pressed={
+                      selectedField?.name === field.name && selectedField?.type === field.type
+                    }
+                    sx={{
+                      py: 0.5,
+                      px: 0.5,
+                      width: "100%",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderRadius: 1,
+                      alignItems: "center",
+                      bgcolor:
+                        selectedField?.name === field.name && selectedField?.type === field.type
+                          ? "action.selected"
+                          : "transparent",
+                      "&:hover": { bgcolor: "action.hover" },
+                    }}
                   >
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {field.name}
@@ -336,6 +379,17 @@ export default function DataStreamsPage() {
             )}
           </Box>
         </Paper>
+
+        {selectedField && connection && selectedName && (
+          <FieldStatsPanel
+            connection={connection}
+            streamName={selectedName}
+            fieldName={selectedField.name}
+            fieldType={selectedField.type}
+            onClose={() => setSelectedField(null)}
+            onOpenInQueryLab={handleFieldStatsQuery}
+          />
+        )}
       </Box>
     </Box>
   );

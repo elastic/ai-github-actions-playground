@@ -34,7 +34,7 @@ import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
-import { buildQueryParams } from "../services/datemath";
+import { buildEsqlRequest } from "../services/es";
 
 import {
   filterColumnsByName,
@@ -46,6 +46,7 @@ import {
 } from "./discoverUtils";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
+import PartialResultPanel from "./PartialResultPanel";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { isNumericType } from "./visualizations/chartUtils";
@@ -91,13 +92,7 @@ export default function DiscoverPage() {
 
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
-      const body: EsqlQueryParams = { query: queryText };
-      if (!timeRange) return body;
-      const queryParams = buildQueryParams(queryText, timeRange);
-      if (queryParams.length > 0) {
-        body.params = queryParams;
-      }
-      return body;
+      return buildEsqlRequest(queryText, { timeRange });
     },
     [timeRange],
   );
@@ -113,6 +108,7 @@ export default function DiscoverPage() {
     lastRunDurationMs,
     lastRunProfile,
     lastRunIsPartial,
+    lastRunPartialMetadata,
   } = useEsqlQuery({
     connection,
     queryContextView,
@@ -194,6 +190,20 @@ export default function DiscoverPage() {
   const handleFormatQuery = useCallback(() => {
     handleQueryChange(formatEsqlQuery(effectiveQuery));
   }, [effectiveQuery, handleQueryChange]);
+
+  const handleRerunHealthyClusters = useCallback(
+    (healthyClusters: string[]) => {
+      // Best-effort: replace cross-cluster wildcard `*:pattern` in FROM with
+      // specific healthy cluster names so the query targets only healthy data.
+      const scoped = effectiveQuery.replace(
+        /\bFROM\s+\*:([^\s,|]+)/gi,
+        (_, pattern: string) => `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
+      );
+      handleQueryChange(scoped);
+      void runQuery(scoped);
+    },
+    [effectiveQuery, handleQueryChange, runQuery],
+  );
 
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
@@ -319,7 +329,7 @@ export default function DiscoverPage() {
         <Box
           sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
         >
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="subtitle2" component="h1" color="text.secondary">
             ES|QL Query
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -367,6 +377,7 @@ export default function DiscoverPage() {
             theme={themeMode}
             height="100px"
             basicSetup={basicSetup}
+            aria-label="ES|QL query editor"
           />
         </Box>
         <QueryPipelineSteps
@@ -431,14 +442,19 @@ export default function DiscoverPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {/* Summary strip: timing and partial-result indicator */}
-      {result && (lastRunDurationMs !== null || lastRunIsPartial) && (
+      {/* Summary strip: timing chip */}
+      {result && lastRunDurationMs !== null && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-          {lastRunDurationMs !== null && (
-            <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
-          )}
-          {lastRunIsPartial && <Chip size="small" color="warning" label="partial results" />}
+          <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
         </Box>
+      )}
+
+      {/* Partial-result blast radius panel */}
+      {result && lastRunIsPartial && lastRunPartialMetadata !== null && (
+        <PartialResultPanel
+          metadata={lastRunPartialMetadata}
+          onRerunHealthyClusters={handleRerunHealthyClusters}
+        />
       )}
 
       {/* Profile panel */}

@@ -10,8 +10,9 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import { useShallow } from "zustand/react/shallow";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { isElasticsearchError } from "../services/es";
 import {
   loadFleetServerStatus,
   loadFleetAgentVersions,
@@ -22,6 +23,7 @@ import {
 } from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useFleetStore, type FleetViewTab } from "../store/useFleetStore";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 import FleetStatCard from "./fleet/FleetStatCard";
 import FleetStatusChart from "./fleet/FleetStatusChart";
@@ -38,73 +40,116 @@ const TABS: { value: FleetViewTab; label: string }[] = [
 ];
 
 const AUTO_REFRESH_MS = 30_000;
+type AgentFilterUpdates = Parameters<
+  ReturnType<typeof useFleetStore.getState>["updateAgentFilter"]
+>[0];
 
 export default function FleetPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
 
-  const activeTab = useFleetStore((s) => s.activeTab);
-  const setActiveTab = useFleetStore((s) => s.setActiveTab);
-  const loading = useFleetStore((s) => s.loading);
-  const error = useFleetStore((s) => s.error);
-  const partialErrors = useFleetStore((s) => s.partialErrors);
-  const serverStatus = useFleetStore((s) => s.serverStatus);
-  const agentVersions = useFleetStore((s) => s.agentVersions);
-  const outputHealth = useFleetStore((s) => s.outputHealth);
-  const agentInventory = useFleetStore((s) => s.agentInventory);
-  const agentInventoryTotal = useFleetStore((s) => s.agentInventoryTotal);
-  const actions = useFleetStore((s) => s.actions);
-  const actionResults = useFleetStore((s) => s.actionResults);
+  const {
+    activeTab,
+    loading,
+    error,
+    partialErrors,
+    serverStatus,
+    agentVersions,
+    outputHealth,
+    agentInventory,
+    agentInventoryTotal,
+    actions,
+    actionResults,
+  } = useFleetStore(
+    useShallow((s) => ({
+      activeTab: s.activeTab,
+      loading: s.loading,
+      error: s.error,
+      partialErrors: s.partialErrors,
+      serverStatus: s.serverStatus,
+      agentVersions: s.agentVersions,
+      outputHealth: s.outputHealth,
+      agentInventory: s.agentInventory,
+      agentInventoryTotal: s.agentInventoryTotal,
+      actions: s.actions,
+      actionResults: s.actionResults,
+    })),
+  );
 
-  const setServerStatus = useFleetStore((s) => s.setServerStatus);
-  const setAgentVersions = useFleetStore((s) => s.setAgentVersions);
-  const setOutputHealth = useFleetStore((s) => s.setOutputHealth);
-  const setAgentInventory = useFleetStore((s) => s.setAgentInventory);
-  const setAgentInventoryTotal = useFleetStore((s) => s.setAgentInventoryTotal);
-  const setActions = useFleetStore((s) => s.setActions);
-  const setActionResults = useFleetStore((s) => s.setActionResults);
-  const setLoading = useFleetStore((s) => s.setLoading);
-  const setError = useFleetStore((s) => s.setError);
-  const setPartialErrors = useFleetStore((s) => s.setPartialErrors);
+  const {
+    setActiveTab,
+    setServerStatus,
+    setAgentVersions,
+    setOutputHealth,
+    setAgentInventory,
+    setAgentInventoryTotal,
+    setActions,
+    setActionResults,
+    setLoading,
+    setError,
+    setPartialErrors,
+    updateAgentFilter,
+    resetFilters,
+  } = useFleetStore(
+    useShallow((s) => ({
+      setActiveTab: s.setActiveTab,
+      setServerStatus: s.setServerStatus,
+      setAgentVersions: s.setAgentVersions,
+      setOutputHealth: s.setOutputHealth,
+      setAgentInventory: s.setAgentInventory,
+      setAgentInventoryTotal: s.setAgentInventoryTotal,
+      setActions: s.setActions,
+      setActionResults: s.setActionResults,
+      setLoading: s.setLoading,
+      setError: s.setError,
+      setPartialErrors: s.setPartialErrors,
+      updateAgentFilter: s.updateAgentFilter,
+      resetFilters: s.resetFilters,
+    })),
+  );
 
   const loadFleetData = useCallback(async () => {
     if (!connection) return;
     setLoading(true);
     setError(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const results = await Promise.allSettled([
-        loadFleetServerStatus(client),
-        loadFleetAgentVersions(client),
-        loadFleetOutputHealth(client),
-        loadElasticAgentInventory(client),
-        loadFleetActions(client),
-        loadFleetActionResults(client),
-      ]);
+      const { data: results, error } = await runConnectionRequest({
+        connection,
+        run: (client) =>
+          Promise.allSettled([
+            loadFleetServerStatus(client),
+            loadFleetAgentVersions(client),
+            loadFleetOutputHealth(client),
+            loadElasticAgentInventory(client),
+            loadFleetActions(client),
+            loadFleetActionResults(client),
+          ]),
+      });
+      if (error !== null) {
+        setError(error);
+      } else if (results !== null) {
+        const errors: string[] = [];
+        const formatReason = (reason: unknown): string => {
+          if (isElasticsearchError(reason)) return reason.message;
+          if (reason instanceof Error) return reason.message;
+          return String(reason);
+        };
+        const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
+          if (r.status === "fulfilled") return r.value;
+          errors.push(`${label}: ${formatReason(r.reason)}`);
+          return null;
+        };
 
-      const errors: string[] = [];
-      const formatReason = (reason: unknown): string => {
-        if (isElasticsearchError(reason)) return reason.message;
-        if (reason instanceof Error) return reason.message;
-        return String(reason);
-      };
-      const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
-        if (r.status === "fulfilled") return r.value;
-        errors.push(`${label}: ${formatReason(r.reason)}`);
-        return null;
-      };
-
-      setServerStatus(value(results[0]!, "Server status") ?? null);
-      setAgentVersions(value(results[1]!, "Agent versions") ?? []);
-      setOutputHealth(value(results[2]!, "Output health") ?? []);
-      const inventoryResult = value(results[3]!, "Agent inventory");
-      setAgentInventory(inventoryResult?.agents ?? []);
-      setAgentInventoryTotal(inventoryResult?.total ?? 0);
-      setActions(value(results[4]!, "Actions") ?? []);
-      setActionResults(value(results[5]!, "Action results") ?? []);
-      setPartialErrors(errors);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
+        setServerStatus(value(results[0]!, "Server status") ?? null);
+        setAgentVersions(value(results[1]!, "Agent versions") ?? []);
+        setOutputHealth(value(results[2]!, "Output health") ?? []);
+        const inventoryResult = value(results[3]!, "Agent inventory");
+        setAgentInventory(inventoryResult?.agents ?? []);
+        setAgentInventoryTotal(inventoryResult?.total ?? 0);
+        setActions(value(results[4]!, "Actions") ?? []);
+        setActionResults(value(results[5]!, "Action results") ?? []);
+        setPartialErrors(errors);
+      }
     } finally {
       setLoading(false);
     }
@@ -139,12 +184,21 @@ export default function FleetPage() {
     [navigate],
   );
 
+  const handleDrillIn = useCallback(
+    (updates: AgentFilterUpdates) => {
+      resetFilters();
+      updateAgentFilter(updates);
+      setActiveTab("agents");
+    },
+    [resetFilters, updateAgentFilter, setActiveTab],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Fleet
           </Typography>
           <Button
@@ -161,7 +215,9 @@ export default function FleetPage() {
       {/* Errors */}
       {error && <Alert severity="error">{error}</Alert>}
       {partialErrors.length > 0 && (
-        <Alert severity="warning">Some data sources unavailable: {partialErrors.join("; ")}</Alert>
+        <Alert severity="warning">
+          Some data sources are unavailable: {partialErrors.join("; ")}
+        </Alert>
       )}
 
       {/* Tabs */}
@@ -188,6 +244,7 @@ export default function FleetPage() {
               agentVersions={agentVersions}
               agentInventory={agentInventory}
               agentInventoryTotal={agentInventoryTotal}
+              onDrillIn={handleDrillIn}
             />
           )}
           {activeTab === "agents" && (
@@ -212,11 +269,13 @@ function OverviewTab({
   agentVersions,
   agentInventory,
   agentInventoryTotal,
+  onDrillIn,
 }: {
   serverStatus: ReturnType<typeof useFleetStore.getState>["serverStatus"];
   agentVersions: ReturnType<typeof useFleetStore.getState>["agentVersions"];
   agentInventory: ReturnType<typeof useFleetStore.getState>["agentInventory"];
   agentInventoryTotal: ReturnType<typeof useFleetStore.getState>["agentInventoryTotal"];
+  onDrillIn: (updates: AgentFilterUpdates) => void;
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -226,8 +285,22 @@ function OverviewTab({
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <FleetStatCard title="Total" value={serverStatus.total} />
             <FleetStatCard title="Healthy" value={serverStatus.healthy} color="success.main" />
-            <FleetStatCard title="Unhealthy" value={serverStatus.unhealthy} color="warning.main" />
-            <FleetStatCard title="Offline" value={serverStatus.offline} color="text.secondary" />
+            <FleetStatCard
+              title="Unhealthy"
+              value={serverStatus.unhealthy}
+              color="warning.main"
+              onClick={
+                serverStatus.unhealthy > 0 ? () => onDrillIn({ hasErrors: true }) : undefined
+              }
+            />
+            <FleetStatCard
+              title="Offline"
+              value={serverStatus.offline}
+              color="text.secondary"
+              onClick={
+                serverStatus.offline > 0 ? () => onDrillIn({ staleness: "stale" }) : undefined
+              }
+            />
             <FleetStatCard title="Updating" value={serverStatus.updating} color="info.main" />
             <FleetStatCard title="Inactive" value={serverStatus.inactive} />
           </Stack>
@@ -318,6 +391,11 @@ function OverviewTab({
               title="With Errors"
               value={agentInventory.filter((a) => a.errorCount > 0).length}
               color="error.main"
+              onClick={
+                agentInventory.some((a) => a.errorCount > 0)
+                  ? () => onDrillIn({ hasErrors: true })
+                  : undefined
+              }
             />
           </Stack>
           {agentVersions.length > 0 && (

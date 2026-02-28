@@ -1,4 +1,6 @@
 export { ElasticsearchClient, isElasticsearchError } from "./client";
+export { buildEsqlRequest } from "./buildEsqlRequest";
+export type { BuildEsqlRequestOptions } from "./buildEsqlRequest";
 export { fetchCapabilitiesForConnection } from "./connectionHandshake";
 export type {
   ElasticsearchConnection,
@@ -30,7 +32,15 @@ export type {
   GetSecurityRolesResponse,
   UserCapabilities,
   ProfilingTopFunctionsRequest,
-  ProfilingFlamegraphRequest,
+  CatIndexRecord,
+  IndexStatsData,
+  IndexStatsResponse,
+  DiskUsageFieldStats,
+  DiskUsageIndexEntry,
+  DiskUsageResponse,
+  IngestPipeline,
+  GetIngestPipelinesResponse,
+  SimulateIngestPipelineResponse,
 } from "./client";
 
 export {
@@ -52,3 +62,13 @@ export type {
 
 export { classifyMetricType, listFields, getFieldValues, getFieldCardinality } from "./metadata";
 export type { MetricTypeClassification, FieldInfo, FieldValueEntry } from "./metadata";
+export {
+  isKeywordLikeType,
+  isNumericOrDateType,
+  buildFieldStatsQuery,
+  buildTopValuesQuery,
+  buildMinMaxQuery,
+  fetchFieldStats,
+  computeConfidenceLevel,
+} from "./fieldStats";
+export type { FieldTopValue, FieldStats, ConfidenceLevel } from "./fieldStats";

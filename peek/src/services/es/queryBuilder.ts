@@ -1,6 +1,7 @@
 import type { TimeRange } from "../../types";
 
 import { escapeEsqlString, escapeEsqlIdentifier } from "./esqlUtils";
+import { buildTimeRangeClause, buildWherePipe } from "./queryParts";
 
 // ---------------------------------------------------------------------------
 // Explorer query types
@@ -125,6 +126,7 @@ export interface OverviewQuery {
 }
 
 const OVERVIEW_BUCKET_COUNT = 20;
+const TIMESTAMP_RANGE_CLAUSE = buildTimeRangeClause("@timestamp", "?_tstart", "?_tend");
 
 export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
@@ -132,7 +134,7 @@ export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
   const aggExpr = buildAggExpression(agg, q.metricField);
   const parts: string[] = [
     `FROM ${q.indexPattern}`,
-    `WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend`,
+    `WHERE ${TIMESTAMP_RANGE_CLAUSE}`,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`,
     `SORT timestamp`,
   ];
@@ -165,10 +167,16 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
   const maxRows = buckets * maxSeries;
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
+  const escapedMetric = escapeEsqlIdentifier(q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);
+  const whereClause = buildWherePipe([
+    TIMESTAMP_RANGE_CLAUSE,
+    `${escapedMetric} IS NOT NULL`,
+    `${escapedDim} IS NOT NULL`,
+  ]);
   const parts: string[] = [
     `FROM ${q.indexPattern}`,
-    `WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend`,
+    whereClause,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${bucketSize}, ?_tstart, ?_tend), ${escapedDim}`,
     `SORT metric DESC`,
     `LIMIT ${maxRows}`,
@@ -192,12 +200,12 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
 
   // WHERE (filters + time range)
   const whereClauses: string[] = [];
-  whereClauses.push("@timestamp >= ?_tstart AND @timestamp <= ?_tend");
+  whereClauses.push(TIMESTAMP_RANGE_CLAUSE);
   const filterClause = buildFilterClause(q.filters);
   if (filterClause) {
     whereClauses.push(filterClause);
   }
-  parts.push(`WHERE ${whereClauses.join(" AND ")}`);
+  parts.push(buildWherePipe(whereClauses));
 
   // STATS ... BY BUCKET(...)
   const aggExpr = buildAggExpression(q.aggregation, q.metricField);

@@ -16,7 +16,6 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import {
-  ElasticsearchClient,
   isElasticsearchError,
   type ClusterHealthResponse,
   type ClusterInfoResponse,
@@ -32,6 +31,8 @@ import {
   type FleetServerStatusMetrics,
 } from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { formatBytes } from "../utils/formatBytes";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
@@ -73,15 +74,6 @@ function formatCompactNumber(value: number | null): string {
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(
     value,
   );
-}
-
-function formatBytes(value: number | null): string {
-  if (value === null) return "Unavailable";
-  if (value === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-  const exponent = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-  const normalized = value / Math.pow(1024, exponent);
-  return `${normalized.toFixed(normalized >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
 
 function formatPercent(value: number | null): string {
@@ -156,79 +148,85 @@ export default function ClusterOverviewPage() {
     setError(null);
     setPartialErrors([]);
     try {
-      const client = new ElasticsearchClient(connection);
-      const [
-        clusterInfoResult,
-        clusterHealthResult,
-        clusterStatsResult,
-        nodesResult,
-        nodeStatsResult,
-        dataStreamsResult,
-        resolveIndexResult,
-        fleetStatusResult,
-        agentInventoryResult,
-      ] = await Promise.allSettled([
-        client.getClusterInfo(),
-        client.getClusterHealth(),
-        client.getClusterStats(),
-        client.getNodes(),
-        client.getNodeStats(),
-        client.getDataStreams(),
-        client.resolveIndex("*"),
-        loadFleetServerStatus(client),
-        loadElasticAgentInventory(client),
-      ]);
+      const { data: results, error } = await runConnectionRequest({
+        connection,
+        run: (client) =>
+          Promise.allSettled([
+            client.getClusterInfo(),
+            client.getClusterHealth(),
+            client.getClusterStats(),
+            client.getNodes(),
+            client.getNodeStats(),
+            client.getDataStreams(),
+            client.resolveIndex("*"),
+            loadFleetServerStatus(client),
+            loadElasticAgentInventory(client),
+          ]),
+      });
+      if (error !== null) {
+        setError(error);
+      } else if (results !== null) {
+        const [
+          clusterInfoResult,
+          clusterHealthResult,
+          clusterStatsResult,
+          nodesResult,
+          nodeStatsResult,
+          dataStreamsResult,
+          resolveIndexResult,
+          fleetStatusResult,
+          agentInventoryResult,
+        ] = results;
 
-      const nextData: OverviewData = {
-        clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
-        clusterHealth:
-          clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
-        clusterStats: clusterStatsResult.status === "fulfilled" ? clusterStatsResult.value : null,
-        nodesInfo: nodesResult.status === "fulfilled" ? nodesResult.value : null,
-        nodesStats: nodeStatsResult.status === "fulfilled" ? nodeStatsResult.value : null,
-        dataStreamCount:
-          dataStreamsResult.status === "fulfilled"
-            ? (dataStreamsResult.value.data_streams?.length ?? 0)
-            : null,
-        indexCount:
-          resolveIndexResult.status === "fulfilled"
-            ? (resolveIndexResult.value.indices?.length ?? 0)
-            : null,
-        aliasCount:
-          resolveIndexResult.status === "fulfilled"
-            ? (resolveIndexResult.value.aliases?.length ?? 0)
-            : null,
-        fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
-        agentInventoryCount:
-          agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
-      };
-      setData(nextData);
+        const nextData: OverviewData = {
+          clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
+          clusterHealth:
+            clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
+          clusterStats: clusterStatsResult.status === "fulfilled" ? clusterStatsResult.value : null,
+          nodesInfo: nodesResult.status === "fulfilled" ? nodesResult.value : null,
+          nodesStats: nodeStatsResult.status === "fulfilled" ? nodeStatsResult.value : null,
+          dataStreamCount:
+            dataStreamsResult.status === "fulfilled"
+              ? (dataStreamsResult.value.data_streams?.length ?? 0)
+              : null,
+          indexCount:
+            resolveIndexResult.status === "fulfilled"
+              ? (resolveIndexResult.value.indices?.length ?? 0)
+              : null,
+          aliasCount:
+            resolveIndexResult.status === "fulfilled"
+              ? (resolveIndexResult.value.aliases?.length ?? 0)
+              : null,
+          fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
+          agentInventoryCount:
+            agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
+        };
+        setData(nextData);
 
-      const failedParts: string[] = [];
-      if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
-      if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
-      if (clusterStatsResult.status === "rejected") failedParts.push("cluster stats");
-      if (nodesResult.status === "rejected") failedParts.push("nodes");
-      if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
-      if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
-      if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
-      if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
-      if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
-      if (failedParts.length > 0) {
-        setPartialErrors(failedParts);
+        const failedParts: string[] = [];
+        if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
+        if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
+        if (clusterStatsResult.status === "rejected") failedParts.push("cluster stats");
+        if (nodesResult.status === "rejected") failedParts.push("nodes");
+        if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
+        if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
+        if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
+        if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
+        if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
+        if (failedParts.length > 0) {
+          setPartialErrors(failedParts);
+        }
+
+        if (failedParts.length === 9) {
+          const firstError =
+            clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
+          setError(
+            isElasticsearchError(firstError)
+              ? firstError.message
+              : "Failed to load cluster overview data.",
+          );
+        }
       }
-
-      if (failedParts.length === 9) {
-        const firstError =
-          clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
-        setError(
-          isElasticsearchError(firstError)
-            ? firstError.message
-            : "Failed to load cluster overview data.",
-        );
-      }
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -275,7 +273,7 @@ export default function ClusterOverviewPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Cluster Overview
           </Typography>
           <Button size="small" variant="outlined" onClick={loadOverview} disabled={loading}>
@@ -305,7 +303,7 @@ export default function ClusterOverviewPage() {
                     <Typography variant="h5">{clusterInfo.cluster_name}</Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                       <Chip size="small" label={`UUID: ${clusterInfo.cluster_uuid}`} />
-                      <Chip size="small" label={`Node: ${clusterInfo.name}`} />
+                      <Chip size="small" label={`Node: ${clusterInfo.name ?? "unknown"}`} />
                       {clusterHealth?.number_of_nodes !== undefined && (
                         <Chip size="small" label={`Nodes: ${clusterHealth.number_of_nodes}`} />
                       )}
@@ -337,7 +335,10 @@ export default function ClusterOverviewPage() {
                   <Stack spacing={1}>
                     <Typography variant="h5">{clusterInfo.version.number}</Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      <Chip size="small" label={`Lucene: ${clusterInfo.version.lucene_version}`} />
+                      <Chip
+                        size="small"
+                        label={`Lucene: ${clusterInfo.version.lucene_version ?? "unknown"}`}
+                      />
                       <Chip
                         size="small"
                         label={`Build: ${clusterInfo.version.build_hash?.slice(0, 7) ?? "unknown"}`}
@@ -408,7 +409,9 @@ export default function ClusterOverviewPage() {
             </Box>
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Store Size">
-                <Typography variant="h4">{formatBytes(clusterStoreBytes)}</Typography>
+                <Typography variant="h4">
+                  {formatBytes(clusterStoreBytes, "Unavailable")}
+                </Typography>
               </InfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>

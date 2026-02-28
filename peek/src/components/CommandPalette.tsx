@@ -21,8 +21,11 @@ import HistoryIcon from "@mui/icons-material/History";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import StarIcon from "@mui/icons-material/Star";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { useShallow } from "zustand/react/shallow";
 
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
@@ -42,7 +45,27 @@ interface Command {
 function useCommands(): Command[] {
   const navigate = useNavigate();
   const location = useLocation();
-  const connected = useConnectionStore((s) => s.connected);
+  const {
+    connected,
+    connectionProfiles,
+    activeProfileId,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    setActiveProfileId,
+    setProfileHealth,
+  } = useConnectionStore(
+    useShallow((s) => ({
+      connected: s.connected,
+      connectionProfiles: s.connectionProfiles,
+      activeProfileId: s.activeProfileId,
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+      setActiveProfileId: s.setActiveProfileId,
+      setProfileHealth: s.setProfileHealth,
+    })),
+  );
   const { themeMode, setConnectionDialogOpen, setThemeMode, setCommandPaletteOpen } = useUIStore(
     useShallow((s) => ({
       themeMode: s.themeMode,
@@ -58,6 +81,7 @@ function useCommands(): Command[] {
     })),
   );
   const dashboards = useDashboardStore((s) => s.dashboards);
+  const switchingProfileRef = useRef(false);
 
   return useMemo(() => {
     const commands: Command[] = [];
@@ -156,6 +180,78 @@ function useCommands(): Command[] {
       }
     }
 
+    // Connection profile commands
+    if (connected && connectionProfiles.length > 0) {
+      for (const profile of connectionProfiles) {
+        if (profile.id !== activeProfileId) {
+          commands.push({
+            id: `profile:switch:${profile.id}`,
+            label: `Switch to ${profile.name}`,
+            group: "Connection Profiles",
+            icon: <AccountCircleIcon fontSize="small" />,
+            keywords: `profile switch connect ${profile.name} ${profile.connection.url}`,
+            onExecute: () => {
+              if (switchingProfileRef.current) return;
+              setCommandPaletteOpen(false);
+              const conn = profile.connection;
+              switchingProfileRef.current = true;
+              void (async () => {
+                try {
+                  const caps = await fetchCapabilitiesForConnection(conn);
+                  setConnection(conn);
+                  setConnected(true);
+                  setCapabilities(caps);
+                  setActiveProfileId(profile.id);
+                  setProfileHealth(profile.id, {
+                    status: "healthy",
+                    checkedAt: new Date().toISOString(),
+                    errorSummary: null,
+                  });
+                } catch (err: unknown) {
+                  const message = isElasticsearchError(err) ? err.message : String(err);
+                  setProfileHealth(profile.id, {
+                    status: "needs_attention",
+                    checkedAt: new Date().toISOString(),
+                    errorSummary: message,
+                  });
+                  setConnectionDialogOpen(true);
+                } finally {
+                  switchingProfileRef.current = false;
+                }
+              })();
+            },
+          });
+        }
+        commands.push({
+          id: `profile:retest:${profile.id}`,
+          label: `Re-test ${profile.name}`,
+          group: "Connection Profiles",
+          icon: <RefreshIcon fontSize="small" />,
+          keywords: `profile retest health check ${profile.name} ${profile.connection.url}`,
+          onExecute: () => {
+            setCommandPaletteOpen(false);
+            void (async () => {
+              try {
+                await fetchCapabilitiesForConnection(profile.connection);
+                setProfileHealth(profile.id, {
+                  status: "healthy",
+                  checkedAt: new Date().toISOString(),
+                  errorSummary: null,
+                });
+              } catch (err: unknown) {
+                const message = isElasticsearchError(err) ? err.message : String(err);
+                setProfileHealth(profile.id, {
+                  status: "needs_attention",
+                  checkedAt: new Date().toISOString(),
+                  errorSummary: message,
+                });
+              }
+            })();
+          },
+        });
+      }
+    }
+
     // Recent queries
     for (const [index, query] of queryHistory.entries()) {
       commands.push({
@@ -190,6 +286,8 @@ function useCommands(): Command[] {
     return commands;
   }, [
     connected,
+    connectionProfiles,
+    activeProfileId,
     location.pathname,
     themeMode,
     queryHistory,
@@ -199,6 +297,11 @@ function useCommands(): Command[] {
     setThemeMode,
     setCommandPaletteOpen,
     setDiscoverQueryDraft,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    setActiveProfileId,
+    setProfileHealth,
   ]);
 }
 

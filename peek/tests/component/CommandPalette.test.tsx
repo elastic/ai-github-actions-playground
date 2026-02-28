@@ -8,6 +8,7 @@ import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import * as esService from "../../src/services/es";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -241,5 +242,177 @@ describe("CommandPalette", () => {
     renderPalette();
 
     expect(screen.queryByText("Favorite Dashboards")).not.toBeInTheDocument();
+  });
+});
+
+describe("CommandPalette — Connection Profiles group", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    resetAllStores();
+  });
+
+  it("does not show Connection Profiles group when disconnected", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore.getState().setActiveProfileId(id!);
+    // Not connected
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.queryByText("Connection Profiles")).not.toBeInTheDocument();
+  });
+
+  it("does not show Connection Profiles group when no profiles exist", () => {
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.queryByText("Connection Profiles")).not.toBeInTheDocument();
+  });
+
+  it("shows Re-test command for the active profile", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.getByText("Re-test Dev")).toBeInTheDocument();
+    expect(screen.queryByText("Switch to Dev")).not.toBeInTheDocument();
+  });
+
+  it("shows Switch and Re-test commands for non-active profiles", () => {
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    const id2 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // Active profile (Dev): only Re-test, no Switch
+    expect(screen.queryByText("Switch to Dev")).not.toBeInTheDocument();
+    expect(screen.getByText("Re-test Dev")).toBeInTheDocument();
+
+    // Non-active profile (Prod): both Switch and Re-test
+    expect(screen.getByText("Switch to Prod")).toBeInTheDocument();
+    expect(screen.getByText("Re-test Prod")).toBeInTheDocument();
+
+    void id2;
+  });
+
+  it("shows Connection Profiles group heading when profiles exist and connected", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Staging", { url: "https://staging.example.com", apiKey: "k" });
+    const id2 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "k2" });
+    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.getByText("Connection Profiles")).toBeInTheDocument();
+    void id2;
+  });
+
+  it("filters profile commands by profile name", async () => {
+    const user = userEvent.setup();
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.type(screen.getByLabelText("Search commands"), "prod");
+
+    await waitFor(() => {
+      expect(screen.getByText("Switch to Prod")).toBeInTheDocument();
+      expect(screen.getByText("Re-test Prod")).toBeInTheDocument();
+      expect(screen.queryByText("Re-test Dev")).not.toBeInTheDocument();
+    });
+  });
+
+  it("ignores a second switch command while a profile switch is in flight", async () => {
+    const user = userEvent.setup();
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore
+      .getState()
+      .saveConnectionProfile("QA", { url: "https://qa.example.com", apiKey: "key3" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    const switchPromise = new Promise<never>(() => {});
+    const fetchCapsSpy = vi
+      .spyOn(esService, "fetchCapabilitiesForConnection")
+      .mockReturnValue(switchPromise);
+    renderPalette();
+
+    await user.click(screen.getByText("Switch to Prod"));
+    useUIStore.getState().setCommandPaletteOpen(true);
+    await user.click(screen.getByText("Switch to QA"));
+
+    await waitFor(() => {
+      expect(fetchCapsSpy).toHaveBeenCalledTimes(1);
+    });
+    fetchCapsSpy.mockRestore();
+  });
+
+  it("keeps the current profile active when switching to another profile fails", async () => {
+    const user = userEvent.setup();
+    const id1 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
+    const id2 = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
+    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setConnection({ url: "https://dev.example.com", apiKey: "key" });
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+    });
+    useUIStore.getState().setCommandPaletteOpen(true);
+    const fetchCapsSpy = vi
+      .spyOn(esService, "fetchCapabilitiesForConnection")
+      .mockRejectedValue(new Error("switch failed"));
+    renderPalette();
+
+    await user.click(screen.getByText("Switch to Prod"));
+
+    await waitFor(() => {
+      expect(useUIStore.getState().connectionDialogOpen).toBe(true);
+    });
+    expect(useConnectionStore.getState().activeProfileId).toBe(id1);
+    expect(useConnectionStore.getState().connection?.url).toBe("https://dev.example.com");
+    expect(useConnectionStore.getState().connected).toBe(true);
+    expect(useConnectionStore.getState().capabilities).toEqual({
+      canManageDataStreams: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+    });
+    expect(useConnectionStore.getState().profileHealthMap[id2!]?.status).toBe("needs_attention");
+
+    fetchCapsSpy.mockRestore();
   });
 });

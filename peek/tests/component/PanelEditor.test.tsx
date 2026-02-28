@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import PanelEditor from "../../src/components/PanelEditor";
@@ -14,16 +14,20 @@ const queryMock = vi.fn();
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
 
-vi.mock("../../src/services/es", () => ({
-  ElasticsearchClient: vi.fn().mockImplementation(() => ({
-    query: queryMock,
-  })),
-  isElasticsearchError: (err: unknown) => {
-    if (typeof err !== "object" || err === null) return false;
-    const obj = err as Record<string, unknown>;
-    return typeof obj.status === "number" && typeof obj.message === "string";
-  },
-}));
+vi.mock("../../src/services/es", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    ElasticsearchClient: vi.fn().mockImplementation(() => ({
+      query: queryMock,
+    })),
+    isElasticsearchError: (err: unknown) => {
+      if (typeof err !== "object" || err === null) return false;
+      const obj = err as Record<string, unknown>;
+      return typeof obj.status === "number" && typeof obj.message === "string";
+    },
+  };
+});
 
 // Mock CodeMirror — it doesn't work in jsdom
 vi.mock("@uiw/react-codemirror", () => ({
@@ -188,13 +192,14 @@ describe("PanelEditor", () => {
   });
 
   it("can select a recent query and run it", async () => {
-    const user = userEvent.setup();
     useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
     render(<PanelEditor />);
 
-    await user.click(screen.getByRole("button", { name: /recent queries/i }));
-    await user.click(screen.getByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
-    await user.click(screen.getByRole("button", { name: /run query/i }));
+    // Use fireEvent to bypass userEvent pointer-event simulation overhead that
+    // compounds with MUI Menu transition animations on slow CI runners.
+    fireEvent.click(screen.getByRole("button", { name: /recent queries/i }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
+    fireEvent.click(screen.getByRole("button", { name: /run query/i }));
 
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
     expect(queryMock).toHaveBeenCalledWith(

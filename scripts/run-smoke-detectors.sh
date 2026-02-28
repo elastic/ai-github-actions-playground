@@ -19,6 +19,11 @@ REPO="${REPO:-}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --repo)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "Error: --repo requires a value (e.g. owner/repo)" >&2
+        echo "Usage: $0 [--repo <owner/repo>]" >&2
+        exit 1
+      fi
       REPO="$2"
       shift 2
       ;;
@@ -56,7 +61,7 @@ echo ""
 FAILED=()
 for workflow in "${WORKFLOWS[@]}"; do
   printf "  %-45s" "$workflow"
-  if output=$(gh workflow run "$workflow" ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} 2>&1); then
+  if output=$(gh workflow run "$workflow" --ref main ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} 2>&1); then
     echo "✓ triggered"
   else
     echo "✗ failed"

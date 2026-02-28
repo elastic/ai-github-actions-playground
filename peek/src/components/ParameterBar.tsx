@@ -251,7 +251,7 @@ export default function ParameterBar() {
           Variables
         </Typography>
         <Tooltip title="Add variable">
-          <IconButton size="small" onClick={openAdd} aria-label="Add parameter">
+          <IconButton size="small" onClick={openAdd} aria-label="Add variable">
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
@@ -292,7 +292,7 @@ export default function ParameterBar() {
         ))}
 
         <Tooltip title="Add variable">
-          <IconButton size="small" onClick={openAdd} aria-label="Add parameter">
+          <IconButton size="small" onClick={openAdd} aria-label="Add variable">
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>

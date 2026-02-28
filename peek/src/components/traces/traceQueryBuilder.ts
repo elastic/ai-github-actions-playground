@@ -4,6 +4,7 @@
  * between EDOT, OTel Collector with Elastic exporter, and APM Server.
  */
 import { escapeEsqlString, validateEsqlIdentifier } from "../../services/es/esqlUtils";
+import { buildWherePipe } from "../../services/es/queryParts";
 
 export interface TraceFieldMapping {
   traceId: string;
@@ -129,7 +130,7 @@ export function buildTraceSearchQueryParts(
   }
 
   if (whereClauses.length > 0) {
-    parts.push(`WHERE ${whereClauses.join(" AND ")}`);
+    parts.push(buildWherePipe(whereClauses));
   }
 
   return {
@@ -159,7 +160,8 @@ export function buildTraceDetailQuery(
   traceId: string,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
-  return `FROM ${fields.index} | WHERE ${fields.traceId} == "${escapeEsqlString(traceId)}" | LIMIT 10000`;
+  const where = buildWherePipe([`${fields.traceId} == "${escapeEsqlString(traceId)}"`]);
+  return `FROM ${fields.index} | ${where} | LIMIT 10000`;
 }
 
 export interface TraceQueryLabDraftContext {
@@ -182,7 +184,7 @@ export function buildTraceQueryLabDraft(
   if (context.timestamp) {
     whereClauses.push(`${fields.timestamp} == "${escapeEsqlString(context.timestamp)}"`);
   }
-  return `FROM ${fields.index} | WHERE ${whereClauses.join(" AND ")} | SORT ${fields.timestamp} DESC | LIMIT 200`;
+  return `FROM ${fields.index} | ${buildWherePipe(whereClauses)} | SORT ${fields.timestamp} DESC | LIMIT 200`;
 }
 
 /**
@@ -203,6 +205,51 @@ export function buildTraceTimeseriesQuery(
 }
 
 /**
+ * Generates an ES|QL query to fetch all spans (not just root spans) in the
+ * current filter window for the Drift Radar aggregated service-map.
+ * Client-side `buildServiceMapData` is used to compute the dependency graph.
+ */
+export function buildDriftRadarQuery(
+  filters: TraceFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  options: { limit?: number } = {},
+): string {
+  const { limit } = options;
+  const { body } = buildTraceSearchQueryParts(filters, fields, {
+    rootSpansOnly: false,
+  });
+  const limitClause = typeof limit === "number" ? ` | LIMIT ${limit}` : "";
+  return `${body} | SORT ${fields.timestamp} DESC${limitClause}`;
+}
+
+/**
+ * Shifts an ES|QL relative time range backward by one window duration so the
+ * previous equal window can be used as a drift baseline.
+ *
+ * Supports the `"NOW() - N unit"` patterns produced by TRACE_TIME_RANGE_OPTIONS.
+ * Returns `null` when the pattern cannot be parsed (e.g. absolute timestamps).
+ *
+ * @example
+ *   shiftTimeRangeBack("NOW() - 1 hour", "NOW()")
+ *   // → { timeFrom: "NOW() - 2 hour", timeTo: "NOW() - 1 hour" }
+ */
+export function shiftTimeRangeBack(
+  timeFrom: string,
+  timeTo: string,
+): { timeFrom: string; timeTo: string } | null {
+  if (timeTo.trim() !== "NOW()") return null;
+  const match = timeFrom.trim().match(/^NOW\(\)\s*-\s*(\d+)\s+(\w+)$/);
+  if (!match) return null;
+  // match[1] and match[2] are always defined when the regex matches (groups 1 and 2 are required).
+  const n = parseInt(match[1]!, 10);
+  const unit = match[2]!;
+  return {
+    timeFrom: `NOW() - ${n * 2} ${unit}`,
+    timeTo: timeFrom,
+  };
+}
+
+/**
  * Generates an ES|QL query for service name value suggestions.
  */
 export function buildServiceSuggestionsQuery(
@@ -218,9 +265,9 @@ export function buildOperationSuggestionsQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
   serviceName?: string,
 ): string {
-  const base = `FROM ${fields.index}`;
   const where = serviceName
-    ? ` | WHERE ${fields.serviceName} == "${escapeEsqlString(serviceName)}"`
+    ? buildWherePipe([`${fields.serviceName} == "${escapeEsqlString(serviceName)}"`])
     : "";
-  return `${base}${where} | STATS count = COUNT(*) BY ${fields.spanName} | SORT count DESC | LIMIT 50`;
+  const wherePipe = where ? ` | ${where}` : "";
+  return `FROM ${fields.index}${wherePipe} | STATS count = COUNT(*) BY ${fields.spanName} | SORT count DESC | LIMIT 50`;
 }

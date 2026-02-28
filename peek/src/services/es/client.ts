@@ -100,6 +100,71 @@ export interface SecurityRole {
 }
 export type GetSecurityUsersResponse = Record<string, SecurityUser>;
 export type GetSecurityRolesResponse = Record<string, SecurityRole>;
+
+/** One record from GET /_cat/indices?format=json&bytes=b */
+export interface CatIndexRecord {
+  index: string;
+  health: string;
+  status: string;
+  /** Number of primary shards (string from cat API) */
+  pri: string;
+  /** Number of replica shards (string from cat API) */
+  rep: string;
+  "docs.count": string | null;
+  "docs.deleted": string | null;
+  /** Store size in bytes (string from cat API) */
+  "store.size": string | null;
+  /** Primary store size in bytes (string from cat API) */
+  "pri.store.size": string | null;
+}
+
+/** Shard-level stats subset from GET /{index}/_stats */
+export interface IndexStatsData {
+  docs?: { count?: number; deleted?: number };
+  store?: { size_in_bytes?: number };
+  indexing?: { index_total?: number; index_time_in_millis?: number };
+  search?: { query_total?: number; query_time_in_millis?: number };
+  segments?: { count?: number; memory_in_bytes?: number };
+  get?: { total?: number };
+  merge?: { total?: number };
+  refresh?: { total?: number; total_time_in_millis?: number };
+  flush?: { total?: number; total_time_in_millis?: number };
+}
+
+/** Response from GET /{index}/_stats */
+export interface IndexStatsResponse {
+  _shards?: { total?: number; successful?: number; failed?: number };
+  _all?: {
+    primaries?: IndexStatsData;
+    total?: IndexStatsData;
+  };
+}
+
+/** Storage breakdown for a single field from POST /{index}/_disk_usage */
+export interface DiskUsageFieldStats {
+  total_in_bytes: number;
+  inverted_index?: { total_in_bytes: number };
+  stored_fields_in_bytes?: number;
+  doc_values_in_bytes?: number;
+  points_in_bytes?: number;
+  norms_in_bytes?: number;
+  term_vectors_in_bytes?: number;
+  knn_vectors_in_bytes?: number;
+}
+
+/** Per-index entry in the disk usage response */
+export interface DiskUsageIndexEntry {
+  store_size_in_bytes: number;
+  all_fields: DiskUsageFieldStats;
+  fields: Record<string, DiskUsageFieldStats>;
+}
+
+/** Response from POST /{index}/_disk_usage?run_expensive_tasks=true */
+export interface DiskUsageResponse {
+  _shards?: { total?: number; successful?: number; failed?: number };
+  [index: string]: DiskUsageIndexEntry | DiskUsageResponse["_shards"] | undefined;
+}
+
 export interface ProfilingTopFunctionsRequest {
   limit: number;
   query: {
@@ -108,9 +173,31 @@ export interface ProfilingTopFunctionsRequest {
     };
   };
 }
-export interface ProfilingFlamegraphRequest {
-  sample_size: number;
-  query: ProfilingTopFunctionsRequest["query"];
+
+export interface IngestPipeline {
+  description?: string;
+  version?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  processors?: Array<Record<string, any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on_failure?: Array<Record<string, any>>;
+}
+
+export type GetIngestPipelinesResponse = Record<string, IngestPipeline>;
+
+export interface SimulateIngestPipelineResponse {
+  docs?: Array<{
+    doc?: {
+      _source?: Record<string, unknown>;
+      _ingest?: { timestamp?: string };
+      error?: { type?: string; reason?: string };
+    };
+    processor_results?: Array<{
+      processor_type?: string;
+      status?: string;
+      doc?: { _source?: Record<string, unknown> };
+    }>;
+  }>;
 }
 
 /**
@@ -149,6 +236,8 @@ export type EsqlError = ElasticsearchError;
 export interface UserCapabilities {
   /** Whether the user can manage data streams (create, delete, rollover, etc.) */
   canManageDataStreams: boolean;
+  /** Whether the user can create API keys for collector onboarding flows. */
+  canCreateApiKeys: boolean;
   /** Whether the user can read user definitions from the security API. */
   canReadSecurityUsers: boolean;
   /** Whether the user can read role definitions from the security API. */
@@ -158,6 +247,13 @@ export interface UserCapabilities {
 /** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
 interface HasPrivilegesResponse {
   cluster?: Record<string, boolean>;
+}
+
+interface CreateApiKeyResponse {
+  id: string;
+  name: string;
+  api_key: string;
+  encoded?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -384,6 +480,33 @@ export class ElasticsearchClient {
     return this._fetch<FieldCapsResponse>(path, { signal });
   }
 
+  async getCatIndices(signal?: AbortSignal): Promise<CatIndexRecord[]> {
+    return this._fetch<CatIndexRecord[]>("/_cat/indices?format=json&bytes=b", { signal });
+  }
+
+  async getIndexStats(index: string, signal?: AbortSignal): Promise<IndexStatsResponse> {
+    return this._fetch<IndexStatsResponse>(`/${encodeURIComponent(index)}/_stats`, { signal });
+  }
+
+  async getIndexMappings(index: string, signal?: AbortSignal): Promise<Record<string, unknown>> {
+    return this._fetch<Record<string, unknown>>(`/${encodeURIComponent(index)}/_mapping`, {
+      signal,
+    });
+  }
+
+  async getIndexSettings(index: string, signal?: AbortSignal): Promise<Record<string, unknown>> {
+    return this._fetch<Record<string, unknown>>(`/${encodeURIComponent(index)}/_settings`, {
+      signal,
+    });
+  }
+
+  async getIndexDiskUsage(index: string, signal?: AbortSignal): Promise<DiskUsageResponse> {
+    return this._fetch<DiskUsageResponse>(
+      `/${encodeURIComponent(index)}/_disk_usage?run_expensive_tasks=true`,
+      { method: "POST", signal },
+    );
+  }
+
   async getSecurityUsers(signal?: AbortSignal): Promise<GetSecurityUsersResponse> {
     return this._fetch<GetSecurityUsersResponse>("/_security/user", { signal });
   }
@@ -403,12 +526,23 @@ export class ElasticsearchClient {
     });
   }
 
-  async getFlamegraph(body: ProfilingFlamegraphRequest, signal?: AbortSignal): Promise<unknown> {
-    return this._fetch<unknown>("/_profiling/flamegraph", {
-      method: "POST",
-      body: JSON.stringify(body),
-      signal,
-    });
+  async getIngestPipelines(signal?: AbortSignal): Promise<GetIngestPipelinesResponse> {
+    return this._fetch<GetIngestPipelinesResponse>("/_ingest/pipeline", { signal });
+  }
+
+  async simulateIngestPipeline(
+    pipelineId: string,
+    docs: Array<Record<string, unknown>>,
+    signal?: AbortSignal,
+  ): Promise<SimulateIngestPipelineResponse> {
+    return this._fetch<SimulateIngestPipelineResponse>(
+      `/_ingest/pipeline/${encodeURIComponent(pipelineId)}/_simulate`,
+      {
+        method: "POST",
+        body: JSON.stringify({ docs }),
+        signal,
+      },
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -425,15 +559,25 @@ export class ElasticsearchClient {
       const response = await this._fetch<HasPrivilegesResponse>("/_security/user/_has_privileges", {
         method: "POST",
         body: JSON.stringify({
-          cluster: ["manage_data_stream", "read_security", "manage_security"],
+          cluster: [
+            "manage_data_stream",
+            "read_security",
+            "manage_security",
+            "manage_own_api_key",
+            "manage_api_key",
+          ],
         }),
         signal,
       });
       const canReadSecurity = Boolean(
         response.cluster?.["read_security"] || response.cluster?.["manage_security"],
       );
+      const canCreateApiKeys = Boolean(
+        response.cluster?.["manage_own_api_key"] || response.cluster?.["manage_api_key"],
+      );
       return {
         canManageDataStreams: response.cluster?.["manage_data_stream"] ?? false,
+        canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
       };
@@ -441,10 +585,24 @@ export class ElasticsearchClient {
       // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
       return {
         canManageDataStreams: false,
+        canCreateApiKeys: false,
         canReadSecurityUsers: false,
         canReadSecurityRoles: false,
       };
     }
+  }
+
+  async createApiKey(
+    body: { name: string; expiration?: string; metadata?: Record<string, unknown> },
+    signal?: AbortSignal,
+  ): Promise<CreateApiKeyResponse & { encodedApiKey: string }> {
+    const response = await this._fetch<CreateApiKeyResponse>("/_security/api_key", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    });
+    const encodedApiKey = response.encoded ?? btoa(`${response.id}:${response.api_key}`);
+    return { ...response, encodedApiKey };
   }
 
   // -------------------------------------------------------------------------

@@ -14,7 +14,6 @@ import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import {
   computeCheckinStaleness,
-  formatFleetTime,
   loadElasticAgentInfo,
   loadElasticAgentLogs,
   loadElasticAgentMetrics,
@@ -23,7 +22,9 @@ import {
   type ElasticAgentMetricPoint,
 } from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { formatBytes } from "../utils/formatBytes";
 
+import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
 
@@ -103,7 +104,7 @@ export default function FleetAgentPage() {
           <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
             ← Fleet
           </Button>
-          <Typography variant="h6" sx={{ flex: 1 }} noWrap>
+          <Typography variant="h6" component="h1" sx={{ flex: 1 }} noWrap>
             {agentInfo?.hostname ?? decodedAgentId}
           </Typography>
           <Button
@@ -125,7 +126,7 @@ export default function FleetAgentPage() {
         </Box>
       ) : !agentInfo && !loading ? (
         <Alert severity="warning">
-          Agent {decodedAgentId} not found in recent Elastic Agent logs (last hour).
+          Agent {decodedAgentId} not found in recent Elastic Agent logs.
         </Alert>
       ) : (
         <>
@@ -194,13 +195,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
             <Chip
               size="small"
               label={`Last seen: ${staleness.label}`}
-              color={
-                staleness.severity === "fresh"
-                  ? "success"
-                  : staleness.severity === "stale"
-                    ? "warning"
-                    : "error"
-              }
+              color={stalenessSeverityToColor(staleness.severity)}
               variant="outlined"
             />
           </Stack>
@@ -441,7 +436,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
         ...theme.yAxis,
         type: "value",
         name: "Memory (bytes)",
-        axisLabel: { formatter: (v: number) => formatBytes(v) },
+        axisLabel: { formatter: (v: number) => formatBytes(v, "") },
       },
       series: [
         {
@@ -531,16 +526,4 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
       )}
     </Box>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatBytes(bytes: number): string {
-  if (bytes <= 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
-  return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`;
 }

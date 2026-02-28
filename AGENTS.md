@@ -33,16 +33,47 @@ After `make setup`, install the Chromium browser binary:
 cd peek && npx playwright install chromium
 ```
 
-### Taking Screenshots
+### Taking Screenshots of Features
 
-Start the dev server, run the screenshot preflight script, then stop the server:
+**Important:** The app requires connecting to an Elasticsearch cluster before any feature
+pages are visible. A screenshot taken at the root URL will always show the
+"Connect to Elasticsearch" landing page — not the feature you want to capture.
+
+To take a screenshot of a specific feature page, use `screenshot-feature.mjs`.
+It starts a dev server, mocks all required Elasticsearch endpoints, connects the
+app automatically, navigates to the requested page, and saves a full-page screenshot.
 
 ```bash
 cd peek && npx vite --port 3000 --host 127.0.0.1 &
 DEV_PID=$!
 sleep 5  # wait for server to be ready
 
-node scripts/screenshot-preflight.mjs \
+# Replace "metrics" with the page you want to capture.
+# Supported pages: cluster-overview | data-streams | indices | ingest-pipelines |
+#                  query-lab | metrics | traces | console | users | roles |
+#                  dashboards | fleet
+node peek/scripts/screenshot-feature.mjs \
+  --url http://127.0.0.1:3000/ai-github-actions-playground/ \
+  --page metrics \
+  --screenshot screenshot-metrics.png \
+  --output screenshot-feature.json
+
+kill $DEV_PID
+```
+
+### Diagnostics Preflight
+
+The preflight script is a **diagnostics tool** — it navigates to the URL provided via --url
+and checks for console errors, page errors, and
+UI alert components. Use it to verify the app loads cleanly, not to demonstrate
+features.
+
+```bash
+cd peek && npx vite --port 3000 --host 127.0.0.1 &
+DEV_PID=$!
+sleep 5  # wait for server to be ready
+
+node peek/scripts/screenshot-preflight.mjs \
   --url http://127.0.0.1:3000/ai-github-actions-playground/ \
   --output screenshot-preflight.json \
   --screenshot screenshot.png
@@ -50,9 +81,9 @@ node scripts/screenshot-preflight.mjs \
 kill $DEV_PID
 ```
 
-The preflight script captures the page screenshot and writes a JSON diagnostics file
-with any console errors, page errors, or UI-level error alerts. Known benign errors
-(e.g. Google Fonts DNS failures in sandboxed CI) are automatically ignored.
+The preflight script writes a JSON diagnostics file with any console errors,
+page errors, or UI-level error alerts. Known benign errors (e.g. Google Fonts
+DNS failures in sandboxed CI) are automatically ignored.
 
 ### Running E2E Tests
 

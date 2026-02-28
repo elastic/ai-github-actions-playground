@@ -66,7 +66,9 @@ export function formatEsqlResult(data: EsqlResponse): string {
   }
 
   // Multiple columns → markdown table
-  const header = columns.map((c) => c.name);
+  const header = columns.map((c) =>
+    c.name.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r?\n/g, " "),
+  );
   const separator = columns.map(() => "---");
   const rows = values.map((row) =>
     row

@@ -1,7 +1,6 @@
-import type {
-  ProfilingTopFunctionsRequest,
-  ProfilingFlamegraphRequest,
-} from "../../services/es/client";
+import type { ProfilingTopFunctionsRequest } from "../../services/es/client";
+import { escapeEsqlString } from "../../services/es/esqlUtils";
+import { buildWherePipe } from "../../services/es/queryParts";
 
 export interface ProfilingFilters {
   executableName: string | null;
@@ -23,16 +22,21 @@ export const EMPTY_FILTERS: ProfilingFilters = {
   limit: 100,
 };
 
-function escapeEsqlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
 function quoteList(values: string[]): string {
   return values.map((value) => `"${escapeEsqlString(value)}"`).join(", ");
 }
 
-export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
-  const where: string[] = [`@timestamp >= ${filters.timeFrom}`, `@timestamp <= ${filters.timeTo}`];
+function normalizeEsqlDateTimeExpression(expr: string): string {
+  const trimmed = expr.trim();
+  const parsed = Date.parse(trimmed);
+  if (Number.isNaN(parsed)) return expr;
+  return `"${escapeEsqlString(new Date(parsed).toISOString())}"`;
+}
+
+function buildProfilingWhereClause(filters: ProfilingFilters): string[] {
+  const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
+  const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
+  const where: string[] = [`@timestamp >= ${timeFrom}`, `@timestamp <= ${timeTo}`];
   if (filters.executableName) {
     where.push(`process.executable.name == "${escapeEsqlString(filters.executableName)}"`);
   }
@@ -45,10 +49,26 @@ export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
   if (filters.hostName) {
     where.push(`host.name == "${escapeEsqlString(filters.hostName)}"`);
   }
+  return where;
+}
+
+export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
+  const where = buildProfilingWhereClause(filters);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
+    buildWherePipe(where),
     `LIMIT ${Math.max(1, Math.min(1000, filters.limit))}`,
+  ].join(" | ");
+}
+
+export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string {
+  const where = buildProfilingWhereClause(filters);
+  return [
+    "FROM profiling-events-all",
+    buildWherePipe(where),
+    "KEEP @timestamp, Stacktrace.id, Stacktrace.count, service.name, host.name",
+    "SORT @timestamp ASC",
+    `LIMIT ${Math.max(1, Math.min(5000, filters.limit * 20))}`,
   ].join(" | ");
 }
 
@@ -67,23 +87,13 @@ export function buildStackframeLookupQuery(frameIds: string[]): string {
 }
 
 export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
-  const where: string[] = [`@timestamp >= ${filters.timeFrom}`, `@timestamp <= ${filters.timeTo}`];
-  if (filters.executableName) {
-    where.push(`process.executable.name == "${escapeEsqlString(filters.executableName)}"`);
-  }
-  if (filters.threadName) {
-    where.push(`process.thread.name == "${escapeEsqlString(filters.threadName)}"`);
-  }
-  if (filters.serviceName) {
-    where.push(`service.name == "${escapeEsqlString(filters.serviceName)}"`);
-  }
-  if (filters.hostName) {
-    where.push(`host.name == "${escapeEsqlString(filters.hostName)}"`);
-  }
+  const where = buildProfilingWhereClause(filters);
+  const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
+  const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
   return [
     "FROM profiling-events-all",
-    `WHERE ${where.join(" AND ")}`,
-    `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${filters.timeFrom}, ${filters.timeTo})`,
+    buildWherePipe(where),
+    `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${timeFrom}, ${timeTo})`,
     "SORT bucket",
   ].join(" | ");
 }
@@ -152,11 +162,4 @@ export function buildTopFunctionsRequest(filters: ProfilingFilters): ProfilingTo
     });
   }
   return request;
-}
-
-export function buildFlamegraphRequest(filters: ProfilingFilters): ProfilingFlamegraphRequest {
-  return {
-    sample_size: Math.max(1, Math.min(100000, filters.limit * 100)),
-    query: buildTopFunctionsRequest(filters).query,
-  };
 }

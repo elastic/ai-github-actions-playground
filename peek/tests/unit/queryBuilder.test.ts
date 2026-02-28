@@ -334,4 +334,10 @@ describe("buildDimensionOverviewQuery", () => {
     expect(result.esql).toContain("?_tstart");
     expect(result.esql).toContain("?_tend");
   });
+
+  it("filters out documents missing the metric or dimension field", () => {
+    const result = buildDimensionOverviewQuery(makeDimensionQuery());
+    expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
+    expect(result.esql).toContain("`host.name` IS NOT NULL");
+  });
 });
