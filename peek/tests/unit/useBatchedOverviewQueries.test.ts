@@ -165,6 +165,31 @@ describe("useBatchedOverviewQueries", () => {
     });
   });
 
+  it("handles synchronous buildQuery errors per item", async () => {
+    const client = makeClient(() => Promise.resolve(makeResponse(1)));
+    const items = makeItems(["cpu", "mem"]);
+    const throwingBuildQuery = (item: { name: string }) => {
+      if (item.name === "cpu") throw new Error("bad query");
+      return { esql: `FROM index | STATS metric BY ${item.name}` };
+    };
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery: throwingBuildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["cpu"]?.errorReason).toBe("bad query");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
+  });
+
   it("retryFailed re-runs only failed queries", async () => {
     let failCpu = true;
     const client = makeClient((params) => {
@@ -398,5 +423,26 @@ describe("useBatchedOverviewQueries", () => {
     // First batch: a and b should appear before c and d
     expect(callOrder.indexOf("a")).toBeLessThan(callOrder.indexOf("c"));
     expect(callOrder.indexOf("b")).toBeLessThan(callOrder.indexOf("d"));
+  });
+
+  it("normalizes non-positive batchSize to avoid stalling", async () => {
+    const client = makeClient(() => Promise.resolve(makeResponse(1)));
+    const items = makeItems(["cpu", "mem"]);
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+        batchSize: 0,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("success");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
   });
 });

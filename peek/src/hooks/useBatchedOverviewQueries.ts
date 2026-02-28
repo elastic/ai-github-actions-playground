@@ -113,6 +113,8 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
       const signal = abortRef.current.signal;
 
       const run = async () => {
+        const safeBatchSize = Number.isInteger(size) && size > 0 ? size : 1;
+
         setResults((prev) => {
           const next = { ...prev };
           for (const item of itemsToQuery) {
@@ -121,12 +123,12 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
           return next;
         });
 
-        for (let i = 0; i < itemsToQuery.length; i += size) {
+        for (let i = 0; i < itemsToQuery.length; i += safeBatchSize) {
           if (signal.aborted) return;
-          const batch = itemsToQuery.slice(i, i + size);
+          const batch = itemsToQuery.slice(i, i + safeBatchSize);
           const promises = batch.map(async (item) => {
-            const queryDef = buildQueryRef.current(item);
             try {
+              const queryDef = buildQueryRef.current(item);
               const params = buildTimeParams(queryDef.esql, range);
               const result = await esClient.query(
                 params.length > 0 ? { query: queryDef.esql, params } : { query: queryDef.esql },
