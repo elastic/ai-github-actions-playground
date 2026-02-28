@@ -712,13 +712,16 @@ export class ElasticsearchClient {
   async simulateIngestPipeline(
     pipelineId: string,
     docs: Array<Record<string, unknown>>,
+    options?: { verbose?: boolean },
     signal?: AbortSignal,
   ): Promise<SimulateIngestPipelineResponse> {
+    const body: Record<string, unknown> = { docs };
+    if (options?.verbose) body.verbose = true;
     return this._fetch<SimulateIngestPipelineResponse>(
       `/_ingest/pipeline/${encodeURIComponent(pipelineId)}/_simulate`,
       {
         method: "POST",
-        body: JSON.stringify({ docs }),
+        body: JSON.stringify(body),
         signal,
       },
     );

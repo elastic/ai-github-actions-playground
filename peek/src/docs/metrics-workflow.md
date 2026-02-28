@@ -5,7 +5,21 @@ Open Metrics from the sidebar to explore time-series metrics without writing ES|
 ## Namespace overview
 
 Pick a namespace from the dropdown to see a wall of sparkline charts — one for every metric in that namespace.
-Only metrics that have data points in the selected time range are shown.
+The header shows three coverage counts:
+
+- **With data** — metrics that returned at least one non-null value in the selected time range.
+- **No data** — metrics that returned successfully but have no data points in the window.
+- **Failed** — metrics whose queries encountered an error (e.g. timeout, permission denied).
+
+Only metrics with data are shown as sparkline cards. If any queries failed, expand the **Failed metrics** section below the grid to see each metric name and its failure reason.
+
+### Troubleshooting failed metrics
+
+1. Expand the **Failed metrics** section to review error messages.
+2. Click the search icon next to a failed metric to open its query in **Query Lab** for manual inspection.
+3. Click **Retry failed** to re-run only the failed queries without reloading the entire overview.
+4. If failures persist, check cluster health and permissions in the Console or Cluster Overview page.
+
 Click any chart card to drill into that metric's detail view.
 
 ## Metric detail

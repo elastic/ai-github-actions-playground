@@ -218,6 +218,33 @@ curl -s -X POST 'http://localhost:9200/_query' \
   -d '{"query":"FROM metrics-hostmetricsreceiver-default | STATS count = COUNT(*) BY dataset = data_stream.dataset, metric_type = type | SORT count DESC"}'
 ```
 
+### OTLP Fixture Capture & Replay
+
+Pre-captured OTLP data in `peek/fixtures/otlp/` can be replayed into a fresh
+Elasticsearch without running the generators. This is faster and deterministic.
+
+```bash
+make otel-replay-up    # start ES + EDOT collector in replay mode
+make otel-replay       # replay OTLP fixtures + seed non-OTLP data (web_logs, orders, pipelines)
+make test-e2e-live     # run Playwright tests against real data
+make otel-replay-down  # stop everything
+```
+
+The replay script (`peek/scripts/otel-replay.mjs`) reads `.jsonl.gz` fixtures,
+rewrites timestamps to be relative to now, and sends via OTLP/HTTP to the
+collector. Data flows through the same elasticapm pipeline as live data.
+
+To re-capture fixtures from the live stack:
+
+```bash
+make otel-capture       # start OTel stack with file exporters
+# wait ~30 seconds
+make otel-capture-down  # stop and gzip captures
+# commit peek/fixtures/otlp/*.jsonl.gz
+```
+
+See `peek/fixtures/otlp/README.md` for details.
+
 ## Fleet Harness
 
 Use this harness to run a real Fleet Server stack with enrolled Elastic Agents. This produces the actual Fleet and agent telemetry data streams that the Fleet page consumes.

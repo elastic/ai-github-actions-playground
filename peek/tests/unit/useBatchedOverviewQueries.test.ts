@@ -58,7 +58,7 @@ describe("useBatchedOverviewQueries", () => {
       }),
     );
 
-    expect(result.current).toEqual({});
+    expect(result.current.results).toEqual({});
   });
 
   it("returns empty results when items array is empty", () => {
@@ -74,7 +74,7 @@ describe("useBatchedOverviewQueries", () => {
       }),
     );
 
-    expect(result.current).toEqual({});
+    expect(result.current.results).toEqual({});
   });
 
   it("marks items as loading then resolves them to success", async () => {
@@ -92,12 +92,12 @@ describe("useBatchedOverviewQueries", () => {
     );
 
     await waitFor(() => {
-      expect(result.current["cpu"]?.status).toBe("success");
-      expect(result.current["mem"]?.status).toBe("success");
+      expect(result.current.results["cpu"]?.status).toBe("success");
+      expect(result.current.results["mem"]?.status).toBe("success");
     });
 
-    expect(result.current["cpu"]?.data).toBeDefined();
-    expect(result.current["mem"]?.data).toBeDefined();
+    expect(result.current.results["cpu"]?.data).toBeDefined();
+    expect(result.current.results["mem"]?.data).toBeDefined();
   });
 
   it("sets status to error for a failed query (non-abort)", async () => {
@@ -121,8 +121,162 @@ describe("useBatchedOverviewQueries", () => {
     );
 
     await waitFor(() => {
-      expect(result.current["cpu"]?.status).toBe("error");
+      expect(result.current.results["cpu"]?.status).toBe("error");
     });
+  });
+
+  it("captures errorReason from a failed query", async () => {
+    const client = makeClient(() => Promise.reject(new Error("permission denied")));
+    const items = makeItems(["cpu"]);
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["cpu"]?.errorReason).toBe("permission denied");
+    });
+  });
+
+  it("captures Unknown error for non-Error throws", async () => {
+    const client = makeClient(() => Promise.reject("string failure"));
+    const items = makeItems(["cpu"]);
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["cpu"]?.errorReason).toBe("Unknown error");
+    });
+  });
+
+  it("handles synchronous buildQuery errors per item", async () => {
+    const client = makeClient(() => Promise.resolve(makeResponse(1)));
+    const items = makeItems(["cpu", "mem"]);
+    const throwingBuildQuery = (item: { name: string }) => {
+      if (item.name === "cpu") throw new Error("bad query");
+      return { esql: `FROM index | STATS metric BY ${item.name}` };
+    };
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery: throwingBuildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["cpu"]?.errorReason).toBe("bad query");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
+  });
+
+  it("retryFailed re-runs only failed queries", async () => {
+    let failCpu = true;
+    const client = makeClient((params) => {
+      const isCpu = params.query.includes("cpu");
+      if (isCpu && failCpu) return Promise.reject(new Error("timeout"));
+      return Promise.resolve(makeResponse(isCpu ? 42 : 10));
+    });
+    const items = makeItems(["cpu", "mem"]);
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    // Wait for initial pass: cpu fails, mem succeeds
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
+
+    const callsBefore = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    // Fix the failure and retry
+    failCpu = false;
+    act(() => {
+      result.current.retryFailed();
+    });
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("success");
+    });
+
+    // Only cpu should have been re-queried (not mem)
+    const callsAfter = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
+    expect(callsAfter - callsBefore).toBe(1);
+  });
+
+  it("adds recovered metrics back to refresh coverage after retryFailed", async () => {
+    let failCpu = true;
+    const client = makeClient((params) => {
+      const isCpu = params.query.includes("cpu");
+      if (isCpu && failCpu) return Promise.reject(new Error("timeout"));
+      return Promise.resolve(makeResponse(isCpu ? 42 : 10));
+    });
+
+    let items = makeItems(["cpu", "mem"]);
+    const { result, rerender } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
+
+    failCpu = false;
+    act(() => {
+      result.current.retryFailed();
+    });
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("success");
+    });
+
+    const callsBeforeRefresh = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
+    items = makeItems(["cpu", "mem"]);
+    rerender();
+
+    await waitFor(() =>
+      expect((client.query as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(
+        callsBeforeRefresh + 1,
+      ),
+    );
+
+    const callsAfterRefresh = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
+    expect(callsAfterRefresh - callsBeforeRefresh).toBe(2);
   });
 
   it("aborts in-flight queries when unmounted", async () => {
@@ -178,7 +332,7 @@ describe("useBatchedOverviewQueries", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current["cpu"]?.status).toBe("success"));
+    await waitFor(() => expect(result.current.results["cpu"]?.status).toBe("success"));
     const firstCount = callCount;
 
     // Change scopeKey — should trigger a full discovery pass again
@@ -209,8 +363,8 @@ describe("useBatchedOverviewQueries", () => {
 
     // Wait for initial discovery
     await waitFor(() => {
-      expect(result.current["cpu"]?.status).toBe("success");
-      expect(result.current["mem"]?.status).toBe("success");
+      expect(result.current.results["cpu"]?.status).toBe("success");
+      expect(result.current.results["mem"]?.status).toBe("success");
     });
 
     const callsBefore = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
@@ -258,10 +412,10 @@ describe("useBatchedOverviewQueries", () => {
     );
 
     await waitFor(() => {
-      expect(result.current["a"]?.status).toBe("success");
-      expect(result.current["b"]?.status).toBe("success");
-      expect(result.current["c"]?.status).toBe("success");
-      expect(result.current["d"]?.status).toBe("success");
+      expect(result.current.results["a"]?.status).toBe("success");
+      expect(result.current.results["b"]?.status).toBe("success");
+      expect(result.current.results["c"]?.status).toBe("success");
+      expect(result.current.results["d"]?.status).toBe("success");
     });
 
     // All 4 items should have been queried
@@ -269,5 +423,26 @@ describe("useBatchedOverviewQueries", () => {
     // First batch: a and b should appear before c and d
     expect(callOrder.indexOf("a")).toBeLessThan(callOrder.indexOf("c"));
     expect(callOrder.indexOf("b")).toBeLessThan(callOrder.indexOf("d"));
+  });
+
+  it("normalizes non-positive batchSize to avoid stalling", async () => {
+    const client = makeClient(() => Promise.resolve(makeResponse(1)));
+    const items = makeItems(["cpu", "mem"]);
+
+    const { result } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+        batchSize: 0,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("success");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
   });
 });

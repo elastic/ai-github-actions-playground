@@ -16,12 +16,16 @@ import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
-import { ElasticsearchClient, buildEsqlRequest, isElasticsearchError } from "../services/es";
+import { isElasticsearchError } from "../services/es";
+import {
+  buildPersesEsqlRequest,
+  createPersesEsqlDatasource,
+} from "../services/perses/esqlDatasource";
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import { toCsv } from "./discoverUtils";
-import Visualization from "./visualizations/Visualization";
-import { getVizEntry } from "./visualizations/vizRegistry";
+import PersesPanelRenderer from "./perses/PersesPanelRenderer";
+import { getPersesPanelEntry } from "./perses/panelRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
 
 interface Props {
@@ -40,7 +44,7 @@ export default function PanelContainer({ panel }: Props) {
   );
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
 
-  const vizEntry = getVizEntry(panel.visualization);
+  const vizEntry = getPersesPanelEntry(panel.visualization);
   const supportsQuery = vizEntry?.supportsQuery ?? true;
 
   const [data, setData] = useState<EsqlResponse | null>(null);
@@ -122,14 +126,9 @@ export default function PanelContainer({ panel }: Props) {
     setError(null);
 
     try {
-      const client = new ElasticsearchClient(connection);
-      const query = panel.query.trim();
-      const body = buildEsqlRequest(query, {
-        timeRange,
-        parameters,
-        includeTimeRangeFilter: true,
-      });
-      const result = await client.query(body, ctrl.signal);
+      const datasource = createPersesEsqlDatasource(connection);
+      const body = buildPersesEsqlRequest(panel.query, { timeRange, parameters });
+      const result = await datasource.execute(body, ctrl.signal);
       if (!ctrl.signal.aborted) {
         setData(result);
         setExecutionTimeMs(result.executionTimeMs);
@@ -279,7 +278,7 @@ export default function PanelContainer({ panel }: Props) {
 
       <Box sx={{ flex: 1, overflow: "auto", position: "relative", p: 1 }}>
         {!supportsQuery ? (
-          <Visualization
+          <PersesPanelRenderer
             type={panel.visualization}
             query={panel.query}
             data={{ columns: [], values: [] } as EsqlResponse}
@@ -318,7 +317,7 @@ export default function PanelContainer({ panel }: Props) {
             <CircularProgress size={32} />
           </Box>
         ) : data ? (
-          <Visualization
+          <PersesPanelRenderer
             type={panel.visualization}
             data={data}
             options={panel.options}

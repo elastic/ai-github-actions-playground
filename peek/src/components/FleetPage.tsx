@@ -31,6 +31,7 @@ import FleetVersionChart from "./fleet/FleetVersionChart";
 import FleetAgentsTable from "./fleet/FleetAgentsTable";
 import FleetOutputsList from "./fleet/FleetOutputsList";
 import FleetActivityList from "./fleet/FleetActivityList";
+import RefreshIntervalPicker from "./RefreshIntervalPicker";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -40,6 +41,10 @@ const TABS: { value: FleetViewTab; label: string }[] = [
 ];
 
 const AUTO_REFRESH_MS = 30_000;
+const FLEET_REFRESH_OPTIONS = [
+  { label: "Off", seconds: 0 },
+  { label: "30s", seconds: AUTO_REFRESH_MS / 1000 },
+];
 type AgentFilterUpdates = Parameters<
   ReturnType<typeof useFleetStore.getState>["updateAgentFilter"]
 >[0];
@@ -60,6 +65,8 @@ export default function FleetPage() {
     agentInventoryTotal,
     actions,
     actionResults,
+    autoRefreshEnabled,
+    lastUpdatedAt,
   } = useFleetStore(
     useShallow((s) => ({
       activeTab: s.activeTab,
@@ -73,6 +80,8 @@ export default function FleetPage() {
       agentInventoryTotal: s.agentInventoryTotal,
       actions: s.actions,
       actionResults: s.actionResults,
+      autoRefreshEnabled: s.autoRefreshEnabled,
+      lastUpdatedAt: s.lastUpdatedAt,
     })),
   );
 
@@ -85,6 +94,8 @@ export default function FleetPage() {
     setAgentInventoryTotal,
     setActions,
     setActionResults,
+    setAutoRefreshEnabled,
+    setLastUpdatedAt,
     setLoading,
     setError,
     setPartialErrors,
@@ -100,6 +111,8 @@ export default function FleetPage() {
       setAgentInventoryTotal: s.setAgentInventoryTotal,
       setActions: s.setActions,
       setActionResults: s.setActionResults,
+      setAutoRefreshEnabled: s.setAutoRefreshEnabled,
+      setLastUpdatedAt: s.setLastUpdatedAt,
       setLoading: s.setLoading,
       setError: s.setError,
       setPartialErrors: s.setPartialErrors,
@@ -108,76 +121,104 @@ export default function FleetPage() {
     })),
   );
 
-  const loadFleetData = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { data: results, error } = await runConnectionRequest({
-        connection,
-        run: (client) =>
-          Promise.allSettled([
-            loadFleetServerStatus(client),
-            loadFleetAgentVersions(client),
-            loadFleetOutputHealth(client),
-            loadElasticAgentInventory(client),
-            loadFleetActions(client),
-            loadFleetActionResults(client),
-          ]),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (results !== null) {
-        const errors: string[] = [];
-        const formatReason = (reason: unknown): string => {
-          if (isElasticsearchError(reason)) return reason.message;
-          if (reason instanceof Error) return reason.message;
-          return String(reason);
-        };
-        const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
-          if (r.status === "fulfilled") return r.value;
-          errors.push(`${label}: ${formatReason(r.reason)}`);
-          return null;
-        };
+  const abortRef = useRef<AbortController | null>(null);
 
-        setServerStatus(value(results[0]!, "Server status") ?? null);
-        setAgentVersions(value(results[1]!, "Agent versions") ?? []);
-        setOutputHealth(value(results[2]!, "Output health") ?? []);
-        const inventoryResult = value(results[3]!, "Agent inventory");
-        setAgentInventory(inventoryResult?.agents ?? []);
-        setAgentInventoryTotal(inventoryResult?.total ?? 0);
-        setActions(value(results[4]!, "Actions") ?? []);
-        setActionResults(value(results[5]!, "Action results") ?? []);
-        setPartialErrors(errors);
+  const loadFleetData = useCallback(
+    async (signal: AbortSignal) => {
+      if (!connection) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: results, error } = await runConnectionRequest({
+          connection,
+          run: (client) =>
+            Promise.allSettled([
+              loadFleetServerStatus(client),
+              loadFleetAgentVersions(client),
+              loadFleetOutputHealth(client),
+              loadElasticAgentInventory(client),
+              loadFleetActions(client),
+              loadFleetActionResults(client),
+            ]),
+        });
+        if (signal.aborted) return;
+        if (error !== null) {
+          setError(error);
+        } else if (results !== null) {
+          const errors: string[] = [];
+          const formatReason = (reason: unknown): string => {
+            if (isElasticsearchError(reason)) return reason.message;
+            if (reason instanceof Error) return reason.message;
+            return String(reason);
+          };
+          const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
+            if (r.status === "fulfilled") return r.value;
+            errors.push(`${label}: ${formatReason(r.reason)}`);
+            return null;
+          };
+
+          setServerStatus(value(results[0]!, "Server status") ?? null);
+          setAgentVersions(value(results[1]!, "Agent versions") ?? []);
+          setOutputHealth(value(results[2]!, "Output health") ?? []);
+          const inventoryResult = value(results[3]!, "Agent inventory");
+          setAgentInventory(inventoryResult?.agents ?? []);
+          setAgentInventoryTotal(inventoryResult?.total ?? 0);
+          setActions(value(results[4]!, "Actions") ?? []);
+          setActionResults(value(results[5]!, "Action results") ?? []);
+          setPartialErrors(errors);
+          if (results.some((result) => result.status === "fulfilled")) {
+            setLastUpdatedAt(Date.now());
+          }
+        }
+      } finally {
+        if (!signal.aborted) setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    connection,
-    setLoading,
-    setError,
-    setServerStatus,
-    setAgentVersions,
-    setOutputHealth,
-    setAgentInventory,
-    setAgentInventoryTotal,
-    setActions,
-    setActionResults,
-    setPartialErrors,
-  ]);
+    },
+    [
+      connection,
+      setLoading,
+      setError,
+      setServerStatus,
+      setAgentVersions,
+      setOutputHealth,
+      setAgentInventory,
+      setAgentInventoryTotal,
+      setActions,
+      setActionResults,
+      setPartialErrors,
+      setLastUpdatedAt,
+    ],
+  );
 
-  useEffect(() => {
-    void loadFleetData();
-  }, [loadFleetData]);
-
-  // Auto-refresh
+  // Auto-refresh – use the per-connection AbortController signal to both
+  // cancel stale requests and prevent overlapping polls.  The signal is the
+  // single source of truth; no separate boolean ref is needed.
   const loadRef = useRef(loadFleetData);
   loadRef.current = loadFleetData;
-  useEffect(() => {
-    const id = setInterval(() => void loadRef.current(), AUTO_REFRESH_MS);
-    return () => clearInterval(id);
+  const runRefresh = useCallback(async (signal?: AbortSignal) => {
+    const s = signal ?? abortRef.current?.signal;
+    if (!s || s.aborted) return;
+    await loadRef.current(s);
   }, []);
+  useEffect(() => {
+    // Abort any in-flight request from the previous connection so its late
+    // response cannot overwrite state for the new connection.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    void runRefresh(controller.signal);
+    return () => {
+      controller.abort();
+    };
+  }, [connection, runRefresh]);
+  useEffect(() => {
+    if (!autoRefreshEnabled) return;
+    const id = setInterval(() => {
+      const s = abortRef.current?.signal;
+      if (s && !s.aborted) void runRefresh(s);
+    }, AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [autoRefreshEnabled, runRefresh]);
 
   const handleAgentClick = useCallback(
     (agentId: string) => navigate(`/fleet/agents/${encodeURIComponent(agentId)}`),
@@ -201,10 +242,25 @@ export default function FleetPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Fleet
           </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Last updated:{" "}
+            {lastUpdatedAt
+              ? new Date(lastUpdatedAt).toLocaleTimeString(undefined, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })
+              : "—"}
+          </Typography>
+          <RefreshIntervalPicker
+            value={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
+            options={FLEET_REFRESH_OPTIONS}
+            onChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+          />
           <Button
             size="small"
             variant="outlined"
-            onClick={() => void loadFleetData()}
+            onClick={() => void runRefresh()}
             disabled={loading}
           >
             {loading ? <CircularProgress size={16} /> : "Refresh"}

@@ -29,7 +29,6 @@ function MockVisualization({
   onExportReady,
 }: {
   onExportReady?: (exportFn: (() => string) | null) => void;
-  onExportCsv?: () => void;
 }) {
   useEffect(() => {
     onExportReady?.(() => "data:image/png;base64,ZmFrZQ==");
@@ -38,7 +37,7 @@ function MockVisualization({
   return <div>Visualization mock</div>;
 }
 
-vi.mock("../../src/components/visualizations/Visualization", () => ({
+vi.mock("../../src/components/perses/PersesPanelRenderer", () => ({
   default: MockVisualization,
 }));
 

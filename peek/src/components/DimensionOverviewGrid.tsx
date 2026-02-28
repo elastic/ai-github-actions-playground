@@ -177,7 +177,7 @@ export default function DimensionOverviewGrid({
     [indexPattern, metricField, metricType, timeRange],
   );
 
-  const results = useBatchedOverviewQueries({
+  const { results } = useBatchedOverviewQueries({
     items: dimensionFields,
     client,
     scopeKey,

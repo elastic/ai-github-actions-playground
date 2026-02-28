@@ -47,6 +47,7 @@ export default function SettingsPage() {
     setApiKey,
     setModel,
     setTabAutocompleteEnabled,
+    setElasticDocsEnabled,
     isConfigured,
     resetLLMConfig,
   } = useLLMStore(
@@ -56,6 +57,7 @@ export default function SettingsPage() {
       setApiKey: s.setApiKey,
       setModel: s.setModel,
       setTabAutocompleteEnabled: s.setTabAutocompleteEnabled,
+      setElasticDocsEnabled: s.setElasticDocsEnabled,
       isConfigured: s.isConfigured,
       resetLLMConfig: s.resetLLMConfig,
     })),
@@ -206,6 +208,16 @@ export default function SettingsPage() {
               />
             }
             label="Enable AI inline completions for code editors"
+          />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={config.elasticDocsEnabled}
+                onChange={(_, checked) => setElasticDocsEnabled(checked)}
+              />
+            }
+            label="Enable Elastic Docs search in chat"
           />
         </Box>
       </Paper>

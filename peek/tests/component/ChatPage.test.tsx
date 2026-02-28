@@ -10,8 +10,9 @@ import { useLLMStore } from "../../src/store/useLLMStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
-const { esQueryMock } = vi.hoisted(() => ({
-  esQueryMock: vi.fn(),
+const { buildChatRuntimeMock, getChatRequestTimeoutMsMock } = vi.hoisted(() => ({
+  buildChatRuntimeMock: vi.fn(),
+  getChatRequestTimeoutMsMock: vi.fn(),
 }));
 
 vi.stubGlobal("localStorage", makeStorageMock());
@@ -26,16 +27,14 @@ vi.mock("ai", () => ({
   tool: vi.fn((definition) => definition),
 }));
 
-vi.mock("../../src/services/es", () => ({
-  ElasticsearchClient: vi.fn().mockImplementation(() => ({
-    query: esQueryMock,
-  })),
+vi.mock("../../src/services/chatRuntime", () => ({
+  buildChatRuntime: buildChatRuntimeMock,
+  getChatRequestTimeoutMs: getChatRequestTimeoutMsMock,
 }));
 
 describe("ChatPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    esQueryMock.mockReset();
     localStorage.clear();
     sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
@@ -46,6 +45,13 @@ describe("ChatPage", () => {
       chat: (model: string) => ({ model, adapter: "chat" }),
     });
     vi.mocked(createOpenAI).mockReturnValue(modelFactory as never);
+
+    getChatRequestTimeoutMsMock.mockReturnValue(15_000);
+    buildChatRuntimeMock.mockResolvedValue({
+      systemPrompt: "You are a helpful assistant.",
+      tools: {},
+      stopWhen: undefined,
+    });
   });
 
   function renderChat() {
@@ -110,12 +116,88 @@ describe("ChatPage", () => {
 
     renderChat();
 
-    await user.type(screen.getByPlaceholderText("Type a message…"), "Help me write ES|QL");
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Help me");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Help me write ES|QL")).toBeInTheDocument();
+      expect(screen.getByText("Help me")).toBeInTheDocument();
       expect(screen.getByText("Assistant response")).toBeInTheDocument();
+    });
+  });
+
+  it("calls buildChatRuntime with connection, config, and pathname", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    useConnectionStore.getState().setConnection({ url: "http://localhost:9200", apiKey: "test" });
+    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(buildChatRuntimeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          config: expect.objectContaining({ apiKey: "sk-test-key" }),
+          connection: expect.objectContaining({ url: "http://localhost:9200" }),
+          pathname: "/",
+          signal: expect.any(AbortSignal),
+        }),
+      );
+    });
+  });
+
+  it("passes runtime tools and systemPrompt to generateText", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+
+    const mockTools = { search_docs: { description: "Search docs", execute: vi.fn() } };
+    buildChatRuntimeMock.mockResolvedValue({
+      systemPrompt: "Custom system prompt",
+      tools: mockTools,
+      stopWhen: undefined,
+    });
+    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          system: "Custom system prompt",
+          tools: mockTools,
+        }),
+      );
+    });
+  });
+
+  it("passes stopWhen from runtime to generateText", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+
+    const mockStopWhen = vi.fn();
+    buildChatRuntimeMock.mockResolvedValue({
+      systemPrompt: "You are a helpful assistant.",
+      tools: {},
+      stopWhen: mockStopWhen,
+    });
+    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stopWhen: mockStopWhen,
+        }),
+      );
     });
   });
 
@@ -172,46 +254,21 @@ describe("ChatPage", () => {
     expect(screen.getByRole("button", { name: /clear/i })).toBeDisabled();
   });
 
-  it("registers run_esql_query tool that executes bounded ES|QL queries", async () => {
+  it("uses timeout from getChatRequestTimeoutMs", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
-    useConnectionStore.getState().setConnection({ url: "http://localhost:9200", apiKey: "test" });
-    vi.mocked(generateText).mockResolvedValue({ text: "Done" } as never);
-    esQueryMock.mockResolvedValue({
-      columns: [{ name: "message", type: "keyword" }],
-      values: [["x".repeat(600)]],
-      executionTimeMs: 12,
-    });
+    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+    getChatRequestTimeoutMsMock.mockReturnValue(30_000);
 
     renderChat();
 
-    await user.type(screen.getByPlaceholderText("Type a message…"), "Run the query");
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     await waitFor(() => {
-      expect(generateText).toHaveBeenCalled();
+      expect(getChatRequestTimeoutMsMock).toHaveBeenCalledWith(
+        expect.objectContaining({ apiKey: "sk-test-key" }),
+      );
     });
-
-    const args = vi.mocked(generateText).mock.calls[0]?.[0] as {
-      tools: {
-        run_esql_query: { execute: (input: { query: string; rowLimit?: number }) => unknown };
-      };
-    };
-    const result = (await args.tools.run_esql_query.execute({
-      query: "FROM logs-*",
-      rowLimit: 10,
-    })) as {
-      query: string;
-      truncated: boolean;
-      values: unknown[][];
-    };
-
-    expect(esQueryMock).toHaveBeenCalledWith(
-      { query: "FROM logs-* | LIMIT 10" },
-      expect.any(AbortSignal),
-    );
-    expect(result.query).toBe("FROM logs-* | LIMIT 10");
-    expect(result.truncated).toBe(true);
-    expect(String(result.values[0]?.[0] ?? "")).toContain("…");
   });
 });

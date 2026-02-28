@@ -1,0 +1,81 @@
+# Capture config: same pipelines as config.yaml, but also writes OTLP JSON
+# Lines to /data/capture/*.jsonl for offline replay.
+#
+# Usage: docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml \
+#        -f docker-compose.otel-capture.yml up -d
+receivers:
+  hostmetrics/system:
+    collection_interval: 15s
+    root_path: /hostfs
+    scrapers:
+      cpu:
+      filesystem:
+      load:
+      memory:
+      network:
+      paging:
+      process:
+      processes:
+  otlp/fromsdk:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+connectors:
+  elasticapm: {}
+
+processors:
+  batch: {}
+  elasticapm: {}
+
+exporters:
+  elasticsearch/otel:
+    endpoints: ["${env:ES_URL:-http://elasticsearch:9200}"]
+    api_key: ${env:ES_API_KEY:-}
+    mapping:
+      mode: otel
+
+  # File exporters — capture OTLP JSON Lines for offline replay
+  file/traces:
+    path: /data/capture/traces.jsonl
+    format: json
+    append: true
+    flush_interval: 1s
+  file/metrics:
+    path: /data/capture/metrics.jsonl
+    format: json
+    append: true
+    flush_interval: 1s
+  file/logs:
+    path: /data/capture/logs.jsonl
+    format: json
+    append: true
+    flush_interval: 1s
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces/fromsdk:
+      receivers: [otlp/fromsdk]
+      processors: [elasticapm, batch]
+      exporters: [elasticapm, elasticsearch/otel, file/traces]
+    metrics/fromsdk:
+      receivers: [otlp/fromsdk]
+      processors: [batch]
+      exporters: [elasticsearch/otel, file/metrics]
+    metrics/hostmetrics:
+      receivers: [hostmetrics/system]
+      processors: [batch]
+      exporters: [elasticsearch/otel, file/metrics]
+    metrics/aggregated-metrics:
+      receivers: [elasticapm]
+      processors: [batch]
+      exporters: [elasticsearch/otel]
+    logs/fromsdk:
+      receivers: [otlp/fromsdk]
+      processors: [batch]
+      exporters: [elasticsearch/otel, file/logs]

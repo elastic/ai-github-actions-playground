@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { isElasticsearchError } from "../services/es";
 import type { ElasticsearchConnection, EsqlResponse } from "../types";
 import type { EsqlQueryParams } from "../services/es";
+import { createPersesEsqlDatasource } from "../services/perses/esqlDatasource";
 import { setLastQueryError, setLastQueryResult } from "../components/llmCompletionExtension";
 
 interface UseEsqlQueryOptions {
@@ -67,10 +68,10 @@ export function useEsqlQuery({
       setError(null);
       const trimmedQuery = queryText.trim();
       try {
-        const client = new ElasticsearchClient(connection);
+        const datasource = createPersesEsqlDatasource(connection);
         const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
         const finalRequest = profileMode ? { ...request, profile: true } : request;
-        const data = await client.query(finalRequest, controller.signal);
+        const data = await datasource.execute(finalRequest, controller.signal);
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
           const serverDurationMs = getServerDurationMs(data);
           if (stepIndex === null) {
