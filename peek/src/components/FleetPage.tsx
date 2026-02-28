@@ -40,6 +40,9 @@ const TABS: { value: FleetViewTab; label: string }[] = [
 ];
 
 const AUTO_REFRESH_MS = 30_000;
+type AgentFilterUpdates = Parameters<
+  ReturnType<typeof useFleetStore.getState>["updateAgentFilter"]
+>[0];
 
 export default function FleetPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -85,6 +88,8 @@ export default function FleetPage() {
     setLoading,
     setError,
     setPartialErrors,
+    updateAgentFilter,
+    resetFilters,
   } = useFleetStore(
     useShallow((s) => ({
       setActiveTab: s.setActiveTab,
@@ -98,6 +103,8 @@ export default function FleetPage() {
       setLoading: s.setLoading,
       setError: s.setError,
       setPartialErrors: s.setPartialErrors,
+      updateAgentFilter: s.updateAgentFilter,
+      resetFilters: s.resetFilters,
     })),
   );
 
@@ -177,6 +184,15 @@ export default function FleetPage() {
     [navigate],
   );
 
+  const handleDrillIn = useCallback(
+    (updates: AgentFilterUpdates) => {
+      resetFilters();
+      updateAgentFilter(updates);
+      setActiveTab("agents");
+    },
+    [resetFilters, updateAgentFilter, setActiveTab],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       {/* Header */}
@@ -228,6 +244,7 @@ export default function FleetPage() {
               agentVersions={agentVersions}
               agentInventory={agentInventory}
               agentInventoryTotal={agentInventoryTotal}
+              onDrillIn={handleDrillIn}
             />
           )}
           {activeTab === "agents" && (
@@ -252,11 +269,13 @@ function OverviewTab({
   agentVersions,
   agentInventory,
   agentInventoryTotal,
+  onDrillIn,
 }: {
   serverStatus: ReturnType<typeof useFleetStore.getState>["serverStatus"];
   agentVersions: ReturnType<typeof useFleetStore.getState>["agentVersions"];
   agentInventory: ReturnType<typeof useFleetStore.getState>["agentInventory"];
   agentInventoryTotal: ReturnType<typeof useFleetStore.getState>["agentInventoryTotal"];
+  onDrillIn: (updates: AgentFilterUpdates) => void;
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -266,8 +285,22 @@ function OverviewTab({
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <FleetStatCard title="Total" value={serverStatus.total} />
             <FleetStatCard title="Healthy" value={serverStatus.healthy} color="success.main" />
-            <FleetStatCard title="Unhealthy" value={serverStatus.unhealthy} color="warning.main" />
-            <FleetStatCard title="Offline" value={serverStatus.offline} color="text.secondary" />
+            <FleetStatCard
+              title="Unhealthy"
+              value={serverStatus.unhealthy}
+              color="warning.main"
+              onClick={
+                serverStatus.unhealthy > 0 ? () => onDrillIn({ hasErrors: true }) : undefined
+              }
+            />
+            <FleetStatCard
+              title="Offline"
+              value={serverStatus.offline}
+              color="text.secondary"
+              onClick={
+                serverStatus.offline > 0 ? () => onDrillIn({ staleness: "stale" }) : undefined
+              }
+            />
             <FleetStatCard title="Updating" value={serverStatus.updating} color="info.main" />
             <FleetStatCard title="Inactive" value={serverStatus.inactive} />
           </Stack>
@@ -358,6 +391,11 @@ function OverviewTab({
               title="With Errors"
               value={agentInventory.filter((a) => a.errorCount > 0).length}
               color="error.main"
+              onClick={
+                agentInventory.some((a) => a.errorCount > 0)
+                  ? () => onDrillIn({ hasErrors: true })
+                  : undefined
+              }
             />
           </Stack>
           {agentVersions.length > 0 && (

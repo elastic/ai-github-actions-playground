@@ -11,9 +11,11 @@ import type {
 
 export type FleetViewTab = "overview" | "agents" | "outputs" | "activity";
 
-interface AgentFilter {
+export interface AgentFilter {
   search: string;
   version: string | null;
+  hasErrors: boolean;
+  staleness: "stale" | "critical" | null;
 }
 
 interface FleetState {
@@ -59,7 +61,12 @@ interface FleetState {
   resetFilters: () => void;
 }
 
-const DEFAULT_FILTER: AgentFilter = { search: "", version: null };
+const DEFAULT_FILTER: AgentFilter = {
+  search: "",
+  version: null,
+  hasErrors: false,
+  staleness: null,
+};
 
 export const useFleetStore = create<FleetState>()((set) => ({
   serverStatus: null,
