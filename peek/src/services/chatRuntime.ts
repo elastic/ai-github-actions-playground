@@ -65,8 +65,15 @@ function clampToolRowLimit(rowLimit?: number): number {
 }
 
 function ensureQueryLimit(query: string, rowLimit: number): string {
-  if (/\|\s*LIMIT\s+\d+\s*$/i.test(query)) return query;
-  return `${query} | LIMIT ${rowLimit}`;
+  const trailingLimit = /\|\s*LIMIT\s+(\d+)\s*$/i;
+  const match = query.match(trailingLimit);
+  if (!match) return `${query} | LIMIT ${rowLimit}`;
+
+  const existing = Number.parseInt(match[1] ?? "", 10);
+  if (Number.isNaN(existing) || existing > rowLimit) {
+    return query.replace(trailingLimit, `| LIMIT ${rowLimit}`);
+  }
+  return query;
 }
 
 function truncateCellValue(value: unknown): { value: unknown; truncated: boolean } {
