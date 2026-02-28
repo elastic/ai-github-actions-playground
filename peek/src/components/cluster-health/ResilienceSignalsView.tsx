@@ -26,16 +26,17 @@ export default function ResilienceSignalsView({ data }: ResilienceSignalsViewPro
   );
 
   // ILM
-  const ilmIndices = Object.entries(data.ilm?.indices ?? {});
+  const ilmIndicesObj = data.ilm?.indices;
+  const ilmIndices = Object.entries(ilmIndicesObj ?? {});
   const ilmWarnings = ilmIndices.filter(([, e]) => Boolean(e.failed_step)).length;
   const ilmPhases = useMemo(() => {
     const phases = new Map<string, number>();
-    for (const [, entry] of ilmIndices) {
+    for (const entry of Object.values(ilmIndicesObj ?? {})) {
       const phase = entry.phase ?? "unknown";
       phases.set(phase, (phases.get(phase) ?? 0) + 1);
     }
     return phases;
-  }, [ilmIndices]);
+  }, [ilmIndicesObj]);
 
   // SLM
   const slmFailures =

@@ -34,19 +34,20 @@ export default function OverviewView({ data }: OverviewViewProps) {
 
   const unassigned = data.clusterHealth?.unassigned_shards ?? 0;
   const pending = data.pendingTasks?.tasks?.length ?? 0;
+  const cpuValues = nodeValues
+    .map((n) => n.os?.cpu?.percent)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  const heapValues = nodeValues
+    .map((n) => n.jvm?.mem?.heap_used_percent)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
 
   const avgCpu =
-    nodeValues.length > 0
-      ? Math.round(
-          nodeValues.reduce((s, n) => s + (n.os?.cpu?.percent ?? 0), 0) / nodeValues.length,
-        )
+    cpuValues.length > 0
+      ? Math.round(cpuValues.reduce((sum, value) => sum + value, 0) / cpuValues.length)
       : 0;
   const avgHeap =
-    nodeValues.length > 0
-      ? Math.round(
-          nodeValues.reduce((s, n) => s + (n.jvm?.mem?.heap_used_percent ?? 0), 0) /
-            nodeValues.length,
-        )
+    heapValues.length > 0
+      ? Math.round(heapValues.reduce((sum, value) => sum + value, 0) / heapValues.length)
       : 0;
 
   const rejections = totalThreadPoolRejections(data.nodeStats?.nodes);

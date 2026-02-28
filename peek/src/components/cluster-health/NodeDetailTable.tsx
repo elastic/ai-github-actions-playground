@@ -16,6 +16,7 @@ import type { InfoCardSeverity } from "./InfoCard";
 import { percentSeverity } from "./clusterHealthUtils";
 
 interface NodeRow {
+  id: string;
   name: string;
   cpu: number;
   osMem: number;
@@ -58,7 +59,7 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
       }
     }
 
-    return Object.values(nodes).map((node) => {
+    return Object.entries(nodes).map(([id, node]) => {
       const pools = ["write", "search", "get"];
       const rejections = pools.reduce((sum, p) => sum + (node.thread_pool?.[p]?.rejected ?? 0), 0);
       const breakers = ["parent", "fielddata", "request", "in_flight_requests"];
@@ -69,6 +70,7 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
         openFd != null && maxFd != null && maxFd > 0 ? Math.round((openFd / maxFd) * 100) : null;
 
       return {
+        id,
         name: node.name ?? "unknown",
         cpu: node.os?.cpu?.percent ?? 0,
         osMem: node.os?.mem?.used_percent ?? 0,
@@ -185,7 +187,7 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
         </TableHead>
         <TableBody>
           {sorted.map((row) => (
-            <TableRow key={row.name}>
+            <TableRow key={row.id}>
               {columns.map((col) => (
                 <TableCell
                   key={col.key}

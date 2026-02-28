@@ -243,6 +243,7 @@ describe("parseNumber", () => {
   it("returns null for invalid values", () => {
     expect(parseNumber(undefined)).toBeNull();
     expect(parseNumber("")).toBeNull();
+    expect(parseNumber("   ")).toBeNull();
     expect(parseNumber("abc")).toBeNull();
   });
 });

@@ -10,7 +10,7 @@ interface TaskBacklogViewProps {
   data: ClusterHealthData;
 }
 
-const PRIORITY_ORDER = ["URGENT", "HIGH", "NORMAL", "LOW", "UNKNOWN"];
+const PRIORITY_ORDER = ["IMMEDIATE", "URGENT", "HIGH", "NORMAL", "LOW", "LANGUID", "UNKNOWN"];
 
 export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
   const tasks = data.pendingTasks?.tasks ?? [];
@@ -52,7 +52,12 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
           <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
             Tasks by Priority
           </Typography>
-          {PRIORITY_ORDER.filter((p) => grouped.has(p)).map((priority) => (
+          {[
+            ...PRIORITY_ORDER.filter((p) => grouped.has(p)),
+            ...Array.from(grouped.keys())
+              .filter((p) => !PRIORITY_ORDER.includes(p))
+              .sort(),
+          ].map((priority) => (
             <div key={priority}>
               <Typography variant="body2" sx={{ fontWeight: 600, mt: 1 }}>
                 {priority} ({grouped.get(priority)!.length})

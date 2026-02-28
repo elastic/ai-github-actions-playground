@@ -35,8 +35,7 @@ export function getDiskWatermarks(settings: ClusterSettingsResponse | null): Dis
     return (
       (settings?.transient?.[flat] as string | undefined) ??
       (settings?.persistent?.[flat] as string | undefined) ??
-      (settings?.defaults?.[flat] as string | undefined) ??
-      undefined
+      (settings?.defaults?.[flat] as string | undefined)
     );
   };
   return {
@@ -210,6 +209,8 @@ export function groupUnassignedReasons(shards: CatShardRecord[]): Map<string, nu
 /** Parse a string value from _cat APIs to a number, returning null for invalid values. */
 export function parseNumber(value: string | undefined): number | null {
   if (!value) return null;
-  const parsed = Number(value);
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
 }

@@ -39,6 +39,7 @@ export default function RefreshPicker({
         size="small"
         value={intervalMs}
         onChange={(e) => onIntervalChange(Number(e.target.value))}
+        inputProps={{ "aria-label": "Auto-refresh interval" }}
         sx={{ minWidth: 80, "& .MuiSelect-select": { py: 0.5 } }}
       >
         {INTERVALS.map((opt) => (

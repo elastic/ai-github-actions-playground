@@ -94,6 +94,8 @@ const DEFAULT_MOCK_DATA = {
   ],
   recovery: {},
   ilmExplain: { indices: {} },
+  allocationExplain: { error: { reason: "unable to find any unassigned shards to explain" } },
+  allocationExplainStatus: 400,
   slmStats: { operation_mode: "RUNNING", policy_stats: [] },
   snapshotStatus: { snapshots: [] },
   ingestNodeStats: { nodes: { n1: { ingest: { total: { count: 1000, failed: 0 } } } } },
@@ -233,27 +235,31 @@ export async function registerElasticsearchMocks(
     if (path === "/_security/user" && method === "GET") return json(resolved.securityUsers);
     if (path === "/_security/role" && method === "GET") return json(resolved.securityRoles);
 
-    if (path === "/_cluster/settings") return json(resolved.clusterSettings);
-    if (path === "/_cluster/pending_tasks") return json(resolved.pendingTasks);
+    if (path === "/_cluster/settings" && method === "GET") return json(resolved.clusterSettings);
+    if (path === "/_cluster/pending_tasks" && method === "GET") return json(resolved.pendingTasks);
     if (path === "/_cluster/allocation/explain" && method === "POST") {
-      return json({ error: { reason: "unable to find any unassigned shards to explain" } }, 400);
+      const status =
+        resolved.allocationExplainStatus ??
+        (resolved.allocationExplain?.error != null ? 400 : 200);
+      return json(resolved.allocationExplain, status);
     }
-    if (path === "/_cat/shards") return json(resolved.catShards);
-    if (path === "/_cat/allocation") return json(resolved.catAllocation);
-    if (path.startsWith("/_recovery")) return json(resolved.recovery);
-    if (path.match(/\/_ilm\/explain/)) return json(resolved.ilmExplain);
-    if (path === "/_slm/stats") return json(resolved.slmStats);
-    if (path === "/_snapshot/_status") return json(resolved.snapshotStatus);
-    if (path === "/_nodes/stats/ingest") return json(resolved.ingestNodeStats);
-    if (path === "/_cat/indices") return json(resolved.catIndices);
-    if (path === "/_data_stream") return json(resolved.dataStreams);
-    if (path.startsWith("/_resolve/index/")) return json(resolved.resolveIndex);
-    if (path.match(/\/_field_caps/)) return json(resolved.fieldCaps);
-    if (path.match(/^\/[^_][^/]*\/_mapping$/)) return json(resolved.indexMapping);
-    if (path.match(/^\/[^_][^/]*\/_settings$/)) return json(resolved.indexSettings);
-    if (path.match(/^\/[^_][^/]*\/_stats$/)) return json(resolved.indexStats);
+    if (path === "/_cat/shards" && method === "GET") return json(resolved.catShards);
+    if (path === "/_cat/allocation" && method === "GET") return json(resolved.catAllocation);
+    if (path.startsWith("/_recovery") && method === "GET") return json(resolved.recovery);
+    if (path.match(/\/_ilm\/explain/) && method === "GET") return json(resolved.ilmExplain);
+    if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);
+    if (path === "/_snapshot/_status" && method === "GET") return json(resolved.snapshotStatus);
+    if (path === "/_nodes/stats/ingest" && method === "GET") return json(resolved.ingestNodeStats);
+    if (path === "/_cat/indices" && method === "GET") return json(resolved.catIndices);
+    if (path === "/_data_stream" && method === "GET") return json(resolved.dataStreams);
+    if (path.startsWith("/_resolve/index/") && method === "GET") return json(resolved.resolveIndex);
+    if (path.match(/\/_field_caps/) && method === "GET") return json(resolved.fieldCaps);
+    if (path.match(/^\/[^_][^/]*\/_mapping$/) && method === "GET") return json(resolved.indexMapping);
+    if (path.match(/^\/[^_][^/]*\/_settings$/) && method === "GET")
+      return json(resolved.indexSettings);
+    if (path.match(/^\/[^_][^/]*\/_stats$/) && method === "GET") return json(resolved.indexStats);
 
-    if (path === "/_ingest/pipeline") return json(resolved.ingestPipelines);
+    if (path === "/_ingest/pipeline" && method === "GET") return json(resolved.ingestPipelines);
     if (path.startsWith("/_fleet/")) return json({});
 
     if (path === "/_query" && method === "POST") {

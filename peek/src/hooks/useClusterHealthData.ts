@@ -76,6 +76,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   const connection = useConnectionStore((s) => s.connection);
   const abortRef = useRef<AbortController | null>(null);
   const requestSeqRef = useRef(0);
+  const inFlightRef = useRef(false);
 
   const [data, setData] = useState<ClusterHealthData>(EMPTY_DATA);
   const [loading, setLoading] = useState(false);
@@ -85,7 +86,16 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   const [refreshIntervalMs, setRefreshIntervalMs] = useState(DEFAULT_REFRESH_MS);
 
   const loadData = useCallback(async () => {
-    if (!connection) return;
+    if (!connection) {
+      abortRef.current?.abort();
+      inFlightRef.current = false;
+      setData(EMPTY_DATA);
+      setError(null);
+      setPartialErrors([]);
+      setLastUpdatedAt(null);
+      setLoading(false);
+      return;
+    }
 
     // Cancel any in-flight request
     abortRef.current?.abort();
@@ -93,6 +103,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
     abortRef.current = controller;
     const signal = controller.signal;
     const seq = ++requestSeqRef.current;
+    inFlightRef.current = true;
 
     setLoading(true);
     setError(null);
@@ -114,7 +125,10 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
         client.getSlmStats(signal),
         client.getSnapshotStatus(signal),
         client.getNodeIngestStats(signal),
-        client.getClusterSettings(signal).catch(() => null), // may 403
+        client.getClusterSettings(signal).catch((err) => {
+          if (isElasticsearchError(err) && err.status === 403) return null;
+          throw err;
+        }),
       ]);
 
       if (signal.aborted || seq !== requestSeqRef.current) return;
@@ -195,6 +209,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
       if (seq === requestSeqRef.current) {
+        inFlightRef.current = false;
         setLoading(false);
       }
     }
@@ -215,8 +230,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   useEffect(() => {
     if (refreshIntervalMs <= 0) return;
     const id = setInterval(() => {
-      const s = abortRef.current?.signal;
-      if (!s || !s.aborted) {
+      if (!inFlightRef.current) {
         void loadRef.current();
       }
     }, refreshIntervalMs);
