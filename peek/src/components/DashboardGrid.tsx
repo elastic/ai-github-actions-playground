@@ -3,7 +3,6 @@ import {
   Responsive,
   useContainerWidth,
   type Layout,
-  type LayoutItem,
   type ResponsiveLayouts as Layouts,
 } from "react-grid-layout";
 import Typography from "@mui/material/Typography";
@@ -19,6 +18,11 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { useUIStore } from "../store/useUIStore";
 
 import PanelContainer from "./PanelContainer";
+import {
+  fromReactGridLayoutItems,
+  toPersesPanelLayouts,
+  toReactGridLayouts,
+} from "./perses/layoutAdapter";
 
 export default function DashboardGrid() {
   const { width, containerRef, mounted } = useContainerWidth();
@@ -33,17 +37,7 @@ export default function DashboardGrid() {
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
 
   const layouts = useMemo<Layouts>(
-    () => ({
-      lg: panels.map((p) => ({
-        i: p.id,
-        x: p.layout.x,
-        y: p.layout.y,
-        w: p.layout.w,
-        h: p.layout.h,
-        minW: 2,
-        minH: 2,
-      })),
-    }),
+    () => toReactGridLayouts(toPersesPanelLayouts(panels)),
     [panels],
   );
 
@@ -51,13 +45,7 @@ export default function DashboardGrid() {
     (_currentLayout: Layout, allLayouts: Layouts) => {
       const lgLayout = allLayouts.lg;
       if (!lgLayout) return;
-      const updates = lgLayout.map((l: LayoutItem) => ({
-        id: l.i,
-        x: l.x,
-        y: l.y,
-        w: l.w,
-        h: l.h,
-      }));
+      const updates = fromReactGridLayoutItems(lgLayout);
       updatePanelLayouts(updates);
     },
     [updatePanelLayouts],

@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 
-import { ElasticsearchClient, buildEsqlRequest } from "../services/es";
 import type {
   ElasticsearchConnection,
   EsqlResponse,
   DashboardParameter,
   TimeRange,
 } from "../types";
+import {
+  buildPersesEsqlRequest,
+  createPersesEsqlDatasource,
+} from "../services/perses/esqlDatasource";
 import {
   extractEsqlBlocks,
   replaceEsqlBlocks,
@@ -73,13 +76,9 @@ export function useMarkdownEsql({
         if (cancelled) return;
         if (!connection) continue;
         try {
-          const client = new ElasticsearchClient(connection);
-          const body = buildEsqlRequest(query, {
-            timeRange,
-            parameters,
-            includeTimeRangeFilter: true,
-          });
-          const data = await client.query(body, ctrl.signal);
+          const datasource = createPersesEsqlDatasource(connection);
+          const request = buildPersesEsqlRequest(query, { timeRange, parameters });
+          const data = await datasource.execute(request, ctrl.signal);
           if (!ctrl.signal.aborted) next.set(raw, data);
         } catch {
           // Query failed — leave the raw token in place.

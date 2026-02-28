@@ -162,14 +162,12 @@ describe("useFleetStore", () => {
     });
 
     it("resetFilters clears to defaults", () => {
-      useFleetStore
-        .getState()
-        .updateAgentFilter({
-          search: "test",
-          version: "8.14.0",
-          hasErrors: true,
-          staleness: "critical",
-        });
+      useFleetStore.getState().updateAgentFilter({
+        search: "test",
+        version: "8.14.0",
+        hasErrors: true,
+        staleness: "critical",
+      });
       useFleetStore.getState().resetFilters();
       expect(useFleetStore.getState().agentFilter).toEqual({
         search: "",
