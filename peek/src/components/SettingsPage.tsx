@@ -49,7 +49,7 @@ export default function SettingsPage() {
     setTabAutocompleteEnabled,
     setElasticDocsEnabled,
     isConfigured,
-    resetLLMState,
+    resetLLMConfig,
   } = useLLMStore(
     useShallow((s) => ({
       config: s.config,
@@ -59,7 +59,7 @@ export default function SettingsPage() {
       setTabAutocompleteEnabled: s.setTabAutocompleteEnabled,
       setElasticDocsEnabled: s.setElasticDocsEnabled,
       isConfigured: s.isConfigured,
-      resetLLMState: s.resetLLMState,
+      resetLLMConfig: s.resetLLMConfig,
     })),
   );
 
@@ -77,7 +77,7 @@ export default function SettingsPage() {
   const configured = isConfigured();
   const isModelEmpty = config.model.trim() === "";
   const handleResetLLMSettings = () => {
-    resetLLMState();
+    resetLLMConfig();
     setUseCustomModel(false);
   };
 

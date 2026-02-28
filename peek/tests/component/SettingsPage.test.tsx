@@ -172,4 +172,17 @@ describe("SettingsPage", () => {
     await user.click(toggle);
     expect(useLLMStore.getState().config.elasticDocsEnabled).toBe(true);
   });
+
+  it("resetting LLM settings does not clear chat messages", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    useLLMStore.getState().addMessage({ id: "msg-1", role: "user", content: "Hello" });
+
+    render(<SettingsPage />);
+    await user.click(screen.getByRole("button", { name: /reset llm settings/i }));
+
+    expect(useLLMStore.getState().config.apiKey).toBe("");
+    expect(useLLMStore.getState().messages).toHaveLength(1);
+    expect(useLLMStore.getState().messages[0].content).toBe("Hello");
+  });
 });

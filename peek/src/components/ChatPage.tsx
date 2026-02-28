@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -13,12 +13,12 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useShallow } from "zustand/react/shallow";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, stepCountIs } from "ai";
-import type { ToolSet } from "ai";
+import { generateText } from "ai";
 
 import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
-import { getElasticDocsTools, resetMcpSession } from "../services/elasticDocsMcp";
 import { PAGE_MANIFEST } from "../routes/manifest";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
 
 export default function ChatPage() {
   const {
@@ -42,6 +42,8 @@ export default function ChatPage() {
   );
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const connection = useConnectionStore((s) => s.connection);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -71,8 +73,7 @@ export default function ChatPage() {
     setLoading(true);
 
     const controller = new AbortController();
-    // Allow extra time when Elastic Docs tools are enabled (MCP handshake + tool calls).
-    const timeoutMs = config.elasticDocsEnabled ? 30_000 : 15_000;
+    const timeoutMs = getChatRequestTimeoutMs(config);
     const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
     try {
@@ -82,38 +83,22 @@ export default function ChatPage() {
       });
       const model =
         config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
-
-      let tools: ToolSet | undefined;
-      if (config.elasticDocsEnabled) {
-        try {
-          tools = await getElasticDocsTools(controller.signal);
-        } catch (mcpError) {
-          // If MCP tool discovery fails, fall through without tools.
-          console.warn("Elastic Docs MCP tool discovery failed:", mcpError);
-          resetMcpSession();
-        }
-      }
-
-      const hasTools = tools !== undefined && Object.keys(tools).length > 0;
+      const runtime = await buildChatRuntime({
+        config,
+        connection,
+        pathname: location.pathname,
+        signal: controller.signal,
+      });
 
       const result = await generateText({
         model,
-        system:
-          "You are a helpful assistant for the Elastic Peek dashboard application. " +
-          "You help users with Elasticsearch ES|QL queries, dashboard configuration, " +
-          "and data analysis. Keep your responses concise and helpful." +
-          (hasTools
-            ? " You have access to Elastic documentation search tools. " +
-              "Use them to look up relevant Elastic docs when the user asks about " +
-              "Elasticsearch features, APIs, ES|QL syntax, or configuration."
-            : ""),
+        system: runtime.systemPrompt,
         messages: [
           ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
           { role: "user" as const, content: trimmed },
         ],
-        // Allow up to 3 LLM round-trips so the model can call a search tool,
-        // read the result, and then produce a final answer.
-        ...(hasTools ? { tools, stopWhen: stepCountIs(3) } : {}),
+        tools: runtime.tools,
+        ...(runtime.stopWhen ? { stopWhen: runtime.stopWhen } : {}),
         abortSignal: controller.signal,
       });
 
@@ -131,7 +116,18 @@ export default function ChatPage() {
       clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [input, loading, configured, config, messages, addMessage, updateMessage, removeMessage]);
+  }, [
+    input,
+    loading,
+    configured,
+    config,
+    messages,
+    addMessage,
+    updateMessage,
+    removeMessage,
+    connection,
+    location.pathname,
+  ]);
 
   if (!configured) {
     return (
