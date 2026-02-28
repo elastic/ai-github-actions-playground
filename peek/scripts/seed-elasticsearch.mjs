@@ -116,6 +116,7 @@ async function seedWebLogs(client) {
 // ---------------------------------------------------------------------------
 
 async function seedOrders(client) {
+  const now = Date.now();
   const docs = [
     { order_id: "ORD-001", category: "electronics", amount: 299.99, quantity: 1, region: "us-east" },
     { order_id: "ORD-002", category: "electronics", amount: 149.99, quantity: 2, region: "us-west" },
@@ -125,7 +126,7 @@ async function seedOrders(client) {
     { order_id: "ORD-006", category: "books", amount: 29.99, quantity: 2, region: "us-west" },
     { order_id: "ORD-007", category: "electronics", amount: 999.99, quantity: 1, region: "eu-west" },
     { order_id: "ORD-008", category: "clothing", amount: 39.99, quantity: 4, region: "us-west" },
-  ];
+  ].map((doc, i) => ({ "@timestamp": new Date(now - i * 10 * 60_000).toISOString(), ...doc }));
 
   await client.indices.delete({ index: "orders" }).catch((e) => {
     if (e.meta?.statusCode !== 404) console.warn(`  Warning: could not delete orders: ${e.message}`);
@@ -135,6 +136,7 @@ async function seedOrders(client) {
     index: "orders",
     mappings: {
       properties: {
+        "@timestamp": { type: "date" },
         order_id: { type: "keyword" },
         category: { type: "keyword" },
         amount: { type: "double" },

@@ -145,7 +145,7 @@ otel-capture-down:
 	@echo "Stopping OTel capture stack..."
 	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-capture.yml down -v
 	@echo "Compressing fixtures..."
-	@cd $(PEEK_DIR)/fixtures/otlp && gzip -f traces.jsonl metrics.jsonl logs.jsonl
+	@cd $(PEEK_DIR)/fixtures/otlp && for f in traces.jsonl metrics.jsonl logs.jsonl; do [ -f "$$f" ] && gzip -f "$$f"; done
 	@echo "✓ Capture stopped. Fixtures in $(PEEK_DIR)/fixtures/otlp/*.jsonl.gz"
 
 otel-replay-up:
@@ -157,7 +157,7 @@ otel-replay:
 	@echo "Replaying OTLP fixtures + seeding non-OTLP data..."
 	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
-	@sleep 5
+	@sleep 5  # allow collector to flush replayed data to ES
 	@echo "✓ Data replayed and seeded."
 
 otel-replay-down:

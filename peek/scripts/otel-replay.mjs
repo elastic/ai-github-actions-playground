@@ -106,10 +106,15 @@ function readJsonLines(filePath) {
   } else {
     return [];
   }
-  return content
-    .split("\n")
-    .filter((line) => line.trim())
-    .map((line) => JSON.parse(line));
+  const lines = content.split("\n").filter((line) => line.trim());
+  return lines.map((line, i) => {
+    try {
+      return JSON.parse(line);
+    } catch (err) {
+      const src = existsSync(gzPath) ? gzPath : filePath;
+      throw new Error(`Failed to parse line ${i + 1} of ${src}: ${err.message}`);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -143,16 +148,24 @@ async function waitForCollector(endpoint, maxWaitMs = 60_000) {
 // Send via OTLP/HTTP
 // ---------------------------------------------------------------------------
 
-async function sendOtlp(endpoint, signal, payload) {
+async function sendOtlp(endpoint, signal, payload, retries = 2) {
   const url = `${endpoint}/v1/${signal}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`OTLP ${signal} POST failed (${res.status}): ${body}`);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`OTLP ${signal} POST failed (${res.status}): ${body}`);
+      }
+      return;
+    } catch (err) {
+      if (attempt >= retries) throw err;
+      await new Promise((r) => setTimeout(r, 1_000 * (attempt + 1)));
+    }
   }
 }
 

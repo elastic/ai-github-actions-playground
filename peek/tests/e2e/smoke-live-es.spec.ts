@@ -75,7 +75,7 @@ test.describe("smoke – live Elasticsearch", () => {
     logDiagnostics("Indices", consoleLogs, muiErrors, -1);
   });
 
-  test("Query Lab can execute a real ES|QL query", async ({ page }) => {
+  test("Query Lab editor loads against live cluster", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Query Lab", exact: true }).click();
