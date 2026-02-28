@@ -199,7 +199,7 @@ export default function FleetPage() {
   }, []);
   useEffect(() => {
     void runRefresh();
-  }, [runRefresh]);
+  }, [connection, runRefresh]);
   useEffect(() => {
     if (!autoRefreshEnabled) return;
     const id = setInterval(() => void runRefresh(), AUTO_REFRESH_MS);
