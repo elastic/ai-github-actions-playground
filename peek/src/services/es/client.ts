@@ -37,6 +37,9 @@ export interface ClusterHealthResponse {
   number_of_data_nodes?: number;
   active_primary_shards?: number;
   active_shards?: number;
+  initializing_shards?: number;
+  relocating_shards?: number;
+  delayed_unassigned_shards?: number;
   unassigned_shards?: number;
 }
 export interface ClusterPendingTask {
@@ -90,6 +93,8 @@ export interface NodeStatsNode {
   indices?: {
     docs?: { count?: number };
     shard_stats?: { total_count?: number };
+    indexing?: { index_total?: number };
+    search?: { query_total?: number; query_time_in_millis?: number };
   };
 }
 export interface NodesStatsResponse {

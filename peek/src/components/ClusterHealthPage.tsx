@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -65,10 +65,10 @@ function InfoCard({ title, value, detail }: { title: string; value: string; deta
   );
 }
 
-function parseNumber(value: string | undefined): number {
-  if (!value) return 0;
+function parseNumber(value: string | undefined): number | null {
+  if (!value) return null;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export default function ClusterHealthPage({
@@ -76,6 +76,7 @@ export default function ClusterHealthPage({
   title = "Cluster Health",
 }: ClusterHealthPageProps) {
   const connection = useConnectionStore((s) => s.connection);
+  const requestSeq = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
@@ -96,6 +97,7 @@ export default function ClusterHealthPage({
 
   const loadData = useCallback(async () => {
     if (!connection) return;
+    const seq = ++requestSeq.current;
     setLoading(true);
     setError(null);
     setPartialErrors([]);
@@ -118,6 +120,7 @@ export default function ClusterHealthPage({
           ]),
       });
       if (requestError !== null) {
+        if (seq !== requestSeq.current) return;
         setError(requestError);
         return;
       }
@@ -137,6 +140,7 @@ export default function ClusterHealthPage({
         ingestStats,
       ] = results;
 
+      if (seq !== requestSeq.current) return;
       setData({
         clusterHealth: clusterHealth.status === "fulfilled" ? clusterHealth.value : null,
         pendingTasks: pendingTasks.status === "fulfilled" ? pendingTasks.value : null,
@@ -163,10 +167,14 @@ export default function ClusterHealthPage({
       if (slm.status === "rejected") failures.push("SLM");
       if (snapshots.status === "rejected") failures.push("snapshots");
       if (ingestStats.status === "rejected") failures.push("ingest stats");
-      setPartialErrors(failures);
-      setLastUpdatedAt(new Date().toISOString());
+      if (seq === requestSeq.current) {
+        setPartialErrors(failures);
+        setLastUpdatedAt(new Date().toISOString());
+      }
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) {
+        setLoading(false);
+      }
     }
   }, [connection]);
 
@@ -179,19 +187,18 @@ export default function ClusterHealthPage({
     0,
     ...(data.pendingTasks?.tasks ?? []).map((task) => task.time_in_queue_millis ?? 0),
   );
-  const hotNodes = (data.allocation ?? []).filter(
-    (entry) => parseNumber(entry["disk.percent"]) >= 85,
-  ).length;
+  const diskPercents = (data.allocation ?? [])
+    .map((entry) => parseNumber(entry["disk.percent"]))
+    .filter((value): value is number => value !== null);
+  const hotNodes = diskPercents.filter((value) => value >= 85).length;
+  const floodStageNodes = diskPercents.filter((value) => value >= 95).length;
   const avgDiskPercent =
-    (data.allocation ?? []).length > 0
-      ? Math.round(
-          (data.allocation ?? []).reduce(
-            (sum, entry) => sum + parseNumber(entry["disk.percent"]),
-            0,
-          ) / (data.allocation ?? []).length,
-        )
+    diskPercents.length > 0
+      ? Math.round(diskPercents.reduce((sum, value) => sum + value, 0) / diskPercents.length)
       : 0;
+  const maxDiskPercent = diskPercents.length > 0 ? Math.round(Math.max(...diskPercents)) : 0;
   const nodeValues = Object.values(data.nodeStats?.nodes ?? {});
+  const nodeEntries = Object.entries(data.nodeStats?.nodes ?? {});
   const avgCpu =
     nodeValues.length > 0
       ? Math.round(
@@ -206,6 +213,23 @@ export default function ClusterHealthPage({
             nodeValues.length,
         )
       : 0;
+  const maxCpu =
+    nodeValues.length > 0 ? Math.max(...nodeValues.map((node) => node.os?.cpu?.percent ?? 0)) : 0;
+  const maxHeap =
+    nodeValues.length > 0
+      ? Math.max(...nodeValues.map((node) => node.jvm?.mem?.heap_used_percent ?? 0))
+      : 0;
+  const highHeapNodes = nodeValues.filter(
+    (node) => (node.jvm?.mem?.heap_used_percent ?? 0) >= 85,
+  ).length;
+  const maxCpuNode = nodeEntries.reduce<{ name: string; cpu: number }>(
+    (best, [, node]) => {
+      const cpu = node.os?.cpu?.percent ?? 0;
+      const name = node.name ?? "unknown";
+      return cpu > best.cpu ? { name, cpu } : best;
+    },
+    { name: "unknown", cpu: 0 },
+  ).name;
   const shardSkew = useMemo(() => {
     const perNode = new Map<string, number>();
     for (const shard of data.shards ?? []) {
@@ -218,12 +242,28 @@ export default function ClusterHealthPage({
   }, [data.shards]);
   const totalShards = (data.shards ?? []).length;
   const startedShards = (data.shards ?? []).filter((shard) => shard.state === "STARTED").length;
+  const initializingShards = data.clusterHealth?.initializing_shards ?? 0;
+  const relocatingShards = data.clusterHealth?.relocating_shards ?? 0;
+  const delayedUnassignedShards = data.clusterHealth?.delayed_unassigned_shards ?? 0;
   const unassignedShards = data.clusterHealth?.unassigned_shards ?? 0;
+  const nodeCount = data.clusterHealth?.number_of_nodes ?? nodeValues.length;
+  const dataNodeCount = data.clusterHealth?.number_of_data_nodes ?? 0;
   const recoveringIndices = Object.keys(data.recovery ?? {}).length;
   const activeRecoveries = Object.values(data.recovery ?? {}).reduce(
     (sum, indexRecovery) => sum + (indexRecovery.shards?.length ?? 0),
     0,
   );
+  const recoveryStuckShards = Object.values(data.recovery ?? {}).reduce(
+    (sum, indexRecovery) =>
+      sum +
+      (indexRecovery.shards ?? []).filter((shard) => (shard.stage ?? "").toUpperCase() !== "DONE")
+        .length,
+    0,
+  );
+  const primaryShards = (data.shards ?? []).filter((shard) => shard.prirep === "p").length;
+  const replicaShards = (data.shards ?? []).filter((shard) => shard.prirep === "r").length;
+  const primaryReplicaRatio =
+    replicaShards > 0 ? (primaryShards / replicaShards).toFixed(2) : "n/a";
   const ilmWarnings = Object.values(data.ilm?.indices ?? {}).filter((entry) =>
     Boolean(entry.failed_step),
   ).length;
@@ -239,6 +279,24 @@ export default function ClusterHealthPage({
       (sum, node) => sum + (node.ingest?.total?.failed ?? 0),
       0,
     ) ?? 0;
+  const indexingOps = nodeValues.reduce(
+    (sum, node) => sum + (node.indices?.indexing?.index_total ?? 0),
+    0,
+  );
+  const queryOps = nodeValues.reduce(
+    (sum, node) => sum + (node.indices?.search?.query_total ?? 0),
+    0,
+  );
+  const queryTimeMillis = nodeValues.reduce(
+    (sum, node) => sum + (node.indices?.search?.query_time_in_millis ?? 0),
+    0,
+  );
+  const queryLatencyMs = queryOps > 0 ? Math.round((queryTimeMillis / queryOps) * 100) / 100 : 0;
+  const instabilitySignals =
+    (pendingTaskCount >= 10 ? 1 : 0) +
+    (maxPendingTaskMillis >= 60_000 ? 1 : 0) +
+    (unassignedShards > 0 ? 1 : 0);
+  const partialApiFailures = partialErrors.length;
   const sectionTitle = useMemo(() => {
     switch (view) {
       case "taskBacklog":
@@ -295,10 +353,16 @@ export default function ClusterHealthPage({
               title="Cluster status"
               value={(data.clusterHealth?.status ?? "unknown").toUpperCase()}
             />
+            <InfoCard title="Unassigned shards" value={unassignedShards.toLocaleString()} />
             <InfoCard title="Pending tasks" value={pendingTaskCount.toString()} />
+            <InfoCard title="Node count" value={nodeCount.toLocaleString()} />
+            <InfoCard title="Data nodes" value={dataNodeCount.toLocaleString()} />
             <InfoCard title="Avg CPU" value={`${avgCpu}%`} />
+            <InfoCard title="Max CPU node" value={maxCpuNode} detail={`${maxCpu}%`} />
+            <InfoCard title="Avg heap" value={`${avgHeap}%`} />
             <InfoCard title="Shard skew" value={shardSkew.toString()} />
             <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
+            <InfoCard title="Partial API failures" value={partialApiFailures.toString()} />
           </Stack>
         ) : null}
         {view === "taskBacklog" ? (
@@ -309,14 +373,30 @@ export default function ClusterHealthPage({
               value={`${Math.round(maxPendingTaskMillis / 1000)}s`}
               detail="time in queue"
             />
+            <InfoCard
+              title="Delayed unassigned shards"
+              value={delayedUnassignedShards.toString()}
+            />
             <InfoCard title="Hot disk nodes" value={hotNodes.toString()} detail=">=85% disk" />
+            <InfoCard
+              title="Instability signals"
+              value={instabilitySignals.toString()}
+              detail="pending + queue + unassigned"
+            />
+            <InfoCard title="Partial API failures" value={partialApiFailures.toString()} />
           </Stack>
         ) : null}
         {view === "capacityPressure" ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Avg CPU" value={`${avgCpu}%`} />
+            <InfoCard title="Max CPU" value={`${maxCpu}%`} />
             <InfoCard title="Avg heap" value={`${avgHeap}%`} />
+            <InfoCard title="Max heap" value={`${maxHeap}%`} />
+            <InfoCard title="Heap >85%" value={highHeapNodes.toString()} detail="nodes" />
             <InfoCard title="Avg disk used" value={`${avgDiskPercent}%`} />
+            <InfoCard title="Max disk used" value={`${maxDiskPercent}%`} />
+            <InfoCard title="High watermark nodes" value={hotNodes.toString()} detail=">=85%" />
+            <InfoCard title="Flood-stage nodes" value={floodStageNodes.toString()} detail=">=95%" />
             <InfoCard
               title="Total indices"
               value={(data.clusterStats?.indices?.count ?? 0).toLocaleString()}
@@ -327,22 +407,30 @@ export default function ClusterHealthPage({
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Total shards" value={totalShards.toLocaleString()} />
             <InfoCard title="Started shards" value={startedShards.toLocaleString()} />
+            <InfoCard title="Initializing shards" value={initializingShards.toLocaleString()} />
+            <InfoCard title="Relocating shards" value={relocatingShards.toLocaleString()} />
             <InfoCard title="Unassigned shards" value={unassignedShards.toLocaleString()} />
             <InfoCard
               title="Shard skew"
               value={shardSkew.toString()}
               detail="max-min shards per node"
             />
+            <InfoCard title="Primary/replica ratio" value={primaryReplicaRatio} />
           </Stack>
         ) : null}
         {view === "resilienceSignals" ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Recovering indices" value={recoveringIndices.toString()} />
             <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
+            <InfoCard title="Recovery stuck shards" value={recoveryStuckShards.toString()} />
             <InfoCard title="ILM warnings" value={ilmWarnings.toString()} />
             <InfoCard title="SLM failures" value={slmFailures.toString()} />
             <InfoCard title="Snapshot failures" value={snapshotFailures.toString()} />
             <InfoCard title="Ingest failures" value={ingestFailures.toString()} />
+            <InfoCard title="Indexing ops" value={indexingOps.toLocaleString()} />
+            <InfoCard title="Search query ops" value={queryOps.toLocaleString()} />
+            <InfoCard title="Search latency proxy" value={`${queryLatencyMs}ms`} />
+            <InfoCard title="Partial API failures" value={partialApiFailures.toString()} />
           </Stack>
         ) : null}
       </Paper>
