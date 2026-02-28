@@ -38,6 +38,8 @@ const PIPELINES_RESPONSE = {
   },
 };
 
+const INPUT_LABEL = "Input documents (JSON, JSON array, or NDJSON)";
+
 describe("IngestPipelinesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -131,7 +133,7 @@ describe("IngestPipelinesPage", () => {
     await screen.findByText("permission_denied");
   });
 
-  it("runs simulate and displays the result", async () => {
+  it("runs simulate and displays the structured result with status chips", async () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
     simulateIngestPipelineMock.mockResolvedValue({
@@ -150,8 +152,152 @@ describe("IngestPipelinesPage", () => {
 
     await user.click(screen.getByRole("button", { name: /simulate/i }));
 
+    const resultContainer = await screen.findByTestId("simulate-result");
+    // Shows the OK status chip for the successful doc
+    expect(resultContainer).toBeInTheDocument();
+    expect(screen.getByTestId("doc-result-status-0")).toHaveTextContent("OK");
+    // Expand Doc 1 to see its output
+    await user.click(screen.getByRole("button", { name: /expand doc 1/i }));
+    await waitFor(() => {
+      expect(resultContainer.textContent).toContain("production");
+    });
+  });
+
+  it("shows Error chip and reason for a failed document", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+    simulateIngestPipelineMock.mockResolvedValue({
+      docs: [
+        {
+          doc: {
+            _source: {},
+            error: { type: "grok_exception", reason: "pattern_match_failure" },
+          },
+        },
+      ],
+    });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("my-pipeline");
+    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByRole("button", { name: /simulate/i }));
+
     await screen.findByTestId("simulate-result");
-    expect(screen.getByTestId("simulate-result").textContent).toContain("production");
+    expect(screen.getByTestId("doc-result-status-0")).toHaveTextContent("Error");
+    expect(screen.getByTestId("simulate-result").textContent).toContain("grok_exception");
+    expect(screen.getByTestId("simulate-result").textContent).toContain("pattern_match_failure");
+  });
+
+  it("simulates a JSON array of multiple documents", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+    simulateIngestPipelineMock.mockResolvedValue({
+      docs: [{ doc: { _source: { env: "production" } } }, { doc: { _source: { env: "staging" } } }],
+    });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("my-pipeline");
+    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
+
+    // Replace input with a JSON array
+    const input = screen.getByLabelText(INPUT_LABEL);
+    fireEvent.change(input, {
+      target: { value: '[{"env": "production"}, {"env": "staging"}]' },
+    });
+
+    await user.click(screen.getByRole("button", { name: /simulate/i }));
+
+    const resultContainer = await screen.findByTestId("simulate-result");
+    expect(resultContainer).toBeInTheDocument();
+    // Should show status chips for both docs
+    expect(screen.getByTestId("doc-result-status-0")).toHaveTextContent("OK");
+    expect(screen.getByTestId("doc-result-status-1")).toHaveTextContent("OK");
+    expect(screen.getByText("Results — 2 documents")).toBeInTheDocument();
+
+    // Verify the API received both docs as an array
+    expect(simulateIngestPipelineMock).toHaveBeenCalledWith(
+      "my-pipeline",
+      [{ _source: { env: "production" } }, { _source: { env: "staging" } }],
+      { verbose: false },
+    );
+  });
+
+  it("simulates NDJSON input (one JSON object per line)", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+    simulateIngestPipelineMock.mockResolvedValue({
+      docs: [{ doc: { _source: { a: 1 } } }, { doc: { _source: { b: 2 } } }],
+    });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("my-pipeline");
+    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+
+    const input = screen.getByLabelText(INPUT_LABEL);
+    fireEvent.change(input, { target: { value: '{"a": 1}\n{"b": 2}' } });
+
+    await user.click(screen.getByRole("button", { name: /simulate/i }));
+
+    await screen.findByTestId("simulate-result");
+    expect(simulateIngestPipelineMock).toHaveBeenCalledWith(
+      "my-pipeline",
+      [{ _source: { a: 1 } }, { _source: { b: 2 } }],
+      { verbose: false },
+    );
+  });
+
+  it("passes verbose flag to the API when verbose trace is enabled", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+    simulateIngestPipelineMock.mockResolvedValue({
+      docs: [
+        {
+          doc: { _source: { env: "production" } },
+          processor_results: [{ processor_type: "set", status: "success" }],
+        },
+      ],
+    });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("my-pipeline");
+    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+
+    // Enable verbose trace
+    await user.click(screen.getByRole("checkbox", { name: /verbose processor trace/i }));
+    await user.click(screen.getByRole("button", { name: /simulate/i }));
+
+    await screen.findByTestId("simulate-result");
+    expect(simulateIngestPipelineMock).toHaveBeenCalledWith("my-pipeline", expect.any(Array), {
+      verbose: true,
+    });
+
+    // Expand the doc to see the trace
+    await user.click(screen.getByRole("button", { name: /expand doc 1/i }));
+    await waitFor(() => {
+      expect(screen.getByTestId("simulate-result").textContent).toContain("set");
+    });
+    expect(screen.getByTestId("simulate-result").textContent).toContain("success");
   });
 
   it("shows a simulate error when the API call fails", async () => {
@@ -188,7 +334,7 @@ describe("IngestPipelinesPage", () => {
     await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
 
-    const input = screen.getByLabelText("Input document (JSON)");
+    const input = screen.getByLabelText(INPUT_LABEL);
     fireEvent.change(input, { target: { value: "not-valid-json" } });
 
     await user.click(screen.getByRole("button", { name: /simulate/i }));
