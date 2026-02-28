@@ -49,9 +49,8 @@ export async function executeRawRequest(
     signal?.addEventListener("abort", onAbort, { once: true });
   }
   const rawBody = body && body.trim() ? body : undefined;
-  let response: Response;
   try {
-    response = await doFetch(
+    const response = await doFetch(
       url,
       { ...headers },
       {
@@ -60,23 +59,22 @@ export async function executeRawRequest(
         signal: controller.signal,
       },
     );
+    const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+    let responseBody: unknown;
+    if (contentType.includes("application/json")) {
+      responseBody = await response.json().catch(() => null);
+    } else {
+      const text = await response.text().catch(() => "");
+      responseBody = text || null;
+    }
+    return { status: response.status, body: responseBody };
   } catch (err) {
-    clearTimeout(timeoutId);
-    signal?.removeEventListener("abort", onAbort);
     throw {
       status: 0,
       message: err instanceof Error ? err.message : String(err),
     } satisfies RawRequestError;
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onAbort);
   }
-  clearTimeout(timeoutId);
-  signal?.removeEventListener("abort", onAbort);
-  const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
-  let responseBody: unknown;
-  if (contentType.includes("application/json")) {
-    responseBody = await response.json().catch(() => null);
-  } else {
-    const text = await response.text().catch(() => "");
-    responseBody = text || null;
-  }
-  return { status: response.status, body: responseBody };
 }

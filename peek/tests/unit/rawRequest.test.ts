@@ -105,7 +105,7 @@ describe("executeRawRequest", () => {
     expect(result).toEqual({ status: 200, body: "green 1 1 0 0 0 0 0 0 -" });
   });
 
-  it("maps fetch failures to ElasticsearchError shape", async () => {
+  it("maps fetch failures to RawRequestError shape", async () => {
     const doFetch: DoFetch = vi.fn().mockRejectedValue(new TypeError("network down"));
 
     await expect(executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/")).rejects.toEqual(
