@@ -87,6 +87,7 @@ test.describe("smoke – live Elasticsearch", () => {
     await page.getByRole("button", { name: "Metrics", exact: true }).click();
     // Search for system.cpu — real field_caps should find it
     const metricSearch = page.getByLabel("Search metrics");
+    await expect(metricSearch).toBeVisible({ timeout: 5_000 });
     await metricSearch.fill("system.cpu");
     await expect(page.locator("li.MuiAutocomplete-option").first()).toBeVisible({
       timeout: 10_000,

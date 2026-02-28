@@ -3,6 +3,7 @@
 **Title:** Improve Playwright and Docker service support for frontend repos
 
 **To file when API rate limit resets:**
+
 ```bash
 gh issue create --repo elastic/ai-github-actions \
   --title "Improve Playwright and Docker service support for frontend repos" \
