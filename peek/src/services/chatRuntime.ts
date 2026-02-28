@@ -120,16 +120,14 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
       description:
         "Run an ES|QL query against the active Elasticsearch connection and return bounded results.",
       inputSchema: z.object({
-        query: z
-          .string()
-          .min(1)
-          .refine((value) => !/^[;\s]*$/.test(value), "Query must not be empty"),
+        query: z.string().min(1),
         profile: z.boolean().optional(),
         rowLimit: z.number().int().min(1).max(MAX_TOOL_ROW_LIMIT).optional(),
       }),
       execute: async ({ query, profile, rowLimit }) => {
         const trimmedQuery = query.trim();
-        if (!trimmedQuery || /^[;\s]*$/.test(trimmedQuery)) {
+        const normalizedQuery = trimmedQuery.replace(/\s*;\s*$/, "");
+        if (!normalizedQuery) {
           throw new Error("Query must not be empty");
         }
         const boundedQuery = ensureQueryLimit(trimmedQuery, clampToolRowLimit(rowLimit));
@@ -213,7 +211,7 @@ export async function buildChatRuntime({
       mcpInstructions.push(provider.systemInstruction);
       maxStepCountLimit = Math.max(maxStepCountLimit, provider.stepCountLimit);
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
         throw error;
       }
       provider.onError?.(error);
