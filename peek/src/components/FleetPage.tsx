@@ -192,20 +192,20 @@ export default function FleetPage() {
   const loadRef = useRef(loadFleetData);
   const pollingInFlightRef = useRef(false);
   loadRef.current = loadFleetData;
+  const runRefresh = useCallback(async () => {
+    if (pollingInFlightRef.current) return;
+    pollingInFlightRef.current = true;
+    try {
+      await loadRef.current();
+    } finally {
+      pollingInFlightRef.current = false;
+    }
+  }, []);
   useEffect(() => {
     if (!autoRefreshEnabled) return;
-    const tick = async () => {
-      if (pollingInFlightRef.current) return;
-      pollingInFlightRef.current = true;
-      try {
-        await loadRef.current();
-      } finally {
-        pollingInFlightRef.current = false;
-      }
-    };
-    const id = setInterval(() => void tick(), AUTO_REFRESH_MS);
+    const id = setInterval(() => void runRefresh(), AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, [autoRefreshEnabled]);
+  }, [autoRefreshEnabled, runRefresh]);
 
   const handleAgentClick = useCallback(
     (agentId: string) => navigate(`/fleet/agents/${encodeURIComponent(agentId)}`),
@@ -247,7 +247,7 @@ export default function FleetPage() {
           <Button
             size="small"
             variant="outlined"
-            onClick={() => void loadFleetData()}
+            onClick={() => void runRefresh()}
             disabled={loading}
           >
             {loading ? <CircularProgress size={16} /> : "Refresh"}
