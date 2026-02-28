@@ -22,7 +22,7 @@ import {
   logDiagnostics,
 } from "./fixtures/love-audit-helpers";
 
-const ES_PROXY_URL = "http://localhost:3000/_es";
+const ES_PROXY_URL = process.env.ES_PROXY_URL ?? "http://localhost:3000/_es";
 
 async function connectToLiveCluster(page: Page) {
   await page.goto("");
@@ -40,7 +40,6 @@ test.describe("smoke – live Elasticsearch", () => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     // Already on Cluster Overview after connect
-    await page.waitForTimeout(2000);
     // Cluster health should be visible (green or yellow)
     await expect(page.getByText(/green|yellow/i).first()).toBeVisible({ timeout: 10_000 });
     await page.screenshot({
@@ -49,14 +48,13 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Cluster Overview", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Cluster Overview", consoleLogs, muiErrors, 0);
+    logDiagnostics("Cluster Overview", consoleLogs, muiErrors, -1);
   });
 
   test("Indices shows seeded indices", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Indices", exact: true }).click();
-    await page.waitForTimeout(2000);
     await expect(page.getByText("web_logs")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("orders")).toBeVisible({ timeout: 10_000 });
     await page.screenshot({
@@ -65,14 +63,14 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Indices", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Indices", consoleLogs, muiErrors, 0);
+    logDiagnostics("Indices", consoleLogs, muiErrors, -1);
   });
 
   test("Query Lab can execute a real ES|QL query", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Query Lab", exact: true }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
     // The Query Lab should show results or a query editor
     await page.screenshot({
       path: "test-results/live-es-query-lab.png",
@@ -80,14 +78,13 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Query Lab", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Query Lab", consoleLogs, muiErrors, 0);
+    logDiagnostics("Query Lab", consoleLogs, muiErrors, -1);
   });
 
   test("Metrics page discovers real metric fields", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Metrics", exact: true }).click();
-    await page.waitForTimeout(2000);
     // Search for system.cpu — real field_caps should find it
     const metricSearch = page.getByLabel("Search metrics");
     await metricSearch.fill("system.cpu");
@@ -100,7 +97,7 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Metrics", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Metrics", consoleLogs, muiErrors, 0);
+    logDiagnostics("Metrics", consoleLogs, muiErrors, -1);
   });
 
   test("Traces page finds seeded traces", async ({ page }) => {
@@ -116,14 +113,13 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Traces", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Traces", consoleLogs, muiErrors, 0);
+    logDiagnostics("Traces", consoleLogs, muiErrors, -1);
   });
 
   test("Data Streams shows seeded data streams", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Data Streams", exact: true }).click();
-    await page.waitForTimeout(2000);
     await expect(page.getByText("metrics-system.cpu-default")).toBeVisible({ timeout: 10_000 });
     await page.screenshot({
       path: "test-results/live-es-data-streams.png",
@@ -131,14 +127,13 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Data Streams", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Data Streams", consoleLogs, muiErrors, 0);
+    logDiagnostics("Data Streams", consoleLogs, muiErrors, -1);
   });
 
   test("Ingest Pipelines shows seeded pipelines", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Ingest Pipelines", exact: true }).click();
-    await page.waitForTimeout(2000);
     await expect(page.getByText("logs-parse-nginx")).toBeVisible({ timeout: 10_000 });
     await page.screenshot({
       path: "test-results/live-es-ingest-pipelines.png",
@@ -146,6 +141,6 @@ test.describe("smoke – live Elasticsearch", () => {
     });
     await dumpDOM(page, "Ingest Pipelines", "live-es");
     const muiErrors = await checkForMuiErrors(page);
-    logDiagnostics("Ingest Pipelines", consoleLogs, muiErrors, 0);
+    logDiagnostics("Ingest Pipelines", consoleLogs, muiErrors, -1);
   });
 });

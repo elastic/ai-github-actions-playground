@@ -34,8 +34,18 @@ The `runtime-setup.md` fragment already auto-detects and installs Node.js (from 
 **Proposed addition:**
 
 ```yaml
+- name: Detect Playwright dependency
+  id: check_playwright
+  if: hashFiles('**/package.json') != ''
+  run: |
+    if grep -q '@playwright/test' package.json package-lock.json 2>/dev/null; then
+      echo "found=true" >> "$GITHUB_OUTPUT"
+    else
+      echo "found=false" >> "$GITHUB_OUTPUT"
+    fi
+
 - name: Install Playwright browsers
-  if: hashFiles('**/package.json') != '' && contains(hashFiles('**/package-lock.json'), '@playwright/test')
+  if: steps.check_playwright.outputs.found == 'true'
   run: npx playwright install chromium --with-deps
 ```
 

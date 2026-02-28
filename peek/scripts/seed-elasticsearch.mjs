@@ -39,21 +39,32 @@ function parseArgs(argv) {
 async function waitForReady(client, maxWaitMs = 120_000) {
   const start = Date.now();
   const intervalMs = 2_000;
+  let attempt = 0;
 
   while (Date.now() - start < maxWaitMs) {
+    attempt += 1;
     try {
       const info = await client.info();
       if (info.tagline) {
         console.log(`  Elasticsearch ${info.version.number} is ready.`);
         return;
       }
-    } catch {
-      // Not ready yet
+    } catch (error) {
+      console.debug(`  Waiting for Elasticsearch (attempt ${attempt}): ${String(error)}`);
     }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 
   throw new Error(`Elasticsearch did not become ready within ${maxWaitMs / 1000}s`);
+}
+
+function isIndexNotFoundError(error) {
+  return (
+    error?.meta?.statusCode === 404 ||
+    error?.meta?.body?.status === 404 ||
+    error?.meta?.body?.error?.type === "index_not_found_exception" ||
+    error?.meta?.body?.error?.type === "resource_not_found_exception"
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -66,9 +77,18 @@ async function seedWebLogs(client) {
 
   const methods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
   const paths = [
-    "/index.html", "/style.css", "/api/login", "/api/users",
-    "/api/checkout", "/api/products", "/api/orders", "/health",
-    "/missing", "/api/search", "/favicon.ico", "/api/settings",
+    "/index.html",
+    "/style.css",
+    "/api/login",
+    "/api/users",
+    "/api/checkout",
+    "/api/products",
+    "/api/orders",
+    "/health",
+    "/missing",
+    "/api/search",
+    "/favicon.ico",
+    "/api/settings",
   ];
   const statuses = [200, 200, 200, 200, 201, 301, 403, 404, 500];
   const hosts = ["web-1", "web-2", "web-3"];
@@ -84,7 +104,11 @@ async function seedWebLogs(client) {
     });
   }
 
-  await client.indices.delete({ index: "web_logs" }).catch(() => {});
+  try {
+    await client.indices.delete({ index: "web_logs" });
+  } catch (error) {
+    if (!isIndexNotFoundError(error)) throw error;
+  }
 
   await client.indices.create({
     index: "web_logs",
@@ -111,17 +135,39 @@ async function seedWebLogs(client) {
 
 async function seedOrders(client) {
   const docs = [
-    { order_id: "ORD-001", category: "electronics", amount: 299.99, quantity: 1, region: "us-east" },
-    { order_id: "ORD-002", category: "electronics", amount: 149.99, quantity: 2, region: "us-west" },
+    {
+      order_id: "ORD-001",
+      category: "electronics",
+      amount: 299.99,
+      quantity: 1,
+      region: "us-east",
+    },
+    {
+      order_id: "ORD-002",
+      category: "electronics",
+      amount: 149.99,
+      quantity: 2,
+      region: "us-west",
+    },
     { order_id: "ORD-003", category: "clothing", amount: 49.99, quantity: 3, region: "us-east" },
     { order_id: "ORD-004", category: "clothing", amount: 79.99, quantity: 1, region: "eu-west" },
     { order_id: "ORD-005", category: "books", amount: 19.99, quantity: 5, region: "us-east" },
     { order_id: "ORD-006", category: "books", amount: 29.99, quantity: 2, region: "us-west" },
-    { order_id: "ORD-007", category: "electronics", amount: 999.99, quantity: 1, region: "eu-west" },
+    {
+      order_id: "ORD-007",
+      category: "electronics",
+      amount: 999.99,
+      quantity: 1,
+      region: "eu-west",
+    },
     { order_id: "ORD-008", category: "clothing", amount: 39.99, quantity: 4, region: "us-west" },
   ];
 
-  await client.indices.delete({ index: "orders" }).catch(() => {});
+  try {
+    await client.indices.delete({ index: "orders" });
+  } catch (error) {
+    if (!isIndexNotFoundError(error)) throw error;
+  }
 
   await client.indices.create({
     index: "orders",
@@ -168,7 +214,11 @@ async function seedMetrics(client) {
   });
 
   // Delete existing data stream if any
-  await client.indices.deleteDataStream({ name: "metrics-system.cpu-default" }).catch(() => {});
+  try {
+    await client.indices.deleteDataStream({ name: "metrics-system.cpu-default" });
+  } catch (error) {
+    if (!isIndexNotFoundError(error)) throw error;
+  }
 
   const now = Date.now();
   const hosts = ["host-01", "host-02", "host-03"];
@@ -225,7 +275,11 @@ async function seedTraces(client) {
   });
 
   // Delete existing data stream if any
-  await client.indices.deleteDataStream({ name: "traces-apm-default" }).catch(() => {});
+  try {
+    await client.indices.deleteDataStream({ name: "traces-apm-default" });
+  } catch (error) {
+    if (!isIndexNotFoundError(error)) throw error;
+  }
 
   const now = Date.now();
   const docs = [];
@@ -239,7 +293,12 @@ async function seedTraces(client) {
       spans: [
         { service: "api-gateway", name: "gateway.forward", kind: "INTERNAL", durationUs: 45_000 },
         { service: "auth-service", name: "POST /auth/verify", kind: "SERVER", durationUs: 12_000 },
-        { service: "catalog-service", name: "GET /catalog/products", kind: "SERVER", durationUs: 28_000 },
+        {
+          service: "catalog-service",
+          name: "GET /catalog/products",
+          kind: "SERVER",
+          durationUs: 28_000,
+        },
         { service: "postgres", name: "SELECT products", kind: "CLIENT", durationUs: 5_000 },
       ],
     },
@@ -250,7 +309,12 @@ async function seedTraces(client) {
       spans: [
         { service: "api-gateway", name: "gateway.forward", kind: "INTERNAL", durationUs: 120_000 },
         { service: "order-service", name: "POST /orders", kind: "SERVER", durationUs: 95_000 },
-        { service: "payment-service", name: "POST /payments/charge", kind: "SERVER", durationUs: 80_000 },
+        {
+          service: "payment-service",
+          name: "POST /payments/charge",
+          kind: "SERVER",
+          durationUs: 80_000,
+        },
         { service: "postgres", name: "INSERT orders", kind: "CLIENT", durationUs: 8_000 },
         { service: "postgres", name: "UPDATE inventory", kind: "CLIENT", durationUs: 6_000 },
       ],
@@ -322,10 +386,7 @@ async function seedTraces(client) {
     }
   }
 
-  const operations = docs.flatMap((doc) => [
-    { create: { _index: "traces-apm-default" } },
-    doc,
-  ]);
+  const operations = docs.flatMap((doc) => [{ create: { _index: "traces-apm-default" } }, doc]);
   await client.bulk({ operations, refresh: "wait_for" });
   console.log(`  traces-apm-default: ${docs.length} docs (${traces.length} traces)`);
 }
@@ -349,20 +410,18 @@ async function seedIngestPipelines(client) {
   await client.ingest.putPipeline({
     id: "enrich-geoip",
     description: "Add GeoIP data from source.ip",
-    processors: [
-      { geoip: { field: "source.ip", ignore_missing: true } },
-    ],
+    processors: [{ geoip: { field: "source.ip", ignore_missing: true } }],
   });
 
   await client.ingest.putPipeline({
     id: "metrics-normalize",
     description: "Normalize metric fields and set event.kind",
-    processors: [
-      { set: { field: "event.kind", value: "metric" } },
-    ],
+    processors: [{ set: { field: "event.kind", value: "metric" } }],
   });
 
-  console.log("  ingest pipelines: 3 pipelines (logs-parse-nginx, enrich-geoip, metrics-normalize)");
+  console.log(
+    "  ingest pipelines: 3 pipelines (logs-parse-nginx, enrich-geoip, metrics-normalize)",
+  );
 }
 
 // ---------------------------------------------------------------------------
