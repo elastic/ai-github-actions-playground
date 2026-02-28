@@ -136,57 +136,16 @@ export default function IngestPipelinesPage() {
     setSimulateResult(null);
     setExpandedDocs(new Set());
     try {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(simulateInput);
-      } catch {
-        parsed = undefined;
-      }
-      let docs: Array<Record<string, unknown>> | null = null;
-      if (parsed !== undefined) {
-        if (Array.isArray(parsed)) {
-          docs = parsed.map((doc) =>
-            doc !== null && typeof doc === "object" && "_source" in (doc as object)
-              ? (doc as Record<string, unknown>)
-              : { _source: doc },
-          );
-        } else {
-          // Accept either a raw _source object or a full doc wrapper
-          const doc =
-            parsed !== null && typeof parsed === "object" && "_source" in (parsed as object)
-              ? (parsed as Record<string, unknown>)
-              : { _source: parsed };
-          docs = [doc];
-        }
-      } else {
-        docs = parseSimulateInput(simulateInput);
-      }
+      const docs = parseSimulateInput(simulateInput);
       if (!docs) {
         setSimulateError(
           "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
         );
         return;
       }
-      if (parsed === undefined || docs.length > 1 || verbose) {
-        const { data, error } = await runConnectionRequest({
-          connection,
-          run: (client) => client.simulateIngestPipeline(selectedName, docs, { verbose }),
-        });
-        if (error !== null) {
-          setSimulateError(error);
-        } else if (data !== null) {
-          setSimulateResult(data);
-        }
-        return;
-      }
-      // Accept either a raw _source object or a full doc wrapper
-      const doc =
-        parsed !== null && typeof parsed === "object" && "_source" in (parsed as object)
-          ? (parsed as Record<string, unknown>)
-          : { _source: parsed };
       const { data, error } = await runConnectionRequest({
         connection,
-        run: (client) => client.simulateIngestPipeline(selectedName, [doc]),
+        run: (client) => client.simulateIngestPipeline(selectedName, docs, { verbose }),
       });
       if (error !== null) {
         setSimulateError(error);
