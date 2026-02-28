@@ -167,6 +167,18 @@ export default function IngestPipelinesPage() {
         );
         return;
       }
+      if (parsed === undefined || docs.length > 1 || verbose) {
+        const { data, error } = await runConnectionRequest({
+          connection,
+          run: (client) => client.simulateIngestPipeline(selectedName, docs, { verbose }),
+        });
+        if (error !== null) {
+          setSimulateError(error);
+        } else if (data !== null) {
+          setSimulateResult(data);
+        }
+        return;
+      }
       // Accept either a raw _source object or a full doc wrapper
       const doc =
         parsed !== null && typeof parsed === "object" && "_source" in (parsed as object)
@@ -180,18 +192,6 @@ export default function IngestPipelinesPage() {
         setSimulateError(error);
       } else if (data !== null) {
         setSimulateResult(data);
-      }
-      if (parsed === undefined || docs.length > 1 || verbose) {
-        const rerun = await runConnectionRequest({
-          connection,
-          run: (client) => client.simulateIngestPipeline(selectedName, docs, { verbose }),
-        });
-        if (rerun.error !== null) {
-          setSimulateError(rerun.error);
-        } else if (rerun.data !== null) {
-          setSimulateError(null);
-          setSimulateResult(rerun.data);
-        }
       }
     } finally {
       setSimulating(false);
