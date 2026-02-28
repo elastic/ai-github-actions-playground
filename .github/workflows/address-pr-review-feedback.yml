@@ -3,6 +3,10 @@ on:
   pull_request_review:
     types: [submitted]
 
+concurrency:
+  group: pr-address-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   actions: read
   contents: write
