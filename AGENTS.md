@@ -52,7 +52,7 @@ sleep 5  # wait for server to be ready
 # Supported pages: cluster-overview | data-streams | indices | ingest-pipelines |
 #                  query-lab | metrics | traces | console | users | roles |
 #                  dashboards | fleet
-node scripts/screenshot-feature.mjs \
+node peek/scripts/screenshot-feature.mjs \
   --url http://127.0.0.1:3000/ai-github-actions-playground/ \
   --page metrics \
   --screenshot screenshot-metrics.png \
@@ -73,7 +73,7 @@ cd peek && npx vite --port 3000 --host 127.0.0.1 &
 DEV_PID=$!
 sleep 5  # wait for server to be ready
 
-node scripts/screenshot-preflight.mjs \
+node peek/scripts/screenshot-preflight.mjs \
   --url http://127.0.0.1:3000/ai-github-actions-playground/ \
   --output screenshot-preflight.json \
   --screenshot screenshot.png
