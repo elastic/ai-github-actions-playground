@@ -228,7 +228,7 @@ export default function ClusterHealthPage({
       const name = node.name ?? "unknown";
       return cpu > best.cpu ? { name, cpu } : best;
     },
-    { name: "unknown", cpu: 0 },
+    { name: "unknown", cpu: -1 },
   ).name;
   const shardSkew = useMemo(() => {
     const perNode = new Map<string, number>();
