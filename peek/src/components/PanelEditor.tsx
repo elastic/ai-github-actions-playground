@@ -36,7 +36,6 @@ import type {
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { buildPersesEsqlRequest } from "../services/perses/esqlDatasource";
 
-import Visualization from "./visualizations/Visualization";
 import MarkdownPanel from "./visualizations/MarkdownPanel";
 import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";
@@ -44,6 +43,7 @@ import QueryPipelineSteps from "./QueryPipelineSteps";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import { getAllVizEntries, getVizEntry } from "./visualizations/vizRegistry";
 import { formatEsqlQuery } from "./discoverUtils";
+import PersesPanelRenderer from "./perses/PersesPanelRenderer";
 
 export default function PanelEditor() {
   const editingId = useUIStore((s) => s.editingPanelId);
@@ -64,11 +64,12 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
       themeMode: s.themeMode,
     })),
   );
-  const { updatePanel, removePanel, timeRange, parameters } = useDashboardStore(
+  const { updatePanel, removePanel, timeRange, timeZone, parameters } = useDashboardStore(
     useShallow((s) => ({
       updatePanel: s.updatePanel,
       removePanel: s.removePanel,
       timeRange: s.dashboard.timeRange,
+      timeZone: s.dashboard.timeZone,
       parameters: s.dashboard.parameters,
     })),
   );
@@ -354,7 +355,16 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         {!isMarkdown && preview && (
           <>
             <Paper variant="outlined" sx={{ minHeight: 220, p: 1, overflow: "hidden" }}>
-              <Visualization type={viz} data={preview} options={options} />
+              <PersesPanelRenderer
+                type={viz}
+                data={preview}
+                options={options}
+                query={query}
+                connection={connection}
+                timeRange={timeRange}
+                parameters={parameters}
+                timeZone={timeZone}
+              />
             </Paper>
 
             {showOptions && (
