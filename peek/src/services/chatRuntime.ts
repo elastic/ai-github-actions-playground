@@ -213,7 +213,7 @@ export async function buildChatRuntime({
       mcpInstructions.push(provider.systemInstruction);
       maxStepCountLimit = Math.max(maxStepCountLimit, provider.stepCountLimit);
     } catch (error) {
-      if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
+      if (error instanceof DOMException && error.name === "AbortError") {
         throw error;
       }
       provider.onError?.(error);
