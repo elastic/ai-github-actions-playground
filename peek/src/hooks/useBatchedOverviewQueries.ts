@@ -85,6 +85,7 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
   const clientRef = useRef(client);
   const itemsRef = useRef(items);
   const timeRangeRef = useRef(timeRange);
+  const resultsRef = useRef(results);
 
   // Keep a stable ref so the effect can always call the latest buildQuery
   // without it being a reactive dependency (avoids requiring useCallback at
@@ -95,6 +96,7 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
     clientRef.current = client;
     itemsRef.current = items;
     timeRangeRef.current = timeRange;
+    resultsRef.current = results;
   });
 
   /** Run a batch pass for the given subset of items. */
@@ -200,10 +202,12 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
   const retryFailed = useCallback(() => {
     const esClient = clientRef.current;
     if (!esClient) return;
-    const failedItems = itemsRef.current.filter((item) => results[item.name]?.status === "error");
+    const failedItems = itemsRef.current.filter(
+      (item) => resultsRef.current[item.name]?.status === "error",
+    );
     if (failedItems.length === 0) return;
     runBatchesFor(failedItems, esClient, timeRangeRef.current, batchSize, false);
-  }, [results, batchSize, runBatchesFor]);
+  }, [batchSize, runBatchesFor]);
 
   return { results, retryFailed };
 }
