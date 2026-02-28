@@ -46,11 +46,8 @@ export default function ResilienceSignalsView({ data }: ResilienceSignalsViewPro
   const snapshotFailures =
     data.snapshots?.snapshots?.reduce((sum, s) => sum + (s.shards_stats?.failed ?? 0), 0) ?? 0;
 
-  // Ingest
-  const ingestFailures = Object.values(data.ingestStats?.nodes ?? {}).reduce(
-    (sum, n) => sum + (n.ingest?.total?.failed ?? 0),
-    0,
-  );
+  // Ingest (read from nodeStats which now includes ingest metrics)
+  const ingestFailures = nodeValues.reduce((sum, n) => sum + (n.ingest?.total?.failed ?? 0), 0);
 
   // Indexing / Search
   const indexingOps = nodeValues.reduce(

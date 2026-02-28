@@ -11,7 +11,6 @@ import {
   type ClusterSettingsResponse,
   type ClusterStatsResponse,
   type IlmExplainResponse,
-  type NodesIngestStatsResponse,
   type NodesStatsResponse,
   type RecoveryResponse,
   type SlmStatsResponse,
@@ -34,7 +33,6 @@ export interface ClusterHealthData {
   ilm: IlmExplainResponse | null;
   slm: SlmStatsResponse | null;
   snapshots: SnapshotStatusResponse | null;
-  ingestStats: NodesIngestStatsResponse | null;
   clusterSettings: ClusterSettingsResponse | null;
   allocationExplain: ClusterAllocationExplainResponse | null;
 }
@@ -61,7 +59,6 @@ const EMPTY_DATA: ClusterHealthData = {
   ilm: null,
   slm: null,
   snapshots: null,
-  ingestStats: null,
   clusterSettings: null,
   allocationExplain: null,
 };
@@ -129,7 +126,6 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
           client.getIlmExplainAll(signal),
           client.getSlmStats(signal),
           client.getSnapshotStatus(signal),
-          client.getNodeIngestStats(signal),
           client.getClusterSettings(signal).catch((err) => {
             if (isElasticsearchError(err) && err.status === 403) return null;
             throw err;
@@ -149,7 +145,6 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
           ilm,
           slm,
           snapshots,
-          ingestStats,
           clusterSettings,
         ] = results;
 
@@ -181,7 +176,6 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
           ilm: val(ilm),
           slm: val(slm),
           snapshots: val(snapshots),
-          ingestStats: val(ingestStats),
           clusterSettings: val(clusterSettings),
           allocationExplain,
         });
@@ -199,7 +193,6 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
           "ILM",
           "SLM",
           "snapshots",
-          "ingest stats",
           "cluster settings",
         ];
         results.forEach((r, i) => {

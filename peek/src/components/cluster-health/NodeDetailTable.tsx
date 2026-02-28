@@ -188,17 +188,20 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
         <TableBody>
           {sorted.map((row) => (
             <TableRow key={row.id}>
-              {columns.map((col) => (
-                <TableCell
-                  key={col.key}
-                  sx={{
-                    color: col.severity ? cellColor(col.severity(row), theme) : undefined,
-                    fontWeight: col.severity?.(row) ? 600 : undefined,
-                  }}
-                >
-                  {col.format(row)}
-                </TableCell>
-              ))}
+              {columns.map((col) => {
+                const sev = col.severity?.(row);
+                return (
+                  <TableCell
+                    key={col.key}
+                    sx={{
+                      color: sev ? cellColor(sev, theme) : undefined,
+                      fontWeight: sev ? 600 : undefined,
+                    }}
+                  >
+                    {col.format(row)}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableBody>

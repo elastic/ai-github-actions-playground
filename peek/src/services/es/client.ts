@@ -126,6 +126,7 @@ export interface NodeStatsNode {
     { limit_size_in_bytes?: number; estimated_size_in_bytes?: number; tripped?: number }
   >;
   process?: { open_file_descriptors?: number; max_file_descriptors?: number };
+  ingest?: { total?: { count?: number; failed?: number; time_in_millis?: number } };
 }
 export interface NodesStatsResponse {
   nodes?: Record<string, NodeStatsNode>;
@@ -586,11 +587,10 @@ export class ElasticsearchClient {
   }
 
   async getNodeStats(signal?: AbortSignal): Promise<NodesStatsResponse> {
-    return this._fetch<NodesStatsResponse>("/_nodes/stats", { signal });
-  }
-
-  async getNodeIngestStats(signal?: AbortSignal): Promise<NodesIngestStatsResponse> {
-    return this._fetch<NodesIngestStatsResponse>("/_nodes/stats/ingest", { signal });
+    return this._fetch<NodesStatsResponse>(
+      "/_nodes/stats/os,jvm,process,thread_pool,breakers,indices,fs,ingest",
+      { signal },
+    );
   }
 
   async getCatAllocation(signal?: AbortSignal): Promise<CatAllocationRecord[]> {
@@ -617,7 +617,7 @@ export class ElasticsearchClient {
   }
 
   async getSnapshotStatus(signal?: AbortSignal): Promise<SnapshotStatusResponse> {
-    return this._fetch<SnapshotStatusResponse>("/_snapshot/_status", { signal });
+    return this._fetch<SnapshotStatusResponse>("/_snapshot/_all/_current", { signal });
   }
 
   async getClusterSettings(signal?: AbortSignal): Promise<ClusterSettingsResponse> {

@@ -17,7 +17,6 @@ const getRecoveryStatusMock = vi.fn();
 const getIlmExplainAllMock = vi.fn();
 const getSlmStatsMock = vi.fn();
 const getSnapshotStatusMock = vi.fn();
-const getNodeIngestStatsMock = vi.fn();
 const getClusterSettingsMock = vi.fn();
 const getAllocationExplainMock = vi.fn();
 
@@ -33,7 +32,6 @@ vi.mock("../../src/services/es", () => ({
     getIlmExplainAll: getIlmExplainAllMock,
     getSlmStats: getSlmStatsMock,
     getSnapshotStatus: getSnapshotStatusMock,
-    getNodeIngestStats: getNodeIngestStatsMock,
     getClusterSettings: getClusterSettingsMock,
     getAllocationExplain: getAllocationExplainMock,
   })),
@@ -100,9 +98,6 @@ describe("ClusterHealthPage", () => {
     getIlmExplainAllMock.mockResolvedValue({ indices: { "idx-a": { failed_step: "error" } } });
     getSlmStatsMock.mockResolvedValue({ policy_stats: [{ snapshots_failed: 2 }] });
     getSnapshotStatusMock.mockResolvedValue({ snapshots: [{ shards_stats: { failed: 1 } }] });
-    getNodeIngestStatsMock.mockResolvedValue({
-      nodes: { a: { ingest: { total: { failed: 3 } } } },
-    });
     getClusterSettingsMock.mockResolvedValue({
       persistent: {},
       transient: {},

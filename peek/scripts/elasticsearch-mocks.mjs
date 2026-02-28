@@ -71,6 +71,7 @@ const DEFAULT_MOCK_DATA = {
           in_flight_requests: { limit_size_in_bytes: 4_294_967_296, estimated_size_in_bytes: 0, tripped: 0 },
         },
         process: { open_file_descriptors: 450, max_file_descriptors: 65_536 },
+        ingest: { total: { count: 1000, failed: 0, time_in_millis: 5000 } },
       },
     },
   },
@@ -229,7 +230,7 @@ export async function registerElasticsearchMocks(
     if (path === "/_cluster/health") return json(resolved.clusterHealth);
     if (path === "/_cluster/stats") return json(resolved.clusterStats);
     if (path === "/_nodes" && method === "GET") return json(resolved.nodesInfo);
-    if (path === "/_nodes/stats") return json(resolved.nodesStats);
+    if (path.startsWith("/_nodes/stats")) return json(resolved.nodesStats);
 
     if (path === "/_security/user/_has_privileges") return json(resolved.hasPrivileges);
     if (path === "/_security/user" && method === "GET") return json(resolved.securityUsers);
@@ -248,8 +249,7 @@ export async function registerElasticsearchMocks(
     if (path.startsWith("/_recovery") && method === "GET") return json(resolved.recovery);
     if (path.match(/\/_ilm\/explain/) && method === "GET") return json(resolved.ilmExplain);
     if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);
-    if (path === "/_snapshot/_status" && method === "GET") return json(resolved.snapshotStatus);
-    if (path === "/_nodes/stats/ingest" && method === "GET") return json(resolved.ingestNodeStats);
+    if (path.startsWith("/_snapshot/") && method === "GET") return json(resolved.snapshotStatus);
     if (path === "/_cat/indices" && method === "GET") return json(resolved.catIndices);
     if (path === "/_data_stream" && method === "GET") return json(resolved.dataStreams);
     if (path.startsWith("/_resolve/index/") && method === "GET") return json(resolved.resolveIndex);

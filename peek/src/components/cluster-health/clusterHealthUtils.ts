@@ -51,6 +51,7 @@ export function isAllocationDisabled(settings: ClusterSettingsResponse | null): 
   const value =
     (settings?.transient?.[key] as string | undefined) ??
     (settings?.persistent?.[key] as string | undefined) ??
+    (settings?.defaults?.[key] as string | undefined) ??
     "all";
   return value !== "all";
 }
