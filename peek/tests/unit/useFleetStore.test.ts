@@ -19,7 +19,7 @@ describe("useFleetStore", () => {
       actions: [],
       actionResults: [],
       activeTab: "overview",
-      agentFilter: { search: "", version: null },
+      agentFilter: { search: "", version: null, hasErrors: false, staleness: null },
       loading: false,
       error: null,
       partialErrors: [],
@@ -32,7 +32,12 @@ describe("useFleetStore", () => {
     });
 
     it("starts with empty filter", () => {
-      expect(useFleetStore.getState().agentFilter).toEqual({ search: "", version: null });
+      expect(useFleetStore.getState().agentFilter).toEqual({
+        search: "",
+        version: null,
+        hasErrors: false,
+        staleness: null,
+      });
     });
 
     it("starts with no data", () => {
@@ -130,19 +135,48 @@ describe("useFleetStore", () => {
   describe("agent filter", () => {
     it("updateAgentFilter merges partial updates", () => {
       useFleetStore.getState().updateAgentFilter({ search: "host" });
-      expect(useFleetStore.getState().agentFilter).toEqual({ search: "host", version: null });
+      expect(useFleetStore.getState().agentFilter).toEqual({
+        search: "host",
+        version: null,
+        hasErrors: false,
+        staleness: null,
+      });
 
       useFleetStore.getState().updateAgentFilter({ version: "8.14.0" });
       expect(useFleetStore.getState().agentFilter).toEqual({
         search: "host",
         version: "8.14.0",
+        hasErrors: false,
+        staleness: null,
+      });
+    });
+
+    it("updateAgentFilter sets hasErrors and staleness", () => {
+      useFleetStore.getState().updateAgentFilter({ hasErrors: true, staleness: "critical" });
+      expect(useFleetStore.getState().agentFilter).toEqual({
+        search: "",
+        version: null,
+        hasErrors: true,
+        staleness: "critical",
       });
     });
 
     it("resetFilters clears to defaults", () => {
-      useFleetStore.getState().updateAgentFilter({ search: "test", version: "8.14.0" });
+      useFleetStore
+        .getState()
+        .updateAgentFilter({
+          search: "test",
+          version: "8.14.0",
+          hasErrors: true,
+          staleness: "critical",
+        });
       useFleetStore.getState().resetFilters();
-      expect(useFleetStore.getState().agentFilter).toEqual({ search: "", version: null });
+      expect(useFleetStore.getState().agentFilter).toEqual({
+        search: "",
+        version: null,
+        hasErrors: false,
+        staleness: null,
+      });
     });
   });
 });

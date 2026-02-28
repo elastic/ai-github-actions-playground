@@ -171,7 +171,7 @@ describe("UsersPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Your credentials cannot read all Users data.");
+    await screen.findByText("Your credentials cannot read all user data.");
     expect(screen.getByText("Select a user.")).toBeInTheDocument();
   });
 

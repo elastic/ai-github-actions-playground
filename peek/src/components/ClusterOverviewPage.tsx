@@ -16,7 +16,6 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import {
-  ElasticsearchClient,
   isElasticsearchError,
   type ClusterHealthResponse,
   type ClusterInfoResponse,
@@ -33,6 +32,7 @@ import {
 } from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { formatBytes } from "../utils/formatBytes";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
@@ -148,79 +148,85 @@ export default function ClusterOverviewPage() {
     setError(null);
     setPartialErrors([]);
     try {
-      const client = new ElasticsearchClient(connection);
-      const [
-        clusterInfoResult,
-        clusterHealthResult,
-        clusterStatsResult,
-        nodesResult,
-        nodeStatsResult,
-        dataStreamsResult,
-        resolveIndexResult,
-        fleetStatusResult,
-        agentInventoryResult,
-      ] = await Promise.allSettled([
-        client.getClusterInfo(),
-        client.getClusterHealth(),
-        client.getClusterStats(),
-        client.getNodes(),
-        client.getNodeStats(),
-        client.getDataStreams(),
-        client.resolveIndex("*"),
-        loadFleetServerStatus(client),
-        loadElasticAgentInventory(client),
-      ]);
+      const { data: results, error } = await runConnectionRequest({
+        connection,
+        run: (client) =>
+          Promise.allSettled([
+            client.getClusterInfo(),
+            client.getClusterHealth(),
+            client.getClusterStats(),
+            client.getNodes(),
+            client.getNodeStats(),
+            client.getDataStreams(),
+            client.resolveIndex("*"),
+            loadFleetServerStatus(client),
+            loadElasticAgentInventory(client),
+          ]),
+      });
+      if (error !== null) {
+        setError(error);
+      } else if (results !== null) {
+        const [
+          clusterInfoResult,
+          clusterHealthResult,
+          clusterStatsResult,
+          nodesResult,
+          nodeStatsResult,
+          dataStreamsResult,
+          resolveIndexResult,
+          fleetStatusResult,
+          agentInventoryResult,
+        ] = results;
 
-      const nextData: OverviewData = {
-        clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
-        clusterHealth:
-          clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
-        clusterStats: clusterStatsResult.status === "fulfilled" ? clusterStatsResult.value : null,
-        nodesInfo: nodesResult.status === "fulfilled" ? nodesResult.value : null,
-        nodesStats: nodeStatsResult.status === "fulfilled" ? nodeStatsResult.value : null,
-        dataStreamCount:
-          dataStreamsResult.status === "fulfilled"
-            ? (dataStreamsResult.value.data_streams?.length ?? 0)
-            : null,
-        indexCount:
-          resolveIndexResult.status === "fulfilled"
-            ? (resolveIndexResult.value.indices?.length ?? 0)
-            : null,
-        aliasCount:
-          resolveIndexResult.status === "fulfilled"
-            ? (resolveIndexResult.value.aliases?.length ?? 0)
-            : null,
-        fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
-        agentInventoryCount:
-          agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
-      };
-      setData(nextData);
+        const nextData: OverviewData = {
+          clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
+          clusterHealth:
+            clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
+          clusterStats: clusterStatsResult.status === "fulfilled" ? clusterStatsResult.value : null,
+          nodesInfo: nodesResult.status === "fulfilled" ? nodesResult.value : null,
+          nodesStats: nodeStatsResult.status === "fulfilled" ? nodeStatsResult.value : null,
+          dataStreamCount:
+            dataStreamsResult.status === "fulfilled"
+              ? (dataStreamsResult.value.data_streams?.length ?? 0)
+              : null,
+          indexCount:
+            resolveIndexResult.status === "fulfilled"
+              ? (resolveIndexResult.value.indices?.length ?? 0)
+              : null,
+          aliasCount:
+            resolveIndexResult.status === "fulfilled"
+              ? (resolveIndexResult.value.aliases?.length ?? 0)
+              : null,
+          fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
+          agentInventoryCount:
+            agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
+        };
+        setData(nextData);
 
-      const failedParts: string[] = [];
-      if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
-      if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
-      if (clusterStatsResult.status === "rejected") failedParts.push("cluster stats");
-      if (nodesResult.status === "rejected") failedParts.push("nodes");
-      if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
-      if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
-      if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
-      if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
-      if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
-      if (failedParts.length > 0) {
-        setPartialErrors(failedParts);
+        const failedParts: string[] = [];
+        if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
+        if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
+        if (clusterStatsResult.status === "rejected") failedParts.push("cluster stats");
+        if (nodesResult.status === "rejected") failedParts.push("nodes");
+        if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
+        if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
+        if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
+        if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
+        if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
+        if (failedParts.length > 0) {
+          setPartialErrors(failedParts);
+        }
+
+        if (failedParts.length === 9) {
+          const firstError =
+            clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
+          setError(
+            isElasticsearchError(firstError)
+              ? firstError.message
+              : "Failed to load cluster overview data.",
+          );
+        }
       }
-
-      if (failedParts.length === 9) {
-        const firstError =
-          clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
-        setError(
-          isElasticsearchError(firstError)
-            ? firstError.message
-            : "Failed to load cluster overview data.",
-        );
-      }
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
       setLoading(false);
     }

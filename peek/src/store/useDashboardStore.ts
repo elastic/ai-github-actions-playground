@@ -553,7 +553,7 @@ export const useDashboardStore = create<DashboardState>()(
           }
           const { dashboards, activeDashboardId } = result.data;
           if (new Set(dashboards.map((dashboard) => dashboard.id)).size !== dashboards.length) {
-            const error = "dashboard ids must be unique within a workspace import";
+            const error = "dashboard IDs must be unique within a workspace import";
             console.error("Workspace import failed:", error);
             return { success: false, error };
           }

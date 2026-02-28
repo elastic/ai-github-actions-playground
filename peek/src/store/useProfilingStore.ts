@@ -42,6 +42,7 @@ export const useProfilingStore = create<ProfilingState>()((set) => ({
     set({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
+      viewMode: "topFunctions",
       expandedStacktraceIds: new Set<string>(),
     }),
 }));

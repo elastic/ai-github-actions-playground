@@ -90,7 +90,7 @@ describe("ParameterBar", () => {
     const user = userEvent.setup();
     render(<ParameterBar />);
 
-    await user.click(screen.getByRole("button", { name: /add parameter/i }));
+    await user.click(screen.getByRole("button", { name: /add variable/i }));
     await screen.findByRole("dialog");
 
     await user.type(screen.getByLabelText("Name"), "service");
@@ -152,7 +152,7 @@ describe("ParameterBar", () => {
     const user = userEvent.setup();
     render(<ParameterBar />);
 
-    await user.click(screen.getByRole("button", { name: /add parameter/i }));
+    await user.click(screen.getByRole("button", { name: /add variable/i }));
     await screen.findByRole("dialog");
 
     await user.type(screen.getByLabelText("Name"), "threshold");
@@ -179,7 +179,7 @@ describe("ParameterBar", () => {
     const user = userEvent.setup();
     render(<ParameterBar />);
 
-    await user.click(screen.getByRole("button", { name: /add parameter/i }));
+    await user.click(screen.getByRole("button", { name: /add variable/i }));
     await screen.findByRole("dialog");
 
     await user.type(screen.getByLabelText("Name"), "from_date");

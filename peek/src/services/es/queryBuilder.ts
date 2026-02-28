@@ -167,10 +167,16 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
   const maxRows = buckets * maxSeries;
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
+  const escapedMetric = escapeEsqlIdentifier(q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);
+  const whereClause = buildWherePipe([
+    TIMESTAMP_RANGE_CLAUSE,
+    `${escapedMetric} IS NOT NULL`,
+    `${escapedDim} IS NOT NULL`,
+  ]);
   const parts: string[] = [
     `FROM ${q.indexPattern}`,
-    `WHERE ${TIMESTAMP_RANGE_CLAUSE}`,
+    whereClause,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${bucketSize}, ?_tstart, ?_tend), ${escapedDim}`,
     `SORT metric DESC`,
     `LIMIT ${maxRows}`,
