@@ -61,7 +61,14 @@ export function interpolatePersesVariableTokens(
     return queryText;
   }
   const values = new Map(variables.map((variable) => [variable.name, String(variable.value)]));
-  return queryText.replace(/\{\{(\w+)\}\}/g, (token, name: string) => values.get(name) ?? token);
+  return queryText.replace(/\{\{(\w+)\}\}/g, (token, name: string) => {
+    const value = values.get(name);
+    if (value === undefined) {
+      return token;
+    }
+    // Escape single quotes by doubling them for ES|QL string literals
+    return value.replace(/'/g, "''");
+  });
 }
 
 export function buildPersesEsqlRequest(

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildPersesEsqlRequest,
   createPersesEsqlDatasource,
+  interpolatePersesVariableTokens,
   mapDashboardVariablesToPerses,
 } from "../../src/services/perses/esqlDatasource";
 
@@ -56,6 +57,17 @@ describe("createPersesEsqlDatasource", () => {
       { name: "service", label: "Service", kind: "string", value: "api" },
       { name: "threshold", label: "Threshold", kind: "number", value: 10 },
     ]);
+  });
+
+  it("escapes single quotes in interpolated variable values for ES|QL literals", () => {
+    const variables = [
+      { name: "env", label: "Environment", kind: "string" as const, value: "O'Reilly" },
+    ];
+    const result = interpolatePersesVariableTokens(
+      "FROM logs-* | WHERE env == '{{env}}'",
+      variables,
+    );
+    expect(result).toBe("FROM logs-* | WHERE env == 'O''Reilly'");
   });
 
   it("builds a perses esql request with interpolation and query params", () => {
