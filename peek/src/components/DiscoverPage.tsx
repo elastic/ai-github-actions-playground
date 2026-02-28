@@ -34,7 +34,7 @@ import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
-import { buildEsqlRequest } from "../services/es";
+import { buildPersesEsqlRequest } from "../services/perses/esqlDatasource";
 
 import {
   filterColumnsByName,
@@ -72,6 +72,7 @@ export default function DiscoverPage() {
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
   const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
+  const parameters = useDashboardStore((s) => s.dashboard.parameters);
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
@@ -92,9 +93,9 @@ export default function DiscoverPage() {
 
   const buildRequest = useCallback(
     (queryText: string): EsqlQueryParams => {
-      return buildEsqlRequest(queryText, { timeRange });
+      return buildPersesEsqlRequest(queryText, { timeRange, parameters });
     },
-    [timeRange],
+    [timeRange, parameters],
   );
 
   const timingsCleared = useRef(false);
