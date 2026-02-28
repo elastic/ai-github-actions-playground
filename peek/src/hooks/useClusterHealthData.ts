@@ -85,135 +85,142 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const [refreshIntervalMs, setRefreshIntervalMs] = useState(DEFAULT_REFRESH_MS);
 
-  const loadData = useCallback(async () => {
-    if (!connection) {
+  const loadData = useCallback(
+    async (abortInFlight = true) => {
+      if (!connection) {
+        abortRef.current?.abort();
+        inFlightRef.current = false;
+        setData(EMPTY_DATA);
+        setError(null);
+        setPartialErrors([]);
+        setLastUpdatedAt(null);
+        setLoading(false);
+        return;
+      }
+
+      if (!abortInFlight && inFlightRef.current) {
+        return;
+      }
+
+      // Cancel any in-flight request
       abortRef.current?.abort();
-      inFlightRef.current = false;
-      setData(EMPTY_DATA);
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const signal = controller.signal;
+      const seq = ++requestSeqRef.current;
+      inFlightRef.current = true;
+
+      setLoading(true);
       setError(null);
       setPartialErrors([]);
-      setLastUpdatedAt(null);
-      setLoading(false);
-      return;
-    }
 
-    // Cancel any in-flight request
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const signal = controller.signal;
-    const seq = ++requestSeqRef.current;
-    inFlightRef.current = true;
+      try {
+        const client = new ElasticsearchClient(connection);
 
-    setLoading(true);
-    setError(null);
-    setPartialErrors([]);
+        // Pass 1: all APIs in parallel
+        const results = await Promise.allSettled([
+          client.getClusterHealth("indices", signal),
+          client.getPendingTasks(signal),
+          client.getCatAllocation(signal),
+          client.getClusterStats(signal),
+          client.getNodeStats(signal),
+          client.getCatShards(signal),
+          client.getRecoveryStatus(signal),
+          client.getIlmExplainAll(signal),
+          client.getSlmStats(signal),
+          client.getSnapshotStatus(signal),
+          client.getNodeIngestStats(signal),
+          client.getClusterSettings(signal).catch((err) => {
+            if (isElasticsearchError(err) && err.status === 403) return null;
+            throw err;
+          }),
+        ]);
 
-    try {
-      const client = new ElasticsearchClient(connection);
+        if (signal.aborted || seq !== requestSeqRef.current) return;
 
-      // Pass 1: all APIs in parallel
-      const results = await Promise.allSettled([
-        client.getClusterHealth("indices", signal),
-        client.getPendingTasks(signal),
-        client.getCatAllocation(signal),
-        client.getClusterStats(signal),
-        client.getNodeStats(signal),
-        client.getCatShards(signal),
-        client.getRecoveryStatus(signal),
-        client.getIlmExplainAll(signal),
-        client.getSlmStats(signal),
-        client.getSnapshotStatus(signal),
-        client.getNodeIngestStats(signal),
-        client.getClusterSettings(signal).catch((err) => {
-          if (isElasticsearchError(err) && err.status === 403) return null;
-          throw err;
-        }),
-      ]);
+        const [
+          clusterHealth,
+          pendingTasks,
+          allocation,
+          clusterStats,
+          nodeStats,
+          shards,
+          recovery,
+          ilm,
+          slm,
+          snapshots,
+          ingestStats,
+          clusterSettings,
+        ] = results;
 
-      if (signal.aborted || seq !== requestSeqRef.current) return;
+        const val = <T>(r: PromiseSettledResult<T>): T | null =>
+          r.status === "fulfilled" ? r.value : null;
 
-      const [
-        clusterHealth,
-        pendingTasks,
-        allocation,
-        clusterStats,
-        nodeStats,
-        shards,
-        recovery,
-        ilm,
-        slm,
-        snapshots,
-        ingestStats,
-        clusterSettings,
-      ] = results;
+        const healthData = val(clusterHealth);
 
-      const val = <T>(r: PromiseSettledResult<T>): T | null =>
-        r.status === "fulfilled" ? r.value : null;
+        // Pass 2: conditional allocation explain
+        let allocationExplain: ClusterAllocationExplainResponse | null = null;
+        if ((healthData?.unassigned_shards ?? 0) > 0) {
+          try {
+            allocationExplain = await client.getAllocationExplain(signal);
+          } catch {
+            // 400 = no unassigned shards to explain, or 403 = no permissions
+          }
+        }
 
-      const healthData = val(clusterHealth);
+        if (signal.aborted || seq !== requestSeqRef.current) return;
 
-      // Pass 2: conditional allocation explain
-      let allocationExplain: ClusterAllocationExplainResponse | null = null;
-      if ((healthData?.unassigned_shards ?? 0) > 0) {
-        try {
-          allocationExplain = await client.getAllocationExplain(signal);
-        } catch {
-          // 400 = no unassigned shards to explain, or 403 = no permissions
+        setData({
+          clusterHealth: healthData,
+          pendingTasks: val(pendingTasks),
+          allocation: val(allocation),
+          clusterStats: val(clusterStats),
+          nodeStats: val(nodeStats),
+          shards: val(shards),
+          recovery: val(recovery),
+          ilm: val(ilm),
+          slm: val(slm),
+          snapshots: val(snapshots),
+          ingestStats: val(ingestStats),
+          clusterSettings: val(clusterSettings),
+          allocationExplain,
+        });
+
+        // Collect partial failures
+        const failures: string[] = [];
+        const names = [
+          "cluster health",
+          "pending tasks",
+          "allocation",
+          "cluster stats",
+          "node stats",
+          "shards",
+          "recovery",
+          "ILM",
+          "SLM",
+          "snapshots",
+          "ingest stats",
+          "cluster settings",
+        ];
+        results.forEach((r, i) => {
+          if (r.status === "rejected") failures.push(names[i]!);
+        });
+
+        setPartialErrors(failures);
+        setLastUpdatedAt(new Date().toISOString());
+      } catch (err) {
+        if (signal.aborted) return;
+        if (seq !== requestSeqRef.current) return;
+        setError(isElasticsearchError(err) ? err.message : String(err));
+      } finally {
+        if (seq === requestSeqRef.current) {
+          inFlightRef.current = false;
+          setLoading(false);
         }
       }
-
-      if (signal.aborted || seq !== requestSeqRef.current) return;
-
-      setData({
-        clusterHealth: healthData,
-        pendingTasks: val(pendingTasks),
-        allocation: val(allocation),
-        clusterStats: val(clusterStats),
-        nodeStats: val(nodeStats),
-        shards: val(shards),
-        recovery: val(recovery),
-        ilm: val(ilm),
-        slm: val(slm),
-        snapshots: val(snapshots),
-        ingestStats: val(ingestStats),
-        clusterSettings: val(clusterSettings),
-        allocationExplain,
-      });
-
-      // Collect partial failures
-      const failures: string[] = [];
-      const names = [
-        "cluster health",
-        "pending tasks",
-        "allocation",
-        "cluster stats",
-        "node stats",
-        "shards",
-        "recovery",
-        "ILM",
-        "SLM",
-        "snapshots",
-        "ingest stats",
-        "cluster settings",
-      ];
-      results.forEach((r, i) => {
-        if (r.status === "rejected") failures.push(names[i]!);
-      });
-
-      setPartialErrors(failures);
-      setLastUpdatedAt(new Date().toISOString());
-    } catch (err) {
-      if (signal.aborted) return;
-      if (seq !== requestSeqRef.current) return;
-      setError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      if (seq === requestSeqRef.current) {
-        inFlightRef.current = false;
-        setLoading(false);
-      }
-    }
-  }, [connection]);
+    },
+    [connection],
+  );
 
   // Initial load + reload on connection change
   useEffect(() => {
@@ -230,9 +237,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   useEffect(() => {
     if (refreshIntervalMs <= 0) return;
     const id = setInterval(() => {
-      if (!inFlightRef.current) {
-        void loadRef.current();
-      }
+      void loadRef.current(false);
     }, refreshIntervalMs);
     return () => clearInterval(id);
   }, [refreshIntervalMs]);
