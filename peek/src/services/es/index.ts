@@ -1,4 +1,6 @@
 export { ElasticsearchClient, isElasticsearchError } from "./client";
+export { executeRawRequest } from "./rawRequest";
+export type { DoFetch } from "./rawRequest";
 export { buildEsqlRequest } from "./buildEsqlRequest";
 export type { BuildEsqlRequestOptions } from "./buildEsqlRequest";
 export { fetchCapabilitiesForConnection } from "./connectionHandshake";
