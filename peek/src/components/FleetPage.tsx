@@ -184,10 +184,6 @@ export default function FleetPage() {
     setLastUpdatedAt,
   ]);
 
-  useEffect(() => {
-    void loadFleetData();
-  }, [loadFleetData]);
-
   // Auto-refresh
   const loadRef = useRef(loadFleetData);
   const pollingInFlightRef = useRef(false);
@@ -201,6 +197,9 @@ export default function FleetPage() {
       pollingInFlightRef.current = false;
     }
   }, []);
+  useEffect(() => {
+    void runRefresh();
+  }, [runRefresh]);
   useEffect(() => {
     if (!autoRefreshEnabled) return;
     const id = setInterval(() => void runRefresh(), AUTO_REFRESH_MS);
