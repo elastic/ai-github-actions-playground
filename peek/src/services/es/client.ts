@@ -557,7 +557,7 @@ export class ElasticsearchClient {
   }
 
   async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainResponse> {
-    return this._fetch<IlmExplainResponse>("/_all/_ilm/explain", { signal });
+    return this._fetch<IlmExplainResponse>("/_all/_ilm/explain?only_managed=true", { signal });
   }
 
   async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {
@@ -565,7 +565,7 @@ export class ElasticsearchClient {
   }
 
   async getSnapshotStatus(signal?: AbortSignal): Promise<SnapshotStatusResponse> {
-    return this._fetch<SnapshotStatusResponse>("/_snapshot/*/_status", { signal });
+    return this._fetch<SnapshotStatusResponse>("/_snapshot/_status", { signal });
   }
 
   async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {

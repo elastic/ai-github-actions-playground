@@ -79,11 +79,11 @@ describe("ClusterHealthPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Cluster Health Overview")).toBeInTheDocument();
+      expect(screen.getByText("YELLOW")).toBeInTheDocument();
     });
 
+    expect(screen.getByText("Cluster Health Overview")).toBeInTheDocument();
     expect(screen.getByText("Cluster status")).toBeInTheDocument();
-    expect(screen.getByText("YELLOW")).toBeInTheDocument();
     expect(screen.getByText("Pending tasks")).toBeInTheDocument();
     expect(
       within(screen.getByRole("group", { name: "Pending tasks" })).getByText("2"),
@@ -106,14 +106,14 @@ describe("ClusterHealthPage", () => {
 
     await waitFor(() => {
       expect(getClusterHealthMock).toHaveBeenCalledTimes(1);
-    })
-    expect(getClusterHealthMock).toHaveBeenNthCalledWith(1, "indices");;
+    });
+    expect(getClusterHealthMock).toHaveBeenNthCalledWith(1, "indices");
 
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
     await waitFor(() => {
       expect(getClusterHealthMock).toHaveBeenCalledTimes(2);
-    })
-    expect(getClusterHealthMock).toHaveBeenNthCalledWith(2, "indices");;
+    });
+    expect(getClusterHealthMock).toHaveBeenNthCalledWith(2, "indices");
   });
 });

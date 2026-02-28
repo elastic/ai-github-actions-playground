@@ -227,7 +227,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Cluster Resilience",
       group: "System",
-      order: 16.5,
+      order: 14,
       showInSidebar: false,
       icon: createElement(ShieldIcon, { fontSize: "small" }),
     },
