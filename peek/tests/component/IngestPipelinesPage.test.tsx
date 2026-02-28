@@ -296,8 +296,8 @@ describe("IngestPipelinesPage", () => {
     await user.click(screen.getByRole("button", { name: /expand doc 1/i }));
     await waitFor(() => {
       expect(screen.getByTestId("simulate-result").textContent).toContain("set");
-    })
-    expect(screen.getByTestId("simulate-result").textContent).toContain("success");;
+    });
+    expect(screen.getByTestId("simulate-result").textContent).toContain("success");
   });
 
   it("shows a simulate error when the API call fails", async () => {
