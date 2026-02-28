@@ -38,7 +38,7 @@ The `runtime-setup.md` fragment already auto-detects and installs Node.js (from 
   id: check_playwright
   if: hashFiles('**/package.json') != ''
   run: |
-    if grep -q '@playwright/test' package.json package-lock.json 2>/dev/null; then
+    if grep -R -q --include='package*.json' '@playwright/test' .; then
       echo "found=true" >> "$GITHUB_OUTPUT"
     else
       echo "found=false" >> "$GITHUB_OUTPUT"
