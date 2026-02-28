@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -6,8 +6,6 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -25,9 +23,10 @@ import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
 import ConnectionProfileSwitcher from "./ConnectionProfileSwitcher";
 import DateRangePicker from "./DateRangePicker";
+import RefreshIntervalPicker from "./RefreshIntervalPicker";
 import TimeZonePicker from "./TimeZonePicker";
 
-const REFRESH_INTERVAL_PRESETS: Array<{ label: string; seconds: number }> = [
+const REFRESH_INTERVAL_PRESETS = [
   { label: "Off", seconds: 0 },
   { label: "10s", seconds: 10 },
   { label: "15s", seconds: 15 },
@@ -76,7 +75,6 @@ export default function AppHeader() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [refreshAnchor, setRefreshAnchor] = useState<null | HTMLElement>(null);
   const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
   const isDashboardView =
     location.pathname.startsWith("/dashboards/") && location.pathname !== "/dashboards";
@@ -228,32 +226,11 @@ export default function AppHeader() {
               timeZone={dashboard.timeZone}
             />
             <TimeZonePicker value={dashboard.timeZone} onChange={setTimeZone} />
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={(e) => setRefreshAnchor(e.currentTarget)}
-            >
-              {REFRESH_INTERVAL_PRESETS.find((p) => p.seconds === refreshInterval)?.label ??
-                `${refreshInterval}s`}
-            </Button>
-            <Menu
-              anchorEl={refreshAnchor}
-              open={Boolean(refreshAnchor)}
-              onClose={() => setRefreshAnchor(null)}
-            >
-              {REFRESH_INTERVAL_PRESETS.map((preset) => (
-                <MenuItem
-                  key={preset.label}
-                  selected={preset.seconds === refreshInterval}
-                  onClick={() => {
-                    setRefreshInterval(preset.seconds);
-                    setRefreshAnchor(null);
-                  }}
-                >
-                  {preset.label}
-                </MenuItem>
-              ))}
-            </Menu>
+            <RefreshIntervalPicker
+              value={refreshInterval}
+              options={REFRESH_INTERVAL_PRESETS}
+              onChange={setRefreshInterval}
+            />
 
             {isDashboardView && (
               <>

@@ -31,6 +31,7 @@ import FleetVersionChart from "./fleet/FleetVersionChart";
 import FleetAgentsTable from "./fleet/FleetAgentsTable";
 import FleetOutputsList from "./fleet/FleetOutputsList";
 import FleetActivityList from "./fleet/FleetActivityList";
+import RefreshIntervalPicker from "./RefreshIntervalPicker";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -40,6 +41,10 @@ const TABS: { value: FleetViewTab; label: string }[] = [
 ];
 
 const AUTO_REFRESH_MS = 30_000;
+const FLEET_REFRESH_OPTIONS = [
+  { label: "Off", seconds: 0 },
+  { label: "30s", seconds: AUTO_REFRESH_MS / 1000 },
+];
 type AgentFilterUpdates = Parameters<
   ReturnType<typeof useFleetStore.getState>["updateAgentFilter"]
 >[0];
@@ -60,6 +65,8 @@ export default function FleetPage() {
     agentInventoryTotal,
     actions,
     actionResults,
+    autoRefreshEnabled,
+    lastUpdatedAt,
   } = useFleetStore(
     useShallow((s) => ({
       activeTab: s.activeTab,
@@ -73,6 +80,8 @@ export default function FleetPage() {
       agentInventoryTotal: s.agentInventoryTotal,
       actions: s.actions,
       actionResults: s.actionResults,
+      autoRefreshEnabled: s.autoRefreshEnabled,
+      lastUpdatedAt: s.lastUpdatedAt,
     })),
   );
 
@@ -85,6 +94,8 @@ export default function FleetPage() {
     setAgentInventoryTotal,
     setActions,
     setActionResults,
+    setAutoRefreshEnabled,
+    setLastUpdatedAt,
     setLoading,
     setError,
     setPartialErrors,
@@ -100,6 +111,8 @@ export default function FleetPage() {
       setAgentInventoryTotal: s.setAgentInventoryTotal,
       setActions: s.setActions,
       setActionResults: s.setActionResults,
+      setAutoRefreshEnabled: s.setAutoRefreshEnabled,
+      setLastUpdatedAt: s.setLastUpdatedAt,
       setLoading: s.setLoading,
       setError: s.setError,
       setPartialErrors: s.setPartialErrors,
@@ -149,6 +162,7 @@ export default function FleetPage() {
         setActions(value(results[4]!, "Actions") ?? []);
         setActionResults(value(results[5]!, "Action results") ?? []);
         setPartialErrors(errors);
+        setLastUpdatedAt(Date.now());
       }
     } finally {
       setLoading(false);
@@ -165,6 +179,7 @@ export default function FleetPage() {
     setActions,
     setActionResults,
     setPartialErrors,
+    setLastUpdatedAt,
   ]);
 
   useEffect(() => {
@@ -175,9 +190,10 @@ export default function FleetPage() {
   const loadRef = useRef(loadFleetData);
   loadRef.current = loadFleetData;
   useEffect(() => {
+    if (!autoRefreshEnabled) return;
     const id = setInterval(() => void loadRef.current(), AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [autoRefreshEnabled]);
 
   const handleAgentClick = useCallback(
     (agentId: string) => navigate(`/fleet/agents/${encodeURIComponent(agentId)}`),
@@ -201,6 +217,14 @@ export default function FleetPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Fleet
           </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Last updated: {lastUpdatedAt ? new Date(lastUpdatedAt).toLocaleTimeString() : "—"}
+          </Typography>
+          <RefreshIntervalPicker
+            value={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
+            options={FLEET_REFRESH_OPTIONS}
+            onChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+          />
           <Button
             size="small"
             variant="outlined"
