@@ -198,6 +198,9 @@ export default function FleetPage() {
     }
   }, []);
   useEffect(() => {
+    // Reset the in-flight guard so a connection switch always triggers a fresh load,
+    // even if the previous connection's request is still pending.
+    pollingInFlightRef.current = false;
     void runRefresh();
   }, [connection, runRefresh]);
   useEffect(() => {
