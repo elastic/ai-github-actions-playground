@@ -46,10 +46,10 @@ test.describe("smoke – live Elasticsearch", () => {
   test("Cluster Overview shows real node data", async ({ page }) => {
     const consoleLogs = collectConsoleLogs(page);
     await connectToLiveCluster(page);
-    // Already on Cluster Overview after connect
-    await page.waitForLoadState("networkidle");
-    // Cluster health should be visible (green or yellow)
-    await expect(page.getByText(/green|yellow/i).first()).toBeVisible({ timeout: 10_000 });
+    // Already on Cluster Overview after connect — wait for health chip to render
+    await expect(page.getByText(/Status:\s*(GREEN|YELLOW)/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
     await page.screenshot({
       path: "test-results/live-es-cluster-overview.png",
       fullPage: true,
@@ -65,7 +65,7 @@ test.describe("smoke – live Elasticsearch", () => {
     await page.getByRole("button", { name: "Indices", exact: true }).click();
     await page.waitForLoadState("networkidle");
     await expect(page.getByText("web_logs")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("orders")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("orders", { exact: true })).toBeVisible({ timeout: 10_000 });
     await page.screenshot({
       path: "test-results/live-es-indices.png",
       fullPage: true,
