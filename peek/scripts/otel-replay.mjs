@@ -68,7 +68,7 @@ function collectTimestamps(obj, out = []) {
     return out;
   }
   for (const [key, value] of Object.entries(obj)) {
-    if (TIMESTAMP_KEYS.has(key) && value) {
+    if (TIMESTAMP_KEYS.has(key) && value != null && value !== "") {
       out.push(BigInt(value));
     } else {
       collectTimestamps(value, out);
@@ -85,7 +85,7 @@ function shiftTimestamps(obj, offsetNs) {
     return obj;
   }
   for (const [key, value] of Object.entries(obj)) {
-    if (TIMESTAMP_KEYS.has(key) && value) {
+    if (TIMESTAMP_KEYS.has(key) && value != null && value !== "") {
       obj[key] = String(BigInt(value) + offsetNs);
     } else {
       shiftTimestamps(value, offsetNs);

@@ -80,7 +80,8 @@ test.describe("smoke – live Elasticsearch", () => {
     await connectToLiveCluster(page);
     await page.getByRole("button", { name: "Query Lab", exact: true }).click();
     await page.waitForLoadState("networkidle");
-    // The Query Lab should show results or a query editor
+    // The Query Lab editor should be visible and ready
+    await expect(page.getByRole("button", { name: /run/i })).toBeVisible({ timeout: 10_000 });
     await page.screenshot({
       path: "test-results/live-es-query-lab.png",
       fullPage: true,

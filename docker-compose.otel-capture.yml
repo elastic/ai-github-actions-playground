@@ -5,7 +5,7 @@
 #   docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml \
 #     -f docker-compose.otel-capture.yml up -d
 #
-# After capturing, stop and commit the .jsonl files:
+# After capturing, run 'make otel-capture-down' to stop and gzip the .jsonl.gz files:
 #   docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml \
 #     -f docker-compose.otel-capture.yml down -v
 services:

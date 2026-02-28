@@ -13,17 +13,21 @@ Compressed OTLP JSON Lines files captured from the live OTel stack for offline r
 ## How they were generated
 
 1. Start the OTel stack with the capture overlay:
+
    ```bash
    make otel-capture
    ```
+
    This runs the standard EDOT collector + tracegen + otelgen-logs, but adds
    `file/traces`, `file/metrics`, and `file/logs` exporters that write OTLP
    JSON Lines to `peek/fixtures/otlp/`.
 
 2. Let it run ~30 seconds for a good sample, then stop:
+
    ```bash
    make otel-capture-down
    ```
+
    This stops the stack and gzips the captured files.
 
 3. Commit the `.jsonl.gz` files.
@@ -55,7 +59,7 @@ Then commit the updated `.jsonl.gz` files.
 
 ## Data flow
 
-```
+```text
 Capture:  tracegen.py ──OTLP/gRPC──▶ EDOT collector ──file exporter──▶ *.jsonl.gz
 
 Replay:   *.jsonl.gz ──otel-replay.mjs──OTLP/HTTP──▶ EDOT collector ──ES exporter──▶ Elasticsearch

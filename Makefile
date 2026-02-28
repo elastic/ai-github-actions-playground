@@ -135,7 +135,7 @@ screenshot-all:
 
 otel-capture:
 	@echo "Starting OTel stack with OTLP file capture..."
-	@rm -f $(PEEK_DIR)/fixtures/otlp/*.jsonl
+	@rm -f $(PEEK_DIR)/fixtures/otlp/*.jsonl $(PEEK_DIR)/fixtures/otlp/*.jsonl.gz
 	@mkdir -p $(PEEK_DIR)/fixtures/otlp
 	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-capture.yml up -d
 	@echo "✓ Capturing to $(PEEK_DIR)/fixtures/otlp/*.jsonl"
@@ -156,7 +156,7 @@ otel-replay-up:
 otel-replay:
 	@echo "Replaying OTLP fixtures + seeding non-OTLP data..."
 	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
-	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}"
+	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
 	@sleep 5
 	@echo "✓ Data replayed and seeded."
 
