@@ -29,7 +29,6 @@ function MockVisualization({
   onExportReady,
 }: {
   onExportReady?: (exportFn: (() => string) | null) => void;
-  onExportCsv?: () => void;
 }) {
   useEffect(() => {
     onExportReady?.(() => "data:image/png;base64,ZmFrZQ==");
