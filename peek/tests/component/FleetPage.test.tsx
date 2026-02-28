@@ -485,7 +485,7 @@ describe("Fleet pages", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Some data sources unavailable:/)).toBeInTheDocument();
+      expect(screen.getByText(/Some data sources are unavailable:/)).toBeInTheDocument();
     });
     expect(screen.getByText(/Agent inventory: forbidden by role/)).toBeInTheDocument();
   });
