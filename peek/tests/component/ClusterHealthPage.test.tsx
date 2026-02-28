@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -62,7 +62,7 @@ describe("ClusterHealthPage", () => {
       },
     });
     getCatShardsMock.mockResolvedValue([{ node: "a" }, { node: "a" }, { node: "b" }]);
-    getRecoveryStatusMock.mockResolvedValue({ "idx-a": [{ stage: "index" }] });
+    getRecoveryStatusMock.mockResolvedValue({ "idx-a": { shards: [{ stage: "index" }] } });
     getIlmExplainAllMock.mockResolvedValue({ indices: { "idx-a": { failed_step: "error" } } });
     getSlmStatsMock.mockResolvedValue({ policy_stats: [{ snapshots_failed: 2 }] });
     getSnapshotStatusMock.mockResolvedValue({ snapshots: [{ shards_stats: { failed: 1 } }] });
@@ -85,11 +85,15 @@ describe("ClusterHealthPage", () => {
     expect(screen.getByText("Cluster status")).toBeInTheDocument();
     expect(screen.getByText("YELLOW")).toBeInTheDocument();
     expect(screen.getByText("Pending tasks")).toBeInTheDocument();
-    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByRole("group", { name: "Pending tasks" })).getByText("2"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Avg CPU")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("Active recoveries")).toBeInTheDocument();
-    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByRole("group", { name: "Active recoveries" })).getByText("1"),
+    ).toBeInTheDocument();
   });
 
   it("refreshes when Refresh is clicked", async () => {
@@ -102,12 +106,14 @@ describe("ClusterHealthPage", () => {
 
     await waitFor(() => {
       expect(getClusterHealthMock).toHaveBeenCalledTimes(1);
-    });
+    })
+    expect(getClusterHealthMock).toHaveBeenNthCalledWith(1, "indices");;
 
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
     await waitFor(() => {
       expect(getClusterHealthMock).toHaveBeenCalledTimes(2);
-    });
+    })
+    expect(getClusterHealthMock).toHaveBeenNthCalledWith(2, "indices");;
   });
 });

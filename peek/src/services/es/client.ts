@@ -98,7 +98,7 @@ export interface NodesStatsResponse {
 export interface RecoveryShardStatus {
   stage?: string;
 }
-export type RecoveryResponse = Record<string, RecoveryShardStatus[]>;
+export type RecoveryResponse = Record<string, { shards?: RecoveryShardStatus[] }>;
 export interface IlmExplainIndexStatus {
   managed?: boolean;
   phase?: string;
@@ -552,7 +552,7 @@ export class ElasticsearchClient {
   }
 
   async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainResponse> {
-    return this._fetch<IlmExplainResponse>("/_ilm/explain/*", { signal });
+    return this._fetch<IlmExplainResponse>("/_all/_ilm/explain", { signal });
   }
 
   async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {

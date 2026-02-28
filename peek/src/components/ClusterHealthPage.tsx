@@ -51,7 +51,7 @@ interface ClusterHealthPageProps {
 
 function InfoCard({ title, value, detail }: { title: string; value: string; detail?: string }) {
   return (
-    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+    <Paper variant="outlined" sx={{ p: 2, flex: 1, minWidth: 180 }} role="group" aria-label={title}>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
         {title}
       </Typography>
@@ -220,11 +220,10 @@ export default function ClusterHealthPage({
   const startedShards = (data.shards ?? []).filter((shard) => shard.state === "STARTED").length;
   const unassignedShards = data.clusterHealth?.unassigned_shards ?? 0;
   const recoveringIndices = Object.keys(data.recovery ?? {}).length;
-  const activeRecoveries =
-    Object.values(data.recovery ?? {}).reduce(
-      (sum, shardStatuses) => sum + shardStatuses.length,
-      0,
-    ) ?? 0;
+  const activeRecoveries = Object.values(data.recovery ?? {}).reduce(
+    (sum, indexRecovery) => sum + (indexRecovery.shards?.length ?? 0),
+    0,
+  );
   const ilmWarnings = Object.values(data.ilm?.indices ?? {}).filter((entry) =>
     Boolean(entry.failed_step),
   ).length;
@@ -267,8 +266,14 @@ export default function ClusterHealthPage({
               Last update: {new Date(lastUpdatedAt).toLocaleTimeString()}
             </Typography>
           ) : null}
-          <Button size="small" variant="outlined" onClick={loadData} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={loadData}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+          >
+            Refresh
           </Button>
         </Stack>
       </Paper>
@@ -285,7 +290,7 @@ export default function ClusterHealthPage({
           {sectionTitle}
         </Typography>
         {view === "overview" ? (
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard
               title="Cluster status"
               value={(data.clusterHealth?.status ?? "unknown").toUpperCase()}
@@ -297,7 +302,7 @@ export default function ClusterHealthPage({
           </Stack>
         ) : null}
         {view === "taskBacklog" ? (
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Pending tasks" value={pendingTaskCount.toString()} />
             <InfoCard
               title="Longest queued task"
@@ -308,7 +313,7 @@ export default function ClusterHealthPage({
           </Stack>
         ) : null}
         {view === "capacityPressure" ? (
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Avg CPU" value={`${avgCpu}%`} />
             <InfoCard title="Avg heap" value={`${avgHeap}%`} />
             <InfoCard title="Avg disk used" value={`${avgDiskPercent}%`} />
@@ -319,7 +324,7 @@ export default function ClusterHealthPage({
           </Stack>
         ) : null}
         {view === "shardDistribution" ? (
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Total shards" value={totalShards.toLocaleString()} />
             <InfoCard title="Started shards" value={startedShards.toLocaleString()} />
             <InfoCard title="Unassigned shards" value={unassignedShards.toLocaleString()} />
@@ -331,7 +336,7 @@ export default function ClusterHealthPage({
           </Stack>
         ) : null}
         {view === "resilienceSignals" ? (
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
             <InfoCard title="Recovering indices" value={recoveringIndices.toString()} />
             <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
             <InfoCard title="ILM warnings" value={ilmWarnings.toString()} />

@@ -17,6 +17,10 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import StorageIcon from "@mui/icons-material/Storage";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import MemoryIcon from "@mui/icons-material/Memory";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import ShieldIcon from "@mui/icons-material/Shield";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
@@ -186,7 +190,7 @@ export const PAGE_MANIFEST = {
       group: "System",
       order: 12,
       showInSidebar: true,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
     },
   },
   clusterCapacity: {
@@ -199,7 +203,7 @@ export const PAGE_MANIFEST = {
       group: "System",
       order: 13,
       showInSidebar: true,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+      icon: createElement(MemoryIcon, { fontSize: "small" }),
     },
   },
   clusterShards: {
@@ -212,7 +216,7 @@ export const PAGE_MANIFEST = {
       group: "System",
       order: 14,
       showInSidebar: true,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+      icon: createElement(ViewModuleIcon, { fontSize: "small" }),
     },
   },
   clusterResilience: {
@@ -223,9 +227,9 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Cluster Resilience",
       group: "System",
-      order: 16,
+      order: 16.5,
       showInSidebar: true,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+      icon: createElement(ShieldIcon, { fontSize: "small" }),
     },
   },
   addData: {
