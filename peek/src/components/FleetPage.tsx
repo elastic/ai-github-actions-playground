@@ -122,7 +122,6 @@ export default function FleetPage() {
   );
 
   const abortRef = useRef<AbortController | null>(null);
-  const pollingInFlightRef = useRef(false);
 
   const loadFleetData = useCallback(
     async (signal: AbortSignal) => {
@@ -191,17 +190,15 @@ export default function FleetPage() {
     ],
   );
 
-  // Auto-refresh
+  // Auto-refresh – use the per-connection AbortController signal to both
+  // cancel stale requests and prevent overlapping polls.  The signal is the
+  // single source of truth; no separate boolean ref is needed.
   const loadRef = useRef(loadFleetData);
   loadRef.current = loadFleetData;
-  const runRefresh = useCallback(async () => {
-    if (pollingInFlightRef.current) return;
-    pollingInFlightRef.current = true;
-    try {
-      await loadRef.current(abortRef.current?.signal ?? new AbortController().signal);
-    } finally {
-      pollingInFlightRef.current = false;
-    }
+  const runRefresh = useCallback(async (signal?: AbortSignal) => {
+    const s = signal ?? abortRef.current?.signal;
+    if (!s || s.aborted) return;
+    await loadRef.current(s);
   }, []);
   useEffect(() => {
     // Abort any in-flight request from the previous connection so its late
@@ -209,14 +206,17 @@ export default function FleetPage() {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    void runRefresh();
+    void runRefresh(controller.signal);
     return () => {
       controller.abort();
     };
   }, [connection, runRefresh]);
   useEffect(() => {
     if (!autoRefreshEnabled) return;
-    const id = setInterval(() => void runRefresh(), AUTO_REFRESH_MS);
+    const id = setInterval(() => {
+      const s = abortRef.current?.signal;
+      if (s && !s.aborted) void runRefresh(s);
+    }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [autoRefreshEnabled, runRefresh]);
 
