@@ -33,6 +33,10 @@ interface FleetState {
   actions: FleetAction[];
   /** Fleet action results from fleet-actions-results-sim */
   actionResults: FleetActionResult[];
+  /** Whether Fleet auto-refresh is enabled */
+  autoRefreshEnabled: boolean;
+  /** Timestamp of last successful refresh in milliseconds */
+  lastUpdatedAt: number | null;
 
   /** Currently active tab */
   activeTab: FleetViewTab;
@@ -53,6 +57,8 @@ interface FleetState {
   setAgentInventoryTotal: (total: number) => void;
   setActions: (actions: FleetAction[]) => void;
   setActionResults: (results: FleetActionResult[]) => void;
+  setAutoRefreshEnabled: (enabled: boolean) => void;
+  setLastUpdatedAt: (timestamp: number | null) => void;
   setActiveTab: (tab: FleetViewTab) => void;
   updateAgentFilter: (updates: Partial<AgentFilter>) => void;
   setLoading: (loading: boolean) => void;
@@ -76,6 +82,8 @@ export const useFleetStore = create<FleetState>()((set) => ({
   agentInventoryTotal: 0,
   actions: [],
   actionResults: [],
+  autoRefreshEnabled: true,
+  lastUpdatedAt: null,
 
   activeTab: "overview",
   agentFilter: { ...DEFAULT_FILTER },
@@ -91,6 +99,8 @@ export const useFleetStore = create<FleetState>()((set) => ({
   setAgentInventoryTotal: (total) => set({ agentInventoryTotal: total }),
   setActions: (actions) => set({ actions }),
   setActionResults: (results) => set({ actionResults: results }),
+  setAutoRefreshEnabled: (enabled) => set({ autoRefreshEnabled: enabled }),
+  setLastUpdatedAt: (timestamp) => set({ lastUpdatedAt: timestamp }),
   setActiveTab: (tab) => set({ activeTab: tab }),
   updateAgentFilter: (updates) => set((s) => ({ agentFilter: { ...s.agentFilter, ...updates } })),
   setLoading: (loading) => set({ loading }),
