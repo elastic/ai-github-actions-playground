@@ -57,9 +57,9 @@ const CONFIDENCE_COLOR: Record<ConfidenceLevel, "success" | "warning" | "error">
 };
 
 const CONFIDENCE_TOOLTIP: Record<ConfidenceLevel, string> = {
-  high: "All documents in this stream were analysed — stats are exact.",
+  high: "All documents in this stream were analyzed — stats are exact.",
   medium:
-    "Stats are complete but the stream is approaching the sample limit. Results may vary for larger time windows.",
+    "Stats are nearly complete but the stream is approaching the sample limit. Results may become approximate for very large streams.",
   low: "The sample limit was reached. Stats reflect only a subset of documents in this stream.",
 };
 
