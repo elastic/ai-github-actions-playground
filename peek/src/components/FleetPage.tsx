@@ -354,7 +354,7 @@ function OverviewTab({
               value={serverStatus.offline}
               color="text.secondary"
               onClick={
-                serverStatus.offline > 0 ? () => onDrillIn({ staleness: "stale" }) : undefined
+                serverStatus.offline > 0 ? () => onDrillIn({ staleness: "critical" }) : undefined
               }
             />
             <FleetStatCard title="Updating" value={serverStatus.updating} color="info.main" />

@@ -544,7 +544,7 @@ describe("Fleet pages", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("clicking Offline stat card switches to agents tab with stale filter", async () => {
+  it("clicking Offline stat card switches to agents tab with offline (critical) filter", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
     render(
@@ -564,7 +564,7 @@ describe("Fleet pages", () => {
     await waitFor(() => {
       expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
     });
-    expect(screen.getByText("Stale")).toBeInTheDocument();
+    expect(screen.getByText("Offline", { selector: ".MuiChip-label" })).toBeInTheDocument();
   });
 
   it("active filter chip can be cleared in agents table", async () => {
