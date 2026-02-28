@@ -35,7 +35,7 @@ interface McpToolProvider {
   getTools: (signal?: AbortSignal) => Promise<ToolSet>;
   onError?: (error: unknown) => void;
   timeoutMs: number;
-  stopWhen: ReturnType<typeof stepCountIs>;
+  stepCountLimit: number;
   systemInstruction: string;
 }
 
@@ -49,7 +49,7 @@ const MCP_TOOL_PROVIDERS: McpToolProvider[] = [
       resetMcpSession();
     },
     timeoutMs: MCP_TIMEOUT_MS,
-    stopWhen: stepCountIs(3),
+    stepCountLimit: 3,
     systemInstruction:
       "You have access to Elastic documentation search tools. " +
       "Use them to look up relevant Elastic docs when the user asks about " +
@@ -65,7 +65,7 @@ function clampToolRowLimit(rowLimit?: number): number {
 }
 
 function ensureQueryLimit(query: string, rowLimit: number): string {
-  if (/\|\s*LIMIT\s+\d+/i.test(query)) return query;
+  if (/\|\s*LIMIT\s+\d+\s*$/i.test(query)) return query;
   return `${query} | LIMIT ${rowLimit}`;
 }
 
@@ -174,7 +174,7 @@ export async function buildChatRuntime({
 }> {
   const tools: ToolSet = { ...getLocalChatTools(connection) };
   const mcpInstructions: string[] = [];
-  let stopWhen: ReturnType<typeof stepCountIs> | undefined;
+  let maxStepCountLimit = 0;
 
   for (const provider of MCP_TOOL_PROVIDERS) {
     if (!provider.enabled(config)) continue;
@@ -183,7 +183,7 @@ export async function buildChatRuntime({
       if (Object.keys(providerTools).length === 0) continue;
       Object.assign(tools, providerTools);
       mcpInstructions.push(provider.systemInstruction);
-      stopWhen = provider.stopWhen;
+      maxStepCountLimit = Math.max(maxStepCountLimit, provider.stepCountLimit);
     } catch (error) {
       provider.onError?.(error);
     }
@@ -197,5 +197,9 @@ export async function buildChatRuntime({
     `Use this screen context to ground your answers:\n${getScreenContextSummary(pathname)}` +
     (mcpInstructions.length > 0 ? `\n${mcpInstructions.join(" ")}` : "");
 
-  return { systemPrompt, tools, stopWhen };
+  return {
+    systemPrompt,
+    tools,
+    stopWhen: maxStepCountLimit > 0 ? stepCountIs(maxStepCountLimit) : undefined,
+  };
 }
