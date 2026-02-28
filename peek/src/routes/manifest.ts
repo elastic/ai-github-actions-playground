@@ -16,10 +16,20 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SpeedIcon from "@mui/icons-material/Speed";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import StorageIcon from "@mui/icons-material/Storage";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import MemoryIcon from "@mui/icons-material/Memory";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import ShieldIcon from "@mui/icons-material/Shield";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
+import ClusterCapacityPage from "../components/ClusterCapacityPage";
+import ClusterHealthPage from "../components/ClusterHealthPage";
 import ClusterOverviewPage from "../components/ClusterOverviewPage";
+import ClusterResiliencePage from "../components/ClusterResiliencePage";
+import ClusterShardsPage from "../components/ClusterShardsPage";
+import ClusterTasksPage from "../components/ClusterTasksPage";
 import DashboardsLandingPage from "../components/DashboardsLandingPage";
 import DataStreamsPage from "../components/DataStreamsPage";
 import AddDataPage from "../components/AddDataPage";
@@ -157,6 +167,71 @@ export const PAGE_MANIFEST = {
       icon: createElement(InfoIcon, { fontSize: "small" }),
     },
   },
+  clusterHealth: {
+    path: "/cluster-health",
+    component: ClusterHealthPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Cluster Health",
+      group: "System",
+      order: 11,
+      showInSidebar: true,
+      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+    },
+  },
+  clusterTasks: {
+    path: "/cluster-tasks",
+    component: ClusterTasksPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Cluster Tasks",
+      group: "System",
+      order: 12,
+      showInSidebar: false,
+      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
+    },
+  },
+  clusterCapacity: {
+    path: "/cluster-capacity",
+    component: ClusterCapacityPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Cluster Capacity",
+      group: "System",
+      order: 13,
+      showInSidebar: false,
+      icon: createElement(MemoryIcon, { fontSize: "small" }),
+    },
+  },
+  clusterShards: {
+    path: "/cluster-shards",
+    component: ClusterShardsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Cluster Shards",
+      group: "System",
+      order: 14,
+      showInSidebar: false,
+      icon: createElement(ViewModuleIcon, { fontSize: "small" }),
+    },
+  },
+  clusterResilience: {
+    path: "/cluster-resilience",
+    component: ClusterResiliencePage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Cluster Resilience",
+      group: "System",
+      order: 15.5,
+      showInSidebar: false,
+      icon: createElement(ShieldIcon, { fontSize: "small" }),
+    },
+  },
   addData: {
     path: "/add-data",
     component: AddDataPage,
@@ -165,7 +240,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Add Data",
       group: "System",
-      order: 12,
+      order: 17,
       showInSidebar: true,
       icon: createElement(AddCircleOutlineIcon, { fontSize: "small" }),
     },

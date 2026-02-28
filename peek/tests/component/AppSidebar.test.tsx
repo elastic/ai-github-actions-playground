@@ -94,6 +94,10 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
+    expect(screen.getByRole("button", { name: /cluster health/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     expect(screen.getByRole("button", { name: /fleet/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
@@ -153,6 +157,26 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /cluster overview/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
+  });
+
+  it("navigates to Cluster Health when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster health/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
+  });
+
+  it("keeps detail cluster pages out of sidebar", () => {
+    useConnectionStore.getState().setConnected(true);
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /cluster tasks/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cluster capacity/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cluster shards/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cluster resilience/i })).not.toBeInTheDocument();
   });
 
   it("navigates to Fleet when clicked while connected", async () => {
