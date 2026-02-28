@@ -22,7 +22,6 @@ export interface ConsoleDiagnostic {
  * Describes one page (or sub-view) to audit.
  *
  * - `navButton` — the sidebar button label (clicked with `exact: true`).
- * - `waitMs` — how long to wait after navigation (default 1500).
  * - `afterNav` — optional extra steps between navigation and the screenshot
  *    (e.g. click tabs, set filters, press Run). Receives the `Page` and
  *    the file-prefix so it can take additional screenshots.
@@ -30,7 +29,6 @@ export interface ConsoleDiagnostic {
 export interface PageAuditConfig {
   name: string;
   navButton: string;
-  waitMs?: number;
   afterNav?: (page: Page, prefix: string) => Promise<void>;
 }
 
@@ -126,7 +124,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       // Navigate through sub-tabs
       for (const tab of ["Mappings", "Settings", "Stats", "Disk Usage"]) {
         await page.getByRole("tab", { name: tab }).click();
-        await page.waitForTimeout(500);
+        await page.getByRole("tabpanel").waitFor({ state: "visible" });
         await page.screenshot({
           path: `test-results/${prefix}-indices-${slug(tab)}.png`,
           fullPage: true,
@@ -146,17 +144,17 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       });
       const metricSearch = page.getByLabel("Search metrics");
       await metricSearch.fill("system.cpu");
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState("networkidle");
       await page.screenshot({
         path: `test-results/${prefix}-metrics-search.png`,
         fullPage: true,
       });
     },
   },
-  { name: "Console", navButton: "Console", waitMs: 1000 },
+  { name: "Console", navButton: "Console" },
   { name: "Users", navButton: "Users" },
   { name: "Roles", navButton: "Roles" },
-  { name: "Dashboards", navButton: "Dashboards", waitMs: 1000 },
+  { name: "Dashboards", navButton: "Dashboards" },
   { name: "Fleet", navButton: "Fleet" },
 ];
 
@@ -164,13 +162,13 @@ export const COMMON_PAGES: PageAuditConfig[] = [
  * Profiling sub-view helper: navigate to Profiling, pick a view mode chip,
  * set time range to "Last 7d", click Run, and wait for results.
  */
-async function profilingAfterNav(viewMode: string, waitMs: number) {
+async function profilingAfterNav(viewMode: string) {
   return async (page: Page) => {
     await page.getByRole("button", { name: viewMode, exact: true }).click();
     await page.getByLabel("Time range").click();
     await page.getByRole("option", { name: "Last 7d" }).click();
     await page.getByRole("button", { name: "Run" }).click();
-    await page.waitForTimeout(waitMs);
+    await page.waitForLoadState("networkidle");
   };
 }
 
@@ -179,13 +177,12 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Top Functions",
     navButton: "Profiling",
-    waitMs: 1000,
     afterNav: async (page) => {
       // Top Functions is the default view, just set time range and run
       await page.getByLabel("Time range").click();
       await page.getByRole("option", { name: "Last 7d" }).click();
       await page.getByRole("button", { name: "Run" }).click();
-      await page.waitForTimeout(5000);
+      await page.locator("table").waitFor({ state: "visible" });
 
       // Check function name resolution
       const tableText = await page.locator("table").textContent();
@@ -198,16 +195,15 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Stacktraces",
     navButton: "Profiling",
-    waitMs: 1000,
     afterNav: async (page, prefix) => {
       await (
-        await profilingAfterNav("Stacktraces", 8000)
+        await profilingAfterNav("Stacktraces")
       )(page);
 
       // Expand the first stacktrace
       const firstRow = page.locator("table tbody tr").first();
       await firstRow.click();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState("networkidle");
       await page.screenshot({
         path: `test-results/${prefix}-profiling-stacktraces-expanded.png`,
         fullPage: true,
@@ -226,30 +222,27 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Flamegraph",
     navButton: "Profiling",
-    waitMs: 1000,
     afterNav: async (page) => {
       await (
-        await profilingAfterNav("Flamegraph", 10_000)
+        await profilingAfterNav("Flamegraph")
       )(page);
     },
   },
   {
     name: "Profiling Timeline",
     navButton: "Profiling",
-    waitMs: 1000,
     afterNav: async (page) => {
       await (
-        await profilingAfterNav("Timeline", 5000)
+        await profilingAfterNav("Timeline")
       )(page);
     },
   },
   {
     name: "Profiling Flamescope",
     navButton: "Profiling",
-    waitMs: 1000,
     afterNav: async (page) => {
       await (
-        await profilingAfterNav("Flamescope", 10_000)
+        await profilingAfterNav("Flamescope")
       )(page);
     },
   },
@@ -285,7 +278,7 @@ export function registerLoveAuditTests(
 
         // Navigate
         await page.getByRole("button", { name: pageConfig.navButton, exact: true }).click();
-        await page.waitForTimeout(pageConfig.waitMs ?? 1500);
+        await page.waitForLoadState("networkidle");
 
         // Optional extra steps (tab navigation, filters, Run button, etc.)
         if (pageConfig.afterNav) {
