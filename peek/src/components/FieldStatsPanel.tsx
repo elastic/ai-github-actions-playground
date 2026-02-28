@@ -13,8 +13,6 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 
 import {
-  ElasticsearchClient,
-  isElasticsearchError,
   fetchFieldStats,
   buildFieldStatsQuery,
   buildTopValuesQuery,
@@ -23,6 +21,7 @@ import {
   isNumericOrDateType,
 } from "../services/es";
 import type { ElasticsearchConnection, FieldStats, ConfidenceLevel } from "../services/es";
+import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -98,14 +97,15 @@ export default function FieldStatsPanel({
     setError(null);
     setStats(null);
     try {
-      const client = new ElasticsearchClient(connection);
-      const result = await fetchFieldStats(client, streamName, fieldName, fieldType);
-      if (requestId === requestIdRef.current) {
-        setStats(result);
-      }
-    } catch (err) {
-      if (requestId === requestIdRef.current) {
-        setError(isElasticsearchError(err) ? err.message : String(err));
+      const { data, error } = await runConnectionRequest({
+        connection,
+        run: (client) => fetchFieldStats(client, streamName, fieldName, fieldType),
+      });
+      if (requestId !== requestIdRef.current) return;
+      if (error !== null) {
+        setError(error);
+      } else if (data !== null) {
+        setStats(data);
       }
     } finally {
       if (requestId === requestIdRef.current) {
