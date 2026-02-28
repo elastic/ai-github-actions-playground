@@ -175,6 +175,32 @@ describe("ChatPage", () => {
     });
   });
 
+  it("passes stopWhen from runtime to generateText", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+
+    const mockStopWhen = vi.fn();
+    buildChatRuntimeMock.mockResolvedValue({
+      systemPrompt: "You are a helpful assistant.",
+      tools: {},
+      stopWhen: mockStopWhen,
+    });
+    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stopWhen: mockStopWhen,
+        }),
+      );
+    });
+  });
+
   it("shows error alert and does not persist error text in chat bubble", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
