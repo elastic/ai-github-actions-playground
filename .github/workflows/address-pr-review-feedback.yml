@@ -3,6 +3,10 @@ on:
   pull_request_review:
     types: [submitted]
 
+concurrency:
+  group: pr-address-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   actions: read
   contents: write
@@ -14,7 +18,7 @@ jobs:
     if: >-
       github.event.review.user.type == 'Bot' &&
       github.event.pull_request.draft == false &&
-      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-review')
+      !contains(github.event.pull_request.labels.*.name, 'skip-auto-pr-address')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review-addresser.lock.yml@main
     with:
       allowed-bot-users: "coderabbitai[bot],github-actions[bot]"
