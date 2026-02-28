@@ -1,5 +1,3 @@
-import type { ElasticsearchError } from "./client";
-
 // ---------------------------------------------------------------------------
 // Raw-request executor – extracted from ElasticsearchClient so that the
 // API-console orchestration (timeout, abort propagation, body normalisation,
@@ -15,6 +13,11 @@ export type DoFetch = (
   headers: Record<string, string>,
   options?: RequestInit & { signal?: AbortSignal },
 ) => Promise<Response>;
+
+export interface RawRequestError {
+  status: number;
+  message: string;
+}
 
 /**
  * Execute an arbitrary HTTP request against an Elasticsearch cluster.
@@ -63,11 +66,11 @@ export async function executeRawRequest(
     throw {
       status: 0,
       message: err instanceof Error ? err.message : String(err),
-    } satisfies ElasticsearchError;
+    } satisfies RawRequestError;
   }
   clearTimeout(timeoutId);
   signal?.removeEventListener("abort", onAbort);
-  const contentType = response.headers.get("content-type") ?? "";
+  const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
   let responseBody: unknown;
   if (contentType.includes("application/json")) {
     responseBody = await response.json().catch(() => null);

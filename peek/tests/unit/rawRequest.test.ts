@@ -113,6 +113,67 @@ describe("executeRawRequest", () => {
     );
   });
 
+  it("propagates external abort signal", async () => {
+    const controller = new AbortController();
+    let requestSignal: AbortSignal | undefined;
+    const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+      requestSignal = opts?.signal;
+      return new Promise((_resolve, reject) => {
+        if (requestSignal?.aborted) {
+          reject(requestSignal.reason);
+          return;
+        }
+        requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+          once: true,
+        });
+      });
+    });
+
+    const pending = executeRawRequest(
+      doFetch,
+      BASE_URL,
+      HEADERS,
+      "GET",
+      "/",
+      undefined,
+      controller.signal,
+    );
+    controller.abort(new DOMException("aborted by caller", "AbortError"));
+
+    await expect(pending).rejects.toEqual(
+      expect.objectContaining({ status: 0, message: expect.stringContaining("aborted by caller") }),
+    );
+    expect(requestSignal?.aborted).toBe(true);
+  });
+
+  it("aborts request when timeout is reached", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+        requestSignal = opts?.signal;
+        return new Promise((_resolve, reject) => {
+          requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+            once: true,
+          });
+        });
+      });
+
+      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/");
+      const assertion = expect(pending).rejects.toEqual(
+        expect.objectContaining({
+          status: 0,
+          message: expect.stringContaining("Request timed out"),
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
+      await assertion;
+      expect(requestSignal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("exports the timeout constant", () => {
     expect(RAW_REQUEST_TIMEOUT_MS).toBe(30_000);
   });
