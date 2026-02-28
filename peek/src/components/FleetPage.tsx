@@ -162,7 +162,9 @@ export default function FleetPage() {
         setActions(value(results[4]!, "Actions") ?? []);
         setActionResults(value(results[5]!, "Action results") ?? []);
         setPartialErrors(errors);
-        setLastUpdatedAt(Date.now());
+        if (results.some((result) => result.status === "fulfilled")) {
+          setLastUpdatedAt(Date.now());
+        }
       }
     } finally {
       setLoading(false);
@@ -188,10 +190,20 @@ export default function FleetPage() {
 
   // Auto-refresh
   const loadRef = useRef(loadFleetData);
+  const pollingInFlightRef = useRef(false);
   loadRef.current = loadFleetData;
   useEffect(() => {
     if (!autoRefreshEnabled) return;
-    const id = setInterval(() => void loadRef.current(), AUTO_REFRESH_MS);
+    const tick = async () => {
+      if (pollingInFlightRef.current) return;
+      pollingInFlightRef.current = true;
+      try {
+        await loadRef.current();
+      } finally {
+        pollingInFlightRef.current = false;
+      }
+    };
+    const id = setInterval(() => void tick(), AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [autoRefreshEnabled]);
 
