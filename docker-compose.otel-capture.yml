@@ -1,0 +1,16 @@
+# Capture overlay: writes OTLP JSON Lines alongside normal ES export.
+# Captured files land in peek/fixtures/otlp/ for offline replay.
+#
+# Usage:
+#   docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml \
+#     -f docker-compose.otel-capture.yml up -d
+#
+# After capturing, stop and commit the .jsonl files:
+#   docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml \
+#     -f docker-compose.otel-capture.yml down -v
+services:
+  otel-collector:
+    volumes:
+      - ./docker/otel-collector/config-capture.yaml:/etc/otelcol/config.yaml:ro
+      - ./peek/fixtures/otlp:/data/capture:rw
+      - /:/hostfs:ro

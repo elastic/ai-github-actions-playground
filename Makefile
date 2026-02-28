@@ -2,7 +2,7 @@ PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
-.PHONY: seed-es screenshot-all test-e2e-live
+.PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -23,8 +23,13 @@ help:
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
 	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
-	@echo "  seed-es          - Seed Elasticsearch with test data (set ES_URL)"
+	@echo "  seed-es          - Seed Elasticsearch with non-OTLP test data (set ES_URL)"
 	@echo "  screenshot-all   - Capture all page screenshots (mocked data)"
+	@echo "  otel-capture     - Capture OTLP fixtures from live OTel stack"
+	@echo "  otel-capture-down - Stop the OTel capture stack"
+	@echo "  otel-replay-up   - Start ES + collector in replay mode"
+	@echo "  otel-replay      - Replay OTLP fixtures + seed non-OTLP data"
+	@echo "  otel-replay-down - Stop the replay stack"
 	@echo "  clean            - Remove build artifacts and node_modules"
 	@echo "  docker-build     - Build the Docker image"
 	@echo "  docker-run       - Run the Docker container (set ES_URL)"
@@ -127,6 +132,38 @@ screenshot-all:
 	@echo "Capturing all page screenshots (mocked)..."
 	@cd $(PEEK_DIR) && node scripts/screenshot-all.mjs --out-dir screenshots
 	@echo "✓ Screenshots saved to $(PEEK_DIR)/screenshots/"
+
+otel-capture:
+	@echo "Starting OTel stack with OTLP file capture..."
+	@rm -f $(PEEK_DIR)/fixtures/otlp/*.jsonl
+	@mkdir -p $(PEEK_DIR)/fixtures/otlp
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-capture.yml up -d
+	@echo "✓ Capturing to $(PEEK_DIR)/fixtures/otlp/*.jsonl"
+	@echo "  Let it run ~30s, then 'make otel-capture-down' and commit the fixtures."
+
+otel-capture-down:
+	@echo "Stopping OTel capture stack..."
+	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-capture.yml down -v
+	@echo "Compressing fixtures..."
+	@cd $(PEEK_DIR)/fixtures/otlp && gzip -f traces.jsonl metrics.jsonl logs.jsonl
+	@echo "✓ Capture stopped. Fixtures in $(PEEK_DIR)/fixtures/otlp/*.jsonl.gz"
+
+otel-replay-up:
+	@echo "Starting ES + EDOT collector in replay mode..."
+	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml up -d
+	@echo "✓ Replay stack running. Collector OTLP/HTTP: http://localhost:4318, ES: http://localhost:9200"
+
+otel-replay:
+	@echo "Replaying OTLP fixtures + seeding non-OTLP data..."
+	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
+	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}"
+	@sleep 5
+	@echo "✓ Data replayed and seeded."
+
+otel-replay-down:
+	@echo "Stopping replay stack..."
+	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
+	@echo "✓ Stopped."
 
 clean:
 	@echo "Cleaning build artifacts..."
