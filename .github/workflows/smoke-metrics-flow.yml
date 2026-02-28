@@ -15,6 +15,9 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
       title-prefix: "[smoke-connection-dialog] [smoke-metrics-flow]"
+      setup-commands: |
+        make setup
+        cd peek && npx playwright install chromium
       additional-instructions: |
         You are the Playwright Smoke Agent for the metrics persona flow.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
@@ -28,9 +31,7 @@ jobs:
         5. Confirm the flow is sufficient for building a line chart panel.
 
         Run:
-        1. `make setup`
-        2. `cd peek && npx playwright install chromium`
-        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "metrics user connects, picks a metric, and gets a line chart-ready result"`
+        1. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "metrics user connects, picks a metric, and gets a line chart-ready result"`
 
         If the check fails, create/update one issue with:
         - the failing test title and assertion/locator output

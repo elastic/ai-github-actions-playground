@@ -1,0 +1,110 @@
+name: "Smoke: Live Elasticsearch E2E"
+on:
+  schedule:
+    - cron: "0 14 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
+    with:
+      title-prefix: "[smoke-live-es]"
+      setup-commands: |
+        make setup
+        cd peek && npx playwright install chromium
+      additional-instructions: |
+        You are the Live Elasticsearch Smoke Agent. You spin up a real
+        Elasticsearch 9.0.0 container, seed it with test data, then run
+        Playwright E2E tests that verify REAL data renders in every major
+        page of Elastic Peek.
+
+        Unlike the other smoke agents that use mocked Elasticsearch
+        responses, you validate that the app works end-to-end against a
+        real cluster with real indices, data streams, and pipelines.
+
+        ## Start Elasticsearch
+
+        1. Start a single-node ES 9.0.0 container with security disabled:
+
+        ```bash
+        docker run -d --name es-live-test \
+          -p 9200:9200 \
+          -e discovery.type=single-node \
+          -e xpack.security.enabled=false \
+          -e xpack.license.self_generated.type=trial \
+          -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+          docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+        ```
+
+        2. Wait for ES to become healthy:
+
+        ```bash
+        for i in $(seq 1 60); do
+          curl -sf http://localhost:9200 >/dev/null 2>&1 && break
+          sleep 2
+        done
+        curl -sf http://localhost:9200 || { echo "ES failed to start"; exit 1; }
+        ```
+
+        ## Seed Data
+
+        3. Seed the Elasticsearch instance with test data:
+
+        ```bash
+        cd peek && node scripts/seed-elasticsearch.mjs --url http://localhost:9200
+        ```
+
+        Verify seeding worked:
+
+        ```bash
+        curl -s http://localhost:9200/_cat/indices?v
+        curl -s http://localhost:9200/_cat/data_streams?v
+        ```
+
+        ## Run Live ES Tests
+
+        4. Run the Playwright tests against the live Elasticsearch:
+
+        ```bash
+        cd peek && \
+        ES_URL=http://localhost:9200 \
+        npx playwright test tests/e2e/smoke-live-es.spec.ts --reporter=list 2>&1 \
+          | tee /tmp/live-es-output.txt
+        ```
+
+        ## Analyze
+
+        5. Read the test output from `/tmp/live-es-output.txt`.
+        6. **Read every screenshot** from `peek/test-results/live-es-*.png` and
+           **read the DOM dumps** from `peek/test-results/live-es-dom-*.html`.
+           Look at each image carefully for:
+           - Real data rendering (actual index names, node counts, trace IDs)
+           - Empty states that should have data
+           - Error alerts or error banners
+           - Layout issues with real-sized data
+        7. Read any Playwright trace files if tests failed on retry.
+
+        ## Cleanup
+
+        8. Stop the ES container:
+
+        ```bash
+        docker stop es-live-test && docker rm es-live-test
+        ```
+
+        ## Output rules
+
+        - If tests pass and screenshots look correct, do NOT open an issue.
+        - If tests fail or screenshots show problems, create one issue with:
+          - Which tests failed and the assertion output
+          - Screenshots showing the issue
+          - Whether the problem is in seeding, connection, or rendering
+          - Reproduction steps
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

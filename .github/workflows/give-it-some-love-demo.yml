@@ -15,6 +15,9 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
       title-prefix: "[love-demo]"
+      setup-commands: |
+        make setup
+        cd peek && npx playwright install chromium
       additional-instructions: |
         You are the **Give It Some Love (Demo)** agent — the same meticulous UI
         quality auditor as the regular love agent, but this variant connects to a
@@ -25,14 +28,9 @@ jobs:
         base64url frame IDs, RLE-encoded frame types, kernel frames, unsymbolized
         native code, large stacktraces, etc.
 
-        ## Setup
-
-        1. `make setup`
-        2. `cd peek && npx playwright install chromium`
-
         ## Run the demo love audit
 
-        3. Run the Playwright spec against the demo cluster (credentials are
+        1. Run the Playwright spec against the demo cluster (credentials are
            loaded automatically from the published demo.json endpoint):
 
         ```bash
@@ -43,8 +41,8 @@ jobs:
 
         ## Analyze
 
-        4. Read the test output from `/tmp/love-audit-demo-output.txt`.
-        5. **Read every screenshot** from `peek/test-results/love-audit-demo-*.png` and
+        2. Read the test output from `/tmp/love-audit-demo-output.txt`.
+        3. **Read every screenshot** from `peek/test-results/love-audit-demo-*.png` and
            **read the DOM dumps** from `peek/test-results/love-audit-demo-dom-*.html`.
            Pay special attention to:
            - **Profiling pages**: Are function names resolved or showing "(unknown)"?
@@ -58,8 +56,8 @@ jobs:
            - **Flamescope heatmap**: Does the heatmap show time buckets with
              stacktrace signatures?
            - Layout issues, truncation, missing data, error alerts
-        6. Cross-reference the accessibility violations from the test output.
-        7. For any page that shows issues, read its source code under `peek/src/components/`
+        4. Cross-reference the accessibility violations from the test output.
+        5. For any page that shows issues, read its source code under `peek/src/components/`
            to understand the root cause and suggest a fix direction.
 
         ## Output rules

@@ -2,6 +2,7 @@ PEEK_DIR := peek
 
 .PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
+.PHONY: seed-es screenshot-all test-e2e-live
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -21,6 +22,9 @@ help:
 	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
+	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
+	@echo "  seed-es          - Seed Elasticsearch with test data (set ES_URL)"
+	@echo "  screenshot-all   - Capture all page screenshots (mocked data)"
 	@echo "  clean            - Remove build artifacts and node_modules"
 	@echo "  docker-build     - Build the Docker image"
 	@echo "  docker-run       - Run the Docker container (set ES_URL)"
@@ -109,6 +113,20 @@ test-integration:
 test-e2e:
 	@echo "Running e2e tests..."
 	@cd $(PEEK_DIR) && npm run test:e2e
+
+test-e2e-live:
+	@echo "Running live ES end-to-end tests..."
+	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npx playwright test tests/e2e/smoke-live-es.spec.ts --reporter=list
+
+seed-es:
+	@echo "Seeding Elasticsearch at $${ES_URL:-http://localhost:9200}..."
+	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
+	@echo "✓ Elasticsearch seeded."
+
+screenshot-all:
+	@echo "Capturing all page screenshots (mocked)..."
+	@cd $(PEEK_DIR) && node scripts/screenshot-all.mjs --out-dir screenshots
+	@echo "✓ Screenshots saved to $(PEEK_DIR)/screenshots/"
 
 clean:
 	@echo "Cleaning build artifacts..."
