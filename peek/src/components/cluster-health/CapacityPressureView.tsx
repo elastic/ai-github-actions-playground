@@ -65,8 +65,9 @@ export default function CapacityPressureView({ data }: CapacityPressureViewProps
   const gcSummary = getGcSummary(data.nodeStats?.nodes);
 
   // File descriptors
-  const fdNodes = nodeValues
-    .map((n) => ({
+  const fdNodes = Object.entries(data.nodeStats?.nodes ?? {})
+    .map(([id, n]) => ({
+      id,
       name: n.name ?? "unknown",
       open: n.process?.open_file_descriptors,
       max: n.process?.max_file_descriptors,
@@ -168,7 +169,7 @@ export default function CapacityPressureView({ data }: CapacityPressureViewProps
                 {fdNodes.map((n) => {
                   const pct = n.max! > 0 ? Math.round((n.open! / n.max!) * 100) : 0;
                   return (
-                    <TableRow key={n.name}>
+                    <TableRow key={n.id}>
                       <TableCell>{n.name}</TableCell>
                       <TableCell align="right">{n.open!.toLocaleString()}</TableCell>
                       <TableCell align="right">{n.max!.toLocaleString()}</TableCell>

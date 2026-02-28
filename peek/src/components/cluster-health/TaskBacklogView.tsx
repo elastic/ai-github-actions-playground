@@ -10,6 +10,8 @@ interface TaskBacklogViewProps {
   data: ClusterHealthData;
 }
 
+const PENDING_TASK_THRESHOLD = 10;
+const QUEUE_TIME_THRESHOLD_MS = 60_000;
 const PRIORITY_ORDER = ["IMMEDIATE", "URGENT", "HIGH", "NORMAL", "LOW", "LANGUID", "UNKNOWN"];
 
 export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
@@ -20,7 +22,9 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
   const unassigned = data.clusterHealth?.unassigned_shards ?? 0;
 
   const instability =
-    (pendingCount >= 10 ? 1 : 0) + (maxQueueMs >= 60_000 ? 1 : 0) + (unassigned > 0 ? 1 : 0);
+    (pendingCount >= PENDING_TASK_THRESHOLD ? 1 : 0) +
+    (maxQueueMs >= QUEUE_TIME_THRESHOLD_MS ? 1 : 0) +
+    (unassigned > 0 ? 1 : 0);
 
   const grouped = groupPendingTasks(tasks);
 
@@ -30,19 +34,19 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
         <InfoCard
           title="Pending tasks"
           value={pendingCount.toString()}
-          severity={pendingCount >= 10 ? "warning" : undefined}
+          severity={pendingCount >= PENDING_TASK_THRESHOLD ? "warning" : undefined}
         />
         <InfoCard
           title="Longest queued task"
           value={`${Math.round(maxQueueMs / 1000)}s`}
           detail="time in queue"
-          severity={maxQueueMs >= 60_000 ? "warning" : undefined}
+          severity={maxQueueMs >= QUEUE_TIME_THRESHOLD_MS ? "warning" : undefined}
         />
         <InfoCard title="Delayed unassigned shards" value={delayed.toString()} />
         <InfoCard
           title="Instability signals"
           value={instability.toString()}
-          detail="pending + queue + unassigned"
+          detail="threshold violations (0-3)"
           severity={instability > 0 ? "warning" : undefined}
         />
       </Stack>
