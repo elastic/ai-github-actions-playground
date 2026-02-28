@@ -121,87 +121,98 @@ export default function FleetPage() {
     })),
   );
 
-  const loadFleetData = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { data: results, error } = await runConnectionRequest({
-        connection,
-        run: (client) =>
-          Promise.allSettled([
-            loadFleetServerStatus(client),
-            loadFleetAgentVersions(client),
-            loadFleetOutputHealth(client),
-            loadElasticAgentInventory(client),
-            loadFleetActions(client),
-            loadFleetActionResults(client),
-          ]),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (results !== null) {
-        const errors: string[] = [];
-        const formatReason = (reason: unknown): string => {
-          if (isElasticsearchError(reason)) return reason.message;
-          if (reason instanceof Error) return reason.message;
-          return String(reason);
-        };
-        const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
-          if (r.status === "fulfilled") return r.value;
-          errors.push(`${label}: ${formatReason(r.reason)}`);
-          return null;
-        };
+  const abortRef = useRef<AbortController | null>(null);
+  const pollingInFlightRef = useRef(false);
 
-        setServerStatus(value(results[0]!, "Server status") ?? null);
-        setAgentVersions(value(results[1]!, "Agent versions") ?? []);
-        setOutputHealth(value(results[2]!, "Output health") ?? []);
-        const inventoryResult = value(results[3]!, "Agent inventory");
-        setAgentInventory(inventoryResult?.agents ?? []);
-        setAgentInventoryTotal(inventoryResult?.total ?? 0);
-        setActions(value(results[4]!, "Actions") ?? []);
-        setActionResults(value(results[5]!, "Action results") ?? []);
-        setPartialErrors(errors);
-        if (results.some((result) => result.status === "fulfilled")) {
-          setLastUpdatedAt(Date.now());
+  const loadFleetData = useCallback(
+    async (signal: AbortSignal) => {
+      if (!connection) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: results, error } = await runConnectionRequest({
+          connection,
+          run: (client) =>
+            Promise.allSettled([
+              loadFleetServerStatus(client),
+              loadFleetAgentVersions(client),
+              loadFleetOutputHealth(client),
+              loadElasticAgentInventory(client),
+              loadFleetActions(client),
+              loadFleetActionResults(client),
+            ]),
+        });
+        if (signal.aborted) return;
+        if (error !== null) {
+          setError(error);
+        } else if (results !== null) {
+          const errors: string[] = [];
+          const formatReason = (reason: unknown): string => {
+            if (isElasticsearchError(reason)) return reason.message;
+            if (reason instanceof Error) return reason.message;
+            return String(reason);
+          };
+          const value = <T,>(r: PromiseSettledResult<T>, label: string): T | null => {
+            if (r.status === "fulfilled") return r.value;
+            errors.push(`${label}: ${formatReason(r.reason)}`);
+            return null;
+          };
+
+          setServerStatus(value(results[0]!, "Server status") ?? null);
+          setAgentVersions(value(results[1]!, "Agent versions") ?? []);
+          setOutputHealth(value(results[2]!, "Output health") ?? []);
+          const inventoryResult = value(results[3]!, "Agent inventory");
+          setAgentInventory(inventoryResult?.agents ?? []);
+          setAgentInventoryTotal(inventoryResult?.total ?? 0);
+          setActions(value(results[4]!, "Actions") ?? []);
+          setActionResults(value(results[5]!, "Action results") ?? []);
+          setPartialErrors(errors);
+          if (results.some((result) => result.status === "fulfilled")) {
+            setLastUpdatedAt(Date.now());
+          }
         }
+      } finally {
+        if (!signal.aborted) setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    connection,
-    setLoading,
-    setError,
-    setServerStatus,
-    setAgentVersions,
-    setOutputHealth,
-    setAgentInventory,
-    setAgentInventoryTotal,
-    setActions,
-    setActionResults,
-    setPartialErrors,
-    setLastUpdatedAt,
-  ]);
+    },
+    [
+      connection,
+      setLoading,
+      setError,
+      setServerStatus,
+      setAgentVersions,
+      setOutputHealth,
+      setAgentInventory,
+      setAgentInventoryTotal,
+      setActions,
+      setActionResults,
+      setPartialErrors,
+      setLastUpdatedAt,
+    ],
+  );
 
   // Auto-refresh
   const loadRef = useRef(loadFleetData);
-  const pollingInFlightRef = useRef(false);
   loadRef.current = loadFleetData;
   const runRefresh = useCallback(async () => {
     if (pollingInFlightRef.current) return;
     pollingInFlightRef.current = true;
     try {
-      await loadRef.current();
+      await loadRef.current(abortRef.current?.signal ?? new AbortController().signal);
     } finally {
       pollingInFlightRef.current = false;
     }
   }, []);
   useEffect(() => {
-    // Reset the in-flight guard so a connection switch always triggers a fresh load,
-    // even if the previous connection's request is still pending.
-    pollingInFlightRef.current = false;
+    // Abort any in-flight request from the previous connection so its late
+    // response cannot overwrite state for the new connection.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     void runRefresh();
+    return () => {
+      controller.abort();
+    };
   }, [connection, runRefresh]);
   useEffect(() => {
     if (!autoRefreshEnabled) return;
