@@ -43,6 +43,7 @@ fi
 # Smoke test workflows that support workflow_dispatch
 WORKFLOWS=(
   "smoke-auth-tab-switch.yml"
+  "smoke-live-es.yml"
   "smoke-metrics-flow.yml"
   "smoke-reset-visibility.yml"
   "smoke-traces-flow.yml"

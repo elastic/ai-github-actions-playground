@@ -15,6 +15,9 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
       title-prefix: "[smoke-auth-tab-switch]"
+      setup-commands: |
+        make setup
+        cd peek && npx playwright install chromium
       additional-instructions: |
         You are the Playwright Smoke Agent for auth tab switching.
         Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
@@ -28,9 +31,7 @@ jobs:
         5. Treat this as a security UX sanity check before cluster login.
 
         Run:
-        1. `make setup`
-        2. `cd peek && npx playwright install chromium`
-        3. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "security-focused user validates auth tab switching before submitting credentials"`
+        1. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "security-focused user validates auth tab switching before submitting credentials"`
 
         If the check fails, create/update one issue with:
         - the failing test title and assertion/locator output

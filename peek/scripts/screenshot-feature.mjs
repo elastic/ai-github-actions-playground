@@ -24,6 +24,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
+import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
 
 // ---------------------------------------------------------------------------
 // Argument parsing
@@ -50,25 +51,6 @@ function parseArgs(argv) {
 
   return opts;
 }
-
-// ---------------------------------------------------------------------------
-// Nav-button mapping
-// ---------------------------------------------------------------------------
-
-const PAGE_NAV_BUTTONS = {
-  "cluster-overview": "Cluster Overview",
-  "data-streams": "Data Streams",
-  indices: "Indices",
-  "ingest-pipelines": "Ingest Pipelines",
-  "query-lab": "Query Lab",
-  metrics: "Metrics",
-  traces: "Traces",
-  console: "Console",
-  users: "Users",
-  roles: "Roles",
-  dashboards: "Dashboards",
-  fleet: "Fleet",
-};
 
 // ---------------------------------------------------------------------------
 // Mock Elasticsearch responses

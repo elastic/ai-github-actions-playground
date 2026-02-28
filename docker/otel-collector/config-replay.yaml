@@ -1,0 +1,50 @@
+# Replay config: receives OTLP over HTTP (from the replay script) and sends
+# to Elasticsearch through the same pipeline as live data.
+#
+# The replay script (otel-replay.mjs) reads captured .jsonl fixtures,
+# rewrites timestamps to now, and POSTs via OTLP/HTTP to port 4318.
+receivers:
+  otlp/replay:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+connectors:
+  elasticapm: {}
+
+processors:
+  batch: {}
+  elasticapm: {}
+
+exporters:
+  elasticsearch/otel:
+    endpoints: ["${env:ES_URL:-http://elasticsearch:9200}"]
+    api_key: ${env:ES_API_KEY:-}
+    mapping:
+      mode: otel
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces/replay:
+      receivers: [otlp/replay]
+      processors: [elasticapm, batch]
+      exporters: [elasticapm, elasticsearch/otel]
+    metrics/replay:
+      receivers: [otlp/replay]
+      processors: [batch]
+      exporters: [elasticsearch/otel]
+    metrics/aggregated-metrics:
+      receivers: [elasticapm]
+      processors: [batch]
+      exporters: [elasticsearch/otel]
+    logs/replay:
+      receivers: [otlp/replay]
+      processors: [batch]
+      exporters: [elasticsearch/otel]

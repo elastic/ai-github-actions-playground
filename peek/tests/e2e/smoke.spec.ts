@@ -121,6 +121,7 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await page.getByRole("button", { name: "Metrics", exact: true }).click();
     const metricSearch = page.getByLabel("Search metrics");
+    await expect(metricSearch).toBeVisible({ timeout: 5_000 });
     await metricSearch.fill("system.cpu");
     await page.locator("li.MuiAutocomplete-option").first().click();
     await page.getByRole("button", { name: "View ungrouped" }).click();

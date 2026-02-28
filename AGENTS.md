@@ -94,6 +94,41 @@ make test-e2e   # starts the dev server automatically via Playwright config
 E2E tests live in `peek/tests/e2e/` and run against Chromium.
 The Playwright config (`peek/playwright.config.ts`) auto-starts the Vite dev server.
 
+### Verifying Changes Against Real Elasticsearch Data
+
+When implementing features or fixing bugs, you can verify your changes render
+correctly against real OTel data (traces, metrics, logs) instead of just mocks.
+This catches issues that only appear with real-world data shapes and volumes.
+
+**Quick start (one-liner):**
+
+```bash
+# Start ES + collector, replay OTLP fixtures + seed app data, run live tests
+make otel-replay-up && make otel-replay && make test-e2e-live
+# Stop when done
+make otel-replay-down
+```
+
+**What this gives you:**
+
+| Data | Source | Indices created |
+|------|--------|----------------|
+| Traces (9-service distributed) | OTLP fixture replay | `traces-generic.otel-default` |
+| Metrics (CPU, memory, disk) | OTLP fixture replay | `metrics-hostmetricsreceiver.otel-default` |
+| Logs | OTLP fixture replay | `logs-generic.otel-default` |
+| web_logs, orders | `seed-elasticsearch.mjs` | `web_logs`, `orders` |
+| Ingest pipelines | `seed-elasticsearch.mjs` | `logs-parse-nginx`, `enrich-geoip`, `metrics-normalize` |
+
+After replay, connect the dev server to the live cluster:
+
+```bash
+ES_URL=http://localhost:9200 make serve-proxy
+# Then open http://localhost:3000 and connect to http://localhost:3000/_es
+```
+
+This is the same data the `smoke-live-es.yml` agent validates against.
+Use `make otel-replay-down` to tear everything down when done.
+
 ### Scheduled Playwright Smoke Agents
 
 The first 5 scheduled smoke plans map one-to-one to the existing tests in

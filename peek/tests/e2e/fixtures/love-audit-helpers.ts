@@ -99,7 +99,7 @@ export function logDiagnostics(
   consoleLogs.forEach((l) => console.log(`  [${l.type}] ${l.text}`));
   console.log(`MUI error alerts: ${muiErrors.length}`);
   muiErrors.forEach((e) => console.log(`  ${e}`));
-  console.log(`A11y violations: ${a11yCount}`);
+  console.log(`A11y violations: ${a11yCount >= 0 ? a11yCount : "not checked"}`);
 }
 
 export function slug(name: string): string {
