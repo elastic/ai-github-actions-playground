@@ -15,6 +15,7 @@ import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedO
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
+import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,7 +62,7 @@ function buildMultiSeriesSparkline(
   // Group rows by dimension value
   const grouped = new Map<string, [number | null, unknown][]>();
   for (const row of data.values) {
-    const dimVal = dimIdx >= 0 ? String(row[dimIdx] ?? "unknown") : "all";
+    const dimVal = dimIdx >= 0 ? normalizeDimensionBucketLabel(row[dimIdx]) : "all";
     const ts = dateIdx >= 0 && row[dateIdx] ? new Date(row[dateIdx] as string).getTime() : null;
     if (!grouped.has(dimVal)) grouped.set(dimVal, []);
     grouped.get(dimVal)!.push([ts, row[metricIdx]]);
