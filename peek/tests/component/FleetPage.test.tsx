@@ -564,7 +564,7 @@ describe("Fleet pages", () => {
     await waitFor(() => {
       expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
     });
-    expect(screen.getByText("Offline")).toBeInTheDocument();
+    expect(screen.getByText("Offline", { selector: ".MuiChip-label" })).toBeInTheDocument();
   });
 
   it("active filter chip can be cleared in agents table", async () => {
