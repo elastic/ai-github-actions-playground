@@ -566,7 +566,7 @@ export class ElasticsearchClient {
   }
 
   async getClusterHealth(
-    level?: "cluster" | "indices",
+    level?: "cluster" | "indices" | "shards",
     signal?: AbortSignal,
   ): Promise<ClusterHealthResponse> {
     const path = level ? `/_cluster/health?level=${level}` : "/_cluster/health";
@@ -605,7 +605,7 @@ export class ElasticsearchClient {
   }
 
   async getRecoveryStatus(signal?: AbortSignal): Promise<RecoveryResponse> {
-    return this._fetch<RecoveryResponse>("/_recovery?active_only=true&detailed=true", { signal });
+    return this._fetch<RecoveryResponse>("/_recovery?active_only=true", { signal });
   }
 
   async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainResponse> {

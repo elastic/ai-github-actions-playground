@@ -63,7 +63,7 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
                 {priority} ({grouped.get(priority)!.length})
               </Typography>
               {grouped.get(priority)!.map((task) => {
-                const taskKey = `${task.insert_order ?? "na"}:${task.source ?? "unknown"}`;
+                const taskKey = `${task.insert_order ?? "na"}:${task.source ?? "unknown"}:${task.time_in_queue_millis ?? 0}`;
                 return (
                   <Typography
                     key={taskKey}
