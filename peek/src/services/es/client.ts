@@ -39,6 +39,30 @@ export interface ClusterHealthResponse {
   active_shards?: number;
   unassigned_shards?: number;
 }
+export interface ClusterPendingTask {
+  insert_order?: number;
+  priority?: string;
+  source?: string;
+  time_in_queue_millis?: number;
+}
+export interface ClusterPendingTasksResponse {
+  tasks?: ClusterPendingTask[];
+}
+export interface CatAllocationRecord {
+  node?: string;
+  shards?: string;
+  "disk.indices"?: string;
+  "disk.used"?: string;
+  "disk.avail"?: string;
+  "disk.percent"?: string;
+}
+export interface CatShardRecord {
+  index?: string;
+  shard?: string;
+  prirep?: string;
+  state?: string;
+  node?: string;
+}
 export interface ClusterStatsResponse {
   indices?: {
     count?: number;
@@ -70,6 +94,53 @@ export interface NodeStatsNode {
 }
 export interface NodesStatsResponse {
   nodes?: Record<string, NodeStatsNode>;
+}
+export interface RecoveryShardStatus {
+  stage?: string;
+}
+export type RecoveryResponse = Record<string, RecoveryShardStatus[]>;
+export interface IlmExplainIndexStatus {
+  managed?: boolean;
+  phase?: string;
+  action?: string;
+  step?: string;
+  failed_step?: string;
+}
+export interface IlmExplainResponse {
+  indices?: Record<string, IlmExplainIndexStatus>;
+}
+export interface SlmPolicyStats {
+  policy?: string;
+  snapshots_taken?: number;
+  snapshots_failed?: number;
+}
+export interface SlmStatsResponse {
+  operation_mode?: string;
+  policy_stats?: SlmPolicyStats[];
+}
+export interface SnapshotShardStats {
+  failed?: number;
+  total?: number;
+}
+export interface SnapshotStatusRecord {
+  state?: string;
+  shards_stats?: SnapshotShardStats;
+}
+export interface SnapshotStatusResponse {
+  snapshots?: SnapshotStatusRecord[];
+}
+export interface NodesIngestPipelineStats {
+  failed?: number;
+  count?: number;
+}
+export interface NodesIngestNodeStats {
+  ingest?: {
+    total?: NodesIngestPipelineStats;
+    pipelines?: Record<string, NodesIngestPipelineStats>;
+  };
+}
+export interface NodesIngestStatsResponse {
+  nodes?: Record<string, NodesIngestNodeStats>;
 }
 export type ResolveIndexResponse =
   operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
@@ -440,12 +511,20 @@ export class ElasticsearchClient {
     return this._fetch<ClusterInfoResponse>("/", { signal });
   }
 
-  async getClusterHealth(signal?: AbortSignal): Promise<ClusterHealthResponse> {
-    return this._fetch<ClusterHealthResponse>("/_cluster/health", { signal });
+  async getClusterHealth(
+    level?: "cluster" | "indices",
+    signal?: AbortSignal,
+  ): Promise<ClusterHealthResponse> {
+    const path = level ? `/_cluster/health?level=${level}` : "/_cluster/health";
+    return this._fetch<ClusterHealthResponse>(path, { signal });
   }
 
   async getClusterStats(signal?: AbortSignal): Promise<ClusterStatsResponse> {
     return this._fetch<ClusterStatsResponse>("/_cluster/stats", { signal });
+  }
+
+  async getPendingTasks(signal?: AbortSignal): Promise<ClusterPendingTasksResponse> {
+    return this._fetch<ClusterPendingTasksResponse>("/_cluster/pending_tasks", { signal });
   }
 
   async getNodes(signal?: AbortSignal): Promise<NodesInfoResponse> {
@@ -454,6 +533,34 @@ export class ElasticsearchClient {
 
   async getNodeStats(signal?: AbortSignal): Promise<NodesStatsResponse> {
     return this._fetch<NodesStatsResponse>("/_nodes/stats", { signal });
+  }
+
+  async getNodeIngestStats(signal?: AbortSignal): Promise<NodesIngestStatsResponse> {
+    return this._fetch<NodesIngestStatsResponse>("/_nodes/stats/ingest", { signal });
+  }
+
+  async getCatAllocation(signal?: AbortSignal): Promise<CatAllocationRecord[]> {
+    return this._fetch<CatAllocationRecord[]>("/_cat/allocation?format=json&bytes=b", { signal });
+  }
+
+  async getCatShards(signal?: AbortSignal): Promise<CatShardRecord[]> {
+    return this._fetch<CatShardRecord[]>("/_cat/shards?format=json", { signal });
+  }
+
+  async getRecoveryStatus(signal?: AbortSignal): Promise<RecoveryResponse> {
+    return this._fetch<RecoveryResponse>("/_recovery?active_only=true&detailed=true", { signal });
+  }
+
+  async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainResponse> {
+    return this._fetch<IlmExplainResponse>("/_ilm/explain/*", { signal });
+  }
+
+  async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {
+    return this._fetch<SlmStatsResponse>("/_slm/stats", { signal });
+  }
+
+  async getSnapshotStatus(signal?: AbortSignal): Promise<SnapshotStatusResponse> {
+    return this._fetch<SnapshotStatusResponse>("/_snapshot/*/_status", { signal });
   }
 
   async resolveIndex(name: string, signal?: AbortSignal): Promise<ResolveIndexResponse> {

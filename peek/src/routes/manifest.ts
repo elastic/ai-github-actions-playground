@@ -16,9 +16,11 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SpeedIcon from "@mui/icons-material/Speed";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import StorageIcon from "@mui/icons-material/Storage";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
+import ClusterHealthPage from "../components/ClusterHealthPage";
 import ClusterOverviewPage from "../components/ClusterOverviewPage";
 import DashboardsLandingPage from "../components/DashboardsLandingPage";
 import DataStreamsPage from "../components/DataStreamsPage";
@@ -155,6 +157,19 @@ export const PAGE_MANIFEST = {
       order: 10,
       showInSidebar: true,
       icon: createElement(InfoIcon, { fontSize: "small" }),
+    },
+  },
+  clusterHealth: {
+    path: "/cluster-health",
+    component: ClusterHealthPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    nav: {
+      label: "Cluster Health",
+      group: "System",
+      order: 11,
+      showInSidebar: true,
+      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
     },
   },
   addData: {
