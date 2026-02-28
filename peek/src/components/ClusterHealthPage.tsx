@@ -37,6 +37,18 @@ interface PhaseData {
   ingestStats: NodesIngestStatsResponse | null;
 }
 
+export type ClusterHealthView =
+  | "overview"
+  | "taskBacklog"
+  | "capacityPressure"
+  | "shardDistribution"
+  | "resilienceSignals";
+
+interface ClusterHealthPageProps {
+  view?: ClusterHealthView;
+  title?: string;
+}
+
 function InfoCard({ title, value, detail }: { title: string; value: string; detail?: string }) {
   return (
     <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
@@ -59,7 +71,10 @@ function parseNumber(value: string | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export default function ClusterHealthPage() {
+export default function ClusterHealthPage({
+  view = "overview",
+  title = "Cluster Health",
+}: ClusterHealthPageProps) {
   const connection = useConnectionStore((s) => s.connection);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,9 +175,22 @@ export default function ClusterHealthPage() {
   }, [loadData]);
 
   const pendingTaskCount = data.pendingTasks?.tasks?.length ?? 0;
+  const maxPendingTaskMillis = Math.max(
+    0,
+    ...(data.pendingTasks?.tasks ?? []).map((task) => task.time_in_queue_millis ?? 0),
+  );
   const hotNodes = (data.allocation ?? []).filter(
     (entry) => parseNumber(entry["disk.percent"]) >= 85,
   ).length;
+  const avgDiskPercent =
+    (data.allocation ?? []).length > 0
+      ? Math.round(
+          (data.allocation ?? []).reduce(
+            (sum, entry) => sum + parseNumber(entry["disk.percent"]),
+            0,
+          ) / (data.allocation ?? []).length,
+        )
+      : 0;
   const nodeValues = Object.values(data.nodeStats?.nodes ?? {});
   const avgCpu =
     nodeValues.length > 0
@@ -188,6 +216,10 @@ export default function ClusterHealthPage() {
     if (counts.length === 0) return 0;
     return Math.max(...counts) - Math.min(...counts);
   }, [data.shards]);
+  const totalShards = (data.shards ?? []).length;
+  const startedShards = (data.shards ?? []).filter((shard) => shard.state === "STARTED").length;
+  const unassignedShards = data.clusterHealth?.unassigned_shards ?? 0;
+  const recoveringIndices = Object.keys(data.recovery ?? {}).length;
   const activeRecoveries =
     Object.values(data.recovery ?? {}).reduce(
       (sum, shardStatuses) => sum + shardStatuses.length,
@@ -208,13 +240,27 @@ export default function ClusterHealthPage() {
       (sum, node) => sum + (node.ingest?.total?.failed ?? 0),
       0,
     ) ?? 0;
+  const sectionTitle = useMemo(() => {
+    switch (view) {
+      case "taskBacklog":
+        return "Task Backlog";
+      case "capacityPressure":
+        return "Capacity Pressure";
+      case "shardDistribution":
+        return "Shard Distribution";
+      case "resilienceSignals":
+        return "Resilience Signals";
+      default:
+        return "Cluster Health Overview";
+    }
+  }, [view]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Cluster Health
+            {title}
           </Typography>
           {lastUpdatedAt ? (
             <Typography variant="caption" color="text.secondary">
@@ -236,52 +282,64 @@ export default function ClusterHealthPage() {
 
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="subtitle1" gutterBottom>
-          Phase 1 — Real-time health
+          {sectionTitle}
         </Typography>
-        <Stack direction="row" spacing={2}>
-          <InfoCard
-            title="Cluster status"
-            value={(data.clusterHealth?.status ?? "unknown").toUpperCase()}
-          />
-          <InfoCard title="Pending tasks" value={pendingTaskCount.toString()} />
-          <InfoCard
-            title="Hot disk nodes"
-            value={hotNodes.toString()}
-            detail="nodes at or above 85% disk"
-          />
-        </Stack>
-      </Paper>
-
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Phase 2 — Capacity pressure
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <InfoCard title="Avg CPU" value={`${avgCpu}%`} />
-          <InfoCard title="Avg heap" value={`${avgHeap}%`} />
-          <InfoCard
-            title="Shard skew"
-            value={shardSkew.toString()}
-            detail="max-min shards per node"
-          />
-          <InfoCard
-            title="Total indices"
-            value={(data.clusterStats?.indices?.count ?? 0).toLocaleString()}
-          />
-        </Stack>
-      </Paper>
-
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Phase 3 — Resilience signals
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
-          <InfoCard title="ILM warnings" value={ilmWarnings.toString()} />
-          <InfoCard title="SLM failures" value={slmFailures.toString()} />
-          <InfoCard title="Snapshot failures" value={snapshotFailures.toString()} />
-          <InfoCard title="Ingest failures" value={ingestFailures.toString()} />
-        </Stack>
+        {view === "overview" ? (
+          <Stack direction="row" spacing={2}>
+            <InfoCard
+              title="Cluster status"
+              value={(data.clusterHealth?.status ?? "unknown").toUpperCase()}
+            />
+            <InfoCard title="Pending tasks" value={pendingTaskCount.toString()} />
+            <InfoCard title="Avg CPU" value={`${avgCpu}%`} />
+            <InfoCard title="Shard skew" value={shardSkew.toString()} />
+            <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
+          </Stack>
+        ) : null}
+        {view === "taskBacklog" ? (
+          <Stack direction="row" spacing={2}>
+            <InfoCard title="Pending tasks" value={pendingTaskCount.toString()} />
+            <InfoCard
+              title="Longest queued task"
+              value={`${Math.round(maxPendingTaskMillis / 1000)}s`}
+              detail="time in queue"
+            />
+            <InfoCard title="Hot disk nodes" value={hotNodes.toString()} detail=">=85% disk" />
+          </Stack>
+        ) : null}
+        {view === "capacityPressure" ? (
+          <Stack direction="row" spacing={2}>
+            <InfoCard title="Avg CPU" value={`${avgCpu}%`} />
+            <InfoCard title="Avg heap" value={`${avgHeap}%`} />
+            <InfoCard title="Avg disk used" value={`${avgDiskPercent}%`} />
+            <InfoCard
+              title="Total indices"
+              value={(data.clusterStats?.indices?.count ?? 0).toLocaleString()}
+            />
+          </Stack>
+        ) : null}
+        {view === "shardDistribution" ? (
+          <Stack direction="row" spacing={2}>
+            <InfoCard title="Total shards" value={totalShards.toLocaleString()} />
+            <InfoCard title="Started shards" value={startedShards.toLocaleString()} />
+            <InfoCard title="Unassigned shards" value={unassignedShards.toLocaleString()} />
+            <InfoCard
+              title="Shard skew"
+              value={shardSkew.toString()}
+              detail="max-min shards per node"
+            />
+          </Stack>
+        ) : null}
+        {view === "resilienceSignals" ? (
+          <Stack direction="row" spacing={2}>
+            <InfoCard title="Recovering indices" value={recoveringIndices.toString()} />
+            <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
+            <InfoCard title="ILM warnings" value={ilmWarnings.toString()} />
+            <InfoCard title="SLM failures" value={slmFailures.toString()} />
+            <InfoCard title="Snapshot failures" value={snapshotFailures.toString()} />
+            <InfoCard title="Ingest failures" value={ingestFailures.toString()} />
+          </Stack>
+        ) : null}
       </Paper>
     </Box>
   );

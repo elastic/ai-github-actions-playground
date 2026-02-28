@@ -71,7 +71,7 @@ describe("ClusterHealthPage", () => {
     });
   });
 
-  it("renders phase 1-3 cards from API data", async () => {
+  it("renders overview cards from API data", async () => {
     render(
       <MemoryRouter>
         <ClusterHealthPage />
@@ -79,7 +79,7 @@ describe("ClusterHealthPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Phase 1 — Real-time health")).toBeInTheDocument();
+      expect(screen.getByText("Cluster Health Overview")).toBeInTheDocument();
     });
 
     expect(screen.getByText("Cluster status")).toBeInTheDocument();
@@ -88,8 +88,8 @@ describe("ClusterHealthPage", () => {
     expect(screen.getAllByText("2").length).toBeGreaterThan(0);
     expect(screen.getByText("Avg CPU")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
-    expect(screen.getByText("Ingest failures")).toBeInTheDocument();
-    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
+    expect(screen.getByText("Active recoveries")).toBeInTheDocument();
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
   });
 
   it("refreshes when Refresh is clicked", async () => {

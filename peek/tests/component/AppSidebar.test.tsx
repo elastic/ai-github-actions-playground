@@ -98,6 +98,22 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
+    expect(screen.getByRole("button", { name: /cluster tasks/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /cluster capacity/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /cluster shards/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /cluster resilience/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     expect(screen.getByRole("button", { name: /fleet/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
@@ -167,6 +183,46 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /cluster health/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
+  });
+
+  it("navigates to Cluster Tasks when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster tasks/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-tasks");
+  });
+
+  it("navigates to Cluster Capacity when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster capacity/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-capacity");
+  });
+
+  it("navigates to Cluster Shards when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster shards/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-shards");
+  });
+
+  it("navigates to Cluster Resilience when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster resilience/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-resilience");
   });
 
   it("navigates to Fleet when clicked while connected", async () => {

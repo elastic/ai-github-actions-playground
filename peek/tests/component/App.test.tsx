@@ -73,6 +73,17 @@ describe("App shell visibility", () => {
     expect(screen.queryByRole("button", { name: /refresh/i })).not.toBeInTheDocument();
   });
 
+  it("shows welcome screen when disconnected and current page is cluster tasks", () => {
+    render(
+      <MemoryRouter initialEntries={["/cluster-tasks"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /refresh/i })).not.toBeInTheDocument();
+  });
+
   it("shows welcome screen when disconnected and current page is console", () => {
     render(
       <MemoryRouter initialEntries={["/console"]}>
