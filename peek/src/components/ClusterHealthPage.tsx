@@ -274,11 +274,10 @@ export default function ClusterHealthPage({
       (sum, snapshot) => sum + (snapshot.shards_stats?.failed ?? 0),
       0,
     ) ?? 0;
-  const ingestFailures =
-    Object.values(data.ingestStats?.nodes ?? {}).reduce(
-      (sum, node) => sum + (node.ingest?.total?.failed ?? 0),
-      0,
-    ) ?? 0;
+  const ingestFailures = Object.values(data.ingestStats?.nodes ?? {}).reduce(
+    (sum, node) => sum + (node.ingest?.total?.failed ?? 0),
+    0,
+  );
   const indexingOps = nodeValues.reduce(
     (sum, node) => sum + (node.indices?.indexing?.index_total ?? 0),
     0,
