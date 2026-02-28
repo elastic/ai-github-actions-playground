@@ -22,7 +22,6 @@ describe("useLLMStore", () => {
     expect(state.config.apiKey).toBe("");
     expect(state.config.model).toBe("gpt-4o-mini");
     expect(state.config.tabAutocompleteEnabled).toBe(false);
-    expect(state.config.elasticDocsEnabled).toBe(false);
     expect(state.messages).toEqual([]);
   });
 
@@ -122,7 +121,6 @@ describe("useLLMStore", () => {
   it("resetLLMState resets all state to defaults", () => {
     useLLMStore.getState().setApiKey("sk-test");
     useLLMStore.getState().setModel("gpt-4o");
-    useLLMStore.getState().setElasticDocsEnabled(true);
     useLLMStore.getState().addMessage({ id: "msg-1", role: "user", content: "Test" });
 
     useLLMStore.getState().resetLLMState();
@@ -132,19 +130,7 @@ describe("useLLMStore", () => {
     expect(state.config.model).toBe("gpt-4o-mini");
     expect(state.config.provider).toBe("openai");
     expect(state.config.tabAutocompleteEnabled).toBe(false);
-    expect(state.config.elasticDocsEnabled).toBe(false);
     expect(state.messages).toEqual([]);
-  });
-
-  it("setElasticDocsEnabled updates the elastic docs toggle", () => {
-    useLLMStore.getState().setElasticDocsEnabled(true);
-    expect(useLLMStore.getState().config.elasticDocsEnabled).toBe(true);
-  });
-
-  it("setElasticDocsEnabled can disable the elastic docs toggle", () => {
-    useLLMStore.getState().setElasticDocsEnabled(true);
-    useLLMStore.getState().setElasticDocsEnabled(false);
-    expect(useLLMStore.getState().config.elasticDocsEnabled).toBe(false);
   });
 
   it("resetLLMConfig resets config but preserves chat messages", () => {
@@ -159,7 +145,6 @@ describe("useLLMStore", () => {
     expect(state.config.model).toBe("gpt-4o-mini");
     expect(state.config.provider).toBe("openai");
     expect(state.config.tabAutocompleteEnabled).toBe(false);
-    expect(state.config.elasticDocsEnabled).toBe(false);
     expect(state.messages).toHaveLength(1);
     expect(state.messages[0].content).toBe("Test");
   });

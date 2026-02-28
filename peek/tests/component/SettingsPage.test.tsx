@@ -162,17 +162,6 @@ describe("SettingsPage", () => {
     expect(screen.getByLabelText("Model")).toBeInTheDocument();
   });
 
-  it("toggles Elastic Docs search in chat setting", async () => {
-    const user = userEvent.setup();
-    render(<SettingsPage />);
-    const toggle = screen.getByRole("checkbox", {
-      name: /enable elastic docs search in chat/i,
-    });
-    expect(toggle).not.toBeChecked();
-    await user.click(toggle);
-    expect(useLLMStore.getState().config.elasticDocsEnabled).toBe(true);
-  });
-
   it("resetting LLM settings does not clear chat messages", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
