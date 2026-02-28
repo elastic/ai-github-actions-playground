@@ -9,8 +9,8 @@ Use the field search box to quickly locate dimensions and metrics before buildin
 Click any field row to open the **Field Stats** panel for that field. The panel shows:
 
 - **Confidence badge** — indicates how representative the stats are based on sample coverage:
-  - **High confidence** (green) — the entire stream was analysed; stats are exact.
-  - **Medium confidence** (yellow) — the stream is approaching the sample limit; stats are complete but may vary for larger time windows.
+  - **High confidence** (green) — the entire stream was analyzed; stats are exact.
+  - **Medium confidence** (yellow) — the stream is approaching the sample limit; stats are nearly complete but may become approximate for very large streams.
   - **Low confidence** (red) — the sample limit was reached; stats reflect only a subset of documents. Treat values as approximate and use Query Lab for more precise analysis.
 - **Total docs** — total document count in the stream.
 - **Non-null** — number of documents where the field has a value.

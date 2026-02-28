@@ -55,7 +55,7 @@ export function isNumericOrDateType(type: string): boolean {
  * Derive a confidence level from how much of the sample limit was consumed.
  *
  * - **high** – fewer than half the sample slots were used, meaning the stream is
- *   small enough that all documents were analysed.
+ *   small enough that all documents were analyzed.
  * - **medium** – between 50 % and 100 % of the sample was consumed; stats are
  *   complete but the stream is approaching the cap.
  * - **low** – the sample limit was reached; the stream has more data than the
