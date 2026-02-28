@@ -8,12 +8,18 @@ Use the field search box to quickly locate dimensions and metrics before buildin
 
 Click any field row to open the **Field Stats** panel for that field. The panel shows:
 
+- **Confidence badge** — indicates how representative the stats are based on sample coverage:
+  - **High confidence** (green) — the entire stream was analyzed; stats are exact.
+  - **Medium confidence** (yellow) — the stream is approaching the sample limit; stats are nearly complete but may become approximate for very large streams.
+  - **Low confidence** (red) — the sample limit was reached; stats reflect only a subset of documents. Treat values as approximate and use Query Lab for more precise analysis.
 - **Total docs** — total document count in the stream.
 - **Non-null** — number of documents where the field has a value.
 - **Null %** — percentage of documents where the field is absent or null.
 - **Cardinality** — approximate number of distinct values.
 - **Top values** — the most frequent values and their counts (shown for keyword and other text-like field types).
 - **Min / Max** — the smallest and largest observed values (shown for numeric and date field types).
+
+Field Stats are computed from a sample of up to 50,000 documents. For large streams where the sample limit is reached, the confidence badge turns red and the stats should be interpreted as approximations rather than exact figures.
 
 Click **Open stats query in Query Lab** inside the Field Stats panel to pivot directly to Query Lab with a pre-built query for that field. The query type depends on the field type:
 
