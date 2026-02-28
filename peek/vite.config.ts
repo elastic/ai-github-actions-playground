@@ -52,24 +52,26 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       open: !isElectron, // Electron plugin opens the app; skip browser auto-open
-      // When ES_URL is set, proxy /_es requests to Elasticsearch to avoid CORS.
+      // Proxy /_es requests to Elasticsearch to avoid CORS.
+      // The target is determined per-request from the X-Elastic-Peek-Proxy-Host
+      // header that the client sends with every request. If ES_URL is set at
+      // startup it is used as the default; otherwise the header is required.
       //
-      // /_es     — full proxy for all Elasticsearch APIs (connection validation,
-      //            cluster health, data streams, field caps, API console, etc.).
-      //            Use http://localhost:3000/_es as the Elasticsearch URL.
-      //
-      // Example: ES_URL=http://localhost:9200 npm run dev
-      //     or: add ES_URL=http://localhost:9200 to .env at the repo root
-      proxy: esUrl
-        ? {
-            "/_es": {
-              target: esUrl,
-              changeOrigin: true,
-              secure: false,
-              rewrite: rewriteEsProxyPath,
-            },
-          }
-        : undefined,
+      // Use http://localhost:3000/_es as the Elasticsearch URL in the UI.
+      proxy: {
+        "/_es": {
+          target: esUrl || "http://localhost:9200",
+          changeOrigin: true,
+          secure: false,
+          rewrite: rewriteEsProxyPath,
+          router: (req) => {
+            const host = req.headers["x-elastic-peek-proxy-host"];
+            if (typeof host === "string" && host) return host;
+            if (esUrl) return esUrl;
+            return "http://localhost:9200";
+          },
+        },
+      },
     },
     build: {
       outDir: "dist",
