@@ -206,7 +206,7 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
       (item) => resultsRef.current[item.name]?.status === "error",
     );
     if (failedItems.length === 0) return;
-    runBatchesFor(failedItems, esClient, timeRangeRef.current, batchSize, false);
+    runBatchesFor(failedItems, esClient, timeRangeRef.current, batchSize, true);
   }, [batchSize, runBatchesFor]);
 
   return { results, retryFailed };

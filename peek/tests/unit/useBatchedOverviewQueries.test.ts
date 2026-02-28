@@ -207,6 +207,53 @@ describe("useBatchedOverviewQueries", () => {
     expect(callsAfter - callsBefore).toBe(1);
   });
 
+  it("adds recovered metrics back to refresh coverage after retryFailed", async () => {
+    let failCpu = true;
+    const client = makeClient((params) => {
+      const isCpu = params.query.includes("cpu");
+      if (isCpu && failCpu) return Promise.reject(new Error("timeout"));
+      return Promise.resolve(makeResponse(isCpu ? 42 : 10));
+    });
+
+    let items = makeItems(["cpu", "mem"]);
+    const { result, rerender } = renderHook(() =>
+      useBatchedOverviewQueries({
+        items,
+        client,
+        scopeKey: "scope1",
+        buildQuery,
+        timeRange: TIME_RANGE,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("error");
+      expect(result.current.results["mem"]?.status).toBe("success");
+    });
+
+    failCpu = false;
+    act(() => {
+      result.current.retryFailed();
+    });
+
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("success");
+    });
+
+    const callsBeforeRefresh = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
+    items = makeItems(["cpu", "mem"]);
+    rerender();
+
+    await waitFor(() =>
+      expect((client.query as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(
+        callsBeforeRefresh + 1,
+      ),
+    );
+
+    const callsAfterRefresh = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
+    expect(callsAfterRefresh - callsBeforeRefresh).toBe(2);
+  });
+
   it("aborts in-flight queries when unmounted", async () => {
     let capturedSignal: AbortSignal | undefined;
     const items = makeItems(["cpu"]);
