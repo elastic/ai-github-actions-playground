@@ -218,7 +218,14 @@ export default function FleetPage() {
             Fleet
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Last updated: {lastUpdatedAt ? new Date(lastUpdatedAt).toLocaleTimeString() : "—"}
+            Last updated:{" "}
+            {lastUpdatedAt
+              ? new Date(lastUpdatedAt).toLocaleTimeString(undefined, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })
+              : "—"}
           </Typography>
           <RefreshIntervalPicker
             value={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}

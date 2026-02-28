@@ -25,13 +25,19 @@ export default function RefreshIntervalPicker({
 
   return (
     <>
-      <Button size={size} variant={variant} onClick={(event) => setAnchorEl(event.currentTarget)}>
+      <Button
+        size={size}
+        variant={variant}
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        aria-haspopup="menu"
+        aria-expanded={Boolean(anchorEl)}
+      >
         {selected?.label ?? `${value}s`}
       </Button>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         {options.map((option) => (
           <MenuItem
-            key={option.label}
+            key={option.seconds}
             selected={option.seconds === value}
             onClick={() => {
               onChange(option.seconds);
