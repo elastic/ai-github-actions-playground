@@ -360,9 +360,13 @@ export default function TracesPage() {
   }, [setSelectedTraceId]);
 
   useEffect(() => {
-    if (!selectedTraceId) return;
+    if (!selectedTraceId) {
+      setSelectedTraceSpans([]);
+      return;
+    }
+    setSelectedTraceSpans([]);
     runDetailQuery(buildTraceDetailQuery(selectedTraceId));
-  }, [runDetailQuery, selectedTraceId]);
+  }, [runDetailQuery, selectedTraceId, setSelectedTraceSpans]);
 
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
