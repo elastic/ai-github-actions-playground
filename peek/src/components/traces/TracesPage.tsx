@@ -13,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Tooltip from "@mui/material/Tooltip";
+import CancelIcon from "@mui/icons-material/Cancel";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
@@ -394,6 +395,9 @@ export default function TracesPage() {
               label={`status: ${status}`}
               size="small"
               color={status === "Error" ? "error" : "default"}
+              deleteIcon={
+                <CancelIcon data-testid={`trace-status-chip-delete-${status.toLowerCase()}`} />
+              }
               onDelete={() =>
                 applyFiltersAndRun({
                   statusCodes: filters.statusCodes.filter((s) => s !== status),

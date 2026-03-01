@@ -221,9 +221,8 @@ describe("TracesPage auto-run on quick filter changes", () => {
     );
 
     mockRunQuery.mockClear();
-    const statusChip = screen.getByRole("button", { name: /status:\s*Error/i });
-    await user.click(statusChip);
-    await user.keyboard("{backspace}");
+    const deleteButton = screen.getByTestId("trace-status-chip-delete-error");
+    await user.click(deleteButton);
 
     expect(mockRunQuery).toHaveBeenCalled();
     expect(useTracesStore.getState().filters.statusCodes).not.toContain("Error");
