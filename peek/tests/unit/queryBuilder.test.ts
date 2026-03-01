@@ -171,6 +171,12 @@ describe("buildExplorerQuery", () => {
     // All connected by AND
     expect(whereSection.match(/AND/g)?.length).toBe(4);
   });
+
+  it("rejects unsafe index patterns", () => {
+    expect(() =>
+      buildExplorerQuery(makeQuery({ indexPattern: 'metrics-* | DROP TABLE "x"' })),
+    ).toThrow("Invalid index pattern");
+  });
 });
 
 describe("getDefaultAggregation", () => {
@@ -251,6 +257,12 @@ describe("buildOverviewQuery", () => {
     expect(result.esql).not.toContain("GROUP BY");
     expect(result.esql).not.toContain("LIKE");
     expect(result.esql).not.toContain("==");
+  });
+
+  it("rejects unsafe index patterns", () => {
+    expect(() =>
+      buildOverviewQuery(makeOverviewQuery({ indexPattern: 'metrics-* | DROP TABLE "x"' })),
+    ).toThrow("Invalid index pattern");
   });
 });
 
@@ -339,5 +351,13 @@ describe("buildDimensionOverviewQuery", () => {
     const result = buildDimensionOverviewQuery(makeDimensionQuery());
     expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
     expect(result.esql).toContain("`host.name` IS NOT NULL");
+  });
+
+  it("rejects unsafe index patterns", () => {
+    expect(() =>
+      buildDimensionOverviewQuery(
+        makeDimensionQuery({ indexPattern: 'metrics-* | DROP TABLE "x"' }),
+      ),
+    ).toThrow("Invalid index pattern");
   });
 });
