@@ -96,6 +96,10 @@ export default function UsersPage() {
       if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
         return requestedUsername;
       }
+      // Preserve manual selection when no query param and current user still exists
+      if (!requestedUsername && current && users.some((user) => user.username === current)) {
+        return current;
+      }
       return users[0]?.username ?? null;
     });
   }, [requestedUsername, users]);
