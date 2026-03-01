@@ -1,6 +1,7 @@
 import type { TimeSeriesData } from "@perses-dev/core";
 
-import { DATE_TYPES, NUMERIC_TYPES } from "../es/esFieldTypes";
+import { findNumericColumnIndices } from "../es/columnUtils";
+import { DATE_TYPES } from "../es/esFieldTypes";
 import type { EsqlColumn, EsqlResponse } from "../../types";
 
 const TIMESTAMP_FIELD = "@timestamp";
@@ -40,12 +41,6 @@ function normalizeNumericValue(value: unknown): number | null {
   }
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
-}
-
-function findNumericColumnIndices(data: EsqlResponse): number[] {
-  return data.columns
-    .map((column, index) => (NUMERIC_TYPES.has(column.type) ? index : -1))
-    .filter((index) => index >= 0);
 }
 
 function findTimestampColumnIndex(data: EsqlResponse): number {
