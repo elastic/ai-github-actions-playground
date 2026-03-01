@@ -26,6 +26,7 @@ export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const requestedUsername = searchParams.get("username");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
@@ -88,8 +89,20 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   useEffect(() => {
-    setSelectedUsername(searchParams.get("username"));
-  }, [searchParams]);
+    setSelectedUsername((current) => {
+      if (users.length === 0) {
+        return requestedUsername ?? current;
+      }
+      if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
+        return requestedUsername;
+      }
+      // Preserve manual selection when no query param and current user still exists
+      if (!requestedUsername && current && users.some((user) => user.username === current)) {
+        return current;
+      }
+      return users[0]?.username ?? null;
+    });
+  }, [requestedUsername, users]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
