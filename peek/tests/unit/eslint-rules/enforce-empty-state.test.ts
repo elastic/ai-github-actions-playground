@@ -36,6 +36,14 @@ describe("peek/enforce-empty-state", () => {
         },
         // No empty-data pattern at all
         { code: `function Component() { if (x > 5) { doSomething(); } }` },
+        // Guard clause (return) - ignored
+        { code: `function Component() { if (!data) return; }` },
+        // Guard clause (block return) - ignored
+        { code: `function Component() { if (!data) { return; } }` },
+        // Guard clause (throw) - ignored
+        { code: `function Component() { if (!data) { throw new Error(); } }` },
+        // Non-data identifier - ignored
+        { code: `function Component() { if (!isReady) { return <div />; } }` },
       ],
       invalid: [
         // .length === 0 without EmptyState usage

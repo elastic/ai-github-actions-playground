@@ -19,12 +19,23 @@ export default {
     /**
      * Detect common empty-data test patterns:
      *   data.length === 0, items.length === 0, arr.length == 0
-     *   !data, !items (unary not on identifier)
-     *   data.length === 0 as the left or right of ===
+     *   !data, !results, etc.
      */
     function isEmptyDataTest(node) {
+      const DATA_IDENTIFIERS = new Set([
+        "data",
+        "results",
+        "result",
+        "metrics",
+        "items",
+        "spans",
+        "indices",
+        "pipelines",
+        "fields",
+      ]);
+
       if (node.type === "UnaryExpression" && node.operator === "!") {
-        return node.argument.type === "Identifier";
+        return node.argument.type === "Identifier" && DATA_IDENTIFIERS.has(node.argument.name);
       }
       if (node.type === "BinaryExpression" && (node.operator === "===" || node.operator === "==")) {
         return isLengthZero(node.left, node.right) || isLengthZero(node.right, node.left);
@@ -42,35 +53,32 @@ export default {
       );
     }
 
-    /** Check whether the consequent block (or any of its descendants) contains <EmptyState />. */
+    /** Check if an IfStatement is a guard clause (returns nothing, null, or throws) */
+    function isGuardClause(node) {
+      if (node.type !== "IfStatement") return false;
+      const consequent = node.consequent;
+
+      // if (...) return;
+      if (consequent.type === "ReturnStatement" && !consequent.argument) return true;
+
+      // if (...) { return; } or if (...) { throw ... }
+      if (consequent.type === "BlockStatement") {
+        const first = consequent.body[0];
+        if (!first) return false;
+        if (first.type === "ReturnStatement" && !first.argument) return true;
+        if (first.type === "ThrowStatement") return true;
+      }
+
+      return false;
+    }
+
+    /** Check whether a node contains <EmptyState />. */
     function containsEmptyStateJSX(node) {
       if (!node) return false;
-      if (
-        node.type === "JSXElement" &&
-        node.openingElement.name &&
-        node.openingElement.name.name === "EmptyState"
-      ) {
-        return true;
-      }
-      if (node.type === "JSXIdentifier" && node.name === "EmptyState") {
-        return true;
-      }
-      for (const key of Object.keys(node)) {
-        if (key === "parent") continue;
-        const child = node[key];
-        if (child && typeof child === "object") {
-          if (Array.isArray(child)) {
-            for (const c of child) {
-              if (c && typeof c.type === "string" && containsEmptyStateJSX(c)) {
-                return true;
-              }
-            }
-          } else if (typeof child.type === "string" && containsEmptyStateJSX(child)) {
-            return true;
-          }
-        }
-      }
-      return false;
+      const sourceCode = context.sourceCode ?? context.getSourceCode();
+      const text = sourceCode.getText(node);
+      // Heuristic: check if the text contains "<EmptyState"
+      return /<EmptyState\b/.test(text);
     }
 
     return {
@@ -87,6 +95,7 @@ export default {
       },
       IfStatement(node) {
         if (!isEmptyDataTest(node.test)) return;
+        if (isGuardClause(node)) return;
         if (!hasEmptyStateImport || !containsEmptyStateJSX(node.consequent)) {
           context.report({ node: node.test, messageId: "missingEmptyState" });
         }
