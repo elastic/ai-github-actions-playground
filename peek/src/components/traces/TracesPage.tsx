@@ -112,6 +112,7 @@ export default function TracesPage() {
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
   const hasHydratedFromUrlRef = useRef(false);
+  const isApplyingUrlToStoreRef = useRef(false);
   const skipNextRawQueryResetRef = useRef(false);
   const urlDefaultsRef = useRef({
     services: filters.services,
@@ -149,6 +150,7 @@ export default function TracesPage() {
   }, [filters, setRawQuery]);
 
   useEffect(() => {
+    isApplyingUrlToStoreRef.current = true;
     const state = useTracesStore.getState();
     const servicesChanged =
       state.filters.services.length !== urlServices.length ||
@@ -178,6 +180,7 @@ export default function TracesPage() {
     }
     queueMicrotask(() => {
       hasHydratedFromUrlRef.current = true;
+      isApplyingUrlToStoreRef.current = false;
     });
   }, [
     setRawQuery,
@@ -193,27 +196,27 @@ export default function TracesPage() {
   ]);
 
   useEffect(() => {
-    if (!hasHydratedFromUrlRef.current) return;
+    if (!hasHydratedFromUrlRef.current || isApplyingUrlToStoreRef.current) return;
     setUrlServices(filters.services, { replace: true });
   }, [filters.services, setUrlServices]);
 
   useEffect(() => {
-    if (!hasHydratedFromUrlRef.current) return;
+    if (!hasHydratedFromUrlRef.current || isApplyingUrlToStoreRef.current) return;
     setUrlTimeRange(filters.timeFrom, filters.timeTo, { replace: true });
   }, [filters.timeFrom, filters.timeTo, setUrlTimeRange]);
 
   useEffect(() => {
-    if (!hasHydratedFromUrlRef.current) return;
+    if (!hasHydratedFromUrlRef.current || isApplyingUrlToStoreRef.current) return;
     setUrlViewMode(viewMode, { replace: true });
   }, [setUrlViewMode, viewMode]);
 
   useEffect(() => {
-    if (!hasHydratedFromUrlRef.current) return;
+    if (!hasHydratedFromUrlRef.current || isApplyingUrlToStoreRef.current) return;
     setUrlTraceId(selectedTraceId, { replace: true });
   }, [selectedTraceId, setUrlTraceId]);
 
   useEffect(() => {
-    if (!hasHydratedFromUrlRef.current) return;
+    if (!hasHydratedFromUrlRef.current || isApplyingUrlToStoreRef.current) return;
     const timer = setTimeout(() => {
       setUrlRawQuery(rawQuery, { replace: true });
     }, 250);
