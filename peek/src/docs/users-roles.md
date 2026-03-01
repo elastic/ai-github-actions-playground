@@ -8,7 +8,7 @@ On the Users page, each role chip in the detail pane is clickable. Click a role 
 
 ## Navigating from Roles to Users
 
-On the Roles page, the detail pane shows an **Assigned users** section listing every user that holds the selected role. Each user chip is clickable — click a username to jump directly to the Users page with that user pre-selected. This lets you quickly pivot from "who has this role?" to "what else does this user have access to?".
+On the Roles page, the detail pane shows an **Assigned users** section listing every user who holds the selected role. Each user chip is clickable — click a username to jump directly to the Users page with that user pre-selected. This lets you quickly pivot from "who has this role?" to "what else does this user have access to?".
 
 ## Seeing Who Has a Role
 

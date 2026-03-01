@@ -26,6 +26,7 @@ export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const requestedUsername = searchParams.get("username");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
@@ -88,8 +89,13 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   useEffect(() => {
-    setSelectedUsername(searchParams.get("username"));
-  }, [searchParams]);
+    setSelectedUsername(() => {
+      if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
+        return requestedUsername;
+      }
+      return users[0]?.username ?? null;
+    });
+  }, [requestedUsername, users]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();

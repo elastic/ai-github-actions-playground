@@ -309,4 +309,18 @@ describe("UsersPage", () => {
 
     expect(await screen.findByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
   });
+
+  it("falls back to the first user when ?username= points to an unknown user", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=does-not-exist"]}>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
+  });
 });
