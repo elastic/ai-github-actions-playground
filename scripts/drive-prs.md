@@ -77,24 +77,30 @@ gh pr view <NUMBER> --json mergeable,mergeStateStatus
 ### If there are conflicts → resolve them
 
 1. Check out the branch locally:
+
    ```bash
    gh pr checkout <NUMBER>
    ```
+
 2. Rebase onto main (preferred over merge commits):
+
    ```bash
    git fetch origin main
    git rebase origin/main
    ```
+
 3. For each conflict, read both sides and resolve intelligently:
    - Favour the PR branch's intent (it is the proposed change)
    - Incorporate any non-overlapping changes from `main`
    - Do not silently discard either side without understanding it
 4. After resolving:
+
    ```bash
    git add <files>
    git rebase --continue
    git push --force-with-lease
    ```
+
 5. Return to Step 2 to confirm conflicts are cleared, then continue.
 
 ---
@@ -151,9 +157,13 @@ never runs automatically. Kick it off:
 ```bash
 # Re-run the most recent CI run for this branch
 RUN_ID=$(gh run list --branch <HEAD_REF_NAME> --workflow ci.yml --limit 5 \
-  --json databaseId,status --jq '[.[] | select(.status == "completed")] | first | .databaseId')
+  --json databaseId,status --jq '[.[] | select(.status == "completed")] | first | .databaseId // empty')
 
-gh run rerun "$RUN_ID"
+if [ -n "$RUN_ID" ]; then
+  gh run rerun "$RUN_ID"
+else
+  echo "No completed CI runs found; use empty commit instead (next section)"
+fi
 ```
 
 If no CI run exists for this branch yet:
@@ -192,15 +202,20 @@ Determine whether the failure is:
 
 - **Caused by this PR's changes** → read the diff, understand the root cause,
   fix the code, push. Return to Step 3.
+
   ```bash
   gh pr diff <NUMBER>
   ```
+
 - **A flaky test or infrastructure issue** → re-run the failed jobs:
+
   ```bash
   gh run rerun <RUN_ID> --failed
   ```
+
   Wait for re-run results before deciding.
 - **Pre-existing on `main`** → note it in a PR comment and continue to Step 6.
+
   ```bash
   gh pr comment <NUMBER> --body "CI failure appears pre-existing on main (not introduced by this PR)."
   ```
@@ -242,9 +257,11 @@ Then **wait** for the review to be submitted before continuing.
 ### Step 6a — Address review feedback
 
 1. Read the review comments:
+
    ```bash
    gh pr view <NUMBER> --json reviews,comments
    ```
+
 2. For each change request:
    - Read the diff at the relevant line
    - Apply the fix if it is straightforward and clearly correct
