@@ -830,7 +830,10 @@ export default function TracesPage() {
             {result &&
               viewMode === "timeseries" &&
               (rawQuery ? (
-                <EmptyState heading="Time series view is not available for custom queries. Use filter chips to see trends." />
+                <EmptyState
+                  heading="Time series view is not available for custom queries. Use filter chips to see trends."
+                  description="Use filter chips instead of raw ES|QL to view trace volume and latency trends."
+                />
               ) : timeseriesLoading ? (
                 <Box
                   sx={{
@@ -850,12 +853,18 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : (
-                <EmptyState heading="Run search to load trace volume and latency trends." />
+                <EmptyState
+                  heading="Run search to load trace volume and latency trends."
+                  description="Apply filters and run search to populate time series metrics."
+                />
               ))}
             {result && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
-                  <EmptyState heading="Select a trace in List or Scatter view to see its service map" />
+                  <EmptyState
+                    heading="Select a trace in List or Scatter view to see its service map"
+                    description="Choose a trace from List or Scatter view to render service relationships."
+                  />
                 ) : detailLoading ? (
                   <Box
                     sx={{
@@ -877,7 +886,10 @@ export default function TracesPage() {
             )}
             {viewMode === "driftRadar" &&
               (rawQuery ? (
-                <EmptyState heading="Drift Radar is not available for custom queries. Use filter chips to scope the window." />
+                <EmptyState
+                  heading="Drift Radar is not available for custom queries. Use filter chips to scope the window."
+                  description="Use filter chips to define the current window before opening Drift Radar."
+                />
               ) : driftRadarLoading || driftRadarBaselineLoading ? (
                 <Box
                   sx={{
@@ -900,9 +912,15 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : result !== null ? (
-                <EmptyState heading="Run search to load the window service map." />
+                <EmptyState
+                  heading="Run search to load the window service map."
+                  description="Run search to load current-window traces for the Drift Radar map."
+                />
               ) : (
-                <EmptyState heading="Search for traces to load the Drift Radar service map." />
+                <EmptyState
+                  heading="Search for traces to load the Drift Radar service map."
+                  description="Run a trace search to compare current and baseline service topology."
+                />
               ))}
           </Paper>
 
