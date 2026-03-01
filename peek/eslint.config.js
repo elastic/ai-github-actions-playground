@@ -69,13 +69,12 @@ export default tseslint.config(
     },
   },
   // Custom Peek design-language rules
-  // TODO: Revert these to "error" once existing violations are addressed.
   {
     files: ["src/**/*.ts", "src/**/*.tsx"],
     plugins: { peek: peekPlugin },
     rules: {
-      "peek/no-hardcoded-colors": "warn",
-      "peek/consistent-typography-variants": "warn",
+      "peek/no-hardcoded-colors": "error",
+      "peek/consistent-typography-variants": "error",
       "peek/no-direct-echarts-import": "error",
       "peek/no-div-onclick": "error",
     },
@@ -86,7 +85,7 @@ export default tseslint.config(
     plugins: { peek: peekPlugin },
     rules: {
       "peek/max-component-lines": ["warn", { max: 500 }],
-      "peek/enforce-empty-state": "warn",
+      "peek/enforce-empty-state": "error",
     },
   },
   {

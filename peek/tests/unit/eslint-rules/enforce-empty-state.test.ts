@@ -42,6 +42,48 @@ describe("peek/enforce-empty-state", () => {
         { code: `function Component() { if (!data) { return; } }` },
         // Guard clause (throw) - ignored
         { code: `function Component() { if (!data) { throw new Error(); } }` },
+        // Guard clause: return null (component defers to parent)
+        { code: `function Component() { if (data.length === 0) return null; }` },
+        // Guard clause: return [] (data transformation)
+        { code: `function Component() { if (data.length === 0) return []; }` },
+        // Guard clause: return 0 (computed value)
+        { code: `function Component() { if (data.length === 0) return 0; }` },
+        // Guard clause: return { ... } (chart config object)
+        { code: `function Component() { if (data.length === 0) return { title: "empty" }; }` },
+        // Guard clause: block with state-setting before return null
+        {
+          code: `function Component() {
+            if (items.length === 0) {
+              setResults([]);
+              return;
+            }
+          }`,
+        },
+        // Inside useMemo callback - not a render decision
+        {
+          code: `function Component() {
+            const val = useMemo(() => {
+              if (data.length === 0) return <div />;
+              return <span />;
+            }, [data]);
+          }`,
+        },
+        // Inside useEffect callback - not a render decision
+        {
+          code: `function Component() {
+            useEffect(() => {
+              if (items.length === 0) { doSomething(); }
+            }, [items]);
+          }`,
+        },
+        // Ternary inside useEffect - not a render decision
+        {
+          code: `function Component() {
+            useEffect(() => {
+              const x = data.length === 0 ? "a" : "b";
+            }, [data]);
+          }`,
+        },
         // Non-data identifier - ignored
         { code: `function Component() { if (!isReady) { return <div />; } }` },
       ],

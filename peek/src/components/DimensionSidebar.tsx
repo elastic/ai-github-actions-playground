@@ -25,6 +25,8 @@ import type {
 } from "../services/es";
 import { getFieldValues } from "../services/es";
 
+import EmptyState from "./EmptyState";
+
 interface Props {
   fields: FieldInfo[];
   client: ElasticsearchClient | null;
@@ -161,11 +163,7 @@ export default function DimensionSidebar({
         <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
           <Typography variant="subtitle2">Dimensions</Typography>
         </Box>
-        <Box sx={{ p: 1.5 }}>
-          <Typography variant="caption" color="text.secondary">
-            Select a metric to see available dimensions
-          </Typography>
-        </Box>
+        <EmptyState size="small" heading="No dimensions" description="No filterable fields found" />
       </Paper>
     );
   }

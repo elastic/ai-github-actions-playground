@@ -53,22 +53,59 @@ export default {
       );
     }
 
-    /** Check if an IfStatement is a guard clause (returns nothing, null, or throws) */
+    /**
+     * Return true when a ReturnStatement yields a non-JSX value such as
+     * `null`, `0`, `[]`, or `{ key: value }`.  These are data-flow guards,
+     * not render decisions, so the rule should ignore them.
+     */
+    function isNonJSXReturn(returnStmt) {
+      if (!returnStmt.argument) return true; // return;
+      const arg = returnStmt.argument;
+      if (arg.type === "Literal") return true; // return null / 0 / ""
+      if (arg.type === "ArrayExpression") return true; // return []
+      if (arg.type === "ObjectExpression") return true; // return { ... }
+      if (arg.type === "Identifier" && arg.name === "undefined") return true;
+      return false;
+    }
+
+    /** Check if an IfStatement is a guard clause (returns non-JSX, or throws) */
     function isGuardClause(node) {
       if (node.type !== "IfStatement") return false;
       const consequent = node.consequent;
 
-      // if (...) return;
-      if (consequent.type === "ReturnStatement" && !consequent.argument) return true;
+      // if (...) return <non-JSX>;
+      if (consequent.type === "ReturnStatement") return isNonJSXReturn(consequent);
 
-      // if (...) { return; } or if (...) { throw ... }
-      if (consequent.type === "BlockStatement") {
-        const first = consequent.body[0];
-        if (!first) return false;
-        if (first.type === "ReturnStatement" && !first.argument) return true;
-        if (first.type === "ThrowStatement") return true;
+      // if (...) { ...; return <non-JSX>; } or if (...) { throw ... }
+      if (consequent.type === "BlockStatement" && consequent.body.length > 0) {
+        const last = consequent.body[consequent.body.length - 1];
+        if (last.type === "ThrowStatement") return true;
+        if (last.type === "ReturnStatement") return isNonJSXReturn(last);
       }
 
+      return false;
+    }
+
+    /**
+     * Return true when the node sits inside a callback passed to useMemo,
+     * useEffect, useCallback, or useLayoutEffect — these are data-flow
+     * hooks, not render functions, so empty-data checks there are not about
+     * showing UI.
+     */
+    const NON_RENDER_HOOKS = new Set(["useMemo", "useEffect", "useCallback", "useLayoutEffect"]);
+    function isInsideNonRenderHookCallback(node) {
+      let current = node.parent;
+      while (current) {
+        if (
+          (current.type === "ArrowFunctionExpression" || current.type === "FunctionExpression") &&
+          current.parent?.type === "CallExpression" &&
+          current.parent.callee?.type === "Identifier" &&
+          NON_RENDER_HOOKS.has(current.parent.callee.name)
+        ) {
+          return true;
+        }
+        current = current.parent;
+      }
       return false;
     }
 
@@ -96,12 +133,14 @@ export default {
       IfStatement(node) {
         if (!isEmptyDataTest(node.test)) return;
         if (isGuardClause(node)) return;
+        if (isInsideNonRenderHookCallback(node)) return;
         if (!hasEmptyStateImport || !containsEmptyStateJSX(node.consequent)) {
           context.report({ node: node.test, messageId: "missingEmptyState" });
         }
       },
       ConditionalExpression(node) {
         if (!isEmptyDataTest(node.test)) return;
+        if (isInsideNonRenderHookCallback(node)) return;
         if (!hasEmptyStateImport || !containsEmptyStateJSX(node.consequent)) {
           context.report({ node: node.test, messageId: "missingEmptyState" });
         }

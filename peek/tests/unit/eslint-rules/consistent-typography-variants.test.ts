@@ -27,6 +27,11 @@ describe("peek/consistent-typography-variants", () => {
           code: `<Typography>text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // h3 is the metric display variant
+        {
+          code: `<Typography variant="h3">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
         // Custom options
         {
           code: `<Typography variant="h1">text</Typography>`,
@@ -40,15 +45,15 @@ describe("peek/consistent-typography-variants", () => {
         },
       ],
       invalid: [
-        // h3 is not in the allowed set
+        // h2 is not in the allowed set
         {
-          code: `<Typography variant="h3">text</Typography>`,
+          code: `<Typography variant="h2">text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidVariant" }],
         },
         // JSXExpressionContainer with invalid variant
         {
-          code: `<Typography variant={"h3"}>text</Typography>`,
+          code: `<Typography variant={"h2"}>text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidVariant" }],
         },

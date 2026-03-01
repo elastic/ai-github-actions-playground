@@ -15,6 +15,7 @@ import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
+import EmptyState from "./EmptyState";
 import EChartWrapper from "./visualizations/EChartWrapper";
 import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
 
@@ -208,23 +209,15 @@ export default function DimensionOverviewGrid({
 
   if (dimensionFields.length === 0) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <Typography variant="body2" color="text.primary">
-          No dimension fields found for <strong>{shortMetric}</strong>
-        </Typography>
-        <Button size="small" onClick={onViewUngrouped}>
-          View ungrouped metric
-        </Button>
-      </Box>
+      <EmptyState
+        heading="No dimension fields found"
+        description={`No dimension fields found for ${shortMetric}. Connect more data or adjust your filters.`}
+        action={
+          <Button size="small" onClick={onViewUngrouped}>
+            View ungrouped metric
+          </Button>
+        }
+      />
     );
   }
 

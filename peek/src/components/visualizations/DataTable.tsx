@@ -19,6 +19,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
+import EmptyState from "../EmptyState";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 
 import { isNumericType } from "./chartUtils";
@@ -179,11 +180,7 @@ export default memo(function DataTable({
   }, []);
 
   if (data.columns.length === 0) {
-    return (
-      <Typography color="text.secondary" sx={{ p: 2, textAlign: "center" }}>
-        No data
-      </Typography>
-    );
+    return <EmptyState size="small" heading="No data" />;
   }
 
   const hiddenCount = emptyColumnIndices.size;

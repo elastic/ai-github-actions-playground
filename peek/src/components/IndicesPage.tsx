@@ -327,11 +327,13 @@ export default function IndicesPage() {
     selectedIndex && mappings ? extractMappingFields(mappings, selectedIndex) : [];
 
   const mappingsContent = (
-    <Box>
+    <Box sx={{ height: "100%" }}>
       {mappingFields.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          No mapping properties found.
-        </Typography>
+        <EmptyState
+          size="small"
+          heading="No mapping properties"
+          description="No field definitions found for this index."
+        />
       ) : (
         mappingFields.map((f) => (
           <Stack
@@ -355,11 +357,13 @@ export default function IndicesPage() {
   const settingRows = selectedIndex && settings ? extractSettings(settings, selectedIndex) : [];
 
   const settingsContent = (
-    <Box>
+    <Box sx={{ height: "100%" }}>
       {settingRows.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          No settings found.
-        </Typography>
+        <EmptyState
+          size="small"
+          heading="No settings"
+          description="No configuration settings found for this index."
+        />
       ) : (
         <Box
           sx={{

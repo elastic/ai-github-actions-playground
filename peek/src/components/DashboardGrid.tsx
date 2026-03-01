@@ -5,7 +5,6 @@ import {
   type Layout,
   type ResponsiveLayouts as Layouts,
 } from "react-grid-layout";
-import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
@@ -19,6 +18,7 @@ import { useUIStore } from "../store/useUIStore";
 import { createDefaultPanel } from "../dashboards/panel";
 
 import PanelContainer from "./PanelContainer";
+import EmptyState from "./EmptyState";
 import {
   fromReactGridLayoutItems,
   toPersesPanelLayouts,
@@ -60,31 +60,25 @@ export default function DashboardGrid() {
 
   if (panels.length === 0) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 400,
-        }}
-      >
-        <Typography variant="h6" color="text.secondary">
-          No panels yet
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Load the default dashboard to get started, or add a panel to build your own.
-        </Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="contained" startIcon={<DashboardIcon />} onClick={loadDefaultDashboard}>
-            Load Default Dashboard
-          </Button>
-          <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddPanel}>
-            Add Panel
-          </Button>
-        </Box>
-      </Box>
+      <EmptyState
+        icon={<DashboardIcon sx={{ fontSize: 40 }} />}
+        heading="No panels yet"
+        description="Load the default dashboard to get started, or add a panel to build your own."
+        action={
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<DashboardIcon />}
+              onClick={loadDefaultDashboard}
+            >
+              Load Default Dashboard
+            </Button>
+            <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddPanel}>
+              Add Panel
+            </Button>
+          </Box>
+        }
+      />
     );
   }
 

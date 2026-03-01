@@ -81,7 +81,7 @@ export default function WelcomeScreen() {
           alt="Elastic Peek"
           sx={{ width: 160, height: 160, mb: 2, objectFit: "contain" }}
         />
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h5" gutterBottom>
           Elastic Peek
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>

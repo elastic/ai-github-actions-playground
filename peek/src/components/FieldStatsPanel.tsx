@@ -23,6 +23,8 @@ import {
 import type { ElasticsearchConnection, FieldStats, ConfidenceLevel } from "../services/es";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
+import EmptyState from "./EmptyState";
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -213,9 +215,11 @@ export default function FieldStatsPanel({
                   Top values
                 </Typography>
                 {stats.topValues.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No values found.
-                  </Typography>
+                  <EmptyState
+                    size="small"
+                    heading="No values found"
+                    description="No distinct values detected in the current range"
+                  />
                 ) : (
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                     {stats.topValues.map((tv) => (

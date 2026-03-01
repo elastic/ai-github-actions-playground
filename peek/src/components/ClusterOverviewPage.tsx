@@ -7,105 +7,19 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import {
-  isElasticsearchError,
-  type ClusterHealthResponse,
-  type ClusterInfoResponse,
-  type ClusterStatsResponse,
-  type NodeStatsNode,
-  type NodesInfoNode,
-  type NodesInfoResponse,
-  type NodesStatsResponse,
-} from "../services/es";
-import {
-  loadFleetServerStatus,
-  loadElasticAgentInventory,
-  type FleetServerStatusMetrics,
-} from "../services/fleet";
+import { isElasticsearchError } from "../services/es";
+import { loadFleetServerStatus, loadElasticAgentInventory } from "../services/fleet";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { formatBytes } from "../utils/formatBytes";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { formatCompactNumber, toNodeRows, type OverviewData } from "../utils/clusterOverviewUtils";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
-
-interface OverviewData {
-  clusterInfo: ClusterInfoResponse | null;
-  clusterHealth: ClusterHealthResponse | null;
-  clusterStats: ClusterStatsResponse | null;
-  nodesInfo: NodesInfoResponse | null;
-  nodesStats: NodesStatsResponse | null;
-  dataStreamCount: number | null;
-  indexCount: number | null;
-  aliasCount: number | null;
-  fleetStatus: FleetServerStatusMetrics | null;
-  agentInventoryCount: number | null;
-}
-
-interface NodeRow {
-  id: string;
-  name: string;
-  roles: string[];
-  cpuPercent: number | null;
-  heapPercent: number | null;
-  diskUsedPercent: number | null;
-  shardCount: number | null;
-  docCount: number | null;
-}
-
-function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Paper variant="outlined" sx={{ height: "100%", p: 2 }}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 }}
-        gutterBottom
-        component="div"
-      >
-        {title}
-      </Typography>
-      {children}
-    </Paper>
-  );
-}
-
-function formatCompactNumber(value: number | null): string {
-  if (value === null) return "Unavailable";
-  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(
-    value,
-  );
-}
-
-function formatPercent(value: number | null): string {
-  if (value === null) return "Unavailable";
-  return `${value.toFixed(0)}%`;
-}
-
-const NODE_STAT_UNAVAILABLE_HINT =
-  "Node stats unavailable — requires the monitor cluster privilege";
-
-function renderNodeStat(formatted: string) {
-  if (formatted === "Unavailable") {
-    return (
-      <Tooltip title={NODE_STAT_UNAVAILABLE_HINT} arrow>
-        <Typography variant="body2" component="span" color="text.secondary">
-          Unavailable
-        </Typography>
-      </Tooltip>
-    );
-  }
-  return formatted;
-}
+import { OverviewInfoCard } from "./OverviewInfoCard";
+import { OverviewNodesTable } from "./OverviewNodesTable";
 
 function renderCount(value: number | null) {
   if (value === null) {
@@ -116,41 +30,10 @@ function renderCount(value: number | null) {
     );
   }
   return (
-    <Typography variant="h4" component="p">
+    <Typography variant="h5" component="p">
       {value.toLocaleString()}
     </Typography>
   );
-}
-
-function toNodeRows(
-  nodesInfo: NodesInfoResponse | null,
-  nodesStats: NodesStatsResponse | null,
-): NodeRow[] {
-  const infoById = nodesInfo?.nodes ?? {};
-  const statsById = nodesStats?.nodes ?? {};
-  const ids = Array.from(new Set([...Object.keys(infoById), ...Object.keys(statsById)])).sort();
-
-  return ids.map((id) => {
-    const info: NodesInfoNode | undefined = infoById[id];
-    const stats: NodeStatsNode | undefined = statsById[id];
-    const totalBytes = stats?.fs?.total?.total_in_bytes;
-    const availableBytes = stats?.fs?.total?.available_in_bytes;
-    const diskUsedPercent =
-      totalBytes && totalBytes > 0 && availableBytes !== undefined
-        ? ((totalBytes - availableBytes) / totalBytes) * 100
-        : null;
-
-    return {
-      id,
-      name: info?.name ?? stats?.name ?? id,
-      roles: info?.roles ?? [],
-      cpuPercent: stats?.os?.cpu?.percent ?? null,
-      heapPercent: stats?.jvm?.mem?.heap_used_percent ?? null,
-      diskUsedPercent,
-      shardCount: stats?.indices?.shard_stats?.total_count ?? null,
-      docCount: stats?.indices?.docs?.count ?? null,
-    };
-  });
 }
 
 export default function ClusterOverviewPage() {
@@ -336,7 +219,7 @@ export default function ClusterOverviewPage() {
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Cluster">
+              <OverviewInfoCard title="Cluster">
                 {clusterInfo ? (
                   <Stack spacing={1}>
                     <Typography variant="h5" component="div">
@@ -367,11 +250,11 @@ export default function ClusterOverviewPage() {
                     No cluster info available.
                   </Typography>
                 )}
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Version">
+              <OverviewInfoCard title="Version">
                 {clusterInfo?.version ? (
                   <Stack spacing={1}>
                     <Typography variant="h5" component="div">
@@ -393,13 +276,13 @@ export default function ClusterOverviewPage() {
                     No version info available.
                   </Typography>
                 )}
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
           </Stack>
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Health">
+              <OverviewInfoCard title="Health">
                 {clusterHealth ? (
                   <Stack spacing={1}>
                     <Chip
@@ -428,54 +311,56 @@ export default function ClusterOverviewPage() {
                     No cluster health available.
                   </Typography>
                 )}
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Data Streams">{renderCount(data.dataStreamCount)}</InfoCard>
+              <OverviewInfoCard title="Data Streams">
+                {renderCount(data.dataStreamCount)}
+              </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Indices">{renderCount(data.indexCount)}</InfoCard>
+              <OverviewInfoCard title="Indices">{renderCount(data.indexCount)}</OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Aliases">{renderCount(data.aliasCount)}</InfoCard>
+              <OverviewInfoCard title="Aliases">{renderCount(data.aliasCount)}</OverviewInfoCard>
             </Box>
           </Stack>
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Docs">
-                <Typography variant="h4" component="p">
+              <OverviewInfoCard title="Docs">
+                <Typography variant="h5" component="p">
                   {formatCompactNumber(clusterDocsCount)}
                 </Typography>
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Store Size">
-                <Typography variant="h4" component="p">
+              <OverviewInfoCard title="Store Size">
+                <Typography variant="h5" component="p">
                   {formatBytes(clusterStoreBytes, "Unavailable")}
                 </Typography>
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Total Shards">
-                <Typography variant="h4" component="p">
+              <OverviewInfoCard title="Total Shards">
+                <Typography variant="h5" component="p">
                   {formatCompactNumber(clusterShardCount)}
                 </Typography>
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <InfoCard title="Total Indices">
-                <Typography variant="h4" component="p">
+              <OverviewInfoCard title="Total Indices">
+                <Typography variant="h5" component="p">
                   {formatCompactNumber(clusterIndexCount)}
                 </Typography>
-              </InfoCard>
+              </OverviewInfoCard>
             </Box>
           </Stack>
 
-          <InfoCard title="Node Role Summary">
+          <OverviewInfoCard title="Node Role Summary">
             {roleCounts.length > 0 ? (
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 {roleCounts.map(([role, count]) => (
@@ -487,57 +372,14 @@ export default function ClusterOverviewPage() {
                 Unavailable
               </Typography>
             )}
-          </InfoCard>
+          </OverviewInfoCard>
 
-          <InfoCard title="Nodes">
-            {nodeRows.length > 0 ? (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Roles</TableCell>
-                      <TableCell align="right">CPU %</TableCell>
-                      <TableCell align="right">Heap %</TableCell>
-                      <TableCell align="right">Disk Used %</TableCell>
-                      <TableCell align="right">Shards</TableCell>
-                      <TableCell align="right">Docs</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {nodeRows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.roles.length > 0 ? row.roles.join(", ") : "—"}</TableCell>
-                        <TableCell align="right">
-                          {renderNodeStat(formatPercent(row.cpuPercent))}
-                        </TableCell>
-                        <TableCell align="right">
-                          {renderNodeStat(formatPercent(row.heapPercent))}
-                        </TableCell>
-                        <TableCell align="right">
-                          {renderNodeStat(formatPercent(row.diskUsedPercent))}
-                        </TableCell>
-                        <TableCell align="right">
-                          {renderNodeStat(formatCompactNumber(row.shardCount))}
-                        </TableCell>
-                        <TableCell align="right">
-                          {renderNodeStat(formatCompactNumber(row.docCount))}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                Unavailable
-              </Typography>
-            )}
-          </InfoCard>
+          <OverviewInfoCard title="Nodes">
+            <OverviewNodesTable nodeRows={nodeRows} />
+          </OverviewInfoCard>
 
           {/* Fleet summary */}
-          <InfoCard title="Fleet">
+          <OverviewInfoCard title="Fleet">
             {data.fleetStatus ? (
               <Stack spacing={1}>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -576,7 +418,7 @@ export default function ClusterOverviewPage() {
               </Stack>
             ) : fleetTotal !== null ? (
               <Stack spacing={1}>
-                <Typography variant="h4" component="p">
+                <Typography variant="h5" component="p">
                   {fleetTotal}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -596,7 +438,7 @@ export default function ClusterOverviewPage() {
                 No Fleet data available.
               </Typography>
             )}
-          </InfoCard>
+          </OverviewInfoCard>
         </Stack>
       )}
     </Box>

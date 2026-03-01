@@ -658,9 +658,11 @@ export default function DiscoverPage() {
                             const vals = insight.data!.values;
                             if (vals.length === 0) {
                               return (
-                                <Typography variant="caption" color="text.secondary">
-                                  No values
-                                </Typography>
+                                <EmptyState
+                                  size="small"
+                                  heading="No values"
+                                  description="No data found for this field."
+                                />
                               );
                             }
                             return (

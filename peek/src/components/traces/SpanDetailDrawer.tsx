@@ -13,6 +13,7 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 import { copyToClipboard } from "../../utils/copyToClipboard";
+import EmptyState from "../EmptyState";
 
 import type { Span, SpanLink } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
@@ -251,9 +252,7 @@ export default function SpanDetailDrawer({
           {tabIndex === 1 && (
             <Box sx={{ p: 1 }}>
               {spanAttrs.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
-                  No span attributes
-                </Typography>
+                <EmptyState size="small" heading="No span attributes" />
               ) : (
                 spanAttrs.map((attr) => (
                   <KeyValueRow
@@ -272,9 +271,7 @@ export default function SpanDetailDrawer({
           {tabIndex === 2 && (
             <Box sx={{ p: 1 }}>
               {resourceAttrs.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
-                  No resource attributes
-                </Typography>
+                <EmptyState size="small" heading="No resource attributes" />
               ) : (
                 resourceAttrs.map((attr) => (
                   <KeyValueRow

@@ -21,6 +21,7 @@ import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 
 import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -440,18 +441,22 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
 
   if (metrics.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-        No metrics found in metrics-elastic_agent* for this agent.
-      </Typography>
+      <EmptyState
+        size="small"
+        heading="No metrics found"
+        description="No documents found in metrics-elastic_agent* for this agent."
+      />
     );
   }
 
   const hasAnyChart = cpuOption || memoryOption || eventsOption;
   if (!hasAnyChart) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-        Metrics documents found ({metrics.length}) but no CPU, memory, or events data available.
-      </Typography>
+      <EmptyState
+        size="small"
+        heading="Insufficient metrics data"
+        description={`Metrics documents found (${metrics.length}) but no CPU, memory, or events data available.`}
+      />
     );
   }
 

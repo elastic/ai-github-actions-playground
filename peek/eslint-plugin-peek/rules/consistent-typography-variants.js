@@ -3,8 +3,7 @@ export default {
   meta: {
     type: "suggestion",
     docs: {
-      description:
-        "Restrict Typography variant prop to the approved design-language type scale. Prevents agents from using off-scale variants like h3.",
+      description: "Restrict Typography variant prop to the approved design-language type scale.",
     },
     schema: [
       {
@@ -26,6 +25,7 @@ export default {
   },
   create(context) {
     const allowed = (context.options[0] && context.options[0].allowed) || [
+      "h3",
       "h5",
       "h6",
       "subtitle1",

@@ -9,6 +9,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import sections from "../docs/sections";
 
+import EmptyState from "./EmptyState";
+
 function normalizeText(text: string): string {
   return text.toLowerCase();
 }
@@ -68,9 +70,7 @@ export default function DocsPage() {
         <Divider />
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, overflowY: "auto" }}>
           {filteredSections.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No sections match your search.
-            </Typography>
+            <EmptyState size="small" heading="No results" description="Try a different keyword" />
           ) : (
             filteredSections.map((section) => (
               <Button

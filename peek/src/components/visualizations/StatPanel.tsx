@@ -5,6 +5,7 @@ import { formatValue } from "@perses-dev/core";
 import type { EsqlResponse, FormatOptions, StatPanelOptions } from "../../types";
 import { toStatData } from "../../services/perses/dataTransformers";
 import { CHART_COLORS } from "../../theme";
+import EmptyState from "../EmptyState";
 
 import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 
@@ -23,18 +24,7 @@ export default function StatPanel({ data, options }: Props) {
   const format = options?.format;
 
   if (stats.length === 0) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <Typography color="text.secondary">No numeric data</Typography>
-      </Box>
-    );
+    return <EmptyState size="small" heading="No numeric data" />;
   }
 
   return (
