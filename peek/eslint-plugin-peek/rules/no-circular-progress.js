@@ -78,7 +78,7 @@ export default {
 
         hasCircularProgressUsage = true;
         const size = getNumericSizeProp(node);
-        const allowedBySize = typeof size === "number" && size <= 16;
+        const allowedBySize = typeof size === "number" && size > 0 && size <= 16;
         const allowedInButton = isInsideButton(node);
         if (!allowedBySize && !allowedInButton) {
           hasDisallowedUsage = true;

@@ -72,6 +72,17 @@ describe("peek/no-circular-progress", () => {
         {
           code: `
             import CircularProgress from "@mui/material/CircularProgress";
+            function Component() {
+              return <CircularProgress size={-1} />;
+            }
+          `,
+          filename: "src/components/UsersPage.tsx",
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "noCircularProgressImport" }],
+        },
+        {
+          code: `
+            import CircularProgress from "@mui/material/CircularProgress";
             const value = 42;
           `,
           filename: "src/components/UsersPage.tsx",
