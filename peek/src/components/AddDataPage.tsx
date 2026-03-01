@@ -47,6 +47,26 @@ export function deriveOtlpEndpoint(esUrl: string): string | null {
   return null;
 }
 
+/**
+ * Probe the derived OTLP ingest endpoint to check if it is reachable.
+ * Uses `mode: "no-cors"` so the browser won't block on missing CORS headers —
+ * if the host exists the fetch resolves; if DNS / host is unreachable it rejects.
+ */
+export async function probeOtlpEndpoint(otlpUrl: string, timeoutMs = 5000): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      await fetch(otlpUrl, { method: "HEAD", mode: "no-cors", signal: controller.signal });
+      return true;
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch {
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Platform definitions
 // ---------------------------------------------------------------------------
@@ -244,6 +264,8 @@ export default function AddDataPage() {
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
+  /** `null` = not yet probed, `true` = reachable, `false` = unreachable */
+  const [ingestAvailable, setIngestAvailable] = useState<boolean | null>(null);
 
   // Fetch cluster version on mount so commands use the matching EDOT version
   useEffect(() => {
@@ -266,6 +288,24 @@ export default function AddDataPage() {
   const esUrl = connection?.url ?? "<YOUR_ELASTICSEARCH_ENDPOINT>";
   const derivedOtlpUrl = useMemo(() => deriveOtlpEndpoint(esUrl), [esUrl]);
   const otlpUrl = derivedOtlpUrl ?? "<YOUR_OTLP_ENDPOINT>";
+
+  // Probe the derived OTLP ingest endpoint; auto-select OTLP when reachable
+  useEffect(() => {
+    if (!derivedOtlpUrl) {
+      setIngestAvailable(null);
+      return;
+    }
+    let cancelled = false;
+    setIngestAvailable(null);
+    probeOtlpEndpoint(derivedOtlpUrl).then((available) => {
+      if (cancelled) return;
+      setIngestAvailable(available);
+      if (available) setEndpointType("managed_otlp");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [derivedOtlpUrl]);
   const version = clusterVersion ?? "<VERSION>";
   const apiKey = apiKeyValue ?? "<YOUR_API_KEY>";
   const activeGuide = useMemo(() => PLATFORM_GUIDES[platform], [platform]);
@@ -330,11 +370,21 @@ export default function AddDataPage() {
             <ToggleButton value="managed_otlp">Managed OTLP</ToggleButton>
           </ToggleButtonGroup>
         </Stack>
-        {endpointType === "managed_otlp" && (
-          <Alert severity={derivedOtlpUrl ? "success" : "info"}>
-            {derivedOtlpUrl
-              ? `Detected Elastic Cloud URL — OTLP endpoint derived as ${derivedOtlpUrl}`
-              : "Enter your managed OTLP endpoint. For Elastic Cloud, it follows the pattern https://<id>.ingest.<region>.<provider>.elastic.cloud"}
+        {endpointType === "managed_otlp" && derivedOtlpUrl && (
+          <Alert
+            severity={ingestAvailable ? "success" : ingestAvailable === false ? "warning" : "info"}
+          >
+            {ingestAvailable === null
+              ? `Checking OTLP endpoint availability at ${derivedOtlpUrl}…`
+              : ingestAvailable
+                ? `OTLP endpoint verified at ${derivedOtlpUrl}`
+                : `Could not reach OTLP endpoint at ${derivedOtlpUrl} — verify the URL is correct`}
+          </Alert>
+        )}
+        {endpointType === "managed_otlp" && !derivedOtlpUrl && (
+          <Alert severity="info">
+            Enter your managed OTLP endpoint. For Elastic Cloud, it follows the pattern
+            https://&lt;id&gt;.ingest.&lt;region&gt;.&lt;provider&gt;.elastic.cloud
           </Alert>
         )}
 

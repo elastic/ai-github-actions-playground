@@ -3,7 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-import AddDataPage, { deriveOtlpEndpoint } from "../../src/components/AddDataPage";
+import AddDataPage, {
+  deriveOtlpEndpoint,
+  probeOtlpEndpoint,
+} from "../../src/components/AddDataPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
@@ -18,6 +21,8 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
+
+const fetchSpy = vi.spyOn(globalThis, "fetch");
 
 vi.stubGlobal("localStorage", makeStorageMock());
 vi.stubGlobal("sessionStorage", makeStorageMock());
@@ -40,6 +45,8 @@ describe("AddDataPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    // Default: probe resolves (ingest endpoint reachable)
+    fetchSpy.mockResolvedValue(new Response(null, { status: 200 }));
     useConnectionStore.getState().setConnection({
       url: "https://my-project.es.us-east-1.aws.elastic.cloud:443",
       apiKey: "testkey",
@@ -47,37 +54,56 @@ describe("AddDataPage", () => {
     useConnectionStore.setState({ capabilities: { canCreateApiKeys: true } as never });
   });
 
-  it("renders the endpoint type toggle with Elasticsearch selected by default", () => {
+  it("renders the endpoint type toggle", () => {
     renderPage();
-    const esButton = screen.getByRole("button", { name: "Elasticsearch" });
-    const otlpButton = screen.getByRole("button", { name: "Managed OTLP" });
-    expect(esButton).toHaveAttribute("aria-pressed", "true");
-    expect(otlpButton).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Elasticsearch" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Managed OTLP" })).toBeInTheDocument();
   });
 
-  it("shows ES endpoint in the command when Elasticsearch is selected", () => {
+  it("auto-selects Managed OTLP when ingest endpoint probe succeeds", async () => {
     renderPage();
-    expect(getCommandValue()).toContain("my-project.es.us-east-1.aws.elastic.cloud");
-  });
-
-  it("switches to Managed OTLP and shows OTLP-derived endpoint in the command", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
-
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
     expect(getCommandValue()).toContain("my-project.ingest.us-east-1.aws.elastic.cloud");
   });
 
-  it("shows detected OTLP endpoint alert for Elastic Cloud URLs", async () => {
+  it("shows verified alert when probe succeeds and OTLP is selected", async () => {
+    renderPage();
+    await waitFor(() => {
+      const alerts = screen.getAllByRole("alert");
+      expect(alerts.some((a) => a.textContent?.includes("OTLP endpoint verified"))).toBe(true);
+    });
+  });
+
+  it("stays on Elasticsearch when ingest endpoint probe fails", async () => {
+    fetchSpy.mockRejectedValue(new TypeError("fetch failed"));
+    renderPage();
+    // Wait for probe to settle
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    // Should remain on Elasticsearch
+    expect(screen.getByRole("button", { name: "Elasticsearch" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(getCommandValue()).toContain("my-project.es.us-east-1.aws.elastic.cloud");
+  });
+
+  it("shows warning alert when probe fails and user manually selects OTLP", async () => {
+    fetchSpy.mockRejectedValue(new TypeError("fetch failed"));
     const user = userEvent.setup();
     renderPage();
-
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
     await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
-
     const alerts = screen.getAllByRole("alert");
-    const otlpAlert = alerts.find((a) => a.textContent?.includes("Detected Elastic Cloud URL"));
-    expect(otlpAlert).toBeDefined();
+    expect(alerts.some((a) => a.textContent?.includes("Could not reach OTLP endpoint"))).toBe(true);
   });
 
   it("shows placeholder guidance when OTLP endpoint cannot be derived", async () => {
@@ -101,7 +127,12 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
     await user.click(screen.getByRole("tab", { name: "Linux" }));
 
     const value = getCommandValue();
@@ -114,7 +145,12 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
     await user.click(screen.getByRole("tab", { name: "Docker" }));
 
     const value = getCommandValue();
@@ -126,7 +162,12 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
     await user.click(screen.getByRole("tab", { name: "Windows" }));
 
     const value = getCommandValue();
@@ -138,9 +179,13 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
     await user.click(screen.getByRole("tab", { name: "Linux" }));
-
     expect(getCommandValue()).toContain("OTEL_EXPORTER_OTLP_ENDPOINT");
 
     await user.click(screen.getByRole("button", { name: "Elasticsearch" }));
@@ -151,15 +196,41 @@ describe("AddDataPage", () => {
   });
 
   it("shows OTLP comment in Kubernetes command when OTLP is selected", async () => {
-    const user = userEvent.setup();
     renderPage();
-
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
-
-    // Kubernetes is the default tab — command should mention OTLP credentials
     await waitFor(() => {
       expect(getCommandValue()).toContain("OTLP credentials");
     });
+  });
+
+  it("does not probe when connection URL is not Elastic Cloud", () => {
+    resetAllStores();
+    useConnectionStore.getState().setConnection({
+      url: "http://localhost:9200",
+      apiKey: "testkey",
+    });
+    useConnectionStore.setState({ capabilities: { canCreateApiKeys: true } as never });
+    renderPage();
+    // fetch should only be called for cluster info, not for the probe
+    expect(fetchSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(".ingest."),
+      expect.anything(),
+    );
+  });
+});
+
+describe("probeOtlpEndpoint", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns true when fetch resolves", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+    expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(true);
+  });
+
+  it("returns false when fetch rejects", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
+    expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(false);
   });
 });
 
