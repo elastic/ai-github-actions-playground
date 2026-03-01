@@ -89,7 +89,10 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   useEffect(() => {
-    setSelectedUsername(() => {
+    setSelectedUsername((current) => {
+      if (users.length === 0) {
+        return requestedUsername ?? current;
+      }
       if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
         return requestedUsername;
       }
