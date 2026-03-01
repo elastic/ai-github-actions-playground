@@ -19,6 +19,10 @@ export interface RawRequestError {
   message: string;
 }
 
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
+
 /**
  * Execute an arbitrary HTTP request against an Elasticsearch cluster.
  *
@@ -63,9 +67,19 @@ export async function executeRawRequest(
     const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
     let responseBody: unknown;
     if (contentType.includes("application/json") || contentType.includes("+json")) {
-      responseBody = await response.json().catch(() => null);
+      responseBody = await response.json().catch((err: unknown) => {
+        if (isAbortError(err)) {
+          throw err;
+        }
+        return null;
+      });
     } else {
-      const text = await response.text().catch(() => "");
+      const text = await response.text().catch((err: unknown) => {
+        if (isAbortError(err)) {
+          throw err;
+        }
+        return "";
+      });
       responseBody = text || null;
     }
     return { status: response.status, body: responseBody };

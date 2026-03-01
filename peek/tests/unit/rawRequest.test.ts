@@ -128,6 +128,23 @@ describe("executeRawRequest", () => {
     expect(result).toEqual({ status: 200, body: "green 1 1 0 0 0 0 0 0 -" });
   });
 
+  it("maps aborts raised while parsing response body", async () => {
+    const abortErr = new DOMException("body read aborted", "AbortError");
+    const doFetch: DoFetch = vi.fn().mockResolvedValueOnce({
+      status: 200,
+      headers: { get: () => "application/json" },
+      json: () => Promise.reject(abortErr),
+      text: () => Promise.resolve(""),
+    } as unknown as Response);
+
+    await expect(executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search")).rejects.toEqual(
+      expect.objectContaining({
+        status: 0,
+        message: expect.stringContaining("body read aborted"),
+      }),
+    );
+  });
+
   it("maps fetch failures to RawRequestError shape", async () => {
     const doFetch: DoFetch = vi.fn().mockRejectedValue(new TypeError("network down"));
 
