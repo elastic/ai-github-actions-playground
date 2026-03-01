@@ -147,9 +147,10 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
   const handleSave = useCallback(() => {
     if (!editingId) return;
-    updatePanel(editingId, { title, query, visualization: viz, options });
+    const nextQueries = panel.queries?.length ? [query, ...panel.queries.slice(1)] : [query];
+    updatePanel(editingId, { title, query, queries: nextQueries, visualization: viz, options });
     setEditingId(null);
-  }, [editingId, title, query, viz, options, updatePanel, setEditingId]);
+  }, [editingId, panel.queries, title, query, viz, options, updatePanel, setEditingId]);
 
   const handleDelete = useCallback(() => {
     if (!editingId) return;

@@ -48,7 +48,7 @@ describe("TimeSeriesChart", () => {
     expect(series[0]!.name).toBe("doc_count");
   });
 
-  it("splits data by group column and names series after group values", () => {
+  it("splits data by group column and names series with metric and labels", () => {
     const data: EsqlResponse = {
       columns: [
         { name: "doc_count", type: "long" },
@@ -69,7 +69,11 @@ describe("TimeSeriesChart", () => {
     const series = option.series as { name: string; data: unknown[][] }[];
 
     expect(series).toHaveLength(3);
-    expect(series.map((s) => s.name)).toEqual(["logs", "metrics", "traces"]);
+    expect(series.map((s) => s.name)).toEqual([
+      "doc_count (data_stream.type=logs)",
+      "doc_count (data_stream.type=metrics)",
+      "doc_count (data_stream.type=traces)",
+    ]);
 
     // Each series should have exactly 2 data points
     expect(series[0]!.data).toHaveLength(2);
