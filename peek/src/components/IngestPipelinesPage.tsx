@@ -179,14 +179,9 @@ export default function IngestPipelinesPage() {
         }
         return;
       }
-      // Accept either a raw _source object or a full doc wrapper
-      const doc =
-        parsed !== null && typeof parsed === "object" && "_source" in (parsed as object)
-          ? (parsed as Record<string, unknown>)
-          : { _source: parsed };
       const { data, error } = await runConnectionRequest({
         connection,
-        run: (client) => client.simulateIngestPipeline(selectedName, [doc]),
+        run: (client) => client.simulateIngestPipeline(selectedName, docs),
       });
       if (error !== null) {
         setSimulateError(error);
