@@ -77,6 +77,7 @@ export default tseslint.config(
       "peek/consistent-typography-variants": "error",
       "peek/no-direct-echarts-import": "error",
       "peek/no-div-onclick": "error",
+      "peek/enforce-spacing-tokens": "warn",
     },
   },
   // rules that only apply to component files
@@ -87,6 +88,7 @@ export default tseslint.config(
       // TODO(#1051): Reduce max to 200 once existing large components are decomposed.
       "peek/max-component-lines": ["warn", { max: 500 }],
       "peek/enforce-empty-state": "error",
+      "peek/no-circular-progress": "error",
     },
   },
   {
