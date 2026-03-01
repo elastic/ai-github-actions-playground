@@ -13,7 +13,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { isElasticsearchError } from "../services/es";
@@ -34,7 +34,7 @@ interface Props {
 
 export default function PanelContainer({ panel }: Props) {
   const connection = useConnectionStore((s) => s.connection);
-  const { timeRange, timeZone, parameters, duplicatePanel } = useDashboardStore(
+  const { timeRange, timeZone, parameters, duplicatePanel } = useDashboardEditorStore(
     useShallow((s) => ({
       timeRange: s.dashboard.timeRange,
       timeZone: s.dashboard.timeZone,

@@ -13,7 +13,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
 import { useUIStore } from "./store/useUIStore";
-import { useDashboardStore } from "./store/useDashboardStore";
+import { useDashboardHistoryStore } from "./store/useDashboardHistoryStore";
 import { useResetAllStores } from "./hooks/useResetAllStores";
 import { useSessionResume } from "./hooks/useSessionResume";
 import AppHeader from "./components/AppHeader";
@@ -40,8 +40,8 @@ export default function App() {
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
   const { resumeError, clearResumeError } = useSessionResume();
 
-  const undoDashboardChange = useDashboardStore((s) => s.undoDashboardChange);
-  const redoDashboardChange = useDashboardStore((s) => s.redoDashboardChange);
+  const undoDashboardChange = useDashboardHistoryStore((s) => s.undoDashboardChange);
+  const redoDashboardChange = useDashboardHistoryStore((s) => s.redoDashboardChange);
 
   const location = useLocation();
   useEffect(() => {

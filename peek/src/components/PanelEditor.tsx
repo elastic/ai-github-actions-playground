@@ -22,7 +22,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
@@ -47,7 +47,7 @@ import { getAllPersesPanelEntries, getPersesPanelEntry } from "./perses/panelReg
 
 export default function PanelEditor() {
   const editingId = useUIStore((s) => s.editingPanelId);
-  const panels = useDashboardStore((s) => s.dashboard.panels);
+  const panels = useDashboardEditorStore((s) => s.dashboard.panels);
   const panel = panels.find((p) => p.id === editingId);
 
   if (!panel || !editingId) {
@@ -64,7 +64,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
       themeMode: s.themeMode,
     })),
   );
-  const { updatePanel, removePanel, timeRange, timeZone, parameters } = useDashboardStore(
+  const { updatePanel, removePanel, timeRange, timeZone, parameters } = useDashboardEditorStore(
     useShallow((s) => ({
       updatePanel: s.updatePanel,
       removePanel: s.removePanel,

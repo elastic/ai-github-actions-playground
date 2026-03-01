@@ -29,7 +29,8 @@ import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
+import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
@@ -61,8 +62,8 @@ import { getTypeColor } from "./fieldTypeColor";
 export default function DiscoverPage() {
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
-  const addPanel = useDashboardStore((s) => s.addPanel);
-  const activeDashboardId = useDashboardStore((s) => s.activeDashboardId);
+  const addPanel = useDashboardEditorStore((s) => s.addPanel);
+  const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const {
     discoverQueryDraft,
@@ -89,11 +90,11 @@ export default function DiscoverPage() {
       setSelectedFields: s.setDiscoverSelectedFields,
     })),
   );
-  const refreshInterval = useDashboardStore(
+  const refreshInterval = useDashboardEditorStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
-  const timeRange = useDashboardStore((s) => s.dashboard.timeRange);
-  const parameters = useDashboardStore((s) => s.dashboard.parameters);
+  const timeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
+  const parameters = useDashboardEditorStore((s) => s.dashboard.parameters);
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 

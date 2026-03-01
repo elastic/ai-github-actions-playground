@@ -30,7 +30,7 @@ import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import sections from "../docs/sections";
 
 interface Command {
@@ -80,7 +80,7 @@ function useCommands(): Command[] {
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
     })),
   );
-  const dashboards = useDashboardStore((s) => s.dashboards);
+  const dashboards = useDashboardCatalogStore((s) => s.dashboards);
   const switchingProfileRef = useRef(false);
 
   return useMemo(() => {
