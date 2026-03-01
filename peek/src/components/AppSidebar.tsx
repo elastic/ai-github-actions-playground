@@ -235,6 +235,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           >
             <WarningAmberIcon
               fontSize="small"
+              role="img"
               aria-label={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
               sx={{ color: "text.secondary" }}
             />
