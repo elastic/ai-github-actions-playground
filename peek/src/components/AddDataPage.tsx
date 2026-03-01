@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -268,6 +268,7 @@ export default function AddDataPage() {
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
+  const endpointTypeManuallySetRef = useRef(false);
   /** `null` = not yet probed, `true` = reachable, `false` = unreachable */
   const [ingestAvailable, setIngestAvailable] = useState<boolean | null>(null);
 
@@ -300,11 +301,12 @@ export default function AddDataPage() {
       return;
     }
     let cancelled = false;
+    endpointTypeManuallySetRef.current = false;
     setIngestAvailable(null);
     probeOtlpEndpoint(derivedOtlpUrl).then((available) => {
       if (cancelled) return;
       setIngestAvailable(available);
-      if (available) setEndpointType("managed_otlp");
+      if (available && !endpointTypeManuallySetRef.current) setEndpointType("managed_otlp");
     });
     return () => {
       cancelled = true;
@@ -366,7 +368,10 @@ export default function AddDataPage() {
             exclusive
             size="small"
             onChange={(_, value: EndpointType | null) => {
-              if (value) setEndpointType(value);
+              if (value) {
+                endpointTypeManuallySetRef.current = true;
+                setEndpointType(value);
+              }
             }}
             aria-label="Endpoint type"
           >

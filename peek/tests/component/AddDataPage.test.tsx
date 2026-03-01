@@ -81,6 +81,32 @@ describe("AddDataPage", () => {
     expect(getCommandValue()).toContain("my-project.ingest.us-east-1.aws.elastic.cloud");
   });
 
+  it("keeps manual Elasticsearch selection when a successful probe resolves in flight", async () => {
+    let resolveProbe: (() => void) | null = null;
+    fetchSpy.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveProbe = () => resolve(new Response(null, { status: 200 }));
+        }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    await user.click(screen.getByRole("button", { name: "Elasticsearch" }));
+    resolveProbe?.();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Elasticsearch" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
+    await user.click(screen.getByRole("tab", { name: "Linux" }));
+    expect(getCommandValue()).toContain("my-project.es.us-east-1.aws.elastic.cloud");
+  });
+
   it("shows verified alert when probe succeeds and OTLP is selected", async () => {
     renderPage();
     await waitFor(() => {
