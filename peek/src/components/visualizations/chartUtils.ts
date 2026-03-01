@@ -1,5 +1,6 @@
 import type { EsqlColumn, EsqlResponse } from "../../types";
 import { DATE_TYPES, NUMERIC_TYPES } from "../../services/es/esFieldTypes";
+export { findNumericColumnIndices } from "../../services/es/columnUtils";
 
 const TIMESTAMP_FIELD = "@timestamp";
 
@@ -9,10 +10,6 @@ export function isDateColumn(column: EsqlColumn): boolean {
 
 export function findDateColumnIndex(data: EsqlResponse): number {
   return data.columns.findIndex(isDateColumn);
-}
-
-export function findNumericColumnIndices(data: EsqlResponse): number[] {
-  return data.columns.map((c, i) => (NUMERIC_TYPES.has(c.type) ? i : -1)).filter((i) => i >= 0);
 }
 
 export function findStringColumnIndices(data: EsqlResponse): number[] {
