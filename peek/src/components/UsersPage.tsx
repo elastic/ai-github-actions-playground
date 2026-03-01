@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -25,12 +25,15 @@ import { loadSecurityResource } from "./securityResourceLoader";
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<SecurityUser[]>([]);
-  const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
+  const [selectedUsername, setSelectedUsername] = useState<string | null>(
+    searchParams.get("username"),
+  );
   const [copied, setCopied] = useState(false);
 
   const selectedUser = useMemo(
@@ -83,6 +86,10 @@ export default function UsersPage() {
   useEffect(() => {
     void loadUsers();
   }, [loadUsers]);
+
+  useEffect(() => {
+    setSelectedUsername(searchParams.get("username"));
+  }, [searchParams]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
