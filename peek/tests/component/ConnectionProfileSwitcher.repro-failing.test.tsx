@@ -19,6 +19,7 @@ describe("ConnectionProfileSwitcher expected behavior", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("keeps current profile active when switching to another profile fails", async () => {
