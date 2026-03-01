@@ -253,13 +253,14 @@ describe("AddDataPage", () => {
     });
     useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
-    // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
     await waitFor(() => {
-      expect(fetchSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining(".ingest."),
-        expect.anything(),
-      );
+      expect(screen.getByLabelText("Starter command")).toBeInTheDocument();
     });
+    // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
+    expect(fetchSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(".ingest."),
+      expect.anything(),
+    );
   });
 });
 
