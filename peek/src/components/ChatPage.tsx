@@ -265,7 +265,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
           disabled={!input.trim() || loading}
           aria-label="Send message"
         >
-          {loading ? <CircularProgress size={24} /> : <SendIcon />}
+          {loading ? <CircularProgress size={16} /> : <SendIcon />}
         </IconButton>
       </Box>
     </Box>

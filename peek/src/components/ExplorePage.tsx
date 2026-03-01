@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
@@ -630,18 +630,7 @@ export default function ExplorePage() {
               />
             )}
 
-            {queryResult.status === "loading" && (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100%",
-                }}
-              >
-                <CircularProgress size={32} />
-              </Box>
-            )}
+            {queryResult.status === "loading" && <LinearProgress />}
 
             {chartData && (
               <Box sx={{ flex: 1, minHeight: 300 }}>

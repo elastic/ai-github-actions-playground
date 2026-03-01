@@ -24,6 +24,7 @@ import {
 import type { PanelDefinition, EsqlResponse } from "../types";
 
 import { toCsv } from "./discoverUtils";
+import ContentSkeleton from "./ContentSkeleton";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
 import { getPersesPanelEntry } from "./perses/panelRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
@@ -308,16 +309,7 @@ export default function PanelContainer({ panel }: Props) {
             </Typography>
           </Box>
         ) : loading && !data ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            <CircularProgress size={32} />
-          </Box>
+          <ContentSkeleton variant="chart" />
         ) : data ? (
           <PersesPanelRenderer
             type={panel.visualization}
