@@ -66,6 +66,16 @@ async function mockElasticsearch(page: Page) {
         };
       }
 
+      if (query.includes("FROM logs-*")) {
+        return {
+          columns: [
+            { name: "@timestamp", type: "date" },
+            { name: "message", type: "keyword" },
+          ],
+          values: [["2026-02-23T10:00:00.000Z", "Hello World"]],
+        };
+      }
+
       if (query.includes("FROM traces-*")) {
         return {
           columns: [
