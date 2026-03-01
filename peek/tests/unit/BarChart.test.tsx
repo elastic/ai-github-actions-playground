@@ -104,13 +104,14 @@ describe("BarChart", () => {
     expect(series[1]!.data).toEqual([200, 50]);
   });
 
-  it("shows error title when no numeric columns", () => {
+  it("shows no-data graphic when no numeric columns", () => {
     const data: EsqlResponse = {
       columns: [{ name: "label", type: "keyword" }],
       values: [["A"]],
     };
     render(<BarChart data={data} />);
     const option = getLastSetOptionCall();
-    expect(option.title).toEqual(expect.objectContaining({ text: "No numeric data to display" }));
+    expect(option.title).toBeUndefined();
+    expect(option.graphic).toEqual(expect.objectContaining({ type: "group" }));
   });
 });

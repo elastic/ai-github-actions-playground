@@ -47,6 +47,8 @@ import type { DashboardDefinition } from "../types";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { toPersesDashboard } from "../services/perses/dashboardAdapters";
 
+import PageHeader from "./PageHeader";
+
 export default function DashboardsLandingPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -403,56 +405,64 @@ export default function DashboardsLandingPage() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", width: "100%", py: 1 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Box>
-          <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
-            Dashboards
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {dashboards.length} dashboard{dashboards.length !== 1 ? "s" : ""}
-            {archivedCount > 0 && ` (${archivedCount} archived)`}
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1}>
-          {archivedCount > 0 && (
-            <Tooltip title={showArchived ? "Hide archived" : "Show archived"}>
-              <IconButton size="small" onClick={() => setShowArchived(!showArchived)}>
-                {showArchived ? (
-                  <VisibilityOffIcon fontSize="small" />
-                ) : (
-                  <VisibilityIcon fontSize="small" />
-                )}
-              </IconButton>
-            </Tooltip>
-          )}
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<FileUploadIcon />}
-            onClick={() => handleImport("dashboard")}
-          >
-            Import
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<FileDownloadIcon />}
-            onClick={handleExportWorkspace}
-          >
-            Export All
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<FileUploadIcon />}
-            onClick={() => handleImport("workspace")}
-          >
-            Import Workspace
-          </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
-            New Dashboard
-          </Button>
-        </Stack>
+      <Box sx={{ mb: 2 }}>
+        <PageHeader
+          title="Dashboards"
+          description={`${dashboards.length} dashboard${dashboards.length !== 1 ? "s" : ""}${archivedCount > 0 ? ` (${archivedCount} archived)` : ""}`}
+          actions={
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {archivedCount > 0 && (
+                <Tooltip title={showArchived ? "Hide archived" : "Show archived"}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowArchived(!showArchived)}
+                    aria-label={
+                      showArchived ? "Hide archived dashboards" : "Show archived dashboards"
+                    }
+                  >
+                    {showArchived ? (
+                      <VisibilityOffIcon fontSize="small" />
+                    ) : (
+                      <VisibilityIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FileUploadIcon />}
+                onClick={() => handleImport("dashboard")}
+              >
+                Import
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FileDownloadIcon />}
+                onClick={handleExportWorkspace}
+              >
+                Export All
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FileUploadIcon />}
+                onClick={() => handleImport("workspace")}
+              >
+                Import Workspace
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleCreate}
+              >
+                New Dashboard
+              </Button>
+            </Stack>
+          }
+        />
       </Box>
 
       {/* Search and filter bar */}

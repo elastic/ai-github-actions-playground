@@ -30,7 +30,7 @@ jobs:
             await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(${{ inputs.pull-request-number }}),
+              issue_number: Number('${{ inputs.pull-request-number }}'),
               content: 'eyes'
             });
 

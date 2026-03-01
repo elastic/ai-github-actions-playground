@@ -20,6 +20,7 @@ import { ElasticsearchClient, type SecurityRole, type SecurityUser } from "../se
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
+import PageHeader from "./PageHeader";
 import { loadSecurityResource } from "./securityResourceLoader";
 
 type RoleEntry = { name: string; role: SecurityRole };
@@ -124,17 +125,19 @@ export default function RolesPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Roles
-          </Typography>
-          <Button size="small" variant="outlined" onClick={loadRoles} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-            {copied ? "Copied" : "Copy API call"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Roles"
+          actions={
+            <>
+              <Button size="small" variant="outlined" onClick={loadRoles} disabled={loading}>
+                {loading ? <CircularProgress size={16} /> : "Refresh"}
+              </Button>
+              <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+                {copied ? "Copied" : "Copy API call"}
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}

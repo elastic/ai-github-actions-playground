@@ -22,6 +22,8 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
 
+import PageHeader from "./PageHeader";
+
 // ---------------------------------------------------------------------------
 // Endpoint type helpers
 // ---------------------------------------------------------------------------
@@ -417,18 +419,15 @@ export default function AddDataPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1">
-            Add Data
-          </Typography>
-          {clusterVersion && (
-            <Chip label={`EDOT Collector v${clusterVersion}`} size="small" variant="outlined" />
-          )}
-        </Stack>
-        <Typography variant="body2" color="text.secondary">
-          Set up the EDOT Collector (Elastic Distribution of OpenTelemetry Collector) to send logs,
-          metrics, and traces to your Elasticsearch cluster.
-        </Typography>
+        <PageHeader
+          title="Add Data"
+          description="Set up the EDOT Collector (Elastic Distribution of OpenTelemetry Collector) to send logs, metrics, and traces to your Elasticsearch cluster."
+          actions={
+            clusterVersion ? (
+              <Chip label={`EDOT Collector v${clusterVersion}`} size="small" variant="outlined" />
+            ) : undefined
+          }
+        />
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
