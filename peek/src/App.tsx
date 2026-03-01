@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Routes, Route, Navigate, useMatch, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useMatch, useLocation, matchPath } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
@@ -43,7 +43,7 @@ export default function App() {
 
   const location = useLocation();
   useEffect(() => {
-    const match = Object.values(PAGE_MANIFEST).find((p) => location.pathname.startsWith(p.path));
+    const match = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, location.pathname));
     document.title = match ? `${match.nav.label} — Elastic Peek` : "Elastic Peek";
   }, [location.pathname]);
 
