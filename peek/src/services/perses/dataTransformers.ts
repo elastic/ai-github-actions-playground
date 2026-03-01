@@ -188,7 +188,7 @@ export function toBarChartData(data: EsqlResponse): BarChartData {
 
   const categories =
     categoryIndex >= 0
-      ? data.values.map((row) => String(row[categoryIndex]))
+      ? data.values.map((row) => String(row?.[categoryIndex] ?? "(empty)"))
       : data.values.map((_, index) => String(index));
 
   if (groupIndex < 0) {
@@ -197,7 +197,7 @@ export function toBarChartData(data: EsqlResponse): BarChartData {
       series: numericColumns.map((columnIndex) => ({
         name: data.columns[columnIndex]?.name ?? `value_${columnIndex}`,
         values: data.values.map((row) => {
-          const numeric = Number(row[columnIndex] ?? 0);
+          const numeric = Number(row?.[columnIndex] ?? 0);
           return Number.isFinite(numeric) ? numeric : 0;
         }),
       })),
@@ -261,7 +261,7 @@ export function toGaugeData(data: EsqlResponse): GaugeDataPoint | undefined {
     name: data.columns[valueColumn]?.name ?? `value_${valueColumn}`,
     value: Number.isFinite(value) ? value : 0,
     values: data.values.map((row) => {
-      const numeric = Number(row[valueColumn] ?? 0);
+      const numeric = Number(row?.[valueColumn] ?? 0);
       return Number.isFinite(numeric) ? numeric : 0;
     }),
   };

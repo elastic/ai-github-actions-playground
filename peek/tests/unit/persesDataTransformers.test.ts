@@ -171,6 +171,30 @@ describe("perses data transformers", () => {
     });
   });
 
+  it("handles sparse rows in bar and gauge transforms", () => {
+    const barData: EsqlResponse = {
+      columns: [
+        { name: "service", type: "keyword" },
+        { name: "doc_count", type: "long" },
+      ],
+      values: [["nginx", 10], [], ["system", 20]],
+    };
+    const gaugeData: EsqlResponse = {
+      columns: [{ name: "cpu", type: "double" }],
+      values: [[0.9], [], [1.1]],
+    };
+
+    expect(toBarChartData(barData)).toEqual({
+      categories: ["nginx", "(empty)", "system"],
+      series: [{ name: "doc_count", values: [10, 0, 20] }],
+    });
+    expect(toGaugeData(gaugeData)).toEqual({
+      name: "cpu",
+      value: 1.1,
+      values: [0.9, 0, 1.1],
+    });
+  });
+
   it("extracts stat values from the last row when no timestamp column exists", () => {
     const data: EsqlResponse = {
       columns: [{ name: "count", type: "long" }],

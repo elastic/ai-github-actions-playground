@@ -28,7 +28,6 @@ export default function BarChart({ data, options, onExportReady }: Props) {
     if (seriesData.length === 0) {
       return {
         ...theme,
-        title: { text: "No numeric data to display", left: "center", top: "center", show: false },
         graphic: {
           type: "group",
           left: "center",
