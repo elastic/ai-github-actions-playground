@@ -30,5 +30,11 @@ export function getVisualizationTypeForPersesPanelKind(
   if (!kind) {
     return undefined;
   }
-  return PANEL_KIND_TO_VISUALIZATION[kind] ?? (kind as VisualizationType);
+  if (Object.hasOwn(PANEL_KIND_TO_VISUALIZATION, kind)) {
+    return PANEL_KIND_TO_VISUALIZATION[kind];
+  }
+  if (Object.hasOwn(VISUALIZATION_TO_PANEL_KIND, kind)) {
+    return kind as VisualizationType;
+  }
+  return undefined;
 }

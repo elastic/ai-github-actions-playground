@@ -29,7 +29,11 @@ datasourcePlugins.set(esqlDatasourcePlugin.kind, esqlDatasourcePlugin);
 
 export function registerPersesDatasourcePlugin<TDatasource>(
   plugin: PersesDatasourcePlugin<TDatasource>,
+  options?: { overwrite?: boolean },
 ): void {
+  if (!options?.overwrite && datasourcePlugins.has(plugin.kind)) {
+    throw new Error(`Perses datasource plugin '${plugin.kind}' is already registered.`);
+  }
   datasourcePlugins.set(plugin.kind, plugin as PersesDatasourcePlugin<unknown>);
 }
 

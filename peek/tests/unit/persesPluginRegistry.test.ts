@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { VISUALIZATION_TYPES } from "../../src/components/visualizations/vizRegistry";
 import { getAllPersesPanelEntries } from "../../src/components/perses/panelRegistry";
-import { getPersesDatasourcePlugin } from "../../src/services/perses/pluginRegistry";
+import {
+  getPersesDatasourcePlugin,
+  registerPersesDatasourcePlugin,
+} from "../../src/services/perses/pluginRegistry";
 import {
   getPersesPanelPluginKind,
   getVisualizationTypeForPersesPanelKind,
@@ -23,10 +26,24 @@ describe("perses plugin registry", () => {
       expect(kind).toMatch(/\w+/);
       expect(getVisualizationTypeForPersesPanelKind(kind)).toBe(visualization);
     }
+    expect(getVisualizationTypeForPersesPanelKind("UnknownPanelKind")).toBeUndefined();
   });
 
   it("registers the default esql datasource plugin seam", () => {
     const plugin = getPersesDatasourcePlugin("EsqlDatasource");
     expect(plugin?.kind).toBe("EsqlDatasource");
+  });
+
+  it("rejects duplicate datasource plugin registration by default", () => {
+    const kind = "TestDatasourcePlugin";
+    const plugin = {
+      kind,
+      create: () => ({ execute: async () => ({ columns: [], values: [], executionTimeMs: 0 }) }),
+    };
+
+    registerPersesDatasourcePlugin(plugin, { overwrite: true });
+    expect(() => registerPersesDatasourcePlugin(plugin)).toThrow(
+      `Perses datasource plugin '${kind}' is already registered.`,
+    );
   });
 });
