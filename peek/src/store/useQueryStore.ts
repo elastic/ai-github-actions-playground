@@ -11,10 +11,6 @@ interface QueryState {
   discoverSessionResult: EsqlResponse | null;
   queryHistory: string[];
 
-  /** The current ES|QL query text in the Query Lab editor. */
-  discoverQuery: string;
-  /** The last successful query result (session-only, not persisted to localStorage). */
-  discoverResult: EsqlResponse | null;
   /** The set of field names selected for display in the results table. */
   discoverSelectedFields: Set<string>;
 
@@ -22,8 +18,6 @@ interface QueryState {
   setDiscoverSessionQuery: (query: string) => void;
   setDiscoverSessionResult: (result: EsqlResponse | null) => void;
   appendQueryToHistory: (query: string) => void;
-  setDiscoverQuery: (query: string) => void;
-  setDiscoverResult: (result: EsqlResponse | null) => void;
   setDiscoverSelectedFields: (fields: Set<string>) => void;
   resetQueryState: () => void;
 }
@@ -40,8 +34,6 @@ export const useQueryStore = create<QueryState>()(
       discoverSessionQuery: DEFAULT_DISCOVER_QUERY,
       discoverSessionResult: null,
       queryHistory: [],
-      discoverQuery: DEFAULT_DISCOVER_QUERY,
-      discoverResult: null,
       discoverSelectedFields: new Set<string>(),
 
       setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
@@ -58,8 +50,6 @@ export const useQueryStore = create<QueryState>()(
             queryHistory: [trimmedQuery, ...dedupedHistory].slice(0, QUERY_HISTORY_MAX_SIZE),
           };
         }),
-      setDiscoverQuery: (query) => set({ discoverQuery: query }),
-      setDiscoverResult: (result) => set({ discoverResult: result }),
       setDiscoverSelectedFields: (fields) => set({ discoverSelectedFields: fields }),
       resetQueryState: () => {
         useQueryStore.persist.clearStorage();
@@ -68,8 +58,6 @@ export const useQueryStore = create<QueryState>()(
           discoverSessionQuery: DEFAULT_DISCOVER_QUERY,
           discoverSessionResult: null,
           queryHistory: [],
-          discoverQuery: DEFAULT_DISCOVER_QUERY,
-          discoverResult: null,
           discoverSelectedFields: new Set<string>(),
         });
       },

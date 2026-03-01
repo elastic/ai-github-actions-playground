@@ -140,9 +140,6 @@ export default function DiscoverPage() {
       appendQueryToHistory(executedQuery);
       timingsCleared.current = false;
     },
-    onFailure: () => {
-      setResult(null);
-    },
   });
 
   const insightQueryToColumnRef = useRef(new Map<string, string>());
