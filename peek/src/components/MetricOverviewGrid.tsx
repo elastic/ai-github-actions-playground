@@ -239,7 +239,18 @@ export default function MetricOverviewGrid({
             : field.name;
 
           return (
-            <Paper key={field.name} variant="outlined" sx={{ minHeight: 140 }}>
+            <Paper
+              key={field.name}
+              variant="outlined"
+              sx={{
+                minHeight: 140,
+                transition: "box-shadow 0.15s, border-color 0.15s",
+                "&:hover": {
+                  borderColor: theme.palette.primary.main,
+                  boxShadow: 1,
+                },
+              }}
+            >
               <ButtonBase
                 aria-label={`View details for ${field.name}`}
                 onClick={() => handleCardClick(field)}
@@ -247,11 +258,7 @@ export default function MetricOverviewGrid({
                   p: 1,
                   width: "100%",
                   height: "100%",
-                  transition: "box-shadow 0.15s, border-color 0.15s",
-                  "&:hover": {
-                    borderColor: theme.palette.primary.main,
-                    boxShadow: 1,
-                  },
+                  transition: "background-color 0.15s",
                   "&.Mui-focusVisible": {
                     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
                   },
