@@ -82,6 +82,21 @@ describe("splitEsqlPipeline", () => {
     expect(splitEsqlPipeline("FROM logs-* | LIMIT 10 |")).toEqual(["FROM logs-*", "LIMIT 10"]);
   });
 
+  it("does not split on pipes inside single-quoted strings", () => {
+    expect(splitEsqlPipeline("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 1")).toEqual([
+      "FROM logs-*",
+      "WHERE message == 'foo|bar'",
+      "LIMIT 1",
+    ]);
+  });
+
+  it("handles escaped single-quote sequences inside single-quoted strings", () => {
+    expect(splitEsqlPipeline("FROM logs-* | WHERE msg == 'it''s fine|here'")).toEqual([
+      "FROM logs-*",
+      "WHERE msg == 'it''s fine|here'",
+    ]);
+  });
+
   it("does not split on pipes inside // line comments", () => {
     expect(splitEsqlPipeline("FROM logs-* // note with | pipe\n| LIMIT 5")).toEqual([
       "FROM logs-* // note with | pipe",
