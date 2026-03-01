@@ -9,6 +9,17 @@ const baseOptions: ThemeOptions = {
   },
   shape: { borderRadius: 8 },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: `
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `,
+    },
     MuiButton: {
       styleOverrides: {
         root: { textTransform: "none", fontWeight: 500 },
