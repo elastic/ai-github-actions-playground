@@ -1,6 +1,6 @@
 import type { TimeRange } from "../../types";
 
-import { escapeEsqlString, escapeEsqlIdentifier } from "./esqlUtils";
+import { escapeEsqlString, escapeEsqlIdentifier, validateEsqlIndexPattern } from "./esqlUtils";
 import { buildTimeRangeClause, buildWherePipe } from "./queryParts";
 
 // ---------------------------------------------------------------------------
@@ -129,11 +129,12 @@ const OVERVIEW_BUCKET_COUNT = 20;
 const TIMESTAMP_RANGE_CLAUSE = buildTimeRangeClause("@timestamp", "?_tstart", "?_tend");
 
 export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
+  const indexPattern = validateEsqlIndexPattern(q.indexPattern);
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
   const parts: string[] = [
-    `FROM ${q.indexPattern}`,
+    `FROM ${indexPattern}`,
     `WHERE ${TIMESTAMP_RANGE_CLAUSE}`,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`,
     `SORT timestamp`,
@@ -160,6 +161,7 @@ export interface DimensionOverviewQuery {
 const DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES = 5;
 
 export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): ExplorerQueryResult {
+  const indexPattern = validateEsqlIndexPattern(q.indexPattern);
   const rawBuckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
   const buckets = Math.max(0, rawBuckets);
   const bucketSize = Math.max(1, buckets);
@@ -175,7 +177,7 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
     `${escapedDim} IS NOT NULL`,
   ]);
   const parts: string[] = [
-    `FROM ${q.indexPattern}`,
+    `FROM ${indexPattern}`,
     whereClause,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${bucketSize}, ?_tstart, ?_tend), ${escapedDim}`,
     `SORT metric DESC`,
@@ -192,11 +194,12 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
 // ---------------------------------------------------------------------------
 
 export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
+  const indexPattern = validateEsqlIndexPattern(q.indexPattern);
   const buckets = q.bucketCount ?? DEFAULT_BUCKET_COUNT;
   const parts: string[] = [];
 
   // FROM
-  parts.push(`FROM ${q.indexPattern}`);
+  parts.push(`FROM ${indexPattern}`);
 
   // WHERE (filters + time range)
   const whereClauses: string[] = [];

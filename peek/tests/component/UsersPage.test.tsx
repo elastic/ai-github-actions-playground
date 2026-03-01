@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 
 import UsersPage from "../../src/components/UsersPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -265,5 +265,48 @@ describe("UsersPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("location-display").textContent).toBe("/roles?role=superuser");
     });
+  });
+
+  it("pre-selects a user from the ?username= URL search param", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=elastic"]}>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    // elastic should be pre-selected rather than alice (first alphabetically)
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+    expect(screen.getByText("Enabled")).toBeInTheDocument();
+    expect(screen.getByText("superuser")).toBeInTheDocument();
+  });
+
+  it("updates selected user when ?username= query param changes on same route", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=elastic"]}>
+        <Routes>
+          <Route
+            path="/users"
+            element={
+              <>
+                <Link to="/users?username=alice">Switch to alice</Link>
+                <UsersPage />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+    await user.click(screen.getByRole("link", { name: "Switch to alice" }));
+
+    expect(await screen.findByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
   });
 });

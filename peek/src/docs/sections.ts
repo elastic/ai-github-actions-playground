@@ -20,6 +20,7 @@ import usersRolesRaw from "./users-roles.md?raw";
 import indicesRaw from "./indices.md?raw";
 import ingestPipelinesRaw from "./ingest-pipelines.md?raw";
 import addDataRaw from "./add-data.md?raw";
+import apiKeysRaw from "./api-keys.md?raw";
 
 export interface DocSection {
   id: string;
@@ -74,6 +75,7 @@ const sections: DocSection[] = [
   parseDocSection("indices", indicesRaw),
   parseDocSection("ingest-pipelines", ingestPipelinesRaw),
   parseDocSection("add-data", addDataRaw),
+  parseDocSection("api-keys", apiKeysRaw),
 ];
 
 export default sections;

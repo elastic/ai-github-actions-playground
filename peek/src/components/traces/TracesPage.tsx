@@ -641,7 +641,7 @@ export default function TracesPage() {
               />
             ))}
             {viewMode === "driftRadar" && filters.timeFrom && rawQuery == null && (
-              <Tooltip title="Compare with the previous equal time window to highlight new, regressed, or improved edges">
+              <Tooltip title="Compare with the previous time window of equal length to highlight new, regressed, or improved edges.">
                 <FormControlLabel
                   control={
                     <Switch
