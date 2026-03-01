@@ -1,0 +1,135 @@
+name: Run All Detectors
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch autonomy-atomicity-analyzer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run autonomy-atomicity-analyzer.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch breaking-change-detector
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run breaking-change-detector.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch bug-hunter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run bug-hunter.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch code-duplication-detector
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run code-duplication-detector.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch docs-patrol
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docs-patrol.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch duplicate-issue-detector
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run duplicate-issue-detector.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch flaky-test-investigator
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run flaky-test-investigator.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch framework-best-practices
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run framework-best-practices.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch information-architecture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run information-architecture.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch newbie-contributor-patrol
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run newbie-contributor-patrol.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch performance-profiler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run performance-profiler.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch product-manager-impersonator
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run product-manager-impersonator.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch react-state-bug-hunter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run react-state-bug-hunter.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch refactor-opportunist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run refactor-opportunist.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch text-auditor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run text-auditor.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch ux-design-patrol
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ux-design-patrol.yml --repo ${{ github.repository }}
