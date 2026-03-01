@@ -27,7 +27,6 @@ export default function AiAssistantDrawer() {
           boxSizing: "border-box",
           top: "auto",
           height: "100%",
-          position: "relative",
         },
       }}
     >
