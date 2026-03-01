@@ -18,8 +18,11 @@ function isDimensionColumn(column: EsqlColumn): boolean {
   return column.type === "keyword" || column.type === "text";
 }
 
-function parseTimestampMs(value: unknown): number | undefined {
+function parseTimestampMs(value: unknown, columnType?: string): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
+    if (columnType === "date_nanos") {
+      return value / 1_000_000;
+    }
     return value;
   }
   if (typeof value === "string") {
@@ -70,7 +73,7 @@ function findLatestRowIndex(data: EsqlResponse, timestampIndex: number): number 
     if (!row) {
       continue;
     }
-    const timestamp = parseTimestampMs(row[timestampIndex]);
+    const timestamp = parseTimestampMs(row[timestampIndex], data.columns[timestampIndex]?.type);
     if (timestamp === undefined) {
       continue;
     }
@@ -102,7 +105,10 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
       continue;
     }
 
-    const parsedTimestamp = timestampIndex >= 0 ? parseTimestampMs(row[timestampIndex]) : undefined;
+    const parsedTimestamp =
+      timestampIndex >= 0
+        ? parseTimestampMs(row[timestampIndex], data.columns[timestampIndex]?.type)
+        : undefined;
     const timestamp = parsedTimestamp ?? rowIndex;
 
     const labels = Object.fromEntries(
@@ -112,16 +118,11 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
       ]),
     );
     const hasLabels = Object.keys(labels).length > 0;
-    const labelText = hasLabels
-      ? ` (${Object.entries(labels)
-          .map(([name, value]) => `${name}=${value}`)
-          .join(", ")})`
-      : "";
-    const labelKey = hasLabels
-      ? Object.entries(labels)
-          .map(([name, value]) => `${name}=${value}`)
-          .join("|")
-      : "";
+    const labelPairs = hasLabels
+      ? Object.entries(labels).map(([name, value]) => `${name}=${value}`)
+      : [];
+    const labelText = hasLabels ? ` (${labelPairs.join(", ")})` : "";
+    const labelKey = labelPairs.join("|");
 
     for (const numericColumnIndex of numericColumns) {
       const metricName = data.columns[numericColumnIndex]?.name ?? `value_${numericColumnIndex}`;
