@@ -106,13 +106,21 @@ serve-explore: setup
 		|| { echo "✗ Seed verification failed: web_logs missing or empty"; exit 1; }
 	@echo "✓ Data seeded and verified"
 	@echo "Starting dev server with ES proxy..."
+	@rm -f /tmp/vite-dev-server.pid
 	@cd $(PEEK_DIR) && ES_URL=http://localhost:9200 nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
 	@for i in $$(seq 1 30); do \
-		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
+		PID=$$(cat /tmp/vite-dev-server.pid 2>/dev/null); \
+		kill -0 $$PID 2>/dev/null \
+			&& ps -p $$PID -o args= | grep -Eq '(^|[ /])vite([[:space:]]|$$)|npx vite' \
+			&& curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 \
+			&& break; \
 		sleep 2; \
 	done
-	@if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then \
-		echo "✓ Dev server running at http://localhost:3000 (PID: $$(cat /tmp/vite-dev-server.pid))"; \
+	@PID=$$(cat /tmp/vite-dev-server.pid 2>/dev/null); \
+	if kill -0 $$PID 2>/dev/null \
+		&& ps -p $$PID -o args= | grep -Eq '(^|[ /])vite([[:space:]]|$$)|npx vite' \
+		&& curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then \
+		echo "✓ Dev server running at http://localhost:3000 (PID: $$PID)"; \
 	else \
 		echo "✗ Dev server failed to start. Logs:"; cat /tmp/vite-dev-server.log; exit 1; \
 	fi
@@ -123,7 +131,12 @@ serve-explore: setup
 
 explore-down:
 	@echo "Stopping exploration stack..."
-	@-kill $$(cat /tmp/vite-dev-server.pid 2>/dev/null) 2>/dev/null || true
+	@PID=$$(cat /tmp/vite-dev-server.pid 2>/dev/null); \
+	if [ -n "$$PID" ] && kill -0 "$$PID" 2>/dev/null \
+		&& ps -p "$$PID" -o args= | grep -Eq '(^|[ /])vite([[:space:]]|$$)|npx vite'; then \
+		kill "$$PID"; \
+	fi
+	@rm -f /tmp/vite-dev-server.pid
 	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
 	@echo "✓ Stopped."
 
