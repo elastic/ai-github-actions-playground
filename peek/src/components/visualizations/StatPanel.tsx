@@ -67,6 +67,7 @@ export default function StatPanel({ data, options }: Props) {
           <Box key={stat.name} sx={{ textAlign: "center" }}>
             <Typography
               variant="h3"
+              component="div"
               sx={{
                 fontWeight: 700,
                 color,

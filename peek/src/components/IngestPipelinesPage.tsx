@@ -16,12 +16,35 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
-import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services/es";
+import type { SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { useIngestPipelines } from "../hooks/useIngestPipelines";
 
-type PipelineEntry = { name: string; pipeline: IngestPipeline };
+import EmptyState from "./EmptyState";
+
+/**
+ * Attempt to extract a human-readable message from a raw Elasticsearch error
+ * string. Returns `null` when the error doesn't match a known pattern.
+ */
+function humanizeEsError(raw: string): string | null {
+  if (/unauthorized.*read_pipeline|manage_ingest_pipelines|manage_pipeline/i.test(raw)) {
+    return "Permission denied — your user role does not include the read_pipeline privilege required to view ingest pipelines.";
+  }
+  if (/unauthorized/i.test(raw)) {
+    const match = raw.match(/this action is granted by the cluster privileges \[([^\]]+)\]/);
+    const privileges = match?.[1];
+    return privileges
+      ? `Permission denied — this action requires one of: ${privileges}`
+      : "Permission denied — insufficient cluster privileges.";
+  }
+  if (/security_exception/i.test(raw)) {
+    return "Permission denied — a security exception occurred.";
+  }
+  return null;
+}
 
 /**
  * Parse the simulate input field into an array of Elasticsearch docs.
@@ -67,12 +90,26 @@ function parseSimulateInput(input: string): Array<Record<string, unknown>> | nul
 
 export default function IngestPipelinesPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const pipelinesResult = useIngestPipelines();
+
+  const loading = pipelinesResult.status === "loading";
+  const error = pipelinesResult.status === "error" ? pipelinesResult.error : null;
+  const pipelinesData = pipelinesResult.status === "success" ? pipelinesResult.data : null;
+  const pipelines = useMemo(() => pipelinesData ?? [], [pipelinesData]);
 
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pipelines, setPipelines] = useState<PipelineEntry[]>([]);
+  const [showRawError, setShowRawError] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+
+  // Auto-select the first pipeline when data loads
+  useEffect(() => {
+    if (!pipelinesData) return;
+    setSelectedName((current) =>
+      current && pipelinesData.some((p) => p.name === current)
+        ? current
+        : (pipelinesData[0]?.name ?? null),
+    );
+  }, [pipelinesData]);
 
   // Simulate state
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
@@ -86,35 +123,6 @@ export default function IngestPipelinesPage() {
     () => pipelines.find((p) => p.name === selectedName) ?? null,
     [pipelines, selectedName],
   );
-
-  const loadPipelines = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.getIngestPipelines(),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (data !== null) {
-        const next = Object.entries(data)
-          .map(([name, pipeline]) => ({ name, pipeline }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setPipelines(next);
-        setSelectedName((current) =>
-          current && next.some((p) => p.name === current) ? current : (next[0]?.name ?? null),
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadPipelines();
-  }, [loadPipelines]);
 
   // Clear simulate results when selection changes
   useEffect(() => {
@@ -200,13 +208,43 @@ export default function IngestPipelinesPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Ingest Pipelines
           </Typography>
-          <Button size="small" variant="outlined" onClick={loadPipelines} disabled={loading}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={pipelinesResult.refresh}
+            disabled={loading}
+          >
             {loading ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && (
+        <Alert severity="error">
+          {humanizeEsError(error) ?? error}
+          {humanizeEsError(error) && (
+            <Collapse in={showRawError}>
+              <Typography
+                component="pre"
+                variant="caption"
+                sx={{ mt: 1, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+              >
+                {error}
+              </Typography>
+            </Collapse>
+          )}
+          {humanizeEsError(error) && (
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => setShowRawError((v) => !v)}
+              sx={{ mt: 0.5, p: 0, minWidth: 0, textTransform: "none" }}
+            >
+              {showRawError ? "Hide technical details" : "Technical details"}
+            </Button>
+          )}
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
         {/* Left panel: pipeline list */}
@@ -241,9 +279,10 @@ export default function IngestPipelinesPage() {
               </ListItem>
             ))}
             {!loading && filteredPipelines.length === 0 && (
-              <Typography variant="body2" color="text.primary" sx={{ p: 2 }}>
-                No pipelines found.
-              </Typography>
+              <EmptyState
+                heading="No pipelines found"
+                description="Try adjusting your search or check that ingest pipelines exist in the cluster"
+              />
             )}
           </List>
         </Paper>
@@ -502,11 +541,11 @@ export default function IngestPipelinesPage() {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ p: 1.5 }}>
-              <Typography variant="body2" color="text.secondary">
-                Select a pipeline.
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<AccountTreeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="Select a pipeline"
+              description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
+            />
           )}
         </Paper>
       </Box>

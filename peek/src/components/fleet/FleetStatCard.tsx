@@ -24,11 +24,15 @@ export default function FleetStatCard({
   const theme = useTheme();
   const content = (
     <>
-      <Typography variant="caption" color="text.primary" noWrap>
+      <Typography variant="caption" color="text.secondary" noWrap>
         {title}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: color ?? "text.primary" }}>
+        <Typography
+          variant="h5"
+          component="div"
+          sx={{ fontWeight: 600, color: color ?? "text.primary" }}
+        >
           {value ?? "—"}
         </Typography>
         {subtitle && (

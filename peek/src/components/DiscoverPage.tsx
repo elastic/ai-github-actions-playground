@@ -22,6 +22,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import CodeIcon from "@mui/icons-material/Code";
+import TableChartIcon from "@mui/icons-material/TableChart";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
@@ -47,6 +49,7 @@ import {
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
+import EmptyState from "./EmptyState";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { isNumericType } from "./visualizations/chartUtils";
@@ -76,10 +79,10 @@ export default function DiscoverPage() {
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
       queryHistory: s.queryHistory,
       appendQueryToHistory: s.appendQueryToHistory,
-      query: s.discoverQuery,
-      setQuery: s.setDiscoverQuery,
-      result: s.discoverResult,
-      setResult: s.setDiscoverResult,
+      query: s.discoverSessionQuery,
+      setQuery: s.setDiscoverSessionQuery,
+      result: s.discoverSessionResult,
+      setResult: s.setDiscoverSessionResult,
       selectedFields: s.discoverSelectedFields,
       setSelectedFields: s.setDiscoverSelectedFields,
     })),
@@ -92,8 +95,6 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
-  // query, result, and selectedFields are now sourced from useQueryStore
-  // so they survive navigation (unmount/remount).
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
@@ -132,13 +133,16 @@ export default function DiscoverPage() {
     buildRequest,
     onSuccess: (data, executedQuery) => {
       setResult(data);
+      if (discoverQueryDraft) {
+        setDiscoverQueryDraft(null);
+        setQuery(executedQuery);
+      }
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
       appendQueryToHistory(executedQuery);
       timingsCleared.current = false;
     },
-    onFailure: () => setResult(null),
   });
 
   const insightQueryToColumnRef = useRef(new Map<string, string>());
@@ -213,7 +217,8 @@ export default function DiscoverPage() {
       // specific healthy cluster names so the query targets only healthy data.
       const scoped = effectiveQuery.replace(
         /\bFROM\s+\*:([^\s,|]+)/gi,
-        (_, pattern: string) => `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
+        (_: string, pattern: string) =>
+          `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
       );
       handleQueryChange(scoped);
       void runQuery(scoped);
@@ -514,9 +519,11 @@ export default function DiscoverPage() {
           </Box>
           <Box sx={{ flex: 1, overflow: "auto" }}>
             {columns.length === 0 ? (
-              <Typography variant="caption" color="text.primary" sx={{ p: 1.5, display: "block" }}>
-                Run a query to see fields
-              </Typography>
+              <EmptyState
+                icon={<CodeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                heading="Run a query to see fields"
+                description="Execute an ES|QL query to inspect the returned field names and types."
+              />
             ) : (
               visibleColumns.map((col) => {
                 const insight = insightsCache[col.name];
@@ -732,18 +739,11 @@ export default function DiscoverPage() {
         {/* Results table */}
         <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
           {!result && !loading && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <Typography variant="body2" color="text.primary">
-                Run a query to see results
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<TableChartIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="No results yet"
+              description="Write an ES|QL query above and press Ctrl+Enter to run it."
+            />
           )}
           {loading && !result && (
             <Box

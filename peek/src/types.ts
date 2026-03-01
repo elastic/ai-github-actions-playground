@@ -7,3 +7,4 @@
 export * from "./types/connection";
 export * from "./types/visualization";
 export * from "./types/dashboard";
+export * from "./types/query";

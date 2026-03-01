@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -19,18 +19,18 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import StorageIcon from "@mui/icons-material/Storage";
 
-import {
-  type CatIndexRecord,
-  type IndexStatsResponse,
-  type DiskUsageIndexEntry,
-} from "../services/es";
+import { type DiskUsageIndexEntry } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { formatBytes } from "../utils/formatBytes";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { useIndices, useIndexDetail } from "../hooks/useIndices";
+
+import EmptyState from "./EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -173,99 +173,45 @@ export default function IndicesPage() {
 
   const [search, setSearch] = useState("");
   const [showSystemIndices, setShowSystemIndices] = useState(false);
-  const [loadingIndices, setLoadingIndices] = useState(false);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [indices, setIndices] = useState<CatIndexRecord[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<IndexTab>("overview");
-  const [mappings, setMappings] = useState<Record<string, unknown> | null>(null);
-  const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
-  const [indexStats, setIndexStats] = useState<IndexStatsResponse | null>(null);
   const [diskUsage, setDiskUsage] = useState<DiskUsageIndexEntry | null>(null);
   const [diskUsageLoading, setDiskUsageLoading] = useState(false);
   const [diskUsageError, setDiskUsageError] = useState<string | null>(null);
 
-  const detailRequestRef = useRef(0);
+  const indicesResult = useIndices();
+  const detailResult = useIndexDetail(selectedIndex);
 
-  const loadIndices = useCallback(async () => {
-    if (!connection) return;
-    setLoadingIndices(true);
-    setError(null);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.getCatIndices(),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (data !== null) {
-        const sorted = [...data].sort((a, b) => a.index.localeCompare(b.index));
-        setIndices(sorted);
-        setSelectedIndex((current) => {
-          if (current && sorted.some((i) => i.index === current)) return current;
-          const first = showSystemIndices
-            ? sorted[0]
-            : sorted.find((i) => !i.index.startsWith("."));
-          return first?.index ?? null;
-        });
-      }
-    } finally {
-      setLoadingIndices(false);
-    }
-  }, [connection, showSystemIndices]);
+  const loadingIndices = indicesResult.status === "loading";
+  const error = indicesResult.status === "error" ? indicesResult.error : null;
+  const indicesData = indicesResult.status === "success" ? indicesResult.data : null;
+  const indices = useMemo(() => indicesData ?? [], [indicesData]);
+  // Treat "idle" as loading when an index is selected but the detail effect
+  // hasn't fired yet. This prevents a brief flash of overview content before
+  // the detail loading spinner appears (React effects run after render).
+  const loadingDetail =
+    detailResult.status === "loading" || (selectedIndex !== null && detailResult.status === "idle");
+  const mappings = detailResult.status === "success" ? detailResult.data.mappings : null;
+  const settings = detailResult.status === "success" ? detailResult.data.settings : null;
+  const indexStats = detailResult.status === "success" ? detailResult.data.indexStats : null;
 
-  const loadDetail = useCallback(
-    async (indexName: string) => {
-      if (!connection) return;
-      const reqId = ++detailRequestRef.current;
-      setLoadingDetail(true);
-      setMappings(null);
-      setSettings(null);
-      setIndexStats(null);
-      setDiskUsage(null);
-      setDiskUsageError(null);
-      try {
-        const { data: results } = await runConnectionRequest({
-          connection,
-          run: (client) =>
-            Promise.allSettled([
-              client.getIndexMappings(indexName),
-              client.getIndexSettings(indexName),
-              client.getIndexStats(indexName),
-            ]),
-        });
-        if (reqId !== detailRequestRef.current) return;
-        if (results !== null) {
-          const [mappingsResult, settingsResult, statsResult] = results;
-          setMappings(mappingsResult.status === "fulfilled" ? mappingsResult.value : null);
-          setSettings(settingsResult.status === "fulfilled" ? settingsResult.value : null);
-          setIndexStats(statsResult.status === "fulfilled" ? statsResult.value : null);
-        }
-      } finally {
-        if (reqId === detailRequestRef.current) {
-          setLoadingDetail(false);
-        }
-      }
-    },
-    [connection],
-  );
-
+  // Auto-select the first index when data loads
   useEffect(() => {
-    void loadIndices();
-  }, [loadIndices]);
+    if (!indicesData) return;
+    setSelectedIndex((current) => {
+      if (current && indicesData.some((i) => i.index === current)) return current;
+      const first = showSystemIndices
+        ? indicesData[0]
+        : indicesData.find((i) => !i.index.startsWith("."));
+      return first?.index ?? null;
+    });
+  }, [indicesData, showSystemIndices]);
 
+  // Clear disk usage when selectedIndex changes
   useEffect(() => {
-    if (!selectedIndex) {
-      setMappings(null);
-      setSettings(null);
-      setIndexStats(null);
-      setDiskUsage(null);
-      setDiskUsageError(null);
-      return;
-    }
-    void loadDetail(selectedIndex);
-  }, [selectedIndex, loadDetail]);
+    setDiskUsage(null);
+    setDiskUsageError(null);
+  }, [selectedIndex]);
 
   // When system indices are hidden, deselect any active system index.
   useEffect(() => {
@@ -586,7 +532,12 @@ export default function IndicesPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Indices
           </Typography>
-          <Button size="small" variant="outlined" onClick={loadIndices} disabled={loadingIndices}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={indicesResult.refresh}
+            disabled={loadingIndices}
+          >
             {loadingIndices ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
           <Tooltip title={!selectedIndex ? "Select an index first" : ""}>
@@ -677,9 +628,15 @@ export default function IndicesPage() {
             ))}
             {!loadingIndices && filteredIndices.length === 0 && (
               <ListItem>
-                <Typography variant="body2" color="text.primary">
-                  No indices found.
-                </Typography>
+                <EmptyState
+                  icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                  heading="No user indices found"
+                  description={
+                    showSystemIndices
+                      ? "No indices match the current search filter."
+                      : "Toggle 'Show system indices' above to include system indices."
+                  }
+                />
               </ListItem>
             )}
           </List>
