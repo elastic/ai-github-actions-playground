@@ -307,8 +307,15 @@ export default function ClusterOverviewPage() {
         <PageHeader
           title="Cluster Overview"
           actions={
-            <Button size="small" variant="outlined" onClick={loadOverview} disabled={loading}>
-              {loading ? <CircularProgress size={16} /> : "Refresh"}
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={loadOverview}
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+              aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
+            >
+              {loading ? "Refreshing..." : "Refresh"}
             </Button>
           }
         />

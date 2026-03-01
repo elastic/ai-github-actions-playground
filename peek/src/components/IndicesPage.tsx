@@ -539,8 +539,12 @@ export default function IndicesPage() {
                 variant="outlined"
                 onClick={indicesResult.refresh}
                 disabled={loadingIndices}
+                startIcon={
+                  loadingIndices ? <CircularProgress size={14} aria-hidden="true" /> : undefined
+                }
+                aria-label={loadingIndices ? "Refreshing indices" : "Refresh indices"}
               >
-                {loadingIndices ? <CircularProgress size={16} /> : "Refresh"}
+                {loadingIndices ? "Refreshing..." : "Refresh"}
               </Button>
               <Tooltip title={!selectedIndex ? "Select an index first" : ""}>
                 <span>
