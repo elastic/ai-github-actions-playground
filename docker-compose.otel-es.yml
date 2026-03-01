@@ -7,6 +7,10 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.license.self_generated.type=trial
+      - http.cors.enabled=true
+      - http.cors.allow-origin="/https?:\\/\\/(localhost|127\\.0\\.0\\.1)(:[0-9]+)?/"
+      - http.cors.allow-headers=X-Requested-With,Content-Type,Content-Length,Authorization
+      - http.cors.allow-methods=OPTIONS,HEAD,GET,POST,PUT,DELETE
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
     ports:
       - "9200:9200"

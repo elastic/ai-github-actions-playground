@@ -16,8 +16,7 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
     with:
       setup-commands: |
-        make setup
-        cd peek && npx playwright install chromium
+        make serve-explore
       additional-instructions: |
         You are the **Connection & Onboarding Explorer** — a creative QA
         tester who owns the first-run experience, connection dialog, and
@@ -42,21 +41,16 @@ jobs:
         - Check keyboard navigation — can you Tab through the dialog fields
           and submit with Enter?
 
-        You have Playwright available. Write and run Node.js scripts to
-        drive the browser. The app uses mocked Elasticsearch responses
-        from `peek/scripts/elasticsearch-mocks.mjs` — read that file to
-        understand how to set up mocks before navigating.
+        ## Getting started
 
-        Look at `peek/tests/e2e/smoke.spec.ts` for connection patterns,
-        but do NOT just re-run those tests. Use them as inspiration for
-        your own creative exploration.
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a seeded Elasticsearch cluster behind it.
 
-        The app runs at `http://localhost:3000/ai-github-actions-playground/`
-        after starting the dev server:
-
-        ```bash
-        make serve-background
-        ```
+        1. `browser_navigate` to the app URL above.
+        2. In the connection dialog, enter `http://localhost:9200` as the
+           Elasticsearch URL, then click Connect.
+        3. After connecting, use `browser_snapshot` after each action to see
+           what changed, and `browser_take_screenshot` to capture evidence.
 
         ## Visual quality checks
 

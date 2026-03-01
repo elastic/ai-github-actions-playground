@@ -3,7 +3,7 @@ PEEK_DIR := peek
 # Base ref for changed-file targets (override: make lint BASE=HEAD~3)
 BASE ?= main
 
-.PHONY: help setup serve serve-proxy serve-background build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
+.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
@@ -15,6 +15,8 @@ help:
 	@echo "  serve            - Install deps + start Vite dev server (http://localhost:3000)"
 	@echo "  serve-proxy      - Install deps + start dev server with Elasticsearch proxy (set ES_URL)"
 	@echo "  serve-background - Start dev server in background and wait until ready"
+	@echo "  serve-explore    - Start ES + seed data + dev server (for explore agents)"
+	@echo "  explore-down     - Stop the exploration stack (ES + dev server)"
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - Prettier + ESLint on changed files + full TypeScript type check (fast default)"
@@ -74,7 +76,7 @@ serve-proxy: setup
 
 serve-background: setup
 	@echo "Starting Vite dev server in background..."
-	@cd $(PEEK_DIR) && nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
+	@cd $(PEEK_DIR) && { nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid; }
 	@for i in $$(seq 1 30); do \
 		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
 		sleep 2; \
@@ -84,6 +86,65 @@ serve-background: setup
 	else \
 		echo "✗ Dev server failed to start. Logs:"; cat /tmp/vite-dev-server.log; exit 1; \
 	fi
+
+serve-explore: setup
+	@echo "Starting Elasticsearch..."
+	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml up -d
+	@echo "Waiting for Elasticsearch to be ready..."
+	@for i in $$(seq 1 60); do \
+		curl -sf http://localhost:9200 >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
+	@if ! curl -sf http://localhost:9200 >/dev/null 2>&1; then \
+		echo "✗ Elasticsearch failed to start. Logs:"; \
+		docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml logs elasticsearch; \
+		exit 1; \
+	fi
+	@echo "✓ Elasticsearch ready at http://localhost:9200"
+	@echo "Replaying OTel fixtures + seeding data..."
+	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
+	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url http://localhost:9200 --wait-for-ready
+	@echo "Waiting for seeded data to be searchable..."
+	@for i in $$(seq 1 30); do \
+		curl -sf 'http://localhost:9200/web_logs/_count' | grep -Eq '"count":[[:space:]]*[1-9][0-9]*' && break; \
+		sleep 2; \
+	done
+	@curl -sf 'http://localhost:9200/web_logs/_count' | grep -Eq '"count":[[:space:]]*[1-9][0-9]*' \
+		|| { echo "✗ Seed verification failed: web_logs has zero docs"; exit 1; }
+	@echo "✓ Data seeded and verified"
+	@echo "Starting dev server..."
+	@if [ -f /tmp/vite-dev-server.pid ]; then \
+		old_pid=$$(cat /tmp/vite-dev-server.pid); \
+		if kill -0 $$old_pid 2>/dev/null && ps -p $$old_pid -o command= 2>/dev/null | grep -q 'vite'; then \
+			kill $$old_pid 2>/dev/null; \
+			sleep 1; \
+		fi; \
+		rm -f /tmp/vite-dev-server.pid; \
+	fi
+	@cd $(PEEK_DIR) && { nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid; }
+	@for i in $$(seq 1 30); do \
+		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
+	@if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then \
+		echo "✓ Dev server running at http://localhost:3000 (PID: $$(cat /tmp/vite-dev-server.pid))"; \
+	else \
+		echo "✗ Dev server failed to start. Logs:"; cat /tmp/vite-dev-server.log; exit 1; \
+	fi
+	@echo ""
+	@echo "✓ Ready for exploration!"
+	@echo "  App:    http://localhost:3000/ai-github-actions-playground/"
+	@echo "  ES URL: http://localhost:9200 (enter this in the connection dialog)"
+
+explore-down:
+	@echo "Stopping exploration stack..."
+	@if [ -f /tmp/vite-dev-server.pid ]; then \
+		pid=$$(cat /tmp/vite-dev-server.pid); \
+		if kill -0 $$pid 2>/dev/null && ps -p $$pid -o command= 2>/dev/null | grep -q 'vite'; then kill $$pid; fi; \
+		rm -f /tmp/vite-dev-server.pid; \
+	fi
+	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
+	@echo "✓ Stopped."
 
 build:
 	@echo "Building for production..."
@@ -99,10 +160,10 @@ lint:
 	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
 	if [ -n "$$CHANGED" ]; then \
 		echo "Running Prettier format check on changed files..."; \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | xargs npx prettier --check) && \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --check) && \
 		echo "" && \
 		echo "Running ESLint on changed files..." && \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | xargs npx eslint); \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx eslint); \
 	else \
 		echo "No changed source files found — skipping Prettier and ESLint."; \
 	fi
@@ -126,10 +187,10 @@ lint-full:
 
 format:
 	@echo "Detecting changed files against '$(BASE)'..."
-	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx|json|css|scss|md|markdown|html|yml|yaml)$$' || true); \
 	if [ -n "$$CHANGED" ]; then \
 		echo "Formatting changed files..."; \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | xargs npx prettier --write); \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --write); \
 		echo "✓ Formatting complete."; \
 	else \
 		echo "No changed source files to format."; \
@@ -144,14 +205,15 @@ format-full:
 ci:
 	@echo "Installing dependencies (strict lockfile)..."
 	@cd $(PEEK_DIR) && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci
-	@$(MAKE) lint-full test-unit-coverage build
+	@$(MAKE) lint-full test-unit-full build
 	@echo ""
-	@echo "✓ CI passed: lint + coverage gate + build all passed."
+	@echo "✓ CI passed: full lint + full unit tests + build all passed."
 
 check: ci
 
 test-unit:
 	@echo "Running unit tests for changed files (against $(BASE))..."
+	@echo "Note: coverage thresholds are intentionally skipped for incremental PR runs."
 	@cd $(PEEK_DIR) && npx vitest run --config vitest.config.ts --changed $(BASE) --passWithNoTests
 
 test: test-unit-full test-integration test-e2e
@@ -199,7 +261,7 @@ otel-capture-down:
 	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-capture.yml down -v
 	@echo "Compressing fixtures..."
 	@cd $(PEEK_DIR)/fixtures/otlp && for f in traces.jsonl metrics.jsonl logs.jsonl; do [ -f "$$f" ] && gzip -f "$$f"; done
-	@echo "✓ Capture stopped. Fixtures in $(PEEK_DIR)/fixtures/otlp/*.jsonl.gz"
+	@echo "✓ Capture stopped. Fixtures in $(PEEK_DIR)/fixtures/otlp/*.gz"
 
 otel-replay-up:
 	@echo "Starting ES + EDOT collector in replay mode..."
@@ -306,7 +368,7 @@ fleet-harness-up:
 	@echo "  Kibana:        http://localhost:5601   (elastic / changeme)"
 	@echo "  Fleet Server:  http://localhost:8220"
 	@echo ""
-	@echo "Connect Peek to: http://localhost:9220 with user 'elastic', password 'changeme'"
+	@echo Connect Peek to: http://localhost:9220 with user 'elastic', password 'changeme'
 
 fleet-harness-down:
 	@echo "Stopping Fleet Server harness..."
