@@ -218,7 +218,7 @@ export default function DimensionOverviewGrid({
           gap: 1,
         }}
       >
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.primary">
           No dimension fields found for <strong>{shortMetric}</strong>
         </Typography>
         <Button size="small" onClick={onViewUngrouped}>

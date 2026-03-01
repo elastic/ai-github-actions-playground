@@ -27,7 +27,7 @@ export default function EmptyState({ icon, heading, description }: EmptyStatePro
         {heading}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.primary">
           {description}
         </Typography>
       )}

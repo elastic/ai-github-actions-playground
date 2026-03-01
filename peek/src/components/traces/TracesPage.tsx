@@ -679,7 +679,7 @@ export default function TracesPage() {
                           colSpan={6}
                           style={{ padding: "24px 12px", textAlign: "center", color: "inherit" }}
                         >
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.primary">
                             No traces matched current filters. Adjust filters or widen the time
                             range.
                           </Typography>
@@ -827,7 +827,7 @@ export default function TracesPage() {
                     height: "100%",
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     Time series view is not available for custom queries. Use filter chips to see
                     trends.
                   </Typography>
@@ -859,7 +859,7 @@ export default function TracesPage() {
                     height: "100%",
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     Run search to load trace volume and latency trends.
                   </Typography>
                 </Box>
@@ -875,7 +875,7 @@ export default function TracesPage() {
                       height: "100%",
                     }}
                   >
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.primary">
                       Select a trace in List or Scatter view to see its service map
                     </Typography>
                   </Box>
