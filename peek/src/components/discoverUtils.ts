@@ -119,7 +119,24 @@ export function splitEsqlPipeline(query: string): string[] {
   while (i < trimmed.length) {
     const ch = trimmed[i]!;
 
-    if (ch === '"') {
+    if (ch === "'") {
+      // Single-quoted string — '' is the escape sequence for a literal '
+      current += ch;
+      i++;
+      while (i < trimmed.length) {
+        const c = trimmed[i]!;
+        current += c;
+        i++;
+        if (c === "'") {
+          if (trimmed[i] === "'") {
+            current += "'";
+            i++;
+          } else {
+            break;
+          }
+        }
+      }
+    } else if (ch === '"') {
       if (trimmed[i + 1] === '"' && trimmed[i + 2] === '"') {
         // Triple-quoted string: """..."""
         current += '"""';
@@ -147,23 +164,6 @@ export function splitEsqlPipeline(query: string): string[] {
             } else {
               break;
             }
-          }
-        }
-      }
-    } else if (ch === "'") {
-      // Single-quoted string — '' is the escape sequence for a literal '
-      current += ch;
-      i++;
-      while (i < trimmed.length) {
-        const c = trimmed[i]!;
-        current += c;
-        i++;
-        if (c === "'") {
-          if (trimmed[i] === "'") {
-            current += "'";
-            i++;
-          } else {
-            break;
           }
         }
       }
