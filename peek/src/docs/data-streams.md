@@ -28,4 +28,6 @@ Click **Open stats query in Query Lab** inside the Field Stats panel to pivot di
 
 Click **Open in Query Lab** at the stream level to seed a starter query for the selected stream and continue analysis with full ES|QL control.
 
+Click **Inspect in Console** to open the API Console with a prefilled `GET /_data_stream/{name}` request for the selected stream. From there you can execute the request, edit it, or build further API calls.
+
 If fields fail to load, refresh the page and verify that your role can access `_field_caps` and data stream metadata APIs.

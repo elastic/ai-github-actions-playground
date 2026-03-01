@@ -1,360 +1,114 @@
-import type { components, operations } from "./types.generated";
 import { executeRawRequest } from "./rawRequest";
+import type { EsqlQueryParams, EsqlQueryResponse } from "./esqlTypes";
+import type {
+  ClusterInfoResponse,
+  ClusterHealthResponse,
+  ClusterStatsResponse,
+  ClusterPendingTasksResponse,
+  NodesInfoResponse,
+  NodesStatsResponse,
+  CatAllocationRecord,
+  CatShardRecord,
+  RecoveryResponse,
+  IlmExplainResponse,
+  SlmStatsResponse,
+  SnapshotStatusResponse,
+  ClusterSettingsResponse,
+  ClusterAllocationExplainResponse,
+} from "./clusterTypes";
+import type {
+  ResolveIndexResponse,
+  GetDataStreamsResponse,
+  FieldCapsResponse,
+  CatIndexRecord,
+  IndexStatsResponse,
+  DiskUsageResponse,
+} from "./indicesTypes";
+import type {
+  GetSecurityUsersResponse,
+  GetSecurityRolesResponse,
+  GetApiKeysResponse,
+  UserCapabilities,
+} from "./securityTypes";
+import type { GetIngestPipelinesResponse, SimulateIngestPipelineResponse } from "./ingestTypes";
+import type { ProfilingTopFunctionsRequest } from "./profilingTypes";
 
 // ---------------------------------------------------------------------------
-// Convenience type aliases from the generated OpenAPI types
+// Re-export domain types so existing `import … from "./client"` keeps working.
+// New types should be added to the corresponding domain type module.
 // ---------------------------------------------------------------------------
 
-export type EsqlColumn = components["schemas"]["esql._types.EsqlColumnInfo"];
-export type EsqlResult = components["schemas"]["esql._types.EsqlResult"];
-export type AsyncEsqlResult = components["schemas"]["esql._types.AsyncEsqlResult"];
+export type {
+  EsqlColumn,
+  EsqlResult,
+  AsyncEsqlResult,
+  EsqlQueryRequest,
+  EsqlQueryParams,
+  EsqlQueryResponse,
+  EsqlResponse,
+} from "./esqlTypes";
 
-/** Request body for POST /_query */
-export type EsqlQueryRequest =
-  operations["esql-query"]["requestBody"]["content"]["application/json"];
+export type {
+  ClusterInfoResponse,
+  ClusterHealthResponse,
+  ClusterPendingTask,
+  ClusterPendingTasksResponse,
+  CatAllocationRecord,
+  CatShardRecord,
+  ClusterStatsResponse,
+  NodesInfoNode,
+  NodesInfoResponse,
+  NodeStatsNode,
+  NodesStatsResponse,
+  RecoveryShardStatus,
+  RecoveryResponse,
+  IlmExplainIndexStatus,
+  IlmExplainResponse,
+  SlmPolicyStats,
+  SlmStatsResponse,
+  SnapshotShardStats,
+  SnapshotStatusRecord,
+  SnapshotStatusResponse,
+  NodesIngestPipelineStats,
+  NodesIngestNodeStats,
+  NodesIngestStatsResponse,
+  ClusterSettingsResponse,
+  ClusterAllocationExplainResponse,
+} from "./clusterTypes";
 
-/**
- * Practical query params — the OpenAPI-generated filter type requires fields
- * like `boost` that Elasticsearch treats as optional. This relaxed type lets
- * callers pass plain query-DSL objects for the filter while keeping the rest
- * of the request fully typed.
- */
-export type EsqlQueryParams = Omit<EsqlQueryRequest, "filter" | "params"> & {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filter?: Record<string, any>;
-  params?: Array<Record<string, string | number | boolean>> | EsqlQueryRequest["params"];
-};
+export type {
+  ResolveIndexResponse,
+  GetDataStreamsResponse,
+  DataStreamInfo,
+  ResolveIndexDataStreamInfo,
+  FieldCapsResponse,
+  FieldCapability,
+  CatIndexRecord,
+  IndexStatsData,
+  IndexStatsResponse,
+  DiskUsageFieldStats,
+  DiskUsageIndexEntry,
+  DiskUsageResponse,
+} from "./indicesTypes";
 
-/** Response from POST /_query */
-export type EsqlQueryResponse =
-  operations["esql-query"]["responses"][200]["content"]["application/json"];
+export type {
+  SecurityUser,
+  SecurityRole,
+  SecurityRoleIndexPrivilege,
+  GetSecurityUsersResponse,
+  GetSecurityRolesResponse,
+  ApiKeyInfo,
+  GetApiKeysResponse,
+  UserCapabilities,
+} from "./securityTypes";
 
-/** Response from GET / (cluster info) */
-export type ClusterInfoResponse =
-  operations["info"]["responses"][200]["content"]["application/json"];
-export interface ClusterHealthResponse {
-  cluster_name?: string;
-  status?: "green" | "yellow" | "red";
-  timed_out?: boolean;
-  number_of_nodes?: number;
-  number_of_data_nodes?: number;
-  active_primary_shards?: number;
-  active_shards?: number;
-  initializing_shards?: number;
-  relocating_shards?: number;
-  delayed_unassigned_shards?: number;
-  unassigned_shards?: number;
-  number_of_in_flight_fetch?: number;
-  active_shards_percent_as_number?: number;
-}
-export interface ClusterPendingTask {
-  insert_order?: number;
-  priority?: string;
-  source?: string;
-  time_in_queue_millis?: number;
-}
-export interface ClusterPendingTasksResponse {
-  tasks?: ClusterPendingTask[];
-}
-export interface CatAllocationRecord {
-  node?: string;
-  shards?: string;
-  "disk.indices"?: string;
-  "disk.used"?: string;
-  "disk.avail"?: string;
-  "disk.percent"?: string;
-}
-export interface CatShardRecord {
-  index?: string;
-  shard?: string;
-  prirep?: string;
-  state?: string;
-  docs?: string;
-  store?: string;
-  node?: string;
-  "unassigned.reason"?: string;
-}
-export interface ClusterStatsResponse {
-  indices?: {
-    count?: number;
-    shards?: { total?: number };
-    docs?: { count?: number };
-    store?: { size_in_bytes?: number };
-  };
-  nodes?: {
-    count?: { total?: number };
-  };
-}
-export interface NodesInfoNode {
-  name?: string;
-  roles?: string[];
-  version?: string;
-}
-export interface NodesInfoResponse {
-  nodes?: Record<string, NodesInfoNode>;
-}
-export interface NodeStatsNode {
-  name?: string;
-  os?: {
-    cpu?: {
-      percent?: number;
-      load_average?: { "1m"?: number; "5m"?: number; "15m"?: number };
-    };
-    mem?: { used_percent?: number; total_in_bytes?: number; free_in_bytes?: number };
-  };
-  jvm?: {
-    mem?: { heap_used_percent?: number };
-    gc?: {
-      collectors?: {
-        young?: { collection_count?: number; collection_time_in_millis?: number };
-        old?: { collection_count?: number; collection_time_in_millis?: number };
-      };
-    };
-  };
-  fs?: { total?: { total_in_bytes?: number; available_in_bytes?: number } };
-  indices?: {
-    docs?: { count?: number };
-    shard_stats?: { total_count?: number };
-    indexing?: { index_total?: number };
-    search?: { query_total?: number; query_time_in_millis?: number };
-  };
-  thread_pool?: Record<
-    string,
-    { active?: number; rejected?: number; completed?: number; queue?: number }
-  >;
-  breakers?: Record<
-    string,
-    { limit_size_in_bytes?: number; estimated_size_in_bytes?: number; tripped?: number }
-  >;
-  process?: { open_file_descriptors?: number; max_file_descriptors?: number };
-  ingest?: { total?: { count?: number; failed?: number; time_in_millis?: number } };
-}
-export interface NodesStatsResponse {
-  nodes?: Record<string, NodeStatsNode>;
-}
-export interface RecoveryShardStatus {
-  stage?: string;
-}
-export type RecoveryResponse = Record<string, { shards?: RecoveryShardStatus[] }>;
-export interface IlmExplainIndexStatus {
-  managed?: boolean;
-  phase?: string;
-  action?: string;
-  step?: string;
-  failed_step?: string;
-}
-export interface IlmExplainResponse {
-  indices?: Record<string, IlmExplainIndexStatus>;
-}
-export interface SlmPolicyStats {
-  policy?: string;
-  snapshots_taken?: number;
-  snapshots_failed?: number;
-}
-export interface SlmStatsResponse {
-  operation_mode?: string;
-  policy_stats?: SlmPolicyStats[];
-}
-export interface SnapshotShardStats {
-  failed?: number;
-  total?: number;
-}
-export interface SnapshotStatusRecord {
-  state?: string;
-  shards_stats?: SnapshotShardStats;
-}
-export interface SnapshotStatusResponse {
-  snapshots?: SnapshotStatusRecord[];
-}
-export interface NodesIngestPipelineStats {
-  failed?: number;
-  count?: number;
-}
-export interface NodesIngestNodeStats {
-  ingest?: {
-    total?: NodesIngestPipelineStats;
-    pipelines?: Record<string, NodesIngestPipelineStats>;
-  };
-}
-export interface NodesIngestStatsResponse {
-  nodes?: Record<string, NodesIngestNodeStats>;
-}
-export interface ClusterSettingsResponse {
-  persistent?: Record<string, unknown>;
-  transient?: Record<string, unknown>;
-  defaults?: Record<string, unknown>;
-}
-export interface ClusterAllocationExplainResponse {
-  index?: string;
-  shard?: number;
-  primary?: boolean;
-  current_state?: string;
-  unassigned_info?: { reason?: string; at?: string; details?: string };
-  can_allocate?: string;
-  allocate_explanation?: string;
-  node_allocation_decisions?: Array<{
-    node_name?: string;
-    node_decision?: string;
-    deciders?: Array<{ decider?: string; decision?: string; explanation?: string }>;
-  }>;
-}
-export type ResolveIndexResponse =
-  operations["indices-resolve-index"]["responses"][200]["content"]["application/json"];
-export type GetDataStreamsResponse =
-  operations["indices-get-data-stream"]["responses"][200]["content"]["application/json"];
-export type DataStreamInfo = GetDataStreamsResponse["data_streams"][number];
-export type ResolveIndexDataStreamInfo = ResolveIndexResponse["data_streams"][number];
-export type FieldCapsResponse =
-  operations["field-caps-2"]["responses"][200]["content"]["application/json"];
-export type FieldCapability = components["schemas"]["_global.field_caps.FieldCapability"];
-export interface SecurityUser {
-  username: string;
-  enabled?: boolean;
-  roles?: string[];
-  full_name?: string | null;
-  email?: string | null;
-  metadata?: Record<string, unknown>;
-}
-export interface SecurityRoleIndexPrivilege {
-  names?: string[];
-  privileges?: string[];
-}
-export interface SecurityRole {
-  cluster?: string[];
-  indices?: SecurityRoleIndexPrivilege[];
-  run_as?: string[];
-  metadata?: Record<string, unknown>;
-}
-export type GetSecurityUsersResponse = Record<string, SecurityUser>;
-export type GetSecurityRolesResponse = Record<string, SecurityRole>;
+export type {
+  IngestPipeline,
+  GetIngestPipelinesResponse,
+  SimulateIngestPipelineResponse,
+} from "./ingestTypes";
 
-/** One API key entry returned by GET /_security/api_key */
-export interface ApiKeyInfo {
-  id: string;
-  name: string;
-  username: string;
-  creation: number;
-  expiration?: number | null;
-  invalidated: boolean;
-  role_descriptors?: Record<
-    string,
-    {
-      cluster?: string[];
-      indices?: Array<{ privileges?: string[] }>;
-    }
-  >;
-  metadata?: Record<string, unknown>;
-  realm?: string;
-}
-
-export interface GetApiKeysResponse {
-  api_keys: ApiKeyInfo[];
-}
-
-/** One record from GET /_cat/indices?format=json&bytes=b */
-export interface CatIndexRecord {
-  index: string;
-  health: string;
-  status: string;
-  /** Number of primary shards (string from cat API) */
-  pri: string;
-  /** Number of replica shards (string from cat API) */
-  rep: string;
-  "docs.count": string | null;
-  "docs.deleted": string | null;
-  /** Store size in bytes (string from cat API) */
-  "store.size": string | null;
-  /** Primary store size in bytes (string from cat API) */
-  "pri.store.size": string | null;
-}
-
-/** Shard-level stats subset from GET /{index}/_stats */
-export interface IndexStatsData {
-  docs?: { count?: number; deleted?: number };
-  store?: { size_in_bytes?: number };
-  indexing?: { index_total?: number; index_time_in_millis?: number };
-  search?: { query_total?: number; query_time_in_millis?: number };
-  segments?: { count?: number; memory_in_bytes?: number };
-  get?: { total?: number };
-  merge?: { total?: number };
-  refresh?: { total?: number; total_time_in_millis?: number };
-  flush?: { total?: number; total_time_in_millis?: number };
-}
-
-/** Response from GET /{index}/_stats */
-export interface IndexStatsResponse {
-  _shards?: { total?: number; successful?: number; failed?: number };
-  _all?: {
-    primaries?: IndexStatsData;
-    total?: IndexStatsData;
-  };
-}
-
-/** Storage breakdown for a single field from POST /{index}/_disk_usage */
-export interface DiskUsageFieldStats {
-  total_in_bytes: number;
-  inverted_index?: { total_in_bytes: number };
-  stored_fields_in_bytes?: number;
-  doc_values_in_bytes?: number;
-  points_in_bytes?: number;
-  norms_in_bytes?: number;
-  term_vectors_in_bytes?: number;
-  knn_vectors_in_bytes?: number;
-}
-
-/** Per-index entry in the disk usage response */
-export interface DiskUsageIndexEntry {
-  store_size_in_bytes: number;
-  all_fields: DiskUsageFieldStats;
-  fields: Record<string, DiskUsageFieldStats>;
-}
-
-/** Response from POST /{index}/_disk_usage?run_expensive_tasks=true */
-export interface DiskUsageResponse {
-  _shards?: { total?: number; successful?: number; failed?: number };
-  [index: string]: DiskUsageIndexEntry | DiskUsageResponse["_shards"] | undefined;
-}
-
-export interface ProfilingTopFunctionsRequest {
-  limit: number;
-  query: {
-    bool: {
-      filter: Array<Record<string, unknown>>;
-    };
-  };
-}
-
-export interface IngestPipeline {
-  description?: string;
-  version?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  processors?: Array<Record<string, any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  on_failure?: Array<Record<string, any>>;
-}
-
-export type GetIngestPipelinesResponse = Record<string, IngestPipeline>;
-
-export interface SimulateIngestPipelineResponse {
-  docs?: Array<{
-    doc?: {
-      _source?: Record<string, unknown>;
-      _ingest?: { timestamp?: string };
-      error?: { type?: string; reason?: string };
-    };
-    processor_results?: Array<{
-      processor_type?: string;
-      status?: string;
-      doc?: { _source?: Record<string, unknown> };
-    }>;
-  }>;
-}
-
-/**
- * Backward-compatible alias — matches the shape components were already using.
- * `EsqlResult` has `columns` and `values` which is what `EsqlResponse` was.
- */
-export type EsqlResponse = EsqlResult;
+export type { ProfilingTopFunctionsRequest } from "./profilingTypes";
 
 // ---------------------------------------------------------------------------
 // Types that are NOT in the OpenAPI spec (our own)
@@ -382,23 +136,6 @@ export interface ElasticsearchError {
  * @deprecated Use `ElasticsearchError` instead. Kept for backward compatibility.
  */
 export type EsqlError = ElasticsearchError;
-
-/**
- * Capabilities derived from the user's API key / credentials.
- * Used to gate UI features based on what the user is allowed to do.
- */
-export interface UserCapabilities {
-  /** Whether the user can manage data streams (create, delete, rollover, etc.) */
-  canManageDataStreams: boolean;
-  /** Whether the user can create API keys for collector onboarding flows. */
-  canCreateApiKeys: boolean;
-  /** Whether the user can read user definitions from the security API. */
-  canReadSecurityUsers: boolean;
-  /** Whether the user can read role definitions from the security API. */
-  canReadSecurityRoles: boolean;
-  /** Whether the user can list/query API keys for audit. */
-  canReadApiKeys: boolean;
-}
 
 /** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
 interface HasPrivilegesResponse {
