@@ -171,11 +171,14 @@ export default function TracesPage() {
       setSelectedRootSpanId(null);
       setSelectedTraceTimestamp(null);
     }
-    if (state.rawQuery !== urlRawQuery) {
+    const nextState = useTracesStore.getState();
+    if (nextState.rawQuery !== urlRawQuery) {
       skipNextRawQueryResetRef.current = urlRawQuery !== null;
       setRawQuery(urlRawQuery);
     }
-    hasHydratedFromUrlRef.current = true;
+    queueMicrotask(() => {
+      hasHydratedFromUrlRef.current = true;
+    });
   }, [
     setRawQuery,
     setSelectedTraceId,
