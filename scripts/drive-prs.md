@@ -85,8 +85,14 @@ gh run list --limit 200 \
   --json databaseId,status,workflowName,event,headSha \
   --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$HEAD_SHA"'") | "\(.databaseId)\t\(.workflowName)"'
 
-# Approve each one
-gh api -X POST "repos/$REPO_SLUG/actions/runs/<RUN_ID>/approve"
+# Approve each one (there may be multiple runs)
+# See Quick reference for the same pattern.
+gh run list --limit 200 \
+  --json databaseId,status,workflowName,event,headSha \
+  --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$HEAD_SHA"'") | .databaseId' \
+  | while IFS= read -r run_id; do
+      [ -n "$run_id" ] && gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/approve"
+    done
 ```
 
 ### Step 3 — Kick CI if the last commit was from a bot
@@ -114,12 +120,12 @@ if [ -n "$RUN_ID" ]; then
 else
   # No CI run exists yet — push an empty commit to trigger one
   git fetch origin "$BRANCH"
-  git worktree add /tmp/pr-<NUMBER>-kick "$BRANCH"
+  git worktree add /tmp/pr-<NUMBER>-kick "$BRANCH" || { echo "Failed to create worktree"; exit 1; }
   cd /tmp/pr-<NUMBER>-kick
   git commit --allow-empty -m "ci: trigger CI checks"
   git push
   cd -
-  git worktree remove /tmp/pr-<NUMBER>-kick
+  git worktree remove --force /tmp/pr-<NUMBER>-kick
 fi
 ```
 
@@ -157,12 +163,14 @@ gh run view <RUN_ID> --log-failed   # get error details
 ```
 
 For a **`copilot-swe-agent[bot]`** PR:
+
 ```bash
 gh pr comment <NUMBER> --body "@copilot CI is failing. Please investigate and fix:
 <paste the relevant error here>"
 ```
 
 For a **`github-actions[bot]`** PR:
+
 ```bash
 gh pr comment <NUMBER> --body "/ai CI is failing. Please investigate and fix:
 <paste the relevant error here>"
@@ -200,12 +208,14 @@ If a run is already active → skip, it is already being handled.
 If not, summarise the outstanding feedback and delegate:
 
 For a **`copilot-swe-agent[bot]`** PR:
+
 ```bash
 gh pr comment <NUMBER> --body "@copilot Please address the review feedback:
 <summarise the specific changes requested>"
 ```
 
 For a **`github-actions[bot]`** PR:
+
 ```bash
 gh pr comment <NUMBER> --body "/ai Please address the review feedback:
 <summarise the specific changes requested>"
@@ -264,8 +274,10 @@ git rebase origin/main
 git add <files>
 GIT_EDITOR=true git rebase --continue   # repeat until rebase completes
 
-# Type-check before pushing
-cd peek && npx tsc --noEmit && cd ..
+# Type-check before pushing (optional, repository-specific)
+if [ -d peek ]; then
+  cd peek && npx tsc --noEmit && cd ..
+fi
 
 git push --force-with-lease
 
@@ -350,4 +362,3 @@ gh workflow run trigger-mention-in-pr-by-id.yml \
 # Merge when ready
 gh pr merge <NUMBER> --squash --delete-branch
 ```
-
