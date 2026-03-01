@@ -38,6 +38,14 @@ import type { ElasticsearchConnection } from "../types";
 
 type AuthType = "apiKey" | "userpass";
 
+function shouldShowTelemetryPanel(conn?: ElasticsearchConnection | null): boolean {
+  if (!conn) return false;
+  if (conn.otlpEnabled || conn.otlpApiKey) return true;
+  const endpoint = conn.otlpEndpoint?.trim();
+  if (!endpoint) return false;
+  return endpoint !== deriveDefaultOtlpEndpoint(conn.url);
+}
+
 export default function ConnectionDialog() {
   const { connectionDialogOpen: open, setConnectionDialogOpen: setOpen } = useUIStore(
     useShallow((s) => ({
@@ -91,12 +99,10 @@ export default function ConnectionDialog() {
     savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""),
   );
   const [otlpUseElasticAuth, setOtlpUseElasticAuth] = useState(
-    savedConn?.otlpUseElasticAuth ?? true,
+    savedConn?.otlpUseElasticAuth ?? Boolean(savedConn?.apiKey),
   );
   const [otlpApiKey, setOtlpApiKey] = useState(savedConn?.otlpApiKey ?? "");
-  const [showTelemetry, setShowTelemetry] = useState(
-    Boolean(savedConn?.otlpEnabled || savedConn?.otlpEndpoint || savedConn?.otlpApiKey),
-  );
+  const [showTelemetry, setShowTelemetry] = useState(shouldShowTelemetryPanel(savedConn));
   const [showSecret, setShowSecret] = useState(false);
   const [showOtlpSecret, setShowOtlpSecret] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -121,14 +127,19 @@ export default function ConnectionDialog() {
     setShowProxy(Boolean(savedConn?.proxyUrl));
     setOtlpEnabled(savedConn?.otlpEnabled ?? false);
     setOtlpEndpoint(savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""));
-    setOtlpUseElasticAuth(savedConn?.otlpUseElasticAuth ?? true);
+    setOtlpUseElasticAuth(savedConn?.otlpUseElasticAuth ?? Boolean(savedConn?.apiKey));
     setOtlpApiKey(savedConn?.otlpApiKey ?? "");
-    setShowTelemetry(
-      Boolean(savedConn?.otlpEnabled || savedConn?.otlpEndpoint || savedConn?.otlpApiKey),
-    );
+    setShowTelemetry(shouldShowTelemetryPanel(savedConn));
   }, [savedConn]);
 
+  useEffect(() => {
+    if (authType !== "apiKey" && otlpUseElasticAuth) {
+      setOtlpUseElasticAuth(false);
+    }
+  }, [authType, otlpUseElasticAuth]);
+
   const buildConnection = useCallback((): ElasticsearchConnection => {
+    const nextOtlpUseElasticAuth = authType === "apiKey" && otlpUseElasticAuth;
     if (authType === "userpass") {
       return {
         url: url.trim(),
@@ -137,7 +148,7 @@ export default function ConnectionDialog() {
         proxyUrl: proxyUrl.trim(),
         otlpEnabled,
         otlpEndpoint: otlpEndpoint.trim(),
-        otlpUseElasticAuth,
+        otlpUseElasticAuth: nextOtlpUseElasticAuth,
         otlpApiKey: otlpApiKey.trim(),
       };
     }
@@ -147,7 +158,7 @@ export default function ConnectionDialog() {
       proxyUrl: proxyUrl.trim(),
       otlpEnabled,
       otlpEndpoint: otlpEndpoint.trim(),
-      otlpUseElasticAuth,
+      otlpUseElasticAuth: nextOtlpUseElasticAuth,
       otlpApiKey: otlpApiKey.trim(),
     };
   }, [
@@ -233,9 +244,9 @@ export default function ConnectionDialog() {
       setShowProxy(Boolean(conn.proxyUrl));
       setOtlpEnabled(conn.otlpEnabled ?? false);
       setOtlpEndpoint(conn.otlpEndpoint ?? deriveDefaultOtlpEndpoint(conn.url));
-      setOtlpUseElasticAuth(conn.otlpUseElasticAuth ?? true);
+      setOtlpUseElasticAuth(conn.otlpUseElasticAuth ?? Boolean(conn.apiKey));
       setOtlpApiKey(conn.otlpApiKey ?? "");
-      setShowTelemetry(Boolean(conn.otlpEnabled || conn.otlpEndpoint || conn.otlpApiKey));
+      setShowTelemetry(shouldShowTelemetryPanel(conn));
       setActiveProfileId(profileId);
       setResult(null);
     },
@@ -537,7 +548,7 @@ export default function ConnectionDialog() {
                   />
                 }
                 label="Use Elasticsearch API key for OTLP auth"
-                disabled={!otlpEnabled}
+                disabled={!otlpEnabled || authType !== "apiKey"}
               />
               <TextField
                 label="OTLP API key override (optional)"
