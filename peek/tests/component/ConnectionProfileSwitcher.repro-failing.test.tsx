@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -16,6 +16,10 @@ describe("ConnectionProfileSwitcher expected behavior", () => {
     localStorage.clear();
     sessionStorage.clear();
     resetAllStores();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("keeps current profile active when switching to another profile fails", async () => {
