@@ -46,9 +46,6 @@ const baseOptions: ThemeOptions = {
           backgroundImage: "none",
           border: `1px solid ${theme.palette.border.subtle}`,
         }),
-        outlined: ({ theme }) => ({
-          border: `1px solid ${theme.palette.border.subtle}`,
-        }),
       },
     },
     MuiAppBar: {
@@ -61,7 +58,11 @@ const baseOptions: ThemeOptions = {
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        sizeSmall: { height: 32 },
+        root: {
+          "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
+            height: 32,
+          },
+        },
       },
     },
     MuiTable: {
