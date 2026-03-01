@@ -377,7 +377,7 @@ interface PageHeaderProps {
 
 - Wrap headers in `<Paper variant="outlined" sx={{ p: 1.5 }}>`.
 - Use `actions` for right-aligned controls.
-- Title renders as `<Typography variant="h6" component="h1">`.
+- Title renders as `<Typography variant="h5" component="h1">`.
 
 ```tsx
 // src/components/EmptyState.tsx
@@ -426,15 +426,106 @@ return (
 );
 ```
 
+### Canonical templates
+
+#### Table page (sorting + pagination)
+
+```tsx
+const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(25);
+const [sortBy, setSortBy] = useState<string>("name");
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+function handleSortChange(nextSortBy: string, nextDirection: "asc" | "desc") {
+  setSortBy(nextSortBy);
+  setSortDirection(nextDirection);
+  setPage(0);
+}
+
+return (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+    <Paper variant="outlined" sx={{ p: 1.5 }}>
+      <PageHeader title="Indices" actions={<Button size="small">Refresh</Button>} />
+    </Paper>
+    <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto", p: 1.5 }}>
+      {loading && <ContentSkeleton variant="table" />}
+      {!loading && rows.length === 0 && <EmptyState heading="No data" description="Try adjusting filters." />}
+      {!loading && rows.length > 0 && (
+        <DataTable
+          rows={rows}
+          page={page}
+          pageSize={pageSize}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          onSortChange={handleSortChange}
+        />
+      )}
+    </Paper>
+  </Box>
+);
+```
+
+#### Form dialog (validation + submit/cancel)
+
+```tsx
+function SaveViewDialog({ open, onCancel, onSaved }: Props) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    if (!name.trim()) {
+      setError("Name is required.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await saveView({ name: name.trim() });
+      onSaved();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Failed to save view.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onCancel} fullWidth maxWidth="sm">
+      <DialogTitle>Save view</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          fullWidth
+          label="Name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          error={Boolean(error)}
+          helperText={error ?? " "}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel} disabled={submitting}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+          {submitting ? "Saving..." : "Save"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+```
+
 ### Spacing decision table
 
-| Context | Token | Example |
-|---------|-------|---------|
-| Container padding | `1.5` | `<Paper sx={{ p: 1.5 }}>` |
-| Gap between sections | `1` | `<Box sx={{ gap: 1 }}>` |
-| Inline element gap | `0.5` | `<Box sx={{ gap: 0.5 }}>` |
-| Section margin | `2` | `<Box sx={{ mt: 2 }}>` |
-| Dense list item padding | `0.5` | `<ListItemButton sx={{ py: 0.5 }}>` |
+| Context | Token Name | MUI `sx` | Px Equivalent | Example |
+|---------|------------|----------|---------------|---------|
+| Container padding | `space.3` | `1.5` | `12px` | `<Paper sx={{ p: 1.5 }}>` |
+| Gap between sections | `space.2` | `1` | `8px` | `<Box sx={{ gap: 1 }}>` |
+| Inline element gap | `space.1` | `0.5` | `4px` | `<Box sx={{ gap: 0.5 }}>` |
+| Section margin | `space.4` | `2` | `16px` | `<Box sx={{ mt: 2 }}>` |
+| Dense list item padding | `space.1` | `0.5` | `4px` | `<ListItemButton sx={{ py: 0.5 }}>` |
 
 ### Design tokens reference
 
@@ -442,7 +533,8 @@ Use `src/types/tokens.ts` (`peek/src/types/tokens.ts` at repo root) for agent-sa
 
 - `StatusColor`: `"healthy" | "warning" | "critical" | "unknown" | "info"`
 - `SpaceToken`: `0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 6`
-- `TypographyVariant`: `"h3" | "h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2" | "caption" | "overline"`
+- `TypographyVariant`: `"h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2" | "caption" | "overline"`
+- `MetricTypographyVariant`: `"h3"`
 
 ### Banned implementation patterns (agent checklist)
 
@@ -450,4 +542,5 @@ Use `src/types/tokens.ts` (`peek/src/types/tokens.ts` at repo root) for agent-sa
 - Never use raw `<div onClick>` / `<Box onClick>`; use `Button`, `IconButton`, `ButtonBase`, or `ListItemButton`.
 - Never use hardcoded hex colors in `sx`; use theme tokens (`theme.palette.*` / token keys).
 - Never return bare empty-state placeholders like `<div />` or `<Typography>No data</Typography>`; use `<EmptyState />`.
-- Typography variants for generated UI must be limited to: `h3`, `h5`, `h6`, `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, `overline`.
+- Typography variants for generated page content must be limited to: `h5`, `subtitle1`, `body1`, `body2`.
+- `h3` is reserved for metric values only.
