@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -238,76 +239,65 @@ export default function MetricOverviewGrid({
             : field.name;
 
           return (
-            <Paper
-              key={field.name}
-              variant="outlined"
-              role="button"
-              tabIndex={0}
-              aria-label={`View details for ${field.name}`}
-              onClick={() => handleCardClick(field)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleCardClick(field);
-                }
-              }}
-              sx={{
-                p: 1,
-                cursor: "pointer",
-                transition: "box-shadow 0.15s, border-color 0.15s",
-                "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  boxShadow: 1,
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-                display: "flex",
-                flexDirection: "column",
-                minHeight: 140,
-              }}
-            >
-              {/* Card header */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                <Typography
-                  variant="caption"
-                  noWrap
-                  sx={{ flex: 1, fontWeight: 600 }}
-                  title={field.name}
-                >
-                  {displayName}
-                </Typography>
-                <Chip
-                  label={field.metricType}
-                  size="small"
-                  color={metricBadgeColor}
-                  variant="outlined"
-                  sx={{
-                    height: 16,
-                    fontSize: "0.6rem",
-                    "& .MuiChip-label": { px: 0.5 },
-                  }}
-                />
-              </Box>
-
-              {/* Sparkline chart */}
-              <Box sx={{ flex: 1, minHeight: 80 }}>
-                {result?.data ? (
-                  <EChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
-                ) : (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                    }}
+            <Paper key={field.name} variant="outlined" sx={{ minHeight: 140 }}>
+              <ButtonBase
+                aria-label={`View details for ${field.name}`}
+                onClick={() => handleCardClick(field)}
+                sx={{
+                  p: 1,
+                  width: "100%",
+                  height: "100%",
+                  transition: "box-shadow 0.15s, border-color 0.15s",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: 1,
+                  },
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                }}
+              >
+                {/* Card header */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    noWrap
+                    sx={{ flex: 1, fontWeight: 600 }}
+                    title={field.name}
                   >
-                    <CircularProgress size={16} />
-                  </Box>
-                )}
-              </Box>
+                    {displayName}
+                  </Typography>
+                  <Chip
+                    label={field.metricType}
+                    size="small"
+                    color={metricBadgeColor}
+                    variant="outlined"
+                    sx={{
+                      height: 16,
+                      fontSize: "0.6rem",
+                      "& .MuiChip-label": { px: 0.5 },
+                    }}
+                  />
+                </Box>
+
+                {/* Sparkline chart */}
+                <Box sx={{ flex: 1, minHeight: 80 }}>
+                  {result?.data ? (
+                    <EChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
+                  ) : (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <CircularProgress size={16} />
+                    </Box>
+                  )}
+                </Box>
+              </ButtonBase>
             </Paper>
           );
         })}

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -266,81 +267,70 @@ export default function DimensionOverviewGrid({
               : field.name;
 
           return (
-            <Paper
-              key={field.name}
-              variant="outlined"
-              role="button"
-              tabIndex={0}
-              aria-label={`Group by ${field.name}`}
-              onClick={() => handleCardClick(field.name)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleCardClick(field.name);
-                }
-              }}
-              sx={{
-                p: 1,
-                cursor: "pointer",
-                transition: "box-shadow 0.15s, border-color 0.15s",
-                "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  boxShadow: 1,
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-                display: "flex",
-                flexDirection: "column",
-                minHeight: 180,
-              }}
-            >
-              {/* Card header */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                <Typography
-                  variant="caption"
-                  noWrap
-                  sx={{ flex: 1, fontWeight: 600 }}
-                  title={field.name}
-                >
-                  {displayName}
-                </Typography>
-                <Chip
-                  label={field.type}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    height: 16,
-                    fontSize: "0.6rem",
-                    "& .MuiChip-label": { px: 0.5 },
-                  }}
-                />
-              </Box>
-
-              {/* Multi-series sparkline */}
-              <Box sx={{ flex: 1, minHeight: 120 }}>
-                {result?.data ? (
-                  <EChartWrapper
-                    option={buildMultiSeriesSparkline(
-                      result.data,
-                      echartsTheme,
-                      theme.palette.text.primary,
-                    )}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                    }}
+            <Paper key={field.name} variant="outlined" sx={{ minHeight: 180 }}>
+              <ButtonBase
+                aria-label={`Group by ${field.name}`}
+                onClick={() => handleCardClick(field.name)}
+                sx={{
+                  p: 1,
+                  width: "100%",
+                  height: "100%",
+                  transition: "box-shadow 0.15s, border-color 0.15s",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: 1,
+                  },
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                }}
+              >
+                {/* Card header */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    noWrap
+                    sx={{ flex: 1, fontWeight: 600 }}
+                    title={field.name}
                   >
-                    <CircularProgress size={16} />
-                  </Box>
-                )}
-              </Box>
+                    {displayName}
+                  </Typography>
+                  <Chip
+                    label={field.type}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      height: 16,
+                      fontSize: "0.6rem",
+                      "& .MuiChip-label": { px: 0.5 },
+                    }}
+                  />
+                </Box>
+
+                {/* Multi-series sparkline */}
+                <Box sx={{ flex: 1, minHeight: 120 }}>
+                  {result?.data ? (
+                    <EChartWrapper
+                      option={buildMultiSeriesSparkline(
+                        result.data,
+                        echartsTheme,
+                        theme.palette.text.primary,
+                      )}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <CircularProgress size={16} />
+                    </Box>
+                  )}
+                </Box>
+              </ButtonBase>
             </Paper>
           );
         })}
