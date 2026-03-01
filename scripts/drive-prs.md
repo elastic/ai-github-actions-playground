@@ -13,6 +13,22 @@ merge conflicts, and make judgment calls** about what a PR actually needs.
 
 ---
 
+## Overview
+
+Work in **two passes** to maximise throughput:
+
+1. **Pass 1 — Do everything you can without touching the filesystem.**
+   Process every non-conflicting PR: kick CI, approve blocked runs, trigger
+   reviews, delegate fixes to bots, merge anything that is ready. Skip
+   conflicting PRs entirely during this pass.
+
+2. **Pass 2 — Resolve merge conflicts.**
+   Only after all other work is dispatched, come back and fix conflicting PRs
+   using git worktrees. By this point bots are already working on other issues
+   in parallel.
+
+---
+
 ## Setup
 
 ```bash
@@ -22,10 +38,9 @@ gh repo set-default     # if working outside the repo directory
 
 ---
 
-## Step 0 — Mark all draft PRs as ready for review
+## Pass 1 — Process all non-conflicting PRs
 
-Draft PRs (except `[WIP]` ones) from bot authors should be promoted before you
-start assessing them.
+### Step 0 — Mark all draft PRs as ready for review
 
 ```bash
 # List all draft PRs from bot authors (excluding [WIP])
@@ -39,14 +54,7 @@ gh pr list --draft --limit 200 --json number,title,author \
 gh pr ready <NUMBER>
 ```
 
-Run this once at the start of a session. Then continue to Step 1.
-
----
-
-## Step 1 — List open bot-authored PRs
-
-Only process PRs whose author is `copilot[bot]`, `copilot-swe-agent[bot]`, or
-`github-actions[bot]`. Human-authored PRs must be skipped entirely.
+### Step 1 — List open bot-authored PRs
 
 ```bash
 gh pr list --state open --limit 200 \
@@ -58,75 +66,15 @@ gh pr list --state open --limit 200 \
   ) | {number, title, author: .author.login, headRefName, mergeable, mergeStateStatus, headRefOid}'
 ```
 
-Process each PR in the list through Steps 2–7 below.
+For each PR, note its `mergeable` state:
+- `CONFLICTING` → **skip for now** (handle in Pass 2)
+- `UNKNOWN` → re-check in 30 s; if still unknown after a minute, treat as `MERGEABLE`
+- `MERGEABLE` → process through Steps 2–6 below
 
----
+### Step 2 — Approve workflow runs awaiting maintainer approval
 
-## Step 2 — Check for merge conflicts
-
-```bash
-gh pr view <NUMBER> --json mergeable,mergeStateStatus
-```
-
-| `mergeable` | `mergeStateStatus` | Meaning |
-|-------------|-------------------|---------|
-| `CONFLICTING` | `dirty` | Has conflicts — **only you can fix this** |
-| `MERGEABLE` | `clean` / `has_hooks` / `blocked` | No conflicts |
-| `UNKNOWN` | any | GitHub hasn't computed it yet — re-check in 30 s |
-
-### If there are conflicts → resolve them (you must do this, not the bot)
-
-Bots cannot resolve merge conflicts. Use a **git worktree** so you can work on
-multiple PRs in parallel without polluting your main checkout:
-
-```bash
-BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
-git fetch origin main "$BRANCH"
-
-# Create an isolated worktree for this PR
-git worktree add /tmp/pr-<NUMBER> "$BRANCH"
-cd /tmp/pr-<NUMBER>
-
-git rebase origin/main
-# ... resolve conflicts, then:
-git add <files>
-GIT_EDITOR=true git rebase --continue
-git push --force-with-lease
-
-cd -
-git worktree remove /tmp/pr-<NUMBER>
-```
-
-Resolution guidelines:
-- Favour the PR branch's intent (it is the proposed change)
-- Incorporate any non-overlapping changes from `main`
-- Do not silently discard either side without understanding it
-- Run `npx tsc --noEmit` in `peek/` after resolving to catch type errors
-
-Return to Step 2 to confirm conflicts are cleared, then continue.
-
----
-
-## Step 3 — Check active CI runs
-
-```bash
-gh run list --branch <HEAD_REF_NAME> --limit 10 \
-  --json databaseId,status,conclusion,workflowName,headSha \
-  --jq '.[] | select(.headSha == "<HEAD_SHA>")'
-```
-
-| Situation | Action |
-|-----------|--------|
-| Any run has `status: in_progress` or `queued` | **Wait** — checks are running. Move to next PR; come back later. |
-| All runs `completed` | Continue to Step 4. |
-| No runs at all | Check who made the last commit (Step 4). |
-| Any run has `status: action_required` | Approve it (Step 3a), then wait. |
-
-### Step 3a — Approve workflow runs awaiting maintainer approval
-
-Some workflow runs are paused with `status: action_required` until a maintainer
-approves them. The `ready-prs-and-enable-workflows.sh` script handles these
-automatically, but you can also approve them manually:
+Bot-authored commits often land with `action_required` runs that need a
+maintainer to approve before CI starts.
 
 ```bash
 REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
@@ -137,52 +85,45 @@ gh run list --limit 200 \
   --json databaseId,status,workflowName,event,headSha \
   --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$HEAD_SHA"'") | "\(.databaseId)\t\(.workflowName)"'
 
-# Approve each run
+# Approve each one
 gh api -X POST "repos/$REPO_SLUG/actions/runs/<RUN_ID>/approve"
 ```
 
-After approving, **wait** for the newly-started runs to complete before continuing.
+### Step 3 — Kick CI if the last commit was from a bot
 
----
-
-## Step 4 — Check who made the last commit
+Bot commits via `GITHUB_TOKEN` do **not** fire the `pull_request` event, so CI
+never runs automatically. Check who committed last:
 
 ```bash
 REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
-gh api "repos/$REPO_SLUG/commits/<HEAD_SHA>" --jq '.author.login // .commit.author.name'
+HEAD_SHA=$(gh pr view <NUMBER> --json headRefOid --jq '.headRefOid')
+gh api "repos/$REPO_SLUG/commits/$HEAD_SHA" --jq '.author.login // .commit.author.name'
 ```
 
-### If the last commit was a bot (`github-actions[bot]`, `copilot[bot]`, or any `*[bot]`)
-
-Bot commits via `GITHUB_TOKEN` do **not** fire the `pull_request` event, so CI
-never runs automatically. Kick it off:
+If the last author is any `*[bot]`, kick CI:
 
 ```bash
-# Re-run the most recent CI run for this branch
-RUN_ID=$(gh run list --branch <HEAD_REF_NAME> --workflow ci.yml --limit 5 \
-  --json databaseId,status --jq '[.[] | select(.status == "completed")] | first | .databaseId // empty')
+# Re-run the most recent completed CI run for this branch
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+RUN_ID=$(gh run list --branch "$BRANCH" --limit 10 \
+  --json databaseId,name,status \
+  --jq '[.[] | select(.name == "CI" and .status == "completed")] | first | .databaseId // empty')
 
 if [ -n "$RUN_ID" ]; then
   gh run rerun "$RUN_ID"
 else
-  echo "No completed CI runs found; use empty commit instead (next section)"
+  # No CI run exists yet — push an empty commit to trigger one
+  git fetch origin "$BRANCH"
+  git worktree add /tmp/pr-<NUMBER>-kick "$BRANCH"
+  cd /tmp/pr-<NUMBER>-kick
+  git commit --allow-empty -m "ci: trigger CI checks"
+  git push
+  cd -
+  git worktree remove /tmp/pr-<NUMBER>-kick
 fi
 ```
 
-If no CI run exists for this branch yet:
-
-```bash
-# Trigger CI by pushing an empty commit
-git checkout <HEAD_REF_NAME>
-git commit --allow-empty -m "ci: trigger CI run"
-git push
-```
-
-Then **wait** for CI to complete before continuing with this PR.
-
----
-
-## Step 5 — Assess CI results
+### Step 4 — Check CI results
 
 ```bash
 gh pr checks <NUMBER>
@@ -190,183 +131,163 @@ gh pr checks <NUMBER>
 
 | Situation | Action |
 |-----------|--------|
-| All checks passing | Continue to Step 6. |
-| Checks failing | Investigate (Step 5a). |
-| Checks skipped / not applicable | Continue to Step 6. |
+| CI `in_progress` / `queued` | Move on to the next PR; come back later |
+| All checks passing | Continue to Step 5 |
+| Checks failing | Delegate the fix (Step 4a) |
+| No CI checks at all | Just kicked CI in Step 3 — move on |
 
-### Step 5a — Investigate failing checks
+#### Step 4a — Delegate failing CI to the bot
+
+Before delegating, check that the "Address PR Review Feedback" workflow is not
+already running for this PR (that job addresses CI failures too):
 
 ```bash
-# Get the failed run logs
-gh run view <RUN_ID> --log-failed
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+gh run list --branch "$BRANCH" --limit 10 \
+  --json name,status \
+  --jq '.[] | select(.name == "Address PR Review Feedback" and (.status == "in_progress" or .status == "queued"))'
 ```
 
-Determine whether the failure is:
+If a run is already `in_progress` or `queued` → skip, it is already being handled.
 
-- **Caused by this PR's changes** → delegate the fix to the bot that owns the PR
-  (you should not fix non-conflict issues yourself):
-
-  ```bash
-  # Determine the trigger based on PR author
-  AUTHOR=$(gh pr view <NUMBER> --json author --jq '.author.login')
-  # copilot-swe-agent[bot] → use @copilot
-  # github-actions[bot]    → use /ai
-  ```
-
-  For a **`copilot-swe-agent[bot]`** PR:
-  ```bash
-  gh pr comment <NUMBER> --body "@copilot The CI is failing. Please investigate and fix:
-  <paste the relevant log snippet or error summary here>"
-  ```
-
-  For a **`github-actions[bot]`** PR:
-  ```bash
-  gh pr comment <NUMBER> --body "/ai The CI is failing. Please investigate and fix:
-  <paste the relevant log snippet or error summary here>"
-  ```
-
-  Then move to the next PR — come back after the bot pushes a fix.
-
-- **A flaky test or infrastructure issue** → re-run the failed jobs:
-
-  ```bash
-  gh run rerun <RUN_ID> --failed
-  ```
-
-  Wait for re-run results before deciding.
-- **Pre-existing on `main`** → note it in a PR comment and continue to Step 6.
-
-  ```bash
-  gh pr comment <NUMBER> --body "CI failure appears pre-existing on main (not introduced by this PR)."
-  ```
-
----
-
-## Step 6 — Check for existing reviews
+If not, get the failure summary and delegate:
 
 ```bash
-gh pr view <NUMBER> --json reviews --jq '.reviews | length'
+gh run view <RUN_ID> --log-failed   # get error details
 ```
 
-### If reviews exist
-
+For a **`copilot-swe-agent[bot]`** PR:
 ```bash
-gh pr view <NUMBER> --json reviews \
-  --jq '.reviews[] | {author: .author.login, state: .state, submittedAt: .submittedAt}'
+gh pr comment <NUMBER> --body "@copilot CI is failing. Please investigate and fix:
+<paste the relevant error here>"
 ```
 
-| Review state | Action |
-|-------------|--------|
-| `APPROVED` | PR is ready to merge — check if it can be merged (Step 7). |
-| `CHANGES_REQUESTED` | Address the feedback (Step 6a). |
-| `COMMENTED` | Read comments; decide if they need action before merging. |
+For a **`github-actions[bot]`** PR:
+```bash
+gh pr comment <NUMBER> --body "/ai CI is failing. Please investigate and fix:
+<paste the relevant error here>"
+```
 
-### If no reviews exist
+Then move on to the next PR.
+
+### Step 5 — Check for existing reviews
 
 ```bash
-# Dispatch an AI review via the repo's trigger workflow
+gh pr view <NUMBER> --json reviewDecision,reviews \
+  --jq '{decision: .reviewDecision, reviews: [.reviews[] | {author: .author.login, state: .state}]}'
+```
+
+| `reviewDecision` | Action |
+|-----------------|--------|
+| `APPROVED` | Continue to Step 6 |
+| `CHANGES_REQUESTED` | Delegate fix to bot (Step 5a) |
+| `REVIEW_REQUIRED` | Trigger a review (Step 5b) |
+| `null` | No policy — continue to Step 6 |
+
+#### Step 5a — Delegate CHANGES_REQUESTED to the bot
+
+First check if "Address PR Review Feedback" is already running:
+
+```bash
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+gh run list --branch "$BRANCH" --limit 10 \
+  --json name,status \
+  --jq '.[] | select(.name == "Address PR Review Feedback" and (.status == "in_progress" or .status == "queued"))'
+```
+
+If a run is already active → skip, it is already being handled.
+
+If not, summarise the outstanding feedback and delegate:
+
+For a **`copilot-swe-agent[bot]`** PR:
+```bash
+gh pr comment <NUMBER> --body "@copilot Please address the review feedback:
+<summarise the specific changes requested>"
+```
+
+For a **`github-actions[bot]`** PR:
+```bash
+gh pr comment <NUMBER> --body "/ai Please address the review feedback:
+<summarise the specific changes requested>"
+```
+
+Then move on to the next PR.
+
+#### Step 5b — Trigger an AI review
+
+```bash
 gh workflow run trigger-mention-in-pr-by-id.yml \
   --field pull-request-number="<NUMBER>" \
   --field prompt="Please review this PR. Assess the changes for correctness, \
 code quality, and alignment with the project standards in DEVELOPING.md. \
-If the PR looks good, leave comments only (do not approve). \
-If changes are needed, request them."
-
-# Also request at least one human maintainer review (required for merge)
-gh pr edit <NUMBER> --add-reviewer <HUMAN_REVIEWER>
+If the PR looks good, approve it. If changes are needed, request them."
 ```
 
-Then **wait** for the review to be submitted before continuing.
-
-### Step 6a — Address review feedback
-
-Review feedback (CHANGES_REQUESTED) must be delegated back to the bot that owns
-the PR. **Do not fix non-conflict issues yourself.**
-
-1. Read the review comments:
-
-   ```bash
-   gh pr view <NUMBER> --json reviews,comments
-   ```
-
-2. Determine which trigger to use based on PR author:
-
-   | PR author | Trigger |
-   |-----------|---------|
-   | `copilot-swe-agent[bot]` | `@copilot` |
-   | `github-actions[bot]` | `/ai` |
-
-3. Post a comment delegating the fix:
-
-   For a **`copilot-swe-agent[bot]`** PR:
-   ```bash
-   gh pr comment <NUMBER> --body "@copilot Please address the review feedback:
-   <summarise the specific changes requested>"
-   ```
-
-   For a **`github-actions[bot]`** PR:
-   ```bash
-   gh pr comment <NUMBER> --body "/ai Please address the review feedback:
-   <summarise the specific changes requested>"
-   ```
-
-4. Move to the next PR — come back after the bot pushes changes and CI passes.
-
----
-
-## Step 7 — Determine if the PR is ready to merge
+### Step 6 — Merge if ready
 
 A PR is ready to merge when **all** of the following are true:
 
-- [ ] No merge conflicts
-- [ ] All required CI checks pass
-- [ ] At least one approving review from a human maintainer (non-bot, non-author)
-- [ ] No unresolved `CHANGES_REQUESTED` reviews
-
-Ignore approvals from bot accounts (for example, usernames ending with `[bot]`).
-
-```bash
-gh pr view <NUMBER> --json mergeable,mergeStateStatus,reviews,reviewDecision
-```
-
-| `reviewDecision` | Meaning |
-|-----------------|---------|
-| `APPROVED` | Ready |
-| `CHANGES_REQUESTED` | Not ready |
-| `REVIEW_REQUIRED` | Needs a review (go back to Step 6) |
-| `null` | No review policy enforced — check checks + conflicts only |
-
-### If ready → merge
+- No merge conflicts
+- All required CI checks pass
+- `reviewDecision` is `APPROVED` (ignore approvals from `*[bot]` accounts)
+- No unresolved `CHANGES_REQUESTED` reviews
 
 ```bash
 gh pr merge <NUMBER> --squash --delete-branch
 ```
 
-Use `--squash` to keep `main` history clean (matches repo convention).
-
-### If not ready → leave a status comment
-
-```bash
-gh pr comment <NUMBER> --body "Assessed this PR — waiting on: <reason>."
-```
-
-Then move on to the next PR.
+If not ready, note the blocker and move on.
 
 ---
 
-## Judgment calls: wait vs. act
+## Pass 2 — Resolve merge conflicts
 
-Use this guide when unsure whether to take action or wait:
+After completing Pass 1 for all non-conflicting PRs, return to every PR that
+was skipped because `mergeable == CONFLICTING`.
+
+Use a **git worktree** so you can work on multiple PRs in parallel without
+polluting your main checkout:
+
+```bash
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+git fetch origin main "$BRANCH"
+
+# Isolated working directory for this PR
+git worktree add /tmp/pr-<NUMBER> "$BRANCH"
+cd /tmp/pr-<NUMBER>
+
+git rebase origin/main
+# For each conflict file:
+#   - read both sides carefully
+#   - favour the PR branch's intent; incorporate non-overlapping main changes
+#   - do not silently discard either side
+git add <files>
+GIT_EDITOR=true git rebase --continue   # repeat until rebase completes
+
+# Type-check before pushing
+cd peek && npx tsc --noEmit && cd ..
+
+git push --force-with-lease
+
+cd -
+git worktree remove /tmp/pr-<NUMBER>
+```
+
+After pushing, the PR re-enters the normal flow. Re-run Pass 1 for it (kick CI,
+check reviews, etc.).
+
+---
+
+## Judgment calls
 
 | Situation | Decision |
 |-----------|----------|
-| CI just started (< 5 min ago) | Wait |
-| CI has been running > 30 min | Investigate for hangs |
-| Last bot commit was > 1 hour ago with no CI | Kick CI (Step 4) |
-| Review requested changes but bot already addressed them | Re-request review |
-| PR is behind main by > 20 commits | Rebase before reviewing |
-| PR description is empty or auto-generated and unclear | Post a comment asking the author to clarify intent before reviewing |
+| CI in_progress < 5 min | Move on; come back later |
+| CI running > 30 min | Investigate for hangs |
+| Last bot commit > 1 hour ago, no CI ever ran | Kick CI (Step 3) |
+| "Address PR Review Feedback" job is active | Skip delegating — already handled |
 | All checks pass, review approved, no conflicts | Merge it |
+| PR is behind main by > 20 commits | Rebase in Pass 2 |
 
 ---
 
@@ -394,6 +315,12 @@ gh run list --limit 200 \
       [ -n "$run_id" ] && gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/approve"
     done
 
+# Check if Address PR Review Feedback is already running
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+gh run list --branch "$BRANCH" --limit 10 \
+  --json name,status \
+  --jq '.[] | select(.name == "Address PR Review Feedback" and (.status == "in_progress" or .status == "queued"))'
+
 # Check a specific PR end-to-end
 gh pr view <NUMBER>
 gh pr checks <NUMBER>
@@ -411,13 +338,9 @@ cd -
 git worktree remove /tmp/pr-<NUMBER>
 
 # Delegate a fix to the bot (NOT for merge conflicts)
-AUTHOR=$(gh pr view <NUMBER> --json author --jq '.author.login')
 # copilot-swe-agent[bot] → @copilot  |  github-actions[bot] → /ai
 gh pr comment <NUMBER> --body "@copilot Please fix: <description>"
 gh pr comment <NUMBER> --body "/ai Please fix: <description>"
-
-# Kick CI manually
-gh workflow run ci.yml --ref <BRANCH>
 
 # Trigger AI review
 gh workflow run trigger-mention-in-pr-by-id.yml \
@@ -427,3 +350,4 @@ gh workflow run trigger-mention-in-pr-by-id.yml \
 # Merge when ready
 gh pr merge <NUMBER> --squash --delete-branch
 ```
+
