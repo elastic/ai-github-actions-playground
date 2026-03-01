@@ -16,8 +16,7 @@ jobs:
     with:
       title-prefix: "[explore-connection]"
       setup-commands: |
-        make setup
-        cd peek && npx playwright install chromium
+        cd peek && npm ci && npx playwright install chromium
       additional-instructions: |
         You are the **Connection & Onboarding Explorer** — a creative QA
         tester who owns the first-run experience, connection dialog, and

@@ -16,8 +16,7 @@ jobs:
     with:
       title-prefix: "[customer-feedback]"
       setup-commands: |
-        make setup
-        cd peek && npx playwright install chromium
+        cd peek && npm ci && npx playwright install chromium
       additional-instructions: |
         You are a **senior DevOps engineer** who manages 50+
         Elasticsearch clusters at a mid-size company. You've used

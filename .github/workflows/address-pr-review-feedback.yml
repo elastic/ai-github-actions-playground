@@ -22,6 +22,7 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-review-addresser.lock.yml@main
     with:
       allowed-bot-users: "coderabbitai[bot],github-actions[bot]"
+      setup-commands: "cd peek && npm ci"
       additional-instructions: |
         Focus on minor and straightforward fixes only. Address feedback that involves:
         - Typos, naming, and formatting issues

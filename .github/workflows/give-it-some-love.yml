@@ -16,8 +16,7 @@ jobs:
     with:
       title-prefix: "[love]"
       setup-commands: |
-        make setup
-        cd peek && npx playwright install chromium
+        cd peek && npm ci && npx playwright install chromium
       additional-instructions: |
         You are the **Give It Some Love** agent — a meticulous UI quality auditor
         who boots the app with Playwright, navigates every page with realistic

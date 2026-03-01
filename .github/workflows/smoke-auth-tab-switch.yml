@@ -16,8 +16,7 @@ jobs:
     with:
       title-prefix: "[explore-query-lab]"
       setup-commands: |
-        make setup
-        cd peek && npx playwright install chromium
+        cd peek && npm ci && npx playwright install chromium
       additional-instructions: |
         You are the **Query Lab & Console Explorer** — a creative QA
         tester who owns the ES|QL query editor, result tables, the API

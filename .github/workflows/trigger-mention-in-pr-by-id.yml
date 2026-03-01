@@ -40,6 +40,7 @@ jobs:
     with:
       target-pr-number: ${{ inputs.pull-request-number }}
       prompt: ${{ inputs.prompt }}
+      setup-commands: "cd peek && npm ci"
       additional-instructions: |
         This run was started via workflow_dispatch with an explicit PR target.
         You MUST operate only on PR #${{ inputs.pull-request-number }}.

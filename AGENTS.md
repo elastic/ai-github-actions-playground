@@ -9,6 +9,8 @@
 Runs are executed in non-interactive CI and state is ephemeral between runs.
 Persist outcomes through safe outputs (comments/issues/PRs), because uncaptured local state is lost after the run.
 
+**Dependencies are pre-installed.** Node modules are installed via `npm ci` before the agent starts (via `setup-commands`). Do NOT run `make setup`, `npm install`, or `npm ci` yourself — it wastes time. Just run `make lint`, `make build`, or `make test-unit` directly.
+
 ## Application
 
 See ./peek
@@ -16,10 +18,9 @@ See ./peek
 ## Common Commands
 
 ```bash
-make setup   # install dependencies
-make serve   # start dev server
-make build   # production build
 make lint    # Prettier + ESLint + TypeScript type checking
+make build   # production build
+make serve   # start dev server
 make format  # auto-format code with Prettier
 make check   # run all checks then build (equivalent to CI)
 ```
@@ -27,7 +28,7 @@ make check   # run all checks then build (equivalent to CI)
 ## Playwright (Screenshots & E2E Testing)
 
 Playwright is available for navigating the app, taking screenshots, and capturing console errors.
-After `make setup`, install the Chromium browser binary:
+Chromium is pre-installed for workflows that use Playwright. If not available, install it:
 
 ```bash
 cd peek && npx playwright install chromium

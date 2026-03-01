@@ -16,6 +16,8 @@ jobs:
       github.event.issue.pull_request == null &&
       startsWith(github.event.comment.body, '/ai')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-mention-in-issue-no-sandbox.lock.yml@main
+    with:
+      setup-commands: "cd peek && npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       EXTRA_COMMIT_GITHUB_TOKEN: ${{ secrets. COMMIT_GITHUB_TOKEN }}

@@ -18,6 +18,7 @@ jobs:
     with:
       intensity: aggressive
       minimum_severity: nitpick
+      setup-commands: "cd peek && npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
