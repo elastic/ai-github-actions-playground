@@ -104,7 +104,7 @@ make electron-dist   # package as a distributable app (dmg / exe / AppImage)
 
 ### In-Product Docs
 
-Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting, CORS/proxy setup, Query Lab, Metrics, Traces, Profiling, dashboard workflows, Console, Data Streams, Chat, LLM settings, Cluster Overview, and dashboard management.
+Use the **Docs** tab in the app for embedded documentation and search covering getting started, connecting, CORS/proxy setup, Query Lab, Metrics, Traces, Profiling, dashboard workflows, Console, Data Streams, Chat, LLM settings, Cluster Overview, Users & Roles, and dashboard management.
 
 ## Further Reading
 
