@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
+import * as esServices from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 
 describe("useConnectionStore", () => {
@@ -273,5 +274,58 @@ describe("useConnectionStore profileHealthMap", () => {
     useConnectionStore.getState().resetConnectionState();
 
     expect(useConnectionStore.getState().profileHealthMap).toEqual({});
+  });
+});
+
+describe("useConnectionStore profile switch actions", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    useConnectionStore.getState().resetConnectionState();
+    vi.restoreAllMocks();
+  });
+
+  it("switchConnectionProfile sets active connection and marks profile healthy", async () => {
+    const profileId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+    const capabilities = {
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+      canReadApiKeys: true,
+    };
+    vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockResolvedValue(capabilities);
+
+    const result = await useConnectionStore.getState().switchConnectionProfile(profileId!);
+    const state = useConnectionStore.getState();
+
+    expect(result).toEqual({ ok: true, profileName: "Dev" });
+    expect(state.connection).toEqual({ url: "https://dev.example.com", apiKey: "dev-key" });
+    expect(state.connected).toBe(true);
+    expect(state.capabilities).toEqual(capabilities);
+    expect(state.activeProfileId).toBe(profileId);
+    expect(state.profileHealthMap[profileId!].status).toBe("healthy");
+  });
+
+  it("retestConnectionProfile marks profile as needs_attention on failure", async () => {
+    const profileId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "prod-key" });
+    vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockRejectedValue(
+      new Error("Connection refused"),
+    );
+
+    const result = await useConnectionStore.getState().retestConnectionProfile(profileId!);
+    const health = useConnectionStore.getState().profileHealthMap[profileId!];
+
+    expect(result).toEqual({
+      ok: false,
+      profileName: "Prod",
+      message: "Error: Connection refused",
+    });
+    expect(health.status).toBe("needs_attention");
+    expect(health.errorSummary).toBe("Error: Connection refused");
   });
 });
