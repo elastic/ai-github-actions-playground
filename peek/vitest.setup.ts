@@ -12,10 +12,10 @@ class StorageMock implements Storage {
     this.store = {};
   }
   getItem(key: string) {
-    return this.store[key] || null;
+    return Object.hasOwn(this.store, key) ? this.store[key]! : null;
   }
   key(index: number) {
-    return Object.keys(this.store)[index] || null;
+    return Object.keys(this.store)[index] ?? null;
   }
   removeItem(key: string) {
     delete this.store[key];

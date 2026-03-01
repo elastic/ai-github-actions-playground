@@ -358,4 +358,30 @@ describe("executeRawRequest", () => {
     ).rejects.toEqual(expect.objectContaining({ status: 0 }));
     expect(doFetch).toHaveBeenCalledTimes(1);
   });
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])(
+    "does not retry mutating %s requests on retryable status responses",
+    async (httpMethod) => {
+      const doFetch: DoFetch = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ error: "unavailable" }, { status: 503 }));
+
+      const result = await executeRawRequest(doFetch, BASE_URL, HEADERS, httpMethod, "/_doc");
+
+      expect(result).toEqual({ status: 503, body: { error: "unavailable" } });
+      expect(doFetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])(
+    "does not retry mutating %s requests on network errors",
+    async (httpMethod) => {
+      const doFetch: DoFetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+
+      await expect(
+        executeRawRequest(doFetch, BASE_URL, HEADERS, httpMethod, "/_doc"),
+      ).rejects.toEqual(expect.objectContaining({ status: 0, message: "Failed to fetch" }));
+      expect(doFetch).toHaveBeenCalledTimes(1);
+    },
+  );
 });

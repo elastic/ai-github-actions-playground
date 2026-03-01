@@ -28,6 +28,7 @@ function isAbortError(err: unknown): boolean {
 
 /** Status codes that should trigger an automatic retry. */
 const RETRY_STATUSES = new Set([429, 503, 504]);
+const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 /**
  * Adds a small amount of random jitter (±10%) to a delay to prevent multiple
@@ -90,6 +91,8 @@ export async function executeRawRequest(
     signal?.addEventListener("abort", onAbort, { once: true });
   }
   const rawBody = body && body.trim() ? body : undefined;
+  const normalizedMethod = method.toUpperCase();
+  const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
   try {
     let response: Response | undefined;
     for (let attempt = 0; ; attempt++) {
@@ -98,18 +101,18 @@ export async function executeRawRequest(
           url,
           { ...headers },
           {
-            method,
+            method: normalizedMethod,
             body: rawBody,
             signal: controller.signal,
           },
         );
 
         const isRetryableStatus = RETRY_STATUSES.has(response.status) || response.status >= 500;
-        if (!isRetryableStatus || attempt >= RETRY_DELAYS_MS.length) {
+        if (!shouldRetryMethod || !isRetryableStatus || attempt >= RETRY_DELAYS_MS.length) {
           break;
         }
       } catch (err) {
-        if (isAbortError(err) || attempt >= RETRY_DELAYS_MS.length) {
+        if (isAbortError(err) || !shouldRetryMethod || attempt >= RETRY_DELAYS_MS.length) {
           throw err;
         }
       }
