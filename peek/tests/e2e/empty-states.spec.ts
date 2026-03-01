@@ -4,33 +4,15 @@ import type { Page } from "@playwright/test";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
 /**
- * Mock Elasticsearch with empty data streams so the empty-state UI is rendered.
+ * Register mocks and connect to the mocked cluster.
+ * Accepts optional `data` overrides for the mock setup.
  */
-async function mockElasticsearchEmptyStreams(page: Page) {
+async function connectToMockCluster(page: Page, data: Record<string, unknown> = {}) {
   await registerElasticsearchMocks(page, {
     esUrl: DEFAULT_ES_URL,
-    data: {
-      dataStreams: { data_streams: [] },
-    },
+    data,
     fallback: {},
   });
-}
-
-async function connectToCluster(page: Page) {
-  await registerElasticsearchMocks(page, {
-    esUrl: DEFAULT_ES_URL,
-    data: {},
-    fallback: {},
-  });
-  await page.goto("");
-  await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
-  await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
-  await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
-}
-
-async function connectToEmptyStreamsCluster(page: Page) {
-  await mockElasticsearchEmptyStreams(page);
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
@@ -40,7 +22,7 @@ async function connectToEmptyStreamsCluster(page: Page) {
 
 test.describe("empty state – data management pages", () => {
   test("Data Streams page shows polished empty state when no streams exist", async ({ page }) => {
-    await connectToEmptyStreamsCluster(page);
+    await connectToMockCluster(page, { dataStreams: { data_streams: [] } });
     await page.getByRole("button", { name: "Data Streams", exact: true }).click();
     await page.waitForLoadState("networkidle");
 
@@ -56,7 +38,7 @@ test.describe("empty state – data management pages", () => {
   test("Ingest Pipelines page shows polished empty state when search yields no results", async ({
     page,
   }) => {
-    await connectToCluster(page);
+    await connectToMockCluster(page);
     await page.getByRole("button", { name: "Ingest Pipelines", exact: true }).click();
     await page.waitForLoadState("networkidle");
 
