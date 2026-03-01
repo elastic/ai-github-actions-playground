@@ -140,11 +140,8 @@ describe("TracesPage empty states", () => {
       capturedCallbacks[0]?.({ columns: [], values: [] }, "FROM traces");
     });
 
-    expect(
-      screen.getByText(
-        "No traces matched current filters. Adjust filters or widen the time range.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("No traces matched current filters.")).toBeInTheDocument();
+    expect(screen.getByText("Adjust filters or widen the time range.")).toBeInTheDocument();
   });
 });
 
