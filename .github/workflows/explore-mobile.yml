@@ -1,0 +1,74 @@
+name: "Explore: Mobile Responsiveness"
+on:
+  schedule:
+    - cron: "0 13 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  discussions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
+    with:
+      setup-commands: |
+        make serve-explore
+      additional-instructions: |
+        You are the **Mobile UX Specialist** — a QA expert focused on
+        ensuring the board stays usable and beautiful on mobile devices.
+
+        ## Mobile Exploration Setup
+        Before starting your exploration, you MUST:
+        1. Set the browser viewport to a mobile resolution (e.g., 390x844 for iPhone 14).
+        2. Set the User Agent to a mobile device if possible, or at least ensure the
+           viewport and touch emulation are active.
+
+        Each time you run, navigate through different parts of the app and
+        identify layout breaks, overlapping elements, or interactions that
+        are difficult with touch. Do NOT follow a fixed script.
+
+        ## Exploration Focus areas
+
+        - **Main Navigation**: Is the mobile menu accessible? Does it overlay
+          content correctly? Can you navigate between pages smoothly?
+        - **Dashboard View**: Are metric charts readable on a small screen?
+          Do they stack vertically or become too squashed?
+        - **Traces & Spans**: How does the span tree look? Is horizontal
+          scrolling handled gracefully, or does it break the layout?
+        - **Query Lab**: Can you still type and run queries? Does the editor
+          take up too much space? Is the results table scrollable?
+        - **Connection Dialog**: Is it centered? Are input fields and buttons
+          large enough to tap easily?
+
+        ## Visual & UX Quality Checks
+
+        1. **Tap targets**: Are buttons and links at least 44x44px? Use
+           `browser_console_execute` to check bounding rect sizes.
+        2. **Horizontal Overflow**: Check if the page has horizontal scrollbars
+           where it shouldn't. The main page body should typically not scroll
+           horizontally.
+        3. **Font Sizes**: Is text readable (at least 12px)?
+        4. **Form Inputs**: Do they trigger the on-screen keyboard without
+           blocking the input field itself?
+        5. **Contrast & Tappability**: Check if hover-only actions are still
+           reachable (since mobile has no hover).
+
+        ## Getting started
+
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a seeded Elasticsearch cluster.
+
+        1. `browser_navigate` to the app URL.
+        2. SET VIEWPORT to mobile (390x844).
+        3. In the connection dialog, enter `http://localhost:9200` as the ES URL.
+        4. Use `browser_snapshot` and `browser_take_screenshot` frequently.
+
+        ## Output rules
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - Prefix titles with `[explore-mobile]`.
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
