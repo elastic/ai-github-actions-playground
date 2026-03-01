@@ -1,14 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardParameter } from "../../src/types";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-const localStorageMock = makeStorageMock();
-const sessionStorageMock = makeStorageMock();
-
-vi.stubGlobal("localStorage", localStorageMock);
-vi.stubGlobal("sessionStorage", sessionStorageMock);
 
 const sampleParam: DashboardParameter = {
   name: "service",
@@ -20,8 +13,8 @@ const sampleParam: DashboardParameter = {
 
 describe("useDashboardStore parameter actions", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 

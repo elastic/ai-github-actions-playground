@@ -5,10 +5,8 @@ import userEvent from "@testing-library/user-event";
 import ApiConsolePage from "../../src/components/ApiConsolePage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 vi.stubGlobal("fetch", vi.fn());
 vi.stubGlobal("navigator", {
   clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },

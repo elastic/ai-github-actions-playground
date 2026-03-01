@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const getClusterInfoMock = vi.fn();
 const getClusterHealthMock = vi.fn();
@@ -33,9 +33,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const CLUSTER_INFO = {
   cluster_name: "test-cluster",
