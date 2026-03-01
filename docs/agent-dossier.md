@@ -460,7 +460,7 @@ Files issues with specific library references, documentation links, and simplifi
 
 ## 9. Exploratory Testing Agents
 
-Six Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents only file issues for genuine bugs found through hands-on exploration.
+Seven Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents file issues aligned to their mission (bug reports for smoke explorers, feature-gap feedback for customer review).
 
 | Agent | File | Schedule | Domain |
 |-------|------|----------|--------|
@@ -470,6 +470,7 @@ Six Playwright-powered exploratory agents run on weekdays. Each owns a domain of
 | **Query Lab & Console** | `smoke-auth-tab-switch.yml` | 12:00 UTC | ES\|QL queries, result tables, API Console, error handling |
 | **Indices, Data Streams & Pipelines** | `smoke-reset-visibility.yml` | 13:00 UTC | Table sorting, detail views, data management |
 | **Live Elasticsearch** | `smoke-live-es.yml` | 14:00 UTC | All pages with real OTel data and a real cluster |
+| **Feature Gap Review** | `customer-complaints.yml` | 16:00 UTC | Missing features vs Kibana/Grafana/Elasticvue expectations |
 
 All exploratory agents use `gh-aw-scheduled-audit.lock.yml` with creative Playwright exploration instructions.
 
@@ -653,5 +654,5 @@ All agents are coached to:
 | 13:00 | Breaking Changes, Framework Practices, Explore: Data Mgmt, UX Patrol | Vector Search Ideas | | |
 | 14:00 | Explore: Live ES, Flaky Tests, Performance Profiler | | Refactor Opportunist | |
 | 15:00 | Stale Issues | | | Give It Some Love |
-| 16:00 | Autonomy Atomicity | | | |
+| 16:00 | Autonomy Atomicity, Feature Gap Review | | | |
 | 17:00 | Information Architecture | | | |
