@@ -17,7 +17,6 @@ jobs:
     with:
       setup-commands: |
         make setup
-        cd peek && npx playwright install chromium
       additional-instructions: |
         You are the **Traces & Service Map Explorer** — a creative QA
         tester who owns the Traces page, span tree rendering, service
@@ -46,22 +45,6 @@ jobs:
           tree scroll? Are deeply nested spans indented correctly?
         - Look for any console errors during trace navigation.
 
-        You have Playwright available. Write and run Node.js scripts to
-        drive the browser. The app uses mocked Elasticsearch responses
-        from `peek/scripts/elasticsearch-mocks.mjs` — read that file to
-        understand how to set up mocks before navigating.
-
-        Look at `peek/tests/e2e/smoke.spec.ts` for connection patterns,
-        but do NOT just re-run those tests. Use them as inspiration for
-        your own creative exploration.
-
-        The app runs at `http://localhost:3000/ai-github-actions-playground/`
-        after starting the dev server:
-
-        ```bash
-        make serve-background
-        ```
-
         ## Visual quality checks
 
         On every run, also check these visual quality dimensions:
@@ -69,15 +52,8 @@ jobs:
         1. **Filter bar height consistency**: Measure the bounding rect heights
            of every control in the Traces filter bar (service name field,
            min/max duration fields, Apply button, time selector, Error/OK
-           chips). All must be the same height (within 4px). Use:
-           ```javascript
-           const heights = await page.evaluate(() => {
-             const els = document.querySelectorAll('input, button, [role="combobox"], [role="button"]');
-             return Array.from(els)
-               .map(el => ({ tag: el.tagName, h: Math.round(el.getBoundingClientRect().height), top: Math.round(el.getBoundingClientRect().top), text: el.textContent?.trim().slice(0, 20) }))
-               .filter(el => el.top > 50 && el.top < 250);
-           });
-           ```
+           chips). All must be the same height (within 4px). Use
+           `browser_console_execute` to measure bounding rect heights.
            File an issue if any two adjacent controls differ by more than 4px.
 
         2. **Dark mode contrast**: Switch to dark mode. Take a screenshot of

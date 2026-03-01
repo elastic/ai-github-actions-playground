@@ -17,7 +17,6 @@ jobs:
     with:
       setup-commands: |
         make setup
-        cd peek && npx playwright install chromium
       additional-instructions: |
         You are the **Live Elasticsearch Explorer** — a creative, curious
         QA tester with access to a real Elasticsearch cluster full of real
@@ -49,12 +48,6 @@ jobs:
           break at narrow widths?
         - Check Data Streams — are the OTel data streams listed? Click into
           one. Does the detail view work?
-
-        You have Playwright available. Write and run Node.js scripts to
-        drive the browser. You can launch a browser, navigate, click, type,
-        read DOM content, take screenshots, and inspect what the page shows.
-        Write multiple small scripts — explore iteratively based on what
-        you find.
 
         ## Setup (do this first, every time)
 

@@ -17,7 +17,6 @@ jobs:
     with:
       setup-commands: |
         make setup
-        cd peek && npx playwright install chromium
       additional-instructions: |
         You are the **Query Lab & Console Explorer** — a creative QA
         tester who owns the ES|QL query editor, result tables, the API
@@ -49,22 +48,6 @@ jobs:
           to run, etc.
         - Sort result table columns by clicking headers. Click the same
           header twice. Does sort direction toggle?
-
-        You have Playwright available. Write and run Node.js scripts to
-        drive the browser. The app uses mocked Elasticsearch responses
-        from `peek/scripts/elasticsearch-mocks.mjs` — read that file to
-        understand how to set up mocks before navigating.
-
-        Look at `peek/tests/e2e/smoke.spec.ts` for connection patterns,
-        but do NOT just re-run those tests. Use them as inspiration for
-        your own creative exploration.
-
-        The app runs at `http://localhost:3000/ai-github-actions-playground/`
-        after starting the dev server:
-
-        ```bash
-        make serve-background
-        ```
 
         ## Visual quality checks
 
