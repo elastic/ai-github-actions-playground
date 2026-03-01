@@ -169,7 +169,7 @@ export default function ApiKeysPage() {
                 >
                   <ListItemText
                     primary={key.name}
-                    secondary={`Owner: ${key.username} • Age: ${ageLabel(key.creation)}`}
+                    secondary={`Owner: ${key.username || "No owner"} • Age: ${ageLabel(key.creation)}`}
                     sx={key.invalidated ? { opacity: 0.5 } : undefined}
                   />
                 </ListItemButton>

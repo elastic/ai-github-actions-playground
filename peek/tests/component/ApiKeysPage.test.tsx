@@ -191,6 +191,7 @@ describe("ApiKeysPage", () => {
     await user.click(screen.getByRole("button", { name: /orphaned-key/i }));
     await screen.findByRole("heading", { level: 6, name: "orphaned-key" });
     expect(screen.getByText("Orphaned (no owner)")).toBeInTheDocument();
+    expect(screen.getByText(/Owner:\s*No owner\s*•\s*Age:/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /privileged-key/i }));
     await screen.findByRole("heading", { level: 6, name: "privileged-key" });
