@@ -7,6 +7,7 @@ import AddDataPage, {
   deriveOtlpEndpoint,
   probeOtlpEndpoint,
 } from "../../src/components/AddDataPage";
+import type { UserCapabilities } from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
@@ -41,6 +42,13 @@ function getCommandValue(): string {
   return (screen.getByLabelText("Starter command") as HTMLTextAreaElement).value;
 }
 
+const defaultCapabilities: UserCapabilities = {
+  canManageDataStreams: false,
+  canCreateApiKeys: true,
+  canReadSecurityUsers: false,
+  canReadSecurityRoles: false,
+};
+
 describe("AddDataPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,7 +59,7 @@ describe("AddDataPage", () => {
       url: "https://my-project.es.us-east-1.aws.elastic.cloud:443",
       apiKey: "testkey",
     });
-    useConnectionStore.setState({ capabilities: { canCreateApiKeys: true } as never });
+    useConnectionStore.setState({ capabilities: defaultCapabilities });
   });
 
   it("renders the endpoint type toggle", () => {
@@ -61,6 +69,7 @@ describe("AddDataPage", () => {
   });
 
   it("auto-selects Managed OTLP when ingest endpoint probe succeeds", async () => {
+    const user = userEvent.setup();
     renderPage();
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
@@ -68,6 +77,7 @@ describe("AddDataPage", () => {
         "true",
       );
     });
+    await user.click(screen.getByRole("tab", { name: "Linux" }));
     expect(getCommandValue()).toContain("my-project.ingest.us-east-1.aws.elastic.cloud");
   });
 
@@ -112,12 +122,13 @@ describe("AddDataPage", () => {
       url: "http://localhost:9200",
       apiKey: "testkey",
     });
-    useConnectionStore.setState({ capabilities: { canCreateApiKeys: true } as never });
+    useConnectionStore.setState({ capabilities: defaultCapabilities });
 
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    await user.click(screen.getByRole("tab", { name: "Linux" }));
 
     expect(screen.getByText(/Enter your managed OTLP endpoint/)).toBeInTheDocument();
     expect(getCommandValue()).toContain("<YOUR_OTLP_ENDPOINT>");
@@ -195,11 +206,17 @@ describe("AddDataPage", () => {
     expect(value).toContain("ELASTIC_API_KEY");
   });
 
-  it("shows OTLP comment in Kubernetes command when OTLP is selected", async () => {
+  it("keeps Kubernetes command in Elasticsearch mode when OTLP is selected", async () => {
     renderPage();
     await waitFor(() => {
-      expect(getCommandValue()).toContain("OTLP credentials");
+      expect(getCommandValue()).toContain(
+        "Kubernetes quickstart currently supports Elasticsearch output only",
+      );
     });
+    expect(getCommandValue()).toContain(
+      "elastic_endpoint='https://my-project.es.us-east-1.aws.elastic.cloud:443'",
+    );
+    expect(getCommandValue()).not.toContain(".ingest.");
   });
 
   it("does not probe when connection URL is not Elastic Cloud", () => {
@@ -208,7 +225,7 @@ describe("AddDataPage", () => {
       url: "http://localhost:9200",
       apiKey: "testkey",
     });
-    useConnectionStore.setState({ capabilities: { canCreateApiKeys: true } as never });
+    useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
     // fetch should only be called for cluster info, not for the probe
     expect(fetchSpy).not.toHaveBeenCalledWith(

@@ -95,17 +95,20 @@ const PLATFORM_GUIDES: Record<Platform, PlatformGuide> = {
     label: "Kubernetes",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry/quickstart/self-managed/k8s",
-    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
-      const endpoint = endpointType === "managed_otlp" ? otlpUrl : esUrl;
-      return `# 1. Add the OpenTelemetry Helm repository
+    command: ({ esUrl, version, apiKey, endpointType }) => {
+      const managedOtlpNotice =
+        endpointType === "managed_otlp"
+          ? "# Note: Kubernetes quickstart currently supports Elasticsearch output only.\n# Managed OTLP endpoint mode is available for Docker, Linux, macOS, and Windows.\n\n"
+          : "";
+      return `${managedOtlpNotice}# 1. Add the OpenTelemetry Helm repository
 helm repo add open-telemetry \\
   'https://open-telemetry.github.io/opentelemetry-helm-charts' --force-update
 
-# 2. Create namespace and secret with your ${endpointType === "managed_otlp" ? "OTLP" : "ES"} credentials
+# 2. Create namespace and secret with your ES credentials
 kubectl create namespace opentelemetry-operator-system
 kubectl create secret generic elastic-secret-otel \\
   --namespace opentelemetry-operator-system \\
-  --from-literal=elastic_endpoint='${endpoint}' \\
+  --from-literal=elastic_endpoint='${esUrl}' \\
   --from-literal=elastic_api_key='${apiKey}'
 
 # 3. Install the OpenTelemetry Kube Stack with EDOT values
