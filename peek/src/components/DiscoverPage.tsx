@@ -76,10 +76,10 @@ export default function DiscoverPage() {
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
       queryHistory: s.queryHistory,
       appendQueryToHistory: s.appendQueryToHistory,
-      query: s.discoverQuery,
-      setQuery: s.setDiscoverQuery,
-      result: s.discoverResult,
-      setResult: s.setDiscoverResult,
+      query: s.discoverSessionQuery,
+      setQuery: s.setDiscoverSessionQuery,
+      result: s.discoverSessionResult,
+      setResult: s.setDiscoverSessionResult,
       selectedFields: s.discoverSelectedFields,
       setSelectedFields: s.setDiscoverSelectedFields,
     })),
@@ -92,8 +92,6 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
-  // query, result, and selectedFields are now sourced from useQueryStore
-  // so they survive navigation (unmount/remount).
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
@@ -132,13 +130,16 @@ export default function DiscoverPage() {
     buildRequest,
     onSuccess: (data, executedQuery) => {
       setResult(data);
+      if (discoverQueryDraft) {
+        setDiscoverQueryDraft(null);
+        setQuery(executedQuery);
+      }
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
       appendQueryToHistory(executedQuery);
       timingsCleared.current = false;
     },
-    onFailure: () => setResult(null),
   });
 
   const insightQueryToColumnRef = useRef(new Map<string, string>());
@@ -213,7 +214,8 @@ export default function DiscoverPage() {
       // specific healthy cluster names so the query targets only healthy data.
       const scoped = effectiveQuery.replace(
         /\bFROM\s+\*:([^\s,|]+)/gi,
-        (_, pattern: string) => `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
+        (_: string, pattern: string) =>
+          `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
       );
       handleQueryChange(scoped);
       void runQuery(scoped);
