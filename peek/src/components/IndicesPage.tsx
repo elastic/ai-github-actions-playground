@@ -12,7 +12,6 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
-import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
@@ -31,7 +30,9 @@ import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
 
+import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
+import PageHeader from "./PageHeader";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -529,42 +530,44 @@ export default function IndicesPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Indices
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={indicesResult.refresh}
-            disabled={loadingIndices}
-            sx={{ height: 36 }}
-          >
-            {loadingIndices ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Tooltip title={!selectedIndex ? "Select an index first" : ""}>
-            <span>
+        <PageHeader
+          title="Indices"
+          actions={
+            <>
               <Button
                 size="small"
-                variant="contained"
-                disabled={!selectedIndex}
-                onClick={handleOpenInQueryLab}
-                sx={{ height: 36 }}
+                variant="outlined"
+                onClick={indicesResult.refresh}
+                startIcon={
+                  loadingIndices ? <CircularProgress size={14} aria-hidden="true" /> : undefined
+                }
+                aria-label={loadingIndices ? "Refreshing indices" : "Refresh indices"}
               >
-                Open in Query Lab
+                {loadingIndices ? "Refreshing..." : "Refresh"}
               </Button>
-            </span>
-          </Tooltip>
-          <Button
-            size="small"
-            variant="outlined"
-            disabled={!selectedIndex}
-            onClick={handleInspectInConsole}
-            sx={{ height: 36 }}
-          >
-            Inspect in Console
-          </Button>
-        </Stack>
+              <Tooltip title={!selectedIndex ? "Select an index first" : ""}>
+                <span>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={!selectedIndex}
+                    onClick={handleOpenInQueryLab}
+                  >
+                    Open in Query Lab
+                  </Button>
+                </span>
+              </Tooltip>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={!selectedIndex}
+                onClick={handleInspectInConsole}
+              >
+                Inspect in Console
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -633,7 +636,8 @@ export default function IndicesPage() {
             {!loadingIndices && filteredIndices.length === 0 && (
               <ListItem>
                 <EmptyState
-                  icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                  size="small"
+                  icon={<StorageIcon sx={{ fontSize: 28 }} />}
                   heading="No user indices found"
                   description={
                     showSystemIndices
@@ -708,17 +712,7 @@ export default function IndicesPage() {
                 sx={{ flex: 1, overflow: "auto", p: 2 }}
               >
                 {loadingDetail ? (
-                  <Box sx={{ py: 1 }}>
-                    <Skeleton
-                      variant="rectangular"
-                      height={24}
-                      width="40%"
-                      sx={{ mb: 1.5, borderRadius: 1 }}
-                    />
-                    {[...Array(4)].map((_, i) => (
-                      <Skeleton key={i} variant="text" height={20} sx={{ mb: 0.5 }} />
-                    ))}
-                  </Box>
+                  <ContentSkeleton variant="table" />
                 ) : (
                   <>
                     {activeTab === "overview" && overviewContent}
@@ -732,7 +726,7 @@ export default function IndicesPage() {
             </>
           ) : (
             <EmptyState
-              icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              icon={<StorageIcon sx={{ fontSize: 32 }} />}
               heading="No index selected"
               description="Select an index from the list to view its details."
             />

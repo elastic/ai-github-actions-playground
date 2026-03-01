@@ -36,7 +36,9 @@ import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import DriftRadarMap from "../visualizations/DriftRadarMap";
+import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
+import PageHeader from "../PageHeader";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
@@ -369,12 +371,14 @@ export default function TracesPage() {
         <Box
           sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
         >
-          <Typography variant="h6" component="h1">
-            Trace Search
-          </Typography>
-          <Button size="small" variant="text" onClick={resetFilters}>
-            Reset Filters
-          </Button>
+          <PageHeader
+            title="Trace Search"
+            actions={
+              <Button size="small" variant="text" onClick={resetFilters}>
+                Reset Filters
+              </Button>
+            }
+          />
         </Box>
 
         {/* Filter pills */}
@@ -456,7 +460,6 @@ export default function TracesPage() {
             mb: 1,
             flexWrap: "wrap",
             alignItems: "center",
-            "& .MuiInputBase-root": { height: 36 },
           }}
         >
           <TextField
@@ -469,7 +472,7 @@ export default function TracesPage() {
             }}
             sx={{ width: 160 }}
           />
-          <Button size="small" variant="outlined" onClick={handleAddService} sx={{ height: 36 }}>
+          <Button size="small" variant="outlined" onClick={handleAddService}>
             Add Service
           </Button>
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
@@ -490,12 +493,7 @@ export default function TracesPage() {
               onChange={(e) => setMaxDurationInput(e.target.value)}
               sx={{ width: 100 }}
             />
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handleApplyDuration}
-              sx={{ height: 36 }}
-            >
+            <Button size="small" variant="outlined" onClick={handleApplyDuration}>
               Apply
             </Button>
           </Box>
@@ -511,7 +509,7 @@ export default function TracesPage() {
                 applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
               }
             }}
-            sx={{ minWidth: 150, height: 36 }}
+            sx={{ minWidth: 150 }}
           >
             {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
               <MenuItem key={opt.label} value={opt.from ?? ""}>
@@ -527,7 +525,6 @@ export default function TracesPage() {
                 size="small"
                 variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
                 color={status === "Error" ? "error" : "default"}
-                sx={{ height: 36 }}
                 onClick={() => {
                   if (filters.statusCodes.includes(status)) {
                     applyFiltersAndRun({
@@ -652,15 +649,8 @@ export default function TracesPage() {
               />
             )}
             {searchLoading && !result && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <CircularProgress size={32} />
+              <Box sx={{ p: 2 }}>
+                <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
               </Box>
             )}
             {result && viewMode === "list" && (
@@ -835,15 +825,8 @@ export default function TracesPage() {
                   description="Use filter chips instead of raw ES|QL to view trace volume and latency trends."
                 />
               ) : timeseriesLoading ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <CircularProgress size={32} />
+                <Box sx={{ p: 2 }}>
+                  <ContentSkeleton variant="chart" />
                 </Box>
               ) : timeseriesResult ? (
                 <Box sx={{ height: "100%" }}>
@@ -866,15 +849,8 @@ export default function TracesPage() {
                     description="Choose a trace from List or Scatter view to render service relationships."
                   />
                 ) : detailLoading ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                    }}
-                  >
-                    <CircularProgress size={32} />
+                  <Box sx={{ p: 2 }}>
+                    <ContentSkeleton variant="chart" />
                   </Box>
                 ) : (
                   <TraceServiceMap
@@ -891,15 +867,8 @@ export default function TracesPage() {
                   description="Use filter chips to define the current window before opening Drift Radar."
                 />
               ) : driftRadarLoading || driftRadarBaselineLoading ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <CircularProgress size={32} />
+                <Box sx={{ p: 2 }}>
+                  <ContentSkeleton variant="chart" />
                 </Box>
               ) : driftRadarSpans.length > 0 ? (
                 <Box sx={{ height: "100%" }}>
@@ -971,10 +940,8 @@ export default function TracesPage() {
                 </Button>
               </Box>
               {detailLoading ? (
-                <Box
-                  sx={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}
-                >
-                  <CircularProgress size={24} />
+                <Box sx={{ p: 2, flex: 1 }}>
+                  <ContentSkeleton variant="table" />
                 </Box>
               ) : selectedTraceSpans.length > 0 ? (
                 <Box sx={{ flex: 1, overflow: "hidden" }}>

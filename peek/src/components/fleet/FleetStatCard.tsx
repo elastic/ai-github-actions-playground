@@ -24,14 +24,18 @@ export default function FleetStatCard({
   const theme = useTheme();
   const content = (
     <>
-      <Typography variant="caption" color="text.secondary" noWrap>
+      <Typography variant="overline" color="text.secondary" noWrap component="div">
         {title}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
         <Typography
           variant="h5"
           component="div"
-          sx={{ fontWeight: 600, color: color ?? "text.primary" }}
+          sx={{
+            fontWeight: 600,
+            color: color ?? "text.primary",
+            fontVariantNumeric: "tabular-nums",
+          }}
         >
           {value ?? "—"}
         </Typography>

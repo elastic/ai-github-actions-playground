@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -34,6 +34,9 @@ import {
 import { useConnectionStore } from "../store/useConnectionStore";
 import { formatBytes } from "../utils/formatBytes";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+
+import ContentSkeleton from "./ContentSkeleton";
+import PageHeader from "./PageHeader";
 
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
@@ -154,6 +157,7 @@ export default function ClusterOverviewPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const loadInFlightRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
   const [partialDismissed, setPartialDismissed] = useState(false);
@@ -171,7 +175,8 @@ export default function ClusterOverviewPage() {
   });
 
   const loadOverview = useCallback(async () => {
-    if (!connection) return;
+    if (!connection || loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
     setLoading(true);
     setError(null);
     setPartialErrors([]);
@@ -258,6 +263,7 @@ export default function ClusterOverviewPage() {
       }
     } finally {
       setLoading(false);
+      loadInFlightRef.current = false;
     }
   }, [connection]);
 
@@ -301,14 +307,20 @@ export default function ClusterOverviewPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Cluster Overview
-          </Typography>
-          <Button size="small" variant="outlined" onClick={loadOverview} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Cluster Overview"
+          actions={
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={loadOverview}
+              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+              aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </Button>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -319,9 +331,7 @@ export default function ClusterOverviewPage() {
       )}
 
       {loading && !clusterInfo ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress />
-        </Box>
+        <ContentSkeleton variant="cards" />
       ) : (
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>

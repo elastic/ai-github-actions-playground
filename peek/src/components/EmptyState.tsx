@@ -7,9 +7,18 @@ interface EmptyStateProps {
   heading: string;
   description?: string;
   action?: React.ReactNode;
+  size?: "small" | "medium";
 }
 
-export default function EmptyState({ icon, heading, description, action }: EmptyStateProps) {
+export default function EmptyState({
+  icon,
+  heading,
+  description,
+  action,
+  size = "medium",
+}: EmptyStateProps) {
+  const iconSize = size === "small" ? 28 : 40;
+
   return (
     <Box
       sx={{
@@ -17,18 +26,34 @@ export default function EmptyState({ icon, heading, description, action }: Empty
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        py: 6,
+        py: size === "small" ? 3 : 6,
         px: 2,
         gap: 1,
         height: "100%",
+        maxWidth: 400,
+        mx: "auto",
+        textAlign: "center",
       }}
     >
-      {icon ?? <SearchIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+      <Box
+        sx={{
+          width: size === "small" ? 44 : 56,
+          height: size === "small" ? 44 : 56,
+          borderRadius: "50%",
+          bgcolor: "background.subtle",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "text.secondary",
+        }}
+      >
+        {icon ?? <SearchIcon sx={{ fontSize: iconSize }} />}
+      </Box>
       <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 600 }}>
         {heading}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.primary">
+        <Typography variant="body2" color="text.secondary">
           {description}
         </Typography>
       )}
