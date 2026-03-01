@@ -70,7 +70,7 @@ serve-proxy: setup
 
 serve-background: setup
 	@echo "Starting Vite dev server in background..."
-	@cd $(PEEK_DIR) && nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
+	@cd $(PEEK_DIR) && { nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid; }
 	@for i in $$(seq 1 30); do \
 		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
 		sleep 2; \
@@ -100,22 +100,22 @@ serve-explore: setup
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url http://localhost:9200 --wait-for-ready
 	@echo "Waiting for seeded data to be searchable..."
 	@for i in $$(seq 1 30); do \
-		curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' && break; \
+		curl -sf 'http://localhost:9200/web_logs/_count' | grep -Eq '"count":[[:space:]]*[1-9][0-9]*' && break; \
 		sleep 2; \
 	done
-	@curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' \
-		|| { echo "✗ Seed verification failed: web_logs missing"; exit 1; }
+	@curl -sf 'http://localhost:9200/web_logs/_count' | grep -Eq '"count":[[:space:]]*[1-9][0-9]*' \
+		|| { echo "✗ Seed verification failed: web_logs has zero docs"; exit 1; }
 	@echo "✓ Data seeded and verified"
 	@echo "Starting dev server..."
 	@if [ -f /tmp/vite-dev-server.pid ]; then \
 		old_pid=$$(cat /tmp/vite-dev-server.pid); \
-		if kill -0 $$old_pid 2>/dev/null; then \
+		if kill -0 $$old_pid 2>/dev/null && ps -p $$old_pid -o command= 2>/dev/null | grep -q 'vite'; then \
 			kill $$old_pid 2>/dev/null; \
 			sleep 1; \
 		fi; \
 		rm -f /tmp/vite-dev-server.pid; \
 	fi
-	@cd $(PEEK_DIR) && nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
+	@cd $(PEEK_DIR) && { nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid; }
 	@for i in $$(seq 1 30); do \
 		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
 		sleep 2; \
@@ -134,7 +134,7 @@ explore-down:
 	@echo "Stopping exploration stack..."
 	@if [ -f /tmp/vite-dev-server.pid ]; then \
 		pid=$$(cat /tmp/vite-dev-server.pid); \
-		if kill -0 $$pid 2>/dev/null; then kill $$pid; fi; \
+		if kill -0 $$pid 2>/dev/null && ps -p $$pid -o command= 2>/dev/null | grep -q 'vite'; then kill $$pid; fi; \
 		rm -f /tmp/vite-dev-server.pid; \
 	fi
 	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
