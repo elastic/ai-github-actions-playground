@@ -27,7 +27,7 @@ import { loadSecurityResource } from "./securityResourceLoader";
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedUsername = searchParams.get("username");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +119,16 @@ export default function UsersPage() {
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
+  const handleSelectUser = useCallback(
+    (username: string) => {
+      setSelectedUsername(username);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("username", username);
+      setSearchParams(nextParams);
+    },
+    [searchParams, setSearchParams],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -172,7 +182,7 @@ export default function UsersPage() {
                 <ListItem key={user.username} disablePadding>
                   <ListItemButton
                     selected={user.username === selectedUsername}
-                    onClick={() => setSelectedUsername(user.username)}
+                    onClick={() => handleSelectUser(user.username)}
                   >
                     <ListItemText
                       primary={user.username}
