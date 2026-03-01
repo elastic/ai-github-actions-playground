@@ -56,7 +56,18 @@ jobs:
            - **Flamescope heatmap**: Does the heatmap show time buckets with
              stacktrace signatures?
            - Layout issues, truncation, missing data, error alerts
-        4. Cross-reference the accessibility violations from the test output.
+        4. **Audit visual patterns from the Feb 2026 audit** (same as the
+           mocked variant): filter bar height mismatches on the Traces page,
+           text.secondary contrast on dark mode (sidebar labels, metric card
+           subtitles, table headers, empty state text), empty state consistency
+           across Traces/Chat/Add Data/Docs, fieldset legend visibility,
+           metric card label readability, and axe-core color-contrast
+           violations (now enabled).
+        5. In the Cluster Health page, check all 6 sub-tabs for visual
+           quality — the demo cluster has real node data, real shard
+           distributions, and real task backlogs, which may expose formatting
+           or truncation issues not visible in mocks.
+        6. Cross-reference the accessibility violations from the test output.
         5. For any page that shows issues, read its source code under `peek/src/components/`
            to understand the root cause and suggest a fix direction.
 

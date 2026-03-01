@@ -62,6 +62,29 @@ jobs:
         done
         ```
 
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Welcome screen layout**: Take a screenshot of the welcome screen.
+           Are the logo, headline, and buttons centered? Is there excessive
+           whitespace? Does the layout look polished?
+
+        2. **Connection dialog fieldset visibility**: Open the connection
+           dialog. Is the fieldset border fully rendered? Is the legend text
+           visible and not clipped?
+
+        3. **Auth tab indicator contrast**: Switch between "API Key" and
+           "Username / Password" tabs. In dark mode, is the active tab
+           indicator clearly visible? Is the inactive tab text readable?
+
+        4. **Form field label contrast**: In the connection dialog, are the
+           floating labels on text fields readable in both focused and
+           unfocused states in dark mode?
+
+        5. **Error state styling**: Enter invalid credentials. Is the error
+           alert readable in both light and dark mode?
+
         ## Output rules
 
         - **Silence is better than noise.** Only file an issue for genuine bugs.

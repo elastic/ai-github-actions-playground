@@ -104,6 +104,31 @@ jobs:
         docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
         ```
 
+        ## Visual quality checks
+
+        With real data, some visual issues appear that mocks don't trigger.
+        On every run, also check:
+
+        1. **Filter bar heights with real data**: On the Traces page after
+           loading traces, measure bounding rect heights of all filter bar
+           controls. Real data can cause controls to reflow differently.
+
+        2. **Large data truncation**: With many real indices, check if long
+           index names overflow their cells. With many-span traces, check if
+           deeply nested span trees cause layout issues.
+
+        3. **Dark mode across 4+ pages**: Switch to dark mode and navigate
+           through at least 4 pages. Take a screenshot of each. Look for
+           text.secondary elements that become invisible, table headers with
+           insufficient contrast, and placeholder text that becomes unreadable.
+
+        4. **Cluster Health tabs with real data**: Navigate through all 6 tabs
+           (Overview, Nodes, Tasks, Capacity, Shards, Resilience). Check that
+           stat cards have readable labels and tables handle real column widths.
+
+        5. **Metric charts with dense data**: Select a metric with dense data.
+           Check if axis labels overlap and if the chart legend is readable.
+
         ## Output rules
 
         - **Silence is better than noise.** Only file an issue for genuine bugs.

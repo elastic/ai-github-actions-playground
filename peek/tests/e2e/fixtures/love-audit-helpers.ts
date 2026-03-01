@@ -48,7 +48,7 @@ export function collectConsoleLogs(page: Page): ConsoleDiagnostic[] {
 }
 
 export async function runAccessibilityCheck(page: Page, pageName: string) {
-  const results = await new AxeBuilder({ page }).disableRules(["color-contrast"]).analyze();
+  const results = await new AxeBuilder({ page }).analyze();
 
   if (results.violations.length > 0) {
     console.log(`\n=== A11Y VIOLATIONS: ${pageName} (${results.violations.length}) ===`);
@@ -111,6 +111,24 @@ export function slug(name: string): string {
 /** Pages audited by both the mocked and demo variants. */
 export const COMMON_PAGES: PageAuditConfig[] = [
   { name: "Cluster Overview", navButton: "Cluster Overview" },
+  {
+    name: "Cluster Health",
+    navButton: "Cluster Health",
+    afterNav: async (page, prefix) => {
+      await page.screenshot({
+        path: `test-results/${prefix}-cluster-health-overview.png`,
+        fullPage: true,
+      });
+      for (const tab of ["Nodes", "Tasks", "Capacity", "Shards", "Resilience"]) {
+        await page.getByRole("tab", { name: tab }).click();
+        await page.waitForLoadState("networkidle");
+        await page.screenshot({
+          path: `test-results/${prefix}-cluster-health-${slug(tab)}.png`,
+          fullPage: true,
+        });
+      }
+    },
+  },
   { name: "Data Streams", navButton: "Data Streams" },
   {
     name: "Indices",
@@ -133,6 +151,27 @@ export const COMMON_PAGES: PageAuditConfig[] = [
     },
   },
   { name: "Ingest Pipelines", navButton: "Ingest Pipelines" },
+  { name: "Traces", navButton: "Traces" },
+  {
+    name: "Add Data",
+    navButton: "Add Data",
+    afterNav: async (page, prefix) => {
+      await page.screenshot({
+        path: `test-results/${prefix}-add-data-default.png`,
+        fullPage: true,
+      });
+      for (const tab of ["Docker", "Linux", "macOS", "Windows"]) {
+        const tabEl = page.getByRole("tab", { name: tab });
+        if ((await tabEl.count()) > 0) {
+          await tabEl.click();
+          await page.screenshot({
+            path: `test-results/${prefix}-add-data-${slug(tab)}.png`,
+            fullPage: true,
+          });
+        }
+      }
+    },
+  },
   { name: "Query Lab", navButton: "Query Lab" },
   {
     name: "Metrics",
@@ -152,10 +191,12 @@ export const COMMON_PAGES: PageAuditConfig[] = [
     },
   },
   { name: "Console", navButton: "Console" },
+  { name: "Chat", navButton: "Chat" },
   { name: "Users", navButton: "Users" },
   { name: "Roles", navButton: "Roles" },
   { name: "Dashboards", navButton: "Dashboards" },
   { name: "Fleet", navButton: "Fleet" },
+  { name: "Docs", navButton: "Docs" },
 ];
 
 /**
