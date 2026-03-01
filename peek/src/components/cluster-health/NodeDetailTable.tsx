@@ -6,11 +6,12 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import Typography from "@mui/material/Typography";
 import type { Theme } from "@mui/material/styles";
 import { useTheme } from "@mui/material/styles";
+import StorageIcon from "@mui/icons-material/Storage";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
+import EmptyState from "../EmptyState";
 
 import type { InfoCardSeverity } from "./InfoCard";
 import { percentSeverity } from "./clusterHealthUtils";
@@ -111,7 +112,13 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
   };
 
   if (rows.length === 0) {
-    return <Typography color="text.secondary">No node data available.</Typography>;
+    return (
+      <EmptyState
+        icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+        heading="No node data available"
+        description="Node stats require the monitor cluster privilege. Contact your administrator to grant access."
+      />
+    );
   }
 
   const columns: {
