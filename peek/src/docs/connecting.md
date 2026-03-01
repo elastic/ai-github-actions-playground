@@ -10,7 +10,7 @@ automatically forward your Elasticsearch URL as a routing header.
 
 Use API keys for least-privilege access in shared environments, and reserve username/password auth for development or dedicated operator workflows.
 
-Your URL is saved in localStorage for convenience. Credentials are stored in sessionStorage and cleared when you close the tab.
+Your URL is saved in localStorage for convenience. By default, credentials are stored in sessionStorage and cleared when you close the tab. If you lock a profile with a PIN, credentials are encrypted and stored in localStorage so they persist across sessions. Unlocking a PIN-locked profile requires re-entering the PIN to decrypt the credentials.
 
 If the connection test fails, verify the URL first, then authentication details, then whether your cluster can be reached from the browser network.
 
@@ -25,7 +25,7 @@ You can save multiple named connection profiles so you don't have to re-enter UR
 - **Delete a profile**: Click the delete icon next to a profile in the dialog, then confirm.
 - **Re-test a saved profile**: In the quick switcher menu, click the refresh icon next to any profile to test its connection without switching to it. A brief spinning animation plays while the test runs. A toast notification confirms the result: a success message if the profile is reachable, or an error message with details if it is not. The health badge next to the profile name updates immediately to reflect the new status.
 
-Profile URLs are persisted in localStorage. Profile credentials are stored in sessionStorage and cleared when you close the tab, just like the active connection.
+Profile URLs are persisted in localStorage. By default, profile credentials are stored in sessionStorage and cleared when you close the tab, just like the active connection. If you lock a profile with a PIN, its credentials are encrypted and persisted in localStorage instead, so they survive tab and browser restarts. You must enter the PIN to unlock and use the profile.
 
 ### Profile health badges
 
