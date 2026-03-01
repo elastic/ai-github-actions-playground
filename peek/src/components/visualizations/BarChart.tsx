@@ -23,9 +23,62 @@ export default function BarChart({ data, options, onExportReady }: Props) {
     const transformed = toBarChartData(data);
     const seriesData = transformed.series;
     const categories = transformed.categories;
+    const textColor = theme.textStyle?.color ?? "#9CA3AF";
 
     if (seriesData.length === 0) {
-      return { title: { text: "No numeric data to display", left: "center", top: "center" } };
+      return {
+        ...theme,
+        title: { text: "No numeric data to display", left: "center", top: "center", show: false },
+        graphic: {
+          type: "group",
+          left: "center",
+          top: "middle",
+          children: [
+            {
+              type: "circle",
+              left: "center",
+              top: -44,
+              shape: { cx: 0, cy: 0, r: 16 },
+              style: { stroke: textColor, lineWidth: 2, fill: "transparent" },
+            },
+            {
+              type: "text",
+              left: "center",
+              top: -52,
+              style: {
+                text: "!",
+                fill: textColor,
+                fontSize: 18,
+                fontWeight: 700,
+                textAlign: "center",
+              },
+            },
+            {
+              type: "text",
+              left: "center",
+              top: -10,
+              style: {
+                text: "No numeric data to display",
+                fill: textColor,
+                fontSize: 16,
+                fontWeight: 700,
+                textAlign: "center",
+              },
+            },
+            {
+              type: "text",
+              left: "center",
+              top: 18,
+              style: {
+                text: "Run a query that returns at least one numeric column.",
+                fill: textColor,
+                fontSize: 12,
+                textAlign: "center",
+              },
+            },
+          ],
+        },
+      };
     }
 
     const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};

@@ -132,6 +132,25 @@ describe("perses data transformers", () => {
     });
   });
 
+  it("converts ES|QL rows to ungrouped categorical bar data", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "service", type: "keyword" },
+        { name: "doc_count", type: "long" },
+      ],
+      values: [
+        ["2026-01-01T00:00:00.000Z", "nginx", 100],
+        ["2026-01-01T00:01:00.000Z", "system", 250],
+      ],
+    };
+
+    expect(toBarChartData(data)).toEqual({
+      categories: ["nginx", "system"],
+      series: [{ name: "doc_count", values: [100, 250] }],
+    });
+  });
+
   it("extracts gauge data from latest timestamp row", () => {
     const data: EsqlResponse = {
       columns: [

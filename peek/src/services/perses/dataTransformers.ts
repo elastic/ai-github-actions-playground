@@ -196,7 +196,10 @@ export function toBarChartData(data: EsqlResponse): BarChartData {
       categories,
       series: numericColumns.map((columnIndex) => ({
         name: data.columns[columnIndex]?.name ?? `value_${columnIndex}`,
-        values: data.values.map((row) => Number(row[columnIndex]) || 0),
+        values: data.values.map((row) => {
+          const numeric = Number(row[columnIndex] ?? 0);
+          return Number.isFinite(numeric) ? numeric : 0;
+        }),
       })),
     };
   }
@@ -214,7 +217,8 @@ export function toBarChartData(data: EsqlResponse): BarChartData {
   }
 
   const series: BarChartSeriesData[] = [];
-  for (const [groupName, rows] of groupedRows) {
+  for (const groupName of Array.from(groupedRows.keys()).sort((a, b) => a.localeCompare(b))) {
+    const rows = groupedRows.get(groupName) ?? [];
     for (const columnIndex of numericColumns) {
       const columnName = data.columns[columnIndex]?.name ?? `value_${columnIndex}`;
       const name = numericColumns.length > 1 ? `${columnName} (${groupName})` : groupName;
