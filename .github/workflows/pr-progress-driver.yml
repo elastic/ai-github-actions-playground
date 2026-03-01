@@ -1,0 +1,217 @@
+name: PR Progress Driver
+
+# Scans all open non-draft PRs and moves each one forward based on its state:
+#
+#   MERGE CONFLICTS  → post a comment (AI cannot resolve conflicts)
+#   BOT LAST COMMIT  → re-run CI (bot commits don't auto-trigger pull_request checks)
+#   CHECKS PASS + NO REVIEW → dispatch AI review via trigger-mention-in-pr-by-id
+#   CHECKS RUNNING   → skip (already in progress)
+#
+# Complements ready-prs-and-enable-workflows.sh, which handles:
+#   - draft → ready for review
+#   - action_required workflow approvals
+
+on:
+  schedule:
+    - cron: "0 9,13,17 * * 1-5" # 9am, 1pm, 5pm UTC on weekdays
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  drive:
+    name: Assess and advance open PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan PRs and take next-step actions
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+
+            // HTML markers embedded in bot comments to prevent duplicate posts
+            const MARKER_CONFLICT   = '<!-- pr-driver:conflict -->';
+            const MARKER_KICKSTART  = '<!-- pr-driver:kickstart -->';
+            const DEDUP_WINDOW_MS   = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+            // Bot logins whose commits do NOT auto-trigger pull_request CI
+            const BOT_LOGINS = new Set([
+              'github-actions[bot]',
+              'copilot[bot]',
+            ]);
+
+            function isBot(login) {
+              return BOT_LOGINS.has(login) || (!!login && login.endsWith('[bot]'));
+            }
+
+            async function hasRecentBotComment(prNum, marker) {
+              const cutoff = Date.now() - DEDUP_WINDOW_MS;
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: prNum, per_page: 100,
+              });
+              return comments.some(c =>
+                c.body?.includes(marker) &&
+                new Date(c.created_at).getTime() > cutoff,
+              );
+            }
+
+            // ── List all open, non-draft PRs ──────────────────────────────────
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+
+            core.info(`Found ${prs.length} open PR(s). Scanning...`);
+
+            for (const pr of prs) {
+              const prNum  = pr.number;
+              const label  = `PR #${prNum} "${pr.title.slice(0, 55)}"`;
+
+              // Skip drafts — ready-prs-and-enable-workflows.sh handles those
+              if (pr.draft) {
+                core.info(`${label}: skip (draft)`);
+                continue;
+              }
+
+              // Fetch the full PR object; the list response omits mergeable_state
+              const { data: full } = await github.rest.pulls.get({
+                owner, repo, pull_number: prNum,
+              });
+
+              // ── CASE 1: Merge conflicts ────────────────────────────────────
+              if (full.mergeable_state === 'dirty') {
+                core.info(`${label}: has merge conflicts`);
+                if (!(await hasRecentBotComment(prNum, MARKER_CONFLICT))) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: prNum,
+                    body:
+                      `${MARKER_CONFLICT}\n` +
+                      `⚠️ **Merge conflicts detected.** This PR has conflicts with ` +
+                      `\`${pr.base.ref}\` that require manual resolution before it can ` +
+                      `continue. Please rebase or merge the base branch into this branch.`,
+                  });
+                  core.info(`${label}: → posted conflict warning`);
+                } else {
+                  core.info(`${label}: → conflict already flagged recently`);
+                }
+                continue;
+              }
+
+              // ── CASE 2: Checks currently running — nothing to do ──────────
+              const headSha = pr.head.sha;
+              const { data: checkData } = await github.rest.checks.listForRef({
+                owner, repo, ref: headSha, per_page: 100,
+              });
+              const activeChecks = checkData.check_runs.filter(c =>
+                c.status === 'in_progress' || c.status === 'queued',
+              );
+              if (activeChecks.length > 0) {
+                core.info(`${label}: ${activeChecks.length} check(s) active — skip`);
+                continue;
+              }
+
+              // ── Determine who authored the last commit ────────────────────
+              const { data: commitData } = await github.rest.repos.getCommit({
+                owner, repo, ref: headSha,
+              });
+              const lastAuthor  = commitData.author?.login ?? commitData.commit.author?.name ?? '';
+              const lastWasBot  = isBot(lastAuthor);
+
+              core.info(`${label}: no active checks. Last commit by: ${lastAuthor || '(unknown)'}`);
+
+              // ── CASE 3: Bot last commit — kickstart CI ────────────────────
+              //
+              // When a bot (e.g. address-pr-review-feedback) pushes a commit using
+              // GITHUB_TOKEN, GitHub does NOT fire the pull_request event, so CI
+              // never runs.  Re-running the most recent CI run for this PR is the
+              // lightest-weight fix.
+              if (lastWasBot) {
+                const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner, repo, event: 'pull_request', per_page: 100,
+                });
+
+                // Prefer a completed run for the exact head SHA
+                let targetRun = runs.workflow_runs.find(r =>
+                  r.name === 'CI' &&
+                  r.head_sha === headSha &&
+                  r.status === 'completed',
+                );
+
+                // Fall back to the most recent run on this branch (different SHA is fine —
+                // re-running it against the new SHA still catches the current code)
+                if (!targetRun) {
+                  targetRun = runs.workflow_runs.find(r =>
+                    r.name === 'CI' && r.head_branch === pr.head.ref,
+                  );
+                }
+
+                if (targetRun) {
+                  core.info(`${label}: → re-running CI run #${targetRun.id} (sha ${targetRun.head_sha.slice(0,7)})`);
+                  await github.rest.actions.reRunWorkflow({
+                    owner, repo, run_id: targetRun.id,
+                  });
+                } else {
+                  // No CI run to re-run — post a note if we haven't already
+                  core.info(`${label}: no CI run found to re-run`);
+                  if (!(await hasRecentBotComment(prNum, MARKER_KICKSTART))) {
+                    await github.rest.issues.createComment({
+                      owner, repo, issue_number: prNum,
+                      body:
+                        `${MARKER_KICKSTART}\n` +
+                        `🔄 **CI not triggered.** The last commit on this PR was from ` +
+                        `\`${lastAuthor}\`, which can prevent CI from running automatically. ` +
+                        `A maintainer can push a small change or re-run CI manually to restart checks.`,
+                    });
+                    core.info(`${label}: → posted kickstart comment`);
+                  } else {
+                    core.info(`${label}: → kickstart already noted recently`);
+                  }
+                }
+                continue;
+              }
+
+              // ── CASE 4: Human last commit, no checks active ───────────────
+              //
+              // Sub-cases:
+              //   a) All checks passed + no review → dispatch AI review
+              //   b) All checks passed + review exists → nothing to do
+              //   c) Checks completed with failures → pr-actions-detective handles this
+              //   d) No checks at all → PR may not touch CI-gated paths; skip
+              const completed  = checkData.check_runs.filter(c => c.status === 'completed');
+              const allPassed  = completed.length > 0 &&
+                                 completed.every(c => c.conclusion === 'success');
+
+              if (allPassed) {
+                const { data: reviews } = await github.rest.pulls.listReviews({
+                  owner, repo, pull_number: prNum,
+                });
+                if (reviews.length === 0) {
+                  core.info(`${label}: checks passed, no review → dispatching AI review`);
+                  await github.rest.actions.createWorkflowDispatch({
+                    owner, repo,
+                    workflow_id: 'trigger-mention-in-pr-by-id.yml',
+                    ref: 'main',
+                    inputs: {
+                      'pull-request-number': String(prNum),
+                      prompt:
+                        'Please review this PR. Assess the changes for correctness, ' +
+                        'code quality, and alignment with project standards in DEVELOPING.md. ' +
+                        'If the PR looks good, approve it. If changes are needed, request them.',
+                    },
+                  });
+                } else {
+                  core.info(`${label}: checks passed, review(s) exist — nothing to do`);
+                }
+              } else if (completed.length === 0) {
+                core.info(`${label}: no check runs — PR may not touch CI-gated paths`);
+              } else {
+                core.info(`${label}: checks have failures — pr-actions-detective handles this`);
+              }
+            }
+
+            core.info('\nDone.');
