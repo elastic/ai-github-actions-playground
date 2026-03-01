@@ -27,6 +27,7 @@ export type PersistedConnectionState = {
 
 export const CONNECTION_STORE_NAME = "elastic-peek-connection";
 export const API_KEY_SESSION_SUFFIX = ":apiKey";
+export const OTLP_API_KEY_SESSION_SUFFIX = ":otlpApiKey";
 export const PASSWORD_SESSION_SUFFIX = ":password";
 export const PROFILE_SESSION_PREFIX = ":profile:";
 export const ENCRYPTED_STORE_SUFFIX = ":enc";
@@ -36,7 +37,7 @@ export const ENCRYPTED_STORE_SUFFIX = ":enc";
 // ---------------------------------------------------------------------------
 
 export function stripCredentials(conn: ElasticsearchConnection): ElasticsearchConnection {
-  return { ...conn, apiKey: "", password: "" };
+  return { ...conn, apiKey: "", password: "", otlpApiKey: "" };
 }
 
 export function stripProfileCredentials(profiles: ConnectionProfile[]): ConnectionProfile[] {
@@ -52,8 +53,9 @@ export const splitStorage = createSplitSecretStorage<PersistedConnectionState>({
     const restored = { ...state };
     if (restored.connection) {
       const apiKey = sessionStorage.getItem(name + API_KEY_SESSION_SUFFIX) ?? "";
+      const otlpApiKey = sessionStorage.getItem(name + OTLP_API_KEY_SESSION_SUFFIX) ?? "";
       const password = sessionStorage.getItem(name + PASSWORD_SESSION_SUFFIX) ?? "";
-      restored.connection = { ...restored.connection, apiKey, password };
+      restored.connection = { ...restored.connection, apiKey, otlpApiKey, password };
     }
     if (restored.connectionProfiles) {
       restored.connectionProfiles = restored.connectionProfiles.map((profile) => {
@@ -65,12 +67,17 @@ export const splitStorage = createSplitSecretStorage<PersistedConnectionState>({
           sessionStorage.getItem(
             name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
           ) ?? "";
+        const pOtlpApiKey =
+          sessionStorage.getItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+          ) ?? "";
         return {
           ...profile,
           connection: {
             ...profile.connection,
             apiKey: pApiKey,
             password: pPassword,
+            otlpApiKey: pOtlpApiKey,
           },
         };
       });
@@ -79,11 +86,16 @@ export const splitStorage = createSplitSecretStorage<PersistedConnectionState>({
   },
   persistSecrets: (name, state) => {
     sessionStorage.setItem(name + API_KEY_SESSION_SUFFIX, state.connection?.apiKey ?? "");
+    sessionStorage.setItem(name + OTLP_API_KEY_SESSION_SUFFIX, state.connection?.otlpApiKey ?? "");
     sessionStorage.setItem(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
     for (const profile of state.connectionProfiles ?? []) {
       sessionStorage.setItem(
         name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
         profile.connection.apiKey ?? "",
+      );
+      sessionStorage.setItem(
+        name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+        profile.connection.otlpApiKey ?? "",
       );
       sessionStorage.setItem(
         name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
@@ -108,6 +120,9 @@ export const splitStorage = createSplitSecretStorage<PersistedConnectionState>({
             name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
           );
           sessionStorage.removeItem(
+            name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+          );
+          sessionStorage.removeItem(
             name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
           );
         }
@@ -116,6 +131,7 @@ export const splitStorage = createSplitSecretStorage<PersistedConnectionState>({
       }
     }
     sessionStorage.removeItem(name + API_KEY_SESSION_SUFFIX);
+    sessionStorage.removeItem(name + OTLP_API_KEY_SESSION_SUFFIX);
     sessionStorage.removeItem(name + PASSWORD_SESSION_SUFFIX);
   },
 });
@@ -130,8 +146,9 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
     const restored = { ...state };
     if (restored.connection) {
       const apiKey = await api.retrieveCredential(name + API_KEY_SESSION_SUFFIX);
+      const otlpApiKey = await api.retrieveCredential(name + OTLP_API_KEY_SESSION_SUFFIX);
       const password = await api.retrieveCredential(name + PASSWORD_SESSION_SUFFIX);
-      restored.connection = { ...restored.connection, apiKey, password };
+      restored.connection = { ...restored.connection, apiKey, otlpApiKey, password };
     }
     if (restored.connectionProfiles) {
       restored.connectionProfiles = await Promise.all(
@@ -142,9 +159,17 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
           const pPassword = await api.retrieveCredential(
             name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
           );
+          const pOtlpApiKey = await api.retrieveCredential(
+            name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+          );
           return {
             ...profile,
-            connection: { ...profile.connection, apiKey: pApiKey, password: pPassword },
+            connection: {
+              ...profile.connection,
+              apiKey: pApiKey,
+              password: pPassword,
+              otlpApiKey: pOtlpApiKey,
+            },
           };
         }),
       );
@@ -154,11 +179,19 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
   persistSecrets: async (name, state) => {
     const api = window.electronAPI!;
     await api.storeCredential(name + API_KEY_SESSION_SUFFIX, state.connection?.apiKey ?? "");
+    await api.storeCredential(
+      name + OTLP_API_KEY_SESSION_SUFFIX,
+      state.connection?.otlpApiKey ?? "",
+    );
     await api.storeCredential(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
     for (const profile of state.connectionProfiles ?? []) {
       await api.storeCredential(
         name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
         profile.connection.apiKey ?? "",
+      );
+      await api.storeCredential(
+        name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+        profile.connection.otlpApiKey ?? "",
       );
       await api.storeCredential(
         name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
@@ -184,6 +217,9 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
             name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
           );
           await api.deleteCredential(
+            name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+          );
+          await api.deleteCredential(
             name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
           );
         }
@@ -192,6 +228,7 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
       }
     }
     await api.deleteCredential(name + API_KEY_SESSION_SUFFIX);
+    await api.deleteCredential(name + OTLP_API_KEY_SESSION_SUFFIX);
     await api.deleteCredential(name + PASSWORD_SESSION_SUFFIX);
   },
 });
