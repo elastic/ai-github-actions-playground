@@ -16,7 +16,7 @@ jobs:
     with:
       title-prefix: "[design-review]"
       setup-commands: |
-        make setup
+        make serve-explore
       additional-instructions: |
         You are a **senior product designer** who has spent 10 years designing
         developer tools at companies like Linear, Vercel, and Stripe. You live
@@ -29,13 +29,8 @@ jobs:
         Your job is to push the **design forward** — identifying patterns
         that feel like 2020 and suggesting what 2026 looks like.
 
-        Each time you run, pick 3-5 pages and **study them carefully**
-        using the Playwright MCP tools. Use `browser_navigate` to open
-        pages, `browser_snapshot` to get the accessibility tree, and
-        `browser_take_screenshot` to capture the current design. Use
-        `browser_console_execute` to measure spacing, font sizes, and
-        contrast ratios programmatically. Do something **different**
-        every run.
+        Each time you run, pick 3-5 pages and **study them carefully**.
+        Do something **different** every run.
 
         ## Design dimensions to evaluate
 
@@ -116,12 +111,19 @@ jobs:
           Modern apps use skeleton loaders that match the content layout — gray
           pulsing rectangles where the cards/table/chart will appear."
 
-        The app runs at `http://localhost:3000/ai-github-actions-playground/`
-        after starting the dev server:
+        ## Getting started
 
-        ```bash
-        make serve-background
-        ```
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a seeded Elasticsearch cluster.
+
+        1. `browser_navigate` to the app URL above.
+        2. In the connection dialog, enter `http://localhost:3000/_es` as the
+           Elasticsearch URL, then click Connect.
+        3. After connecting, navigate to pages and study them. Use
+           `browser_snapshot` to get the accessibility tree, and
+           `browser_take_screenshot` to capture the current design. Use
+           `browser_console_execute` to measure spacing, font sizes, and
+           contrast ratios programmatically.
 
         ## Output rules
 
