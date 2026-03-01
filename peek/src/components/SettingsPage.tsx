@@ -222,7 +222,7 @@ export default function SettingsPage() {
         </Box>
       </Paper>
 
-      <Button variant="outlined" color="error" onClick={handleResetLLMSettings}>
+      <Button variant="text" color="error" onClick={handleResetLLMSettings}>
         Reset LLM Settings
       </Button>
     </Box>
