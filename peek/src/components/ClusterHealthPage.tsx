@@ -12,7 +12,8 @@ import { useClusterHealthData } from "../hooks/useClusterHealthData";
 import CapacityPressureView from "./cluster-health/CapacityPressureView";
 import NodeDetailTable from "./cluster-health/NodeDetailTable";
 import OverviewView from "./cluster-health/OverviewView";
-import RefreshPicker from "./cluster-health/RefreshPicker";
+import type { RefreshIntervalOption } from "./RefreshIntervalPicker";
+import RefreshToolbar from "./RefreshToolbar";
 import ResilienceSignalsView from "./cluster-health/ResilienceSignalsView";
 import ShardDistributionView from "./cluster-health/ShardDistributionView";
 import TaskBacklogView from "./cluster-health/TaskBacklogView";
@@ -24,6 +25,14 @@ export type ClusterHealthView =
   | "capacityPressure"
   | "shardDistribution"
   | "resilienceSignals";
+
+const CLUSTER_HEALTH_REFRESH_OPTIONS: RefreshIntervalOption[] = [
+  { label: "Off", seconds: 0 },
+  { label: "10s", seconds: 10 },
+  { label: "30s", seconds: 30 },
+  { label: "1m", seconds: 60 },
+  { label: "5m", seconds: 300 },
+];
 
 const TABS: { value: ClusterHealthView; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -58,12 +67,13 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Cluster Health
           </Typography>
-          <RefreshPicker
-            intervalMs={refreshIntervalMs}
-            onIntervalChange={setRefreshIntervalMs}
+          <RefreshToolbar
+            lastUpdatedAt={lastUpdatedAt}
+            refreshIntervalSeconds={refreshIntervalMs / 1000}
+            refreshOptions={CLUSTER_HEALTH_REFRESH_OPTIONS}
+            onIntervalChange={(s) => setRefreshIntervalMs(s * 1000)}
             onRefresh={refresh}
             loading={loading}
-            lastUpdatedAt={lastUpdatedAt}
           />
         </Stack>
       </Paper>
