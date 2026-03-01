@@ -472,6 +472,7 @@ export default function IngestPipelinesPage() {
                                         >
                                           <Chip
                                             size="small"
+                                            data-testid={`processor-trace-status-${idx}-${prIdx}`}
                                             label={
                                               pr.status === "success"
                                                 ? "OK"

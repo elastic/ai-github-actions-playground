@@ -297,7 +297,7 @@ describe("IngestPipelinesPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("simulate-result").textContent).toContain("set");
     });
-    expect(screen.getByTestId("simulate-result").textContent).toContain("OK");
+    expect(screen.getByTestId("processor-trace-status-0-0")).toHaveTextContent("OK");
   });
 
   it("shows a simulate error when the API call fails", async () => {
