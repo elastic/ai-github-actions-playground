@@ -5,10 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 describe("App shell visibility", () => {
   beforeEach(() => {

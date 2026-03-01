@@ -1,14 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 
 import { useDashboardFromUrl } from "../../src/hooks/useDashboardFromUrl";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 function makeWrapper(path: string) {
   return function Wrapper({ children }: { children: ReactNode }) {

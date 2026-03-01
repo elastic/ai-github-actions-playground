@@ -1,14 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
 import DashboardsLandingPage from "../../src/components/DashboardsLandingPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 function LocationDisplay() {
   const location = useLocation();
@@ -389,7 +386,9 @@ describe("DashboardsLandingPage", () => {
         screen.getByRole("button", { name: new RegExp(`Add ${title} to favorites`, "i") }),
       );
 
-      expect(useDashboardStore.getState().dashboards.find((d) => d.id === id)?.favoritedAt).toBeTruthy();
+      expect(
+        useDashboardStore.getState().dashboards.find((d) => d.id === id)?.favoritedAt,
+      ).toBeTruthy();
     });
 
     it("shows Favorites filter chip when at least one dashboard is favorited", async () => {
@@ -421,7 +420,7 @@ describe("DashboardsLandingPage", () => {
     });
 
     it("ranks favorited dashboards first when sorted by last updated", () => {
-      const id1 = useDashboardStore.getState().createDashboard("Alpha");
+      useDashboardStore.getState().createDashboard("Alpha");
       const id2 = useDashboardStore.getState().createDashboard("Beta");
       // Favorite the second-created dashboard
       useDashboardStore.getState().toggleFavoriteDashboard(id2);

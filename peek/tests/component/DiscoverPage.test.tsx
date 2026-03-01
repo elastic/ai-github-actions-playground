@@ -7,7 +7,7 @@ import DiscoverPage from "../../src/components/DiscoverPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
 
@@ -25,9 +25,6 @@ vi.mock("../../src/services/es", async (importOriginal) => {
     },
   };
 });
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 vi.mock("@uiw/react-codemirror", () => ({
   default: ({ value }: { value: string }) => <div data-testid="codemirror-mock">{value}</div>,

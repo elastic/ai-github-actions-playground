@@ -1,13 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import SettingsPage from "../../src/components/SettingsPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("SettingsPage", () => {
   beforeEach(() => {

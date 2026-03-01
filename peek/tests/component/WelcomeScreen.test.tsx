@@ -5,10 +5,7 @@ import userEvent from "@testing-library/user-event";
 import WelcomeScreen from "../../src/components/WelcomeScreen";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 // Provide a controllable fetch stub so demo-config fetching can be simulated.
 const fetchMock = vi.fn();

@@ -10,7 +10,7 @@ import AddDataPage, {
 } from "../../src/components/AddDataPage";
 import type { UserCapabilities, ElasticsearchClient } from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const mockGetDataStreams = vi.fn().mockResolvedValue({ data_streams: [] });
 
@@ -28,9 +28,6 @@ vi.mock("../../src/services/es", () => ({
 }));
 
 const fetchSpy = vi.spyOn(globalThis, "fetch");
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 function renderPage() {
   return render(

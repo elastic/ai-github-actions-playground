@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import ParameterBar from "../../src/components/ParameterBar";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const queryMock = vi.fn();
 
@@ -14,9 +14,6 @@ vi.mock("../../src/services/es", () => ({
     query: queryMock,
   })),
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("ParameterBar", () => {
   beforeEach(() => {
