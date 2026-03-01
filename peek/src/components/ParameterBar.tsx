@@ -23,7 +23,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import TuneIcon from "@mui/icons-material/Tune";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import type { DashboardParameter, ParameterSource } from "../types";
 import {
@@ -80,7 +80,7 @@ function formatValueForInput(
 
 export default function ParameterBar() {
   const { parameters, setParameterValue, addParameter, updateParameter, removeParameter } =
-    useDashboardStore(
+    useDashboardEditorStore(
       useShallow((s) => ({
         parameters: s.dashboard.parameters ?? EMPTY_PARAMETERS,
         setParameterValue: s.setParameterValue,

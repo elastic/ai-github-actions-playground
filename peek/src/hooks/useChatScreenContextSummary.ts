@@ -1,14 +1,14 @@
 import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST } from "../routes/manifest";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useTracesStore } from "../store/useTracesStore";
 
 export function useChatScreenContextSummary(pathname: string): string {
   const discoverQueryDraft = useQueryStore((s) => s.discoverQueryDraft);
   const selectedTraceId = useTracesStore((s) => s.selectedTraceId);
-  const { dashboards, activeDashboardId } = useDashboardStore(
+  const { dashboards, activeDashboardId } = useDashboardCatalogStore(
     useShallow((s) => ({
       dashboards: s.dashboards,
       activeDashboardId: s.activeDashboardId,

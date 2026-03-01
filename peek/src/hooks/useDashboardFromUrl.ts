@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 
 export function useDashboardFromUrl() {
   const { id } = useParams<{ id: string }>();
-  const { dashboards, activeDashboardId, setActiveDashboard } = useDashboardStore(
+  const { dashboards, activeDashboardId, setActiveDashboard } = useDashboardCatalogStore(
     useShallow((s) => ({
       dashboards: s.dashboards,
       activeDashboardId: s.activeDashboardId,
