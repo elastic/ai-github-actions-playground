@@ -236,6 +236,13 @@ export interface ApiKeyInfo {
   creation: number;
   expiration?: number | null;
   invalidated: boolean;
+  role_descriptors?: Record<
+    string,
+    {
+      cluster?: string[];
+      indices?: Array<{ privileges?: string[] }>;
+    }
+  >;
   metadata?: Record<string, unknown>;
   realm?: string;
 }

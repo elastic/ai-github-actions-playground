@@ -182,6 +182,7 @@ describe("ApiKeysPage", () => {
     );
 
     await screen.findByText("Your credentials may have partial access to security APIs.");
+    expect(getApiKeysMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows access notice on 403 and empties key list", async () => {

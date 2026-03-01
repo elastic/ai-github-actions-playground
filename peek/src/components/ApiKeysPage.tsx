@@ -20,34 +20,8 @@ import { ElasticsearchClient, type ApiKeyInfo } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
+import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
 import { loadSecurityResource } from "./securityResourceLoader";
-
-function ageDays(creationMs: number): number {
-  return Math.floor((Date.now() - creationMs) / 86_400_000);
-}
-
-function ageLabel(creationMs: number): string {
-  const days = ageDays(creationMs);
-  if (days < 1) return "< 1 day";
-  if (days === 1) return "1 day";
-  return `${days} days`;
-}
-
-type RiskLevel = "error" | "warning" | "default";
-
-function riskLevel(key: ApiKeyInfo): RiskLevel {
-  if (key.invalidated) return "default";
-  if (key.expiration == null) return "error";
-  if (ageDays(key.creation) > 90) return "warning";
-  return "default";
-}
-
-function riskLabel(key: ApiKeyInfo): string {
-  if (key.invalidated) return "Invalidated";
-  if (key.expiration == null) return "Never expires";
-  if (ageDays(key.creation) > 90) return "Stale (>90 days)";
-  return "";
-}
 
 export default function ApiKeysPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -63,6 +37,16 @@ export default function ApiKeysPage() {
   const selectedKey = useMemo(
     () => keys.find((k) => k.id === selectedKeyId) ?? null,
     [keys, selectedKeyId],
+  );
+  const selectedKeyRisk = useMemo(
+    () =>
+      selectedKey === null
+        ? null
+        : {
+            level: riskLevel(selectedKey),
+            label: riskLabel(selectedKey),
+          },
+    [selectedKey],
   );
 
   const loadKeys = useCallback(async () => {
@@ -182,17 +166,9 @@ export default function ApiKeysPage() {
             <>
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                 <Typography variant="h6">{selectedKey.name}</Typography>
-                {selectedKey.invalidated && (
-                  <Chip size="small" label="Invalidated" color="default" />
+                {selectedKeyRisk !== null && selectedKeyRisk.label !== "" && (
+                  <Chip size="small" label={selectedKeyRisk.label} color={selectedKeyRisk.level} />
                 )}
-                {!selectedKey.invalidated && selectedKey.expiration == null && (
-                  <Chip size="small" label="Never expires" color="error" />
-                )}
-                {!selectedKey.invalidated &&
-                  selectedKey.expiration != null &&
-                  ageDays(selectedKey.creation) > 90 && (
-                    <Chip size="small" label="Stale (>90 days)" color="warning" />
-                  )}
               </Stack>
 
               <Typography variant="caption" color="text.secondary">
@@ -255,5 +231,3 @@ export default function ApiKeysPage() {
     </Box>
   );
 }
-
-export { ageDays, ageLabel, riskLevel, riskLabel };
