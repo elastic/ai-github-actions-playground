@@ -1,11 +1,19 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import type { EsqlResponse } from "../types";
+
+export const DEFAULT_DISCOVER_QUERY = "FROM logs-* | SORT @timestamp | LIMIT 50";
+
 interface QueryState {
   discoverQueryDraft: string | null;
+  discoverLastQuery: string;
+  discoverLastResult: EsqlResponse | null;
   queryHistory: string[];
 
   setDiscoverQueryDraft: (query: string | null) => void;
+  setDiscoverLastQuery: (query: string) => void;
+  setDiscoverLastResult: (result: EsqlResponse | null) => void;
   appendQueryToHistory: (query: string) => void;
   resetQueryState: () => void;
 }
@@ -17,9 +25,13 @@ export const useQueryStore = create<QueryState>()(
   persist(
     (set) => ({
       discoverQueryDraft: null,
+      discoverLastQuery: DEFAULT_DISCOVER_QUERY,
+      discoverLastResult: null,
       queryHistory: [],
 
       setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
+      setDiscoverLastQuery: (query) => set({ discoverLastQuery: query }),
+      setDiscoverLastResult: (result) => set({ discoverLastResult: result }),
       appendQueryToHistory: (query) =>
         set((s) => {
           const trimmedQuery = query.trim();
@@ -33,7 +45,12 @@ export const useQueryStore = create<QueryState>()(
         }),
       resetQueryState: () => {
         useQueryStore.persist.clearStorage();
-        set({ discoverQueryDraft: null, queryHistory: [] });
+        set({
+          discoverQueryDraft: null,
+          discoverLastQuery: DEFAULT_DISCOVER_QUERY,
+          discoverLastResult: null,
+          queryHistory: [],
+        });
       },
     }),
     {

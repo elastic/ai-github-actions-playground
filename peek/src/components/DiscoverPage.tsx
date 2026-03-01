@@ -59,15 +59,27 @@ export default function DiscoverPage() {
   const addPanel = useDashboardStore((s) => s.addPanel);
   const activeDashboardId = useDashboardStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
-  const { discoverQueryDraft, setDiscoverQueryDraft, queryHistory, appendQueryToHistory } =
-    useQueryStore(
-      useShallow((s) => ({
-        discoverQueryDraft: s.discoverQueryDraft,
-        setDiscoverQueryDraft: s.setDiscoverQueryDraft,
-        queryHistory: s.queryHistory,
-        appendQueryToHistory: s.appendQueryToHistory,
-      })),
-    );
+  const {
+    discoverQueryDraft,
+    setDiscoverQueryDraft,
+    discoverLastQuery,
+    discoverLastResult,
+    setDiscoverLastQuery,
+    setDiscoverLastResult,
+    queryHistory,
+    appendQueryToHistory,
+  } = useQueryStore(
+    useShallow((s) => ({
+      discoverQueryDraft: s.discoverQueryDraft,
+      setDiscoverQueryDraft: s.setDiscoverQueryDraft,
+      discoverLastQuery: s.discoverLastQuery,
+      discoverLastResult: s.discoverLastResult,
+      setDiscoverLastQuery: s.setDiscoverLastQuery,
+      setDiscoverLastResult: s.setDiscoverLastResult,
+      queryHistory: s.queryHistory,
+      appendQueryToHistory: s.appendQueryToHistory,
+    })),
+  );
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
@@ -76,15 +88,24 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
-  const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
-  const [result, setResult] = useState<EsqlResponse | null>(null);
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState(discoverLastQuery);
+  const [result, setResult] = useState<EsqlResponse | null>(discoverLastResult);
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(
+    () => new Set(discoverLastResult?.columns?.map((c) => c.name) ?? []),
+  );
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
+
+  useEffect(() => {
+    setDiscoverLastQuery(query);
+  }, [query, setDiscoverLastQuery]);
+  useEffect(() => {
+    setDiscoverLastResult(result);
+  }, [result, setDiscoverLastResult]);
 
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
   const [insightsCache, setInsightsCache] = useState<
