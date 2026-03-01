@@ -6,9 +6,10 @@ interface EmptyStateProps {
   icon?: React.ReactNode;
   heading: string;
   description?: string;
+  action?: React.ReactNode;
 }
 
-export default function EmptyState({ icon, heading, description }: EmptyStateProps) {
+export default function EmptyState({ icon, heading, description, action }: EmptyStateProps) {
   return (
     <Box
       sx={{
@@ -31,6 +32,7 @@ export default function EmptyState({ icon, heading, description }: EmptyStatePro
           {description}
         </Typography>
       )}
+      {action && <Box sx={{ mt: 1 }}>{action}</Box>}
     </Box>
   );
 }

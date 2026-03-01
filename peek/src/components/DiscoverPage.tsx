@@ -11,6 +11,7 @@ import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
+import Skeleton from "@mui/material/Skeleton";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
@@ -746,15 +747,11 @@ export default function DiscoverPage() {
             />
           )}
           {loading && !result && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <CircularProgress size={32} />
+            <Box sx={{ p: 2 }}>
+              <Skeleton variant="rectangular" height={36} sx={{ mb: 1, borderRadius: 1 }} />
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} variant="text" height={28} sx={{ mb: 0.5 }} />
+              ))}
             </Box>
           )}
           {filteredResult && filteredResult.columns.length > 0 && (
@@ -768,18 +765,11 @@ export default function DiscoverPage() {
             />
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                No fields selected — check the field picker to show columns
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<TableChartIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="No fields selected"
+              description="Check the field picker to show columns."
+            />
           )}
         </Paper>
       </Box>

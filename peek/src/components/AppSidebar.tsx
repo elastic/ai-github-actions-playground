@@ -151,10 +151,9 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                   px: 2,
                   py: 0.5,
                   display: "block",
-                  color: "text.primary",
+                  color: "text.secondary",
                   fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  letterSpacing: "0.02em",
                   fontSize: "0.7rem",
                 }}
               >
@@ -180,9 +179,20 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                       borderRadius: 1,
                       mx: 0.5,
                       justifyContent: collapsed ? "center" : "flex-start",
+                      position: "relative",
                       "&.Mui-selected": {
                         bgcolor: "action.selected",
                         "&:hover": { bgcolor: "action.selected" },
+                        "&::before": {
+                          content: '""',
+                          position: "absolute",
+                          left: 0,
+                          top: "20%",
+                          bottom: "20%",
+                          width: 3,
+                          borderRadius: 1,
+                          bgcolor: "primary.main",
+                        },
                       },
                     }}
                   >
