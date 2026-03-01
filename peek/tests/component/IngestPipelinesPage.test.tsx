@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import IngestPipelinesPage from "../../src/components/IngestPipelinesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const { getIngestPipelinesMock, simulateIngestPipelineMock } = vi.hoisted(() => ({
   getIngestPipelinesMock: vi.fn(),
@@ -23,9 +23,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const PIPELINES_RESPONSE = {
   "my-pipeline": {

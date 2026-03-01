@@ -7,7 +7,7 @@ import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const { getDataStreamsMock, getFieldCapsMock, fetchFieldStatsMock } = vi.hoisted(() => ({
   getDataStreamsMock: vi.fn(),
@@ -53,9 +53,6 @@ vi.mock("../../src/services/es", () => ({
       "date_nanos",
     ].includes(type),
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

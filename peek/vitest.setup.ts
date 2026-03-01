@@ -5,6 +5,8 @@ import "vitest-axe/extend-expect";
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
+  sessionStorage.clear();
 });
 
 vi.mock("echarts/core", () => ({

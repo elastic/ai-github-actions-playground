@@ -3,33 +3,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import type { DashboardDefinition } from "../../src/types";
 
-// Provide minimal localStorage/sessionStorage stubs so the persist middleware works
-const makeStorageMock = () => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-};
-
-const localStorageMock = makeStorageMock();
-const sessionStorageMock = makeStorageMock();
-
-vi.stubGlobal("localStorage", localStorageMock);
-vi.stubGlobal("sessionStorage", sessionStorageMock);
-
 describe("useDashboardStore resetDashboardState", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     // Reset to a clean store state before each test
     useDashboardStore.setState({
       dashboard: {
@@ -70,8 +47,8 @@ function makeValidDashboard(overrides: Partial<DashboardDefinition> = {}): Dashb
 
 describe("useDashboardStore addPanel / removePanel", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -107,8 +84,8 @@ describe("useDashboardStore addPanel / removePanel", () => {
 
 describe("useDashboardStore duplicatePanel", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -273,8 +250,8 @@ describe("useDashboardStore duplicatePanel", () => {
 
 describe("useDashboardStore updatePanel", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -307,8 +284,8 @@ describe("useDashboardStore updatePanel", () => {
 
 describe("useDashboardStore updatePanelLayouts", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -327,8 +304,8 @@ describe("useDashboardStore updatePanelLayouts", () => {
 
 describe("useDashboardStore setTimeRange / setDashboardTitle", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
@@ -361,8 +338,8 @@ describe("useDashboardStore setTimeRange / setDashboardTitle", () => {
 
 describe("useDashboardStore exportDashboard / importDashboard round-trip", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -411,8 +388,8 @@ describe("useDashboardStore exportDashboard / importDashboard round-trip", () =>
 
 describe("useDashboardStore importDashboard", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -635,8 +612,8 @@ describe("useDashboardStore importDashboard", () => {
 
 describe("useDashboardStore importWorkspace", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -669,8 +646,8 @@ describe("useDashboardStore importWorkspace", () => {
 
 describe("useDashboardStore undo/redo history", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useDashboardStore.getState().resetDashboardState();
   });
 
@@ -912,7 +889,7 @@ describe("useDashboardStore undo/redo history", () => {
       layout: { x: 0, y: 0, w: 6, h: 4 },
     });
 
-    const persisted = JSON.parse(localStorageMock.getItem("elastic-peek-dashboard") ?? "{}") as {
+    const persisted = JSON.parse(localStorage.getItem("elastic-peek-dashboard") ?? "{}") as {
       state?: { historyPast?: unknown };
     };
     expect(persisted.state?.historyPast).toBeUndefined();

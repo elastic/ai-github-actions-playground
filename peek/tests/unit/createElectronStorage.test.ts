@@ -1,14 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { createElectronStorage, isElectronAvailable } from "../../src/store/createElectronStorage";
-import { makeStorageMock } from "../fixtures/test-utils";
 
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
-
-const localStorageMock = makeStorageMock();
-vi.stubGlobal("localStorage", localStorageMock);
 
 interface TestState {
   username: string;
@@ -51,7 +47,7 @@ function makeTestStorage(ipc: ReturnType<typeof makeIpcMock>) {
 
 describe("createElectronStorage", () => {
   beforeEach(() => {
-    localStorageMock.clear();
+    localStorage.clear();
     vi.clearAllMocks();
   });
 
@@ -64,7 +60,7 @@ describe("createElectronStorage", () => {
   it("getItem returns null on malformed JSON", async () => {
     const ipc = makeIpcMock();
     const storage = makeTestStorage(ipc);
-    localStorageMock.setItem("my-store", "not-valid-json");
+    localStorage.setItem("my-store", "not-valid-json");
     expect(await storage.getItem("my-store")).toBeNull();
   });
 
@@ -77,7 +73,7 @@ describe("createElectronStorage", () => {
       version: 1,
     });
 
-    const raw = localStorageMock.getItem("my-store");
+    const raw = localStorage.getItem("my-store");
     expect(raw).not.toBeNull();
     const parsed = JSON.parse(raw!) as { state: TestState };
     expect(parsed.state.secret).toBe(""); // stripped from localStorage
@@ -113,7 +109,7 @@ describe("createElectronStorage", () => {
 
     await storage.removeItem("my-store");
 
-    expect(localStorageMock.getItem("my-store")).toBeNull();
+    expect(localStorage.getItem("my-store")).toBeNull();
     expect(ipc.deleteCredential).toHaveBeenCalledWith("test-secret");
   });
 });

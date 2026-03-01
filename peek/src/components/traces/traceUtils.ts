@@ -279,12 +279,10 @@ export function parseSpansFromEsql(
     const parsedTimestampUs = Number(get(row, fieldMapping.timestampUs) ?? NaN);
     const parsedDurationUs = Number(get(row, fieldMapping.durationUs) ?? NaN);
     const parsedDurationNs = Number(get(row, fieldMapping.durationNs) ?? NaN);
-    const fallbackStartTimeUs =
-      new Date(String(get(row, fieldMapping.timestamp) ?? "")).getTime() * 1000;
     const startTimeUs =
       Number.isFinite(parsedTimestampUs) && parsedTimestampUs > 0
         ? parsedTimestampUs
-        : fallbackStartTimeUs;
+        : new Date(String(get(row, fieldMapping.timestamp) ?? "")).getTime() * 1000;
     const durationUs =
       Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
         ? parsedDurationUs

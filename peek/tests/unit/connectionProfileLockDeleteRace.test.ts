@@ -7,18 +7,11 @@ import {
   ENCRYPTED_STORE_SUFFIX,
 } from "../../src/store/connectionStorageAdapters";
 import * as cryptoUtils from "../../src/utils/crypto";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-const localStorageMock = makeStorageMock();
-const sessionStorageMock = makeStorageMock();
-
-vi.stubGlobal("localStorage", localStorageMock);
-vi.stubGlobal("sessionStorage", sessionStorageMock);
 
 describe("connection profile lock/delete race", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     vi.restoreAllMocks();
     useConnectionStore.getState().resetConnectionState();
   });
@@ -50,6 +43,6 @@ describe("connection profile lock/delete race", () => {
 
     // The encrypted payload must NOT have been written back.
     const encKey = CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + ENCRYPTED_STORE_SUFFIX;
-    expect(localStorageMock.getItem(encKey)).toBeNull();
+    expect(localStorage.getItem(encKey)).toBeNull();
   });
 });

@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import ClusterHealthPage from "../../src/components/ClusterHealthPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const getClusterHealthMock = vi.fn();
 const getPendingTasksMock = vi.fn();
@@ -41,9 +41,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 function renderHealth(defaultTab?: string) {
   return render(

@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import ConnectionDialog from "../../src/components/ConnectionDialog";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const { fetchCapabilitiesForConnectionMock } = vi.hoisted(() => ({
   fetchCapabilitiesForConnectionMock: vi.fn(),
@@ -19,9 +19,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 // Mock fetch to prevent real network calls during connect/test
 vi.stubGlobal("fetch", vi.fn());
