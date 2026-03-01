@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route, Link } from "react-router-dom";
+import { MemoryRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 
 import RolesPage from "../../src/components/RolesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -291,5 +291,38 @@ describe("RolesPage", () => {
     await user.click(screen.getByRole("link", { name: "Switch to viewer" }));
 
     expect(await screen.findByRole("heading", { level: 6, name: "viewer" })).toBeInTheDocument();
+  });
+
+  it("navigates to /users?user=<name> when an assigned user chip is clicked", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    function LocationDisplay() {
+      const location = useLocation();
+      return <div data-testid="location-display">{location.pathname + location.search}</div>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={["/roles?role=superuser"]}>
+        <Routes>
+          <Route path="/roles" element={<RolesPage />} />
+          <Route path="/users" element={null} />
+        </Routes>
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "superuser" });
+    await waitFor(() => {
+      expect(screen.getByText("elastic")).toBeInTheDocument();
+    });
+
+    const chip = screen.getByRole("button", { name: "View user: elastic" });
+    await user.click(chip);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-display").textContent).toBe("/users?user=elastic");
+    });
   });
 });
