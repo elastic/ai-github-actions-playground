@@ -82,8 +82,8 @@ export async function dumpDOM(page: Page, pageName: string, prefix: string) {
   const path = await import("path");
   const dir = path.resolve("test-results");
   fs.mkdirSync(dir, { recursive: true });
-  const slug = pageName.toLowerCase().replace(/\s+/g, "-");
-  fs.writeFileSync(path.join(dir, `${prefix}-dom-${slug}.html`), html, "utf-8");
+  const s = slug(pageName);
+  fs.writeFileSync(path.join(dir, `${prefix}-dom-${s}.html`), html, "utf-8");
 }
 
 export async function captureAriaSnapshot(page: Page, pageName: string, prefix: string) {
