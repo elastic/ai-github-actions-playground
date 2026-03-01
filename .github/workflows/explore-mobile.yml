@@ -23,7 +23,7 @@ jobs:
 
         ## Mobile Exploration Setup
         Before starting your exploration, you MUST:
-        1. Set the browser viewport to a mobile resolution (e.g., 390x844 for iPhone 14).
+        1. Use `browser_resize` to set the viewport to a mobile resolution (e.g., 390x844 for iPhone 14).
         2. Set the User Agent to a mobile device if possible, or at least ensure the
            viewport and touch emulation are active.
 
@@ -63,7 +63,7 @@ jobs:
         with a seeded Elasticsearch cluster.
 
         1. `browser_navigate` to the app URL.
-        2. SET VIEWPORT to mobile (390x844).
+        2. Use `browser_resize` to set the viewport to mobile (390x844).
         3. In the connection dialog, enter `http://localhost:9200` as the ES URL.
         4. Use `browser_snapshot` and `browser_take_screenshot` frequently.
 
