@@ -24,31 +24,7 @@ Before filing an issue, use an AI assistant to research the problem or feature. 
 
 ### 2. Open an Issue with a Plan
 
-Create an issue with a clear, step-by-step implementation plan. The more detailed your plan, the better the agent can execute it.
-
-**Example:**
-
-```markdown
-## Add heatmap visualization type
-
-### Analysis
-The dashboard currently supports time series, bar, pie, table, stat, and gauge
-visualizations. A heatmap would be useful for visualizing density distributions
-from ES|QL aggregations like STATS ... BY bucket1, bucket2.
-
-### Implementation Plan
-
-1. **Create HeatmapChart component** (`peek/src/components/visualizations/HeatmapChart.tsx`):
-   - Accept EsqlResponse data
-   - Map two categorical columns to x/y axes and a numeric column to color intensity
-   - Use ECharts heatmap series type
-
-2. **Register the visualization**:
-   - Add "heatmap" to `VISUALIZATION_TYPES` and `vizRegistryEntries` in `peek/src/components/visualizations/vizRegistry.tsx`
-
-3. **Verify**:
-   - Run `make check` to run lint, unit tests, and build
-```
+Create an issue with: analysis of the problem/feature, step-by-step implementation plan naming specific files and components, and verification steps (`make check`).
 
 ### 3. Maintainer Assigns an Agent
 

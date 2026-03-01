@@ -71,6 +71,8 @@ Elastic Peek is a browser-based dashboard builder that connects directly to your
 
 Use a version manager such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to switch Node versions quickly. A `.nvmrc` file is included in this repo — run `nvm use` or `fnm use` at the repo root to activate the correct version automatically.
 
+See [DEVELOPING.md](DEVELOPING.md) for the full development guide.
+
 ### Quick Start
 
 ```bash
@@ -86,20 +88,11 @@ npm install   # install dependencies
 npm run dev   # start dev server at http://localhost:3000
 ```
 
-Or use the built-in proxy to avoid CORS (see [DEVELOPING.md](DEVELOPING.md#running-with-a-proxy)):
+To avoid CORS, use the built-in proxy or Electron mode — see [DEVELOPING.md](DEVELOPING.md#running-with-a-proxy) for details.
 
 ```bash
-ES_URL=http://localhost:9200 make serve-proxy
-# or without make:
-cd peek && ES_URL=http://localhost:9200 npm run dev
-```
-
-Or run as a native desktop app via Electron — no CORS configuration or proxy required (see [DEVELOPING.md](DEVELOPING.md#electron-mode)):
-
-```bash
-make electron-dev    # start Electron app in dev mode (hot-reloads)
-make electron-build  # compile renderer + main process
-make electron-dist   # package as a distributable app (dmg / exe / AppImage)
+ES_URL=http://localhost:9200 make serve-proxy  # proxy mode
+make electron-dev                               # native desktop app (no CORS needed)
 ```
 
 ### In-Product Docs
