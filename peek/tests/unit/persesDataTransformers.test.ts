@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { toStatData, toTimeSeriesData } from "../../src/services/perses/dataTransformers";
+import {
+  toBarChartData,
+  toGaugeData,
+  toStatData,
+  toTimeSeriesData,
+} from "../../src/services/perses/dataTransformers";
 import type { EsqlResponse } from "../../src/types";
 
 describe("perses data transformers", () => {
@@ -103,6 +108,93 @@ describe("perses data transformers", () => {
     ]);
   });
 
+  it("converts ES|QL rows to grouped categorical bar data", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "doc_count", type: "long" },
+        { name: "dataset", type: "keyword" },
+        { name: "type", type: "keyword" },
+      ],
+      values: [
+        [100, "nginx", "logs"],
+        [200, "nginx", "metrics"],
+        [150, "system", "logs"],
+        [250, "system", "metrics"],
+      ],
+    };
+
+    expect(toBarChartData(data)).toEqual({
+      categories: ["nginx", "system"],
+      series: [
+        { name: "logs", values: [100, 150] },
+        { name: "metrics", values: [200, 250] },
+      ],
+    });
+  });
+
+  it("converts ES|QL rows to ungrouped categorical bar data", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "service", type: "keyword" },
+        { name: "doc_count", type: "long" },
+      ],
+      values: [
+        ["2026-01-01T00:00:00.000Z", "nginx", 100],
+        ["2026-01-01T00:01:00.000Z", "system", 250],
+      ],
+    };
+
+    expect(toBarChartData(data)).toEqual({
+      categories: ["nginx", "system"],
+      series: [{ name: "doc_count", values: [100, 250] }],
+    });
+  });
+
+  it("extracts gauge data from latest timestamp row", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "cpu", type: "double" },
+      ],
+      values: [
+        ["2026-01-01T00:02:00.000Z", 0.9],
+        ["2026-01-01T00:01:00.000Z", 0.6],
+        ["2026-01-01T00:03:00.000Z", 1.1],
+      ],
+    };
+
+    expect(toGaugeData(data)).toEqual({
+      name: "cpu",
+      value: 1.1,
+      values: [0.9, 0.6, 1.1],
+    });
+  });
+
+  it("handles sparse rows in bar and gauge transforms", () => {
+    const barData: EsqlResponse = {
+      columns: [
+        { name: "service", type: "keyword" },
+        { name: "doc_count", type: "long" },
+      ],
+      values: [["nginx", 10], [], ["system", 20]],
+    };
+    const gaugeData: EsqlResponse = {
+      columns: [{ name: "cpu", type: "double" }],
+      values: [[0.9], [], [1.1]],
+    };
+
+    expect(toBarChartData(barData)).toEqual({
+      categories: ["nginx", "(empty)", "system"],
+      series: [{ name: "doc_count", values: [10, 0, 20] }],
+    });
+    expect(toGaugeData(gaugeData)).toEqual({
+      name: "cpu",
+      value: 1.1,
+      values: [0.9, 0, 1.1],
+    });
+  });
+
   it("extracts stat values from the last row when no timestamp column exists", () => {
     const data: EsqlResponse = {
       columns: [{ name: "count", type: "long" }],
@@ -123,6 +215,11 @@ describe("perses data transformers", () => {
 
     expect(toTimeSeriesData(data)).toEqual({ series: [] });
     expect(toStatData(data)).toEqual([]);
+    expect(toBarChartData(data)).toEqual({
+      categories: [],
+      series: [{ name: "value", values: [] }],
+    });
+    expect(toGaugeData(data)).toBeUndefined();
   });
 
   it("returns empty outputs when there are no numeric columns", () => {
@@ -136,6 +233,8 @@ describe("perses data transformers", () => {
 
     expect(toTimeSeriesData(data)).toEqual({ series: [] });
     expect(toStatData(data)).toEqual([]);
+    expect(toBarChartData(data)).toEqual({ categories: [], series: [] });
+    expect(toGaugeData(data)).toBeUndefined();
   });
 
   it("normalizes nullish metrics to null and falls back to row index for invalid timestamps", () => {
