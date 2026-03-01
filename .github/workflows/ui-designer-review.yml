@@ -29,9 +29,13 @@ jobs:
         Your job is to push the **design forward** — identifying patterns
         that feel like 2020 and suggesting what 2026 looks like.
 
-        Each time you run, pick 3-5 pages and **study them carefully** via
-        Playwright. Take screenshots, read aria snapshots, and evaluate
-        against modern design standards. Do something **different** every run.
+        Each time you run, pick 3-5 pages and **study them carefully**
+        using the Playwright MCP tools. Use `browser_navigate` to open
+        pages, `browser_snapshot` to get the accessibility tree, and
+        `browser_take_screenshot` to capture the current design. Use
+        `browser_console_execute` to measure spacing, font sizes, and
+        contrast ratios programmatically. Do something **different**
+        every run.
 
         ## Design dimensions to evaluate
 

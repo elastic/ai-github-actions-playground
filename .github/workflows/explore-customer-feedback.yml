@@ -60,6 +60,16 @@ jobs:
         workflows and notice where the tool falls short. Compare what
         you see to what Kibana, Grafana, or Elasticvue would offer.
 
+        ## How to explore
+
+        1. Start the dev server: `make serve-background`
+        2. Use `browser_navigate` to open `http://localhost:3000/ai-github-actions-playground/`
+        3. The app uses mocked Elasticsearch responses — read
+           `peek/scripts/elasticsearch-mocks.mjs` to understand available data.
+        4. Use `browser_snapshot` to inspect page structure after each action.
+           Use `browser_click` and `browser_type` to interact with the UI.
+           Use `browser_take_screenshot` to capture evidence for issues.
+
         ## Visual quality checks
 
         Although your primary focus is missing features, also note visual
