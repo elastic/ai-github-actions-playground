@@ -253,13 +253,12 @@ describe("AddDataPage", () => {
     });
     useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
+    await Promise.resolve();
     // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
-    await waitFor(() => {
-      expect(fetchSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining(".ingest."),
-        expect.anything(),
-      );
-    });
+    expect(fetchSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(".ingest."),
+      expect.anything(),
+    );
   });
 });
 
