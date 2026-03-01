@@ -10,12 +10,42 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+
+// ---------------------------------------------------------------------------
+// Endpoint type helpers
+// ---------------------------------------------------------------------------
+
+export type EndpointType = "elasticsearch" | "managed_otlp";
+
+/**
+ * Attempt to derive the managed OTLP ingest endpoint from an Elasticsearch URL.
+ * Elastic Cloud URLs follow the pattern `<id>.es.<region>.<provider>.elastic.cloud`;
+ * replacing the `.es.` segment with `.ingest.` yields the OTLP endpoint.
+ * Returns `null` when the URL does not match the Elastic Cloud pattern.
+ */
+export function deriveOtlpEndpoint(esUrl: string): string | null {
+  try {
+    const url = new URL(esUrl);
+    const parts = url.hostname.split(".");
+    const esIdx = parts.indexOf("es");
+    if (esIdx >= 0 && url.hostname.endsWith(".elastic.cloud")) {
+      parts[esIdx] = "ingest";
+      url.hostname = parts.join(".");
+      return url.toString().replace(/\/+$/, "");
+    }
+  } catch {
+    /* invalid URL — fall through */
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Platform definitions
@@ -25,10 +55,18 @@ type Platform = "kubernetes" | "docker" | "linux" | "macos" | "windows";
 
 const ARTIFACTS_BASE = "https://artifacts.elastic.co/downloads/beats/elastic-agent";
 
+interface CommandContext {
+  esUrl: string;
+  version: string;
+  apiKey: string;
+  endpointType: EndpointType;
+  otlpUrl: string;
+}
+
 interface PlatformGuide {
   label: string;
   quickstartUrl: string;
-  command: (ctx: { esUrl: string; version: string; apiKey: string }) => string;
+  command: (ctx: CommandContext) => string;
 }
 
 const PLATFORM_GUIDES: Record<Platform, PlatformGuide> = {
@@ -36,40 +74,51 @@ const PLATFORM_GUIDES: Record<Platform, PlatformGuide> = {
     label: "Kubernetes",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry/quickstart/self-managed/k8s",
-    command: ({ esUrl, version, apiKey }) => `# 1. Add the OpenTelemetry Helm repository
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
+      const endpoint = endpointType === "managed_otlp" ? otlpUrl : esUrl;
+      return `# 1. Add the OpenTelemetry Helm repository
 helm repo add open-telemetry \\
   'https://open-telemetry.github.io/opentelemetry-helm-charts' --force-update
 
-# 2. Create namespace and secret with your ES credentials
+# 2. Create namespace and secret with your ${endpointType === "managed_otlp" ? "OTLP" : "ES"} credentials
 kubectl create namespace opentelemetry-operator-system
 kubectl create secret generic elastic-secret-otel \\
   --namespace opentelemetry-operator-system \\
-  --from-literal=elastic_endpoint='${esUrl}' \\
+  --from-literal=elastic_endpoint='${endpoint}' \\
   --from-literal=elastic_api_key='${apiKey}'
 
 # 3. Install the OpenTelemetry Kube Stack with EDOT values
 helm install opentelemetry-kube-stack open-telemetry/opentelemetry-kube-stack \\
   --namespace opentelemetry-operator-system \\
   --values 'https://raw.githubusercontent.com/elastic/elastic-agent/refs/tags/v${version}/deploy/helm/edot-collector/kube-stack/values.yaml' \\
-  --version '0.12.4'`,
+  --version '0.12.4'`;
+    },
   },
   docker: {
     label: "Docker",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry/quickstart/self-managed/docker",
-    command: ({
-      esUrl,
-      version,
-      apiKey,
-    }) => `# 1. Create an otel-collector-config.yml (see official docs for full reference)
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
+      const isOtlp = endpointType === "managed_otlp";
+      const endpoint = isOtlp ? otlpUrl : esUrl;
+      const endpointEnvKey = isOtlp ? "OTEL_EXPORTER_OTLP_ENDPOINT" : "ELASTIC_ENDPOINT";
+      const authEnv = isOtlp
+        ? `OTEL_EXPORTER_OTLP_HEADERS=Authorization=ApiKey ${apiKey}`
+        : `ELASTIC_API_KEY=${apiKey}`;
+      const composeEnvLines = isOtlp
+        ? `      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_HEADERS`
+        : `      - ELASTIC_API_KEY
+      - ELASTIC_ENDPOINT`;
+      return `# 1. Create an otel-collector-config.yml (see official docs for full reference)
 # 2. Create a .env file
 cat > .env << 'DOTENV'
 HOST_FILESYSTEM=/
 DOCKER_SOCK=/var/run/docker.sock
 ELASTIC_AGENT_OTEL=true
 COLLECTOR_CONTRIB_IMAGE=elastic/elastic-agent:${version}
-ELASTIC_API_KEY=${apiKey}
-ELASTIC_ENDPOINT=${esUrl}
+${authEnv}
+${endpointEnvKey}=${endpoint}
 OTEL_COLLECTOR_CONFIG=./otel-collector-config.yml
 DOTENV
 
@@ -94,36 +143,50 @@ services:
     environment:
       - HOST_FILESYSTEM
       - ELASTIC_AGENT_OTEL
-      - ELASTIC_API_KEY
-      - ELASTIC_ENDPOINT
+${composeEnvLines}
       - STORAGE_DIR=/usr/share/elastic-agent
 COMPOSE
 
 # 4. Start the collector
-docker compose up -d`,
+docker compose up -d`;
+    },
   },
   linux: {
     label: "Linux",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/quickstart-monitor-hosts-with-opentelemetry",
-    command: ({ esUrl, version, apiKey }) => `# 1. Download and extract the EDOT Collector
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
+      const isOtlp = endpointType === "managed_otlp";
+      const credentialLines = isOtlp
+        ? `export OTEL_EXPORTER_OTLP_ENDPOINT="${otlpUrl}"
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=ApiKey ${apiKey}"`
+        : `export ELASTIC_ENDPOINT="${esUrl}"
+export ELASTIC_API_KEY="${apiKey}"`;
+      return `# 1. Download and extract the EDOT Collector
 curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-linux-x86_64.tar.gz
 tar xzvf elastic-agent-${version}-linux-x86_64.tar.gz
 cd elastic-agent-${version}-linux-x86_64
 
 # 2. Set your credentials
-export ELASTIC_ENDPOINT="${esUrl}"
-export ELASTIC_API_KEY="${apiKey}"
+${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 
 # 3. Start the EDOT Collector
-sudo -E ./otelcol --config otel.yml`,
+sudo -E ./otelcol --config otel.yml`;
+    },
   },
   macos: {
     label: "macOS",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/quickstart-monitor-hosts-with-opentelemetry",
-    command: ({ esUrl, version, apiKey }) => `# 1. Download and extract the EDOT Collector
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
+      const isOtlp = endpointType === "managed_otlp";
+      const credentialLines = isOtlp
+        ? `export OTEL_EXPORTER_OTLP_ENDPOINT="${otlpUrl}"
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=ApiKey ${apiKey}"`
+        : `export ELASTIC_ENDPOINT="${esUrl}"
+export ELASTIC_API_KEY="${apiKey}"`;
+      return `# 1. Download and extract the EDOT Collector
 # For Apple Silicon (M1/M2/M3/M4):
 curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-darwin-aarch64.tar.gz
 tar xzvf elastic-agent-${version}-darwin-aarch64.tar.gz
@@ -132,18 +195,25 @@ cd elastic-agent-${version}-darwin-aarch64
 # For Intel Macs, replace aarch64 with x86_64 above
 
 # 2. Set your credentials
-export ELASTIC_ENDPOINT="${esUrl}"
-export ELASTIC_API_KEY="${apiKey}"
+${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 
 # 3. Start the EDOT Collector
-sudo -E ./otelcol --config otel.yml`,
+sudo -E ./otelcol --config otel.yml`;
+    },
   },
   windows: {
     label: "Windows",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/quickstart-monitor-hosts-with-opentelemetry",
-    command: ({ esUrl, version, apiKey }) => `# 1. Download the EDOT Collector
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
+      const isOtlp = endpointType === "managed_otlp";
+      const credentialLines = isOtlp
+        ? `$env:OTEL_EXPORTER_OTLP_ENDPOINT = "${otlpUrl}"
+$env:OTEL_EXPORTER_OTLP_HEADERS = "Authorization=ApiKey ${apiKey}"`
+        : `$env:ELASTIC_ENDPOINT = "${esUrl}"
+$env:ELASTIC_API_KEY = "${apiKey}"`;
+      return `# 1. Download the EDOT Collector
 # Download from: ${ARTIFACTS_BASE}/elastic-agent-${version}-windows-x86_64.zip
 # Or use PowerShell:
 Invoke-WebRequest -Uri "${ARTIFACTS_BASE}/elastic-agent-${version}-windows-x86_64.zip" -OutFile elastic-agent.zip
@@ -151,12 +221,12 @@ Expand-Archive -Path elastic-agent.zip -DestinationPath .
 cd elastic-agent-${version}-windows-x86_64
 
 # 2. Set your credentials
-$env:ELASTIC_ENDPOINT = "${esUrl}"
-$env:ELASTIC_API_KEY = "${apiKey}"
+${credentialLines}
 $env:STORAGE_DIR = "$PWD\\data\\otel"
 
 # 3. Start the EDOT Collector
-.\\otelcol.exe --config otel.yml`,
+.\\otelcol.exe --config otel.yml`;
+    },
   },
 };
 
@@ -168,6 +238,7 @@ export default function AddDataPage() {
   const connection = useConnectionStore((s) => s.connection);
   const capabilities = useConnectionStore((s) => s.capabilities);
   const [platform, setPlatform] = useState<Platform>("kubernetes");
+  const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
   const [creatingApiKey, setCreatingApiKey] = useState(false);
   const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -193,6 +264,8 @@ export default function AddDataPage() {
   }, [connection]);
 
   const esUrl = connection?.url ?? "<YOUR_ELASTICSEARCH_ENDPOINT>";
+  const derivedOtlpUrl = useMemo(() => deriveOtlpEndpoint(esUrl), [esUrl]);
+  const otlpUrl = derivedOtlpUrl ?? "<YOUR_OTLP_ENDPOINT>";
   const version = clusterVersion ?? "<VERSION>";
   const apiKey = apiKeyValue ?? "<YOUR_API_KEY>";
   const activeGuide = useMemo(() => PLATFORM_GUIDES[platform], [platform]);
@@ -242,6 +315,29 @@ export default function AddDataPage() {
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Typography variant="subtitle2">Endpoint type</Typography>
+          <ToggleButtonGroup
+            value={endpointType}
+            exclusive
+            size="small"
+            onChange={(_, value: EndpointType | null) => {
+              if (value) setEndpointType(value);
+            }}
+            aria-label="Endpoint type"
+          >
+            <ToggleButton value="elasticsearch">Elasticsearch</ToggleButton>
+            <ToggleButton value="managed_otlp">Managed OTLP</ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
+        {endpointType === "managed_otlp" && (
+          <Alert severity={derivedOtlpUrl ? "success" : "info"}>
+            {derivedOtlpUrl
+              ? `Detected Elastic Cloud URL — OTLP endpoint derived as ${derivedOtlpUrl}`
+              : "Enter your managed OTLP endpoint. For Elastic Cloud, it follows the pattern https://<id>.ingest.<region>.<provider>.elastic.cloud"}
+          </Alert>
+        )}
+
         <Tabs
           value={platform}
           onChange={(_, value: Platform) => setPlatform(value)}
@@ -274,7 +370,7 @@ export default function AddDataPage() {
 
         <TextField
           label="Starter command"
-          value={activeGuide.command({ esUrl, version, apiKey })}
+          value={activeGuide.command({ esUrl, version, apiKey, endpointType, otlpUrl })}
           multiline
           minRows={7}
           fullWidth
@@ -286,7 +382,11 @@ export default function AddDataPage() {
           {apiKeyValue
             ? "Your generated API key, "
             : "Generate an API key below (or provide your own) — "}
-          {connection?.url ? "Elasticsearch endpoint, " : ""}
+          {endpointType === "managed_otlp" && derivedOtlpUrl
+            ? "OTLP endpoint, "
+            : connection?.url
+              ? "Elasticsearch endpoint, "
+              : ""}
           {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
           {apiKeyValue || connection?.url || clusterVersion
             ? "have been pre-filled in the command above."
