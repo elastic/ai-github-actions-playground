@@ -380,7 +380,7 @@ export default function DataStreamsPage() {
                       "&:hover": { bgcolor: "action.hover" },
                     }}
                   >
-                    <Typography variant="body2" sx={{ flex: 1 }}>
+                    <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
                       {field.name}
                     </Typography>
                     <Chip size="small" label={field.type} />
