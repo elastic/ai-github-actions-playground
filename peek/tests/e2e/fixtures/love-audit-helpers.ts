@@ -86,6 +86,16 @@ export async function dumpDOM(page: Page, pageName: string, prefix: string) {
   fs.writeFileSync(path.join(dir, `${prefix}-dom-${slug}.html`), html, "utf-8");
 }
 
+export async function captureAriaSnapshot(page: Page, pageName: string, prefix: string) {
+  const ariaYaml = await page.locator("body").ariaSnapshot();
+  const fs = await import("fs");
+  const path = await import("path");
+  const dir = path.resolve("test-results");
+  fs.mkdirSync(dir, { recursive: true });
+  const s = pageName.toLowerCase().replace(/\s+/g, "-");
+  fs.writeFileSync(path.join(dir, `${prefix}-aria-${s}.yaml`), ariaYaml, "utf-8");
+}
+
 export function logDiagnostics(
   pageName: string,
   consoleLogs: ConsoleDiagnostic[],
@@ -128,6 +138,7 @@ async function captureTabScreenshots(
       path: `test-results/${prefix}-${section}-${slug(tab)}.png`,
       fullPage: true,
     });
+    await captureAriaSnapshot(page, `${section}-${tab}`, prefix);
   }
 }
 
@@ -356,6 +367,7 @@ export function registerLoveAuditTests(
           fullPage: true,
         });
         await dumpDOM(page, pageConfig.name, prefix);
+        await captureAriaSnapshot(page, pageConfig.name, prefix);
         const muiErrors = await checkForMuiErrors(page);
         const a11y = await runAccessibilityCheck(page, pageConfig.name);
         logDiagnostics(pageConfig.name, consoleLogs, muiErrors, a11y.length);

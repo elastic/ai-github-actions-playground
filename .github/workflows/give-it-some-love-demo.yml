@@ -42,8 +42,14 @@ jobs:
         ## Analyze
 
         2. Read the test output from `/tmp/love-audit-demo-output.txt`.
-        3. **Read every screenshot** from `peek/test-results/love-audit-demo-*.png` and
-           **read the DOM dumps** from `peek/test-results/love-audit-demo-dom-*.html`.
+        3. **Read every screenshot** from `peek/test-results/love-audit-demo-*.png`,
+           **read the aria snapshots** from `peek/test-results/love-audit-demo-aria-*.yaml`,
+           and **read the DOM dumps** from `peek/test-results/love-audit-demo-dom-*.html`.
+           The aria snapshot files are your most useful tool — they contain a clean
+           YAML accessibility tree showing every interactive element, its role, name,
+           and state (e.g. buttons, tabs, headings, text fields, table cells). Use
+           them to understand what's actually on the page and check for missing labels,
+           broken structure, or empty content areas.
            Pay special attention to:
            - **Profiling pages**: Are function names resolved or showing "(unknown)"?
              Real data should show names like `finish_task_switch`, `recur_fibo`,
