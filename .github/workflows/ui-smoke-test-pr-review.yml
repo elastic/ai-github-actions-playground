@@ -54,7 +54,7 @@ jobs:
           DEV_PID=$!
           SERVER_READY=false
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:3000/ai-github-actions-playground/ >/dev/null 2>&1; then SERVER_READY=true; break; fi
+            if curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null 2>&1; then SERVER_READY=true; break; fi
             sleep 1
           done
           if [ "$SERVER_READY" = false ]; then
@@ -63,7 +63,7 @@ jobs:
             exit 1
           fi
           node scripts/screenshot-preflight.mjs \
-            --url http://127.0.0.1:3000/ai-github-actions-playground/ \
+            --url http://localhost:3000/ai-github-actions-playground/ \
             --output screenshot-preflight.json \
             --screenshot screenshot.png
           PREFLIGHT_EXIT=$?
