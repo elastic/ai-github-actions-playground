@@ -25,6 +25,21 @@ describe("peek/no-div-onclick", () => {
           code: `<div className="foo" />`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // stopPropagation-only handler is allowed
+        {
+          code: `<div onClick={(e) => e.stopPropagation()} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
+        // stopPropagation-only handler in block form
+        {
+          code: `<div onClick={(e) => { e.stopPropagation(); }} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
+        // Box with component="button" is allowed
+        {
+          code: `<Box component="button" onClick={() => {}} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
       ],
       invalid: [
         {

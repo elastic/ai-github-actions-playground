@@ -12,8 +12,13 @@ import { getServiceColor } from "./traceColors";
 import { formatSpanDuration } from "./traceUtils";
 import type { Span } from "./traceUtils";
 
+type TraceRow = Pick<
+  Span,
+  "traceId" | "spanId" | "serviceName" | "name" | "durationUs" | "status" | "timestamp"
+>;
+
 interface TraceTableProps {
-  traceRows: Span[];
+  traceRows: TraceRow[];
   selectedTraceId: string | null;
   onSelectTrace: (traceId: string, spanId?: string, timestamp?: string) => void;
   maxDuration: number;

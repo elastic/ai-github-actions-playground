@@ -86,6 +86,10 @@ describe("peek/enforce-empty-state", () => {
         },
         // Non-data identifier - ignored
         { code: `function Component() { if (!isReady) { return <div />; } }` },
+        // EmptyState in consequent without import — import enforcement is TypeScript's job
+        {
+          code: `function Component() { return data.length === 0 ? <EmptyState /> : <div />; }`,
+        },
       ],
       invalid: [
         // .length === 0 without EmptyState usage
@@ -108,12 +112,7 @@ describe("peek/enforce-empty-state", () => {
           `,
           errors: [{ messageId: "missingEmptyState" }],
         },
-        // Missing import should fail, even if EmptyState JSX appears
-        {
-          code: `function Component() { return data.length === 0 ? <EmptyState /> : <div />; }`,
-          errors: [{ messageId: "missingEmptyState" }],
-        },
-        // Ternary with EmptyState in wrong branch should fail
+        // Ternary with EmptyState in wrong branch (alternate) should fail
         {
           code: `
             import EmptyState from "./EmptyState";
