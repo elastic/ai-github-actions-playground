@@ -592,11 +592,9 @@ describe("Fleet pages", () => {
       agentFilter: { search: "", version: null, hasErrors: false, staleness: "stale" },
     });
 
-    await waitFor(() => {
-      const chipLabel = screen.getByText("Stale", { selector: ".MuiChip-label" });
-      // eslint-disable-next-line testing-library/no-node-access -- MUI Chip root lacks a unique role/name
-      expect(chipLabel.closest(".MuiChip-root")).toHaveClass("MuiChip-colorWarning");
-    });
+    const chipLabel = await screen.findByText("Stale", { selector: ".MuiChip-label" });
+    // eslint-disable-next-line testing-library/no-node-access -- MUI Chip root lacks a unique role/name
+    expect(chipLabel.closest(".MuiChip-root")).toHaveClass("MuiChip-colorWarning");
   });
 
   it("active filter chip can be cleared in agents table", async () => {
