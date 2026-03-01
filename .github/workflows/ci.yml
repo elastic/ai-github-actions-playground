@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v5
         with:
@@ -40,8 +42,13 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
-      - name: Lint and typecheck
-        run: make lint
+      - name: Lint and typecheck (changed files only)
+        if: github.event_name == 'pull_request'
+        run: make lint BASE=origin/${{ github.event.pull_request.base.ref }}
+
+      - name: Lint and typecheck (full)
+        if: github.event_name == 'push'
+        run: make lint-full
 
       - name: Build
         run: make build
@@ -51,6 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v5
         with:
@@ -64,5 +73,10 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
-      - name: Unit tests with coverage
+      - name: Unit tests (changed files only)
+        if: github.event_name == 'pull_request'
+        run: make test-unit BASE=origin/${{ github.event.pull_request.base.ref }}
+
+      - name: Unit tests with coverage (full)
+        if: github.event_name == 'push'
         run: make test-unit-coverage
