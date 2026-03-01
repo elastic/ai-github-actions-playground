@@ -109,10 +109,14 @@ async function captureTabScreenshots(
   prefix: string,
   section: string,
   tabs: string[],
+  allowMissingTabs = false,
 ): Promise<void> {
   for (const tab of tabs) {
     const tabEl = page.getByRole("tab", { name: tab });
-    if ((await tabEl.count()) === 0) continue;
+    if ((await tabEl.count()) === 0) {
+      if (allowMissingTabs) continue;
+      throw new Error(`Expected tab "${tab}" to exist in ${section}`);
+    }
     await tabEl.click();
     await page.getByRole("tabpanel").waitFor({ state: "visible" });
     await page.screenshot({
@@ -177,12 +181,13 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-add-data-default.png`,
         fullPage: true,
       });
-      await captureTabScreenshots(page, prefix, "add-data", [
-        "Docker",
-        "Linux",
-        "macOS",
-        "Windows",
-      ]);
+      await captureTabScreenshots(
+        page,
+        prefix,
+        "add-data",
+        ["Docker", "Linux", "macOS", "Windows"],
+        true,
+      );
     },
   },
   { name: "Query Lab", navButton: "Query Lab" },
