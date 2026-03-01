@@ -184,7 +184,7 @@ export default function MetricOverviewGrid({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
         <Typography variant="subtitle2" component="div">
           {namespace} namespace
         </Typography>
@@ -244,20 +244,20 @@ export default function MetricOverviewGrid({
                 aria-label={`View details for ${field.name}`}
                 onClick={() => handleCardClick(field)}
                 sx={{
-                  p: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
                   width: "100%",
                   height: "100%",
+                  p: 1,
                   transition: "background-color 0.15s",
                   "&.Mui-focusVisible": {
                     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
                   },
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "stretch",
                 }}
               >
                 {/* Card header */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mb: 0.5 }}>
                   <Typography
                     variant="caption"
                     noWrap
@@ -287,8 +287,8 @@ export default function MetricOverviewGrid({
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
                         justifyContent: "center",
+                        alignItems: "center",
                         height: "100%",
                       }}
                     >
@@ -309,11 +309,11 @@ export default function MetricOverviewGrid({
               key={`loading-${field.name}`}
               variant="outlined"
               sx={{
-                p: 1,
                 display: "flex",
-                alignItems: "center",
                 justifyContent: "center",
+                alignItems: "center",
                 minHeight: 140,
+                p: 1,
               }}
             >
               <CircularProgress size={24} />
@@ -324,7 +324,7 @@ export default function MetricOverviewGrid({
       {/* Failed metrics expandable section */}
       {!isLoading && failedMetrics.length > 0 && (
         <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
             <IconButton
               size="small"
               onClick={() => setFailedExpanded((prev) => !prev)}
@@ -356,7 +356,7 @@ export default function MetricOverviewGrid({
           <Collapse in={failedExpanded}>
             <Box
               component="ul"
-              sx={{ listStyle: "none", m: 0, p: 0, mt: 0.5 }}
+              sx={{ m: 0, mt: 0.5, p: 0, listStyle: "none" }}
               role="list"
               aria-label="Failed metrics"
             >
@@ -368,8 +368,8 @@ export default function MetricOverviewGrid({
                     component="li"
                     sx={{
                       display: "flex",
-                      alignItems: "center",
                       gap: 1,
+                      alignItems: "center",
                       py: 0.5,
                       px: 1,
                       borderBottom: `1px solid ${theme.palette.divider}`,

@@ -114,7 +114,7 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
   if (rows.length === 0) {
     return (
       <EmptyState
-        icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+        icon={<StorageIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
         heading="No node data available"
         description="Node stats require the monitor cluster privilege. Contact your administrator to grant access."
       />

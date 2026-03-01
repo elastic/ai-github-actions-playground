@@ -80,12 +80,12 @@ function DriverRow({ driver, index }: DriverRowProps) {
           display: "flex",
           alignItems: "center",
           width: "100%",
-          px: 1.5,
           py: 0.75,
+          px: 1.5,
           border: 0,
           bgcolor: "transparent",
-          textAlign: "left",
           cursor: "pointer",
+          textAlign: "left",
           "&:hover": { bgcolor: "action.hover" },
         }}
         onClick={() => setOpen((prev) => !prev)}
@@ -95,9 +95,9 @@ function DriverRow({ driver, index }: DriverRowProps) {
           fontSize="small"
           sx={{
             mr: 0.5,
+            color: "text.secondary",
             transform: open ? "rotate(0deg)" : "rotate(-90deg)",
             transition: "transform 0.2s",
-            color: "text.secondary",
           }}
         />
         <Typography variant="body2" sx={{ flex: 1 }} noWrap title={driver.description}>
@@ -109,7 +109,7 @@ function DriverRow({ driver, index }: DriverRowProps) {
       </Box>
       <Collapse in={open}>
         {operators.length > 0 ? (
-          <Box sx={{ px: 2, pb: 1 }}>
+          <Box sx={{ pb: 1, px: 2 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -160,7 +160,7 @@ function DriverRow({ driver, index }: DriverRowProps) {
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ px: 2, pb: 1, display: "block" }}
+            sx={{ display: "block", pb: 1, px: 2 }}
           >
             No operator details available.
           </Typography>
@@ -197,7 +197,7 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
   return (
     <Paper variant="outlined">
       {/* Header */}
-      <Box sx={{ px: 1.5, py: 0.75, display: "flex", alignItems: "center", gap: 0.5 }}>
+      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", py: 0.75, px: 1.5 }}>
         <IconButton
           size="small"
           onClick={() => setExpanded((prev) => !prev)}
@@ -230,7 +230,7 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
               <DriverRow key={idx} driver={driver} index={idx} />
             ))
           ) : (
-            <Typography variant="caption" color="text.secondary" sx={{ p: 1.5, display: "block" }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", p: 1.5 }}>
               Profile returned no driver details.
             </Typography>
           )
@@ -239,13 +239,13 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
           <Box
             component="pre"
             sx={{
+              maxHeight: 300,
+              overflow: "auto",
               m: 1,
               p: 1,
-              overflow: "auto",
-              fontSize: "0.7rem",
-              bgcolor: "action.hover",
               borderRadius: 1,
-              maxHeight: 300,
+              bgcolor: "action.hover",
+              fontSize: "0.7rem",
             }}
           >
             {JSON.stringify(profile, null, 2)}

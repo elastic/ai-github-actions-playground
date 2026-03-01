@@ -138,11 +138,11 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
           flex: 1,
+          flexDirection: "column",
           gap: 2,
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
         <Typography variant="h6" color="text.secondary">
@@ -163,9 +163,9 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
       {!hideHeader && (
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
             Chat
           </Typography>
@@ -190,23 +190,23 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       <Paper
         variant="outlined"
         sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          p: 2,
-          mb: 1,
           display: "flex",
+          flex: 1,
           flexDirection: "column",
           gap: 1.5,
+          minHeight: 0,
+          overflowY: "auto",
+          mb: 1,
+          p: 2,
         }}
       >
         {messages.length === 0 && (
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
             <Typography variant="body2" color="text.secondary">
@@ -225,12 +225,12 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
             <Paper
               elevation={0}
               sx={{
-                px: 2,
-                py: 1,
                 maxWidth: "75%",
+                py: 1,
+                px: 2,
+                borderRadius: 2,
                 bgcolor: msg.role === "user" ? "primary.main" : "action.hover",
                 color: msg.role === "user" ? "primary.contrastText" : "text.primary",
-                borderRadius: 2,
               }}
             >
               <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>

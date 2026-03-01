@@ -404,7 +404,7 @@ export default function DashboardsLandingPage() {
   const archivedCount = dashboards.filter((d) => d.archived).length;
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", width: "100%", py: 1 }}>
+    <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", py: 1 }}>
       <Box sx={{ mb: 2 }}>
         <PageHeader
           title="Dashboards"
@@ -579,15 +579,15 @@ export default function DashboardsLandingPage() {
                 position: "relative",
                 opacity: entry.archived ? 0.6 : 1,
                 ...(isActive && {
-                  borderColor: "primary.main",
                   borderWidth: 2,
+                  borderColor: "primary.main",
                 }),
               }}
             >
               <CardActionArea onClick={() => navigate(`/dashboards/${entry.id}`)}>
                 <CardContent sx={{ pb: 1 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, pr: 8 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }} noWrap>
+                  <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 0.5, pr: 8 }}>
+                    <Typography variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }} noWrap>
                       {entry.title}
                     </Typography>
                     {isActive && <Chip label="Active" size="small" color="primary" />}
@@ -598,12 +598,12 @@ export default function DashboardsLandingPage() {
                       variant="body2"
                       color="text.primary"
                       sx={{
-                        mb: 1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
                         display: "-webkit-box",
-                        WebkitLineClamp: 2,
+                        overflow: "hidden",
+                        mb: 1,
+                        textOverflow: "ellipsis",
                         WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
                       }}
                     >
                       {entry.description}
@@ -671,7 +671,7 @@ export default function DashboardsLandingPage() {
       </Box>
 
       {visibleDashboards.length === 0 && (
-        <Box sx={{ textAlign: "center", py: 8 }}>
+        <Box sx={{ py: 8, textAlign: "center" }}>
           {hasActiveFilters ? (
             <>
               <Typography variant="h6" color="text.secondary">
@@ -731,7 +731,7 @@ export default function DashboardsLandingPage() {
         </MenuItem>
         <Divider />
         {confirmDeleteId === menuDashboard?.id ? (
-          <Box sx={{ px: 2, py: 1, display: "flex", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1, py: 1, px: 2 }}>
             <Button size="small" color="error" variant="contained" onClick={handleDelete}>
               Confirm Delete
             </Button>

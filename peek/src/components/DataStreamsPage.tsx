@@ -183,7 +183,7 @@ export default function DataStreamsPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Data Streams"
@@ -220,10 +220,10 @@ export default function DataStreamsPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
+      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         <Paper
           variant="outlined"
-          sx={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}
+          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 320, minHeight: 0 }}
         >
           <Box sx={{ p: 1 }}>
             <TextField
@@ -251,7 +251,7 @@ export default function DataStreamsPage() {
             />
           </Box>
           <Divider />
-          <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             {filteredStreams.map((stream) => (
               <ListItem key={stream.name} disablePadding>
                 <ListItemButton
@@ -279,7 +279,7 @@ export default function DataStreamsPage() {
 
         <Paper
           variant="outlined"
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+          sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}
         >
           <Box sx={{ p: 1.5 }}>
             {selectedDataStream ? (
@@ -350,7 +350,7 @@ export default function DataStreamsPage() {
             )}
           </Box>
           <Divider />
-          <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", minHeight: 0, gap: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}>
             {selectedDataStream && (
               <TextField
                 size="small"
@@ -362,7 +362,7 @@ export default function DataStreamsPage() {
             {loadingFields ? (
               <ContentSkeleton variant="table" />
             ) : (
-              <Box sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+              <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
                 {fieldRows.map((field) => (
                   <Stack
                     key={`${field.name}:${field.type}`}
@@ -374,19 +374,19 @@ export default function DataStreamsPage() {
                       selectedField?.name === field.name && selectedField?.type === field.type
                     }
                     sx={{
+                      alignItems: "center",
+                      width: "100%",
                       py: 0.5,
                       px: 0.5,
-                      width: "100%",
-                      background: "none",
                       border: "none",
-                      cursor: "pointer",
-                      textAlign: "left",
                       borderRadius: 1,
-                      alignItems: "center",
+                      background: "none",
                       bgcolor:
                         selectedField?.name === field.name && selectedField?.type === field.type
                           ? "action.selected"
                           : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
                       "&:hover": { bgcolor: "action.hover" },
                     }}
                   >

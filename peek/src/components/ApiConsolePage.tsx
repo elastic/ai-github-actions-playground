@@ -151,7 +151,7 @@ function RequestCard({
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
       {/* Request row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5 }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center", p: 1.5 }}>
         <Select
           size="small"
           value={entry.method}
@@ -240,11 +240,11 @@ function RequestCard({
 
       {/* Request body editor */}
       {showBody && (
-        <Box sx={{ px: 1.5, pb: 1 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
+        <Box sx={{ pb: 1, px: 1.5 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
             Request body (JSON)
           </Typography>
-          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+          <Box sx={{ overflow: "hidden", border: 1, borderColor: "divider", borderRadius: 1 }}>
             <CodeMirror
               value={entry.body}
               onChange={(v) => onUpdate(entry.id, { body: v, response: null })}
@@ -264,7 +264,7 @@ function RequestCard({
           <Divider />
           <Box sx={{ p: 1.5 }}>
             {entry.response.status === "error" ? (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 <Typography variant="body2" color="error.main" sx={{ flex: 1 }}>
                   {entry.response.message}
                 </Typography>
@@ -276,7 +276,7 @@ function RequestCard({
               </Box>
             ) : (
               <>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
                   <Chip
                     label={`${entry.response.httpStatus}`}
                     color={httpStatusColor(entry.response.httpStatus)}
@@ -300,12 +300,12 @@ function RequestCard({
                 </Box>
                 <Box
                   sx={{
+                    maxHeight: 300,
+                    overflow: "hidden",
+                    overflowY: "auto",
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 1,
-                    overflow: "hidden",
-                    maxHeight: 300,
-                    overflowY: "auto",
                   }}
                 >
                   <CodeMirror
@@ -545,7 +545,7 @@ export default function ApiConsolePage() {
       ))}
 
       {entries.length === 1 && entries[0] && !entries[0].response && (
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mt: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: "center" }}>
           Try <code>GET _cluster/health</code> or <code>GET _cat/indices?v</code> to get started.
         </Typography>
       )}

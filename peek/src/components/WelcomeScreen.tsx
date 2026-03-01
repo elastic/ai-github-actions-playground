@@ -61,17 +61,17 @@ export default function WelcomeScreen() {
     <Box
       sx={{
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       <Paper
         sx={{
-          p: 6,
           maxWidth: 520,
-          textAlign: "center",
+          p: 6,
           borderRadius: 3,
+          textAlign: "center",
         }}
         elevation={2}
       >
@@ -81,7 +81,7 @@ export default function WelcomeScreen() {
           alt="Elastic Peek"
           sx={{ width: 160, height: 160, mb: 2, objectFit: "contain" }}
         />
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h5" gutterBottom>
           Elastic Peek
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>

@@ -229,11 +229,11 @@ export default function ProfilingPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <Typography variant="subtitle2" color="text.secondary">
             Profiling Explorer
           </Typography>
-          <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
             <Button size="small" variant="text" onClick={resetFilters}>
               Reset Filters
             </Button>
@@ -271,7 +271,7 @@ export default function ProfilingPage() {
             ),
           )}
         </Box>
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
           <TextField
             size="small"
             label="Executable"
@@ -324,7 +324,7 @@ export default function ProfilingPage() {
           InputProps={{ readOnly: viewMode === "topFunctions" }}
           InputLabelProps={{ sx: { color: "text.primary" } }}
         />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
           <Button variant="contained" size="small" onClick={handleRun} disabled={loading}>
             {loading ? <CircularProgress size={14} color="inherit" /> : "Run"}
           </Button>
@@ -387,7 +387,7 @@ export default function ProfilingPage() {
                     onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
                     sx={{ cursor: "pointer" }}
                   >
-                    <TableCell sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                    <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
                       {stacktrace.stacktraceId}
                     </TableCell>
                     <TableCell align="right">{stacktrace.count}</TableCell>

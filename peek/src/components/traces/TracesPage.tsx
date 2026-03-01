@@ -40,8 +40,9 @@ import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 
+import { TraceTable } from "./TraceTable";
 import { getServiceColor } from "./traceColors";
-import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
+import { parseSpansFromEsql } from "./traceUtils";
 import type { Span } from "./traceUtils";
 import {
   buildTraceSearchQuery,
@@ -54,15 +55,6 @@ import {
 } from "./traceQueryBuilder";
 import type { TraceFilters } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
-
-const thStyle: React.CSSProperties = {
-  textAlign: "left",
-  padding: "8px 12px",
-  borderBottom: "1px solid var(--divider, #333)",
-  position: "sticky",
-  top: 0,
-  background: "inherit",
-};
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -105,7 +97,7 @@ export default function TracesPage() {
     })),
   );
 
-  const [result, setResult] = useState<EsqlResponse | null>(null);
+  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
   const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [serviceFilter, setServiceFilter] = useState("");
@@ -135,8 +127,8 @@ export default function TracesPage() {
   } = useEsqlQuery({
     connection,
     queryContextView,
-    onSuccess: (data) => setResult(data),
-    onFailure: () => setResult(null),
+    onSuccess: (data) => setSearchResult(data),
+    onFailure: () => setSearchResult(null),
   });
 
   // Trace detail query
@@ -227,7 +219,7 @@ export default function TracesPage() {
     [viewMode, rawQuery, driftRadarBaselineEnabled, runDriftRadarQuery, runDriftRadarBaselineQuery],
   );
 
-  /** Apply a quick-filter update and immediately re-run queries so results stay in sync. */
+  /** Apply a quick-filter update and immediately re-run queries so searchResults stay in sync. */
   const applyFiltersAndRun = useCallback(
     (updates: Partial<TraceFilters>) => {
       updateFilters(updates);
@@ -308,19 +300,19 @@ export default function TracesPage() {
     [runTraceQueries],
   );
 
-  // Parse trace results for display
+  // Parse trace searchResults for display
   const traceRows = useMemo(() => {
-    if (!result) return [];
+    if (!searchResult) return [];
     const colIndex = new Map<string, number>();
-    for (let i = 0; i < result.columns.length; i++) {
-      colIndex.set(result.columns[i]!.name, i);
+    for (let i = 0; i < searchResult.columns.length; i++) {
+      colIndex.set(searchResult.columns[i]!.name, i);
     }
     const get = (row: unknown[], field: string): unknown => {
       const idx = colIndex.get(field);
       return idx !== undefined ? row[idx] : null;
     };
 
-    return result.values.map((row) => ({
+    return searchResult.values.map((row) => ({
       traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
       spanId: String(get(row, DEFAULT_FIELD_MAPPING.spanId) ?? ""),
       serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
@@ -329,7 +321,7 @@ export default function TracesPage() {
       status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
       timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
     }));
-  }, [result]);
+  }, [searchResult]);
 
   const maxDuration = useMemo(
     () => Math.max(1, ...traceRows.map((r) => r.durationUs)),
@@ -365,11 +357,11 @@ export default function TracesPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       {/* Query bar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box
-          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
+          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
         >
           <PageHeader
             title="Trace Search"
@@ -456,10 +448,10 @@ export default function TracesPage() {
         <Box
           sx={{
             display: "flex",
-            gap: 1,
-            mb: 1,
             flexWrap: "wrap",
+            gap: 1,
             alignItems: "center",
+            mb: 1,
           }}
         >
           <TextField
@@ -517,7 +509,7 @@ export default function TracesPage() {
               </MenuItem>
             ))}
           </Select>
-          <Box sx={{ display: "flex", gap: 0.5, ml: "auto", alignItems: "center" }}>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", ml: "auto" }}>
             {(["Error", "OK"] as const).map((status) => (
               <Chip
                 key={status}
@@ -542,7 +534,7 @@ export default function TracesPage() {
         </Box>
 
         {/* ES|QL editor */}
-        <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
+        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
           <CodeMirror
             value={effectiveQuery}
             onChange={(val) => setRawQuery(val)}
@@ -555,7 +547,7 @@ export default function TracesPage() {
           />
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <Button
             variant="contained"
             size="small"
@@ -567,9 +559,9 @@ export default function TracesPage() {
           >
             Search Traces
           </Button>
-          {result && (
+          {searchResult && (
             <Typography variant="caption" color="text.secondary">
-              {result.values.length} traces found
+              {searchResult.values.length} traces found
             </Typography>
           )}
         </Box>
@@ -592,15 +584,15 @@ export default function TracesPage() {
         {/* Results panel */}
         <Box
           sx={{
-            flex: 1,
             display: "flex",
+            flex: 1,
             flexDirection: "column",
             minWidth: 0,
             minHeight: 0,
           }}
         >
           {/* View switcher */}
-          <Box sx={{ display: "flex", gap: 0.5, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center", mb: 1 }}>
             {(
               ["list", "timeseries", "scatter", "serviceMap", "driftRadar"] as TracesViewMode[]
             ).map((mode) => (
@@ -642,171 +634,26 @@ export default function TracesPage() {
 
           {/* Results view */}
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-            {!result && !searchLoading && viewMode !== "driftRadar" && (
+            {!searchResult && !searchLoading && viewMode !== "driftRadar" && (
               <EmptyState
                 heading="Search for traces"
                 description="Use the filters above to find traces by service name, duration, or status."
               />
             )}
-            {searchLoading && !result && (
+            {searchLoading && !searchResult && (
               <Box sx={{ p: 2 }}>
                 <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
               </Box>
             )}
-            {result && viewMode === "list" && (
-              <Box sx={{ overflow: "auto", height: "100%" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
-                  <thead>
-                    <tr>
-                      <th style={thStyle}>Trace ID</th>
-                      <th style={thStyle}>Service</th>
-                      <th style={thStyle}>Operation</th>
-                      <th style={thStyle}>Duration</th>
-                      <th style={thStyle}>Status</th>
-                      <th style={thStyle}>Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {traceRows.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={6}
-                          style={{ padding: "24px 12px", textAlign: "center", color: "inherit" }}
-                        >
-                          <Typography variant="body2" color="text.primary">
-                            No traces matched current filters. Adjust filters or widen the time
-                            range.
-                          </Typography>
-                        </td>
-                      </tr>
-                    )}
-                    {traceRows.map((row, idx) => (
-                      <tr
-                        key={`${row.traceId}-${idx}`}
-                        tabIndex={0}
-                        onClick={() => handleSelectTrace(row.traceId, row.spanId, row.timestamp)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleSelectTrace(row.traceId, row.spanId, row.timestamp);
-                          }
-                        }}
-                        style={{
-                          cursor: "pointer",
-                          backgroundColor:
-                            selectedTraceId === row.traceId ? "rgba(0,119,204,0.1)" : "transparent",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (selectedTraceId !== row.traceId)
-                            (e.currentTarget as HTMLElement).style.backgroundColor =
-                              "rgba(255,255,255,0.04)";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedTraceId !== row.traceId)
-                            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                        }}
-                      >
-                        <td
-                          style={{
-                            padding: "6px 12px",
-                            borderBottom: "1px solid rgba(128,128,128,0.2)",
-                            fontFamily: "monospace",
-                            fontSize: "0.75rem",
-                          }}
-                        >
-                          {row.traceId.slice(0, 16)}…
-                        </td>
-                        <td
-                          style={{
-                            padding: "6px 12px",
-                            borderBottom: "1px solid rgba(128,128,128,0.2)",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: "50%",
-                                bgcolor: getServiceColor(row.serviceName),
-                                flexShrink: 0,
-                              }}
-                            />
-                            {row.serviceName}
-                          </Box>
-                        </td>
-                        <td
-                          style={{
-                            padding: "6px 12px",
-                            borderBottom: "1px solid rgba(128,128,128,0.2)",
-                          }}
-                        >
-                          {row.name}
-                        </td>
-                        <td
-                          style={{
-                            padding: "6px 12px",
-                            borderBottom: "1px solid rgba(128,128,128,0.2)",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Box
-                              sx={{
-                                width: 60,
-                                height: 4,
-                                bgcolor: "action.hover",
-                                borderRadius: 1,
-                                overflow: "hidden",
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: `${Math.max(2, (row.durationUs / maxDuration) * 100)}%`,
-                                  height: "100%",
-                                  bgcolor: getServiceColor(row.serviceName),
-                                  borderRadius: 1,
-                                }}
-                              />
-                            </Box>
-                            <Typography variant="caption">
-                              {formatSpanDuration(row.durationUs)}
-                            </Typography>
-                          </Box>
-                        </td>
-                        <td
-                          style={{
-                            padding: "6px 12px",
-                            borderBottom: "1px solid rgba(128,128,128,0.2)",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              bgcolor:
-                                row.status === "Error" || row.status === "STATUS_CODE_ERROR"
-                                  ? "error.main"
-                                  : "success.main",
-                            }}
-                          />
-                        </td>
-                        <td
-                          style={{
-                            padding: "6px 12px",
-                            borderBottom: "1px solid rgba(128,128,128,0.2)",
-                            fontSize: "0.75rem",
-                          }}
-                        >
-                          {row.timestamp ? new Date(row.timestamp).toLocaleString() : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Box>
+            {searchResult && viewMode === "list" && (
+              <TraceTable
+                traceRows={traceRows}
+                selectedTraceId={selectedTraceId}
+                onSelectTrace={handleSelectTrace}
+                maxDuration={maxDuration}
+              />
             )}
-            {result && viewMode === "scatter" && (
+            {searchResult && viewMode === "scatter" && (
               <TraceScatterChart
                 data={traceRows.map((r) => ({
                   timestamp: r.timestamp,
@@ -817,7 +664,7 @@ export default function TracesPage() {
                 onPointClick={(traceId) => handleSelectTrace(traceId)}
               />
             )}
-            {result &&
+            {searchResult &&
               viewMode === "timeseries" &&
               (rawQuery ? (
                 <EmptyState
@@ -841,7 +688,7 @@ export default function TracesPage() {
                   description="Apply filters and run search to populate time series metrics."
                 />
               ))}
-            {result && viewMode === "serviceMap" && (
+            {searchResult && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
                   <EmptyState
@@ -880,7 +727,7 @@ export default function TracesPage() {
                     onNodeClick={handleServiceMapNodeClick}
                   />
                 </Box>
-              ) : result !== null ? (
+              ) : searchResult !== null ? (
                 <EmptyState
                   heading="Run search to load the window service map."
                   description="Run search to load current-window traces for the Drift Radar map."
@@ -898,21 +745,21 @@ export default function TracesPage() {
             <Paper
               variant="outlined"
               sx={{
-                mt: 1,
+                display: "flex",
                 flex: 1,
+                flexDirection: "column",
                 minHeight: 360,
                 overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
+                mt: 1,
               }}
             >
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
                   gap: 1,
-                  px: 1.5,
+                  alignItems: "center",
                   py: 0.5,
+                  px: 1.5,
                   borderBottom: 1,
                   borderColor: "divider",
                 }}
@@ -940,7 +787,7 @@ export default function TracesPage() {
                 </Button>
               </Box>
               {detailLoading ? (
-                <Box sx={{ p: 2, flex: 1 }}>
+                <Box sx={{ flex: 1, p: 2 }}>
                   <ContentSkeleton variant="table" />
                 </Box>
               ) : selectedTraceSpans.length > 0 ? (

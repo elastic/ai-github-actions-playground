@@ -364,7 +364,7 @@ export default function ExplorePage() {
   }, [queryResult]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
       {/* Top controls */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ mb: 1 }}>
@@ -431,7 +431,7 @@ export default function ExplorePage() {
 
         {/* Active filters — full detail mode only */}
         {selectedMetric && !showDimensionOverview && filters.length > 0 && (
-          <Box sx={{ display: "flex", gap: 0.5, mt: 1, flexWrap: "wrap", alignItems: "center" }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center", mt: 1 }}>
             <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
               Filters:
             </Typography>
@@ -453,7 +453,7 @@ export default function ExplorePage() {
 
         {/* Group by indicator — full detail mode only */}
         {selectedMetric && !showDimensionOverview && groupBy && (
-          <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, alignItems: "center" }}>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mt: 0.5 }}>
             <Typography variant="caption" color="text.secondary">
               Split by:
             </Typography>
@@ -468,7 +468,7 @@ export default function ExplorePage() {
 
         {/* Action buttons — full detail mode only */}
         {selectedMetric && !showDimensionOverview && (
-          <Box sx={{ display: "flex", gap: 1, mt: 1, alignItems: "center" }}>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
             <Tooltip title="View generated ES|QL query">
               <IconButton
                 size="small"
@@ -524,10 +524,10 @@ export default function ExplorePage() {
               mt: 1,
               p: 1.5,
               bgcolor: "action.hover",
-              fontFamily: "monospace",
-              fontSize: "0.8rem",
-              whiteSpace: "pre-wrap",
               wordBreak: "break-all",
+              whiteSpace: "pre-wrap",
+              fontSize: "0.8rem",
+              fontFamily: "monospace",
             }}
           >
             {queryResult.esql}
@@ -550,7 +550,7 @@ export default function ExplorePage() {
       )}
 
       {/* Content area: dimension sidebar + chart / overview grids */}
-      <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>
+      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
         {/* Dimension sidebar — only show in full detail mode */}
         {selectedMetric && !showDimensionOverview && (
           <DimensionSidebar
@@ -568,7 +568,7 @@ export default function ExplorePage() {
         {showOverview && (
           <Paper
             variant="outlined"
-            sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
+            sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
           >
             <MetricOverviewGrid
               fields={fields}
@@ -585,7 +585,7 @@ export default function ExplorePage() {
         {showDimensionOverview && (
           <Paper
             variant="outlined"
-            sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
+            sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
           >
             <DimensionOverviewGrid
               fields={fields}
@@ -606,11 +606,11 @@ export default function ExplorePage() {
         {!showOverview && !showDimensionOverview && (
           <Paper
             variant="outlined"
-            sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}
+            sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
           >
             {/* Back button — goes to dimension overview */}
             {selectedMetric && selectedNamespace && (
-              <Box sx={{ px: 1.5, pt: 1 }}>
+              <Box sx={{ pt: 1, px: 1.5 }}>
                 <Button
                   size="small"
                   startIcon={<ArrowBackIcon />}
@@ -623,7 +623,7 @@ export default function ExplorePage() {
 
             {!selectedMetric && queryResult.status === "idle" && (
               <EmptyState
-                icon={<ShowChartIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                icon={<ShowChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
                 heading="Explore your metrics"
                 description="Pick a namespace to see an overview of all its metrics, or search for a specific metric field."
               />
@@ -633,8 +633,8 @@ export default function ExplorePage() {
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
                   justifyContent: "center",
+                  alignItems: "center",
                   height: "100%",
                 }}
               >

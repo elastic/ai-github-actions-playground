@@ -171,7 +171,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     >
       <DialogTitle
         component="div"
-        sx={{ display: "flex", alignItems: "baseline", gap: 1, pb: 1.5, pt: 2, px: 3 }}
+        sx={{ display: "flex", gap: 1, alignItems: "baseline", pt: 2, pb: 1.5, px: 3 }}
       >
         <Typography variant="h6" component="span" sx={{ flexShrink: 0, lineHeight: "inherit" }}>
           Edit
@@ -183,14 +183,14 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
           inputProps={{ "aria-label": "Panel title" }}
           sx={{
             flex: 1,
-            fontSize: "1.25rem",
-            fontWeight: 500,
             lineHeight: "inherit",
+            fontWeight: 500,
+            fontSize: "1.25rem",
             "& .MuiInputBase-input": {
               p: 0,
               borderBottom: "1px dashed",
               borderColor: "divider",
-              "&:focus": { borderColor: "primary.main", outline: "none" },
+              "&:focus": { outline: "none", borderColor: "primary.main" },
             },
           }}
         />
@@ -198,11 +198,11 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
       <Divider />
 
-      <DialogContent sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2, px: 3 }}>
         {/* Query / content editor */}
         <Box>
           <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
+            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
           >
             <Typography variant="subtitle2" color="text.secondary">
               {isMarkdown ? "Markdown Content" : "ES|QL Query"}
@@ -237,10 +237,10 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
             <>
               <Box
                 sx={{
+                  overflow: "hidden",
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 1,
-                  overflow: "hidden",
                 }}
               >
                 <CodeMirror
@@ -266,7 +266,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
         {/* Query controls row — hidden for markdown panels */}
         {!isMarkdown && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
             <Button
               variant="contained"
               size="small"
@@ -317,7 +317,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         )}
 
         {/* Visualization type selector */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
           <Typography variant="subtitle2" color="text.secondary" sx={{ flexShrink: 0 }}>
             Visualization
           </Typography>
@@ -343,7 +343,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
         {/* Markdown preview — always shown for markdown panels */}
         {isMarkdown && (
-          <Paper variant="outlined" sx={{ minHeight: 120, p: 1, overflow: "auto" }}>
+          <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto", p: 1 }}>
             <MarkdownPanel
               content={query}
               connection={connection}
@@ -356,7 +356,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         {/* Preview + options — only for query-based panels */}
         {!isMarkdown && preview && (
           <>
-            <Paper variant="outlined" sx={{ minHeight: 220, p: 1, overflow: "hidden" }}>
+            <Paper variant="outlined" sx={{ minHeight: 220, overflow: "hidden", p: 1 }}>
               <PersesPanelRenderer
                 type={viz}
                 data={preview}
@@ -389,7 +389,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
       <Divider />
 
-      <DialogActions sx={{ px: 3, py: 1.5 }}>
+      <DialogActions sx={{ py: 1.5, px: 3 }}>
         <Button color="error" onClick={handleDelete}>
           Delete Panel
         </Button>

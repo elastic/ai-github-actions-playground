@@ -23,6 +23,8 @@ import {
 import type { ElasticsearchConnection, FieldStats, ConfidenceLevel } from "../services/es";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
+import EmptyState from "./EmptyState";
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -125,10 +127,10 @@ export default function FieldStatsPanel({
   return (
     <Paper
       variant="outlined"
-      sx={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}
+      sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 300, minHeight: 0 }}
     >
       {/* Header */}
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 1.5, py: 1, flexShrink: 0 }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, py: 1, px: 1.5 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="subtitle2" noWrap title={fieldName}>
             {fieldName}
@@ -144,7 +146,7 @@ export default function FieldStatsPanel({
 
       {/* Body */}
       <Box
-        sx={{ flex: 1, overflow: "auto", p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}
+        sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, overflow: "auto", p: 1.5 }}
       >
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
@@ -213,9 +215,11 @@ export default function FieldStatsPanel({
                   Top values
                 </Typography>
                 {stats.topValues.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No values found.
-                  </Typography>
+                  <EmptyState
+                    size="small"
+                    heading="No values found"
+                    description="No distinct values detected in the current range"
+                  />
                 ) : (
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                     {stats.topValues.map((tv) => (
@@ -231,8 +235,8 @@ export default function FieldStatsPanel({
                             flex: 1,
                             minWidth: 0,
                             overflow: "hidden",
-                            textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
+                            textOverflow: "ellipsis",
                           }}
                           title={tv.value}
                         >
@@ -283,7 +287,7 @@ export default function FieldStatsPanel({
       <Divider />
 
       {/* Footer */}
-      <Box sx={{ p: 1, flexShrink: 0 }}>
+      <Box sx={{ flexShrink: 0, p: 1 }}>
         <Button
           size="small"
           variant="outlined"

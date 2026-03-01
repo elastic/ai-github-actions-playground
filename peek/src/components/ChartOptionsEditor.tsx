@@ -27,8 +27,8 @@ export default function ChartOptionsEditor({ vizType, options, onChange }: Props
   };
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 2, p: 1 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, mt: 1 }}>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "flex-start", p: 1 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, mr: 0.5 }}>
         Options
       </Typography>
 

@@ -13,6 +13,7 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 import { copyToClipboard } from "../../utils/copyToClipboard";
+import EmptyState from "../EmptyState";
 
 import type { Span, SpanLink } from "./traceUtils";
 import { formatSpanDuration } from "./traceUtils";
@@ -51,26 +52,26 @@ function KeyValueRow({
     <Box
       sx={{
         display: "flex",
+        gap: 1,
         alignItems: "center",
         py: 0.5,
         px: 1,
         "&:hover": { bgcolor: "action.hover" },
-        gap: 1,
       }}
     >
       <Typography
         variant="caption"
-        sx={{ fontWeight: 600, minWidth: 140, flexShrink: 0, wordBreak: "break-all" }}
+        sx={{ flexShrink: 0, minWidth: 140, wordBreak: "break-all", fontWeight: 600 }}
       >
         {label}
       </Typography>
       <Typography
         variant="caption"
-        sx={{ flex: 1, fontFamily: "monospace", wordBreak: "break-all" }}
+        sx={{ flex: 1, wordBreak: "break-all", fontFamily: "monospace" }}
       >
         {value}
       </Typography>
-      <Box sx={{ display: "flex", gap: 0.25, flexShrink: 0 }}>
+      <Box sx={{ display: "flex", flexShrink: 0, gap: 0.25 }}>
         {onFilterBy && (
           <Tooltip title="Filter by this value">
             <IconButton size="small" onClick={onFilterBy}>
@@ -149,21 +150,21 @@ export default function SpanDetailDrawer({
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
             gap: 1,
-            px: 2,
+            alignItems: "center",
             py: 1,
+            px: 2,
             borderBottom: 1,
             borderColor: "divider",
           }}
         >
           <Box
             sx={{
+              flexShrink: 0,
               width: 10,
               height: 10,
               borderRadius: "50%",
               bgcolor: getServiceColor(span.serviceName),
-              flexShrink: 0,
             }}
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -185,7 +186,7 @@ export default function SpanDetailDrawer({
           onChange={(_, v: number) => setTabIndex(v)}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ borderBottom: 1, borderColor: "divider", minHeight: 36 }}
+          sx={{ minHeight: 36, borderBottom: 1, borderColor: "divider" }}
         >
           <Tab label="Overview" sx={{ minHeight: 36, py: 0 }} />
           <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
@@ -251,9 +252,7 @@ export default function SpanDetailDrawer({
           {tabIndex === 1 && (
             <Box sx={{ p: 1 }}>
               {spanAttrs.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
-                  No span attributes
-                </Typography>
+                <EmptyState size="small" heading="No span attributes" />
               ) : (
                 spanAttrs.map((attr) => (
                   <KeyValueRow
@@ -272,9 +271,7 @@ export default function SpanDetailDrawer({
           {tabIndex === 2 && (
             <Box sx={{ p: 1 }}>
               {resourceAttrs.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
-                  No resource attributes
-                </Typography>
+                <EmptyState size="small" heading="No resource attributes" />
               ) : (
                 resourceAttrs.map((attr) => (
                   <KeyValueRow
@@ -301,7 +298,7 @@ export default function SpanDetailDrawer({
                   <Box key={i} sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
                     <Typography
                       variant="caption"
-                      sx={{ fontWeight: 600, px: 1, pt: 0.5, display: "block" }}
+                      sx={{ display: "block", pt: 0.5, px: 1, fontWeight: 600 }}
                     >
                       Link {i + 1}
                     </Typography>
@@ -338,7 +335,7 @@ export default function SpanDetailDrawer({
               ) : (
                 span.events.map((event, i) => (
                   <Box key={i} sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-                    <Box sx={{ px: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+                    <Box sx={{ py: 0.5, px: 1, borderBottom: 1, borderColor: "divider" }}>
                       <Typography variant="caption" sx={{ fontWeight: 600 }}>
                         {event.name || "(unnamed event)"}
                       </Typography>
@@ -362,7 +359,7 @@ export default function SpanDetailDrawer({
                         />
                       ))
                     ) : (
-                      <Typography variant="caption" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ py: 0.5, px: 1 }}>
                         No attributes
                       </Typography>
                     )}
@@ -374,7 +371,7 @@ export default function SpanDetailDrawer({
         </Box>
 
         {/* Footer actions */}
-        <Box sx={{ p: 1, borderTop: 1, borderColor: "divider", display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
           <Button
             size="small"
             variant="outlined"

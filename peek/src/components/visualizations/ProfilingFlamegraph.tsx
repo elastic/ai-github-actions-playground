@@ -225,18 +225,18 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   }
 
   return (
-    <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
       {/* Toolbar */}
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
+          flexShrink: 0,
           gap: 1,
-          px: 1,
+          alignItems: "center",
           py: 0.5,
+          px: 1,
           borderBottom: 1,
           borderColor: "divider",
-          flexShrink: 0,
         }}
       >
         <TextField
@@ -281,14 +281,14 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
               onClick={handleOpenInQueryLab}
               sx={{
                 ml: "auto",
-                cursor: "pointer",
+                py: 0.25,
+                px: 1,
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 1,
-                px: 1,
-                py: 0.25,
                 bgcolor: "transparent",
                 color: "primary.main",
+                cursor: "pointer",
                 "&:hover": { bgcolor: "action.hover" },
               }}
             >
@@ -300,7 +300,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
       {/* Breadcrumb */}
       {zoomPath.length > 0 && (
-        <Box sx={{ px: 1, py: 0.5, flexShrink: 0, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ flexShrink: 0, py: 0.5, px: 1, borderBottom: 1, borderColor: "divider" }}>
           <Breadcrumbs separator="›" sx={{ fontSize: "0.75rem" }}>
             <Link
               component="button"

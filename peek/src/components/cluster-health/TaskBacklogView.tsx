@@ -63,7 +63,7 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
               .sort(),
           ].map((priority) => (
             <div key={priority}>
-              <Typography variant="body2" sx={{ fontWeight: 600, mt: 1 }}>
+              <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
                 {priority} ({grouped.get(priority)!.length})
               </Typography>
               {grouped.get(priority)!.map((task, idx) => {
@@ -73,7 +73,7 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
                     key={taskKey}
                     variant="body2"
                     color="text.secondary"
-                    sx={{ pl: 2, fontFamily: "monospace", fontSize: "0.8rem" }}
+                    sx={{ pl: 2, fontSize: "0.8rem", fontFamily: "monospace" }}
                   >
                     [{Math.round((task.time_in_queue_millis ?? 0) / 1000)}s] {task.source ?? "—"}
                   </Typography>

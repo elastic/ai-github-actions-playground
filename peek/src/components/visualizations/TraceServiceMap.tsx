@@ -1,9 +1,8 @@
 import { useMemo, useCallback } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 
 import type { Span } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
+import EmptyState from "../EmptyState";
 
 import EChartWrapper from "./EChartWrapper";
 import { buildServiceGraphOption } from "./serviceGraphOptions";
@@ -31,11 +30,11 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
 
   if (mapData.edges.length === 0) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-        <Typography variant="body2" color="text.secondary">
-          No cross-service dependencies found for this trace
-        </Typography>
-      </Box>
+      <EmptyState
+        size="small"
+        heading="No cross-service dependencies"
+        description="No dependencies found for this trace."
+      />
     );
   }
 

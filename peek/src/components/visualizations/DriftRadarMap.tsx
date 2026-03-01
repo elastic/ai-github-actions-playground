@@ -1,10 +1,10 @@
 import { useMemo, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import Typography from "@mui/material/Typography";
 
 import type { Span, ServiceMapEdge } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
+import EmptyState from "../EmptyState";
 
 import EChartWrapper from "./EChartWrapper";
 import { buildServiceGraphOption } from "./serviceGraphOptions";
@@ -120,18 +120,18 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
 
   if (mapData.edges.length === 0) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-        <Typography variant="body2" color="text.secondary">
-          No cross-service dependencies found in this time window
-        </Typography>
-      </Box>
+      <EmptyState
+        size="small"
+        heading="No cross-service dependencies"
+        description="No dependencies found in this time window."
+      />
     );
   }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {legendStatuses.length > 0 && (
-        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", px: 1.5, pt: 1 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, pt: 1, px: 1.5 }}>
           {legendStatuses.map((status) => (
             <Chip
               key={status}

@@ -120,7 +120,7 @@ export default function OverviewView({ data }: OverviewViewProps) {
           <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
             Allocation Explain
           </Typography>
-          <Alert severity="info" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+          <Alert severity="info" sx={{ fontSize: "0.8rem", fontFamily: "monospace" }}>
             <strong>Index:</strong> {data.allocationExplain.index} &nbsp;
             <strong>Shard:</strong> {data.allocationExplain.shard} &nbsp;
             <strong>Primary:</strong> {data.allocationExplain.primary ? "yes" : "no"}

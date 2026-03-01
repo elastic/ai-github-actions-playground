@@ -29,8 +29,8 @@ export default function MarkdownPanel({ content, connection, timeRange, paramete
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
           justifyContent: "center",
+          alignItems: "center",
           height: "100%",
         }}
       >
@@ -44,39 +44,39 @@ export default function MarkdownPanel({ content, connection, timeRange, paramete
   return (
     <Box
       sx={{
-        p: 1,
-        overflow: "auto",
         height: "100%",
-        "& h1,& h2,& h3,& h4,& h5,& h6": { mt: 1, mb: 0.5 },
-        "& p": { mt: 0, mb: 1 },
-        "& ul,& ol": { pl: 2.5, mb: 1 },
-        "& li": { mb: 0.25 },
+        overflow: "auto",
+        p: 1,
         "& a": { color: "primary.main" },
-        "& code": {
-          fontFamily: "monospace",
-          fontSize: "0.85em",
-          bgcolor: "action.hover",
-          px: 0.5,
-          borderRadius: 0.5,
-        },
-        "& pre": {
-          bgcolor: "action.hover",
-          p: 1,
-          borderRadius: 1,
-          overflow: "auto",
-          "& code": { bgcolor: "transparent", p: 0 },
-        },
         "& blockquote": {
+          ml: 0,
+          pl: 2,
           borderLeft: 3,
           borderColor: "divider",
-          pl: 2,
-          ml: 0,
           color: "text.secondary",
         },
-        "& hr": { borderColor: "divider", my: 1 },
-        "& table": { borderCollapse: "collapse", width: "100%", mb: 1 },
-        "& th,& td": { border: 1, borderColor: "divider", px: 1, py: 0.5 },
+        "& code": {
+          px: 0.5,
+          borderRadius: 0.5,
+          bgcolor: "action.hover",
+          fontSize: "0.85em",
+          fontFamily: "monospace",
+        },
+        "& h1,& h2,& h3,& h4,& h5,& h6": { mt: 1, mb: 0.5 },
+        "& hr": { my: 1, borderColor: "divider" },
+        "& li": { mb: 0.5 },
+        "& p": { mt: 0, mb: 1 },
+        "& pre": {
+          overflow: "auto",
+          p: 1,
+          borderRadius: 1,
+          bgcolor: "action.hover",
+          "& code": { p: 0, bgcolor: "transparent" },
+        },
+        "& table": { width: "100%", mb: 1, borderCollapse: "collapse" },
         "& th": { bgcolor: "action.hover", fontWeight: 600 },
+        "& th,& td": { py: 0.5, px: 1, border: 1, borderColor: "divider" },
+        "& ul,& ol": { mb: 1, pl: 2.5 },
       }}
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolved}</ReactMarkdown>

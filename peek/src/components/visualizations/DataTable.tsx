@@ -19,6 +19,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
+import EmptyState from "../EmptyState";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 
 import { isNumericType } from "./chartUtils";
@@ -52,7 +53,7 @@ function TruncatedCell({ value }: { value: string }) {
           }
         }}
         aria-label={expanded ? "Collapse cell value" : "Expand cell value"}
-        sx={{ ml: 0.5, minWidth: 0, p: 0, fontSize: "0.7rem", verticalAlign: "baseline" }}
+        sx={{ verticalAlign: "baseline", minWidth: 0, ml: 0.5, p: 0, fontSize: "0.7rem" }}
       >
         {expanded ? "less" : "more"}
       </Button>
@@ -179,11 +180,7 @@ export default memo(function DataTable({
   }, []);
 
   if (data.columns.length === 0) {
-    return (
-      <Typography color="text.secondary" sx={{ p: 2, textAlign: "center" }}>
-        No data
-      </Typography>
-    );
+    return <EmptyState size="small" heading="No data" />;
   }
 
   const hiddenCount = emptyColumnIndices.size;
@@ -193,11 +190,11 @@ export default memo(function DataTable({
       {hiddenCount > 0 && (
         <Box
           sx={{
-            px: 1.5,
-            py: 0.5,
             display: "flex",
-            alignItems: "center",
             gap: 0.5,
+            alignItems: "center",
+            py: 0.5,
+            px: 1.5,
             borderBottom: 1,
             borderColor: "divider",
           }}
@@ -230,36 +227,36 @@ export default memo(function DataTable({
                   <TableCell
                     key={col.name}
                     sx={{
-                      fontWeight: 600,
                       whiteSpace: "nowrap",
+                      fontWeight: 600,
                       fontSize: "0.75rem",
                       ...(isPinned
                         ? {
                             position: "sticky",
-                            left: stickyLeft,
                             zIndex: 4,
-                            minWidth: PINNED_COLUMN_MIN_WIDTH,
+                            left: stickyLeft,
                             width: PINNED_COLUMN_MIN_WIDTH,
+                            minWidth: PINNED_COLUMN_MIN_WIDTH,
                             maxWidth: PINNED_COLUMN_MIN_WIDTH,
                             overflow: "hidden",
-                            backgroundColor: "background.paper",
                             borderRight: "1px solid",
                             borderRightColor: "divider",
+                            backgroundColor: "background.paper",
                           }
                         : {}),
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                    <Box sx={{ display: "flex", gap: 0.25, alignItems: "center" }}>
                       <Box
                         sx={
                           isPinned
                             ? {
+                                display: "flex",
                                 flex: 1,
+                                gap: 0.25,
+                                alignItems: "center",
                                 minWidth: 0,
                                 overflow: "hidden",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.25,
                               }
                             : { display: "contents" }
                         }
@@ -282,7 +279,7 @@ export default memo(function DataTable({
                         <Typography
                           component="span"
                           variant="caption"
-                          sx={{ opacity: 0.5, flexShrink: 0 }}
+                          sx={{ flexShrink: 0, opacity: 0.5 }}
                         >
                           {col.type}
                         </Typography>
@@ -350,26 +347,26 @@ export default memo(function DataTable({
                       <TableCell
                         key={colIdx}
                         sx={{
-                          whiteSpace: isPinned ? "nowrap" : "normal",
-                          wordBreak: isPinned ? "normal" : "break-word",
                           maxWidth: isPinned ? undefined : 400,
+                          textAlign: numeric ? "right" : "left",
+                          wordBreak: isPinned ? "normal" : "break-word",
+                          whiteSpace: isPinned ? "nowrap" : "normal",
                           fontSize: "0.75rem",
                           fontFamily: numeric ? "monospace" : "inherit",
-                          textAlign: numeric ? "right" : "left",
                           ...(bgColor ? { backgroundColor: bgColor } : {}),
                           ...(isPinned
                             ? {
                                 position: "sticky",
-                                left: stickyLeft,
                                 zIndex: 1,
-                                minWidth: PINNED_COLUMN_MIN_WIDTH,
+                                left: stickyLeft,
                                 width: PINNED_COLUMN_MIN_WIDTH,
+                                minWidth: PINNED_COLUMN_MIN_WIDTH,
                                 maxWidth: PINNED_COLUMN_MIN_WIDTH,
                                 overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                backgroundColor: bgColor ?? "background.paper",
                                 borderRight: "1px solid",
                                 borderRightColor: "divider",
+                                backgroundColor: bgColor ?? "background.paper",
+                                textOverflow: "ellipsis",
                               }
                             : {}),
                         }}
@@ -394,9 +391,9 @@ export default memo(function DataTable({
         sx={{
           display: "flex",
           alignItems: "center",
+          px: 1,
           borderTop: 1,
           borderColor: "divider",
-          px: 1,
         }}
       >
         <TablePagination

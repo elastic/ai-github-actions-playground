@@ -27,7 +27,7 @@ function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
         <CheckCircleIcon
           fontSize="small"
           titleAccess="Healthy"
-          sx={{ color: "success.main", ml: 0.5, flexShrink: 0 }}
+          sx={{ flexShrink: 0, ml: 0.5, color: "success.main" }}
         />
       </Tooltip>
     );
@@ -37,7 +37,7 @@ function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
       <WarningAmberIcon
         fontSize="small"
         titleAccess={health.errorSummary ?? "Connection failed"}
-        sx={{ color: "warning.main", ml: 0.5, flexShrink: 0 }}
+        sx={{ flexShrink: 0, ml: 0.5, color: "warning.main" }}
       />
     </Tooltip>
   );

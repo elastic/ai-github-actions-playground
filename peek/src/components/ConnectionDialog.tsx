@@ -300,7 +300,7 @@ export default function ConnectionDialog() {
               <Typography variant="subtitle2" sx={{ mt: 1 }}>
                 Saved Profiles
               </Typography>
-              <List dense disablePadding sx={{ bgcolor: "action.hover", borderRadius: 1 }}>
+              <List dense disablePadding sx={{ borderRadius: 1, bgcolor: "action.hover" }}>
                 {connectionProfiles.map((profile) => (
                   <ListItemButton
                     key={profile.id}
@@ -337,7 +337,7 @@ export default function ConnectionDialog() {
                       />
                     ) : unlockingProfileId === profile.id ? (
                       <Box
-                        sx={{ display: "flex", alignItems: "flex-start", gap: 1, flex: 1, py: 0.5 }}
+                        sx={{ display: "flex", flex: 1, gap: 1, alignItems: "flex-start", py: 0.5 }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <TextField
@@ -386,7 +386,7 @@ export default function ConnectionDialog() {
                     ) : (
                       <ListItemText
                         primary={
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
                             {profile.encrypted && (
                               <LockIcon fontSize="small" color="action" aria-label="Encrypted" />
                             )}
@@ -710,7 +710,7 @@ export default function ConnectionDialog() {
           )}
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions sx={{ pb: 2, px: 3 }}>
         <Button onClick={handleDisconnect} color="warning">
           Disconnect
         </Button>

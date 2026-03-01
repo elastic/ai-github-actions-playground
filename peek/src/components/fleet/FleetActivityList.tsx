@@ -6,6 +6,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { type FleetAction, type FleetActionResult } from "../../services/fleet";
+import EmptyState from "../EmptyState";
 
 import { formatFleetTimestamp } from "./fleetPresentation";
 
@@ -34,9 +35,11 @@ export default function FleetActivityList({ actions, actionResults }: Props) {
 
   if (actions.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-        No fleet actions found in fleet-actions*.
-      </Typography>
+      <EmptyState
+        size="small"
+        heading="No fleet actions"
+        description="No actions found in fleet-actions*."
+      />
     );
   }
 

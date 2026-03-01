@@ -5,6 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { type FleetOutputHealth } from "../../services/fleet";
+import EmptyState from "../EmptyState";
 
 import { formatFleetTimestamp } from "./fleetPresentation";
 
@@ -21,9 +22,11 @@ const STATE_COLOR: Record<string, "success" | "warning" | "error" | "default"> =
 export default function FleetOutputsList({ outputs }: Props) {
   if (outputs.length === 0) {
     return (
-      <Typography variant="body2" color="text.primary" sx={{ p: 2 }}>
-        No output health data found in logs-fleet_server.output_health-*.
-      </Typography>
+      <EmptyState
+        size="small"
+        heading="No output health data"
+        description="No data found in logs-fleet_server.output_health-*."
+      />
     );
   }
 

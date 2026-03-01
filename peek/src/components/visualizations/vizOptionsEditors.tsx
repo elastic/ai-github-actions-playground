@@ -45,11 +45,11 @@ function ThresholdColorSwatch({ color }: { color: ThresholdColor }) {
   return (
     <Box
       sx={{
+        flexShrink: 0,
         width: 10,
         height: 10,
         borderRadius: "50%",
         bgcolor: THRESHOLD_PALETTE[color],
-        flexShrink: 0,
       }}
     />
   );
@@ -68,7 +68,7 @@ function ThresholdColorSelect({
         value={value}
         onChange={(e) => onChange(e.target.value as ThresholdColor)}
         renderValue={(v) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
             <ThresholdColorSwatch color={v as ThresholdColor} />
             {THRESHOLD_COLOR_OPTIONS.find((o) => o.value === v)?.label}
           </Box>
@@ -76,7 +76,7 @@ function ThresholdColorSelect({
       >
         {THRESHOLD_COLOR_OPTIONS.map((opt) => (
           <MenuItem key={opt.value} value={opt.value}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <Box sx={{ display: "flex", gap: 0.75, alignItems: "center" }}>
               <ThresholdColorSwatch color={opt.value} />
               {opt.label}
             </Box>
@@ -118,7 +118,7 @@ function ThresholdEditor({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 0.5 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
         <Typography variant="caption" color="text.secondary" sx={{ minWidth: 70 }}>
           Base color
         </Typography>
@@ -129,7 +129,7 @@ function ThresholdEditor({
       </Box>
 
       {steps.map((step, idx) => (
-        <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box key={idx} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <TextField
             size="small"
             type="number"
@@ -308,7 +308,7 @@ export function TableOptionsEditor({ options, onChange }: VizOptionsEditorProps)
   const o = options as TablePanelOptions;
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
         <Typography variant="caption" color="text.secondary" sx={{ minWidth: 70 }}>
           Columns
         </Typography>

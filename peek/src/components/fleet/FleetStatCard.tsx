@@ -27,14 +27,14 @@ export default function FleetStatCard({
       <Typography variant="overline" color="text.secondary" noWrap component="div">
         {title}
       </Typography>
-      <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+      <Box sx={{ display: "flex", gap: 0.5, alignItems: "baseline" }}>
         <Typography
           variant="h5"
           component="div"
           sx={{
-            fontWeight: 600,
             color: color ?? "text.primary",
             fontVariantNumeric: "tabular-nums",
+            fontWeight: 600,
           }}
         >
           {value ?? "—"}
@@ -68,10 +68,10 @@ export default function FleetStatCard({
             alignItems: "flex-start",
             width: "100%",
             textAlign: "left",
-            "&:hover": { bgcolor: "action.hover" },
             "&.Mui-focusVisible": {
               boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
             },
+            "&:hover": { bgcolor: "action.hover" },
           }}
         >
           {content}

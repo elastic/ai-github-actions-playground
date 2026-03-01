@@ -84,17 +84,17 @@ export default function App() {
               onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
             />
           )}
-          <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>
             {connected && isDashboardView && <ParameterBar />}
             <Box
               component="main"
               sx={{
-                flex: 1,
-                minHeight: 0,
-                p: 2,
-                overflow: "auto",
                 display: "flex",
+                flex: 1,
                 flexDirection: "column",
+                minHeight: 0,
+                overflow: "auto",
+                p: 2,
               }}
             >
               <Suspense fallback={<LinearProgress />}>
@@ -137,17 +137,17 @@ export default function App() {
             <Box
               component="footer"
               sx={{
+                position: "relative",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                flexShrink: 0,
                 gap: 1,
+                justifyContent: "center",
+                alignItems: "center",
                 py: 0.75,
                 px: 2,
-                flexShrink: 0,
                 borderTop: 1,
                 borderColor: "divider",
                 bgcolor: "background.paper",
-                position: "relative",
               }}
             >
               <Link
@@ -156,15 +156,15 @@ export default function App() {
                 rel="noopener noreferrer"
                 underline="none"
                 sx={{
-                  px: 1,
                   py: 0.25,
+                  px: 1,
                   borderRadius: 1,
                   bgcolor: "warning.main",
                   color: "warning.contrastText",
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
                   letterSpacing: "0.04em",
                   textTransform: "uppercase",
+                  fontWeight: 700,
+                  fontSize: "0.7rem",
                   "&:hover": { bgcolor: "warning.dark" },
                 }}
               >

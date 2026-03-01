@@ -107,11 +107,11 @@ export default function AppHeader() {
       <Toolbar disableGutters variant="dense" sx={{ gap: 1, px: 0 }}>
         <Box
           sx={{
-            width: 68,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             flexShrink: 0,
+            justifyContent: "center",
+            alignItems: "center",
+            width: 68,
           }}
         >
           <Box
@@ -124,20 +124,21 @@ export default function AppHeader() {
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 700,
-            background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
-            backgroundClip: "text",
-            WebkitBackgroundClip: "text",
-            color: "transparent",
-            WebkitTextFillColor: "transparent",
-            lineHeight: 1,
             mr: 1,
+            background: (theme) =>
+              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
+            backgroundClip: "text",
+            color: "transparent",
+            lineHeight: 1,
+            fontWeight: 700,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
           }}
         >
           Peek
         </Typography>
         {isDashboardView ? (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mr: 1 }}>
             <Chip
               label="Dashboards"
               size="small"
@@ -174,30 +175,30 @@ export default function AppHeader() {
         <ConnectionProfileSwitcher />
 
         {connected ? (
-          <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
+          <Box sx={{ display: "flex", flex: 1, justifyContent: "center", px: 2 }}>
             <ButtonBase
               onClick={() => setCommandPaletteOpen(true)}
               aria-label="Open command palette"
               sx={{
                 display: "flex",
-                alignItems: "center",
                 gap: 1,
-                px: 1.5,
+                justifyContent: "flex-start",
+                alignItems: "center",
+                width: "100%",
+                maxWidth: 360,
                 py: 0.5,
-                borderRadius: 1,
+                px: 1.5,
                 border: 1,
                 borderColor: "border.default",
+                borderRadius: 1,
                 bgcolor: "background.subtle",
-                maxWidth: 360,
-                width: "100%",
-                justifyContent: "flex-start",
                 "&:hover": { borderColor: "border.strong" },
               }}
             >
-              <SearchIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
+              <SearchIcon sx={{ color: "text.secondary", fontSize: "1rem" }} />
               <Typography
                 variant="body2"
-                sx={{ color: "text.secondary", flex: 1, textAlign: "left", fontSize: "0.8rem" }}
+                sx={{ flex: 1, color: "text.secondary", textAlign: "left", fontSize: "0.8rem" }}
               >
                 Search commands…
               </Typography>
@@ -205,7 +206,7 @@ export default function AppHeader() {
                 label="Ctrl/Cmd+K"
                 size="small"
                 variant="outlined"
-                sx={{ fontSize: "0.65rem", height: 20 }}
+                sx={{ height: 20, fontSize: "0.65rem" }}
               />
             </ButtonBase>
           </Box>

@@ -237,16 +237,16 @@ export default function ParameterBar() {
       <Box
         sx={{
           display: "flex",
+          gap: 1,
           alignItems: "center",
-          px: 2,
           py: 0.5,
+          px: 2,
           borderBottom: 1,
           borderColor: "divider",
           bgcolor: "background.paper",
-          gap: 1,
         }}
       >
-        <TuneIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+        <TuneIcon sx={{ color: "text.secondary", fontSize: 16 }} />
         <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
           Variables
         </Typography>
@@ -264,17 +264,17 @@ export default function ParameterBar() {
       <Box
         sx={{
           display: "flex",
+          flexWrap: "wrap",
+          gap: 1,
           alignItems: "center",
-          px: 2,
           py: 0.5,
+          px: 2,
           borderBottom: 1,
           borderColor: "divider",
           bgcolor: "background.paper",
-          gap: 1,
-          flexWrap: "wrap",
         }}
       >
-        <TuneIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+        <TuneIcon sx={{ color: "text.secondary", fontSize: 16 }} />
         <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
           Variables
         </Typography>
@@ -420,7 +420,7 @@ export default function ParameterBar() {
                 )}
               </Box>
               {esqlOptions.length > 0 && (
-                <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {esqlOptions.slice(0, 20).map((opt, idx) => (
                     <Chip key={`${opt}-${idx}`} label={opt} size="small" variant="outlined" />
                   ))}
@@ -527,7 +527,7 @@ function ParameterControl({
   return (
     <Box
       data-testid={`parameter-row-${param.name}`}
-      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+      sx={{ display: "flex", gap: 0.5, alignItems: "center" }}
     >
       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
         {param.label || param.name}:
@@ -547,7 +547,7 @@ function ParameterControl({
               onChange(parsed.value);
             }}
             displayEmpty
-            sx={{ fontSize: "0.75rem", height: 28 }}
+            sx={{ height: 28, fontSize: "0.75rem" }}
           >
             {currentValueInput &&
               !options.some(
@@ -596,7 +596,7 @@ function ParameterControl({
           helperText={validationError}
           sx={{
             width: 120,
-            "& .MuiInputBase-input": { fontSize: "0.75rem", py: 0.5, px: 1 },
+            "& .MuiInputBase-input": { py: 0.5, px: 1, fontSize: "0.75rem" },
           }}
         />
       )}

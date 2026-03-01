@@ -118,13 +118,13 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
+          flexShrink: 0,
           justifyContent: "space-between",
-          px: 2,
+          alignItems: "center",
           py: 1.5,
+          px: 2,
           borderBottom: 1,
           borderColor: "divider",
-          flexShrink: 0,
         }}
       >
         <Typography variant="subtitle1" fontWeight={600}>
@@ -149,7 +149,7 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
           </IconButton>
         </Box>
       </Box>
-      <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: "divider" }}>
+      <Box sx={{ py: 1, px: 2, borderBottom: 1, borderColor: "divider" }}>
         <TextField
           size="small"
           fullWidth
@@ -175,8 +175,8 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
         {row &&
           filteredFields.map(({ col, value }) => (
             <Box key={col.name} data-testid={`row-inspector-field-${col.name}`}>
-              <Box sx={{ px: 2, py: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75, mb: 0.25 }}>
+              <Box sx={{ py: 1, px: 2 }}>
+                <Box sx={{ display: "flex", gap: 0.75, alignItems: "baseline", mb: 0.25 }}>
                   <Typography variant="caption" fontWeight={600} noWrap sx={{ flexShrink: 0 }}>
                     {col.name}
                   </Typography>
@@ -192,9 +192,9 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
                   <Typography
                     variant="body2"
                     sx={{
-                      fontFamily: "monospace",
                       wordBreak: "break-all",
                       whiteSpace: "pre-wrap",
+                      fontFamily: "monospace",
                     }}
                   >
                     {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}

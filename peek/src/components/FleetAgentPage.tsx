@@ -21,6 +21,7 @@ import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 
 import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -58,7 +59,7 @@ export default function FleetAgentPage() {
   const metrics = agentResult.status === "success" ? agentResult.data.metrics : [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
@@ -255,8 +256,8 @@ function AgentLogs({
             variant={levelFilter === level ? "filled" : "outlined"}
             sx={{
               borderColor: LOG_LEVEL_COLORS[level],
-              color: levelFilter === level ? undefined : LOG_LEVEL_COLORS[level],
               bgcolor: levelFilter === level ? LOG_LEVEL_COLORS[level] : undefined,
+              color: levelFilter === level ? undefined : LOG_LEVEL_COLORS[level],
             }}
             onClick={() => onLevelFilterChange(levelFilter === level ? null : level)}
           />
@@ -264,7 +265,7 @@ function AgentLogs({
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ ml: "auto", alignSelf: "center" }}
+          sx={{ alignSelf: "center", ml: "auto" }}
         >
           {filtered.length} log{filtered.length !== 1 ? "s" : ""}
         </Typography>
@@ -274,11 +275,11 @@ function AgentLogs({
       <Paper
         variant="outlined"
         sx={{
-          p: 1,
           maxHeight: "calc(100vh - 300px)",
           overflow: "auto",
-          fontFamily: "monospace",
+          p: 1,
           fontSize: "0.75rem",
+          fontFamily: "monospace",
         }}
       >
         {filtered.map((log, i) => (
@@ -296,10 +297,10 @@ function AgentLogs({
             <Typography
               component="span"
               sx={{
+                flexShrink: 0,
+                color: "text.secondary",
                 fontSize: "inherit",
                 fontFamily: "inherit",
-                color: "text.secondary",
-                flexShrink: 0,
               }}
             >
               {formatFleetTime(log.timestamp)}
@@ -307,12 +308,12 @@ function AgentLogs({
             <Typography
               component="span"
               sx={{
-                fontSize: "inherit",
-                fontFamily: "inherit",
-                fontWeight: 600,
-                color: LOG_LEVEL_COLORS[log.level.toLowerCase()] ?? "text.primary",
                 flexShrink: 0,
                 minWidth: 40,
+                color: LOG_LEVEL_COLORS[log.level.toLowerCase()] ?? "text.primary",
+                fontWeight: 600,
+                fontSize: "inherit",
+                fontFamily: "inherit",
               }}
             >
               {log.level.toUpperCase()}
@@ -321,10 +322,10 @@ function AgentLogs({
               <Typography
                 component="span"
                 sx={{
+                  flexShrink: 0,
+                  color: "text.secondary",
                   fontSize: "inherit",
                   fontFamily: "inherit",
-                  color: "text.secondary",
-                  flexShrink: 0,
                 }}
               >
                 [{log.component}]
@@ -332,7 +333,7 @@ function AgentLogs({
             )}
             <Typography
               component="span"
-              sx={{ fontSize: "inherit", fontFamily: "inherit", wordBreak: "break-word" }}
+              sx={{ wordBreak: "break-word", fontSize: "inherit", fontFamily: "inherit" }}
             >
               {log.message}
             </Typography>
@@ -440,18 +441,22 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
 
   if (metrics.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-        No metrics found in metrics-elastic_agent* for this agent.
-      </Typography>
+      <EmptyState
+        size="small"
+        heading="No metrics found"
+        description="No documents found in metrics-elastic_agent* for this agent."
+      />
     );
   }
 
   const hasAnyChart = cpuOption || memoryOption || eventsOption;
   if (!hasAnyChart) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-        Metrics documents found ({metrics.length}) but no CPU, memory, or events data available.
-      </Typography>
+      <EmptyState
+        size="small"
+        heading="Insufficient metrics data"
+        description={`Metrics documents found (${metrics.length}) but no CPU, memory, or events data available.`}
+      />
     );
   }
 
