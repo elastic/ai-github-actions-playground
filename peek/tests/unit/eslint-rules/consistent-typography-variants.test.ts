@@ -33,11 +33,22 @@ describe("peek/consistent-typography-variants", () => {
           options: [{ allowed: ["h1"] }],
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // JSXExpressionContainer with valid variant
+        {
+          code: `<Typography variant={"subtitle1"}>text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
       ],
       invalid: [
         // h3 is not in the allowed set
         {
           code: `<Typography variant="h3">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidVariant" }],
+        },
+        // JSXExpressionContainer with invalid variant
+        {
+          code: `<Typography variant={"h3"}>text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidVariant" }],
         },

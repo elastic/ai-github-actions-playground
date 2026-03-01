@@ -15,7 +15,7 @@ describe("peek/enforce-empty-state", () => {
   it("passes RuleTester valid/invalid cases", () => {
     tester.run("enforce-empty-state", rule, {
       valid: [
-        // File that uses EmptyState in the branch
+        // Import + usage in empty branch
         {
           code: `
             import EmptyState from "./EmptyState";
@@ -28,6 +28,7 @@ describe("peek/enforce-empty-state", () => {
         // Ternary with EmptyState
         {
           code: `
+            import EmptyState from "./EmptyState";
             function Component() {
               return data.length === 0 ? <EmptyState heading="Empty" /> : <div>Data</div>;
             }
@@ -35,10 +36,6 @@ describe("peek/enforce-empty-state", () => {
         },
         // No empty-data pattern at all
         { code: `function Component() { if (x > 5) { doSomething(); } }` },
-        // Inline JSX usage without import (e.g. from global or other means)
-        {
-          code: `function Component() { return data.length === 0 ? <EmptyState /> : <div />; }`,
-        },
       ],
       invalid: [
         // .length === 0 without EmptyState usage
@@ -57,6 +54,21 @@ describe("peek/enforce-empty-state", () => {
             import EmptyState from "./EmptyState";
             function Component() {
               if (data.length === 0) { return <div />; }
+            }
+          `,
+          errors: [{ messageId: "missingEmptyState" }],
+        },
+        // Missing import should fail, even if EmptyState JSX appears
+        {
+          code: `function Component() { return data.length === 0 ? <EmptyState /> : <div />; }`,
+          errors: [{ messageId: "missingEmptyState" }],
+        },
+        // Ternary with EmptyState in wrong branch should fail
+        {
+          code: `
+            import EmptyState from "./EmptyState";
+            function Component() {
+              return data.length === 0 ? <div /> : <EmptyState heading="Empty" />;
             }
           `,
           errors: [{ messageId: "missingEmptyState" }],

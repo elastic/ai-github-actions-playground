@@ -47,16 +47,24 @@ export default {
             attr.type === "JSXAttribute" &&
             attr.name &&
             attr.name.name === "variant" &&
-            attr.value &&
-            attr.value.type === "Literal" &&
-            typeof attr.value.value === "string"
+            attr.value
           ) {
-            if (!allowedSet.has(attr.value.value)) {
+            const variantValue =
+              attr.value.type === "Literal" && typeof attr.value.value === "string"
+                ? attr.value.value
+                : attr.value.type === "JSXExpressionContainer" &&
+                    attr.value.expression &&
+                    attr.value.expression.type === "Literal" &&
+                    typeof attr.value.expression.value === "string"
+                  ? attr.value.expression.value
+                  : null;
+
+            if (variantValue && !allowedSet.has(variantValue)) {
               context.report({
                 node: attr.value,
                 messageId: "invalidVariant",
                 data: {
-                  variant: attr.value.value,
+                  variant: variantValue,
                   allowed: allowed.join(", "),
                 },
               });

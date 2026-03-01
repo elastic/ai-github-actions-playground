@@ -73,8 +73,8 @@ export default tseslint.config(
     files: ["src/**/*.ts", "src/**/*.tsx"],
     plugins: { peek: peekPlugin },
     rules: {
-      "peek/no-hardcoded-colors": "warn",
-      "peek/consistent-typography-variants": "warn",
+      "peek/no-hardcoded-colors": "error",
+      "peek/consistent-typography-variants": "error",
       "peek/no-direct-echarts-import": "error",
       "peek/no-div-onclick": "error",
     },
@@ -84,8 +84,8 @@ export default tseslint.config(
     files: ["src/components/**/*.tsx"],
     plugins: { peek: peekPlugin },
     rules: {
-      "peek/max-component-lines": ["warn", { max: 200 }],
-      "peek/enforce-empty-state": "warn",
+      "peek/max-component-lines": ["error", { max: 200 }],
+      "peek/enforce-empty-state": "error",
     },
   },
   {

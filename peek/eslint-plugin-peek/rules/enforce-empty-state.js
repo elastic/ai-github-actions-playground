@@ -13,6 +13,9 @@ export default {
     },
   },
   create(context) {
+    /** Track whether this file imports EmptyState */
+    let hasEmptyStateImport = false;
+
     /**
      * Detect common empty-data test patterns:
      *   data.length === 0, items.length === 0, arr.length == 0
@@ -57,8 +60,10 @@ export default {
         const child = node[key];
         if (child && typeof child === "object") {
           if (Array.isArray(child)) {
-            if (child.some((c) => c && typeof c.type === "string" && containsEmptyStateJSX(c))) {
-              return true;
+            for (const c of child) {
+              if (c && typeof c.type === "string" && containsEmptyStateJSX(c)) {
+                return true;
+              }
             }
           } else if (typeof child.type === "string" && containsEmptyStateJSX(child)) {
             return true;
@@ -69,15 +74,28 @@ export default {
     }
 
     return {
+      ImportDeclaration(node) {
+        if (
+          node.specifiers.some(
+            (s) =>
+              (s.type === "ImportDefaultSpecifier" || s.type === "ImportSpecifier") &&
+              s.local.name === "EmptyState",
+          )
+        ) {
+          hasEmptyStateImport = true;
+        }
+      },
       IfStatement(node) {
         if (!isEmptyDataTest(node.test)) return;
-        if (containsEmptyStateJSX(node.consequent)) return;
-        context.report({ node: node.test, messageId: "missingEmptyState" });
+        if (!hasEmptyStateImport || !containsEmptyStateJSX(node.consequent)) {
+          context.report({ node: node.test, messageId: "missingEmptyState" });
+        }
       },
       ConditionalExpression(node) {
         if (!isEmptyDataTest(node.test)) return;
-        if (containsEmptyStateJSX(node.consequent)) return;
-        context.report({ node: node.test, messageId: "missingEmptyState" });
+        if (!hasEmptyStateImport || !containsEmptyStateJSX(node.consequent)) {
+          context.report({ node: node.test, messageId: "missingEmptyState" });
+        }
       },
     };
   },
