@@ -32,6 +32,13 @@ These workflows require a repository secret named `COPILOT_GITHUB_TOKEN`.
 
 The same setup applies to private repositories; just make sure the PAT is authorized for the private repository (or org) where the workflows run.
 
+### Gemini API key setup
+
+Workflows that use Google Gemini (Deep Research, Ideas agents) require a repository secret named `GEMINI_API_KEY`.
+
+1. Obtain an API key from [Google AI Studio](https://aistudio.google.com/apikey).
+2. Add it as a repository secret named `GEMINI_API_KEY`.
+
 ---
 
 ## The Product: Elastic Peek

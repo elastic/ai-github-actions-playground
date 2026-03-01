@@ -195,7 +195,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 | | |
 |---|---|
 | **File** | `deep-research.yml` |
-| **Calls** | `gh-aw-deep-research.lock.yml` |
+| **Calls** | `gh-aw-internal-gemini-cli-web-search.lock.yml` |
 | **Triggers** | `/research` command in issue comments |
 
 **What it does:** Performs in-depth research on an issue topic. Unlike most agents that use GitHub Copilot, this one uses **Google Gemini** (`GEMINI_API_KEY`) for comprehensive analysis.
@@ -398,7 +398,7 @@ Files issues with specific library references, documentation links, and simplifi
 | | |
 |---|---|
 | **File** | `iterative-ideas-man.yml` |
-| **Calls** | `gh-aw-scheduled-audit.lock.yml` (custom instructions) |
+| **Calls** | `gh-aw-internal-gemini-cli-web-search.lock.yml` |
 | **Schedule** | Daily 09:00 UTC |
 | **Issue prefix** | `[idea]` |
 
@@ -411,7 +411,7 @@ Files issues with specific library references, documentation links, and simplifi
 | | |
 |---|---|
 | **File** | `medium-ideas-man.yml` |
-| **Calls** | `gh-aw-scheduled-audit.lock.yml` (custom instructions) |
+| **Calls** | `gh-aw-internal-gemini-cli-web-search.lock.yml` |
 | **Schedule** | Daily 10:00 UTC |
 | **Issue prefix** | `[medium idea]` |
 
@@ -424,7 +424,7 @@ Files issues with specific library references, documentation links, and simplifi
 | | |
 |---|---|
 | **File** | `observability-ideas-man.yml` |
-| **Calls** | `gh-aw-scheduled-audit.lock.yml` (custom instructions) |
+| **Calls** | `gh-aw-internal-gemini-cli-web-search.lock.yml` |
 | **Schedule** | Daily 12:00 UTC |
 | **Issue prefix** | `[observability idea]` |
 
@@ -437,7 +437,7 @@ Files issues with specific library references, documentation links, and simplifi
 | | |
 |---|---|
 | **File** | `security-ideas-man.yml` |
-| **Calls** | `gh-aw-scheduled-audit.lock.yml` (custom instructions) |
+| **Calls** | `gh-aw-internal-gemini-cli-web-search.lock.yml` |
 | **Schedule** | Daily 11:00 UTC |
 | **Issue prefix** | `[security idea]` |
 
@@ -450,7 +450,7 @@ Files issues with specific library references, documentation links, and simplifi
 | | |
 |---|---|
 | **File** | `vector-search-ideas-man.yml` |
-| **Calls** | `gh-aw-scheduled-audit.lock.yml` (custom instructions) |
+| **Calls** | `gh-aw-internal-gemini-cli-web-search.lock.yml` |
 | **Schedule** | Daily 13:00 UTC |
 | **Issue prefix** | `[search idea]` |
 
