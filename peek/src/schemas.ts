@@ -66,6 +66,7 @@ export const panelDefinitionSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
   query: z.string(),
+  queries: z.array(z.string().min(1)).optional(),
   visualization: visualizationTypeSchema,
   layout: panelLayoutSchema,
   options: z.record(z.string(), z.unknown()).optional(),

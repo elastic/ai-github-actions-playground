@@ -3,9 +3,9 @@ import Typography from "@mui/material/Typography";
 import { formatValue } from "@perses-dev/core";
 
 import type { EsqlResponse, FormatOptions, StatPanelOptions } from "../../types";
+import { toStatData } from "../../services/perses/dataTransformers";
 import { CHART_COLORS } from "../../theme";
 
-import { findNumericColumnIndices } from "./chartUtils";
 import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 
 function formatStatValue(value: unknown, format?: FormatOptions): string {
@@ -19,10 +19,10 @@ interface Props {
 }
 
 export default function StatPanel({ data, options }: Props) {
-  const numericIdxs = findNumericColumnIndices(data);
+  const stats = toStatData(data);
   const format = options?.format;
 
-  if (numericIdxs.length === 0 || data.values.length === 0) {
+  if (stats.length === 0) {
     return (
       <Box
         sx={{
@@ -36,11 +36,6 @@ export default function StatPanel({ data, options }: Props) {
       </Box>
     );
   }
-
-  const stats = numericIdxs.map((colIdx) => ({
-    name: data.columns[colIdx]!.name,
-    value: data.values[0]![colIdx],
-  }));
 
   return (
     <Box

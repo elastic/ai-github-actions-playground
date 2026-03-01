@@ -381,6 +381,27 @@ describe("useDashboardStore exportDashboard / importDashboard round-trip", () =>
     expect(exportedPanel?.spec?.queries?.[0]?.spec?.query).toBe(state.dashboard.panels[0].query);
   });
 
+  it("exports all canonical panel queries when present", () => {
+    const state = useDashboardStore.getState();
+    const panel = state.dashboard.panels[0];
+    state.updatePanel(panel.id, {
+      queries: ["FROM logs-* | LIMIT 5", "FROM metrics-* | LIMIT 5"],
+      query: "FROM logs-* | LIMIT 5",
+    });
+
+    const exported = JSON.parse(state.exportDashboard()) as {
+      spec?: {
+        panels?: Record<string, { spec?: { queries?: Array<{ spec?: { query?: string } }> } }>;
+      };
+    };
+    const exportedPanel = exported.spec?.panels?.[panel.id];
+
+    expect(exportedPanel?.spec?.queries?.map((entry) => entry.spec?.query)).toEqual([
+      "FROM logs-* | LIMIT 5",
+      "FROM metrics-* | LIMIT 5",
+    ]);
+  });
+
   it("exports workspaces using the Perses workspace shape", () => {
     const exported = JSON.parse(useDashboardStore.getState().exportWorkspace()) as {
       kind: string;
@@ -427,7 +448,10 @@ describe("useDashboardStore importDashboard", () => {
                 display: { name: "Panel One" },
                 layout: { x: 0, y: 0, w: 6, h: 4 },
                 plugin: { kind: "TimeSeriesChart", spec: { smooth: true } },
-                queries: [{ kind: "EsqlQuery", spec: { query: "FROM logs-* | LIMIT 5" } }],
+                queries: [
+                  { kind: "EsqlQuery", spec: { query: "FROM logs-* | LIMIT 5" } },
+                  { kind: "EsqlQuery", spec: { query: "FROM metrics-* | LIMIT 10" } },
+                ],
               },
             },
           },
@@ -439,6 +463,7 @@ describe("useDashboardStore importDashboard", () => {
     expect(result).toEqual({ success: true });
     const panel = useDashboardStore.getState().dashboard.panels[0];
     expect(panel.query).toBe("FROM logs-* | LIMIT 5");
+    expect(panel.queries).toEqual(["FROM logs-* | LIMIT 5", "FROM metrics-* | LIMIT 10"]);
     expect(panel.visualization).toBe("timeseries");
     expect(panel.options).toEqual({ smooth: true });
   });

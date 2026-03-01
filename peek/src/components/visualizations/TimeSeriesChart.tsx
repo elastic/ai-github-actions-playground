@@ -2,15 +2,10 @@ import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
 
 import type { EsqlResponse, TimeSeriesOptions } from "../../types";
+import { toTimeSeriesData } from "../../services/perses/dataTransformers";
 
 import { useEChartTheme } from "./useEChartTheme";
-import {
-  findDateColumnIndex,
-  findNumericColumnIndices,
-  findStringColumnIndices,
-  getColumnValues,
-  buildGroupedSeries,
-} from "./chartUtils";
+import { findDateColumnIndex } from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
 
 interface Props {
@@ -29,29 +24,19 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
 
   const option = useMemo(() => {
     const dateIdx = findDateColumnIndex(data);
-    const numericIdxs = findNumericColumnIndices(data);
-    const stringIdxs = findStringColumnIndices(data);
-
-    if (numericIdxs.length === 0) {
+    const transformed = toTimeSeriesData(data);
+    if (transformed.series.length === 0) {
       return { title: { text: "No numeric data to display", left: "center", top: "center" } };
     }
-
-    const xData =
-      dateIdx >= 0
-        ? getColumnValues(data, dateIdx).map((v) => (v ? new Date(v as string).getTime() : null))
-        : data.values.map((_, i) => i);
-
-    const groupIdx = stringIdxs.length > 0 ? stringIdxs[0]! : -1;
-    const grouped = buildGroupedSeries(data, numericIdxs, groupIdx);
-
-    const series = grouped.map((s, i) => ({
-      name: s.name,
+    const series = transformed.series.map((entry, i) => ({
+      name: entry.name,
       type: "line",
-      data: s.rows.map((rowIdx) => [xData[rowIdx], data.values[rowIdx]![s.colIdx]]),
+      data: entry.values,
       smooth,
-      showSymbol: data.values.length < 50,
+      showSymbol: entry.values.length < 50,
       lineStyle: { width: 2 },
-      areaStyle: showArea && (grouped.length === 1 || stacked) ? { opacity: 0.1 } : undefined,
+      areaStyle:
+        showArea && (transformed.series.length === 1 || stacked) ? { opacity: 0.1 } : undefined,
       stack: stacked ? "total" : undefined,
       itemStyle: { color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC" },
     }));
@@ -105,8 +90,7 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
       },
       xAxis: {
         ...theme.xAxis,
-        type: dateIdx >= 0 ? "time" : "category",
-        data: dateIdx < 0 ? xData : undefined,
+        type: dateIdx >= 0 ? "time" : "value",
         ...(tzDateFormatter
           ? { axisLabel: { ...theme.xAxis.axisLabel, formatter: tzDateFormatter } }
           : {}),

@@ -42,6 +42,18 @@ function toVisualizationType(kind: string | undefined): VisualizationType | unde
   return PLUGIN_KIND_TO_VISUALIZATION[kind] ?? (kind as VisualizationType);
 }
 
+function toPanelQueries(panel: Pick<PanelDefinition, "query" | "queries">): string[] {
+  const canonicalQueries =
+    panel.queries
+      ?.map((query) => query.trim())
+      .filter((query) => query.length > 0)
+      .map((query) => query) ?? [];
+  if (canonicalQueries.length > 0) {
+    return canonicalQueries;
+  }
+  return [panel.query];
+}
+
 function toPersesVariableKind(
   source: DashboardParameter["source"],
 ): "TextVariable" | "ListVariable" | "QueryVariable" {
@@ -96,7 +108,10 @@ export function toPersesDashboard(dashboard: DashboardDefinition): PersesDashboa
                 kind: toPluginKind(panel.visualization),
                 spec: panel.options as Record<string, unknown> | undefined,
               },
-              queries: [{ kind: "EsqlQuery", spec: { query: panel.query } }],
+              queries: toPanelQueries(panel).map((query) => ({
+                kind: "EsqlQuery",
+                spec: { query },
+              })),
               refreshInterval: panel.refreshInterval,
             },
           },
@@ -121,8 +136,12 @@ export function fromPersesDashboard(dashboard: PersesDashboardDefinition): Dashb
     favoritedAt: annotations?.favoritedAt,
     preferredProfileId: annotations?.preferredProfileId,
     panels: Object.entries(dashboard.spec.panels).map(([id, panel]) => {
-      const firstQuery = panel.spec.queries?.[0];
-      const query = firstQuery?.spec?.query ?? firstQuery?.query ?? panel.spec.query ?? "";
+      const canonicalQueries = (panel.spec.queries ?? [])
+        .map((entry) => entry.spec?.query ?? entry.query)
+        .filter((query): query is string => typeof query === "string" && query.trim().length > 0);
+      const queries =
+        canonicalQueries.length > 0 ? canonicalQueries : panel.spec.query ? [panel.spec.query] : [];
+      const query = queries[0] ?? "";
       const visualization =
         toVisualizationType(panel.spec.plugin?.kind) ?? panel.spec.visualization ?? "timeseries";
       const options = panel.spec.plugin?.spec ?? panel.spec.options;
@@ -130,6 +149,7 @@ export function fromPersesDashboard(dashboard: PersesDashboardDefinition): Dashb
         id,
         title: panel.spec.display.name,
         query,
+        queries: queries.length > 0 ? queries : undefined,
         visualization,
         layout: panel.spec.layout,
         options: options as PanelDefinition["options"],
