@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
@@ -31,7 +30,7 @@ import FleetVersionChart from "./fleet/FleetVersionChart";
 import FleetAgentsTable from "./fleet/FleetAgentsTable";
 import FleetOutputsList from "./fleet/FleetOutputsList";
 import FleetActivityList from "./fleet/FleetActivityList";
-import RefreshIntervalPicker from "./RefreshIntervalPicker";
+import RefreshToolbar from "./RefreshToolbar";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -242,29 +241,14 @@ export default function FleetPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Fleet
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Last updated:{" "}
-            {lastUpdatedAt
-              ? new Date(lastUpdatedAt).toLocaleTimeString(undefined, {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })
-              : "—"}
-          </Typography>
-          <RefreshIntervalPicker
-            value={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
-            options={FLEET_REFRESH_OPTIONS}
-            onChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+          <RefreshToolbar
+            lastUpdatedAt={lastUpdatedAt}
+            refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
+            refreshOptions={FLEET_REFRESH_OPTIONS}
+            onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+            onRefresh={() => void runRefresh()}
+            loading={loading}
           />
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => void runRefresh()}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
         </Stack>
       </Paper>
 
