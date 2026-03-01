@@ -14,6 +14,7 @@ import dataStreamsRaw from "./data-streams.md?raw";
 import chatRaw from "./chat.md?raw";
 import llmSettingsRaw from "./llm-settings.md?raw";
 import clusterOverviewRaw from "./cluster-overview.md?raw";
+import clusterHealthRaw from "./cluster-health.md?raw";
 import dashboardManagementRaw from "./dashboard-management.md?raw";
 import usersRolesRaw from "./users-roles.md?raw";
 import indicesRaw from "./indices.md?raw";
@@ -67,6 +68,7 @@ const sections: DocSection[] = [
   parseDocSection("chat", chatRaw),
   parseDocSection("llm-settings", llmSettingsRaw),
   parseDocSection("cluster-overview", clusterOverviewRaw),
+  parseDocSection("cluster-health", clusterHealthRaw),
   parseDocSection("dashboard-management", dashboardManagementRaw),
   parseDocSection("users-roles", usersRolesRaw),
   parseDocSection("indices", indicesRaw),

@@ -6,4 +6,4 @@ Add http.cors.enabled: true and set http.cors.allow-origin to your dashboard URL
 
 For local development you can use allow-origin: "\*", but never use the wildcard in production.
 
-Alternatively, use proxy mode to skip CORS entirely — see the Proxy Mode section below.
+Alternatively, use proxy mode to skip CORS entirely — see the Proxy Mode documentation.
