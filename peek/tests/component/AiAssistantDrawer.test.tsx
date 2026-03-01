@@ -27,6 +27,7 @@ describe("AiAssistantDrawer", () => {
     renderDrawer();
 
     expect(useUIStore.getState().aiPanelOpen).toBe(false);
+    expect(screen.queryByPlaceholderText("Type a message…")).not.toBeInTheDocument();
   });
 
   it("renders chat content when aiPanelOpen is true", () => {

@@ -39,7 +39,7 @@ export default function AiAssistantDrawer() {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <Typography id="ai-drawer-title" variant="subtitle2" sx={{ flex: 1, fontWeight: 600 }}>
+          <Typography id="ai-drawer-title" variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             AI Assistant
           </Typography>
           <IconButton
