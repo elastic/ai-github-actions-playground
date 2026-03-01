@@ -2,10 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 
 import IndicesPage from "../../src/components/IndicesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const {
@@ -129,10 +130,16 @@ const SAMPLE_STATS = {
   },
 };
 
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
       <IndicesPage />
+      <LocationDisplay />
     </MemoryRouter>,
   );
 }
@@ -275,5 +282,19 @@ describe("IndicesPage", () => {
     expect(screen.getByTestId("disk-usage-all-fields")).toHaveTextContent("488 KB");
     expect(screen.getByText("message")).toBeInTheDocument();
     expect(screen.getByText("@timestamp")).toBeInTheDocument();
+  });
+
+  it("navigates to Console with a mapping draft when Inspect in Console is clicked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByTestId("index-meta-health");
+
+    await user.click(screen.getByRole("button", { name: /inspect in console/i }));
+
+    expect(useApiConsoleStore.getState().consoleDraft).toEqual({
+      method: "GET",
+      path: "/logs-app/_mapping",
+    });
+    expect(screen.getByTestId("location")).toHaveTextContent("/console");
   });
 });
