@@ -24,13 +24,21 @@ function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
   if (health.status === "healthy") {
     return (
       <Tooltip title="Healthy">
-        <CheckCircleIcon fontSize="small" sx={{ flexShrink: 0, ml: 0.5, color: "success.main" }} />
+        <CheckCircleIcon
+          fontSize="small"
+          titleAccess="Healthy"
+          sx={{ flexShrink: 0, ml: 0.5, color: "success.main" }}
+        />
       </Tooltip>
     );
   }
   return (
     <Tooltip title={health.errorSummary ?? "Connection failed"}>
-      <WarningAmberIcon fontSize="small" sx={{ flexShrink: 0, ml: 0.5, color: "warning.main" }} />
+      <WarningAmberIcon
+        fontSize="small"
+        titleAccess={health.errorSummary ?? "Connection failed"}
+        sx={{ flexShrink: 0, ml: 0.5, color: "warning.main" }}
+      />
     </Tooltip>
   );
 }

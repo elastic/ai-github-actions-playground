@@ -25,7 +25,10 @@ export default function AiAssistantDrawer() {
       open={open}
       onClose={() => setOpen(false)}
       variant="persistent"
-      aria-labelledby="ai-drawer-title"
+      PaperProps={{
+        role: "complementary",
+        "aria-labelledby": "ai-drawer-title",
+      }}
       sx={{
         "& .MuiDrawer-paper": {
           top: "auto",
