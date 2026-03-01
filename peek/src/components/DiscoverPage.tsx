@@ -128,16 +128,16 @@ export default function DiscoverPage() {
     queryContextView,
     profileMode,
     buildRequest,
-    onSuccess: (data, executedQuery) => {
+    onSuccess: (data, executedQuery, executedStepIndex) => {
       setResult(data);
-      if (discoverQueryDraft) {
-        setDiscoverQueryDraft(null);
+      if (executedStepIndex === null) {
+        if (discoverQueryDraft) setDiscoverQueryDraft(null);
         setQuery(executedQuery);
+        appendQueryToHistory(executedQuery);
       }
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
-      appendQueryToHistory(executedQuery);
       timingsCleared.current = false;
     },
   });
