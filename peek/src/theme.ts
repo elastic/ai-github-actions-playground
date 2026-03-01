@@ -40,7 +40,7 @@ export const darkTheme = createTheme({
     primary: { main: "#36A2EF" },
     secondary: { main: "#7DE2D1" },
     background: { default: "#1D1E24", paper: "#25262E" },
-    text: { primary: "#DFE5EF", secondary: "#98A2B3" },
+    text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
   },
 });
 

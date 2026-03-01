@@ -250,6 +250,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
                   theme={themeMode}
                   height="120px"
                   basicSetup={basicSetup}
+                  aria-label="ES|QL query editor"
                 />
               </Box>
               <QueryPipelineSteps

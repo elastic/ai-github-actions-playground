@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,6 +14,7 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
@@ -67,6 +69,42 @@ export async function probeOtlpEndpoint(otlpUrl: string, timeoutMs = 5000): Prom
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Ingestion verification helpers
+// ---------------------------------------------------------------------------
+
+/** Telemetry signal types that the verification check looks for. */
+export type TelemetrySignal = "logs" | "metrics" | "traces";
+
+const SIGNAL_PREFIXES: TelemetrySignal[] = ["logs", "metrics", "traces"];
+
+/**
+ * Detect which telemetry signals have data streams present in the cluster.
+ * Returns the set of signal types whose `{signal}-*` data streams exist.
+ */
+export async function detectTelemetrySignals(
+  client: ElasticsearchClient,
+  signal?: AbortSignal,
+): Promise<Set<TelemetrySignal>> {
+  const res = await client.getDataStreams(undefined, signal);
+  const found = new Set<TelemetrySignal>();
+  for (const ds of res.data_streams ?? []) {
+    for (const prefix of SIGNAL_PREFIXES) {
+      if (ds.name.startsWith(`${prefix}-`)) {
+        found.add(prefix);
+        break;
+      }
+    }
+  }
+  return found;
+}
+
+const SIGNAL_NAV: Record<TelemetrySignal, { label: string; path: string }> = {
+  metrics: { label: "Metrics", path: "/explore" },
+  traces: { label: "Traces", path: "/traces" },
+  logs: { label: "Query Lab", path: "/discover" },
+};
 
 // ---------------------------------------------------------------------------
 // Platform definitions
@@ -259,6 +297,7 @@ $env:STORAGE_DIR = "$PWD\\data\\otel"
 // ---------------------------------------------------------------------------
 
 export default function AddDataPage() {
+  const navigate = useNavigate();
   const connection = useConnectionStore((s) => s.connection);
   const capabilities = useConnectionStore((s) => s.capabilities);
   const [platform, setPlatform] = useState<Platform>("kubernetes");
@@ -343,6 +382,51 @@ export default function AddDataPage() {
     setTimeout(() => setCopied(false), 2000);
   }, [apiKeyValue]);
 
+  // ---- Ingestion verification ----
+  type VerifyStatus = "idle" | "checking" | "found" | "not_found" | "error";
+  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>("idle");
+  const [foundSignals, setFoundSignals] = useState<Set<TelemetrySignal>>(new Set());
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const verifyAbortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      verifyAbortControllerRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    verifyAbortControllerRef.current?.abort();
+    verifyAbortControllerRef.current = null;
+    setVerifyStatus("idle");
+    setFoundSignals(new Set());
+    setVerifyError(null);
+  }, [connection]);
+
+  const handleVerifyIngestion = useCallback(async () => {
+    if (!connection) return;
+    verifyAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    verifyAbortControllerRef.current = controller;
+    setVerifyStatus("checking");
+    setVerifyError(null);
+    try {
+      const client = new ElasticsearchClient(connection);
+      const signals = await detectTelemetrySignals(client, controller.signal);
+      if (controller.signal.aborted) return;
+      setFoundSignals(signals);
+      setVerifyStatus(signals.size > 0 ? "found" : "not_found");
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      setVerifyError(isElasticsearchError(err) ? err.message : String(err));
+      setVerifyStatus("error");
+    } finally {
+      if (verifyAbortControllerRef.current === controller) {
+        verifyAbortControllerRef.current = null;
+      }
+    }
+  }, [connection]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -411,55 +495,59 @@ export default function AddDataPage() {
           <Tab value="windows" label="Windows" />
         </Tabs>
 
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="subtitle2" sx={{ flex: 1 }}>
-            {activeGuide.label} quickstart
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            href={activeGuide.quickstartUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            endIcon={<OpenInNewIcon fontSize="small" />}
-          >
-            Open official docs
-          </Button>
-        </Stack>
+        <Box role="tabpanel">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="subtitle2" sx={{ flex: 1 }}>
+              {activeGuide.label} quickstart
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              href={activeGuide.quickstartUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              endIcon={<OpenInNewIcon fontSize="small" />}
+            >
+              Open official docs
+            </Button>
+          </Stack>
 
-        <TextField
-          label="Starter command"
-          value={activeGuide.command({ esUrl, version, apiKey, endpointType, otlpUrl })}
-          multiline
-          minRows={7}
-          fullWidth
-          slotProps={{
-            input: { readOnly: true, sx: { fontFamily: "monospace", fontSize: "0.8rem" } },
-            inputLabel: { sx: { color: "text.primary" } },
-          }}
-        />
-        <Alert severity="info">
-          {apiKeyValue
-            ? "Your generated API key, "
-            : "Generate an API key below (or provide your own) — "}
-          {endpointType === "managed_otlp" && derivedOtlpUrl
-            ? "OTLP endpoint, "
-            : connection?.url
-              ? "Elasticsearch endpoint, "
-              : ""}
-          {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
-          {apiKeyValue ||
-          (endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connection?.url)) ||
-          clusterVersion
-            ? "have been pre-filled in the command above."
-            : "Replace the placeholders before running."}
-          {!apiKeyValue && (
-            <>
-              {" "}
-              Replace <code>&lt;YOUR_API_KEY&gt;</code> with a generated or existing key.
-            </>
-          )}
-        </Alert>
+          <TextField
+            label="Starter command"
+            value={activeGuide.command({ esUrl, version, apiKey, endpointType, otlpUrl })}
+            multiline
+            minRows={7}
+            fullWidth
+            slotProps={{
+              input: { readOnly: true, sx: { fontFamily: "monospace", fontSize: "0.8rem" } },
+              inputLabel: { sx: { color: "text.primary" } },
+            }}
+          />
+          <Alert severity="info">
+            {apiKeyValue
+              ? "Your generated API key, "
+              : "Generate an API key below (or provide your own) — "}
+            {endpointType === "managed_otlp" && derivedOtlpUrl
+              ? "OTLP endpoint, "
+              : connection?.url
+                ? "Elasticsearch endpoint, "
+                : ""}
+            {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
+            {apiKeyValue ||
+            (endpointType === "managed_otlp"
+              ? Boolean(derivedOtlpUrl)
+              : Boolean(connection?.url)) ||
+            clusterVersion
+              ? "have been pre-filled in the command above."
+              : "Replace the placeholders before running."}
+            {!apiKeyValue && (
+              <>
+                {" "}
+                Replace <code>&lt;YOUR_API_KEY&gt;</code> with a generated or existing key.
+              </>
+            )}
+          </Alert>
+        </Box>
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
@@ -512,6 +600,61 @@ export default function AddDataPage() {
               Create API key API
             </Link>{" "}
             or ask an administrator to provision one for collector onboarding.
+          </Alert>
+        )}
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="subtitle2">Verify ingestion</Typography>
+        <Typography variant="body2" color="text.secondary">
+          After starting the collector, check whether telemetry data streams have appeared.
+        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => void handleVerifyIngestion()}
+            disabled={!connection || verifyStatus === "checking"}
+            startIcon={
+              verifyStatus === "checking" ? (
+                <CircularProgress size={16} />
+              ) : (
+                <CheckCircleOutlineIcon fontSize="small" />
+              )
+            }
+          >
+            {verifyStatus === "checking" ? "Checking…" : "Verify ingestion"}
+          </Button>
+        </Stack>
+        {verifyStatus === "error" && <Alert severity="error">{verifyError}</Alert>}
+        {verifyStatus === "not_found" && (
+          <Alert severity="info">
+            No telemetry data streams found yet. Make sure the collector is running and try again in
+            a few moments.{" "}
+            <Link
+              href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Troubleshooting docs
+            </Link>
+          </Alert>
+        )}
+        {verifyStatus === "found" && (
+          <Alert severity="success" icon={<CheckCircleOutlineIcon />}>
+            Telemetry data detected! Found data in: {Array.from(foundSignals).sort().join(", ")}.
+            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+              {SIGNAL_PREFIXES.filter((s) => foundSignals.has(s)).map((s) => (
+                <Button
+                  key={s}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => navigate(SIGNAL_NAV[s].path)}
+                >
+                  Go to {SIGNAL_NAV[s].label}
+                </Button>
+              ))}
+            </Stack>
           </Alert>
         )}
       </Paper>

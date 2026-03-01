@@ -62,22 +62,26 @@ export default function DiscoverPage() {
   const {
     discoverQueryDraft,
     setDiscoverQueryDraft,
-    discoverLastQuery,
-    discoverLastResult,
-    setDiscoverLastQuery,
-    setDiscoverLastResult,
     queryHistory,
     appendQueryToHistory,
+    query,
+    setQuery,
+    result,
+    setResult,
+    selectedFields,
+    setSelectedFields,
   } = useQueryStore(
     useShallow((s) => ({
       discoverQueryDraft: s.discoverQueryDraft,
       setDiscoverQueryDraft: s.setDiscoverQueryDraft,
-      discoverLastQuery: s.discoverLastQuery,
-      discoverLastResult: s.discoverLastResult,
-      setDiscoverLastQuery: s.setDiscoverLastQuery,
-      setDiscoverLastResult: s.setDiscoverLastResult,
       queryHistory: s.queryHistory,
       appendQueryToHistory: s.appendQueryToHistory,
+      query: s.discoverSessionQuery,
+      setQuery: s.setDiscoverSessionQuery,
+      result: s.discoverSessionResult,
+      setResult: s.setDiscoverSessionResult,
+      selectedFields: s.discoverSelectedFields,
+      setSelectedFields: s.setDiscoverSelectedFields,
     })),
   );
   const refreshInterval = useDashboardStore(
@@ -88,33 +92,12 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
-  const hasDiscoverQueryDraft = discoverQueryDraft !== null;
-  const [query, setQuery] = useState(discoverLastQuery);
-  const [result, setResult] = useState<EsqlResponse | null>(
-    hasDiscoverQueryDraft ? null : discoverLastResult,
-  );
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(
-    () =>
-      new Set(hasDiscoverQueryDraft ? [] : (discoverLastResult?.columns?.map((c) => c.name) ?? [])),
-  );
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
-  const skipInitialResultSync = useRef(hasDiscoverQueryDraft);
-
-  useEffect(() => {
-    setDiscoverLastQuery(query);
-  }, [query, setDiscoverLastQuery]);
-  useEffect(() => {
-    if (skipInitialResultSync.current) {
-      skipInitialResultSync.current = false;
-      return;
-    }
-    setDiscoverLastResult(result);
-  }, [result, setDiscoverLastResult]);
 
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
   const [insightsCache, setInsightsCache] = useState<
@@ -147,13 +130,16 @@ export default function DiscoverPage() {
     buildRequest,
     onSuccess: (data, executedQuery) => {
       setResult(data);
+      setQuery(executedQuery);
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
       setTableVersion((prev) => prev + 1);
       appendQueryToHistory(executedQuery);
       timingsCleared.current = false;
     },
-    onFailure: () => setResult(null),
+    onFailure: () => {
+      setResult(null);
+    },
   });
 
   const insightQueryToColumnRef = useRef(new Map<string, string>());
@@ -216,7 +202,7 @@ export default function DiscoverPage() {
       setExpandedInsight(null);
       insightQueryToColumnRef.current.clear();
     },
-    [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
+    [discoverQueryDraft, setDiscoverQueryDraft, clearTimings, setQuery],
   );
   const handleFormatQuery = useCallback(() => {
     handleQueryChange(formatEsqlQuery(effectiveQuery));
@@ -228,7 +214,8 @@ export default function DiscoverPage() {
       // specific healthy cluster names so the query targets only healthy data.
       const scoped = effectiveQuery.replace(
         /\bFROM\s+\*:([^\s,|]+)/gi,
-        (_, pattern: string) => `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
+        (_: string, pattern: string) =>
+          `FROM ${healthyClusters.map((c) => `${c}:${pattern}`).join(", ")}`,
       );
       handleQueryChange(scoped);
       void runQuery(scoped);
@@ -249,7 +236,7 @@ export default function DiscoverPage() {
       setQuery(newQuery);
       void runQuery(newQuery);
     },
-    [effectiveQuery, discoverQueryDraft, setDiscoverQueryDraft, runQuery],
+    [effectiveQuery, discoverQueryDraft, setDiscoverQueryDraft, setQuery, runQuery],
   );
   const handleSelectHistory = useCallback(
     (selectedQuery: string) => {
@@ -258,7 +245,7 @@ export default function DiscoverPage() {
       setQuery(selectedQuery);
       setHistoryAnchor(null);
     },
-    [setDiscoverQueryDraft, clearTimings],
+    [setDiscoverQueryDraft, clearTimings, setQuery],
   );
   const handleRunQueryRef = useRef(handleRunQuery);
   useEffect(() => {
@@ -286,18 +273,19 @@ export default function DiscoverPage() {
     return () => clearInterval(id);
   }, [connection, refreshInterval, effectiveQuery, loading, handleRunQuery]);
 
-  const toggleField = useCallback((name: string) => {
-    setSelectedFields((prev) => {
-      const next = new Set(prev);
+  const toggleField = useCallback(
+    (name: string) => {
+      const next = new Set(selectedFields);
       if (next.has(name)) {
         next.delete(name);
       } else {
         next.add(name);
       }
-      return next;
-    });
-    setTableVersion((prev) => prev + 1);
-  }, []);
+      setSelectedFields(next);
+      setTableVersion((prev) => prev + 1);
+    },
+    [selectedFields, setSelectedFields],
+  );
 
   const handleCreatePanel = useCallback(() => {
     const newPanel = {
@@ -336,22 +324,18 @@ export default function DiscoverPage() {
   );
 
   const selectVisibleFields = useCallback(() => {
-    setSelectedFields((prev) => {
-      const next = new Set(prev);
-      for (const col of visibleColumns) next.add(col.name);
-      return next;
-    });
+    const next = new Set(selectedFields);
+    for (const col of visibleColumns) next.add(col.name);
+    setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
-  }, [visibleColumns]);
+  }, [selectedFields, setSelectedFields, visibleColumns]);
 
   const deselectVisibleFields = useCallback(() => {
-    setSelectedFields((prev) => {
-      const next = new Set(prev);
-      for (const col of visibleColumns) next.delete(col.name);
-      return next;
-    });
+    const next = new Set(selectedFields);
+    for (const col of visibleColumns) next.delete(col.name);
+    setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
-  }, [visibleColumns]);
+  }, [selectedFields, setSelectedFields, visibleColumns]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>

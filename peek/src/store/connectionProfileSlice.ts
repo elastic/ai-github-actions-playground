@@ -18,6 +18,7 @@ import { isElectronAvailable } from "./createElectronStorage";
 import {
   CONNECTION_STORE_NAME,
   API_KEY_SESSION_SUFFIX,
+  OTLP_API_KEY_SESSION_SUFFIX,
   PASSWORD_SESSION_SUFFIX,
   PROFILE_SESSION_PREFIX,
   ENCRYPTED_STORE_SUFFIX,
@@ -25,8 +26,9 @@ import {
 
 const credentialsSchema = z
   .object({
-    apiKey: z.unknown().optional(),
-    password: z.unknown().optional(),
+    apiKey: z.string().optional().catch(""),
+    otlpApiKey: z.string().optional().catch(""),
+    password: z.string().optional().catch(""),
   })
   .strict();
 
@@ -85,12 +87,20 @@ export const createConnectionProfileSlice: StateCreator<
           .catch(console.error);
         void window
           .electronAPI!.deleteCredential(
+            CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + OTLP_API_KEY_SESSION_SUFFIX,
+          )
+          .catch(console.error);
+        void window
+          .electronAPI!.deleteCredential(
             CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
           )
           .catch(console.error);
       } else {
         sessionStorage.removeItem(
           CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + API_KEY_SESSION_SUFFIX,
+        );
+        sessionStorage.removeItem(
+          CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + OTLP_API_KEY_SESSION_SUFFIX,
         );
         sessionStorage.removeItem(
           CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
@@ -123,8 +133,8 @@ export const createConnectionProfileSlice: StateCreator<
   lockProfile: async (id, pin) => {
     const profile = get().connectionProfiles.find((p) => p.id === id);
     if (!profile) return;
-    const { apiKey = "", password = "" } = profile.connection;
-    const payload = await encryptWithPin(pin, JSON.stringify({ apiKey, password }));
+    const { apiKey = "", password = "", otlpApiKey = "" } = profile.connection;
+    const payload = await encryptWithPin(pin, JSON.stringify({ apiKey, password, otlpApiKey }));
     // Re-check: profile may have been deleted while awaiting encryption.
     if (!get().connectionProfiles.some((p) => p.id === id)) return;
     localStorage.setItem(
@@ -149,11 +159,10 @@ export const createConnectionProfileSlice: StateCreator<
       if (plaintext === null) return false;
       const result = credentialsSchema.safeParse(JSON.parse(plaintext));
       if (!result.success) return false;
-      const apiKey = typeof result.data.apiKey === "string" ? result.data.apiKey : "";
-      const password = typeof result.data.password === "string" ? result.data.password : "";
+      const { apiKey = "", otlpApiKey = "", password = "" } = result.data;
       set((s) => ({
         connectionProfiles: s.connectionProfiles.map((p) =>
-          p.id === id ? { ...p, connection: { ...p.connection, apiKey, password } } : p,
+          p.id === id ? { ...p, connection: { ...p.connection, apiKey, otlpApiKey, password } } : p,
         ),
       }));
       return true;
