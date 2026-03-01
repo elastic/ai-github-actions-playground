@@ -460,7 +460,7 @@ Files issues with specific library references, documentation links, and simplifi
 
 ## 9. Exploratory Testing Agents
 
-Seven Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents file issues aligned to their mission (bug reports for smoke explorers, feature-gap feedback for customer review).
+Eight Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents file issues aligned to their mission (bug reports for smoke explorers, feature-gap feedback for customer review).
 
 | Agent | File | Schedule | Domain |
 |-------|------|----------|--------|
@@ -471,6 +471,7 @@ Seven Playwright-powered exploratory agents run on weekdays. Each owns a domain 
 | **Indices, Data Streams & Pipelines** | `smoke-reset-visibility.yml` | 13:00 UTC | Table sorting, detail views, data management |
 | **Live Elasticsearch** | `smoke-live-es.yml` | 14:00 UTC | All pages with real OTel data and a real cluster |
 | **Feature Gap Review** | `customer-complaints.yml` | 16:00 UTC | Missing features vs Kibana/Grafana/Elasticvue expectations |
+| **Modern UI Review** | `ui-designer-review.yml` | 17:00 UTC | Design modernization vs Linear/Vercel/Stripe standards |
 
 All exploratory agents use `gh-aw-scheduled-audit.lock.yml` with creative Playwright exploration instructions.
 
