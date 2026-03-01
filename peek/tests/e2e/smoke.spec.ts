@@ -6,9 +6,13 @@ import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasti
 
 /**
  * Baseline of known pre-existing axe violations per page (tracked in #954).
+ *
+ * IMPORTANT: This is a temporary measure to prevent accessibility regressions
+ * while we work toward full WCAG 2.2 Level AA compliance. Each entry here
+ * represents a technical debt item that should be resolved rather than expanded.
+ *
  * Maps page label → rule ID → maximum number of violating DOM nodes.
- * The gate fails when a new rule fires or its node count exceeds the baseline,
- * ensuring new violations of already-known rule categories are still caught.
+ * The gate fails when a new rule fires or its node count exceeds the baseline.
  */
 const A11Y_BASELINE: Record<string, Record<string, number>> = {
   welcome: {
@@ -63,7 +67,9 @@ async function checkA11y(page: Page, pageName: string) {
     newViolations.map(
       (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
     ),
-    `axe found new a11y violation(s) on "${pageName}"`,
+    `axe found new accessibility violations on "${pageName}".\n` +
+      `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
+      `See DEVELOPING.md for accessibility standards.`,
   ).toEqual([]);
 }
 
