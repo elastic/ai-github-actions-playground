@@ -73,27 +73,25 @@ export async function checkForMuiErrors(page: Page): Promise<string[]> {
   return errors;
 }
 
+async function writeAuditArtifact(filename: string, content: string): Promise<void> {
+  const fs = await import("fs");
+  const path = await import("path");
+  const dir = path.resolve("test-results");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, filename), content, "utf-8");
+}
+
 export async function dumpDOM(page: Page, pageName: string, prefix: string) {
   const html = await page.evaluate(() => {
     const main = document.querySelector("main") ?? document.querySelector("#root") ?? document.body;
     return main.innerHTML;
   });
-  const fs = await import("fs");
-  const path = await import("path");
-  const dir = path.resolve("test-results");
-  fs.mkdirSync(dir, { recursive: true });
-  const s = slug(pageName);
-  fs.writeFileSync(path.join(dir, `${prefix}-dom-${s}.html`), html, "utf-8");
+  await writeAuditArtifact(`${prefix}-dom-${slug(pageName)}.html`, html);
 }
 
 export async function captureAriaSnapshot(page: Page, pageName: string, prefix: string) {
   const ariaYaml = await page.locator("body").ariaSnapshot();
-  const fs = await import("fs");
-  const path = await import("path");
-  const dir = path.resolve("test-results");
-  fs.mkdirSync(dir, { recursive: true });
-  const s = slug(pageName);
-  fs.writeFileSync(path.join(dir, `${prefix}-aria-${s}.yaml`), ariaYaml, "utf-8");
+  await writeAuditArtifact(`${prefix}-aria-${slug(pageName)}.yaml`, ariaYaml);
 }
 
 export function logDiagnostics(
@@ -216,7 +214,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
     navButton: "Metrics",
     afterNav: async (page, prefix) => {
       await page.screenshot({
-        path: `test-results/${prefix}-metrics.png`,
+        path: `test-results/${prefix}-metrics-pre-search.png`,
         fullPage: true,
       });
       await captureAriaSnapshot(page, "metrics-pre-search", prefix);
