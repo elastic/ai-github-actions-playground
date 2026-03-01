@@ -17,6 +17,7 @@ import { useResetAllStores } from "./hooks/useResetAllStores";
 import { useSessionResume } from "./hooks/useSessionResume";
 import AppHeader from "./components/AppHeader";
 import AppSidebar from "./components/AppSidebar";
+import AiAssistantDrawer from "./components/AiAssistantDrawer";
 import ParameterBar from "./components/ParameterBar";
 import ConnectionDialog from "./components/ConnectionDialog";
 import PanelEditor from "./components/PanelEditor";
@@ -173,6 +174,7 @@ export default function App() {
               </Button>
             </Box>
           </Box>
+          {connected && <AiAssistantDrawer />}
         </Box>
       </Box>
       <ConnectionDialog />

@@ -10,6 +10,7 @@ import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import SettingsIcon from "@mui/icons-material/Settings";
+import ChatIcon from "@mui/icons-material/Chat";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -77,13 +78,16 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
   const { connected, capabilities } = useConnectionStore(
     useShallow((s) => ({ connected: s.connected, capabilities: s.capabilities })),
   );
-  const { themeMode, setConnectionDialogOpen, setThemeMode } = useUIStore(
-    useShallow((s) => ({
-      themeMode: s.themeMode,
-      setConnectionDialogOpen: s.setConnectionDialogOpen,
-      setThemeMode: s.setThemeMode,
-    })),
-  );
+  const { themeMode, setConnectionDialogOpen, setThemeMode, aiPanelOpen, setAiPanelOpen } =
+    useUIStore(
+      useShallow((s) => ({
+        themeMode: s.themeMode,
+        setConnectionDialogOpen: s.setConnectionDialogOpen,
+        setThemeMode: s.setThemeMode,
+        aiPanelOpen: s.aiPanelOpen,
+        setAiPanelOpen: s.setAiPanelOpen,
+      })),
+    );
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
@@ -245,8 +249,19 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           p: 1,
           display: "flex",
           justifyContent: collapsed ? "center" : "flex-start",
+          gap: 0.5,
         }}
       >
+        <Tooltip title="AI Assistant" placement={collapsed ? "right" : "top"}>
+          <IconButton
+            size="small"
+            color={aiPanelOpen ? "primary" : "default"}
+            aria-label="Toggle AI assistant panel"
+            onClick={() => setAiPanelOpen(!aiPanelOpen)}
+          >
+            <ChatIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
           <IconButton
             size="small"

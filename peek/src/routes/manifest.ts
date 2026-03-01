@@ -155,7 +155,7 @@ export const PAGE_MANIFEST = {
       label: "Chat",
       group: "Workspace",
       order: 60,
-      showInSidebar: true,
+      showInSidebar: false,
       icon: createElement(ChatIcon, { fontSize: "small" }),
     },
   },
