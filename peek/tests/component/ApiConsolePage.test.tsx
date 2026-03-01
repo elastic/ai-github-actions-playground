@@ -257,6 +257,10 @@ describe("ApiConsolePage", () => {
 
     await user.click(screen.getByRole("button", { name: /cancel/i }));
 
+    // The underlying fetch should have been aborted via its signal
+    const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(init.signal?.aborted).toBe(true);
+
     // After cancel, Send button returns and no response is shown
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument();
