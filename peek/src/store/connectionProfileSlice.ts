@@ -26,9 +26,9 @@ import {
 
 const credentialsSchema = z
   .object({
-    apiKey: z.unknown().optional(),
-    otlpApiKey: z.unknown().optional(),
-    password: z.unknown().optional(),
+    apiKey: z.string().optional().catch(""),
+    otlpApiKey: z.string().optional().catch(""),
+    password: z.string().optional().catch(""),
   })
   .strict();
 
@@ -159,9 +159,7 @@ export const createConnectionProfileSlice: StateCreator<
       if (plaintext === null) return false;
       const result = credentialsSchema.safeParse(JSON.parse(plaintext));
       if (!result.success) return false;
-      const apiKey = typeof result.data.apiKey === "string" ? result.data.apiKey : "";
-      const otlpApiKey = typeof result.data.otlpApiKey === "string" ? result.data.otlpApiKey : "";
-      const password = typeof result.data.password === "string" ? result.data.password : "";
+      const { apiKey = "", otlpApiKey = "", password = "" } = result.data;
       set((s) => ({
         connectionProfiles: s.connectionProfiles.map((p) =>
           p.id === id ? { ...p, connection: { ...p.connection, apiKey, otlpApiKey, password } } : p,

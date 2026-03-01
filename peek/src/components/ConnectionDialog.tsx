@@ -458,9 +458,16 @@ export default function ConnectionDialog() {
             value={url}
             onChange={(e) => {
               const nextUrl = e.target.value;
+              const previousDerived = deriveDefaultOtlpEndpoint(url);
               setUrl(nextUrl);
               setActiveProfileId(null);
-              setOtlpEndpoint((prev) => (prev.trim() ? prev : deriveDefaultOtlpEndpoint(nextUrl)));
+              setOtlpEndpoint((prev) => {
+                const trimmed = prev.trim();
+                if (!trimmed || trimmed === previousDerived) {
+                  return deriveDefaultOtlpEndpoint(nextUrl);
+                }
+                return prev;
+              });
             }}
             helperText="The full URL including protocol and port"
           />
