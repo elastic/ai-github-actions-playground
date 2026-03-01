@@ -37,17 +37,19 @@ export default function PersesPanelRenderer({
   timeZone,
 }: Props) {
   const entry = getPersesPanelEntry(type);
-  return (
-    entry?.renderComponent({
-      data,
-      options,
-      onExportReady,
-      onExportCsv,
-      query,
-      connection,
-      timeRange,
-      parameters,
-      timeZone,
-    }) ?? <DataTable data={data} />
-  );
+  if (!entry) {
+    return <DataTable data={data} />;
+  }
+
+  return entry.renderComponent({
+    data,
+    options,
+    onExportReady,
+    onExportCsv,
+    query,
+    connection,
+    timeRange,
+    parameters,
+    timeZone,
+  });
 }
