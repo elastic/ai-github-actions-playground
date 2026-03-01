@@ -22,6 +22,7 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
+import { parseAsString, parseAsStringEnum } from "nuqs";
 
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
@@ -29,11 +30,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
-import {
-  useExplorerStore,
-  serializeExplorerState,
-  deserializeExplorerState,
-} from "../store/useExplorerStore";
+import { useExplorerStore } from "../store/useExplorerStore";
 import {
   ElasticsearchClient,
   isElasticsearchError,
@@ -52,6 +49,72 @@ import DimensionSidebar from "./DimensionSidebar";
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
+
+const VALID_AGGREGATIONS: AggregationType[] = [
+  "avg",
+  "sum",
+  "min",
+  "max",
+  "count",
+  "p50",
+  "p95",
+  "p99",
+];
+const parseAggregation = parseAsStringEnum<AggregationType>(VALID_AGGREGATIONS);
+
+function parseFilters(search: string): ExplorerFilter[] {
+  const params = new URLSearchParams(search);
+  const parsedFilters: ExplorerFilter[] = [];
+  for (const [key, value] of params.entries()) {
+    if (!key.startsWith("filter.")) continue;
+    const field = key.slice("filter.".length);
+    const colonIdx = value.indexOf(":");
+    if (colonIdx <= 0) continue;
+    const op = value.slice(0, colonIdx);
+    if (op !== "==" && op !== "!=" && op !== "LIKE") continue;
+    parsedFilters.push({ field, op, value: value.slice(colonIdx + 1) });
+  }
+  return parsedFilters;
+}
+
+function parseExplorerSearch(searchParams: URLSearchParams): {
+  index: string | null;
+  metric: string | null;
+  agg: AggregationType | null;
+  groupBy: string | null;
+  from: string | null;
+  to: string | null;
+} {
+  const index = searchParams.get("index");
+  const metric = searchParams.get("metric");
+  const rawAgg = searchParams.get("agg");
+  const groupBy = searchParams.get("groupBy");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+  return {
+    index: index ? parseAsString.parse(index) : null,
+    metric: metric ? parseAsString.parse(metric) : null,
+    agg: rawAgg ? parseAggregation.parse(rawAgg) : null,
+    groupBy: groupBy ? parseAsString.parse(groupBy) : null,
+    from: from ? parseAsString.parse(from) : null,
+    to: to ? parseAsString.parse(to) : null,
+  };
+}
+
+function applyFilters(
+  searchParams: URLSearchParams,
+  nextFilters: ExplorerFilter[],
+): URLSearchParams {
+  const next = new URLSearchParams(searchParams);
+  const filterKeys = Array.from(next.keys()).filter((key) => key.startsWith("filter."));
+  for (const key of filterKeys) {
+    next.delete(key);
+  }
+  for (const filter of nextFilters) {
+    next.append(`filter.${filter.field}`, `${filter.op}:${filter.value}`);
+  }
+  return next;
+}
 
 function metricNamespaceOf(metricName: string): string {
   const dot = metricName.indexOf(".");
@@ -77,6 +140,7 @@ export default function ExplorePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearchRef = useRef(searchParams.toString());
+  const initialUrlStateRef = useRef(parseExplorerSearch(searchParams));
 
   const {
     indexPattern,
@@ -153,26 +217,26 @@ export default function ExplorePage() {
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
-    const restored = deserializeExplorerState(initialSearchRef.current);
-    if (restored.indexPattern) {
-      setIndexPattern(restored.indexPattern);
+    const initialUrlState = initialUrlStateRef.current;
+    if (initialUrlState.index) {
+      setIndexPattern(initialUrlState.index);
     }
-    if (restored.metric) {
-      setSelectedMetric(restored.metric);
-      setSelectedNamespace(metricNamespaceOf(restored.metric));
+    if (initialUrlState.metric) {
+      setSelectedMetric(initialUrlState.metric);
+      setSelectedNamespace(metricNamespaceOf(initialUrlState.metric));
     }
-    if (restored.aggregation) {
-      setAggregation(restored.aggregation);
+    if (initialUrlState.agg) {
+      setAggregation(initialUrlState.agg);
     }
-    if (restored.groupBy) {
-      setGroupBy(restored.groupBy);
+    if (initialUrlState.groupBy) {
+      setGroupBy(initialUrlState.groupBy);
     }
     clearFilters();
-    for (const filter of restored.filters) {
+    for (const filter of parseFilters(initialSearchRef.current)) {
       addFilter(filter);
     }
-    if (restored.from && restored.to) {
-      setTimeRange({ from: restored.from, to: restored.to });
+    if (initialUrlState.from && initialUrlState.to) {
+      setTimeRange({ from: initialUrlState.from, to: initialUrlState.to });
     }
     hasHydratedFromUrlRef.current = true;
   }, [
@@ -188,9 +252,22 @@ export default function ExplorePage() {
   // Sync URL state
   useEffect(() => {
     if (!hasHydratedFromUrlRef.current) return;
-    const state = { indexPattern, selectedMetric, aggregation, filters, groupBy };
-    const qs = serializeExplorerState(state, dashboard.timeRange);
-    setSearchParams(qs, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = applyFilters(prev, filters);
+        if (indexPattern) next.set("index", parseAsString.serialize(indexPattern));
+        else next.delete("index");
+        if (selectedMetric) next.set("metric", parseAsString.serialize(selectedMetric));
+        else next.delete("metric");
+        next.set("agg", parseAggregation.serialize(aggregation));
+        if (groupBy) next.set("groupBy", parseAsString.serialize(groupBy));
+        else next.delete("groupBy");
+        next.set("from", parseAsString.serialize(dashboard.timeRange.from));
+        next.set("to", parseAsString.serialize(dashboard.timeRange.to));
+        return next;
+      },
+      { replace: true },
+    );
   }, [
     indexPattern,
     selectedMetric,
