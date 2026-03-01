@@ -35,9 +35,8 @@ export function deriveOtlpEndpoint(esUrl: string): string | null {
   try {
     const url = new URL(esUrl);
     const parts = url.hostname.split(".");
-    const esIdx = parts.indexOf("es");
-    if (esIdx >= 0 && url.hostname.endsWith(".elastic.cloud")) {
-      parts[esIdx] = "ingest";
+    if (url.hostname.endsWith(".elastic.cloud") && parts.length >= 3 && parts[1] === "es") {
+      parts[1] = "ingest";
       url.hostname = parts.join(".");
       return url.toString().replace(/\/+$/, "");
     }

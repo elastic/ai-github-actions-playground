@@ -13,7 +13,7 @@ import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getClusterInfo: vi.fn().mockResolvedValue({ version: { number: "8.17.0" } }),
-    createApiKey: vi.fn().mockResolvedValue({ id: "1", name: "k", encoded: "abc123" }),
+    createApiKey: vi.fn().mockResolvedValue({ id: "1", name: "k", encodedApiKey: "abc123" }),
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
