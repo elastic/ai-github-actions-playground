@@ -93,6 +93,7 @@ export async function detectTelemetrySignals(
     for (const prefix of SIGNAL_PREFIXES) {
       if (ds.name.startsWith(`${prefix}-`)) {
         found.add(prefix);
+        break;
       }
     }
   }
@@ -386,19 +387,39 @@ export default function AddDataPage() {
   const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>("idle");
   const [foundSignals, setFoundSignals] = useState<Set<TelemetrySignal>>(new Set());
   const [verifyError, setVerifyError] = useState<string | null>(null);
+  const verifyAbortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      verifyAbortControllerRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    verifyAbortControllerRef.current?.abort();
+  }, [connection]);
 
   const handleVerifyIngestion = useCallback(async () => {
     if (!connection) return;
+    verifyAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    verifyAbortControllerRef.current = controller;
     setVerifyStatus("checking");
     setVerifyError(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const signals = await detectTelemetrySignals(client);
+      const signals = await detectTelemetrySignals(client, controller.signal);
+      if (controller.signal.aborted) return;
       setFoundSignals(signals);
       setVerifyStatus(signals.size > 0 ? "found" : "not_found");
     } catch (err) {
+      if (controller.signal.aborted) return;
       setVerifyError(isElasticsearchError(err) ? err.message : String(err));
       setVerifyStatus("error");
+    } finally {
+      if (verifyAbortControllerRef.current === controller) {
+        verifyAbortControllerRef.current = null;
+      }
     }
   }, [connection]);
 
@@ -613,8 +634,7 @@ export default function AddDataPage() {
         )}
         {verifyStatus === "found" && (
           <Alert severity="success" icon={<CheckCircleOutlineIcon />}>
-            Telemetry data detected! Found {Array.from(foundSignals).sort().join(", ")} data{" "}
-            {foundSignals.size === 1 ? "stream" : "streams"}.
+            Telemetry data detected! Found data in: {Array.from(foundSignals).sort().join(", ")}.
             <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
               {SIGNAL_PREFIXES.filter((s) => foundSignals.has(s)).map((s) => (
                 <Button
