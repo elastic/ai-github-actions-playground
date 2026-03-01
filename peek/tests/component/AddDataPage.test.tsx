@@ -6,15 +6,19 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AddDataPage, {
   deriveOtlpEndpoint,
   probeOtlpEndpoint,
+  detectTelemetrySignals,
 } from "../../src/components/AddDataPage";
-import type { UserCapabilities } from "../../src/services/es";
+import type { UserCapabilities, ElasticsearchClient } from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+
+const mockGetDataStreams = vi.fn().mockResolvedValue({ data_streams: [] });
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getClusterInfo: vi.fn().mockResolvedValue({ version: { number: "8.17.0" } }),
     createApiKey: vi.fn().mockResolvedValue({ id: "1", name: "k", encodedApiKey: "abc123" }),
+    getDataStreams: (...args: unknown[]) => mockGetDataStreams(...args),
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -262,6 +266,50 @@ describe("AddDataPage", () => {
       expect.anything(),
     );
   });
+
+  it("renders the Verify ingestion button", () => {
+    renderPage();
+    expect(screen.getByRole("button", { name: /Verify ingestion/i })).toBeInTheDocument();
+  });
+
+  it("shows success with navigation buttons when telemetry data streams are found", async () => {
+    mockGetDataStreams.mockResolvedValueOnce({
+      data_streams: [
+        { name: "metrics-host.otel-default" },
+        { name: "traces-generic.otel-default" },
+      ],
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Telemetry data detected/)).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Go to Metrics" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Go to Traces" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Go to Query Lab" })).not.toBeInTheDocument();
+  });
+
+  it("shows not-found message when no telemetry data streams exist", async () => {
+    mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/No telemetry data streams found yet/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Troubleshooting docs/)).toBeInTheDocument();
+  });
+
+  it("shows error when verification fails", async () => {
+    mockGetDataStreams.mockRejectedValueOnce(new Error("Connection refused"));
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Connection refused/)).toBeInTheDocument();
+    });
+  });
 });
 
 describe("probeOtlpEndpoint", () => {
@@ -332,5 +380,42 @@ describe("deriveOtlpEndpoint", () => {
 
   it("returns null for empty string", () => {
     expect(deriveOtlpEndpoint("")).toBeNull();
+  });
+});
+
+describe("detectTelemetrySignals", () => {
+  it("returns matching signal types from data streams", async () => {
+    const client = {
+      getDataStreams: vi.fn().mockResolvedValue({
+        data_streams: [
+          { name: "logs-generic.otel-default" },
+          { name: "metrics-host.otel-default" },
+          { name: "traces-generic.otel-default" },
+        ],
+      }),
+    } as unknown as ElasticsearchClient;
+    const signals = await detectTelemetrySignals(client);
+    expect(signals).toEqual(new Set(["logs", "metrics", "traces"]));
+  });
+
+  it("returns empty set when no telemetry streams exist", async () => {
+    const client = {
+      getDataStreams: vi.fn().mockResolvedValue({ data_streams: [] }),
+    } as unknown as ElasticsearchClient;
+    const signals = await detectTelemetrySignals(client);
+    expect(signals.size).toBe(0);
+  });
+
+  it("ignores non-telemetry data streams", async () => {
+    const client = {
+      getDataStreams: vi.fn().mockResolvedValue({
+        data_streams: [
+          { name: ".ds-ilm-history-7-2024.01.01-000001" },
+          { name: "synthetics-http" },
+        ],
+      }),
+    } as unknown as ElasticsearchClient;
+    const signals = await detectTelemetrySignals(client);
+    expect(signals.size).toBe(0);
   });
 });

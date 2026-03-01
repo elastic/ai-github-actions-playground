@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,11 +14,13 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+import { PAGE_MANIFEST } from "../routes/manifest";
 
 // ---------------------------------------------------------------------------
 // Endpoint type helpers
@@ -67,6 +70,41 @@ export async function probeOtlpEndpoint(otlpUrl: string, timeoutMs = 5000): Prom
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Ingestion verification helpers
+// ---------------------------------------------------------------------------
+
+/** Telemetry signal types that the verification check looks for. */
+export type TelemetrySignal = "logs" | "metrics" | "traces";
+
+const SIGNAL_PREFIXES: TelemetrySignal[] = ["logs", "metrics", "traces"];
+
+/**
+ * Detect which telemetry signals have data streams present in the cluster.
+ * Returns the set of signal types whose `{signal}-*` data streams exist.
+ */
+export async function detectTelemetrySignals(
+  client: ElasticsearchClient,
+  signal?: AbortSignal,
+): Promise<Set<TelemetrySignal>> {
+  const res = await client.getDataStreams(undefined, signal);
+  const found = new Set<TelemetrySignal>();
+  for (const ds of res.data_streams ?? []) {
+    for (const prefix of SIGNAL_PREFIXES) {
+      if (ds.name.startsWith(`${prefix}-`)) {
+        found.add(prefix);
+      }
+    }
+  }
+  return found;
+}
+
+const SIGNAL_NAV: Record<TelemetrySignal, { label: string; path: string }> = {
+  metrics: { label: "Metrics", path: PAGE_MANIFEST.explore.path },
+  traces: { label: "Traces", path: PAGE_MANIFEST.traces.path },
+  logs: { label: "Query Lab", path: PAGE_MANIFEST.discover.path },
+};
 
 // ---------------------------------------------------------------------------
 // Platform definitions
@@ -259,6 +297,7 @@ $env:STORAGE_DIR = "$PWD\\data\\otel"
 // ---------------------------------------------------------------------------
 
 export default function AddDataPage() {
+  const navigate = useNavigate();
   const connection = useConnectionStore((s) => s.connection);
   const capabilities = useConnectionStore((s) => s.capabilities);
   const [platform, setPlatform] = useState<Platform>("kubernetes");
@@ -342,6 +381,27 @@ export default function AddDataPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [apiKeyValue]);
+
+  // ---- Ingestion verification ----
+  type VerifyStatus = "idle" | "checking" | "found" | "not_found" | "error";
+  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>("idle");
+  const [foundSignals, setFoundSignals] = useState<Set<TelemetrySignal>>(new Set());
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
+  const handleVerifyIngestion = useCallback(async () => {
+    if (!connection) return;
+    setVerifyStatus("checking");
+    setVerifyError(null);
+    try {
+      const client = new ElasticsearchClient(connection);
+      const signals = await detectTelemetrySignals(client);
+      setFoundSignals(signals);
+      setVerifyStatus(signals.size > 0 ? "found" : "not_found");
+    } catch (err) {
+      setVerifyError(isElasticsearchError(err) ? err.message : String(err));
+      setVerifyStatus("error");
+    }
+  }, [connection]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
@@ -512,6 +572,64 @@ export default function AddDataPage() {
               Create API key API
             </Link>{" "}
             or ask an administrator to provision one for collector onboarding.
+          </Alert>
+        )}
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="subtitle2">Verify ingestion</Typography>
+        <Typography variant="body2" color="text.secondary">
+          After starting the collector, check whether telemetry data streams have appeared.
+        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => void handleVerifyIngestion()}
+            disabled={verifyStatus === "checking"}
+            startIcon={
+              verifyStatus === "checking" ? (
+                <CircularProgress size={16} />
+              ) : (
+                <CheckCircleOutlineIcon fontSize="small" />
+              )
+            }
+          >
+            {verifyStatus === "checking" ? "Checking…" : "Verify ingestion"}
+          </Button>
+        </Stack>
+        {verifyStatus === "error" && <Alert severity="error">{verifyError}</Alert>}
+        {verifyStatus === "not_found" && (
+          <Alert severity="info">
+            No telemetry data streams found yet. Make sure the collector is running and try again in
+            a few moments.{" "}
+            <Link
+              href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Troubleshooting docs
+            </Link>
+          </Alert>
+        )}
+        {verifyStatus === "found" && (
+          <Alert severity="success" icon={<CheckCircleOutlineIcon />}>
+            Telemetry data detected! Found {Array.from(foundSignals).sort().join(", ")} data
+            streams.
+            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+              {(["metrics", "traces", "logs"] as const)
+                .filter((s) => foundSignals.has(s))
+                .map((s) => (
+                  <Button
+                    key={s}
+                    size="small"
+                    variant="outlined"
+                    onClick={() => navigate(SIGNAL_NAV[s].path)}
+                  >
+                    Go to {SIGNAL_NAV[s].label}
+                  </Button>
+                ))}
+            </Stack>
           </Alert>
         )}
       </Paper>
