@@ -101,7 +101,13 @@ const DEFAULT_MOCK_DATA = {
   snapshotStatus: { snapshots: [] },
   ingestNodeStats: { nodes: { n1: { ingest: { total: { count: 1000, failed: 0 } } } } },
   hasPrivileges: {
-    cluster: { manage_data_stream: true, read_security: true, manage_security: false },
+    cluster: {
+      manage_data_stream: true,
+      read_security: true,
+      manage_security: false,
+      manage_own_api_key: true,
+      manage_api_key: false,
+    },
   },
   securityUsers: {
     elastic: {
@@ -113,6 +119,28 @@ const DEFAULT_MOCK_DATA = {
   },
   securityRoles: {
     superuser: { cluster: ["all"], indices: [{ names: ["*"], privileges: ["all"] }] },
+  },
+  apiKeys: {
+    api_keys: [
+      {
+        id: "mock-key-1",
+        name: "ingest-pipeline-key",
+        username: "elastic",
+        creation: Date.now() - 30 * 86_400_000,
+        expiration: Date.now() + 30 * 86_400_000,
+        invalidated: false,
+        metadata: {},
+      },
+      {
+        id: "mock-key-2",
+        name: "never-expiring-key",
+        username: "elastic",
+        creation: Date.now() - 120 * 86_400_000,
+        expiration: null,
+        invalidated: false,
+        metadata: { purpose: "legacy integration" },
+      },
+    ],
   },
   catIndices: [
     {
@@ -235,6 +263,7 @@ export async function registerElasticsearchMocks(
     if (path === "/_security/user/_has_privileges") return json(resolved.hasPrivileges);
     if (path === "/_security/user" && method === "GET") return json(resolved.securityUsers);
     if (path === "/_security/role" && method === "GET") return json(resolved.securityRoles);
+    if (path === "/_security/api_key" && method === "GET") return json(resolved.apiKeys);
 
     if (path === "/_cluster/settings" && method === "GET") return json(resolved.clusterSettings);
     if (path === "/_cluster/pending_tasks" && method === "GET") return json(resolved.pendingTasks);

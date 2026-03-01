@@ -44,6 +44,8 @@ export type {
   GetSecurityUsersResponse,
   GetSecurityRolesResponse,
   UserCapabilities,
+  ApiKeyInfo,
+  GetApiKeysResponse,
   ProfilingTopFunctionsRequest,
   CatIndexRecord,
   IndexStatsData,
