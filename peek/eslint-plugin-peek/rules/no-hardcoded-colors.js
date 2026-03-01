@@ -13,7 +13,7 @@ export default {
     },
   },
   create(context) {
-    const HEX_RE = /^#(?:[0-9a-fA-F]{3,8})$/;
+    const HEX_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
     const RGB_RE = /^rgba?\(/;
 
     function isColorLiteral(node) {
