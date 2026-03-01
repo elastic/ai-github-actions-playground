@@ -5,25 +5,17 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
-import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
-import Divider from "@mui/material/Divider";
-import Checkbox from "@mui/material/Checkbox";
-import Chip from "@mui/material/Chip";
 import Skeleton from "@mui/material/Skeleton";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
-import TextField from "@mui/material/TextField";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import CodeIcon from "@mui/icons-material/Code";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
@@ -52,12 +44,11 @@ import QueryPipelineSteps from "./QueryPipelineSteps";
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
 import EmptyState from "./EmptyState";
+import FieldPickerSidebar from "./FieldPickerSidebar";
 import PageHeader from "./PageHeader";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
-import { isNumericType } from "./visualizations/chartUtils";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
-import { getTypeColor } from "./fieldTypeColor";
 
 export default function DiscoverPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -97,26 +88,21 @@ export default function DiscoverPage() {
   const parameters = useDashboardEditorStore((s) => s.dashboard.parameters);
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
-
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
-  const effectiveQuery = discoverQueryDraft ?? query;
-
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
   const [insightsCache, setInsightsCache] = useState<
     Record<string, { loading: boolean; error: string | null; data: EsqlResponse | null }>
   >({});
-
+  const effectiveQuery = discoverQueryDraft ?? query;
   const buildRequest = useCallback(
-    (queryText: string): EsqlQueryParams => {
-      return buildPersesEsqlRequest(queryText, { timeRange, parameters });
-    },
+    (queryText: string): EsqlQueryParams =>
+      buildPersesEsqlRequest(queryText, { timeRange, parameters }),
     [timeRange, parameters],
   );
-
   const timingsCleared = useRef(false);
   const {
     runQuery,
@@ -147,7 +133,6 @@ export default function DiscoverPage() {
       timingsCleared.current = false;
     },
   });
-
   const insightQueryToColumnRef = useRef(new Map<string, string>());
   const { runQuery: runInsightQuery } = useEsqlQuery({
     connection,
@@ -168,7 +153,6 @@ export default function DiscoverPage() {
       }));
     },
   });
-
   const handleToggleInsight = useCallback(
     (columnName: string, columnType: string) => {
       if (expandedInsight === columnName) {
@@ -191,13 +175,10 @@ export default function DiscoverPage() {
     },
     [expandedInsight, insightsCache, effectiveQuery, runInsightQuery],
   );
-
   const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
   const handleQueryChange = useCallback(
     (nextQuery: string) => {
-      if (discoverQueryDraft) {
-        setDiscoverQueryDraft(null);
-      }
+      if (discoverQueryDraft) setDiscoverQueryDraft(null);
       if (!timingsCleared.current) {
         clearTimings();
         timingsCleared.current = true;
@@ -210,10 +191,10 @@ export default function DiscoverPage() {
     },
     [discoverQueryDraft, setDiscoverQueryDraft, clearTimings, setQuery],
   );
-  const handleFormatQuery = useCallback(() => {
-    handleQueryChange(formatEsqlQuery(effectiveQuery));
-  }, [effectiveQuery, handleQueryChange]);
-
+  const handleFormatQuery = useCallback(
+    () => handleQueryChange(formatEsqlQuery(effectiveQuery)),
+    [effectiveQuery, handleQueryChange],
+  );
   const handleRerunHealthyClusters = useCallback(
     (healthyClusters: string[]) => {
       // Best-effort: replace cross-cluster wildcard `*:pattern` in FROM with
@@ -228,7 +209,6 @@ export default function DiscoverPage() {
     },
     [effectiveQuery, handleQueryChange, runQuery],
   );
-
   const handleRunStep = useCallback(
     (stepQuery: string, stepIndex: number) => runQuery(stepQuery, stepIndex),
     [runQuery],
@@ -278,21 +258,16 @@ export default function DiscoverPage() {
     }, refreshInterval * 1000);
     return () => clearInterval(id);
   }, [connection, refreshInterval, effectiveQuery, loading, handleRunQuery]);
-
   const toggleField = useCallback(
     (name: string) => {
       const next = new Set(selectedFields);
-      if (next.has(name)) {
-        next.delete(name);
-      } else {
-        next.add(name);
-      }
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
       setSelectedFields(next);
       setTableVersion((prev) => prev + 1);
     },
     [selectedFields, setSelectedFields],
   );
-
   const handleCreatePanel = useCallback(() => {
     const newPanel = {
       id: crypto.randomUUID(),
@@ -305,12 +280,10 @@ export default function DiscoverPage() {
     setEditingPanelId(newPanel.id);
     navigate(`/dashboards/${activeDashboardId}`);
   }, [effectiveQuery, addPanel, setEditingPanelId, navigate, activeDashboardId]);
-
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),
     [result, selectedFields],
   );
-
   const handleExportCsv = useCallback(() => {
     if (!filteredResult || filteredResult.columns.length === 0) return;
     const csv = toCsv(filteredResult);
@@ -322,20 +295,17 @@ export default function DiscoverPage() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [filteredResult]);
-
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
   const visibleColumns = useMemo(
     () => filterColumnsByName(columns, fieldFilter),
     [columns, fieldFilter],
   );
-
   const selectVisibleFields = useCallback(() => {
     const next = new Set(selectedFields);
     for (const col of visibleColumns) next.add(col.name);
     setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
   }, [selectedFields, setSelectedFields, visibleColumns]);
-
   const deselectVisibleFields = useCallback(() => {
     const next = new Set(selectedFields);
     for (const col of visibleColumns) next.delete(col.name);
@@ -345,7 +315,6 @@ export default function DiscoverPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
-      {/* Query bar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="ES|QL Query"
@@ -460,290 +429,34 @@ export default function DiscoverPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
-
-      {/* Summary strip: timing chip */}
       {result && lastRunDurationMs !== null && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
         </Box>
       )}
-
-      {/* Partial-result blast radius panel */}
       {result && lastRunIsPartial && lastRunPartialMetadata !== null && (
         <PartialResultPanel
           metadata={lastRunPartialMetadata}
           onRerunHealthyClusters={handleRerunHealthyClusters}
         />
       )}
-
-      {/* Profile panel */}
       {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
 
       {/* Content area: field picker + table */}
       <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
-        {/* Field picker sidebar */}
-        <Paper
-          variant="outlined"
-          sx={{
-            display: "flex",
-            flexShrink: 0,
-            flexDirection: "column",
-            width: 220,
-            overflow: "hidden",
-          }}
-        >
-          <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle2">Fields</Typography>
-            {columns.length > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                {selectedFields.size} / {columns.length} selected
-              </Typography>
-            )}
-            {columns.length > 0 && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1 }}>
-                <TextField
-                  size="small"
-                  placeholder="Filter fields"
-                  value={fieldFilter}
-                  onChange={(e) => setFieldFilter(e.target.value)}
-                />
-                <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <Button size="small" onClick={selectVisibleFields}>
-                    Select all
-                  </Button>
-                  <Button size="small" onClick={deselectVisibleFields}>
-                    Deselect all
-                  </Button>
-                </Box>
-              </Box>
-            )}
-          </Box>
-          <Box sx={{ flex: 1, overflow: "auto" }}>
-            {columns.length === 0 ? (
-              <EmptyState
-                icon={<CodeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
-                heading="Run a query to see fields"
-                description="Execute an ES|QL query to inspect the returned field names and types."
-              />
-            ) : (
-              visibleColumns.map((col) => {
-                const insight = insightsCache[col.name];
-                const isExpanded = expandedInsight === col.name;
-                return (
-                  <Box key={col.name}>
-                    <Box
-                      component="button"
-                      type="button"
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
-                        py: 0.25,
-                        px: 0.5,
-                        border: 0,
-                        bgcolor: "transparent",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        "&:hover": { bgcolor: "action.hover" },
-                      }}
-                      onClick={() => toggleField(col.name)}
-                    >
-                      <Checkbox
-                        size="small"
-                        checked={selectedFields.has(col.name)}
-                        onChange={() => toggleField(col.name)}
-                        onClick={(e) => e.stopPropagation()}
-                        sx={{ p: 0.5 }}
-                      />
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="caption" noWrap display="block" title={col.name}>
-                          {col.name}
-                        </Typography>
-                        <Chip
-                          label={col.type}
-                          size="small"
-                          color={getTypeColor(col.type)}
-                          sx={{
-                            height: 14,
-                            fontSize: "0.6rem",
-                            "& .MuiChip-label": { px: 0.5 },
-                          }}
-                        />
-                      </Box>
-                      <IconButton
-                        size="small"
-                        aria-label={`${isExpanded ? "Collapse" : "Expand"} insights for ${col.name}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleInsight(col.name, col.type);
-                        }}
-                        sx={{ p: 0.25 }}
-                      >
-                        {isExpanded ? (
-                          <ExpandLessIcon sx={{ fontSize: 16 }} />
-                        ) : (
-                          <ExpandMoreIcon sx={{ fontSize: 16 }} />
-                        )}
-                      </IconButton>
-                    </Box>
-                    <Collapse in={isExpanded}>
-                      <Box sx={{ py: 0.75, px: 1.5, bgcolor: "action.hover" }}>
-                        {insight?.loading && (
-                          <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
-                            <CircularProgress size={16} />
-                          </Box>
-                        )}
-                        {!insight?.loading && insight?.error && (
-                          <Alert severity="error" sx={{ py: 0, fontSize: "0.7rem" }}>
-                            {insight.error}
-                          </Alert>
-                        )}
-                        {!insight?.loading &&
-                          !insight?.error &&
-                          insight?.data &&
-                          isNumericType(col.type) &&
-                          (() => {
-                            const row = insight.data!.values[0];
-                            const getVal = (name: string) => {
-                              const idx = insight.data!.columns.findIndex((c) => c.name === name);
-                              return idx >= 0 && row ? (row[idx] ?? null) : null;
-                            };
-                            const min = getVal("min_value");
-                            const max = getVal("max_value");
-                            const avg = getVal("avg_value");
-                            const total = getVal("total_count");
-                            const nulls = getVal("null_count");
-                            return (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: 0.25,
-                                  fontSize: "0.7rem",
-                                }}
-                              >
-                                {[
-                                  { label: "Min", value: min },
-                                  { label: "Max", value: max },
-                                  { label: "Avg", value: avg },
-                                  { label: "Count", value: total },
-                                  { label: "Nulls", value: nulls },
-                                ].map(({ label, value }) => (
-                                  <Box
-                                    key={label}
-                                    sx={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                    }}
-                                  >
-                                    <Typography variant="caption" color="text.secondary">
-                                      {label}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      fontFamily="monospace"
-                                      fontWeight={600}
-                                    >
-                                      {value == null ? "—" : String(value)}
-                                    </Typography>
-                                  </Box>
-                                ))}
-                              </Box>
-                            );
-                          })()}
-                        {!insight?.loading &&
-                          !insight?.error &&
-                          insight?.data &&
-                          !isNumericType(col.type) &&
-                          (() => {
-                            const vals = insight.data!.values;
-                            if (vals.length === 0) {
-                              return (
-                                <EmptyState
-                                  size="small"
-                                  heading="No values"
-                                  description="No data found for this field."
-                                />
-                              );
-                            }
-                            return (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: 0.25,
-                                  fontSize: "0.7rem",
-                                }}
-                              >
-                                {vals.map((row, i) => {
-                                  const valIdx = insight.data!.columns.findIndex(
-                                    (c) => c.name === col.name,
-                                  );
-                                  const cntIdx = insight.data!.columns.findIndex(
-                                    (c) => c.name === "value_count",
-                                  );
-                                  const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
-                                  const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
-                                  return (
-                                    <Box
-                                      key={i}
-                                      sx={{
-                                        display: "flex",
-                                        gap: 0.5,
-                                        justifyContent: "space-between",
-                                      }}
-                                    >
-                                      <Typography
-                                        variant="caption"
-                                        noWrap
-                                        sx={{ flex: 1, minWidth: 0, fontFamily: "monospace" }}
-                                        title={value == null ? "null" : String(value)}
-                                      >
-                                        {value == null ? (
-                                          <span style={{ opacity: 0.4, fontStyle: "italic" }}>
-                                            null
-                                          </span>
-                                        ) : (
-                                          String(value)
-                                        )}
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        fontFamily="monospace"
-                                        color="text.secondary"
-                                        sx={{ flexShrink: 0 }}
-                                      >
-                                        {count == null ? "—" : String(count)}
-                                      </Typography>
-                                    </Box>
-                                  );
-                                })}
-                                {vals.length >= 10 && (
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{ opacity: 0.6 }}
-                                  >
-                                    Top 10 only
-                                  </Typography>
-                                )}
-                              </Box>
-                            );
-                          })()}
-                        {!insight?.loading && !insight?.error && !insight?.data && (
-                          <Typography variant="caption" color="text.secondary">
-                            No data
-                          </Typography>
-                        )}
-                      </Box>
-                    </Collapse>
-                    <Divider />
-                  </Box>
-                );
-              })
-            )}
-          </Box>
-        </Paper>
+        <FieldPickerSidebar
+          columns={columns}
+          selectedFields={selectedFields}
+          onToggleField={toggleField}
+          fieldFilter={fieldFilter}
+          onFieldFilterChange={setFieldFilter}
+          onSelectVisible={selectVisibleFields}
+          onDeselectVisible={deselectVisibleFields}
+          visibleColumns={visibleColumns}
+          expandedInsight={expandedInsight}
+          insightsCache={insightsCache}
+          onToggleInsight={handleToggleInsight}
+        />
 
         {/* Results table */}
         <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
