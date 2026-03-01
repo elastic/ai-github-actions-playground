@@ -341,13 +341,13 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 
 | Agent | Domain | Workflow |
 | --- | --- | --- |
-| Connection & Onboarding | Connection dialog, auth tabs, disconnect/reconnect | `smoke-welcome-flow.yml` |
-| Metrics & Charts | Metric search, chart rendering, time ranges | `smoke-metrics-flow.yml` |
-| Traces & Service Map | Span trees, service map, trace-to-query pivot | `smoke-traces-flow.yml` |
-| Query Lab & Console | ES\|QL queries, result tables, API Console | `smoke-auth-tab-switch.yml` |
-| Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `smoke-reset-visibility.yml` |
-| Live Elasticsearch | All pages with real OTel data and a real cluster | `smoke-live-es.yml` |
-| Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `customer-complaints.yml` |
+| Connection & Onboarding | Connection dialog, auth tabs, disconnect/reconnect | `explore-connection.yml` |
+| Metrics & Charts | Metric search, chart rendering, time ranges | `explore-metrics.yml` |
+| Traces & Service Map | Span trees, service map, trace-to-query pivot | `explore-traces.yml` |
+| Query Lab & Console | ES\|QL queries, result tables, API Console | `explore-query-lab.yml` |
+| Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `explore-data-management.yml` |
+| Live Elasticsearch | All pages with real OTel data and a real cluster | `explore-live-es.yml` |
+| Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `explore-customer-feedback.yml` |
 | Design: Modern UI Review | Design modernization, spacing, typography, cards, tables, empty states, loading patterns | `ui-designer-review.yml` |
 
 Each agent writes and runs its own Playwright scripts to navigate, click, type,
