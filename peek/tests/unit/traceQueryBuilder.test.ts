@@ -47,7 +47,7 @@ describe("buildTraceSearchQuery", () => {
       statusCodes: ["Error"],
     };
     const query = buildTraceSearchQuery(filters);
-    expect(query).toContain('status IN ("Error")');
+    expect(query).toContain('status.code IN ("Error")');
   });
 
   it("includes duration filters", () => {

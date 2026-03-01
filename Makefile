@@ -1,6 +1,6 @@
 PEEK_DIR := peek
 
-.PHONY: help setup serve serve-proxy build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
+.PHONY: help setup serve serve-proxy serve-background build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
@@ -11,6 +11,7 @@ help:
 	@echo "  setup            - Install Node.js dependencies"
 	@echo "  serve            - Install deps + start Vite dev server (http://localhost:3000)"
 	@echo "  serve-proxy      - Install deps + start dev server with Elasticsearch proxy (set ES_URL)"
+	@echo "  serve-background - Start dev server in background and wait until ready"
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - Prettier format check + ESLint + TypeScript type check"
@@ -64,6 +65,19 @@ serve-proxy: setup
 	@echo "  ES_URL from environment or .env: $${ES_URL:-<loaded from .env>}"
 	@echo "  Enter http://localhost:3000/_es as the Elasticsearch URL"
 	@cd $(PEEK_DIR) && npm run dev
+
+serve-background: setup
+	@echo "Starting Vite dev server in background..."
+	@cd $(PEEK_DIR) && nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
+	@for i in $$(seq 1 30); do \
+		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
+	@if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then \
+		echo "✓ Dev server running at http://localhost:3000 (PID: $$(cat /tmp/vite-dev-server.pid))"; \
+	else \
+		echo "✗ Dev server failed to start. Logs:"; cat /tmp/vite-dev-server.log; exit 1; \
+	fi
 
 build:
 	@echo "Building for production..."
