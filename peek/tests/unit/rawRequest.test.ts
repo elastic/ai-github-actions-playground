@@ -59,6 +59,17 @@ describe("executeRawRequest", () => {
     expect(url).toBe(`${BASE_URL}/_search`);
   });
 
+  it("normalizes baseUrl with trailing slash", async () => {
+    const doFetch: DoFetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
+
+    await executeRawRequest(doFetch, `${BASE_URL}/`, HEADERS, "GET", "/_search");
+
+    const [url] = (doFetch as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/_search`);
+  });
+
   it("sends request body only when provided and non-empty", async () => {
     const doFetch: DoFetch = vi
       .fn()
