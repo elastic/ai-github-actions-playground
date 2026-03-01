@@ -35,6 +35,9 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { formatBytes } from "../utils/formatBytes";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
+import ContentSkeleton from "./ContentSkeleton";
+import PageHeader from "./PageHeader";
+
 interface OverviewData {
   clusterInfo: ClusterInfoResponse | null;
   clusterHealth: ClusterHealthResponse | null;
@@ -301,14 +304,14 @@ export default function ClusterOverviewPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Cluster Overview
-          </Typography>
-          <Button size="small" variant="outlined" onClick={loadOverview} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Cluster Overview"
+          actions={
+            <Button size="small" variant="outlined" onClick={loadOverview} disabled={loading}>
+              {loading ? <CircularProgress size={16} /> : "Refresh"}
+            </Button>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -319,9 +322,7 @@ export default function ClusterOverviewPage() {
       )}
 
       {loading && !clusterInfo ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress />
-        </Box>
+        <ContentSkeleton variant="cards" />
       ) : (
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>

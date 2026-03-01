@@ -25,8 +25,10 @@ import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
+import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
 import FieldStatsPanel from "./FieldStatsPanel";
+import PageHeader from "./PageHeader";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -183,35 +185,37 @@ export default function DataStreamsPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Data Streams
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={loadDataStreams}
-            disabled={loadingStreams}
-          >
-            {loadingStreams ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Button
-            size="small"
-            variant="contained"
-            disabled={!selectedName}
-            onClick={handleOpenInDiscover}
-          >
-            Open in Query Lab
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            disabled={!selectedName}
-            onClick={handleInspectInConsole}
-          >
-            Inspect in Console
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Data Streams"
+          actions={
+            <>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={loadDataStreams}
+                disabled={loadingStreams}
+              >
+                {loadingStreams ? <CircularProgress size={16} /> : "Refresh"}
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                disabled={!selectedName}
+                onClick={handleOpenInDiscover}
+              >
+                Open in Query Lab
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={!selectedName}
+                onClick={handleInspectInConsole}
+              >
+                Inspect in Console
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -265,6 +269,7 @@ export default function DataStreamsPage() {
             ))}
             {!loadingStreams && filteredStreams.length === 0 && (
               <EmptyState
+                size="small"
                 heading="No data streams found"
                 description="Try adjusting your search or check that data streams exist in the cluster"
               />
@@ -338,7 +343,7 @@ export default function DataStreamsPage() {
               </Box>
             ) : (
               <EmptyState
-                icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                icon={<StorageIcon sx={{ fontSize: 32 }} />}
                 heading="Select a data stream"
                 description="Select a data stream from the left panel to view its fields and backing indices."
               />
@@ -355,9 +360,7 @@ export default function DataStreamsPage() {
               />
             )}
             {loadingFields ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                <CircularProgress size={24} />
-              </Box>
+              <ContentSkeleton variant="table" />
             ) : (
               <Box sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
                 {fieldRows.map((field) => (

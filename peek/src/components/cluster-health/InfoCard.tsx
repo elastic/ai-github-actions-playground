@@ -28,10 +28,10 @@ export default function InfoCard({ title, value, detail, severity }: InfoCardPro
       role="group"
       aria-label={title}
     >
-      <Typography variant="subtitle2" color="text.primary" gutterBottom>
+      <Typography variant="overline" color="text.secondary" gutterBottom component="div">
         {title}
       </Typography>
-      <Typography variant="h5" component="div">
+      <Typography variant="h5" component="div" sx={{ fontVariantNumeric: "tabular-nums" }}>
         {value}
       </Typography>
       {detail ? (

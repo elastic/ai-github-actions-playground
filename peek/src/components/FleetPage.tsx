@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -33,6 +32,8 @@ import FleetOutputsList from "./fleet/FleetOutputsList";
 import FleetActivityList from "./fleet/FleetActivityList";
 import RefreshToolbar from "./RefreshToolbar";
 import EmptyState from "./EmptyState";
+import ContentSkeleton from "./ContentSkeleton";
+import PageHeader from "./PageHeader";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -239,19 +240,19 @@ export default function FleetPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Fleet
-          </Typography>
-          <RefreshToolbar
-            lastUpdatedAt={lastUpdatedAt}
-            refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
-            refreshOptions={FLEET_REFRESH_OPTIONS}
-            onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
-            onRefresh={() => void runRefresh()}
-            loading={loading}
-          />
-        </Stack>
+        <PageHeader
+          title="Fleet"
+          actions={
+            <RefreshToolbar
+              lastUpdatedAt={lastUpdatedAt}
+              refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
+              refreshOptions={FLEET_REFRESH_OPTIONS}
+              onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+              onRefresh={() => void runRefresh()}
+              loading={loading}
+            />
+          }
+        />
       </Paper>
 
       {/* Errors */}
@@ -275,9 +276,7 @@ export default function FleetPage() {
 
       {/* Initial loading */}
       {loading && !serverStatus && agentInventory.length === 0 ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress />
-        </Box>
+        <ContentSkeleton variant="cards" />
       ) : (
         <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           {activeTab === "overview" && (
@@ -412,7 +411,7 @@ function OverviewTab({
         </>
       ) : (
         <EmptyState
-          icon={<DevicesIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+          icon={<DevicesIcon sx={{ fontSize: 32 }} />}
           heading="No Fleet Server status available"
           description={
             agentInventoryTotal > 0

@@ -7,6 +7,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
+import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -111,7 +112,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         width: collapsed ? 68 : 200,
         flexShrink: 0,
         borderRight: 1,
-        borderColor: "divider",
+        borderColor: "border.subtle",
         bgcolor: "background.paper",
         display: "flex",
         flexDirection: "column",
@@ -146,15 +147,12 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           <Box key={section.label} sx={{ pt: 1 }}>
             {!collapsed && (
               <Typography
-                variant="caption"
+                variant="overline"
                 sx={{
                   px: 2,
                   py: 0.5,
                   display: "block",
                   color: "text.secondary",
-                  fontWeight: 600,
-                  letterSpacing: "0.02em",
-                  fontSize: "0.7rem",
                 }}
               >
                 {section.label}
@@ -183,16 +181,6 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                       "&.Mui-selected": {
                         bgcolor: "action.selected",
                         "&:hover": { bgcolor: "action.selected" },
-                        "&::before": {
-                          content: '""',
-                          position: "absolute",
-                          left: 0,
-                          top: "20%",
-                          bottom: "20%",
-                          width: 3,
-                          borderRadius: 1,
-                          bgcolor: "primary.main",
-                        },
                       },
                     }}
                   >
@@ -253,6 +241,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           </Tooltip>
         </Box>
       )}
+      <Divider />
       <Box
         sx={{
           mt: "auto",
