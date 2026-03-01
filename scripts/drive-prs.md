@@ -18,6 +18,25 @@ gh repo set-default     # if working outside the repo directory
 
 ---
 
+## Step 0 — Mark all draft PRs as ready for review
+
+Draft PRs (except `[WIP]` ones) should be promoted before you start assessing
+them. The `ready-prs-and-enable-workflows.sh` script does this automatically,
+but you can also do it inline:
+
+```bash
+# List all draft PRs (excluding [WIP])
+gh pr list --draft --limit 200 --json number,title \
+  --jq '.[] | select((.title | ascii_downcase | contains("[wip]")) | not) | "\(.number)\t\(.title)"'
+
+# Mark a specific draft PR as ready
+gh pr ready <NUMBER>
+```
+
+Run this once at the start of a session. Then continue to Step 1.
+
+---
+
 ## Step 1 — List all open, non-draft PRs
 
 ```bash
@@ -80,6 +99,29 @@ gh run list --branch <HEAD_REF_NAME> --limit 10 \
 | Any run has `status: in_progress` or `queued` | **Wait** — checks are running. Move to next PR; come back later. |
 | All runs `completed` | Continue to Step 4. |
 | No runs at all | Check who made the last commit (Step 4). |
+| Any run has `status: action_required` | Approve it (Step 3a), then wait. |
+
+### Step 3a — Approve workflow runs awaiting maintainer approval
+
+Some workflow runs (especially from first-time contributors or bot-authored
+commits) are paused with `status: action_required` until a maintainer approves
+them. The `ready-prs-and-enable-workflows.sh` script handles these automatically,
+but you can also approve them manually:
+
+```bash
+REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+HEAD_SHA=$(gh pr view <NUMBER> --json headRefOid --jq '.headRefOid')
+
+# Find action_required runs for this PR's SHA
+gh run list --limit 200 \
+  --json databaseId,status,workflowName,event,headSha \
+  --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$HEAD_SHA"'") | "\(.databaseId)\t\(.workflowName)"'
+
+# Approve each run
+gh api -X POST "repos/$REPO_SLUG/actions/runs/<RUN_ID>/approve"
+```
+
+After approving, **wait** for the newly-started runs to complete before continuing.
 
 ---
 
@@ -260,6 +302,17 @@ Use this guide when unsure whether to take action or wait:
 # List PRs needing attention
 gh pr list --state open --json number,title,isDraft,mergeStateStatus \
   --jq '.[] | select(.isDraft == false) | "\(.number)\t\(.mergeStateStatus)\t\(.title)"'
+
+# Mark a draft PR as ready
+gh pr ready <NUMBER>
+
+# Approve action_required workflow runs for a PR
+REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+HEAD_SHA=$(gh pr view <NUMBER> --json headRefOid --jq '.headRefOid')
+gh run list --limit 200 \
+  --json databaseId,status,workflowName,event,headSha \
+  --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$HEAD_SHA"'") | .databaseId' \
+  | xargs -I{} gh api -X POST "repos/$REPO_SLUG/actions/runs/{}/approve"
 
 # Check a specific PR end-to-end
 gh pr view <NUMBER>
