@@ -12,6 +12,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
@@ -537,6 +538,7 @@ export default function IndicesPage() {
             variant="outlined"
             onClick={indicesResult.refresh}
             disabled={loadingIndices}
+            sx={{ height: 36 }}
           >
             {loadingIndices ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
@@ -547,6 +549,7 @@ export default function IndicesPage() {
                 variant="contained"
                 disabled={!selectedIndex}
                 onClick={handleOpenInQueryLab}
+                sx={{ height: 36 }}
               >
                 Open in Query Lab
               </Button>
@@ -557,6 +560,7 @@ export default function IndicesPage() {
             variant="outlined"
             disabled={!selectedIndex}
             onClick={handleInspectInConsole}
+            sx={{ height: 36 }}
           >
             Inspect in Console
           </Button>
@@ -704,8 +708,16 @@ export default function IndicesPage() {
                 sx={{ flex: 1, overflow: "auto", p: 2 }}
               >
                 {loadingDetail ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                    <CircularProgress size={24} />
+                  <Box sx={{ py: 1 }}>
+                    <Skeleton
+                      variant="rectangular"
+                      height={24}
+                      width="40%"
+                      sx={{ mb: 1.5, borderRadius: 1 }}
+                    />
+                    {[...Array(4)].map((_, i) => (
+                      <Skeleton key={i} variant="text" height={20} sx={{ mb: 0.5 }} />
+                    ))}
                   </Box>
                 ) : (
                   <>
@@ -719,11 +731,11 @@ export default function IndicesPage() {
               </Box>
             </>
           ) : (
-            <Box sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Select an index to view details.
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="No index selected"
+              description="Select an index from the list to view its details."
+            />
           )}
         </Paper>
       </Box>
