@@ -121,7 +121,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       });
       for (const tab of ["Nodes", "Tasks", "Capacity", "Shards", "Resilience"]) {
         await page.getByRole("tab", { name: tab }).click();
-        await page.waitForLoadState("networkidle");
+        await page.getByRole("tab", { name: tab, selected: true }).waitFor();
         await page.screenshot({
           path: `test-results/${prefix}-cluster-health-${slug(tab)}.png`,
           fullPage: true,
@@ -164,6 +164,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         const tabEl = page.getByRole("tab", { name: tab });
         if ((await tabEl.count()) > 0) {
           await tabEl.click();
+          await page.getByRole("tab", { name: tab, selected: true }).waitFor();
           await page.screenshot({
             path: `test-results/${prefix}-add-data-${slug(tab)}.png`,
             fullPage: true,
