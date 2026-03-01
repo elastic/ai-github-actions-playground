@@ -686,7 +686,7 @@ export default function IndicesPage() {
                   description={
                     showSystemIndices
                       ? "No indices match the current search filter."
-                      : "Toggle \u2018Show system indices\u2019 above to include system indices."
+                      : "Toggle 'Show system indices' above to include system indices."
                   }
                 />
               </ListItem>
