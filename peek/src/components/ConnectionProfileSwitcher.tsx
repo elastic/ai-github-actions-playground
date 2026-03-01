@@ -16,7 +16,6 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
-import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import type { ProfileHealth } from "../types";
 
 function ProfileHealthBadge({ health }: { health: ProfileHealth | undefined }) {
@@ -49,22 +48,16 @@ export default function ConnectionProfileSwitcher() {
     connectionProfiles,
     activeProfileId,
     profileHealthMap,
-    setConnection,
-    setConnected,
-    setCapabilities,
-    setActiveProfileId,
-    setProfileHealth,
+    switchConnectionProfile,
+    retestConnectionProfile,
   } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
       profileHealthMap: s.profileHealthMap,
-      setConnection: s.setConnection,
-      setConnected: s.setConnected,
-      setCapabilities: s.setCapabilities,
-      setActiveProfileId: s.setActiveProfileId,
-      setProfileHealth: s.setProfileHealth,
+      switchConnectionProfile: s.switchConnectionProfile,
+      retestConnectionProfile: s.retestConnectionProfile,
     })),
   );
   const { setConnectionDialogOpen } = useUIStore(
@@ -90,41 +83,17 @@ export default function ConnectionProfileSwitcher() {
       if (!profile) return;
       setProfileAnchor(null);
       setSwitchingProfile(true);
-      const conn = profile.connection;
       try {
-        const caps = await fetchCapabilitiesForConnection(conn);
-        setConnection(conn);
-        setConnected(true);
-        setCapabilities(caps);
-        setActiveProfileId(profileId);
-        setProfileHealth(profileId, {
-          status: "healthy",
-          checkedAt: new Date().toISOString(),
-          errorSummary: null,
-        });
-      } catch (err: unknown) {
-        const message = isElasticsearchError(err) ? err.message : String(err);
-        console.error("Profile switch failed:", message);
-        setProfileHealth(profileId, {
-          status: "needs_attention",
-          checkedAt: new Date().toISOString(),
-          errorSummary: message,
-        });
-        setConnectionDialogOpen(true);
+        const result = await switchConnectionProfile(profileId);
+        if (!result.ok) {
+          console.error("Profile switch failed:", result.message);
+          setConnectionDialogOpen(true);
+        }
       } finally {
         setSwitchingProfile(false);
       }
     },
-    [
-      switchingProfile,
-      connectionProfiles,
-      setConnection,
-      setConnected,
-      setCapabilities,
-      setActiveProfileId,
-      setProfileHealth,
-      setConnectionDialogOpen,
-    ],
+    [switchingProfile, connectionProfiles, switchConnectionProfile, setConnectionDialogOpen],
   );
 
   const handleRetestProfile = useCallback(
@@ -135,26 +104,20 @@ export default function ConnectionProfileSwitcher() {
       if (!profile) return;
       setRetestingProfileId(profileId);
       try {
-        await fetchCapabilitiesForConnection(profile.connection);
-        setProfileHealth(profileId, {
-          status: "healthy",
-          checkedAt: new Date().toISOString(),
-          errorSummary: null,
-        });
-        setProfileFeedback({ message: `"${profile.name}" is healthy`, severity: "success" });
-      } catch (err: unknown) {
-        const message = isElasticsearchError(err) ? err.message : String(err);
-        setProfileHealth(profileId, {
-          status: "needs_attention",
-          checkedAt: new Date().toISOString(),
-          errorSummary: message,
-        });
-        setProfileFeedback({ message: `"${profile.name}" failed: ${message}`, severity: "error" });
+        const result = await retestConnectionProfile(profileId);
+        if (result.ok) {
+          setProfileFeedback({ message: `"${profile.name}" is healthy`, severity: "success" });
+        } else {
+          setProfileFeedback({
+            message: `"${profile.name}" failed: ${result.message}`,
+            severity: "error",
+          });
+        }
       } finally {
         setRetestingProfileId(null);
       }
     },
-    [retestingProfileId, connectionProfiles, setProfileHealth],
+    [retestingProfileId, connectionProfiles, retestConnectionProfile],
   );
 
   if (!connected || connectionProfiles.length === 0) return null;

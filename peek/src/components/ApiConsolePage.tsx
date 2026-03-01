@@ -231,7 +231,7 @@ function RequestCard({
 
         {removable && (
           <Tooltip title="Remove request">
-            <IconButton size="small" onClick={() => onRemove(entry.id)}>
+            <IconButton size="small" onClick={() => onRemove(entry.id)} aria-label="Remove request">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -269,7 +269,11 @@ function RequestCard({
                   {entry.response.message}
                 </Typography>
                 <Tooltip title="Dismiss">
-                  <IconButton size="small" onClick={() => onUpdate(entry.id, { response: null })}>
+                  <IconButton
+                    size="small"
+                    onClick={() => onUpdate(entry.id, { response: null })}
+                    aria-label="Dismiss"
+                  >
                     <CloseIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -288,12 +292,20 @@ function RequestCard({
                   </Typography>
                   <Box sx={{ flex: 1 }} />
                   <Tooltip title={copied ? "Copied!" : "Copy response"}>
-                    <IconButton size="small" onClick={() => void handleCopy()}>
+                    <IconButton
+                      size="small"
+                      onClick={() => void handleCopy()}
+                      aria-label="Copy response"
+                    >
                       <ContentCopyIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Dismiss">
-                    <IconButton size="small" onClick={() => onUpdate(entry.id, { response: null })}>
+                    <IconButton
+                      size="small"
+                      onClick={() => onUpdate(entry.id, { response: null })}
+                      aria-label="Dismiss"
+                    >
                       <CloseIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
