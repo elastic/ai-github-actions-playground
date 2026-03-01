@@ -89,6 +89,21 @@ describe("splitEsqlPipeline", () => {
     expect(splitEsqlPipeline("FROM logs-* | LIMIT 10 |")).toEqual(["FROM logs-*", "LIMIT 10"]);
   });
 
+  it("does not split on pipes inside single-quoted strings", () => {
+    expect(splitEsqlPipeline("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 1")).toEqual([
+      "FROM logs-*",
+      "WHERE message == 'foo|bar'",
+      "LIMIT 1",
+    ]);
+  });
+
+  it("handles escaped single-quote sequences inside single-quoted strings", () => {
+    expect(splitEsqlPipeline("FROM logs-* | WHERE msg == 'it''s fine|here'")).toEqual([
+      "FROM logs-*",
+      "WHERE msg == 'it''s fine|here'",
+    ]);
+  });
+
   it("does not split on pipes inside // line comments", () => {
     expect(splitEsqlPipeline("FROM logs-* // note with | pipe\n| LIMIT 5")).toEqual([
       "FROM logs-* // note with | pipe",
@@ -294,6 +309,18 @@ describe("formatEsqlQuery", () => {
 });
 
 describe("applyEsqlSort", () => {
+  it("preserves pipes inside single-quoted literals when inserting SORT", () => {
+    expect(
+      applyEsqlSort("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 10", "message", "asc"),
+    ).toBe("FROM logs-* | WHERE message == 'foo|bar' | SORT `message` ASC | LIMIT 10");
+  });
+
+  it("preserves escaped single-quoted literals when inserting SORT", () => {
+    expect(applyEsqlSort("FROM logs-* | WHERE msg == 'it''s fine|here'", "message", "asc")).toBe(
+      "FROM logs-* | WHERE msg == 'it''s fine|here' | SORT `message` ASC",
+    );
+  });
+
   it("appends a SORT step before LIMIT when no SORT exists", () => {
     expect(applyEsqlSort("FROM logs-* | LIMIT 50", "message", "asc")).toBe(
       "FROM logs-* | SORT `message` ASC | LIMIT 50",

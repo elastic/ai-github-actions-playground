@@ -8,9 +8,13 @@ function isSameConnection(a: ElasticsearchConnection, b: ElasticsearchConnection
   return (
     a.url === b.url &&
     (a.apiKey ?? "") === (b.apiKey ?? "") &&
+    (a.otlpApiKey ?? "") === (b.otlpApiKey ?? "") &&
     (a.username ?? "") === (b.username ?? "") &&
     (a.password ?? "") === (b.password ?? "") &&
-    (a.proxyUrl ?? "") === (b.proxyUrl ?? "")
+    (a.proxyUrl ?? "") === (b.proxyUrl ?? "") &&
+    (a.otlpEndpoint ?? "") === (b.otlpEndpoint ?? "") &&
+    (a.otlpEnabled ?? false) === (b.otlpEnabled ?? false) &&
+    (a.otlpUseElasticAuth ?? true) === (b.otlpUseElasticAuth ?? true)
   );
 }
 

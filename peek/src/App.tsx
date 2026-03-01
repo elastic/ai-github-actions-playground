@@ -164,7 +164,7 @@ export default function App() {
               <Button
                 size="small"
                 color="error"
-                variant="text"
+                variant="outlined"
                 onClick={resetState}
                 aria-label="Reset state"
                 sx={{ position: "absolute", right: 8 }}

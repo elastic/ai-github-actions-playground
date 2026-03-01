@@ -516,6 +516,7 @@ export default function TracesPage() {
           <Select
             size="small"
             displayEmpty
+            aria-label="Time range"
             value={filters.timeFrom ?? ""}
             onChange={(e) => {
               const selectedFrom = e.target.value === "" ? null : e.target.value;
@@ -567,6 +568,7 @@ export default function TracesPage() {
             theme={themeMode}
             height="120px"
             basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
+            aria-label="Trace search query editor"
           />
         </Box>
 

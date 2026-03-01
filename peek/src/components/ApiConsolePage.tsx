@@ -251,6 +251,7 @@ function RequestCard({
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}
+              aria-label="Request body editor"
             />
           </Box>
         </Box>
@@ -312,6 +313,7 @@ function RequestCard({
                     theme={themeMode}
                     editable={false}
                     basicSetup={{ lineNumbers: true, foldGutter: false }}
+                    aria-label="Response body"
                   />
                 </Box>
               </>

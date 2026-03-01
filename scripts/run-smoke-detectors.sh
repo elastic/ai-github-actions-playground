@@ -49,6 +49,7 @@ WORKFLOWS=(
   "smoke-reset-visibility.yml"
   "smoke-live-es.yml"
   "customer-complaints.yml"
+  "ui-designer-review.yml"
 )
 
 # Verify gh is available
