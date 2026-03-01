@@ -322,6 +322,7 @@ export default function ProfilingPage() {
             if (viewMode !== "topFunctions") setRawQuery(event.target.value);
           }}
           InputProps={{ readOnly: viewMode === "topFunctions" }}
+          InputLabelProps={{ sx: { color: "text.secondary" } }}
         />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
           <Button variant="contained" size="small" onClick={handleRun} disabled={loading}>

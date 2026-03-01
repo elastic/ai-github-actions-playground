@@ -440,9 +440,9 @@ export default function TracesPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleAddService();
             }}
-            sx={{ width: 160 }}
+            sx={{ width: 160, "& .MuiInputBase-root": { height: 36 } }}
           />
-          <Button size="small" variant="outlined" onClick={handleAddService}>
+          <Button size="small" variant="outlined" onClick={handleAddService} sx={{ height: 36 }}>
             Add Service
           </Button>
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
@@ -451,17 +451,22 @@ export default function TracesPage() {
               placeholder="Min (ms)"
               value={minDurationInput}
               onChange={(e) => setMinDurationInput(e.target.value)}
-              sx={{ width: 100 }}
+              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
             />
-            <Typography variant="caption">–</Typography>
+            <Typography variant="body2">–</Typography>
             <TextField
               size="small"
               placeholder="Max (ms)"
               value={maxDurationInput}
               onChange={(e) => setMaxDurationInput(e.target.value)}
-              sx={{ width: 100 }}
+              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
             />
-            <Button size="small" variant="outlined" onClick={handleApplyDuration}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleApplyDuration}
+              sx={{ height: 36 }}
+            >
               Apply
             </Button>
           </Box>
@@ -476,7 +481,7 @@ export default function TracesPage() {
                 updateFilters({ timeFrom: opt.from, timeTo: opt.to });
               }
             }}
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: 150, height: 36 }}
           >
             {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
               <MenuItem key={opt.label} value={opt.from ?? ""}>
@@ -484,7 +489,7 @@ export default function TracesPage() {
               </MenuItem>
             ))}
           </Select>
-          <Box sx={{ display: "flex", gap: 0.5, ml: "auto" }}>
+          <Box sx={{ display: "flex", gap: 0.5, ml: "auto", alignItems: "center" }}>
             {(["Error", "OK"] as const).map((status) => (
               <Chip
                 key={status}
@@ -492,6 +497,7 @@ export default function TracesPage() {
                 size="small"
                 variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
                 color={status === "Error" ? "error" : "default"}
+                sx={{ height: 36 }}
                 onClick={() => {
                   if (filters.statusCodes.includes(status)) {
                     updateFilters({
