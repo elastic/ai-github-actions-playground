@@ -108,7 +108,7 @@ format:
 
 ci:
 	@echo "Installing dependencies (strict lockfile)..."
-	@cd $(PEEK_DIR) && npm ci
+	@cd $(PEEK_DIR) && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci
 	@$(MAKE) lint test-unit-coverage build
 	@echo ""
 	@echo "✓ CI passed: lint + coverage gate + build all passed."
