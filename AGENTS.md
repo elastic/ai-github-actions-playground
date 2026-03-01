@@ -36,6 +36,18 @@ make check   # lint + unit tests + build (equivalent to CI)
 ## Playwright (Screenshots & E2E Testing)
 
 Playwright is available for navigating the app, taking screenshots, and capturing console errors.
+
+### Interactive Browser Automation (MCP Tools)
+
+Exploratory testing agents use **Playwright MCP tools** for interactive browser
+automation. This is configured via `.gemini/settings.json` and provides tools
+like `browser_navigate`, `browser_click`, `browser_type`, `browser_snapshot`,
+and `browser_take_screenshot`.
+
+**Do NOT write Node.js scripts to drive the browser** — use the MCP tools
+directly for step-by-step interactive exploration. This allows you to see
+the page state after each action and adapt based on what you find.
+
 After `make setup`, install the Chromium browser binary:
 
 ```bash
@@ -105,9 +117,7 @@ The Playwright config (`peek/playwright.config.ts`) auto-starts the Vite dev ser
 
 ### Verifying Changes Against Real Elasticsearch Data
 
-When implementing features or fixing bugs, you can verify your changes render
-correctly against real OTel data (traces, metrics, logs) instead of just mocks.
-This catches issues that only appear with real-world data shapes and volumes.
+See DEVELOPING.md § OTLP Fixture Capture & Replay for full replay commands, data tables, and teardown instructions.
 
 **Quick start (one-liner):**
 
@@ -118,40 +128,9 @@ make otel-replay-up && make otel-replay && make test-e2e-live
 make otel-replay-down
 ```
 
-**What this gives you:**
-
-| Data | Source | Indices created |
-|------|--------|----------------|
-| Traces (9-service distributed) | OTLP fixture replay | `traces-generic.otel-default` |
-| Metrics (CPU, memory, disk) | OTLP fixture replay | `metrics-hostmetricsreceiver.otel-default` |
-| Logs | OTLP fixture replay | `logs-generic.otel-default` |
-| web_logs, orders | `seed-elasticsearch.mjs` | `web_logs`, `orders` |
-| Ingest pipelines | `seed-elasticsearch.mjs` | `logs-parse-nginx`, `enrich-geoip`, `metrics-normalize` |
-
-After replay, connect the dev server to the live cluster:
-
-```bash
-ES_URL=http://localhost:9200 make serve-proxy
-# Then open http://localhost:3000 and connect to http://localhost:3000/_es
-```
-
-This is the same data the `explore-live-es.yml` agent explores against.
-Use `make otel-replay-down` to tear everything down when done.
-
 ### Exploratory Testing Agents
 
-Eight scheduled agents creatively explore the app with Playwright. Each owns a
-domain and invents novel interaction scenarios every run — they do NOT run
-pre-written test suites. Deterministic E2E tests run in CI instead.
-
-- `explore-connection.yml` → **Explore: Connection & Onboarding** — connection dialog, auth tabs, disconnect/reconnect, keyboard nav
-- `explore-metrics.yml` → **Explore: Metrics & Charts** — metric search, chart rendering, time ranges, state persistence
-- `explore-traces.yml` → **Explore: Traces & Service Map** — span trees, service map, trace-to-query pivot, navigation
-- `explore-query-lab.yml` → **Explore: Query Lab & Console** — ES|QL queries, result tables, API Console, error handling
-- `explore-data-management.yml` → **Explore: Indices, Data Streams & Pipelines** — table sorting, detail views, data management
-- `explore-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
-- `explore-customer-feedback.yml` → **Customer: Feature Gap Review** — missing features, feature requests, comparison to Kibana/Grafana/Elasticvue
-- `ui-designer-review.yml` → **Design: Modern UI Review** — design modernization, spacing, typography, cards, tables, empty states, loading patterns
+See DEVELOPING.md § Exploratory Testing Agents for the full agent list, domains, and failure-handling rules.
 
 ### Visual Quality Checklist
 
@@ -159,32 +138,28 @@ Every exploratory agent MUST check these visual quality dimensions on pages
 it visits. These are the exact defect patterns found in the February 2026
 full-app audit (issue #872).
 
-**Element height consistency in toolbars** — All interactive controls in a
-filter/toolbar row (text fields, selects, chips, buttons) must be the same
-height. A mismatch of more than 4px is a bug. Measure programmatically:
+**Element height consistency in toolbars** — See DESIGN_LANGUAGE.md § Component Heights — a mismatch >4px is a bug. Measure using `browser_console_execute`:
 
 ```javascript
-const heights = await page.evaluate(() => {
+(() => {
   const els = document.querySelectorAll('input, button, [role="combobox"], [role="button"]');
-  return Array.from(els)
+  return JSON.stringify(Array.from(els)
     .map(el => {
       const r = el.getBoundingClientRect();
       return { tag: el.tagName, h: Math.round(r.height), top: Math.round(r.top), text: el.textContent?.trim().slice(0, 20) };
     })
-    .filter(el => el.top > 50 && el.top < 250);
-});
+    .filter(el => el.top > 50 && el.top < 250));
+})()
 ```
 
-**text.secondary contrast on dark mode** — Elements using MUI
-`color="text.secondary"` on dark backgrounds can fall below WCAG AA 4.5:1.
+**text.secondary contrast on dark mode** — See DESIGN_LANGUAGE.md § Brand Palette for the `text.secondary` minimum.
 Check: sidebar section headers ("WORKSPACE", "SYSTEM", "HELP"), metric card
 subtitle labels, table column headers, empty state helper text, and fieldset
 `<legend>` elements. Switch to dark mode via Settings gear and take a
 screenshot.
 
-**Empty state consistency** — Every page that can show "no data" must display
-a centered icon, a short bold title, and a one-line helper sentence. No page
-should show a blank rectangle. Pages to verify: Query Lab, Metrics, Traces,
+**Empty state consistency** — See DESIGN_LANGUAGE.md § Empty States for required anatomy.
+Pages to verify: Query Lab, Metrics, Traces,
 Dashboards, Fleet, Indices, Ingest Pipelines.
 
 **Fieldset and legend visibility** — MUI `<fieldset>` borders with `<legend>`
