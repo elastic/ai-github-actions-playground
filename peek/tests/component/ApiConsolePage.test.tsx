@@ -5,10 +5,8 @@ import userEvent from "@testing-library/user-event";
 import ApiConsolePage from "../../src/components/ApiConsolePage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 vi.stubGlobal("fetch", vi.fn());
 vi.stubGlobal("navigator", {
   clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
@@ -233,5 +231,47 @@ describe("ApiConsolePage", () => {
     const pathInputs = screen.getAllByPlaceholderText("/_cat/indices?v");
     expect(pathInputs[0]).toHaveValue("/my-index/_mapping");
     expect(useApiConsoleStore.getState().consoleDraft).toBeNull();
+  });
+
+  it("shows a Cancel button while a request is loading and cancels on click", async () => {
+    let resolveFetch!: (value: Response) => void;
+    vi.mocked(fetch).mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    const user = userEvent.setup();
+    render(<ApiConsolePage />);
+
+    await user.click(screen.getByRole("button", { name: /send/i }));
+
+    // While loading, Cancel button should appear and Send should not
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: /^send$/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+
+    // The underlying fetch should have been aborted via its signal
+    const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(init.signal?.aborted).toBe(true);
+
+    // After cancel, Send button returns and no response is shown
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: /cancel/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("200")).not.toBeInTheDocument();
+
+    // Resolve the pending fetch to avoid unhandled promise warnings
+    resolveFetch(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
   });
 });

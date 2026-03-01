@@ -6,10 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import AppSidebar from "../../src/components/AppSidebar";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 /** Helper to capture the current router location inside tests. */
 function LocationDisplay() {

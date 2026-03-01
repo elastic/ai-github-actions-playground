@@ -4,10 +4,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { fetchCapabilitiesForConnection } from "../../src/services/es";
 import { useSessionResume } from "../../src/hooks/useSessionResume";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 vi.mock("../../src/services/es", () => ({
   fetchCapabilitiesForConnection: vi.fn(),

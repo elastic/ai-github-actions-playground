@@ -9,7 +9,7 @@ import AddDataPage, {
 } from "../../src/components/AddDataPage";
 import type { UserCapabilities } from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -24,9 +24,6 @@ vi.mock("../../src/services/es", () => ({
 }));
 
 const fetchSpy = vi.spyOn(globalThis, "fetch");
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 function renderPage() {
   return render(

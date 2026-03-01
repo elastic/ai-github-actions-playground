@@ -11,10 +11,6 @@ import {
   setLastQueryResult,
   ESQL_SYNTAX_GUIDE,
 } from "../../src/components/llmCompletionExtension";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 vi.mock("@ai-sdk/openai", () => ({
   createOpenAI: vi.fn(() => {

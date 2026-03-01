@@ -1,13 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { createSplitSecretStorage } from "../../src/store/createSplitSecretStorage";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-const localStorageMock = makeStorageMock();
-const sessionStorageMock = makeStorageMock();
-
-vi.stubGlobal("localStorage", localStorageMock);
-vi.stubGlobal("sessionStorage", sessionStorageMock);
 
 interface TestState {
   username: string;
@@ -32,8 +25,8 @@ function makeTestStorage() {
 
 describe("createSplitSecretStorage", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it("getItem returns null when localStorage has no entry", () => {
@@ -42,13 +35,13 @@ describe("createSplitSecretStorage", () => {
   });
 
   it("getItem returns null and recovers gracefully on malformed JSON", () => {
-    localStorageMock.setItem("my-store", "not-valid-json");
+    localStorage.setItem("my-store", "not-valid-json");
     const storage = makeTestStorage();
     expect(storage.getItem("my-store")).toBeNull();
   });
 
   it("getItem returns null when stored value has no state", () => {
-    localStorageMock.setItem("my-store", JSON.stringify({ version: 1 }));
+    localStorage.setItem("my-store", JSON.stringify({ version: 1 }));
     const storage = makeTestStorage();
     expect(storage.getItem("my-store")).toBeNull();
   });
@@ -60,13 +53,13 @@ describe("createSplitSecretStorage", () => {
       version: 1,
     });
 
-    const raw = localStorageMock.getItem("my-store");
+    const raw = localStorage.getItem("my-store");
     expect(raw).not.toBeNull();
     const parsed = JSON.parse(raw!) as { state: TestState };
     expect(parsed.state.secret).toBe("");
     expect(parsed.state.username).toBe("alice");
 
-    expect(sessionStorageMock.getItem("test-secret")).toBe("hunter2");
+    expect(sessionStorage.getItem("test-secret")).toBe("hunter2");
   });
 
   it("getItem restores secrets from sessionStorage", () => {
@@ -83,7 +76,7 @@ describe("createSplitSecretStorage", () => {
   });
 
   it("getItem restores empty string when session key is absent", () => {
-    localStorageMock.setItem(
+    localStorage.setItem(
       "my-store",
       JSON.stringify({ state: { username: "bob", secret: "" }, version: 1 }),
     );
@@ -102,8 +95,8 @@ describe("createSplitSecretStorage", () => {
 
     storage.removeItem("my-store");
 
-    expect(localStorageMock.getItem("my-store")).toBeNull();
-    expect(sessionStorageMock.getItem("test-secret")).toBeNull();
+    expect(localStorage.getItem("my-store")).toBeNull();
+    expect(sessionStorage.getItem("test-secret")).toBeNull();
   });
 
   it("removeItem passes the current localStorage raw string to clearSecrets", () => {

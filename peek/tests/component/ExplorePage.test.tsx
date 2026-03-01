@@ -7,7 +7,7 @@ import ExplorePage from "../../src/components/ExplorePage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const { queryMock, listFieldsMock } = vi.hoisted(() => ({
   queryMock: vi.fn().mockResolvedValue({
@@ -33,9 +33,6 @@ vi.mock("../../src/services/es", async () => {
     listFields: listFieldsMock,
   };
 });
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("ExplorePage", () => {
   beforeEach(() => {

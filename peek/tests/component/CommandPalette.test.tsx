@@ -9,10 +9,7 @@ import { useUIStore } from "../../src/store/useUIStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import * as esService from "../../src/services/es";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 /** Helper to capture the current router location inside tests. */
 function LocationDisplay() {

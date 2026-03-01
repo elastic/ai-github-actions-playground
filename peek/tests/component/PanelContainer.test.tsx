@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 
 import PanelContainer from "../../src/components/PanelContainer";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 import type { PanelDefinition } from "../../src/types";
 
 const queryMock = vi.fn();
@@ -40,9 +40,6 @@ function MockVisualization({
 vi.mock("../../src/components/perses/PersesPanelRenderer", () => ({
   default: MockVisualization,
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 describe("PanelContainer", () => {
   beforeEach(() => {

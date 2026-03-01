@@ -8,15 +8,12 @@ import { generateText } from "ai";
 import ChatPage from "../../src/components/ChatPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const { buildChatRuntimeMock, getChatRequestTimeoutMsMock } = vi.hoisted(() => ({
   buildChatRuntimeMock: vi.fn(),
   getChatRequestTimeoutMsMock: vi.fn(),
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 vi.mock("@ai-sdk/openai", () => ({
   createOpenAI: vi.fn(),

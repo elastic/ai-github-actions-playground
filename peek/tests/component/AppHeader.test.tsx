@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -6,10 +6,7 @@ import AppHeader from "../../src/components/AppHeader";
 import { PAGE_MANIFEST } from "../../src/routes/manifest";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 function renderHeader(path = "/") {
   return render(
