@@ -71,4 +71,27 @@ describe("browser tracing helpers", () => {
 
     expect(shouldReconfigureTracing(previous, next)).toBe(true);
   });
+
+  it("reconfigures tracing when connection URL changes", () => {
+    const previous = getTracingConnectionSnapshot(
+      {
+        url: "https://es-one.example.com:9200",
+        apiKey: "es-key",
+        otlpEnabled: true,
+        otlpEndpoint: "https://otlp.example.com/v1/traces",
+      },
+      true,
+    );
+    const next = getTracingConnectionSnapshot(
+      {
+        url: "https://es-two.example.com:9200",
+        apiKey: "es-key",
+        otlpEnabled: true,
+        otlpEndpoint: "https://otlp.example.com/v1/traces",
+      },
+      true,
+    );
+
+    expect(shouldReconfigureTracing(previous, next)).toBe(true);
+  });
 });
