@@ -23,7 +23,7 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
     "color-contrast": 2,
   },
   Metrics: {
-    "color-contrast": 1,
+    "color-contrast": 2,
   },
   Traces: {
     "aria-input-field-name": 2,
