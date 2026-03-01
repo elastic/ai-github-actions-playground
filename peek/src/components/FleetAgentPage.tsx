@@ -20,6 +20,7 @@ import {
 import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 
+import PageHeader from "./PageHeader";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
@@ -60,22 +61,24 @@ export default function FleetAgentPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
-            ← Fleet
-          </Button>
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }} noWrap>
-            {agentInfo?.hostname ?? decodedAgentId}
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => void agentResult.refresh()}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title={agentInfo?.hostname ?? decodedAgentId}
+          actions={
+            <>
+              <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
+                ← Fleet
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => void agentResult.refresh()}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={16} /> : "Refresh"}
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}

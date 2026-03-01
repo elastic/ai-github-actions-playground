@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -20,12 +20,15 @@ import { ElasticsearchClient, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
+import ContentSkeleton from "./ContentSkeleton";
+import PageHeader from "./PageHeader";
 import { loadSecurityResource } from "./securityResourceLoader";
 
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedUsername = searchParams.get("username");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,20 +92,39 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   useEffect(() => {
-    setSelectedUsername((current) => {
-      if (users.length === 0) {
-        return requestedUsername ?? current;
-      }
-      if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
-        return requestedUsername;
-      }
-      // Preserve manual selection when no query param and current user still exists
-      if (!requestedUsername && current && users.some((user) => user.username === current)) {
-        return current;
-      }
-      return users[0]?.username ?? null;
-    });
-  }, [requestedUsername, users]);
+    const resolvedUsername =
+      users.length === 0
+        ? (requestedUsername ?? selectedUsername)
+        : requestedUsername && users.some((user) => user.username === requestedUsername)
+          ? requestedUsername
+          : !requestedUsername &&
+              selectedUsername &&
+              users.some((user) => user.username === selectedUsername)
+            ? selectedUsername
+            : (users[0]?.username ?? null);
+    if (resolvedUsername !== selectedUsername) {
+      setSelectedUsername(resolvedUsername);
+    }
+    if (
+      users.length === 0 ||
+      resolvedUsername === requestedUsername ||
+      !location.pathname.startsWith("/users")
+    ) {
+      return;
+    }
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+        if (resolvedUsername) {
+          nextParams.set("username", resolvedUsername);
+        } else {
+          nextParams.delete("username");
+        }
+        return nextParams;
+      },
+      { replace: true },
+    );
+  }, [location.pathname, requestedUsername, selectedUsername, setSearchParams, users]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -117,115 +139,143 @@ export default function UsersPage() {
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
+  const handleSelectUser = useCallback(
+    (username: string) => {
+      setSelectedUsername(username);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("username", username);
+      setSearchParams(nextParams);
+    },
+    [searchParams, setSearchParams],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Users
-          </Typography>
-          <Button size="small" variant="outlined" onClick={loadUsers} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-            {copied ? "Copied" : "Copy API call"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Users"
+          actions={
+            <>
+              <Button size="small" variant="outlined" onClick={loadUsers} disabled={loading}>
+                {loading ? <CircularProgress size={16} /> : "Refresh"}
+              </Button>
+              <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+                {copied ? "Copied" : "Copy API call"}
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
       {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
 
-      <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
-        <Paper
-          variant="outlined"
-          sx={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}
-        >
-          <Box sx={{ p: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search users"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </Box>
-          <Divider />
-          <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
-            {filteredUsers.map((user) => (
-              <ListItem key={user.username} disablePadding>
-                <ListItemButton
-                  selected={user.username === selectedUsername}
-                  onClick={() => setSelectedUsername(user.username)}
-                >
+      {loading && users.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 1.5, flex: 1 }}>
+          <ContentSkeleton variant="table" />
+        </Paper>
+      ) : (
+        <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              width: 320,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            }}
+          >
+            <Box sx={{ p: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Search users"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                inputProps={{ "aria-label": "Search users" }}
+              />
+            </Box>
+            <Divider />
+            <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+              {filteredUsers.map((user) => (
+                <ListItem key={user.username} disablePadding>
+                  <ListItemButton
+                    selected={user.username === selectedUsername}
+                    onClick={() => handleSelectUser(user.username)}
+                  >
+                    <ListItemText
+                      primary={user.username}
+                      secondary={`${user.enabled === false ? "Disabled" : "Enabled"} • ${user.roles?.length ?? 0} roles`}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              {!loading && filteredUsers.length === 0 && (
+                <ListItem>
                   <ListItemText
-                    primary={user.username}
-                    secondary={`${user.enabled === false ? "Disabled" : "Enabled"} • ${user.roles?.length ?? 0} roles`}
+                    primary="No users found."
+                    primaryTypographyProps={{ variant: "body2", color: "text.secondary" }}
                   />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {!loading && filteredUsers.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                No users found.
+                </ListItem>
+              )}
+            </List>
+          </Paper>
+
+          <Paper
+            variant="outlined"
+            sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, p: 1.5, gap: 1 }}
+          >
+            {selectedUser ? (
+              <>
+                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                  <Typography variant="h6">{selectedUser.username}</Typography>
+                  <Chip
+                    size="small"
+                    color={selectedUser.enabled === false ? "warning" : "success"}
+                    label={selectedUser.enabled === false ? "Disabled" : "Enabled"}
+                  />
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  Roles
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {(selectedUser.roles ?? []).map((role) => (
+                    <Tooltip key={role} title={`View role: ${role}`}>
+                      <Chip
+                        size="small"
+                        label={role}
+                        clickable
+                        aria-label={`View role: ${role}`}
+                        onClick={() => navigate(`/roles?role=${encodeURIComponent(role)}`)}
+                      />
+                    </Tooltip>
+                  ))}
+                  {(selectedUser.roles ?? []).length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      No assigned roles.
+                    </Typography>
+                  )}
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  Metadata
+                </Typography>
+                <Typography
+                  component="pre"
+                  variant="body2"
+                  sx={{ m: 0, p: 1, bgcolor: "action.hover", borderRadius: 1, overflow: "auto" }}
+                >
+                  {JSON.stringify(selectedUser.metadata ?? {}, null, 2)}
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Select a user.
               </Typography>
             )}
-          </List>
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, p: 1.5, gap: 1 }}
-        >
-          {selectedUser ? (
-            <>
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Typography variant="h6">{selectedUser.username}</Typography>
-                <Chip
-                  size="small"
-                  color={selectedUser.enabled === false ? "warning" : "success"}
-                  label={selectedUser.enabled === false ? "Disabled" : "Enabled"}
-                />
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                Roles
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {(selectedUser.roles ?? []).map((role) => (
-                  <Tooltip key={role} title={`View role: ${role}`}>
-                    <Chip
-                      size="small"
-                      label={role}
-                      clickable
-                      aria-label={`View role: ${role}`}
-                      onClick={() => navigate(`/roles?role=${encodeURIComponent(role)}`)}
-                    />
-                  </Tooltip>
-                ))}
-                {(selectedUser.roles ?? []).length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    No assigned roles.
-                  </Typography>
-                )}
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                Metadata
-              </Typography>
-              <Typography
-                component="pre"
-                variant="body2"
-                sx={{ m: 0, p: 1, bgcolor: "action.hover", borderRadius: 1, overflow: "auto" }}
-              >
-                {JSON.stringify(selectedUser.metadata ?? {}, null, 2)}
-              </Typography>
-            </>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Select a user.
-            </Typography>
-          )}
-        </Paper>
-      </Box>
+          </Paper>
+        </Box>
+      )}
     </Box>
   );
 }

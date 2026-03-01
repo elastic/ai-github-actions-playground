@@ -24,6 +24,7 @@ import { runConnectionRequest } from "../hooks/useConnectionRequest";
 import { useIngestPipelines } from "../hooks/useIngestPipelines";
 
 import EmptyState from "./EmptyState";
+import PageHeader from "./PageHeader";
 
 /**
  * Attempt to extract a human-readable message from a raw Elasticsearch error
@@ -204,19 +205,19 @@ export default function IngestPipelinesPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Ingest Pipelines
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={pipelinesResult.refresh}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Ingest Pipelines"
+          actions={
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={pipelinesResult.refresh}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={16} /> : "Refresh"}
+            </Button>
+          }
+        />
       </Paper>
 
       {error && (
