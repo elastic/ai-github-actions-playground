@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { EChart } from "@perses-dev/components";
 import type { EChartsCoreOption } from "echarts/core";
 
-import EChartWrapper from "../visualizations/EChartWrapper";
-
 interface Props {
   option: Record<string, unknown>;
   style?: React.CSSProperties;
@@ -12,8 +10,6 @@ interface Props {
 }
 
 export default function PersesEChartWrapper({ option, style, onExportReady, onClick }: Props) {
-  const isTest = import.meta.env.MODE === "test";
-
   const chartRef = useRef<{ getDataURL: (opts: { type: "png"; pixelRatio: number }) => string }>();
 
   const onEvents = useMemo(
@@ -33,17 +29,6 @@ export default function PersesEChartWrapper({ option, style, onExportReady, onCl
     onExportReady(() => chartRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
     return () => onExportReady(null);
   }, [onExportReady]);
-
-  if (isTest) {
-    return (
-      <EChartWrapper
-        option={option}
-        style={style}
-        onExportReady={onExportReady}
-        onClick={onClick}
-      />
-    );
-  }
 
   return (
     <EChart

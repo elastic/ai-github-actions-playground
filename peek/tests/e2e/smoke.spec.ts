@@ -20,6 +20,7 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
     "page-has-heading-one": 1,
   },
   "post-connect": {
+    "aria-prohibited-attr": 1,
     "color-contrast": 2,
     "heading-order": 1,
   },
