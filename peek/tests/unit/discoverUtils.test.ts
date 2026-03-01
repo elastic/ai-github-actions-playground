@@ -302,6 +302,18 @@ describe("formatEsqlQuery", () => {
 });
 
 describe("applyEsqlSort", () => {
+  it("preserves pipes inside single-quoted literals when inserting SORT", () => {
+    expect(
+      applyEsqlSort("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 10", "message", "asc"),
+    ).toBe("FROM logs-* | WHERE message == 'foo|bar' | SORT `message` ASC | LIMIT 10");
+  });
+
+  it("preserves escaped single-quoted literals when inserting SORT", () => {
+    expect(applyEsqlSort("FROM logs-* | WHERE msg == 'it''s fine|here'", "message", "asc")).toBe(
+      "FROM logs-* | WHERE msg == 'it''s fine|here' | SORT `message` ASC",
+    );
+  });
+
   it("appends a SORT step before LIMIT when no SORT exists", () => {
     expect(applyEsqlSort("FROM logs-* | LIMIT 50", "message", "asc")).toBe(
       "FROM logs-* | SORT `message` ASC | LIMIT 50",
