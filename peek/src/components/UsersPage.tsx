@@ -20,6 +20,8 @@ import { ElasticsearchClient, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
+import ContentSkeleton from "./ContentSkeleton";
+import PageHeader from "./PageHeader";
 import { loadSecurityResource } from "./securityResourceLoader";
 
 export default function UsersPage() {
@@ -120,112 +122,126 @@ export default function UsersPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Users
-          </Typography>
-          <Button size="small" variant="outlined" onClick={loadUsers} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-            {copied ? "Copied" : "Copy API call"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="Users"
+          actions={
+            <>
+              <Button size="small" variant="outlined" onClick={loadUsers} disabled={loading}>
+                {loading ? <CircularProgress size={16} /> : "Refresh"}
+              </Button>
+              <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+                {copied ? "Copied" : "Copy API call"}
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
       {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
 
-      <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
-        <Paper
-          variant="outlined"
-          sx={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}
-        >
-          <Box sx={{ p: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search users"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </Box>
-          <Divider />
-          <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
-            {filteredUsers.map((user) => (
-              <ListItem key={user.username} disablePadding>
-                <ListItemButton
-                  selected={user.username === selectedUsername}
-                  onClick={() => setSelectedUsername(user.username)}
-                >
-                  <ListItemText
-                    primary={user.username}
-                    secondary={`${user.enabled === false ? "Disabled" : "Enabled"} • ${user.roles?.length ?? 0} roles`}
+      {loading && users.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 1.5, flex: 1 }}>
+          <ContentSkeleton variant="table" />
+        </Paper>
+      ) : (
+        <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              width: 320,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            }}
+          >
+            <Box sx={{ p: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Search users"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </Box>
+            <Divider />
+            <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+              {filteredUsers.map((user) => (
+                <ListItem key={user.username} disablePadding>
+                  <ListItemButton
+                    selected={user.username === selectedUsername}
+                    onClick={() => setSelectedUsername(user.username)}
+                  >
+                    <ListItemText
+                      primary={user.username}
+                      secondary={`${user.enabled === false ? "Disabled" : "Enabled"} • ${user.roles?.length ?? 0} roles`}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              {!loading && filteredUsers.length === 0 && (
+                <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                  No users found.
+                </Typography>
+              )}
+            </List>
+          </Paper>
+
+          <Paper
+            variant="outlined"
+            sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, p: 1.5, gap: 1 }}
+          >
+            {selectedUser ? (
+              <>
+                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                  <Typography variant="h6">{selectedUser.username}</Typography>
+                  <Chip
+                    size="small"
+                    color={selectedUser.enabled === false ? "warning" : "success"}
+                    label={selectedUser.enabled === false ? "Disabled" : "Enabled"}
                   />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {!loading && filteredUsers.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                No users found.
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  Roles
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {(selectedUser.roles ?? []).map((role) => (
+                    <Tooltip key={role} title={`View role: ${role}`}>
+                      <Chip
+                        size="small"
+                        label={role}
+                        clickable
+                        aria-label={`View role: ${role}`}
+                        onClick={() => navigate(`/roles?role=${encodeURIComponent(role)}`)}
+                      />
+                    </Tooltip>
+                  ))}
+                  {(selectedUser.roles ?? []).length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      No assigned roles.
+                    </Typography>
+                  )}
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  Metadata
+                </Typography>
+                <Typography
+                  component="pre"
+                  variant="body2"
+                  sx={{ m: 0, p: 1, bgcolor: "action.hover", borderRadius: 1, overflow: "auto" }}
+                >
+                  {JSON.stringify(selectedUser.metadata ?? {}, null, 2)}
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Select a user.
               </Typography>
             )}
-          </List>
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, p: 1.5, gap: 1 }}
-        >
-          {selectedUser ? (
-            <>
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Typography variant="h6">{selectedUser.username}</Typography>
-                <Chip
-                  size="small"
-                  color={selectedUser.enabled === false ? "warning" : "success"}
-                  label={selectedUser.enabled === false ? "Disabled" : "Enabled"}
-                />
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                Roles
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {(selectedUser.roles ?? []).map((role) => (
-                  <Tooltip key={role} title={`View role: ${role}`}>
-                    <Chip
-                      size="small"
-                      label={role}
-                      clickable
-                      aria-label={`View role: ${role}`}
-                      onClick={() => navigate(`/roles?role=${encodeURIComponent(role)}`)}
-                    />
-                  </Tooltip>
-                ))}
-                {(selectedUser.roles ?? []).length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    No assigned roles.
-                  </Typography>
-                )}
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                Metadata
-              </Typography>
-              <Typography
-                component="pre"
-                variant="body2"
-                sx={{ m: 0, p: 1, bgcolor: "action.hover", borderRadius: 1, overflow: "auto" }}
-              >
-                {JSON.stringify(selectedUser.metadata ?? {}, null, 2)}
-              </Typography>
-            </>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Select a user.
-            </Typography>
-          )}
-        </Paper>
-      </Box>
+          </Paper>
+        </Box>
+      )}
     </Box>
   );
 }

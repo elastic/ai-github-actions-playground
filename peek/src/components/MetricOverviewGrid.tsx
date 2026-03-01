@@ -232,10 +232,9 @@ export default function MetricOverviewGrid({
               variant="outlined"
               sx={{
                 minHeight: 140,
-                transition: "box-shadow 0.15s, border-color 0.15s",
+                transition: "border-color 0.15s",
                 "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  boxShadow: 1,
+                  borderColor: "border.strong",
                 },
               }}
             >

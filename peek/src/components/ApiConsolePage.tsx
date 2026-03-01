@@ -35,6 +35,7 @@ import { buildCurlCommand } from "../utils/buildCurlCommand";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import { makeLLMCompletionExtension } from "./llmCompletionExtension";
+import PageHeader from "./PageHeader";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD";
 
@@ -457,48 +458,49 @@ export default function ApiConsolePage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pb: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Typography variant="h6" component="h1" sx={{ fontWeight: 600 }}>
-          API Console
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Send arbitrary HTTP requests to your Elasticsearch cluster
-        </Typography>
-        <Box sx={{ flex: 1 }} />
-        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addEntry}>
-          Add Request
-        </Button>
-        <Button variant="outlined" size="small" startIcon={<PlayArrowIcon />} onClick={sendAll}>
-          Run All
-        </Button>
-        <IconButton
-          size="small"
-          aria-label="More actions"
-          aria-controls={overflowMenuAnchor ? "console-overflow-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={overflowMenuAnchor ? "true" : undefined}
-          onClick={(e) => setOverflowMenuAnchor(e.currentTarget)}
-        >
-          <MoreVertIcon fontSize="small" />
-        </IconButton>
-        <Menu
-          id="console-overflow-menu"
-          anchorEl={overflowMenuAnchor}
-          open={Boolean(overflowMenuAnchor)}
-          onClose={() => setOverflowMenuAnchor(null)}
-        >
-          <MenuItem
-            aria-label="Clear session"
-            onClick={() => {
-              setOverflowMenuAnchor(null);
-              setConfirmClearOpen(true);
-            }}
-            sx={{ color: "error.main" }}
-          >
-            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-            Clear Session
-          </MenuItem>
-        </Menu>
+      <PageHeader
+        title="API Console"
+        description="Send arbitrary HTTP requests to your Elasticsearch cluster"
+        actions={
+          <>
+            <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addEntry}>
+              Add Request
+            </Button>
+            <Button variant="outlined" size="small" startIcon={<PlayArrowIcon />} onClick={sendAll}>
+              Run All
+            </Button>
+            <IconButton
+              size="small"
+              aria-label="More actions"
+              aria-controls={overflowMenuAnchor ? "console-overflow-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={overflowMenuAnchor ? "true" : undefined}
+              onClick={(e) => setOverflowMenuAnchor(e.currentTarget)}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+            <Menu
+              id="console-overflow-menu"
+              anchorEl={overflowMenuAnchor}
+              open={Boolean(overflowMenuAnchor)}
+              onClose={() => setOverflowMenuAnchor(null)}
+            >
+              <MenuItem
+                aria-label="Clear session"
+                onClick={() => {
+                  setOverflowMenuAnchor(null);
+                  setConfirmClearOpen(true);
+                }}
+                sx={{ color: "error.main" }}
+              >
+                <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                Clear Session
+              </MenuItem>
+            </Menu>
+          </>
+        }
+      />
+      <Box>
         <Dialog
           open={confirmClearOpen}
           onClose={() => setConfirmClearOpen(false)}

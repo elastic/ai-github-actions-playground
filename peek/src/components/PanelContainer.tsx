@@ -166,8 +166,8 @@ export default function PanelContainer({ panel }: Props) {
         flexDirection: "column",
         overflow: "hidden",
         borderRadius: 2,
-        transition: "box-shadow 0.2s",
-        "&:hover": { boxShadow: 4 },
+        transition: "border-color 0.2s",
+        "&:hover": { borderColor: "border.strong" },
       }}
     >
       <Box
