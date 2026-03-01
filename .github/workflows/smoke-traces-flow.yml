@@ -66,6 +66,36 @@ jobs:
         done
         ```
 
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Filter bar height consistency**: Measure the bounding rect heights
+           of every control in the Traces filter bar (service name field,
+           min/max duration fields, Apply button, time selector, Error/OK
+           chips). All must be the same height (within 4px). Use:
+           ```javascript
+           const heights = await page.evaluate(() => {
+             const els = document.querySelectorAll('input, button, [role="combobox"], [role="button"]');
+             return Array.from(els)
+               .map(el => ({ tag: el.tagName, h: Math.round(el.getBoundingClientRect().height), top: Math.round(el.getBoundingClientRect().top), text: el.textContent?.trim().slice(0, 20) }))
+               .filter(el => el.top > 50 && el.top < 250);
+           });
+           ```
+           File an issue if any two adjacent controls differ by more than 4px.
+
+        2. **Dark mode contrast**: Switch to dark mode. Take a screenshot of
+           the traces list. Are column headers visible? Are status badges
+           readable? Is the "Trace Search" label contrast sufficient?
+
+        3. **Service map empty state**: Navigate to the service map view with
+           no traces loaded. Is there a helpful empty state with an icon and
+           description, or just a blank canvas?
+
+        4. **Span detail drawer**: Open a trace and expand span detail. Are
+           all field names and values readable? No truncated text without a
+           tooltip?
+
         ## Output rules
 
         - **Silence is better than noise.** Only file an issue for genuine bugs.

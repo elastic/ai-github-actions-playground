@@ -70,6 +70,29 @@ jobs:
         done
         ```
 
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Result table column header contrast**: After running a query,
+           inspect the column headers in dark mode. Are they visible against
+           the dark background?
+
+        2. **Empty state before first query**: Open Query Lab without running
+           a query. Is there a clear empty state ("run a query to see results")
+           with an icon and description, or just blank space?
+
+        3. **Error message readability**: Run a malformed ES|QL query. Is the
+           error message readable? Does it overflow? Is the red error color
+           visible in dark mode?
+
+        4. **Console JSON syntax highlighting**: Send a request in Console. In
+           dark mode, is the JSON response syntax highlighting readable? Are
+           keys, strings, and numbers distinguishable?
+
+        5. **Editor focus ring**: Tab into the ES|QL editor. Is the focus ring
+           visible in dark mode?
+
         ## Output rules
 
         - **Silence is better than noise.** Only file an issue for genuine bugs.

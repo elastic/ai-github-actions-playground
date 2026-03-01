@@ -143,6 +143,51 @@ pre-written test suites. Deterministic E2E tests run in CI instead.
 - `smoke-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
 - `customer-complaints.yml` → **Customer: Feature Gap Review** — missing features, feature requests, comparison to Kibana/Grafana/Elasticvue
 
+### Visual Quality Checklist
+
+Every exploratory agent MUST check these visual quality dimensions on pages
+it visits. These are the exact defect patterns found in the February 2026
+full-app audit (issue #872).
+
+**Element height consistency in toolbars** — All interactive controls in a
+filter/toolbar row (text fields, selects, chips, buttons) must be the same
+height. A mismatch of more than 4px is a bug. Measure programmatically:
+
+```javascript
+const heights = await page.evaluate(() => {
+  const els = document.querySelectorAll('input, button, [role="combobox"], [role="button"]');
+  return Array.from(els)
+    .map(el => {
+      const r = el.getBoundingClientRect();
+      return { tag: el.tagName, h: Math.round(r.height), top: Math.round(r.top), text: el.textContent?.trim().slice(0, 20) };
+    })
+    .filter(el => el.top > 50 && el.top < 250);
+});
+```
+
+**text.secondary contrast on dark mode** — Elements using MUI
+`color="text.secondary"` on dark backgrounds can fall below WCAG AA 4.5:1.
+Check: sidebar section headers ("WORKSPACE", "SYSTEM", "HELP"), metric card
+subtitle labels, table column headers, empty state helper text, and fieldset
+`<legend>` elements. Switch to dark mode via Settings gear and take a
+screenshot.
+
+**Empty state consistency** — Every page that can show "no data" must display
+a centered icon, a short bold title, and a one-line helper sentence. No page
+should show a blank rectangle. Pages to verify: Query Lab, Metrics, Traces,
+Dashboards, Fleet, Indices, Ingest Pipelines.
+
+**Fieldset and legend visibility** — MUI `<fieldset>` borders with `<legend>`
+labels must be fully visible. Legend text must not be clipped or render with
+near-invisible contrast against the border.
+
+**Metric card label readability** — Stat cards (Cluster Overview, Fleet, Cluster
+Health) must show labels at sufficient size and contrast. Values must be
+clearly larger than labels.
+
+**axe-core color-contrast** — The love-audit now runs axe-core with
+`color-contrast` enabled. Every violation is a genuine defect.
+
 ### UI Smoke Test PR Review
 
 `ui-smoke-test-pr-review.yml` runs on every non-draft pull request that touches
