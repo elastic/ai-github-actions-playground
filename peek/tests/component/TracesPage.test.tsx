@@ -220,4 +220,27 @@ describe("TracesPage auto-run on quick filter changes", () => {
     expect(mockRunQuery).toHaveBeenCalled();
     expect(useTracesStore.getState().filters.statusCodes).not.toContain("Error");
   });
+
+  it("refreshes Drift Radar spans when quick filters change in Drift Radar mode", async () => {
+    useTracesStore.setState({ viewMode: "driftRadar" });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <TracesPage />
+      </MemoryRouter>,
+    );
+
+    mockRunQuery.mockClear();
+    await user.click(screen.getByText("Error"));
+
+    const queries = mockRunQuery.mock.calls.map(([query]) => String(query));
+    expect(
+      queries.some(
+        (query) =>
+          query.includes("FROM traces-*") &&
+          !query.includes("parent.id IS NULL") &&
+          !query.includes("STATS request_count"),
+      ),
+    ).toBe(true);
+  });
 });

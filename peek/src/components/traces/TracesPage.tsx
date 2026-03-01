@@ -197,45 +197,47 @@ export default function TracesPage() {
     [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
   );
 
-  /** Apply a quick-filter update and immediately re-run queries so results stay in sync. */
-  const applyFiltersAndRun = useCallback(
-    (updates: Partial<TraceFilters>) => {
-      updateFilters(updates);
-      const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
-    },
-    [updateFilters, runTraceQueries],
-  );
+  const runDriftRadarQueries = useCallback(
+    (updatedFilters: TraceFilters) => {
+      if (viewMode !== "driftRadar" || rawQuery != null) return;
 
-  const handleSearch = useCallback(() => {
-    runTraceQueries(effectiveQuery, filters, rawQuery == null);
-    if (viewMode === "driftRadar" && rawQuery == null) {
       setDriftRadarSpans([]);
       setDriftRadarBaselineSpans(null);
-      runDriftRadarQuery(buildDriftRadarQuery(filters));
-      if (driftRadarBaselineEnabled && filters.timeFrom) {
-        const shifted = shiftTimeRangeBack(filters.timeFrom, filters.timeTo ?? "NOW()");
+      runDriftRadarQuery(buildDriftRadarQuery(updatedFilters));
+      if (driftRadarBaselineEnabled && updatedFilters.timeFrom) {
+        const shifted = shiftTimeRangeBack(
+          updatedFilters.timeFrom,
+          updatedFilters.timeTo ?? "NOW()",
+        );
         if (shifted) {
           runDriftRadarBaselineQuery(
             buildDriftRadarQuery({
-              ...filters,
+              ...updatedFilters,
               timeFrom: shifted.timeFrom,
               timeTo: shifted.timeTo,
             }),
           );
         }
       }
-    }
-  }, [
-    runTraceQueries,
-    effectiveQuery,
-    filters,
-    rawQuery,
-    viewMode,
-    driftRadarBaselineEnabled,
-    runDriftRadarQuery,
-    runDriftRadarBaselineQuery,
-  ]);
+    },
+    [viewMode, rawQuery, driftRadarBaselineEnabled, runDriftRadarQuery, runDriftRadarBaselineQuery],
+  );
+
+  /** Apply a quick-filter update and immediately re-run queries so results stay in sync. */
+  const applyFiltersAndRun = useCallback(
+    (updates: Partial<TraceFilters>) => {
+      updateFilters(updates);
+      const updatedFilters = useTracesStore.getState().filters;
+      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runDriftRadarQueries(updatedFilters);
+    },
+    [updateFilters, runTraceQueries, runDriftRadarQueries],
+  );
+
+  const handleSearch = useCallback(() => {
+    runTraceQueries(effectiveQuery, filters, rawQuery == null);
+    runDriftRadarQueries(filters);
+  }, [runTraceQueries, runDriftRadarQueries, effectiveQuery, filters, rawQuery]);
 
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
