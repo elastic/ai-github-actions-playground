@@ -131,7 +131,7 @@ Use `make otel-replay-down` to tear everything down when done.
 
 ### Exploratory Testing Agents
 
-Six scheduled agents creatively explore the app with Playwright. Each owns a
+Seven scheduled agents creatively explore the app with Playwright. Each owns a
 domain and invents novel interaction scenarios every run — they do NOT run
 pre-written test suites. Deterministic E2E tests run in CI instead.
 
@@ -141,6 +141,7 @@ pre-written test suites. Deterministic E2E tests run in CI instead.
 - `smoke-auth-tab-switch.yml` → **Explore: Query Lab & Console** — ES|QL queries, result tables, API Console, error handling
 - `smoke-reset-visibility.yml` → **Explore: Indices, Data Streams & Pipelines** — table sorting, detail views, data management
 - `smoke-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
+- `customer-complaints.yml` → **Customer: Feature Gap Review** — missing features, feature requests, comparison to Kibana/Grafana/Elasticvue
 
 ### UI Smoke Test PR Review
 
