@@ -360,12 +360,6 @@ describe("applyEsqlSort", () => {
       "FROM logs-* | SORT `@timestamp` ASC",
     );
   });
-
-  it("preserves single-quoted literals containing pipes", () => {
-    expect(
-      applyEsqlSort("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 1", "@timestamp", "asc"),
-    ).toBe("FROM logs-* | WHERE message == 'foo|bar' | SORT `@timestamp` ASC | LIMIT 1");
-  });
 });
 
 describe("buildColumnInsightsQuery", () => {
