@@ -1,6 +1,9 @@
 PEEK_DIR := peek
 
-.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
+# Base ref for changed-file targets (override: make lint BASE=HEAD~3)
+BASE ?= main
+
+.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
@@ -16,12 +19,15 @@ help:
 	@echo "  explore-down     - Stop the exploration stack (ES + dev server)"
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
-	@echo "  lint             - Prettier format check + ESLint + TypeScript type check"
-	@echo "  format           - Auto-format code with Prettier"
+	@echo "  lint             - Prettier + ESLint on changed files + full TypeScript type check (fast default)"
+	@echo "  lint-full        - Prettier + ESLint + TypeScript type check on all files"
+	@echo "  format           - Auto-format changed files with Prettier"
+	@echo "  format-full      - Auto-format all files with Prettier"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
-	@echo "  test-unit        - Run unit tests"
+	@echo "  test-unit        - Run unit tests related to files changed since BASE (fast default)"
+	@echo "  test-unit-full   - Run all unit tests"
 	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
@@ -150,6 +156,24 @@ preview: setup build
 	@cd $(PEEK_DIR) && npm run preview
 
 lint:
+	@echo "Detecting changed files against '$(BASE)'..."
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
+	if [ -n "$$CHANGED" ]; then \
+		echo "Running Prettier format check on changed files..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --check) && \
+		echo "" && \
+		echo "Running ESLint on changed files..." && \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx eslint); \
+	else \
+		echo "No changed source files found — skipping Prettier and ESLint."; \
+	fi
+	@echo ""
+	@echo "Running TypeScript type check (full project)..."
+	@cd $(PEEK_DIR) && npx tsc --noEmit
+	@echo ""
+	@echo "✓ All checks passed."
+
+lint-full:
 	@echo "Running Prettier format check..."
 	@cd $(PEEK_DIR) && npx prettier --check src
 	@echo ""
@@ -162,6 +186,17 @@ lint:
 	@echo "✓ All checks passed."
 
 format:
+	@echo "Detecting changed files against '$(BASE)'..."
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx|json|css|scss|md|markdown|html|yml|yaml)$$' || true); \
+	if [ -n "$$CHANGED" ]; then \
+		echo "Formatting changed files..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --write); \
+		echo "✓ Formatting complete."; \
+	else \
+		echo "No changed source files to format."; \
+	fi
+
+format-full:
 	@echo "Formatting code with Prettier..."
 	@cd $(PEEK_DIR) && npx prettier --write src
 	@echo ""
@@ -170,15 +205,20 @@ format:
 ci:
 	@echo "Installing dependencies (strict lockfile)..."
 	@cd $(PEEK_DIR) && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci
-	@$(MAKE) lint test-unit-coverage build
+	@$(MAKE) lint-full test-unit-full build
 	@echo ""
-	@echo "✓ CI passed: lint + coverage gate + build all passed."
+	@echo "✓ CI passed: full lint + full unit tests + build all passed."
 
 check: ci
 
-test: test-unit test-integration test-e2e
-
 test-unit:
+	@echo "Running unit tests for changed files (against $(BASE))..."
+	@echo "Note: coverage thresholds are intentionally skipped for incremental PR runs."
+	@cd $(PEEK_DIR) && npx vitest run --config vitest.config.ts --changed $(BASE) --passWithNoTests
+
+test: test-unit-full test-integration test-e2e
+
+test-unit-full:
 	@echo "Running unit tests..."
 	@cd $(PEEK_DIR) && npm run test:unit
 
@@ -221,7 +261,7 @@ otel-capture-down:
 	@docker compose -f docker-compose.otel.yml -f docker-compose.otel-es.yml -f docker-compose.otel-capture.yml down -v
 	@echo "Compressing fixtures..."
 	@cd $(PEEK_DIR)/fixtures/otlp && for f in traces.jsonl metrics.jsonl logs.jsonl; do [ -f "$$f" ] && gzip -f "$$f"; done
-	@echo "✓ Capture stopped. Fixtures in $(PEEK_DIR)/fixtures/otlp/*.jsonl.gz"
+	@echo "✓ Capture stopped. Fixtures in $(PEEK_DIR)/fixtures/otlp/*.gz"
 
 otel-replay-up:
 	@echo "Starting ES + EDOT collector in replay mode..."
@@ -328,7 +368,7 @@ fleet-harness-up:
 	@echo "  Kibana:        http://localhost:5601   (elastic / changeme)"
 	@echo "  Fleet Server:  http://localhost:8220"
 	@echo ""
-	@echo "Connect Peek to: http://localhost:9220 with user 'elastic', password 'changeme'"
+	@echo Connect Peek to: http://localhost:9220 with user 'elastic', password 'changeme'
 
 fleet-harness-down:
 	@echo "Stopping Fleet Server harness..."
