@@ -3,28 +3,58 @@ import { describe, it } from "vitest";
 
 import rule from "../../../eslint-plugin-peek/rules/enforce-empty-state.js";
 
-const tester = new RuleTester({ languageOptions: { ecmaVersion: 2022, sourceType: "module" } });
+const tester = new RuleTester({
+  languageOptions: {
+    ecmaVersion: 2022,
+    sourceType: "module",
+    parserOptions: { ecmaFeatures: { jsx: true } },
+  },
+});
 
 describe("peek/enforce-empty-state", () => {
   it("passes RuleTester valid/invalid cases", () => {
     tester.run("enforce-empty-state", rule, {
       valid: [
-        // File that imports EmptyState is always valid
+        // File that uses EmptyState in the branch
         {
-          code: `import EmptyState from "./EmptyState";\nif (data.length === 0) { console.log("empty"); }`,
+          code: `
+            import EmptyState from "./EmptyState";
+            function Component() {
+              if (data.length === 0) { return <EmptyState heading="No data" />; }
+              return <div>{data}</div>;
+            }
+          `,
+        },
+        // Ternary with EmptyState
+        {
+          code: `
+            function Component() {
+              return data.length === 0 ? <EmptyState heading="Empty" /> : <div>Data</div>;
+            }
+          `,
         },
         // No empty-data pattern at all
-        { code: `if (x > 5) { doSomething(); }` },
+        { code: `function Component() { if (x > 5) { doSomething(); } }` },
       ],
       invalid: [
-        // .length === 0 without EmptyState import
+        // .length === 0 without EmptyState usage
         {
-          code: `if (data.length === 0) { console.log("empty"); }`,
+          code: `function Component() { if (data.length === 0) { return <div />; } }`,
           errors: [{ messageId: "missingEmptyState" }],
         },
-        // !data without EmptyState import
+        // !data without EmptyState usage
         {
-          code: `if (!data) { console.log("empty"); }`,
+          code: `function Component() { if (!data) { return <div />; } }`,
+          errors: [{ messageId: "missingEmptyState" }],
+        },
+        // Even if imported, it must be used in the branch
+        {
+          code: `
+            import EmptyState from "./EmptyState";
+            function Component() {
+              if (data.length === 0) { return <div />; }
+            }
+          `,
           errors: [{ messageId: "missingEmptyState" }],
         },
       ],

@@ -280,7 +280,7 @@ export default function IndicesPage() {
                 size="small"
                 label={selectedRecord.health.toUpperCase()}
                 color={healthColor(selectedRecord.health)}
-                sx={{ fontSize: "0.7rem", height: 20 }}
+                sx={{ height: 20, fontSize: "0.7rem" }}
               />
             </Stack>
           </MetaValue>
@@ -374,11 +374,11 @@ export default function IndicesPage() {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ wordBreak: "break-all", py: 0.25 }}
+                sx={{ py: 0.25, wordBreak: "break-all" }}
               >
                 {key}
               </Typography>
-              <Typography variant="body2" sx={{ wordBreak: "break-all", py: 0.25 }}>
+              <Typography variant="body2" sx={{ py: 0.25, wordBreak: "break-all" }}>
                 {value}
               </Typography>
             </Fragment>
@@ -506,12 +506,12 @@ export default function IndicesPage() {
           >
             {diskUsageFields.map(({ name, totalBytes }) => (
               <Box key={name} sx={{ display: "contents" }}>
-                <Typography variant="body2" sx={{ wordBreak: "break-all", py: 0.25 }}>
+                <Typography variant="body2" sx={{ py: 0.25, wordBreak: "break-all" }}>
                   {name}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ textAlign: "right", whiteSpace: "nowrap", py: 0.25 }}
+                  sx={{ py: 0.25, textAlign: "right", whiteSpace: "nowrap" }}
                 >
                   {formatBytes(totalBytes)}
                 </Typography>
@@ -528,7 +528,7 @@ export default function IndicesPage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Indices"
@@ -572,15 +572,15 @@ export default function IndicesPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
+      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         {/* Left panel: index list */}
         <Paper
           variant="outlined"
           sx={{
-            width: 280,
-            flexShrink: 0,
             display: "flex",
+            flexShrink: 0,
             flexDirection: "column",
+            width: 280,
             minHeight: 0,
           }}
         >
@@ -611,7 +611,7 @@ export default function IndicesPage() {
             />
           </Box>
           <Divider />
-          <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }} aria-label="Index list">
+          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} aria-label="Index list">
             {filteredIndices.map((idx) => (
               <ListItem key={idx.index} disablePadding>
                 <ListItemButton
@@ -623,7 +623,7 @@ export default function IndicesPage() {
                     color={healthColor(idx.health)}
                     label={idx.health.slice(0, 1).toUpperCase()}
                     aria-label={`Health: ${idx.health}`}
-                    sx={{ width: 24, height: 20, fontSize: "0.65rem", mr: 1, flexShrink: 0 }}
+                    sx={{ flexShrink: 0, width: 24, height: 20, mr: 1, fontSize: "0.65rem" }}
                   />
                   <ListItemText
                     primary={idx.index}
@@ -654,8 +654,8 @@ export default function IndicesPage() {
         <Paper
           variant="outlined"
           sx={{
-            flex: 1,
             display: "flex",
+            flex: 1,
             flexDirection: "column",
             minHeight: 0,
             overflow: "hidden",
@@ -663,7 +663,7 @@ export default function IndicesPage() {
         >
           {selectedIndex ? (
             <>
-              <Box sx={{ px: 2, pt: 1.5, pb: 0 }}>
+              <Box sx={{ pt: 1.5, pb: 0, px: 2 }}>
                 <Typography variant="h6" component="h2">
                   {selectedIndex}
                 </Typography>

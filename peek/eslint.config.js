@@ -74,16 +74,18 @@ export default tseslint.config(
     plugins: { peek: peekPlugin },
     rules: {
       "peek/no-hardcoded-colors": "warn",
-      "peek/enforce-empty-state": "warn",
       "peek/consistent-typography-variants": "warn",
+      "peek/no-direct-echarts-import": "error",
+      "peek/no-div-onclick": "error",
     },
   },
-  // max-component-lines only applies to component files
+  // rules that only apply to component files
   {
     files: ["src/components/**/*.tsx"],
     plugins: { peek: peekPlugin },
     rules: {
       "peek/max-component-lines": ["warn", { max: 200 }],
+      "peek/enforce-empty-state": "warn",
     },
   },
   {

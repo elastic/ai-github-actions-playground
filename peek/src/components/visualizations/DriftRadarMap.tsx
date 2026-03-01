@@ -120,7 +120,7 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
 
   if (mapData.edges.length === 0) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
         <Typography variant="body2" color="text.secondary">
           No cross-service dependencies found in this time window
         </Typography>
@@ -131,7 +131,7 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {legendStatuses.length > 0 && (
-        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", px: 1.5, pt: 1 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, pt: 1, px: 1.5 }}>
           {legendStatuses.map((status) => (
             <Chip
               key={status}

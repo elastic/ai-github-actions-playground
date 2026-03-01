@@ -50,10 +50,10 @@ export default function DocsPage() {
   }, [sectionFromUrl]);
 
   return (
-    <Box sx={{ display: "flex", flex: 1, minHeight: 0, gap: 1.5 }}>
+    <Box sx={{ display: "flex", flex: 1, gap: 1.5, minHeight: 0 }}>
       <Paper
         variant="outlined"
-        sx={{ width: 320, flexShrink: 0, p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}
+        sx={{ display: "flex", flexShrink: 0, flexDirection: "column", gap: 1, width: 320, p: 1.5 }}
       >
         <Typography variant="subtitle1" fontWeight={600}>
           Docs
@@ -87,7 +87,7 @@ export default function DocsPage() {
         </Box>
       </Paper>
 
-      <Paper variant="outlined" sx={{ flex: 1, p: 2, overflowY: "auto" }}>
+      <Paper variant="outlined" sx={{ flex: 1, overflowY: "auto", p: 2 }}>
         {filteredSections.map((section) => (
           <Box key={section.id} id={section.id} sx={{ mb: 3, scrollMarginTop: 16 }}>
             {section.image && (
@@ -95,7 +95,7 @@ export default function DocsPage() {
                 component="img"
                 src={section.image}
                 alt={section.title}
-                sx={{ width: 120, height: 120, objectFit: "contain", mb: 1.5 }}
+                sx={{ width: 120, height: 120, mb: 1.5, objectFit: "contain" }}
               />
             )}
             <Typography variant="h6" sx={{ mb: 1 }}>

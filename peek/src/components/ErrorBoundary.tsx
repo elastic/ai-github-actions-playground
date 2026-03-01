@@ -34,11 +34,11 @@ export default class ErrorBoundary extends Component<Props, State> {
           sx={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
             gap: 2,
-            p: 4,
+            justifyContent: "center",
+            alignItems: "center",
             minHeight: 200,
+            p: 4,
           }}
         >
           <Typography variant="h6" component="p">

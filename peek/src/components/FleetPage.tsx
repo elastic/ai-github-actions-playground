@@ -237,7 +237,7 @@ export default function FleetPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       {/* Header */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
@@ -438,7 +438,7 @@ function OverviewTab({
             />
           </Stack>
           {agentVersions.length > 0 && (
-            <Paper variant="outlined" sx={{ p: 1.5, height: 200 }}>
+            <Paper variant="outlined" sx={{ height: 200, p: 1.5 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Version Distribution
               </Typography>

@@ -212,10 +212,10 @@ export default function DimensionOverviewGrid({
         sx={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
           gap: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
         }}
       >
         <Typography variant="body2" color="text.primary">
@@ -231,7 +231,7 @@ export default function DimensionOverviewGrid({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
         <Button size="small" startIcon={<ArrowBackIcon />} onClick={onBackToOverview}>
           Back to overview
         </Button>
@@ -282,20 +282,20 @@ export default function DimensionOverviewGrid({
                 aria-label={`Group by ${field.name}`}
                 onClick={() => handleCardClick(field.name)}
                 sx={{
-                  p: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
                   width: "100%",
                   height: "100%",
+                  p: 1,
                   transition: "background-color 0.15s",
                   "&.Mui-focusVisible": {
                     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
                   },
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "stretch",
                 }}
               >
                 {/* Card header */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mb: 0.5 }}>
                   <Typography
                     variant="caption"
                     noWrap
@@ -330,8 +330,8 @@ export default function DimensionOverviewGrid({
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
                         justifyContent: "center",
+                        alignItems: "center",
                         height: "100%",
                       }}
                     >
@@ -352,11 +352,11 @@ export default function DimensionOverviewGrid({
               key={`loading-${field.name}`}
               variant="outlined"
               sx={{
-                p: 1,
                 display: "flex",
-                alignItems: "center",
                 justifyContent: "center",
+                alignItems: "center",
                 minHeight: 180,
+                p: 1,
               }}
             >
               <CircularProgress size={24} />
@@ -370,10 +370,10 @@ export default function DimensionOverviewGrid({
           sx={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            py: 4,
             gap: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            py: 4,
           }}
         >
           <Typography variant="body2" color="text.primary">

@@ -28,9 +28,9 @@ export default function AiAssistantDrawer() {
       aria-labelledby="ai-drawer-title"
       sx={{
         "& .MuiDrawer-paper": {
-          width: AI_DRAWER_WIDTH,
-          boxSizing: "border-box",
           top: "auto",
+          boxSizing: "border-box",
+          width: AI_DRAWER_WIDTH,
           height: "100%",
         },
       }}
@@ -43,7 +43,7 @@ export default function AiAssistantDrawer() {
           p: 2,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <Typography id="ai-drawer-title" variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             AI Assistant
           </Typography>

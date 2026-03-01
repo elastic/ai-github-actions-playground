@@ -24,26 +24,26 @@ export default function EmptyState({
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        gap: 1,
         justifyContent: "center",
+        alignItems: "center",
+        maxWidth: 400,
+        height: "100%",
+        mx: "auto",
         py: size === "small" ? 3 : 6,
         px: 2,
-        gap: 1,
-        height: "100%",
-        maxWidth: 400,
-        mx: "auto",
         textAlign: "center",
       }}
     >
       <Box
         sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           width: size === "small" ? 44 : 56,
           height: size === "small" ? 44 : 56,
           borderRadius: "50%",
           bgcolor: "background.subtle",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           color: "text.secondary",
         }}
       >

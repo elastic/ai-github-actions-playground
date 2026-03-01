@@ -1,5 +1,4 @@
 import { useMemo, useCallback } from "react";
-import * as echarts from "echarts/core";
 
 import type { Span, SpanTreeNode } from "../traces/traceUtils";
 import { buildSpanTree, flattenSpanTree, formatSpanDuration } from "../traces/traceUtils";
@@ -7,6 +6,7 @@ import { getServiceColor } from "../traces/traceColors";
 
 import { useEChartTheme } from "./useEChartTheme";
 import EChartWrapper from "./EChartWrapper";
+import { escapeHtml } from "./htmlUtils";
 
 interface WaterfallChartProps {
   spans: Span[];
@@ -96,7 +96,7 @@ export default function WaterfallChart({
           const idx = params[0]?.dataIndex;
           if (idx == null || idx < 0 || idx >= chartNodes.length) return "Unknown span";
           const node = chartNodes[idx]!;
-          return `<strong>${echarts.format.encodeHTML(node.span.serviceName)}</strong>: ${echarts.format.encodeHTML(node.span.name)}<br/>Duration: ${echarts.format.encodeHTML(formatSpanDuration(node.span.durationUs))}`;
+          return `<strong>${escapeHtml(node.span.serviceName)}</strong>: ${escapeHtml(node.span.name)}<br/>Duration: ${escapeHtml(formatSpanDuration(node.span.durationUs))}`;
         },
       },
       xAxis: {

@@ -66,7 +66,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
   }, [rawRefresh]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Cluster Health"
@@ -101,7 +101,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
         ))}
       </Tabs>
 
-      <Paper role="tabpanel" variant="outlined" sx={{ p: 2, flex: 1, overflow: "auto" }}>
+      <Paper role="tabpanel" variant="outlined" sx={{ flex: 1, overflow: "auto", p: 2 }}>
         {activeTab === "overview" && <OverviewView data={data} />}
         {activeTab === "nodes" && <NodeDetailTable data={data} />}
         {activeTab === "taskBacklog" && <TaskBacklogView data={data} />}

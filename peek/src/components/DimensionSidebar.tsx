@@ -150,14 +150,14 @@ export default function DimensionSidebar({
       <Paper
         variant="outlined"
         sx={{
-          width: 240,
-          flexShrink: 0,
           display: "flex",
+          flexShrink: 0,
           flexDirection: "column",
+          width: 240,
           overflow: "hidden",
         }}
       >
-        <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
           <Typography variant="subtitle2">Dimensions</Typography>
         </Box>
         <Box sx={{ p: 1.5 }}>
@@ -173,14 +173,14 @@ export default function DimensionSidebar({
     <Paper
       variant="outlined"
       sx={{
-        width: 240,
-        flexShrink: 0,
         display: "flex",
+        flexShrink: 0,
         flexDirection: "column",
+        width: 240,
         overflow: "hidden",
       }}
     >
-      <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
+      <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
         <Typography variant="subtitle2">Dimensions</Typography>
         {metricNamespace && (
           <Typography variant="caption" color="text.secondary" display="block">
@@ -189,7 +189,7 @@ export default function DimensionSidebar({
         )}
         <Typography variant="caption" color="text.secondary" display="block">
           {dimensionFields.length} fields — select to expand, use{" "}
-          <GroupWorkIcon aria-label="group by" sx={{ fontSize: 10, verticalAlign: "middle" }} /> to
+          <GroupWorkIcon aria-label="group by" sx={{ verticalAlign: "middle", fontSize: 10 }} /> to
           group by
         </Typography>
         <TextField
@@ -202,109 +202,111 @@ export default function DimensionSidebar({
         />
       </Box>
       <Box sx={{ flex: 1, overflow: "auto" }}>
-        {filteredDimensions.map((field) => {
-          const state = dimensionStates[field.name];
-          const isGroupBy = groupBy === field.name;
-          return (
-            <Box key={field.name}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 1,
-                  py: 0.5,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "action.hover" },
-                  bgcolor: isGroupBy ? "action.selected" : undefined,
-                }}
-                onClick={() => handleToggleExpand(field.name)}
-              >
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="caption" noWrap display="block" title={field.name}>
-                    {field.name}
-                  </Typography>
-                  <Chip
-                    label={field.type}
-                    size="small"
-                    color="default"
-                    sx={{
-                      height: 14,
-                      fontSize: "0.6rem",
-                      "& .MuiChip-label": { px: 0.5 },
-                    }}
-                  />
-                </Box>
-                <Tooltip title="Group by this field">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSetGroupBy(isGroupBy ? null : field.name);
-                    }}
-                    color={isGroupBy ? "primary" : "default"}
-                    sx={{ p: 0.25 }}
-                  >
-                    <GroupWorkIcon sx={{ fontSize: 14 }} />
-                  </IconButton>
-                </Tooltip>
-                {state?.expanded ? (
-                  <ExpandLessIcon sx={{ fontSize: 16 }} />
-                ) : (
-                  <ExpandMoreIcon sx={{ fontSize: 16 }} />
-                )}
-              </Box>
-              <Collapse in={state?.expanded ?? false}>
-                {state?.loading ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-                    <CircularProgress size={16} />
+        <List dense disablePadding>
+          {filteredDimensions.map((field) => {
+            const state = dimensionStates[field.name];
+            const isGroupBy = groupBy === field.name;
+            return (
+              <Box key={field.name}>
+                <ListItemButton
+                  selected={isGroupBy}
+                  onClick={() => handleToggleExpand(field.name)}
+                  sx={{ py: 0.5, px: 1 }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="caption" noWrap display="block" title={field.name}>
+                      {field.name}
+                    </Typography>
+                    <Chip
+                      label={field.type}
+                      size="small"
+                      color="default"
+                      sx={{
+                        height: 14,
+                        fontSize: "0.6rem",
+                        "& .MuiChip-label": { px: 0.5 },
+                      }}
+                    />
                   </Box>
-                ) : state?.values.length ? (
-                  <List dense disablePadding>
-                    {state.values.map((v) => (
-                      <ListItemButton
-                        key={v.value}
-                        sx={{ pl: 3, py: 0 }}
-                        onClick={() => onAddFilter({ field: field.name, op: "==", value: v.value })}
-                      >
-                        <ListItemText
-                          primary={
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <Typography variant="caption" noWrap sx={{ flex: 1 }} title={v.value}>
-                                {v.value}
+                  <Tooltip title="Group by this field">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSetGroupBy(isGroupBy ? null : field.name);
+                      }}
+                      color={isGroupBy ? "primary" : "default"}
+                      sx={{ p: 0.25 }}
+                    >
+                      <GroupWorkIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Tooltip>
+                  {state?.expanded ? (
+                    <ExpandLessIcon sx={{ fontSize: 16 }} />
+                  ) : (
+                    <ExpandMoreIcon sx={{ fontSize: 16 }} />
+                  )}
+                </ListItemButton>
+                <Collapse in={state?.expanded ?? false}>
+                  {state?.loading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+                      <CircularProgress size={16} />
+                    </Box>
+                  ) : state?.values.length ? (
+                    <List dense disablePadding>
+                      {state.values.map((v) => (
+                        <ListItemButton
+                          key={v.value}
+                          sx={{ pl: 3, py: 0 }}
+                          onClick={() =>
+                            onAddFilter({ field: field.name, op: "==", value: v.value })
+                          }
+                        >
+                          <ListItemText
+                            primary={
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  noWrap
+                                  sx={{ flex: 1 }}
+                                  title={v.value}
+                                >
+                                  {v.value}
+                                </Typography>
+                                <Tooltip title="Add as filter">
+                                  <FilterListIcon sx={{ ml: 0.5, opacity: 0.5, fontSize: 12 }} />
+                                </Tooltip>
+                              </Box>
+                            }
+                            secondary={
+                              <Typography variant="caption" color="text.secondary">
+                                {v.count.toLocaleString()} docs
                               </Typography>
-                              <Tooltip title="Add as filter">
-                                <FilterListIcon sx={{ fontSize: 12, ml: 0.5, opacity: 0.5 }} />
-                              </Tooltip>
-                            </Box>
-                          }
-                          secondary={
-                            <Typography variant="caption" color="text.secondary">
-                              {v.count.toLocaleString()} docs
-                            </Typography>
-                          }
-                        />
-                      </ListItemButton>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ pl: 3, py: 0.5, display: "block" }}
-                  >
-                    No values found
-                  </Typography>
-                )}
-              </Collapse>
-            </Box>
-          );
-        })}
+                            }
+                          />
+                        </ListItemButton>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", pl: 3, py: 0.5 }}
+                    >
+                      No values found
+                    </Typography>
+                  )}
+                </Collapse>
+              </Box>
+            );
+          })}
+        </List>
       </Box>
     </Paper>
   );

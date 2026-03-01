@@ -1,11 +1,11 @@
 import { useMemo, useCallback } from "react";
-import * as echarts from "echarts/core";
 
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
 
 import { useEChartTheme } from "./useEChartTheme";
 import EChartWrapper from "./EChartWrapper";
+import { escapeHtml } from "./htmlUtils";
 
 interface ScatterDataPoint {
   timestamp: string;
@@ -76,7 +76,7 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
         }) => {
           const ts = new Date(params.value[0]).toLocaleString();
           const duration = formatSpanDuration(params.value[1] * 1000);
-          return `<strong>${echarts.format.encodeHTML(params.seriesName)}</strong><br/>Time: ${echarts.format.encodeHTML(ts)}<br/>Duration: ${echarts.format.encodeHTML(duration)}<br/>Trace: ${echarts.format.encodeHTML(params.data.traceId.slice(0, 16))}…`;
+          return `<strong>${escapeHtml(params.seriesName)}</strong><br/>Time: ${escapeHtml(ts)}<br/>Duration: ${escapeHtml(duration)}<br/>Trace: ${escapeHtml(params.data.traceId.slice(0, 16))}…`;
         },
       },
       legend: {

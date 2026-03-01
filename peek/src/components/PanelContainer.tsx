@@ -161,13 +161,13 @@ export default function PanelContainer({ panel }: Props) {
     <Paper
       elevation={1}
       sx={{
-        height: "100%",
         display: "flex",
         flexDirection: "column",
+        height: "100%",
         overflow: "hidden",
-        borderRadius: 2,
         border: 1,
         borderColor: "divider",
+        borderRadius: 2,
         transition: "border-color 0.2s",
         "&:hover": { borderColor: "border.strong" },
       }}
@@ -176,21 +176,21 @@ export default function PanelContainer({ panel }: Props) {
         sx={{
           display: "flex",
           alignItems: "center",
-          px: 1.5,
+          minHeight: 36,
           py: 0.75,
+          px: 1.5,
           borderBottom: 1,
           borderColor: "divider",
-          minHeight: 36,
         }}
       >
         <DragIndicatorIcon
           className="panel-drag-handle"
           sx={{
-            fontSize: 16,
-            color: "text.secondary",
-            cursor: "grab",
             mr: 0.5,
+            color: "text.secondary",
             opacity: 0.5,
+            cursor: "grab",
+            fontSize: 16,
             "&:hover": { opacity: 1 },
           }}
         />
@@ -205,15 +205,15 @@ export default function PanelContainer({ panel }: Props) {
               variant="caption"
               sx={{
                 mr: 0.5,
-                px: 0.75,
                 py: 0.125,
+                px: 0.75,
                 borderRadius: 1,
                 bgcolor: "action.hover",
-                fontFamily: "monospace",
-                fontSize: "0.65rem",
-                whiteSpace: "nowrap",
                 color: "text.secondary",
                 cursor: "default",
+                whiteSpace: "nowrap",
+                fontSize: "0.65rem",
+                fontFamily: "monospace",
               }}
             >
               {formatMs(executionTimeMs)} • {formatRowCount(data.values.length)} rows •{" "}
@@ -223,7 +223,7 @@ export default function PanelContainer({ panel }: Props) {
         )}
         {supportsQuery && !loading && error && (
           <Tooltip title={error}>
-            <ErrorOutlineIcon sx={{ fontSize: 14, color: "error.main", mr: 0.5 }} />
+            <ErrorOutlineIcon sx={{ mr: 0.5, color: "error.main", fontSize: 14 }} />
           </Tooltip>
         )}
         {supportsImageExport && (
@@ -278,7 +278,7 @@ export default function PanelContainer({ panel }: Props) {
         </Tooltip>
       </Box>
 
-      <Box sx={{ flex: 1, overflow: "auto", position: "relative", p: 1 }}>
+      <Box sx={{ position: "relative", flex: 1, overflow: "auto", p: 1 }}>
         {!supportsQuery ? (
           <PersesPanelRenderer
             type={panel.visualization}
@@ -295,10 +295,10 @@ export default function PanelContainer({ panel }: Props) {
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
               gap: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
               color: "error.main",
             }}
           >
@@ -311,8 +311,8 @@ export default function PanelContainer({ panel }: Props) {
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
               justifyContent: "center",
+              alignItems: "center",
               height: "100%",
             }}
           >
@@ -331,8 +331,8 @@ export default function PanelContainer({ panel }: Props) {
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
               justifyContent: "center",
+              alignItems: "center",
               height: "100%",
             }}
           >

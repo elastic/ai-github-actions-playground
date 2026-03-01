@@ -127,7 +127,7 @@ export default function MetricSearch({
               : option.name;
           return (
             <Box component="li" {...props} key={option.name}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center", width: "100%" }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="body2" noWrap>
                     {displayName}

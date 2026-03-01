@@ -125,12 +125,12 @@ function ClusterSection({ name, detail }: ClusterSectionProps) {
           display: "flex",
           alignItems: "center",
           width: "100%",
-          px: 1.5,
           py: 0.5,
+          px: 1.5,
           border: 0,
           bgcolor: "transparent",
-          textAlign: "left",
           cursor: "pointer",
+          textAlign: "left",
           "&:hover": { bgcolor: "action.hover" },
         }}
         onClick={() => setOpen((prev) => !prev)}
@@ -140,9 +140,9 @@ function ClusterSection({ name, detail }: ClusterSectionProps) {
           fontSize="small"
           sx={{
             mr: 0.5,
+            color: "text.secondary",
             transform: open ? "rotate(0deg)" : "rotate(-90deg)",
             transition: "transform 0.2s",
-            color: "text.secondary",
           }}
         />
         <Typography variant="body2" sx={{ flex: 1 }} noWrap title={name}>
@@ -159,7 +159,7 @@ function ClusterSection({ name, detail }: ClusterSectionProps) {
         )}
       </Box>
       <Collapse in={open}>
-        <Box sx={{ px: 2.5, pb: 1 }}>
+        <Box sx={{ pb: 1, px: 2.5 }}>
           {detail.indices && (
             <Typography variant="caption" color="text.secondary" display="block">
               Indices: {detail.indices}
@@ -237,7 +237,7 @@ export default function PartialResultPanel({
   return (
     <Paper variant="outlined" sx={{ borderColor: "warning.main" }}>
       {/* Header */}
-      <Box sx={{ px: 1.5, py: 0.75, display: "flex", alignItems: "center", gap: 0.5 }}>
+      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", py: 0.75, px: 1.5 }}>
         <IconButton
           size="small"
           onClick={() => setExpanded((prev) => !prev)}
@@ -253,7 +253,7 @@ export default function PartialResultPanel({
             }}
           />
         </IconButton>
-        <WarningAmberIcon fontSize="small" sx={{ color: "warning.main", mr: 0.5 }} />
+        <WarningAmberIcon fontSize="small" sx={{ mr: 0.5, color: "warning.main" }} />
         <Typography variant="subtitle2" sx={{ flex: 1 }}>
           Partial Results
         </Typography>
@@ -288,7 +288,7 @@ export default function PartialResultPanel({
       <Collapse in={expanded}>
         {/* Shard-level failures (single-cluster / no cluster breakdown) */}
         {clusterDetails.length === 0 && shards && (
-          <Box sx={{ px: 1.5, py: 1 }}>
+          <Box sx={{ py: 1, px: 1.5 }}>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
               Shards: {shards.successful ?? 0}/{shards.total ?? 0} successful
               {(shards.skipped ?? 0) > 0 && `, ${shards.skipped} skipped`}
@@ -311,7 +311,7 @@ export default function PartialResultPanel({
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ px: 1.5, py: 1, display: "block" }}
+                sx={{ display: "block", py: 1, px: 1.5 }}
               >
                 No cluster-level failures found.
               </Typography>
@@ -324,14 +324,14 @@ export default function PartialResultPanel({
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ px: 1.5, py: 1, display: "block" }}
+            sx={{ display: "block", py: 1, px: 1.5 }}
           >
             No diagnostic details available for this partial response.
           </Typography>
         )}
 
         {/* Action buttons */}
-        <Box sx={{ px: 1.5, py: 1, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, py: 1, px: 1.5 }}>
           {onRerunHealthyClusters && healthyClusters.length > 0 && (
             <Tooltip title={`Re-run scoped to: ${healthyClusters.join(", ")}`}>
               <Button

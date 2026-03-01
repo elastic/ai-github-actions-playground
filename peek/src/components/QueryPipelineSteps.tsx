@@ -36,7 +36,7 @@ export default function QueryPipelineSteps({
   if (steps.length <= 1) return null;
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75, mt: 0.5 }}>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center", mt: 0.5 }}>
       <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
         Run to step:
       </Typography>

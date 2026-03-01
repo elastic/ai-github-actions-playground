@@ -343,7 +343,7 @@ export default function DiscoverPage() {
   }, [selectedFields, setSelectedFields, visibleColumns]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
       {/* Query bar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
@@ -386,7 +386,7 @@ export default function DiscoverPage() {
             </>
           }
         />
-        <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
+        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
           <CodeMirror
             value={effectiveQuery}
             onChange={handleQueryChange}
@@ -405,7 +405,7 @@ export default function DiscoverPage() {
           stepDurationsMs={stepDurationsMs}
           onRunStep={handleRunStep}
         />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
           <Button
             variant="contained"
             size="small"
@@ -462,7 +462,7 @@ export default function DiscoverPage() {
 
       {/* Summary strip: timing chip */}
       {result && lastRunDurationMs !== null && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <Chip size="small" label={`took ${lastRunDurationMs} ms`} />
         </Box>
       )}
@@ -479,19 +479,19 @@ export default function DiscoverPage() {
       {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
 
       {/* Content area: field picker + table */}
-      <Box sx={{ display: "flex", flex: 1, gap: 1, overflow: "hidden", minHeight: 0 }}>
+      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
         {/* Field picker sidebar */}
         <Paper
           variant="outlined"
           sx={{
-            width: 220,
-            flexShrink: 0,
             display: "flex",
+            flexShrink: 0,
             flexDirection: "column",
+            width: 220,
             overflow: "hidden",
           }}
         >
-          <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
             <Typography variant="subtitle2">Fields</Typography>
             {columns.length > 0 && (
               <Typography variant="caption" color="text.secondary">
@@ -499,7 +499,7 @@ export default function DiscoverPage() {
               </Typography>
             )}
             {columns.length > 0 && (
-              <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1 }}>
                 <TextField
                   size="small"
                   placeholder="Filter fields"
@@ -520,7 +520,7 @@ export default function DiscoverPage() {
           <Box sx={{ flex: 1, overflow: "auto" }}>
             {columns.length === 0 ? (
               <EmptyState
-                icon={<CodeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                icon={<CodeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
                 heading="Run a query to see fields"
                 description="Execute an ES|QL query to inspect the returned field names and types."
               />
@@ -531,12 +531,18 @@ export default function DiscoverPage() {
                 return (
                   <Box key={col.name}>
                     <Box
+                      component="button"
+                      type="button"
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        px: 0.5,
+                        width: "100%",
                         py: 0.25,
+                        px: 0.5,
+                        border: 0,
+                        bgcolor: "transparent",
                         cursor: "pointer",
+                        textAlign: "left",
                         "&:hover": { bgcolor: "action.hover" },
                       }}
                       onClick={() => toggleField(col.name)}
@@ -580,7 +586,7 @@ export default function DiscoverPage() {
                       </IconButton>
                     </Box>
                     <Collapse in={isExpanded}>
-                      <Box sx={{ px: 1.5, py: 0.75, bgcolor: "action.hover" }}>
+                      <Box sx={{ py: 0.75, px: 1.5, bgcolor: "action.hover" }}>
                         {insight?.loading && (
                           <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
                             <CircularProgress size={16} />
@@ -680,8 +686,8 @@ export default function DiscoverPage() {
                                       key={i}
                                       sx={{
                                         display: "flex",
-                                        justifyContent: "space-between",
                                         gap: 0.5,
+                                        justifyContent: "space-between",
                                       }}
                                     >
                                       <Typography
@@ -740,7 +746,7 @@ export default function DiscoverPage() {
         <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
           {!result && !loading && (
             <EmptyState
-              icon={<TableChartIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
               description="Write an ES|QL query above and press Ctrl+Enter to run it."
             />
@@ -765,7 +771,7 @@ export default function DiscoverPage() {
           )}
           {filteredResult && filteredResult.columns.length === 0 && result && (
             <EmptyState
-              icon={<TableChartIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No fields selected"
               description="Check the field picker to show columns."
             />

@@ -31,7 +31,7 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
 
   if (mapData.edges.length === 0) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
         <Typography variant="body2" color="text.secondary">
           No cross-service dependencies found for this trace
         </Typography>

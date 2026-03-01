@@ -27,8 +27,8 @@ export default function StatPanel({ data, options }: Props) {
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
           justifyContent: "center",
+          alignItems: "center",
           height: "100%",
         }}
       >
@@ -42,10 +42,10 @@ export default function StatPanel({ data, options }: Props) {
       sx={{
         display: "flex",
         flexWrap: "wrap",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100%",
         gap: 4,
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
         p: 2,
       }}
     >
@@ -64,9 +64,9 @@ export default function StatPanel({ data, options }: Props) {
               variant="h3"
               component="div"
               sx={{
-                fontWeight: 700,
                 color,
                 lineHeight: 1.2,
+                fontWeight: 700,
               }}
             >
               {formatStatValue(stat.value, format)}

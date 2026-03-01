@@ -9,8 +9,8 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
-      <Box sx={{ minWidth: 0, flex: 1 }}>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="h6" component="h1">
           {title}
         </Typography>
@@ -21,7 +21,7 @@ export default function PageHeader({ title, description, actions }: PageHeaderPr
         )}
       </Box>
       {actions && (
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           {actions}
         </Box>
       )}

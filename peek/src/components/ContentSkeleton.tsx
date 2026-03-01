@@ -15,8 +15,8 @@ export default function ContentSkeleton({ variant }: ContentSkeletonProps) {
         <Box
           sx={{
             display: "grid",
-            gap: 1,
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: 1,
           }}
         >
           {Array.from({ length: 4 }).map((_, i) => (

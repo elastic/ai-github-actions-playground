@@ -116,18 +116,18 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
         slotProps={{ paper: { sx: { display: "flex" } } }}
       >
         {/* Quick-select presets */}
-        <Box sx={{ borderRight: 1, borderColor: "divider", minWidth: 140 }}>
+        <Box sx={{ minWidth: 140, borderRight: 1, borderColor: "divider" }}>
           <Typography
             variant="caption"
             sx={{
-              px: 2,
+              display: "block",
               pt: 1.5,
               pb: 0.5,
-              display: "block",
+              px: 2,
               color: "text.secondary",
-              fontWeight: 600,
-              textTransform: "uppercase",
               letterSpacing: 0.5,
+              textTransform: "uppercase",
+              fontWeight: 600,
             }}
           >
             Quick select
@@ -148,16 +148,16 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
         <Divider orientation="vertical" flexItem />
 
         {/* Absolute custom range */}
-        <Box sx={{ p: 2, minWidth: 220 }}>
+        <Box sx={{ minWidth: 220, p: 2 }}>
           <Typography
             variant="caption"
             sx={{
               display: "block",
-              color: "text.secondary",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
               mb: 1.5,
+              color: "text.secondary",
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              fontWeight: 600,
             }}
           >
             Custom range

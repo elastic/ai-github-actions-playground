@@ -109,20 +109,20 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
       component="nav"
       aria-label="Main navigation"
       sx={{
-        width: collapsed ? 68 : 200,
+        display: "flex",
         flexShrink: 0,
+        flexDirection: "column",
+        width: collapsed ? 68 : 200,
+        overflow: "auto",
         borderRight: 1,
         borderColor: "border.subtle",
         bgcolor: "background.paper",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "auto",
         transition: (theme) =>
           theme.transitions.create("width", { duration: theme.transitions.duration.shorter }),
       }}
     >
       <Box
-        sx={{ display: "flex", justifyContent: collapsed ? "center" : "flex-end", px: 1, pt: 1 }}
+        sx={{ display: "flex", justifyContent: collapsed ? "center" : "flex-end", pt: 1, px: 1 }}
       >
         <Tooltip title={collapsed ? "Expand navigation" : "Collapse navigation"}>
           <IconButton
@@ -149,9 +149,9 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
               <Typography
                 variant="overline"
                 sx={{
-                  px: 2,
-                  py: 0.5,
                   display: "block",
+                  py: 0.5,
+                  px: 2,
                   color: "text.secondary",
                 }}
               >
@@ -172,12 +172,12 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                     aria-current={isActive ? "page" : undefined}
                     aria-label={item.label}
                     sx={{
-                      px: collapsed ? 1 : 2,
-                      py: 0.75,
-                      borderRadius: 1,
-                      mx: 0.5,
-                      justifyContent: collapsed ? "center" : "flex-start",
                       position: "relative",
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      mx: 0.5,
+                      py: 0.75,
+                      px: collapsed ? 1 : 2,
+                      borderRadius: 1,
                       "&.Mui-selected": {
                         bgcolor: "action.selected",
                         "&:hover": { bgcolor: "action.selected" },
@@ -223,10 +223,10 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
       {hiddenCount > 0 && (
         <Box
           sx={{
-            px: collapsed ? 0 : 2,
-            py: 1,
             display: "flex",
             justifyContent: collapsed ? "center" : "flex-start",
+            py: 1,
+            px: collapsed ? 0 : 2,
           }}
         >
           <Tooltip
@@ -244,11 +244,11 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
       <Divider />
       <Box
         sx={{
+          display: "flex",
+          gap: 0.5,
+          justifyContent: collapsed ? "center" : "flex-start",
           mt: "auto",
           p: 1,
-          display: "flex",
-          justifyContent: collapsed ? "center" : "flex-start",
-          gap: 0.5,
         }}
       >
         <Tooltip title="AI Assistant" placement={collapsed ? "right" : "top"}>

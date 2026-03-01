@@ -64,10 +64,10 @@ export default function DashboardGrid() {
         sx={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: 400,
           gap: 2,
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 400,
         }}
       >
         <Typography variant="h6" color="text.secondary">

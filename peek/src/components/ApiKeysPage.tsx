@@ -128,7 +128,7 @@ export default function ApiKeysPage() {
   }, []);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="API Keys"
@@ -148,10 +148,10 @@ export default function ApiKeysPage() {
       {error && <Alert severity="error">{error}</Alert>}
       {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
 
-      <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
+      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         <Paper
           variant="outlined"
-          sx={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}
+          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 320, minHeight: 0 }}
         >
           <Box sx={{ p: 1 }}>
             <TextField
@@ -163,7 +163,7 @@ export default function ApiKeysPage() {
             />
           </Box>
           <Divider />
-          <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             {filteredKeys.map((key) => (
               <ListItem key={key.id} disablePadding>
                 <ListItemButton
@@ -188,7 +188,7 @@ export default function ApiKeysPage() {
 
         <Paper
           variant="outlined"
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, p: 1.5, gap: 1 }}
+          sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
         >
           {selectedKey ? (
             <>
@@ -248,7 +248,7 @@ export default function ApiKeysPage() {
               <Typography
                 component="pre"
                 variant="body2"
-                sx={{ m: 0, p: 1, bgcolor: "action.hover", borderRadius: 1, overflow: "auto" }}
+                sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
               >
                 {JSON.stringify(selectedKey.metadata ?? {}, null, 2)}
               </Typography>

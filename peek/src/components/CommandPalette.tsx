@@ -408,8 +408,8 @@ export default function CommandPalette() {
             sx={{
               display: "flex",
               alignItems: "center",
-              px: 2,
               py: 1,
+              px: 2,
               borderBottom: 1,
               borderColor: "divider",
             }}
@@ -433,13 +433,13 @@ export default function CommandPalette() {
             <Typography
               variant="caption"
               sx={{
-                px: 2,
-                py: 0.75,
                 display: "block",
+                py: 0.75,
+                px: 2,
                 color: "text.secondary",
-                fontWeight: 600,
-                textTransform: "uppercase",
                 letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontWeight: 600,
                 fontSize: "0.65rem",
               }}
             >
@@ -456,9 +456,9 @@ export default function CommandPalette() {
               {...optionProps}
               component="li"
               sx={{
-                px: 2,
-                py: 0.75,
                 mx: 0.5,
+                py: 0.75,
+                px: 2,
                 borderRadius: 1,
               }}
             >

@@ -82,12 +82,12 @@ export default function SettingsPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 640, mx: "auto", width: "100%", py: 2 }}>
+    <Box sx={{ width: "100%", maxWidth: 640, mx: "auto", py: 2 }}>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
         Settings
       </Typography>
 
-      <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+      <Paper variant="outlined" sx={{ mb: 3, p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
           LLM Provider
         </Typography>

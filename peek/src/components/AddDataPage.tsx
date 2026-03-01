@@ -417,7 +417,7 @@ export default function AddDataPage() {
   }, [connection]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Add Data"
@@ -430,7 +430,7 @@ export default function AddDataPage() {
         />
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <Typography variant="subtitle2">Endpoint type</Typography>
           <ToggleButtonGroup
@@ -536,7 +536,7 @@ export default function AddDataPage() {
         </Box>
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+      <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5 }}>
         <Typography variant="subtitle2">Collector credentials</Typography>
         {apiKeyError && <Alert severity="error">{apiKeyError}</Alert>}
         {capabilities?.canCreateApiKeys ? (
@@ -590,7 +590,7 @@ export default function AddDataPage() {
         )}
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+      <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5 }}>
         <Typography variant="subtitle2">Verify ingestion</Typography>
         <Typography variant="body2" color="text.secondary">
           After starting the collector, check whether telemetry data streams have appeared.

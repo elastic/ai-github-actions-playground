@@ -61,17 +61,17 @@ export default function WelcomeScreen() {
     <Box
       sx={{
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       <Paper
         sx={{
-          p: 6,
           maxWidth: 520,
-          textAlign: "center",
+          p: 6,
           borderRadius: 3,
+          textAlign: "center",
         }}
         elevation={2}
       >

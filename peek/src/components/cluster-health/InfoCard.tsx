@@ -19,9 +19,9 @@ export default function InfoCard({ title, value, detail, severity }: InfoCardPro
     <Paper
       variant="outlined"
       sx={{
-        p: 2,
         flex: 1,
         minWidth: 180,
+        p: 2,
         borderLeftWidth: severity ? 4 : 1,
         borderLeftColor: borderColor,
       }}

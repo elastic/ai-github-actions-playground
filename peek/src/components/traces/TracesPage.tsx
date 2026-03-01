@@ -365,11 +365,11 @@ export default function TracesPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       {/* Query bar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box
-          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
+          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
         >
           <PageHeader
             title="Trace Search"
@@ -456,10 +456,10 @@ export default function TracesPage() {
         <Box
           sx={{
             display: "flex",
-            gap: 1,
-            mb: 1,
             flexWrap: "wrap",
+            gap: 1,
             alignItems: "center",
+            mb: 1,
           }}
         >
           <TextField
@@ -517,7 +517,7 @@ export default function TracesPage() {
               </MenuItem>
             ))}
           </Select>
-          <Box sx={{ display: "flex", gap: 0.5, ml: "auto", alignItems: "center" }}>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", ml: "auto" }}>
             {(["Error", "OK"] as const).map((status) => (
               <Chip
                 key={status}
@@ -542,7 +542,7 @@ export default function TracesPage() {
         </Box>
 
         {/* ES|QL editor */}
-        <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", mb: 1 }}>
+        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
           <CodeMirror
             value={effectiveQuery}
             onChange={(val) => setRawQuery(val)}
@@ -555,7 +555,7 @@ export default function TracesPage() {
           />
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <Button
             variant="contained"
             size="small"
@@ -592,15 +592,15 @@ export default function TracesPage() {
         {/* Results panel */}
         <Box
           sx={{
-            flex: 1,
             display: "flex",
+            flex: 1,
             flexDirection: "column",
             minWidth: 0,
             minHeight: 0,
           }}
         >
           {/* View switcher */}
-          <Box sx={{ display: "flex", gap: 0.5, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center", mb: 1 }}>
             {(
               ["list", "timeseries", "scatter", "serviceMap", "driftRadar"] as TracesViewMode[]
             ).map((mode) => (
@@ -654,7 +654,7 @@ export default function TracesPage() {
               </Box>
             )}
             {result && viewMode === "list" && (
-              <Box sx={{ overflow: "auto", height: "100%" }}>
+              <Box sx={{ height: "100%", overflow: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                   <thead>
                     <tr>
@@ -722,14 +722,14 @@ export default function TracesPage() {
                             borderBottom: "1px solid rgba(128,128,128,0.2)",
                           }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
                             <Box
                               sx={{
+                                flexShrink: 0,
                                 width: 8,
                                 height: 8,
                                 borderRadius: "50%",
                                 bgcolor: getServiceColor(row.serviceName),
-                                flexShrink: 0,
                               }}
                             />
                             {row.serviceName}
@@ -749,22 +749,22 @@ export default function TracesPage() {
                             borderBottom: "1px solid rgba(128,128,128,0.2)",
                           }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                             <Box
                               sx={{
                                 width: 60,
                                 height: 4,
-                                bgcolor: "action.hover",
-                                borderRadius: 1,
                                 overflow: "hidden",
+                                borderRadius: 1,
+                                bgcolor: "action.hover",
                               }}
                             >
                               <Box
                                 sx={{
                                   width: `${Math.max(2, (row.durationUs / maxDuration) * 100)}%`,
                                   height: "100%",
-                                  bgcolor: getServiceColor(row.serviceName),
                                   borderRadius: 1,
+                                  bgcolor: getServiceColor(row.serviceName),
                                 }}
                               />
                             </Box>
@@ -898,21 +898,21 @@ export default function TracesPage() {
             <Paper
               variant="outlined"
               sx={{
-                mt: 1,
+                display: "flex",
                 flex: 1,
+                flexDirection: "column",
                 minHeight: 360,
                 overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
+                mt: 1,
               }}
             >
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
                   gap: 1,
-                  px: 1.5,
+                  alignItems: "center",
                   py: 0.5,
+                  px: 1.5,
                   borderBottom: 1,
                   borderColor: "divider",
                 }}
@@ -940,7 +940,7 @@ export default function TracesPage() {
                 </Button>
               </Box>
               {detailLoading ? (
-                <Box sx={{ p: 2, flex: 1 }}>
+                <Box sx={{ flex: 1, p: 2 }}>
                   <ContentSkeleton variant="table" />
                 </Box>
               ) : selectedTraceSpans.length > 0 ? (

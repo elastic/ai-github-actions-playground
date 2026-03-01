@@ -85,13 +85,11 @@ export default {
       },
       IfStatement(node) {
         if (!isEmptyDataTest(node.test)) return;
-        if (hasEmptyStateImport) return; // file already imports EmptyState — assume correct usage
         if (containsEmptyStateJSX(node.consequent)) return;
         context.report({ node: node.test, messageId: "missingEmptyState" });
       },
       ConditionalExpression(node) {
         if (!isEmptyDataTest(node.test)) return;
-        if (hasEmptyStateImport) return;
         if (containsEmptyStateJSX(node.consequent) || containsEmptyStateJSX(node.alternate)) return;
         context.report({ node: node.test, messageId: "missingEmptyState" });
       },

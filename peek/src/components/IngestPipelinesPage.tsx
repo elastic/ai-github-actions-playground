@@ -203,7 +203,7 @@ export default function IngestPipelinesPage() {
   }, [connection, selectedName, simulateInput, verbose]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Ingest Pipelines"
@@ -228,7 +228,7 @@ export default function IngestPipelinesPage() {
               <Typography
                 component="pre"
                 variant="caption"
-                sx={{ mt: 1, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+                sx={{ mt: 1, wordBreak: "break-word", whiteSpace: "pre-wrap" }}
               >
                 {error}
               </Typography>
@@ -239,7 +239,7 @@ export default function IngestPipelinesPage() {
               size="small"
               variant="text"
               onClick={() => setShowRawError((v) => !v)}
-              sx={{ mt: 0.5, p: 0, minWidth: 0, textTransform: "none" }}
+              sx={{ minWidth: 0, mt: 0.5, p: 0, textTransform: "none" }}
             >
               {showRawError ? "Hide technical details" : "Technical details"}
             </Button>
@@ -247,11 +247,11 @@ export default function IngestPipelinesPage() {
         </Alert>
       )}
 
-      <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
+      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         {/* Left panel: pipeline list */}
         <Paper
           variant="outlined"
-          sx={{ width: 280, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}
+          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 280, minHeight: 0 }}
         >
           <Box sx={{ p: 1 }}>
             <TextField
@@ -263,7 +263,7 @@ export default function IngestPipelinesPage() {
             />
           </Box>
           <Divider />
-          <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
+          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             {filteredPipelines.map((entry) => (
               <ListItem key={entry.name} disablePadding>
                 <ListItemButton
@@ -291,10 +291,10 @@ export default function IngestPipelinesPage() {
         {/* Right panel: details + simulate */}
         <Paper
           variant="outlined"
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "auto" }}
+          sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "auto" }}
         >
           {selectedPipeline ? (
-            <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5 }}>
               {/* Metadata */}
               <Box>
                 <Typography variant="h6" gutterBottom>
@@ -349,12 +349,12 @@ export default function IngestPipelinesPage() {
                   variant="body2"
                   data-testid="pipeline-processors-json"
                   sx={{
+                    maxHeight: 240,
+                    overflow: "auto",
                     m: 0,
                     p: 1,
-                    bgcolor: "action.hover",
                     borderRadius: 1,
-                    overflow: "auto",
-                    maxHeight: 240,
+                    bgcolor: "action.hover",
                     fontSize: "0.75rem",
                   }}
                 >
@@ -459,7 +459,7 @@ export default function IngestPipelinesPage() {
                               </Button>
                             </Stack>
                             <Collapse in={isExpanded}>
-                              <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+                              <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 1 }}>
                                 <Box>
                                   <Typography
                                     variant="caption"
@@ -473,12 +473,12 @@ export default function IngestPipelinesPage() {
                                     component="pre"
                                     variant="body2"
                                     sx={{
+                                      maxHeight: 200,
+                                      overflow: "auto",
                                       m: 0,
                                       p: 1,
-                                      bgcolor: "action.hover",
                                       borderRadius: 1,
-                                      overflow: "auto",
-                                      maxHeight: 200,
+                                      bgcolor: "action.hover",
                                       fontSize: "0.75rem",
                                     }}
                                   >
@@ -543,7 +543,7 @@ export default function IngestPipelinesPage() {
             </Box>
           ) : (
             <EmptyState
-              icon={<AccountTreeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="Select a pipeline"
               description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
             />
