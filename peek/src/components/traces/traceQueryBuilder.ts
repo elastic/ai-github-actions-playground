@@ -33,7 +33,7 @@ export const DEFAULT_FIELD_MAPPING: TraceFieldMapping = {
   // EDOT stores raw `duration` in ns and `attributes.span.duration.us` in microseconds.
   durationUs: "attributes.span.duration.us",
   durationNs: "duration",
-  statusCode: "status",
+  statusCode: "status.code",
   timestamp: "@timestamp",
   timestampUs: "attributes.timestamp.us",
   events: "events",
