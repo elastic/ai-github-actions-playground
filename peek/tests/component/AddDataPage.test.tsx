@@ -245,7 +245,7 @@ describe("AddDataPage", () => {
     expect(getCommandValue()).not.toContain(".ingest.");
   });
 
-  it("does not probe when connection URL is not Elastic Cloud", () => {
+  it("does not probe when connection URL is not Elastic Cloud", async () => {
     resetAllStores();
     useConnectionStore.getState().setConnection({
       url: "http://localhost:9200",
@@ -254,10 +254,12 @@ describe("AddDataPage", () => {
     useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
     // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
-    expect(fetchSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining(".ingest."),
-      expect.anything(),
-    );
+    await waitFor(() => {
+      expect(fetchSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining(".ingest."),
+        expect.anything(),
+      );
+    });
   });
 });
 
