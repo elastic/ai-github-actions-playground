@@ -3,11 +3,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-import AddDataPage, {
+import AddDataPage from "../../src/components/AddDataPage";
+import {
   deriveOtlpEndpoint,
   probeOtlpEndpoint,
   detectTelemetrySignals,
-} from "../../src/components/AddDataPage";
+} from "../../src/utils/addDataUtils";
 import type { UserCapabilities, ElasticsearchClient } from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
