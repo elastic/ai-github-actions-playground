@@ -193,4 +193,35 @@ describe("perses data transformers", () => {
     });
     expect(toStatData(data)).toEqual([{ name: "cpu", value: 0.7 }]);
   });
+
+  it("keeps distinct label groups when label values contain delimiters", () => {
+    const timestamp = "2026-01-01T00:00:00.000Z";
+    const data: EsqlResponse = {
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "service", type: "keyword" },
+        { name: "host", type: "keyword" },
+        { name: "cpu", type: "double" },
+      ],
+      values: [
+        [timestamp, "api-1|host=api-2", "api-3", 0.5],
+        [timestamp, "api-1", "api-2|host=api-3", 0.7],
+      ],
+    };
+
+    expect(toTimeSeriesData(data).series).toEqual(
+      expect.arrayContaining([
+        {
+          name: "cpu (service=api-1|host=api-2, host=api-3)",
+          labels: { service: "api-1|host=api-2", host: "api-3" },
+          values: [[Date.parse(timestamp), 0.5]],
+        },
+        {
+          name: "cpu (service=api-1, host=api-2|host=api-3)",
+          labels: { service: "api-1", host: "api-2|host=api-3" },
+          values: [[Date.parse(timestamp), 0.7]],
+        },
+      ]),
+    );
+  });
 });

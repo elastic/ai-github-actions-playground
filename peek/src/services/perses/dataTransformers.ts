@@ -117,7 +117,7 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
       ? Object.entries(labels).map(([name, value]) => `${name}=${value}`)
       : [];
     const labelText = hasLabels ? ` (${labelPairs.join(", ")})` : "";
-    const labelKey = labelPairs.join("|");
+    const labelKey = JSON.stringify(labelPairs);
 
     for (const numericColumnIndex of numericColumns) {
       const metricName = data.columns[numericColumnIndex]?.name ?? `value_${numericColumnIndex}`;
