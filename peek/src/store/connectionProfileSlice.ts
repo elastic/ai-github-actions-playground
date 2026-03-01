@@ -10,6 +10,7 @@
 import type { StateCreator } from "zustand";
 import { z } from "zod";
 
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import type { ConnectionProfile, ElasticsearchConnection, ProfileHealth } from "../types";
 import type { EncryptedPayload } from "../utils/crypto";
 import { encryptWithPin, decryptWithPin } from "../utils/crypto";
@@ -32,6 +33,10 @@ const credentialsSchema = z
   })
   .strict();
 
+export type SwitchOrRetestProfileResult =
+  | { ok: true; profileName: string }
+  | { ok: false; profileName: string | null; message: string };
+
 export interface ConnectionProfileSlice {
   connectionProfiles: ConnectionProfile[];
   activeProfileId: string | null;
@@ -43,6 +48,8 @@ export interface ConnectionProfileSlice {
   setActiveProfileId: (id: string | null) => void;
   getConnectionProfile: (id: string) => ConnectionProfile | undefined;
   setProfileHealth: (id: string, health: ProfileHealth) => void;
+  switchConnectionProfile: (id: string) => Promise<SwitchOrRetestProfileResult>;
+  retestConnectionProfile: (id: string) => Promise<SwitchOrRetestProfileResult>;
   /**
    * Encrypt the profile's credentials with a PIN and persist them to localStorage.
    * After this call the profile is marked `encrypted: true`; credentials remain
@@ -129,6 +136,78 @@ export const createConnectionProfileSlice: StateCreator<
 
   setProfileHealth: (id, health) =>
     set((s) => ({ profileHealthMap: { ...s.profileHealthMap, [id]: health } })),
+
+  switchConnectionProfile: async (id) => {
+    const profile = get().connectionProfiles.find((p) => p.id === id);
+    if (!profile) {
+      return { ok: false, profileName: null, message: "Connection profile not found" };
+    }
+    try {
+      const caps = await fetchCapabilitiesForConnection(profile.connection);
+      set((s) => ({
+        connection: profile.connection,
+        connected: true,
+        capabilities: caps,
+        activeProfileId: id,
+        profileHealthMap: {
+          ...s.profileHealthMap,
+          [id]: {
+            status: "healthy",
+            checkedAt: new Date().toISOString(),
+            errorSummary: null,
+          },
+        },
+      }));
+      return { ok: true, profileName: profile.name };
+    } catch (err: unknown) {
+      const message = isElasticsearchError(err) ? err.message : String(err);
+      set((s) => ({
+        profileHealthMap: {
+          ...s.profileHealthMap,
+          [id]: {
+            status: "needs_attention",
+            checkedAt: new Date().toISOString(),
+            errorSummary: message,
+          },
+        },
+      }));
+      return { ok: false, profileName: profile.name, message };
+    }
+  },
+
+  retestConnectionProfile: async (id) => {
+    const profile = get().connectionProfiles.find((p) => p.id === id);
+    if (!profile) {
+      return { ok: false, profileName: null, message: "Connection profile not found" };
+    }
+    try {
+      await fetchCapabilitiesForConnection(profile.connection);
+      set((s) => ({
+        profileHealthMap: {
+          ...s.profileHealthMap,
+          [id]: {
+            status: "healthy",
+            checkedAt: new Date().toISOString(),
+            errorSummary: null,
+          },
+        },
+      }));
+      return { ok: true, profileName: profile.name };
+    } catch (err: unknown) {
+      const message = isElasticsearchError(err) ? err.message : String(err);
+      set((s) => ({
+        profileHealthMap: {
+          ...s.profileHealthMap,
+          [id]: {
+            status: "needs_attention",
+            checkedAt: new Date().toISOString(),
+            errorSummary: message,
+          },
+        },
+      }));
+      return { ok: false, profileName: profile.name, message };
+    }
+  },
 
   lockProfile: async (id, pin) => {
     const profile = get().connectionProfiles.find((p) => p.id === id);
