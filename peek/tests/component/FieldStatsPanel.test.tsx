@@ -289,7 +289,7 @@ describe("FieldStatsPanel", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("No values found.");
+    await screen.findByText("No values found");
   });
 
   it("shows field name and type chip in the header", async () => {

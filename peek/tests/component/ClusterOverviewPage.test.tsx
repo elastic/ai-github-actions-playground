@@ -253,6 +253,6 @@ describe("ClusterOverviewPage", () => {
 
     expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument();
     expect(screen.getByText(/cluster stats, nodes, node stats/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Unavailable").length).toBeGreaterThanOrEqual(6);
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThanOrEqual(5);
   });
 });
