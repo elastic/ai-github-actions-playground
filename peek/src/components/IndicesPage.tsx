@@ -183,6 +183,9 @@ export default function IndicesPage() {
   const error = indicesResult.status === "error" ? indicesResult.error : null;
   const indicesData = indicesResult.status === "success" ? indicesResult.data : null;
   const indices = useMemo(() => indicesData ?? [], [indicesData]);
+  // Treat "idle" as loading when an index is selected but the detail effect
+  // hasn't fired yet. This prevents a brief flash of overview content before
+  // the detail loading spinner appears (React effects run after render).
   const loadingDetail =
     detailResult.status === "loading" || (selectedIndex !== null && detailResult.status === "idle");
   const mappings = detailResult.status === "success" ? detailResult.data.mappings : null;

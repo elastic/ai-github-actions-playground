@@ -62,6 +62,15 @@ export interface IndexDetailData {
   indexStats: IndexStatsResponse | null;
 }
 
+/**
+ * Fetches mappings, settings, and stats for the given index.
+ *
+ * When `indexName` is `null` the result is `{ status: "idle" }`.
+ * Note: when `indexName` transitions from `null` to a string, the status
+ * remains `"idle"` until the effect fires on the next render cycle.
+ * Consumers that need to show a spinner immediately should treat
+ * `status === "idle"` with a non-null `indexName` as loading.
+ */
 export function useIndexDetail(indexName: string | null): DataFetchResult<IndexDetailData> {
   const connection = useConnectionStore((s) => s.connection);
   const [result, setResult] = useState<DataFetchResult<IndexDetailData>>({ status: "idle" });
