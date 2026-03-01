@@ -102,20 +102,7 @@ export default function DocsPage() {
               {section.title}
             </Typography>
             {section.body.map((paragraph, index) => {
-              const h2Match = paragraph.match(/^##\s+(.+)$/);
-              if (h2Match) {
-                return (
-                  <Typography
-                    key={index}
-                    variant="subtitle1"
-                    fontWeight={600}
-                    sx={{ mt: 2, mb: 1 }}
-                  >
-                    {h2Match[1]}
-                  </Typography>
-                );
-              }
-              const h3Match = paragraph.match(/^###\s+(.+)$/);
+              const h3Match = paragraph.match(/^### (.+)$/);
               if (h3Match) {
                 return (
                   <Typography
@@ -125,6 +112,19 @@ export default function DocsPage() {
                     sx={{ mt: 1.5, mb: 0.5 }}
                   >
                     {h3Match[1]}
+                  </Typography>
+                );
+              }
+              const h2Match = paragraph.match(/^## (.+)$/);
+              if (h2Match) {
+                return (
+                  <Typography
+                    key={index}
+                    variant="subtitle1"
+                    fontWeight={600}
+                    sx={{ mt: 2, mb: 1 }}
+                  >
+                    {h2Match[1]}
                   </Typography>
                 );
               }
