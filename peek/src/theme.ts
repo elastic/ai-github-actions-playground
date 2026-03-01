@@ -77,7 +77,7 @@ const baseOptions: ThemeOptions = {
     MuiTableRow: {
       styleOverrides: {
         root: ({ theme }) => ({
-          "&:hover": { backgroundColor: theme.palette.background.subtle },
+          "tbody &:hover": { backgroundColor: theme.palette.background.subtle },
         }),
       },
     },
@@ -96,7 +96,7 @@ export const lightTheme = createTheme({
     primary: { main: "#0077CC" },
     secondary: { main: "#00BFB3" },
     background: { default: "#F5F7FA", paper: "#FFFFFF", subtle: "#F0F2F5", elevated: "#FFFFFF" },
-    text: { primary: "#1A1C21", secondary: "#69707D" },
+    text: { primary: "#1A1C21", secondary: "#676F7B" },
     border: { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" },
   },
 });
