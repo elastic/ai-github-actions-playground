@@ -25,7 +25,6 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useShallow } from "zustand/react/shallow";
 
-import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
@@ -49,21 +48,15 @@ function useCommands(): Command[] {
     connected,
     connectionProfiles,
     activeProfileId,
-    setConnection,
-    setConnected,
-    setCapabilities,
-    setActiveProfileId,
-    setProfileHealth,
+    switchConnectionProfile,
+    retestConnectionProfile,
   } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
-      setConnection: s.setConnection,
-      setConnected: s.setConnected,
-      setCapabilities: s.setCapabilities,
-      setActiveProfileId: s.setActiveProfileId,
-      setProfileHealth: s.setProfileHealth,
+      switchConnectionProfile: s.switchConnectionProfile,
+      retestConnectionProfile: s.retestConnectionProfile,
     })),
   );
   const { themeMode, setConnectionDialogOpen, setThemeMode, setCommandPaletteOpen } = useUIStore(
@@ -195,28 +188,13 @@ function useCommands(): Command[] {
             onExecute: () => {
               if (switchingProfileRef.current) return;
               setCommandPaletteOpen(false);
-              const conn = profile.connection;
               switchingProfileRef.current = true;
               void (async () => {
                 try {
-                  const caps = await fetchCapabilitiesForConnection(conn);
-                  setConnection(conn);
-                  setConnected(true);
-                  setCapabilities(caps);
-                  setActiveProfileId(profile.id);
-                  setProfileHealth(profile.id, {
-                    status: "healthy",
-                    checkedAt: new Date().toISOString(),
-                    errorSummary: null,
-                  });
-                } catch (err: unknown) {
-                  const message = isElasticsearchError(err) ? err.message : String(err);
-                  setProfileHealth(profile.id, {
-                    status: "needs_attention",
-                    checkedAt: new Date().toISOString(),
-                    errorSummary: message,
-                  });
-                  setConnectionDialogOpen(true);
+                  const result = await switchConnectionProfile(profile.id);
+                  if (!result.ok) {
+                    setConnectionDialogOpen(true);
+                  }
                 } finally {
                   switchingProfileRef.current = false;
                 }
@@ -233,21 +211,7 @@ function useCommands(): Command[] {
           onExecute: () => {
             setCommandPaletteOpen(false);
             void (async () => {
-              try {
-                await fetchCapabilitiesForConnection(profile.connection);
-                setProfileHealth(profile.id, {
-                  status: "healthy",
-                  checkedAt: new Date().toISOString(),
-                  errorSummary: null,
-                });
-              } catch (err: unknown) {
-                const message = isElasticsearchError(err) ? err.message : String(err);
-                setProfileHealth(profile.id, {
-                  status: "needs_attention",
-                  checkedAt: new Date().toISOString(),
-                  errorSummary: message,
-                });
-              }
+              await retestConnectionProfile(profile.id);
             })();
           },
         });
@@ -299,11 +263,8 @@ function useCommands(): Command[] {
     setThemeMode,
     setCommandPaletteOpen,
     setDiscoverQueryDraft,
-    setConnection,
-    setConnected,
-    setCapabilities,
-    setActiveProfileId,
-    setProfileHealth,
+    switchConnectionProfile,
+    retestConnectionProfile,
   ]);
 }
 
