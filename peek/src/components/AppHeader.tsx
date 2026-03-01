@@ -103,7 +103,7 @@ export default function AppHeader() {
   }, [addPanel, setEditingPanelId]);
 
   return (
-    <AppBar position="static" color="default" elevation={1} sx={{ zIndex: 1201 }}>
+    <AppBar position="static" color="default" sx={{ zIndex: 1201, borderColor: "border.subtle" }}>
       <Toolbar disableGutters variant="dense" sx={{ gap: 1, px: 0 }}>
         <Box
           sx={{
@@ -186,12 +186,12 @@ export default function AppHeader() {
                 py: 0.5,
                 borderRadius: 1,
                 border: 1,
-                borderColor: "divider",
-                bgcolor: "action.hover",
+                borderColor: "border.default",
+                bgcolor: "background.subtle",
                 maxWidth: 360,
                 width: "100%",
                 justifyContent: "flex-start",
-                "&:hover": { borderColor: "text.secondary" },
+                "&:hover": { borderColor: "border.strong" },
               }}
             >
               <SearchIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
