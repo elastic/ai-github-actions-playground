@@ -3,3 +3,5 @@ screenshot-preflight.json
 screenshot*.png
 coverage
 .env
+# Claude agent temporary files
+.claude/
