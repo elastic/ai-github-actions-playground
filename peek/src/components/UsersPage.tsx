@@ -163,6 +163,7 @@ export default function UsersPage() {
                 placeholder="Search users"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
+                inputProps={{ "aria-label": "Search users" }}
               />
             </Box>
             <Divider />
@@ -181,9 +182,12 @@ export default function UsersPage() {
                 </ListItem>
               ))}
               {!loading && filteredUsers.length === 0 && (
-                <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                  No users found.
-                </Typography>
+                <ListItem>
+                  <ListItemText
+                    primary="No users found."
+                    primaryTypographyProps={{ variant: "body2", color: "text.secondary" }}
+                  />
+                </ListItem>
               )}
             </List>
           </Paper>

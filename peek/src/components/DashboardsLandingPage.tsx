@@ -410,10 +410,16 @@ export default function DashboardsLandingPage() {
           title="Dashboards"
           description={`${dashboards.length} dashboard${dashboards.length !== 1 ? "s" : ""}${archivedCount > 0 ? ` (${archivedCount} archived)` : ""}`}
           actions={
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {archivedCount > 0 && (
                 <Tooltip title={showArchived ? "Hide archived" : "Show archived"}>
-                  <IconButton size="small" onClick={() => setShowArchived(!showArchived)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowArchived(!showArchived)}
+                    aria-label={
+                      showArchived ? "Hide archived dashboards" : "Show archived dashboards"
+                    }
+                  >
                     {showArchived ? (
                       <VisibilityOffIcon fontSize="small" />
                     ) : (
@@ -446,7 +452,12 @@ export default function DashboardsLandingPage() {
               >
                 Import Workspace
               </Button>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleCreate}
+              >
                 New Dashboard
               </Button>
             </Stack>
