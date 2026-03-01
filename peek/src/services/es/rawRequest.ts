@@ -35,7 +35,7 @@ export async function executeRawRequest(
   body?: string,
   signal?: AbortSignal,
 ): Promise<{ status: number; body: unknown }> {
-  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const url = `${normalizedBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
