@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Routes, Route, Navigate, useMatch } from "react-router-dom";
+import { Routes, Route, Navigate, useMatch, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
@@ -23,6 +23,7 @@ import PanelEditor from "./components/PanelEditor";
 import CommandPalette from "./components/CommandPalette";
 import DashboardViewPage from "./components/DashboardViewPage";
 import WelcomeScreen from "./components/WelcomeScreen";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
@@ -39,6 +40,12 @@ export default function App() {
 
   const undoDashboardChange = useDashboardStore((s) => s.undoDashboardChange);
   const redoDashboardChange = useDashboardStore((s) => s.redoDashboardChange);
+
+  const location = useLocation();
+  useEffect(() => {
+    const match = Object.values(PAGE_MANIFEST).find((p) => location.pathname.startsWith(p.path));
+    document.title = match ? `${match.nav.label} — Elastic Peek` : "Elastic Peek";
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,7 +106,9 @@ export default function App() {
                         !connected && config.requiresConnection ? (
                           <WelcomeScreen />
                         ) : (
-                          <PageComponent />
+                          <ErrorBoundary>
+                            <PageComponent />
+                          </ErrorBoundary>
                         )
                       }
                     />
@@ -107,7 +116,15 @@ export default function App() {
                 })}
                 <Route
                   path="/dashboards/:id"
-                  element={!connected ? <WelcomeScreen /> : <DashboardViewPage />}
+                  element={
+                    !connected ? (
+                      <WelcomeScreen />
+                    ) : (
+                      <ErrorBoundary>
+                        <DashboardViewPage />
+                      </ErrorBoundary>
+                    )
+                  }
                 />
                 <Route path="/" element={<Navigate to="/dashboards" replace />} />
                 <Route path="*" element={<Navigate to="/dashboards" replace />} />

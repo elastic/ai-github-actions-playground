@@ -89,7 +89,11 @@ function renderCount(value: number | null) {
       </Typography>
     );
   }
-  return <Typography variant="h4">{value.toLocaleString()}</Typography>;
+  return (
+    <Typography variant="h4" component="p">
+      {value.toLocaleString()}
+    </Typography>
+  );
 }
 
 function toNodeRows(
@@ -404,24 +408,30 @@ export default function ClusterOverviewPage() {
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Docs">
-                <Typography variant="h4">{formatCompactNumber(clusterDocsCount)}</Typography>
+                <Typography variant="h4" component="p">
+                  {formatCompactNumber(clusterDocsCount)}
+                </Typography>
               </InfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Store Size">
-                <Typography variant="h4">
+                <Typography variant="h4" component="p">
                   {formatBytes(clusterStoreBytes, "Unavailable")}
                 </Typography>
               </InfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Total Shards">
-                <Typography variant="h4">{formatCompactNumber(clusterShardCount)}</Typography>
+                <Typography variant="h4" component="p">
+                  {formatCompactNumber(clusterShardCount)}
+                </Typography>
               </InfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
               <InfoCard title="Total Indices">
-                <Typography variant="h4">{formatCompactNumber(clusterIndexCount)}</Typography>
+                <Typography variant="h4" component="p">
+                  {formatCompactNumber(clusterIndexCount)}
+                </Typography>
               </InfoCard>
             </Box>
           </Stack>
@@ -517,7 +527,9 @@ export default function ClusterOverviewPage() {
               </Stack>
             ) : fleetTotal !== null ? (
               <Stack spacing={1}>
-                <Typography variant="h4">{fleetTotal}</Typography>
+                <Typography variant="h4" component="p">
+                  {fleetTotal}
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   agent{fleetTotal !== 1 ? "s" : ""} detected from Elastic Agent logs
                 </Typography>

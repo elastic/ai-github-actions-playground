@@ -704,7 +704,15 @@ export default function TracesPage() {
                     {traceRows.map((row, idx) => (
                       <tr
                         key={`${row.traceId}-${idx}`}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleSelectTrace(row.traceId, row.spanId, row.timestamp)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleSelectTrace(row.traceId, row.spanId, row.timestamp);
+                          }
+                        }}
                         style={{
                           cursor: "pointer",
                           backgroundColor:
