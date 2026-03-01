@@ -1,7 +1,37 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
+
+/**
+ * Known pre-existing axe violations (tracked in issue #954).
+ * These are excluded from the CI gate so it can catch *new* violations
+ * while existing ones are fixed incrementally.
+ */
+const KNOWN_VIOLATION_RULES = [
+  "aria-input-field-name",
+  "aria-progressbar-name",
+  "aria-prohibited-attr",
+  "button-name",
+  "color-contrast",
+  "heading-order",
+  "list",
+  "page-has-heading-one",
+  "region",
+  "scrollable-region-focusable",
+];
+
+/**
+ * Run an axe accessibility scan and fail if any new violations are found.
+ * Pre-existing violations tracked in issue #954 are excluded.
+ */
+async function checkA11y(page: Page) {
+  const results = await new AxeBuilder({ page }).disableRules(KNOWN_VIOLATION_RULES).analyze();
+  expect(results.violations, `axe found ${results.violations.length} a11y violation(s)`).toEqual(
+    [],
+  );
+}
 
 async function mockElasticsearch(page: Page) {
   await registerElasticsearchMocks(page, {
@@ -234,5 +264,19 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();
     await expect(page.getByText("Run a query to see results")).toBeHidden();
+  });
+
+  test("pages have no axe accessibility violations", async ({ page }) => {
+    await page.goto("");
+    await checkA11y(page);
+
+    await connectToMockCluster(page);
+    await checkA11y(page);
+
+    for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
+      await page.getByRole("button", { name: nav, exact: true }).click();
+      await page.waitForLoadState("networkidle");
+      await checkA11y(page);
+    }
   });
 });
