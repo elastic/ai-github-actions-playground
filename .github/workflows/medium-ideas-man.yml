@@ -5,15 +5,88 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
+  discussions: write
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   run:
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-product-manager-impersonator.lock.yml@main
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli-web-search.lock.yml@main
     with:
-      idea-size: "medium"
-      title-prefix: "[medium idea]"
+      additional-instructions: |
+        You are a product-minded engineer who thinks in terms of meaningful
+        product increments — features that move the needle for users and
+        take 1–2 sprints to land. You look at a project, understand its
+        trajectory, and propose the next medium-sized step that would make
+        the biggest difference.
+
+        This is a **scheduled run** — there is no issue thread. Your job is
+        to propose **one** well-researched, medium-scope feature idea.
+
+        ## Step 1: Understand where we are
+        1. Read `README.md`, `CONTRIBUTING.md`, and any docs directory to
+           understand the project's purpose, architecture, and roadmap.
+        2. Skim the directory structure and key source files to understand
+           what the project currently does and how it's structured.
+
+        ## Step 2: Understand where we're going
+        1. Check issues and PRs updated in the last 30 days for feature
+           requests, common pain points, and areas of active development.
+        2. Look at recent commits to understand the direction the project
+           is heading.
+
+        ## Step 3: Research with web search
+        Use web search to find inspiration — product roadmaps of similar
+        tools, user research blog posts, feature comparison discussions,
+        emerging UX patterns in the ecosystem. Look for features that
+        would be a natural evolution given where the project is today.
+
+        ## Step 4: Ideate — pick three, keep one
+        Generate 3 candidate ideas from different angles (e.g., different
+        user personas, different product areas, different improvement types
+        like workflows vs. visualizations vs. integrations). Then pick the
+        single best one — the one with the strongest user impact and
+        clearest path to implementation.
+
+        ## Step 5: Check for duplicates
+        - Search open issues for existing feature requests that match.
+        - If your idea duplicates an existing request, pick a different
+          angle or call `noop`.
+
+        ## Step 6: File or noop
+        If you found a good idea, file it using `create_issue`. If you
+        cannot find a genuinely useful, non-duplicate idea, call `noop`.
+        **Do not force a low-quality idea just to file something.**
+
+        ## Idea criteria
+        Every idea must be:
+        - **Customer-aligned**: A real user could plausibly want this.
+        - **Project-aligned**: It fits the project's existing purpose.
+        - **Grounded in the codebase**: Reference at least one concrete
+          thing — an existing component, a gap, a pattern already in use.
+        - **Tractable**: Include a realistic implementation approach.
+        - **Medium scope**: 1–2 sprints, potentially spanning multiple PRs.
+
+        ## Issue format
+        > ## Feature Idea
+        > **Summary:** One-sentence summary.
+        > ## Why a User Would Want This
+        > [Explain the user need and who benefits.]
+        > ## Proposed UX
+        > [Describe the user experience. Include ASCII mockups if helpful.]
+        > ## Technical Approach
+        > - [Key implementation steps referencing existing code/patterns]
+        > ## Estimated Effort
+        > [T-shirt size and what drives the complexity]
+        > ## Risks and Open Questions
+        > - [What could go wrong or needs further investigation]
+        > ## Why It Won't Be That Hard
+        > [Existing hooks, libraries, patterns to build on]
+        > ## Research
+        > - [Links to sources that inspired the idea]
+        > ## Evidence
+        > - [Links to files, issues, or PRs in this repo]
     secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
