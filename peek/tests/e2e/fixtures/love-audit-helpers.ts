@@ -157,6 +157,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-cluster-health-overview.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "cluster-health-overview", prefix);
       await captureTabScreenshots(page, prefix, "cluster-health", [
         "Nodes",
         "Tasks",
@@ -176,6 +177,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-indices-overview.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "indices-overview", prefix);
       // Navigate through sub-tabs
       for (const tab of ["Mappings", "Settings", "Stats", "Disk Usage"]) {
         await page.getByRole("tab", { name: tab }).click();
@@ -184,6 +186,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
           path: `test-results/${prefix}-indices-${slug(tab)}.png`,
           fullPage: true,
         });
+        await captureAriaSnapshot(page, `indices-${tab}`, prefix);
       }
     },
   },
@@ -197,6 +200,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-add-data-default.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "add-data-default", prefix);
       await captureTabScreenshots(
         page,
         prefix,
@@ -215,6 +219,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-metrics.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "metrics-pre-search", prefix);
       const metricSearch = page.getByLabel("Search metrics");
       await metricSearch.fill("system.cpu");
       await page.waitForLoadState("networkidle");
@@ -222,6 +227,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-metrics-search.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "metrics-search", prefix);
     },
   },
   { name: "Console", navButton: "Console" },
@@ -283,6 +289,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-profiling-stacktraces-expanded.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "profiling-stacktraces-expanded", prefix);
 
       // Check frame resolution
       const expandedText = await page.locator("table").textContent();
