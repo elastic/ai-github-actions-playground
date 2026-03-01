@@ -14,7 +14,8 @@ export default {
   },
   create(context) {
     const filename = context.filename ?? context.getFilename();
-    if (filename.includes("src/components/visualizations/")) {
+    const normalizedFilename = filename.replace(/\\/g, "/");
+    if (normalizedFilename.includes("src/components/visualizations/")) {
       return {};
     }
 
