@@ -7,6 +7,9 @@
 /** Timeout applied to every raw request issued from the API console. */
 export const RAW_REQUEST_TIMEOUT_MS = 30_000;
 
+/** Back-off delays for automatic retries on transient (network / 5xx) failures. */
+export const RETRY_DELAYS_MS: readonly number[] = [500, 1_000];
+
 /** Function signature matching `ElasticsearchClient._doFetch`. */
 export type DoFetch = (
   url: string,
@@ -21,6 +24,25 @@ export interface RawRequestError {
 
 function isAbortError(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
+}
+
+/** Signal-aware delay that rejects immediately when the signal fires. */
+function delay(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(id);
+      reject(signal.reason);
+    };
+    const id = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 /**
@@ -56,15 +78,29 @@ export async function executeRawRequest(
   }
   const rawBody = body && body.trim() ? body : undefined;
   try {
-    const response = await doFetch(
-      url,
-      { ...headers },
-      {
-        method,
-        body: rawBody,
-        signal: controller.signal,
-      },
-    );
+    let response!: Response;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        response = await doFetch(
+          url,
+          { ...headers },
+          {
+            method,
+            body: rawBody,
+            signal: controller.signal,
+          },
+        );
+        if (response.status < 500 || attempt >= RETRY_DELAYS_MS.length) {
+          break;
+        }
+      } catch (err) {
+        if (isAbortError(err) || attempt >= RETRY_DELAYS_MS.length) {
+          throw err;
+        }
+      }
+      // attempt is always < RETRY_DELAYS_MS.length here (loop exits above otherwise)
+      await delay(RETRY_DELAYS_MS[attempt]!, controller.signal);
+    }
     const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
     let responseBody: unknown;
     if (contentType.includes("application/json") || contentType.includes("+json")) {

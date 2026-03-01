@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { executeRawRequest, RAW_REQUEST_TIMEOUT_MS } from "../../src/services/es/rawRequest";
+import {
+  executeRawRequest,
+  RAW_REQUEST_TIMEOUT_MS,
+  RETRY_DELAYS_MS,
+} from "../../src/services/es/rawRequest";
 import type { DoFetch } from "../../src/services/es/rawRequest";
 
 // ---------------------------------------------------------------------------
@@ -227,5 +231,95 @@ describe("executeRawRequest", () => {
 
   it("exports the timeout constant", () => {
     expect(RAW_REQUEST_TIMEOUT_MS).toBe(30_000);
+  });
+
+  it("exports retry delay constants", () => {
+    expect(RETRY_DELAYS_MS).toEqual([500, 1_000]);
+  });
+
+  // -------------------------------------------------------------------------
+  // Retry / resilience
+  // -------------------------------------------------------------------------
+
+  it("retries on 5xx and succeeds on subsequent attempt", async () => {
+    vi.useFakeTimers();
+    try {
+      const doFetch: DoFetch = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ error: "overloaded" }, { status: 503 }))
+        .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
+
+      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
+      await vi.advanceTimersByTimeAsync(RETRY_DELAYS_MS[0]!);
+      const result = await pending;
+
+      expect(result).toEqual({ status: 200, body: { ok: true } });
+      expect(doFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("retries on network error and succeeds on subsequent attempt", async () => {
+    vi.useFakeTimers();
+    try {
+      const doFetch: DoFetch = vi
+        .fn()
+        .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+        .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
+
+      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
+      await vi.advanceTimersByTimeAsync(RETRY_DELAYS_MS[0]!);
+      const result = await pending;
+
+      expect(result).toEqual({ status: 200, body: { ok: true } });
+      expect(doFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not retry on 4xx responses", async () => {
+    const doFetch: DoFetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ error: "bad request" }, { status: 400 }));
+
+    const result = await executeRawRequest(doFetch, BASE_URL, HEADERS, "POST", "/_search");
+
+    expect(result).toEqual({ status: 400, body: { error: "bad request" } });
+    expect(doFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the 5xx response after exhausting all retries", async () => {
+    vi.useFakeTimers();
+    try {
+      const doFetch: DoFetch = vi
+        .fn()
+        .mockResolvedValue(jsonResponse({ error: "unavailable" }, { status: 503 }));
+
+      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
+      for (const d of RETRY_DELAYS_MS) {
+        await vi.advanceTimersByTimeAsync(d);
+      }
+      const result = await pending;
+
+      expect(result).toEqual({ status: 503, body: { error: "unavailable" } });
+      expect(doFetch).toHaveBeenCalledTimes(RETRY_DELAYS_MS.length + 1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not retry when an abort signal fires", async () => {
+    const controller = new AbortController();
+    const doFetch: DoFetch = vi.fn(() => {
+      controller.abort(new DOMException("user cancel", "AbortError"));
+      return Promise.reject(controller.signal.reason);
+    });
+
+    await expect(
+      executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/", undefined, controller.signal),
+    ).rejects.toEqual(expect.objectContaining({ status: 0 }));
+    expect(doFetch).toHaveBeenCalledTimes(1);
   });
 });

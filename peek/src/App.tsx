@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { Routes, Route, Navigate, useMatch, useLocation, matchPath } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -8,6 +8,7 @@ import Link from "@mui/material/Link";
 import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import LinearProgress from "@mui/material/LinearProgress";
 
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
@@ -96,40 +97,42 @@ export default function App() {
                 flexDirection: "column",
               }}
             >
-              <Routes>
-                {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                  const PageComponent = config.component;
-                  return (
-                    <Route
-                      key={config.path}
-                      path={config.path}
-                      element={
-                        !connected && config.requiresConnection ? (
-                          <WelcomeScreen />
-                        ) : (
-                          <ErrorBoundary>
-                            <PageComponent />
-                          </ErrorBoundary>
-                        )
-                      }
-                    />
-                  );
-                })}
-                <Route
-                  path="/dashboards/:id"
-                  element={
-                    !connected ? (
-                      <WelcomeScreen />
-                    ) : (
-                      <ErrorBoundary>
-                        <DashboardViewPage />
-                      </ErrorBoundary>
-                    )
-                  }
-                />
-                <Route path="/" element={<Navigate to="/dashboards" replace />} />
-                <Route path="*" element={<Navigate to="/dashboards" replace />} />
-              </Routes>
+              <Suspense fallback={<LinearProgress />}>
+                <Routes>
+                  {Object.entries(PAGE_MANIFEST).map(([, config]) => {
+                    const PageComponent = config.component;
+                    return (
+                      <Route
+                        key={config.path}
+                        path={config.path}
+                        element={
+                          !connected && config.requiresConnection ? (
+                            <WelcomeScreen />
+                          ) : (
+                            <ErrorBoundary>
+                              <PageComponent />
+                            </ErrorBoundary>
+                          )
+                        }
+                      />
+                    );
+                  })}
+                  <Route
+                    path="/dashboards/:id"
+                    element={
+                      !connected ? (
+                        <WelcomeScreen />
+                      ) : (
+                        <ErrorBoundary>
+                          <DashboardViewPage />
+                        </ErrorBoundary>
+                      )
+                    }
+                  />
+                  <Route path="/" element={<Navigate to="/dashboards" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboards" replace />} />
+                </Routes>
+              </Suspense>
             </Box>
             <Box
               component="footer"
