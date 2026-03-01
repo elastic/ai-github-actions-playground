@@ -92,7 +92,7 @@ export async function captureAriaSnapshot(page: Page, pageName: string, prefix: 
   const path = await import("path");
   const dir = path.resolve("test-results");
   fs.mkdirSync(dir, { recursive: true });
-  const s = pageName.toLowerCase().replace(/\s+/g, "-");
+  const s = slug(pageName);
   fs.writeFileSync(path.join(dir, `${prefix}-aria-${s}.yaml`), ariaYaml, "utf-8");
 }
 
