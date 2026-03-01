@@ -564,7 +564,37 @@ describe("Fleet pages", () => {
     await waitFor(() => {
       expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
     });
-    expect(screen.getByText("Offline", { selector: ".MuiChip-label" })).toBeInTheDocument();
+    const chipLabel = screen.getByText("Offline", { selector: ".MuiChip-label" });
+    expect(chipLabel).toBeInTheDocument();
+    // The Offline (critical) chip must use error color, not warning
+    // eslint-disable-next-line testing-library/no-node-access -- MUI Chip root lacks a unique role/name
+    expect(chipLabel.closest(".MuiChip-root")).toHaveClass("MuiChip-colorError");
+  });
+
+  it("staleness filter chip for stale uses warning color", async () => {
+    mockFleetResponses();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Wait for data to load then set the filter directly
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Agents" })).toBeInTheDocument();
+    });
+
+    // Set staleness to "stale" via store
+    useFleetStore.setState({
+      activeTab: "agents",
+      agentFilter: { search: "", version: null, hasErrors: false, staleness: "stale" },
+    });
+
+    const chipLabel = await screen.findByText("Stale", { selector: ".MuiChip-label" });
+    // eslint-disable-next-line testing-library/no-node-access -- MUI Chip root lacks a unique role/name
+    expect(chipLabel.closest(".MuiChip-root")).toHaveClass("MuiChip-colorWarning");
   });
 
   it("active filter chip can be cleared in agents table", async () => {

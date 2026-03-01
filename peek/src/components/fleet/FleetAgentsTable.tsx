@@ -97,7 +97,7 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
           <Chip
             size="small"
             label={agentFilter.staleness === "critical" ? "Offline" : "Stale"}
-            color="warning"
+            color={stalenessSeverityToColor(agentFilter.staleness)}
             onDelete={() => updateAgentFilter({ staleness: null })}
           />
         )}
