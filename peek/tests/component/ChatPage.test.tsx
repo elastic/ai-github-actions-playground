@@ -142,6 +142,7 @@ describe("ChatPage", () => {
           config: expect.objectContaining({ apiKey: "sk-test-key" }),
           connection: expect.objectContaining({ url: "http://localhost:9200" }),
           pathname: "/",
+          screenContextSummary: expect.any(String),
           signal: expect.any(AbortSignal),
         }),
       );

@@ -661,20 +661,28 @@ export async function loadElasticAgentMetrics(
       },
     },
   });
-  return extractHits(data).map((hit) => ({
-    timestamp: readNestedString(hit._source, ["@timestamp"], ""),
-    cpuPct: readNestedNumber(hit._source, ["system", "process", "cpu", "total", "value"]),
-    memoryPct: readNestedNumber(hit._source, ["system", "process", "memory", "size"]),
-    handles: readNestedNumber(hit._source, ["system", "process", "fd", "open"]),
-    eventsRate: readNestedNumber(hit._source, [
-      "beat",
-      "stats",
-      "libbeat",
-      "output",
-      "events",
-      "total",
-    ]),
-  }));
+  return extractHits(data).map((hit) => {
+    const source = hit._source;
+    const ts = source["@timestamp"];
+    const systemProcess = (source.system as { process?: Record<string, unknown> } | undefined)
+      ?.process;
+    const cpuVal = (systemProcess?.cpu as { total?: { value?: unknown } } | undefined)?.total
+      ?.value;
+    const memVal = (systemProcess?.memory as { size?: unknown } | undefined)?.size;
+    const fdVal = (systemProcess?.fd as { open?: unknown } | undefined)?.open;
+    const eventsVal = (
+      source.beat as {
+        stats?: { libbeat?: { output?: { events?: { total?: unknown } } } };
+      }
+    )?.stats?.libbeat?.output?.events?.total;
+    return {
+      timestamp: typeof ts === "string" && ts.length > 0 ? ts : "",
+      cpuPct: typeof cpuVal === "number" ? cpuVal : null,
+      memoryPct: typeof memVal === "number" ? memVal : null,
+      handles: typeof fdVal === "number" ? fdVal : null,
+      eventsRate: typeof eventsVal === "number" ? eventsVal : null,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------

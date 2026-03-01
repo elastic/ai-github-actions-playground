@@ -435,6 +435,7 @@ export default function AddDataPage() {
           fullWidth
           slotProps={{
             input: { readOnly: true, sx: { fontFamily: "monospace", fontSize: "0.8rem" } },
+            inputLabel: { sx: { color: "text.secondary" } },
           }}
         />
         <Alert severity="info">
