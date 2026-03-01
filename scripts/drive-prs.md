@@ -252,6 +252,9 @@ gh workflow run trigger-mention-in-pr-by-id.yml \
 code quality, and alignment with the project standards in DEVELOPING.md. \
 If the PR looks good, leave comments only (do not approve). \
 If changes are needed, request them."
+
+# Also request at least one human maintainer review (required for merge)
+gh pr edit <NUMBER> --add-reviewer <HUMAN_REVIEWER>
 ```
 
 Then **wait** for the review to be submitted before continuing.
@@ -349,7 +352,9 @@ HEAD_SHA=$(gh pr view <NUMBER> --json headRefOid --jq '.headRefOid')
 gh run list --limit 200 \
   --json databaseId,status,workflowName,event,headSha \
   --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$HEAD_SHA"'") | .databaseId' \
-  | xargs -I{} gh api -X POST "repos/$REPO_SLUG/actions/runs/{}/approve"
+  | while IFS= read -r run_id; do
+      [ -n "$run_id" ] && gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/approve"
+    done
 
 # Check a specific PR end-to-end
 gh pr view <NUMBER>
