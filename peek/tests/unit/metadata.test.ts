@@ -178,6 +178,9 @@ describe("getFieldValues", () => {
     await expect(getFieldValues(client, "metrics-*", "host.name", 0)).rejects.toThrow(
       "Invalid limit",
     );
+    await expect(getFieldValues(client, "metrics-*", "host.name", -1)).rejects.toThrow(
+      "Invalid limit",
+    );
   });
 
   it("caps large limits to a safe maximum", async () => {
