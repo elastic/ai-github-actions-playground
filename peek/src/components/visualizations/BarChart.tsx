@@ -2,14 +2,9 @@ import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
 
 import type { EsqlResponse, BarChartOptions } from "../../types";
+import { toBarChartData } from "../../services/perses/dataTransformers";
 
 import { useEChartTheme } from "./useEChartTheme";
-import {
-  findNumericColumnIndices,
-  findStringColumnIndices,
-  getColumnValues,
-  buildGroupedSeries,
-} from "./chartUtils";
 import EChartWrapper from "./EChartWrapper";
 
 interface Props {
@@ -25,62 +20,77 @@ export default function BarChart({ data, options, onExportReady }: Props) {
   const format = options?.format;
 
   const option = useMemo(() => {
-    const numericIdxs = findNumericColumnIndices(data);
-    const stringIdxs = findStringColumnIndices(data);
+    const transformed = toBarChartData(data);
+    const seriesData = transformed.series;
+    const categories = transformed.categories;
+    const textColor = theme.textStyle?.color ?? "#9CA3AF";
 
-    if (numericIdxs.length === 0) {
-      return { title: { text: "No numeric data to display", left: "center", top: "center" } };
+    if (seriesData.length === 0) {
+      return {
+        ...theme,
+        graphic: {
+          type: "group",
+          left: "center",
+          top: "middle",
+          children: [
+            {
+              type: "circle",
+              left: "center",
+              top: -44,
+              shape: { cx: 0, cy: 0, r: 16 },
+              style: { stroke: textColor, lineWidth: 2, fill: "transparent" },
+            },
+            {
+              type: "text",
+              left: "center",
+              top: -52,
+              style: {
+                text: "!",
+                fill: textColor,
+                fontSize: 18,
+                fontWeight: 700,
+                textAlign: "center",
+              },
+            },
+            {
+              type: "text",
+              left: "center",
+              top: -10,
+              style: {
+                text: "No numeric data to display",
+                fill: textColor,
+                fontSize: 16,
+                fontWeight: 700,
+                textAlign: "center",
+              },
+            },
+            {
+              type: "text",
+              left: "center",
+              top: 18,
+              style: {
+                text: "Run a query that returns at least one numeric column.",
+                fill: textColor,
+                fontSize: 12,
+                textAlign: "center",
+              },
+            },
+          ],
+        },
+      };
     }
-
-    const categoryIdx = stringIdxs[0] ?? -1;
-    const groupIdx = stringIdxs.length >= 2 ? stringIdxs[1]! : -1;
 
     const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};
-
-    let categories: string[];
-    let series;
-
-    if (groupIdx >= 0) {
-      const rawCategories = getColumnValues(data, categoryIdx).map(String);
-      categories = [...new Set(rawCategories)];
-      const grouped = buildGroupedSeries(data, numericIdxs, groupIdx);
-
-      series = grouped.map((s, i) => {
-        const seriesData = categories.map((cat) => {
-          return s.rows.reduce((sum, rowIdx) => {
-            if (rawCategories[rowIdx] !== cat) return sum;
-            const value = Number(data.values[rowIdx]![s.colIdx] ?? 0);
-            return Number.isFinite(value) ? sum + value : sum;
-          }, 0);
-        });
-        return {
-          name: s.name,
-          type: "bar" as const,
-          data: seriesData,
-          stack: stacked ? "total" : undefined,
-          itemStyle: {
-            color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC",
-            borderRadius: stacked ? undefined : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
-          },
-        };
-      });
-    } else {
-      categories =
-        categoryIdx >= 0
-          ? getColumnValues(data, categoryIdx).map(String)
-          : data.values.map((_, i) => String(i));
-
-      series = numericIdxs.map((colIdx, i) => ({
-        name: data.columns[colIdx]!.name,
-        type: "bar" as const,
-        data: getColumnValues(data, colIdx) as number[],
-        stack: stacked ? "total" : undefined,
-        itemStyle: {
-          color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC",
-          borderRadius: stacked ? undefined : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
-        },
-      }));
-    }
+    const series = seriesData.map((entry, i) => ({
+      name: entry.name,
+      type: "bar" as const,
+      data: entry.values,
+      stack: stacked ? "total" : undefined,
+      itemStyle: {
+        color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC",
+        borderRadius: stacked ? undefined : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+      },
+    }));
 
     const categoryAxis = {
       type: "category" as const,

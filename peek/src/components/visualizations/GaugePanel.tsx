@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { formatValue } from "@perses-dev/core";
 
 import type { EsqlResponse, GaugePanelOptions, ThresholdColor, ThresholdStep } from "../../types";
+import { toGaugeData } from "../../services/perses/dataTransformers";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { findNumericColumnIndices } from "./chartUtils";
 import { THRESHOLD_PALETTE } from "./thresholdUtils";
 import EChartWrapper from "./EChartWrapper";
 
@@ -50,16 +50,12 @@ export default function GaugePanel({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
 
   const option = useMemo(() => {
-    const numericIdxs = findNumericColumnIndices(data);
-    if (numericIdxs.length === 0 || data.values.length === 0) {
+    const gauge = toGaugeData(data);
+    if (!gauge) {
       return { title: { text: "No numeric data", left: "center", top: "center" } };
     }
 
-    const value = Number(data.values[0]![numericIdxs[0]!]) || 0;
-    const name = data.columns[numericIdxs[0]!]!.name;
-
-    const allValues = data.values.map((row) => Number(row[numericIdxs[0]!]) || 0);
-    const autoMax = Math.max(...allValues, value * 1.5, 100);
+    const autoMax = Math.max(...gauge.values, gauge.value * 1.5, 100);
 
     const minVal = Number.isFinite(options?.min) ? options!.min! : 0;
     const maxVal = Number.isFinite(options?.max) ? options!.max! : autoMax;
@@ -99,7 +95,7 @@ export default function GaugePanel({ data, options, onExportReady }: Props) {
             fontSize: 12,
             color: theme.textStyle.color,
           },
-          data: [{ value, name }],
+          data: [{ value: gauge.value, name: gauge.name }],
         },
       ],
     };
