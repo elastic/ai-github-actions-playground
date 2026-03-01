@@ -15,7 +15,7 @@ import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
-import EChartWrapper from "./visualizations/EChartWrapper";
+import PersesEChartWrapper from "./perses/PersesEChartWrapper";
 import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
 
 // ---------------------------------------------------------------------------
@@ -320,7 +320,7 @@ export default function DimensionOverviewGrid({
                 {/* Multi-series sparkline */}
                 <Box sx={{ flex: 1, minHeight: 120 }}>
                   {result?.data ? (
-                    <EChartWrapper
+                    <PersesEChartWrapper
                       option={buildMultiSeriesSparkline(
                         result.data,
                         echartsTheme,

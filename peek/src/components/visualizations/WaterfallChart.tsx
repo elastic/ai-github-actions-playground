@@ -4,9 +4,9 @@ import * as echarts from "echarts/core";
 import type { Span, SpanTreeNode } from "../traces/traceUtils";
 import { buildSpanTree, flattenSpanTree, formatSpanDuration } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
+import PersesEChartWrapper from "../perses/PersesEChartWrapper";
 
 import { useEChartTheme } from "./useEChartTheme";
-import EChartWrapper from "./EChartWrapper";
 
 interface WaterfallChartProps {
   spans: Span[];
@@ -162,5 +162,5 @@ export default function WaterfallChart({
     [chartNodes, onSpanClick],
   );
 
-  return <EChartWrapper option={option} onClick={onSpanClick ? handleClick : undefined} />;
+  return <PersesEChartWrapper option={option} onClick={onSpanClick ? handleClick : undefined} />;
 }

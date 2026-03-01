@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { FleetAgentVersionCount } from "../../services/fleet";
 import { useEChartTheme } from "../visualizations/useEChartTheme";
-import EChartWrapper from "../visualizations/EChartWrapper";
+import PersesEChartWrapper from "../perses/PersesEChartWrapper";
 
 interface Props {
   versions: FleetAgentVersionCount[];
@@ -34,5 +34,5 @@ export default function FleetVersionChart({ versions }: Props) {
   }, [versions, theme]);
 
   if (versions.length === 0) return null;
-  return <EChartWrapper option={option} style={{ width: "100%", height: "100%" }} />;
+  return <PersesEChartWrapper option={option} style={{ width: "100%", height: "100%" }} />;
 }

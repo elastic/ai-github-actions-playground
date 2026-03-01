@@ -25,7 +25,7 @@ import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
-import EChartWrapper from "./visualizations/EChartWrapper";
+import PersesEChartWrapper from "./perses/PersesEChartWrapper";
 import EmptyState from "./EmptyState";
 
 // ---------------------------------------------------------------------------
@@ -281,7 +281,7 @@ export default function MetricOverviewGrid({
                 {/* Sparkline chart */}
                 <Box sx={{ flex: 1, minHeight: 80 }}>
                   {result?.data ? (
-                    <EChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
+                    <PersesEChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
                   ) : (
                     <Box
                       sx={{

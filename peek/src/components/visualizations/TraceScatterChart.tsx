@@ -3,9 +3,9 @@ import * as echarts from "echarts/core";
 
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
+import PersesEChartWrapper from "../perses/PersesEChartWrapper";
 
 import { useEChartTheme } from "./useEChartTheme";
-import EChartWrapper from "./EChartWrapper";
 
 interface ScatterDataPoint {
   timestamp: string;
@@ -113,5 +113,5 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
     [onPointClick],
   );
 
-  return <EChartWrapper option={option} onClick={onPointClick ? handleClick : undefined} />;
+  return <PersesEChartWrapper option={option} onClick={onPointClick ? handleClick : undefined} />;
 }

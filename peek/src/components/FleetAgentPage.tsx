@@ -26,7 +26,7 @@ import { formatBytes } from "../utils/formatBytes";
 
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
-import EChartWrapper from "./visualizations/EChartWrapper";
+import PersesEChartWrapper from "./perses/PersesEChartWrapper";
 
 type AgentTab = "overview" | "logs" | "metrics";
 
@@ -500,7 +500,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             CPU Usage
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={cpuOption} style={{ width: "100%", height: "100%" }} />
+            <PersesEChartWrapper option={cpuOption} style={{ width: "100%", height: "100%" }} />
           </Box>
         </Paper>
       )}
@@ -510,7 +510,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             Memory Usage
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={memoryOption} style={{ width: "100%", height: "100%" }} />
+            <PersesEChartWrapper option={memoryOption} style={{ width: "100%", height: "100%" }} />
           </Box>
         </Paper>
       )}
@@ -520,7 +520,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             Events
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={eventsOption} style={{ width: "100%", height: "100%" }} />
+            <PersesEChartWrapper option={eventsOption} style={{ width: "100%", height: "100%" }} />
           </Box>
         </Paper>
       )}

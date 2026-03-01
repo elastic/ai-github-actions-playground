@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { FleetServerStatusMetrics } from "../../services/fleet";
 import { useEChartTheme } from "../visualizations/useEChartTheme";
-import EChartWrapper from "../visualizations/EChartWrapper";
+import PersesEChartWrapper from "../perses/PersesEChartWrapper";
 
 interface Props {
   status: FleetServerStatusMetrics;
@@ -49,5 +49,5 @@ export default function FleetStatusChart({ status }: Props) {
     };
   }, [status, theme]);
 
-  return <EChartWrapper option={option} style={{ width: "100%", height: "100%" }} />;
+  return <PersesEChartWrapper option={option} style={{ width: "100%", height: "100%" }} />;
 }
