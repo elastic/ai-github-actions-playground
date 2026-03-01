@@ -329,6 +329,23 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 Each agent writes and runs its own Playwright scripts to navigate, click, type,
 and inspect. They report only genuine bugs found through hands-on exploration.
 
+#### Handling failures during exploration
+
+When a Playwright interaction fails (timeout, element not found, unexpected state):
+
+1. **Do not retry the same action more than twice.** If it fails twice, the page
+   state is different from what you expected — retrying won't help.
+2. **Diagnose before moving on.** Take a screenshot at the point of failure.
+   Inspect the DOM to see what's actually on the page. Check if the element
+   exists with a different selector, or if the UI is in an unexpected state.
+3. **Adapt or report.** Either work around the failure (try a different selector,
+   a different interaction path, or skip to the next scenario) or report the
+   failure as a finding — a persistent timeout on an expected UI element is
+   itself a potential bug worth filing.
+4. **Never claim you verified something you didn't.** If a scenario failed and
+   you skipped it, say so in your output. Do not list it as "verified" or
+   "no issues found."
+
 ### Testing Philosophy
 
 - **Test behavior, not implementation** — assert on what the user sees and what the system does, not internal wiring.
