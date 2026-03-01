@@ -78,7 +78,7 @@ const parameterSourceSchema = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal(PARAMETER_SOURCE_MODES.esql), query: z.string() }),
 ]);
 
-const dashboardParameterSchema = z
+export const dashboardParameterSchema = z
   .object({
     name: z.string().min(1),
     label: z.string().min(1),
@@ -152,4 +152,70 @@ export const dashboardDefinitionSchema = z.object({
 export const workspaceSnapshotSchema = z.object({
   dashboards: z.array(dashboardDefinitionSchema).min(1),
   activeDashboardId: z.string().min(1),
+});
+
+const persesDisplaySchema = z.object({
+  name: z.string().min(1),
+});
+
+const persesPanelSchema = z.object({
+  kind: z.literal("Panel"),
+  spec: z.object({
+    display: persesDisplaySchema,
+    query: z.string(),
+    visualization: visualizationTypeSchema,
+    layout: panelLayoutSchema,
+    options: z.record(z.string(), z.unknown()).optional(),
+    refreshInterval: z.number().optional(),
+  }),
+});
+
+const persesVariableSchema = z.object({
+  kind: z.enum(["TextVariable", "ListVariable", "QueryVariable"]),
+  spec: z.object({
+    name: z.string().min(1),
+    display: persesDisplaySchema,
+    type: z.enum(PARAMETER_TYPES).default("keyword"),
+    source: parameterSourceSchema,
+    value: z.union([z.string(), z.number(), z.boolean()]),
+  }),
+});
+
+export const persesDashboardSchema = z.object({
+  kind: z.literal("Dashboard"),
+  metadata: z.object({
+    name: z.string().min(1),
+    labels: z.array(z.string()).optional(),
+    annotations: z
+      .object({
+        description: z.string().optional(),
+        archived: z.boolean().optional(),
+        favoritedAt: z.string().optional(),
+        preferredProfileId: z.string().min(1).optional(),
+        createdAt: z.string().optional(),
+        updatedAt: z.string().optional(),
+      })
+      .optional(),
+  }),
+  spec: z.object({
+    display: persesDisplaySchema,
+    panels: z.record(z.string().min(1), persesPanelSchema),
+    variables: z.array(persesVariableSchema).optional(),
+    timeRange: timeRangeSchema,
+    timeZone: z
+      .string()
+      .optional()
+      .refine((tz) => !tz || isValidTimeZone(tz), {
+        message: "timeZone must be a valid IANA timezone identifier",
+      }),
+    refreshInterval: z.number().optional(),
+  }),
+});
+
+export const persesWorkspaceSnapshotSchema = z.object({
+  kind: z.literal("Workspace"),
+  spec: z.object({
+    dashboards: z.array(persesDashboardSchema).min(1),
+    activeDashboardId: z.string().min(1),
+  }),
 });
