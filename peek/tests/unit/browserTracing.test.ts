@@ -39,6 +39,16 @@ describe("browser tracing helpers", () => {
     ).toEqual({ Authorization: "ApiKey es-key" });
   });
 
+  it("returns empty headers when otlpUseElasticAuth is false and no OTLP key", () => {
+    expect(
+      getOtlpAuthHeaders({
+        url: "https://es.example.com:9200",
+        apiKey: "es-key",
+        otlpUseElasticAuth: false,
+      }),
+    ).toEqual({});
+  });
+
   it("reconfigures tracing when telemetry-relevant connection fields change", () => {
     const previous = getTracingConnectionSnapshot(
       {

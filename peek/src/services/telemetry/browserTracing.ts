@@ -6,12 +6,14 @@ import { DocumentLoadInstrumentation } from "@opentelemetry/instrumentation-docu
 import { FetchInstrumentation } from "@opentelemetry/instrumentation-fetch";
 import { UserInteractionInstrumentation } from "@opentelemetry/instrumentation-user-interaction";
 
+import appPackage from "../../../package.json";
 import type { ElasticsearchConnection } from "../es";
 
 export interface BrowserTracingStartConfig {
   enabled: boolean;
   endpoint?: string;
   headers?: Record<string, string>;
+  propagateTraceHeaderCorsUrls?: string[];
   serviceName?: string;
   serviceVersion?: string;
   environment?: string;
@@ -77,10 +79,28 @@ function buildConfigKey(config: BrowserTracingStartConfig): string {
     enabled: config.enabled,
     endpoint: config.endpoint ?? "",
     headers: config.headers ?? {},
+    propagateTraceHeaderCorsUrls: config.propagateTraceHeaderCorsUrls ?? [],
     serviceName: config.serviceName ?? "",
     serviceVersion: config.serviceVersion ?? "",
     environment: config.environment ?? "",
   });
+}
+
+const APP_VERSION = typeof appPackage.version === "string" ? appPackage.version : "0.0.0";
+
+function parseUrlOrigin(url: string): string {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "";
+  }
+}
+
+function getTraceHeaderCorsUrls(connection: ElasticsearchConnection, endpoint: string): string[] {
+  const candidates = [connection.url, connection.proxyUrl, endpoint]
+    .map((value) => parseUrlOrigin((value ?? "").trim()))
+    .filter(Boolean);
+  return [...new Set(candidates)];
 }
 
 export function getOtlpAuthHeaders(connection: ElasticsearchConnection): Record<string, string> {
@@ -140,7 +160,7 @@ export async function startBrowserTracing(config: BrowserTracingStartConfig): Pr
   const instrumentations = [
     new DocumentLoadInstrumentation(),
     new FetchInstrumentation({
-      propagateTraceHeaderCorsUrls: [/.*/],
+      propagateTraceHeaderCorsUrls: config.propagateTraceHeaderCorsUrls ?? [],
       clearTimingResources: true,
     }),
     new UserInteractionInstrumentation(),
@@ -174,8 +194,9 @@ export async function syncBrowserTracingForConnection(
     enabled: true,
     endpoint,
     headers: getOtlpAuthHeaders(connection),
+    propagateTraceHeaderCorsUrls: getTraceHeaderCorsUrls(connection, endpoint),
     serviceName: "elastic-peek",
-    serviceVersion: "0.1.0",
+    serviceVersion: APP_VERSION,
     environment: import.meta.env.MODE,
   });
 }

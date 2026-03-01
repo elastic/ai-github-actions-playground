@@ -98,6 +98,7 @@ export default function ConnectionDialog() {
     Boolean(savedConn?.otlpEnabled || savedConn?.otlpEndpoint || savedConn?.otlpApiKey),
   );
   const [showSecret, setShowSecret] = useState(false);
+  const [showOtlpSecret, setShowOtlpSecret] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [profileName, setProfileName] = useState("");
@@ -534,7 +535,7 @@ export default function ConnectionDialog() {
               <TextField
                 label="OTLP API key override (optional)"
                 fullWidth
-                type={showSecret ? "text" : "password"}
+                type={showOtlpSecret ? "text" : "password"}
                 value={otlpApiKey}
                 onChange={(e) => {
                   setOtlpApiKey(e.target.value);
@@ -542,6 +543,25 @@ export default function ConnectionDialog() {
                 }}
                 helperText="If provided, this key is used instead of the Elasticsearch API key."
                 disabled={!otlpEnabled}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          aria-label={showOtlpSecret ? "Hide credentials" : "Show credentials"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowOtlpSecret(!showOtlpSecret);
+                          }}
+                          disabled={!otlpEnabled}
+                        >
+                          {showOtlpSecret ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
             </Box>
           </Collapse>
