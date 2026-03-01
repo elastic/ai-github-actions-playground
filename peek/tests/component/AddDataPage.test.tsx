@@ -269,6 +269,13 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: /Verify ingestion/i })).toBeInTheDocument();
   });
 
+  it("disables Verify ingestion when there is no connection", () => {
+    resetAllStores();
+    useConnectionStore.setState({ capabilities: defaultCapabilities });
+    renderPage();
+    expect(screen.getByRole("button", { name: /Verify ingestion/i })).toBeDisabled();
+  });
+
   it("shows success with navigation buttons when telemetry data streams are found", async () => {
     mockGetDataStreams.mockResolvedValueOnce({
       data_streams: [
@@ -305,6 +312,28 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
     await waitFor(() => {
       expect(screen.getByText(/Connection refused/)).toBeInTheDocument();
+    });
+  });
+
+  it("resets verification results when the connection changes", async () => {
+    mockGetDataStreams.mockResolvedValueOnce({
+      data_streams: [{ name: "metrics-host.otel-default" }],
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Telemetry data detected/)).toBeInTheDocument();
+    });
+
+    useConnectionStore.getState().setConnection({
+      url: "https://other-project.es.us-east-1.aws.elastic.cloud:443",
+      apiKey: "nextkey",
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Telemetry data detected/)).not.toBeInTheDocument();
     });
   });
 });

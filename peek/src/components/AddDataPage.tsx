@@ -397,6 +397,10 @@ export default function AddDataPage() {
 
   useEffect(() => {
     verifyAbortControllerRef.current?.abort();
+    verifyAbortControllerRef.current = null;
+    setVerifyStatus("idle");
+    setFoundSignals(new Set());
+    setVerifyError(null);
   }, [connection]);
 
   const handleVerifyIngestion = useCallback(async () => {
@@ -606,7 +610,7 @@ export default function AddDataPage() {
             size="small"
             variant="contained"
             onClick={() => void handleVerifyIngestion()}
-            disabled={verifyStatus === "checking"}
+            disabled={!connection || verifyStatus === "checking"}
             startIcon={
               verifyStatus === "checking" ? (
                 <CircularProgress size={16} />
