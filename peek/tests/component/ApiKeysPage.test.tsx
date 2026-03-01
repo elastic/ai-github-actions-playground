@@ -117,7 +117,13 @@ describe("ApiKeysPage", () => {
 
   it("renders API keys list sorted alphabetically and selects the first key", async () => {
     getCapabilitiesMock.mockResolvedValue(CAPS_OK);
-    getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
+    getApiKeysMock.mockResolvedValue({
+      api_keys: [
+        API_KEYS_RESPONSE.api_keys[3],
+        API_KEYS_RESPONSE.api_keys[1],
+        API_KEYS_RESPONSE.api_keys[0],
+      ],
+    });
 
     render(
       <MemoryRouter>
@@ -125,7 +131,7 @@ describe("ApiKeysPage", () => {
       </MemoryRouter>,
     );
 
-    // First key alphabetically is "ingest-key"
+    // First key alphabetically should be "ingest-key"
     await screen.findByRole("heading", { level: 6, name: "ingest-key" });
   });
 

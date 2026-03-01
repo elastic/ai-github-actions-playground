@@ -52,7 +52,15 @@ export default function ApiKeysPage() {
   );
 
   const loadKeys = useCallback(async () => {
-    if (!connection) return;
+    if (!connection) {
+      loadRequestRef.current += 1;
+      setLoading(false);
+      setError(null);
+      setAccessNotice(null);
+      setKeys([]);
+      setSelectedKeyId(null);
+      return;
+    }
     const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError(null);
@@ -192,17 +200,21 @@ export default function ApiKeysPage() {
                 Owner
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Tooltip title={`View user: ${selectedKey.username}`}>
-                  <Chip
-                    size="small"
-                    label={selectedKey.username}
-                    clickable
-                    aria-label={`View user: ${selectedKey.username}`}
-                    onClick={() =>
-                      navigate(`/users?username=${encodeURIComponent(selectedKey.username)}`)
-                    }
-                  />
-                </Tooltip>
+                {selectedKey.username ? (
+                  <Tooltip title={`View user: ${selectedKey.username}`}>
+                    <Chip
+                      size="small"
+                      label={selectedKey.username}
+                      clickable
+                      aria-label={`View user: ${selectedKey.username}`}
+                      onClick={() =>
+                        navigate(`/users?username=${encodeURIComponent(selectedKey.username)}`)
+                      }
+                    />
+                  </Tooltip>
+                ) : (
+                  <Chip size="small" label="No owner" aria-label="No owner" />
+                )}
               </Stack>
 
               <Typography variant="caption" color="text.secondary">
