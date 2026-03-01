@@ -22,6 +22,7 @@ import { copyToClipboard } from "../utils/copyToClipboard";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
 import { loadSecurityResource } from "./securityResourceLoader";
+import PageHeader from "./PageHeader";
 
 export default function ApiKeysPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -129,17 +130,19 @@ export default function ApiKeysPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            API Keys
-          </Typography>
-          <Button size="small" variant="outlined" onClick={loadKeys} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-            {copied ? "Copied" : "Copy API call"}
-          </Button>
-        </Stack>
+        <PageHeader
+          title="API Keys"
+          actions={
+            <>
+              <Button size="small" variant="outlined" onClick={loadKeys} disabled={loading}>
+                {loading ? <CircularProgress size={16} /> : "Refresh"}
+              </Button>
+              <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+                {copied ? "Copied" : "Copy API call"}
+              </Button>
+            </>
+          }
+        />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}

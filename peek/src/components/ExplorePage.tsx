@@ -49,6 +49,7 @@ import MetricOverviewGrid from "./MetricOverviewGrid";
 import DimensionOverviewGrid from "./DimensionOverviewGrid";
 import DimensionSidebar from "./DimensionSidebar";
 import EmptyState from "./EmptyState";
+import PageHeader from "./PageHeader";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
 
 function metricNamespaceOf(metricName: string): string {
@@ -366,9 +367,9 @@ export default function ExplorePage() {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
       {/* Top controls */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Typography variant="h6" component="h1" sx={{ mb: 1 }}>
-          Metrics
-        </Typography>
+        <Box sx={{ mb: 1 }}>
+          <PageHeader title="Metrics" />
+        </Box>
         <Box
           sx={{
             display: "flex",
