@@ -21,7 +21,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
 import { useChatScreenContextSummary } from "../hooks/useChatScreenContextSummary";
 
-export default function ChatPage() {
+export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const {
     config,
     messages,
@@ -164,20 +164,22 @@ export default function ChatPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
-        <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
-          Chat
-        </Typography>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<DeleteOutlineIcon />}
-          onClick={clearMessages}
-          disabled={messages.length === 0}
-        >
-          Clear
-        </Button>
-      </Box>
+      {!hideHeader && (
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
+          <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
+            Chat
+          </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DeleteOutlineIcon />}
+            onClick={clearMessages}
+            disabled={messages.length === 0}
+          >
+            Clear
+          </Button>
+        </Box>
+      )}
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
