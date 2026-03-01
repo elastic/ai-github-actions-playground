@@ -97,10 +97,6 @@ export default function ConnectionProfileSwitcher() {
       } catch (err: unknown) {
         const message = isElasticsearchError(err) ? err.message : String(err);
         console.error("Profile switch failed:", message);
-        setConnected(false);
-        setCapabilities(null);
-        setConnection(conn);
-        setActiveProfileId(profileId);
         setProfileHealth(profileId, {
           status: "needs_attention",
           checkedAt: new Date().toISOString(),
