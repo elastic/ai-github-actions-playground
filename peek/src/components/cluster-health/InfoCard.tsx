@@ -31,7 +31,9 @@ export default function InfoCard({ title, value, detail, severity }: InfoCardPro
       <Typography variant="subtitle2" color="text.primary" gutterBottom>
         {title}
       </Typography>
-      <Typography variant="h5">{value}</Typography>
+      <Typography variant="h5" component="div">
+        {value}
+      </Typography>
       {detail ? (
         <Typography variant="body2" color="text.secondary">
           {detail}

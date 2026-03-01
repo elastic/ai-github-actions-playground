@@ -464,16 +464,16 @@ Eight Playwright-powered exploratory agents run on weekdays. Each owns a domain 
 
 | Agent | File | Schedule | Domain |
 |-------|------|----------|--------|
-| **Connection & Onboarding** | `smoke-welcome-flow.yml` | 09:00 UTC | Connection dialog, auth tabs, disconnect/reconnect, keyboard nav |
-| **Metrics & Charts** | `smoke-metrics-flow.yml` | 10:00 UTC | Metric search, chart rendering, time ranges, state persistence |
-| **Traces & Service Map** | `smoke-traces-flow.yml` | 11:00 UTC | Span trees, service map, trace-to-query pivot, navigation |
-| **Query Lab & Console** | `smoke-auth-tab-switch.yml` | 12:00 UTC | ES\|QL queries, result tables, API Console, error handling |
-| **Indices, Data Streams & Pipelines** | `smoke-reset-visibility.yml` | 13:00 UTC | Table sorting, detail views, data management |
-| **Live Elasticsearch** | `smoke-live-es.yml` | 14:00 UTC | All pages with real OTel data and a real cluster |
-| **Feature Gap Review** | `customer-complaints.yml` | 16:00 UTC | Missing features vs Kibana/Grafana/Elasticvue expectations |
+| **Connection & Onboarding** | `explore-connection.yml` | 09:00 UTC | Connection dialog, auth tabs, disconnect/reconnect, keyboard nav |
+| **Metrics & Charts** | `explore-metrics.yml` | 10:00 UTC | Metric search, chart rendering, time ranges, state persistence |
+| **Traces & Service Map** | `explore-traces.yml` | 11:00 UTC | Span trees, service map, trace-to-query pivot, navigation |
+| **Query Lab & Console** | `explore-query-lab.yml` | 12:00 UTC | ES\|QL queries, result tables, API Console, error handling |
+| **Indices, Data Streams & Pipelines** | `explore-data-management.yml` | 13:00 UTC | Table sorting, detail views, data management |
+| **Live Elasticsearch** | `explore-live-es.yml` | 14:00 UTC | All pages with real OTel data and a real cluster |
+| **Feature Gap Review** | `explore-customer-feedback.yml` | 16:00 UTC | Missing features vs Kibana/Grafana/Elasticvue expectations |
 | **Modern UI Review** | `ui-designer-review.yml` | 17:00 UTC | Design modernization vs Linear/Vercel/Stripe standards |
 
-All exploratory agents use `gh-aw-scheduled-audit.lock.yml` with creative Playwright exploration instructions.
+Exploratory agents use `gh-aw-internal-gemini-cli.lock.yml` (Gemini) with creative Playwright exploration instructions. The Modern UI Review agent uses `gh-aw-scheduled-audit.lock.yml` (Copilot).
 
 ### Give It Some Love
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -49,16 +49,22 @@ interface ClusterHealthPageProps {
 
 export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHealthPageProps) {
   const [activeTab, setActiveTab] = useState<ClusterHealthView>(defaultTab);
+  const [partialDismissed, setPartialDismissed] = useState(false);
   const {
     data,
     loading,
     error,
     partialErrors,
     lastUpdatedAt,
-    refresh,
+    refresh: rawRefresh,
     refreshIntervalMs,
     setRefreshIntervalMs,
   } = useClusterHealthData();
+
+  const refresh = useCallback(() => {
+    setPartialDismissed(false);
+    rawRefresh();
+  }, [rawRefresh]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
@@ -79,8 +85,8 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
       </Paper>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
-      {!error && partialErrors.length > 0 ? (
-        <Alert severity="warning">
+      {!error && partialErrors.length > 0 && !partialDismissed ? (
+        <Alert severity="warning" onClose={() => setPartialDismissed(true)}>
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       ) : null}
