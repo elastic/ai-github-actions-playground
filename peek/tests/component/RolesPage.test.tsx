@@ -5,7 +5,7 @@ import { MemoryRouter, Routes, Route, Link } from "react-router-dom";
 
 import RolesPage from "../../src/components/RolesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const getCapabilitiesMock = vi.fn();
 const getSecurityRolesMock = vi.fn();
@@ -23,9 +23,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const CAPS_OK = {
   canManageDataStreams: false,

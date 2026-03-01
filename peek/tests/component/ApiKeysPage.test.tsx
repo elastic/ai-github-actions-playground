@@ -5,7 +5,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 import ApiKeysPage from "../../src/components/ApiKeysPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const getCapabilitiesMock = vi.fn();
 const getApiKeysMock = vi.fn();
@@ -21,9 +21,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const CAPS_OK = {
   canManageDataStreams: false,

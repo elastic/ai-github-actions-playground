@@ -1,18 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-const localStorageMock = makeStorageMock();
-const sessionStorageMock = makeStorageMock();
-
-vi.stubGlobal("localStorage", localStorageMock);
-vi.stubGlobal("sessionStorage", sessionStorageMock);
 
 describe("useConnectionStore", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useConnectionStore.getState().resetConnectionState();
   });
 
@@ -50,8 +43,8 @@ describe("useConnectionStore", () => {
 
 describe("useConnectionStore connection profiles", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useConnectionStore.getState().resetConnectionState();
   });
 
@@ -155,13 +148,13 @@ describe("useConnectionStore connection profiles", () => {
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
     const apiKeyKey = `elastic-peek-connection:profile:${id}:apiKey`;
     const passwordKey = `elastic-peek-connection:profile:${id}:password`;
-    sessionStorageMock.setItem(apiKeyKey, "dev-key");
-    sessionStorageMock.setItem(passwordKey, "dev-pass");
+    sessionStorage.setItem(apiKeyKey, "dev-key");
+    sessionStorage.setItem(passwordKey, "dev-pass");
 
     useConnectionStore.getState().deleteConnectionProfile(id!);
 
-    expect(sessionStorageMock.getItem(apiKeyKey)).toBeNull();
-    expect(sessionStorageMock.getItem(passwordKey)).toBeNull();
+    expect(sessionStorage.getItem(apiKeyKey)).toBeNull();
+    expect(sessionStorage.getItem(passwordKey)).toBeNull();
   });
 
   it("resetConnectionState clears connection profiles", () => {
@@ -179,8 +172,8 @@ describe("useConnectionStore connection profiles", () => {
 
 describe("useConnectionStore profileHealthMap", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useConnectionStore.getState().resetConnectionState();
   });
 

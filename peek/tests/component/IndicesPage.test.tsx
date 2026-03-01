@@ -7,7 +7,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import IndicesPage from "../../src/components/IndicesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const {
   getCatIndicesMock,
@@ -37,9 +37,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const SAMPLE_INDICES = [
   {

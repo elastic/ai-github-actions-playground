@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import FieldStatsPanel from "../../src/components/FieldStatsPanel";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 import type { FieldStats } from "../../src/services/es";
 
 const { fetchFieldStatsMock } = vi.hoisted(() => ({ fetchFieldStatsMock: vi.fn() }));
@@ -44,9 +44,6 @@ vi.mock("../../src/services/es", () => ({
       "date_nanos",
     ].includes(type),
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const connection = { url: "https://example.es.local:9200", apiKey: "key" };
 const noop = () => {};

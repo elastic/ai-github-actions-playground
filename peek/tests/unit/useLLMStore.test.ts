@@ -1,18 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { useLLMStore } from "../../src/store/useLLMStore";
-import { makeStorageMock } from "../fixtures/test-utils";
-
-const localStorageMock = makeStorageMock();
-const sessionStorageMock = makeStorageMock();
-
-vi.stubGlobal("localStorage", localStorageMock);
-vi.stubGlobal("sessionStorage", sessionStorageMock);
 
 describe("useLLMStore", () => {
   beforeEach(() => {
-    localStorageMock.clear();
-    sessionStorageMock.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
   });
 

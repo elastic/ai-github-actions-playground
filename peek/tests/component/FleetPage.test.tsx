@@ -7,7 +7,7 @@ import FleetAgentPage from "../../src/components/FleetAgentPage";
 import FleetPage from "../../src/components/FleetPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useFleetStore } from "../../src/store/useFleetStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
+import { resetAllStores } from "../fixtures/test-utils";
 
 const rawRequestMock = vi.fn();
 
@@ -21,9 +21,6 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
 
 function LocationDisplay() {
   const location = useLocation();

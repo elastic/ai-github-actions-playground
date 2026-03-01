@@ -4,10 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import DashboardViewPage from "../../src/components/DashboardViewPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
-import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
-
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
+import { resetAllStores } from "../fixtures/test-utils";
 
 vi.mock("../../src/components/DashboardGrid", () => ({
   default: () => <div data-testid="dashboard-grid">DashboardGrid</div>,
