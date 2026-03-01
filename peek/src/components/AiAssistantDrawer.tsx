@@ -1,5 +1,6 @@
 import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -19,7 +20,7 @@ export default function AiAssistantDrawer() {
       open={open}
       onClose={() => setOpen(false)}
       variant="persistent"
-      aria-label="AI assistant panel"
+      aria-labelledby="ai-drawer-title"
       sx={{
         "& .MuiDrawer-paper": {
           width: AI_DRAWER_WIDTH,
@@ -38,7 +39,10 @@ export default function AiAssistantDrawer() {
           p: 2,
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: -1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+          <Typography id="ai-drawer-title" variant="subtitle2" sx={{ flex: 1, fontWeight: 600 }}>
+            AI Assistant
+          </Typography>
           <IconButton
             size="small"
             onClick={() => setOpen(false)}

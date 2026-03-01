@@ -53,4 +53,11 @@ describe("AiAssistantDrawer", () => {
 
     expect(screen.getByRole("button", { name: /close ai assistant panel/i })).toBeInTheDocument();
   });
+
+  it("renders AI Assistant heading when open", () => {
+    useUIStore.getState().setAiPanelOpen(true);
+    renderDrawer();
+
+    expect(screen.getByText("AI Assistant")).toBeInTheDocument();
+  });
 });
