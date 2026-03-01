@@ -9,7 +9,7 @@ import { setLastQueryError, setLastQueryResult } from "../components/llmCompleti
 
 interface UseEsqlQueryOptions {
   connection: ElasticsearchConnection | null;
-  onSuccess: (data: EsqlResponse, executedQuery: string) => void;
+  onSuccess: (data: EsqlResponse, executedQuery: string, executedStepIndex: number | null) => void;
   onFailure?: (failedQuery: string) => void;
   buildRequest?: (queryText: string) => EsqlQueryParams;
   queryContextView?: EditorView | null;
@@ -110,7 +110,7 @@ export function useEsqlQuery({
             setLastQueryError(null, queryContextView);
             setLastQueryResult(trimmedQuery, data, queryContextView);
           }
-          onSuccess(data, trimmedQuery);
+          onSuccess(data, trimmedQuery, stepIndex);
         }
       } catch (err) {
         if (
