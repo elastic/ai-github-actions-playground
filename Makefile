@@ -179,7 +179,7 @@ docker-run:
 	@echo "Starting Docker container..."
 	@echo "  Dashboard: http://localhost:8080"
 	@echo "  Proxying /_es/* → $${ES_URL:-http://host.docker.internal:9200}"
-	@echo "  Connect the dashboard to: http://localhost:8080"
+	@echo "  Connect the dashboard to Elasticsearch at: http://localhost:8080/_es"
 	@docker run --rm -p 8080:80 -e ES_URL=$${ES_URL:-http://host.docker.internal:9200} elastic-peek
 
 electron-dev: setup
