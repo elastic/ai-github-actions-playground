@@ -48,6 +48,7 @@ WORKFLOWS=(
   "smoke-auth-tab-switch.yml"
   "smoke-reset-visibility.yml"
   "smoke-live-es.yml"
+  "customer-complaints.yml"
 )
 
 # Verify gh is available

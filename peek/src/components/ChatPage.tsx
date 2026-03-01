@@ -19,6 +19,7 @@ import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
+import { useChatScreenContextSummary } from "../hooks/useChatScreenContextSummary";
 
 export default function ChatPage() {
   const {
@@ -44,6 +45,7 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const connection = useConnectionStore((s) => s.connection);
+  const screenContextSummary = useChatScreenContextSummary(location.pathname);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,6 +83,7 @@ export default function ChatPage() {
         config,
         connection,
         pathname: location.pathname,
+        screenContextSummary,
         signal: controller.signal,
       });
 
@@ -127,6 +130,7 @@ export default function ChatPage() {
     removeMessage,
     connection,
     location.pathname,
+    screenContextSummary,
   ]);
 
   if (!configured) {
