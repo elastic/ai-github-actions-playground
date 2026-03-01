@@ -1,7 +1,8 @@
-import { ElasticsearchClient } from "../es";
 import type { ElasticsearchConnection, EsqlQueryParams, EsqlQueryResponse } from "../es";
 import { buildQueryParams } from "../datemath";
 import type { DashboardParameter, TimeRange } from "../../types";
+
+import { getPersesDatasourcePlugin } from "./pluginRegistry";
 
 export interface PersesEsqlDatasource {
   execute(
@@ -102,8 +103,9 @@ export function buildPersesEsqlRequest(
 export function createPersesEsqlDatasource(
   connection: ElasticsearchConnection,
 ): PersesEsqlDatasource {
-  const client = new ElasticsearchClient(connection);
-  return {
-    execute: (request, signal) => client.query(request, signal),
-  };
+  const plugin = getPersesDatasourcePlugin<PersesEsqlDatasource>("EsqlDatasource");
+  if (!plugin) {
+    throw new Error("Perses datasource plugin 'EsqlDatasource' is not registered.");
+  }
+  return plugin.create(connection);
 }
