@@ -13,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Tooltip from "@mui/material/Tooltip";
+import CancelIcon from "@mui/icons-material/Cancel";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
@@ -48,6 +49,7 @@ import {
   shiftTimeRangeBack,
   DEFAULT_FIELD_MAPPING,
 } from "./traceQueryBuilder";
+import type { TraceFilters } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
 
 const thStyle: React.CSSProperties = {
@@ -196,35 +198,47 @@ export default function TracesPage() {
     [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
   );
 
-  const handleSearch = useCallback(() => {
-    runTraceQueries(effectiveQuery, filters, rawQuery == null);
-    if (viewMode === "driftRadar" && rawQuery == null) {
+  const runDriftRadarQueries = useCallback(
+    (updatedFilters: TraceFilters) => {
+      if (viewMode !== "driftRadar" || rawQuery != null) return;
+
       setDriftRadarSpans([]);
       setDriftRadarBaselineSpans(null);
-      runDriftRadarQuery(buildDriftRadarQuery(filters));
-      if (driftRadarBaselineEnabled && filters.timeFrom) {
-        const shifted = shiftTimeRangeBack(filters.timeFrom, filters.timeTo ?? "NOW()");
+      runDriftRadarQuery(buildDriftRadarQuery(updatedFilters));
+      if (driftRadarBaselineEnabled && updatedFilters.timeFrom) {
+        const shifted = shiftTimeRangeBack(
+          updatedFilters.timeFrom,
+          updatedFilters.timeTo ?? "NOW()",
+        );
         if (shifted) {
           runDriftRadarBaselineQuery(
             buildDriftRadarQuery({
-              ...filters,
+              ...updatedFilters,
               timeFrom: shifted.timeFrom,
               timeTo: shifted.timeTo,
             }),
           );
         }
       }
-    }
-  }, [
-    runTraceQueries,
-    effectiveQuery,
-    filters,
-    rawQuery,
-    viewMode,
-    driftRadarBaselineEnabled,
-    runDriftRadarQuery,
-    runDriftRadarBaselineQuery,
-  ]);
+    },
+    [viewMode, rawQuery, driftRadarBaselineEnabled, runDriftRadarQuery, runDriftRadarBaselineQuery],
+  );
+
+  /** Apply a quick-filter update and immediately re-run queries so results stay in sync. */
+  const applyFiltersAndRun = useCallback(
+    (updates: Partial<TraceFilters>) => {
+      updateFilters(updates);
+      const updatedFilters = useTracesStore.getState().filters;
+      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runDriftRadarQueries(updatedFilters);
+    },
+    [updateFilters, runTraceQueries, runDriftRadarQueries],
+  );
+
+  const handleSearch = useCallback(() => {
+    runTraceQueries(effectiveQuery, filters, rawQuery == null);
+    runDriftRadarQueries(filters);
+  }, [runTraceQueries, runDriftRadarQueries, effectiveQuery, filters, rawQuery]);
 
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
@@ -253,29 +267,29 @@ export default function TracesPage() {
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
     const maxMs = maxDurationInput !== "" ? Number(maxDurationInput) : null;
-    updateFilters({
+    applyFiltersAndRun({
       minDurationMs: minMs !== null && !isNaN(minMs) ? minMs : null,
       maxDurationMs: maxMs !== null && !isNaN(maxMs) ? maxMs : null,
     });
-  }, [minDurationInput, maxDurationInput, updateFilters]);
+  }, [minDurationInput, maxDurationInput, applyFiltersAndRun]);
 
   const handleAddService = useCallback(() => {
     const trimmed = serviceFilter.trim();
     if (trimmed && !filters.services.includes(trimmed)) {
-      updateFilters({
+      applyFiltersAndRun({
         services: [...filters.services, trimmed],
       });
       setServiceFilter("");
     }
-  }, [serviceFilter, filters.services, updateFilters]);
+  }, [serviceFilter, filters.services, applyFiltersAndRun]);
 
   const handleRemoveService = useCallback(
     (service: string) => {
-      updateFilters({
+      applyFiltersAndRun({
         services: filters.services.filter((s) => s !== service),
       });
     },
-    [filters.services, updateFilters],
+    [filters.services, applyFiltersAndRun],
   );
 
   const handleServiceMapNodeClick = useCallback(
@@ -381,8 +395,11 @@ export default function TracesPage() {
               label={`status: ${status}`}
               size="small"
               color={status === "Error" ? "error" : "default"}
+              deleteIcon={
+                <CancelIcon data-testid={`trace-status-chip-delete-${status.toLowerCase()}`} />
+              }
               onDelete={() =>
-                updateFilters({
+                applyFiltersAndRun({
                   statusCodes: filters.statusCodes.filter((s) => s !== status),
                 })
               }
@@ -393,7 +410,7 @@ export default function TracesPage() {
               label={`min: ${filters.minDurationMs}ms`}
               size="small"
               onDelete={() => {
-                updateFilters({ minDurationMs: null });
+                applyFiltersAndRun({ minDurationMs: null });
                 setMinDurationInput("");
               }}
             />
@@ -403,7 +420,7 @@ export default function TracesPage() {
               label={`max: ${filters.maxDurationMs}ms`}
               size="small"
               onDelete={() => {
-                updateFilters({ maxDurationMs: null });
+                applyFiltersAndRun({ maxDurationMs: null });
                 setMaxDurationInput("");
               }}
             />
@@ -415,7 +432,7 @@ export default function TracesPage() {
               size="small"
               color={tag.exclude ? "warning" : "default"}
               onDelete={() =>
-                updateFilters({
+                applyFiltersAndRun({
                   tags: filters.tags.filter((_, idx) => idx !== i),
                 })
               }
@@ -425,7 +442,7 @@ export default function TracesPage() {
             <Chip
               label={`time: ${TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
               size="small"
-              onDelete={() => updateFilters({ timeFrom: null, timeTo: null })}
+              onDelete={() => applyFiltersAndRun({ timeFrom: null, timeTo: null })}
             />
           )}
         </Box>
@@ -440,9 +457,9 @@ export default function TracesPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleAddService();
             }}
-            sx={{ width: 160 }}
+            sx={{ width: 160, "& .MuiInputBase-root": { height: 36 } }}
           />
-          <Button size="small" variant="outlined" onClick={handleAddService}>
+          <Button size="small" variant="outlined" onClick={handleAddService} sx={{ height: 36 }}>
             Add Service
           </Button>
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
@@ -451,17 +468,22 @@ export default function TracesPage() {
               placeholder="Min (ms)"
               value={minDurationInput}
               onChange={(e) => setMinDurationInput(e.target.value)}
-              sx={{ width: 100 }}
+              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
             />
-            <Typography variant="caption">–</Typography>
+            <Typography variant="body2">–</Typography>
             <TextField
               size="small"
               placeholder="Max (ms)"
               value={maxDurationInput}
               onChange={(e) => setMaxDurationInput(e.target.value)}
-              sx={{ width: 100 }}
+              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
             />
-            <Button size="small" variant="outlined" onClick={handleApplyDuration}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleApplyDuration}
+              sx={{ height: 36 }}
+            >
               Apply
             </Button>
           </Box>
@@ -473,10 +495,10 @@ export default function TracesPage() {
               const selectedFrom = e.target.value === "" ? null : e.target.value;
               const opt = TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
               if (opt) {
-                updateFilters({ timeFrom: opt.from, timeTo: opt.to });
+                applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
               }
             }}
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: 150, height: 36 }}
           >
             {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
               <MenuItem key={opt.label} value={opt.from ?? ""}>
@@ -484,7 +506,7 @@ export default function TracesPage() {
               </MenuItem>
             ))}
           </Select>
-          <Box sx={{ display: "flex", gap: 0.5, ml: "auto" }}>
+          <Box sx={{ display: "flex", gap: 0.5, ml: "auto", alignItems: "center" }}>
             {(["Error", "OK"] as const).map((status) => (
               <Chip
                 key={status}
@@ -492,13 +514,14 @@ export default function TracesPage() {
                 size="small"
                 variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
                 color={status === "Error" ? "error" : "default"}
+                sx={{ height: 36 }}
                 onClick={() => {
                   if (filters.statusCodes.includes(status)) {
-                    updateFilters({
+                    applyFiltersAndRun({
                       statusCodes: filters.statusCodes.filter((s) => s !== status),
                     });
                   } else {
-                    updateFilters({
+                    applyFiltersAndRun({
                       statusCodes: [...filters.statusCodes, status],
                     });
                   }
