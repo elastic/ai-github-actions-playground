@@ -16,10 +16,13 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
 import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+
+import EmptyState from "./EmptyState";
 
 type PipelineEntry = { name: string; pipeline: IngestPipeline };
 
@@ -550,11 +553,11 @@ export default function IngestPipelinesPage() {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ p: 1.5 }}>
-              <Typography variant="body2" color="text.secondary">
-                Select a pipeline.
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<AccountTreeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="Select a pipeline"
+              description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
+            />
           )}
         </Paper>
       </Box>

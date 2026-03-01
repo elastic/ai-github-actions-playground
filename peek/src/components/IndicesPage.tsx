@@ -19,6 +19,7 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import StorageIcon from "@mui/icons-material/Storage";
 
 import {
   type CatIndexRecord,
@@ -31,6 +32,8 @@ import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { formatBytes } from "../utils/formatBytes";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+
+import EmptyState from "./EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -677,9 +680,15 @@ export default function IndicesPage() {
             ))}
             {!loadingIndices && filteredIndices.length === 0 && (
               <ListItem>
-                <Typography variant="body2" color="text.primary">
-                  No indices found.
-                </Typography>
+                <EmptyState
+                  icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                  heading="No user indices found"
+                  description={
+                    showSystemIndices
+                      ? "No indices match the current search filter."
+                      : "Toggle \u2018Show system indices\u2019 above to include system indices."
+                  }
+                />
               </ListItem>
             )}
           </List>

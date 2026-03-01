@@ -16,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import StorageIcon from "@mui/icons-material/Storage";
 
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -25,6 +26,7 @@ import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
 import FieldStatsPanel from "./FieldStatsPanel";
+import EmptyState from "./EmptyState";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -334,19 +336,23 @@ export default function DataStreamsPage() {
                 </Box>
               </Box>
             ) : (
-              <Typography variant="body2" color="text.secondary">
-                Select a data stream.
-              </Typography>
+              <EmptyState
+                icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                heading="Select a data stream"
+                description="Select a data stream from the left panel to view its fields and backing indices."
+              />
             )}
           </Box>
           <Divider />
           <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", minHeight: 0, gap: 1 }}>
-            <TextField
-              size="small"
-              placeholder="Search fields"
-              value={fieldSearch}
-              onChange={(e) => setFieldSearch(e.target.value)}
-            />
+            {selectedDataStream && (
+              <TextField
+                size="small"
+                placeholder="Search fields"
+                value={fieldSearch}
+                onChange={(e) => setFieldSearch(e.target.value)}
+              />
+            )}
             {loadingFields ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                 <CircularProgress size={24} />
@@ -386,9 +392,9 @@ export default function DataStreamsPage() {
                     <Chip size="small" label={field.type} />
                   </Stack>
                 ))}
-                {!loadingFields && fieldRows.length === 0 && (
+                {!loadingFields && fieldRows.length === 0 && selectedDataStream && (
                   <Typography variant="body2" color="text.secondary">
-                    No fields found for this stream.
+                    No fields found for this data stream.
                   </Typography>
                 )}
               </Box>
