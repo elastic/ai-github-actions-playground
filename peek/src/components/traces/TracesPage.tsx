@@ -62,29 +62,6 @@ const thStyle: React.CSSProperties = {
   background: "inherit",
 };
 
-interface CenteredEmptyStateProps {
-  message: string;
-  sx?: React.ComponentProps<typeof Box>["sx"];
-}
-
-function CenteredEmptyState({ message, sx }: CenteredEmptyStateProps) {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100%",
-        ...sx,
-      }}
-    >
-      <Typography variant="body2" color="text.primary">
-        {message}
-      </Typography>
-    </Box>
-  );
-}
-
 export default function TracesPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((s) => s.connection);
@@ -392,7 +369,7 @@ export default function TracesPage() {
         <Box
           sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
         >
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="h6" component="h1">
             Trace Search
           </Typography>
           <Button size="small" variant="text" onClick={resetFilters}>
@@ -472,7 +449,16 @@ export default function TracesPage() {
         </Box>
 
         {/* Quick filters row */}
-        <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            mb: 1,
+            flexWrap: "wrap",
+            alignItems: "center",
+            "& .MuiInputBase-root": { height: 36 },
+          }}
+        >
           <TextField
             size="small"
             placeholder="Service name"
@@ -481,7 +467,7 @@ export default function TracesPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleAddService();
             }}
-            sx={{ width: 160, "& .MuiInputBase-root": { height: 36 } }}
+            sx={{ width: 160 }}
           />
           <Button size="small" variant="outlined" onClick={handleAddService} sx={{ height: 36 }}>
             Add Service
@@ -492,7 +478,7 @@ export default function TracesPage() {
               placeholder="Min (ms)"
               value={minDurationInput}
               onChange={(e) => setMinDurationInput(e.target.value)}
-              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
+              sx={{ width: 100 }}
             />
             <Typography variant="body1" sx={{ px: 0.5 }}>
               —
@@ -502,7 +488,7 @@ export default function TracesPage() {
               placeholder="Max (ms)"
               value={maxDurationInput}
               onChange={(e) => setMaxDurationInput(e.target.value)}
-              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
+              sx={{ width: 100 }}
             />
             <Button
               size="small"
@@ -844,7 +830,10 @@ export default function TracesPage() {
             {result &&
               viewMode === "timeseries" &&
               (rawQuery ? (
-                <CenteredEmptyState message="Time series view is not available for custom queries. Use filter chips to see trends." />
+                <EmptyState
+                  heading="Time series view is not available for custom queries. Use filter chips to see trends."
+                  description="Use filter chips instead of raw ES|QL to view trace volume and latency trends."
+                />
               ) : timeseriesLoading ? (
                 <Box
                   sx={{
@@ -864,12 +853,18 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : (
-                <CenteredEmptyState message="Run search to load trace volume and latency trends." />
+                <EmptyState
+                  heading="Run search to load trace volume and latency trends."
+                  description="Apply filters and run search to populate time series metrics."
+                />
               ))}
             {result && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
-                  <CenteredEmptyState message="Select a trace in List or Scatter view to see its service map" />
+                  <EmptyState
+                    heading="Select a trace in List or Scatter view to see its service map"
+                    description="Choose a trace from List or Scatter view to render service relationships."
+                  />
                 ) : detailLoading ? (
                   <Box
                     sx={{
@@ -891,7 +886,10 @@ export default function TracesPage() {
             )}
             {viewMode === "driftRadar" &&
               (rawQuery ? (
-                <CenteredEmptyState message="Drift Radar is not available for custom queries. Use filter chips to scope the window." />
+                <EmptyState
+                  heading="Drift Radar is not available for custom queries. Use filter chips to scope the window."
+                  description="Use filter chips to define the current window before opening Drift Radar."
+                />
               ) : driftRadarLoading || driftRadarBaselineLoading ? (
                 <Box
                   sx={{
@@ -914,9 +912,15 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : result !== null ? (
-                <CenteredEmptyState message="Run search to load the window service map." />
+                <EmptyState
+                  heading="Run search to load the window service map."
+                  description="Run search to load current-window traces for the Drift Radar map."
+                />
               ) : (
-                <CenteredEmptyState message="Search for traces to load the Drift Radar service map." />
+                <EmptyState
+                  heading="Search for traces to load the Drift Radar service map."
+                  description="Run a trace search to compare current and baseline service topology."
+                />
               ))}
           </Paper>
 
@@ -982,7 +986,10 @@ export default function TracesPage() {
                 </Box>
               ) : (
                 <Box sx={{ flex: 1 }}>
-                  <EmptyState heading="No spans found for this trace" />
+                  <EmptyState
+                    heading="No spans found for this trace"
+                    description="This trace may be incomplete or missing ingested span data."
+                  />
                 </Box>
               )}
             </Paper>
