@@ -293,7 +293,7 @@ describe("RolesPage", () => {
     expect(await screen.findByRole("heading", { level: 6, name: "viewer" })).toBeInTheDocument();
   });
 
-  it("navigates to /users?user=<name> when an assigned user chip is clicked", async () => {
+  it("navigates to /users?username=<name> when an assigned user chip is clicked", async () => {
     const user = userEvent.setup();
     getCapabilitiesMock.mockResolvedValue(CAPS_OK);
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
@@ -322,7 +322,7 @@ describe("RolesPage", () => {
     await user.click(chip);
 
     await waitFor(() => {
-      expect(screen.getByTestId("location-display").textContent).toBe("/users?user=elastic");
+      expect(screen.getByTestId("location-display").textContent).toBe("/users?username=elastic");
     });
   });
 });

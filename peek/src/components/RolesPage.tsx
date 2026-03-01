@@ -220,7 +220,9 @@ export default function RolesPage() {
                       label={user.username}
                       clickable
                       aria-label={`View user: ${user.username}`}
-                      onClick={() => navigate(`/users?user=${encodeURIComponent(user.username)}`)}
+                      onClick={() =>
+                        navigate(`/users?username=${encodeURIComponent(user.username)}`)
+                      }
                     />
                   </Tooltip>
                 ))}
