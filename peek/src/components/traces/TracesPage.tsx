@@ -113,6 +113,14 @@ export default function TracesPage() {
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
   const hasHydratedFromUrlRef = useRef(false);
   const skipNextRawQueryResetRef = useRef(false);
+  const urlDefaultsRef = useRef({
+    services: filters.services,
+    timeFrom: filters.timeFrom,
+    timeTo: filters.timeTo,
+    viewMode,
+    traceId: selectedTraceId,
+    rawQuery,
+  });
 
   const {
     services: urlServices,
@@ -126,14 +134,7 @@ export default function TracesPage() {
     setViewMode: setUrlViewMode,
     setTraceId: setUrlTraceId,
     setRawQuery: setUrlRawQuery,
-  } = useTracesSearchParams({
-    services: filters.services,
-    timeFrom: filters.timeFrom,
-    timeTo: filters.timeTo,
-    viewMode,
-    traceId: selectedTraceId,
-    rawQuery,
-  });
+  } = useTracesSearchParams(urlDefaultsRef.current);
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
@@ -167,6 +168,8 @@ export default function TracesPage() {
     }
     if (state.selectedTraceId !== urlTraceId) {
       setSelectedTraceId(urlTraceId);
+      setSelectedRootSpanId(null);
+      setSelectedTraceTimestamp(null);
     }
     if (state.rawQuery !== urlRawQuery) {
       skipNextRawQueryResetRef.current = urlRawQuery !== null;
