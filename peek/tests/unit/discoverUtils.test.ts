@@ -49,6 +49,13 @@ describe("splitEsqlPipeline", () => {
     ]);
   });
 
+  it("does not split on pipes inside single-quoted strings", () => {
+    expect(splitEsqlPipeline("FROM logs-* | WHERE message == 'foo|bar'")).toEqual([
+      "FROM logs-*",
+      "WHERE message == 'foo|bar'",
+    ]);
+  });
+
   it("does not split on pipes inside triple-quoted strings", () => {
     expect(splitEsqlPipeline('FROM logs-* | WHERE message == """foo|bar"""')).toEqual([
       "FROM logs-*",
@@ -325,6 +332,12 @@ describe("applyEsqlSort", () => {
     expect(applyEsqlSort("FROM logs-*", "@timestamp", "asc")).toBe(
       "FROM logs-* | SORT `@timestamp` ASC",
     );
+  });
+
+  it("preserves single-quoted literals containing pipes", () => {
+    expect(
+      applyEsqlSort("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 1", "@timestamp", "asc"),
+    ).toBe("FROM logs-* | WHERE message == 'foo|bar' | SORT `@timestamp` ASC | LIMIT 1");
   });
 });
 
