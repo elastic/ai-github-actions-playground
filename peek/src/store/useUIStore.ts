@@ -6,11 +6,13 @@ interface UIState {
   editingPanelId: string | null;
   connectionDialogOpen: boolean;
   commandPaletteOpen: boolean;
+  aiPanelOpen: boolean;
 
   setThemeMode: (mode: "light" | "dark") => void;
   setEditingPanelId: (id: string | null) => void;
   setConnectionDialogOpen: (open: boolean) => void;
   setCommandPaletteOpen: (open: boolean) => void;
+  setAiPanelOpen: (open: boolean) => void;
   resetUIState: () => void;
 }
 
@@ -23,11 +25,13 @@ export const useUIStore = create<UIState>()(
       editingPanelId: null,
       connectionDialogOpen: false,
       commandPaletteOpen: false,
+      aiPanelOpen: false,
 
       setThemeMode: (mode) => set({ themeMode: mode }),
       setEditingPanelId: (id) => set({ editingPanelId: id }),
       setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+      setAiPanelOpen: (open) => set({ aiPanelOpen: open }),
       resetUIState: () => {
         useUIStore.persist.clearStorage();
         set({
@@ -35,6 +39,7 @@ export const useUIStore = create<UIState>()(
           editingPanelId: null,
           connectionDialogOpen: false,
           commandPaletteOpen: false,
+          aiPanelOpen: false,
         });
       },
     }),
