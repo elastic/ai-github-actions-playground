@@ -40,7 +40,8 @@ export async function executeRawRequest(
   signal?: AbortSignal,
 ): Promise<{ status: number; body: unknown }> {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
-  const url = `${normalizedBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+  const trimmedPath = path.trim();
+  const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort(new DOMException("Request timed out", "AbortError"));
