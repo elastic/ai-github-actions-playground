@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -11,18 +11,14 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import {
   computeCheckinStaleness,
-  loadElasticAgentInfo,
-  loadElasticAgentLogs,
-  loadElasticAgentMetrics,
   type ElasticAgentInfo,
   type ElasticAgentLogEntry,
   type ElasticAgentMetricPoint,
 } from "../services/fleet";
-import { useConnectionStore } from "../store/useConnectionStore";
 import { formatBytes } from "../utils/formatBytes";
+import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
@@ -39,7 +35,6 @@ const LOG_LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function FleetAgentPage() {
-  const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const { agentId = "" } = useParams<{ agentId: string }>();
   const decodedAgentId = (() => {
@@ -51,50 +46,15 @@ export default function FleetAgentPage() {
   })();
 
   const [activeTab, setActiveTab] = useState<AgentTab>("overview");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [agentInfo, setAgentInfo] = useState<ElasticAgentInfo | null>(null);
-  const [logs, setLogs] = useState<ElasticAgentLogEntry[]>([]);
-  const [metrics, setMetrics] = useState<ElasticAgentMetricPoint[]>([]);
   const [logLevelFilter, setLogLevelFilter] = useState<string | null>(null);
 
-  const loadAgentData = useCallback(async () => {
-    if (!connection || !decodedAgentId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const [agent, agentLogs, agentMetrics] = await Promise.all([
-        loadElasticAgentInfo(client, decodedAgentId),
-        loadElasticAgentLogs(client, decodedAgentId, { size: 200 }),
-        loadElasticAgentMetrics(client, decodedAgentId, 60),
-      ]);
-      const fallbackAgent =
-        !agent && (agentLogs.length > 0 || agentMetrics.length > 0)
-          ? {
-              agentId: decodedAgentId,
-              hostname: decodedAgentId,
-              version: "unknown",
-              os: null,
-              lastSeen: agentLogs[0]?.timestamp ?? agentMetrics[0]?.timestamp ?? "",
-              logCount: agentLogs.length,
-              errorCount: agentLogs.filter((entry) => entry.level.toLowerCase() === "error").length,
-            }
-          : null;
-      setAgentInfo(agent ?? fallbackAgent);
-      setLogs(agentLogs);
-      setMetrics(agentMetrics);
-    } catch (err) {
-      setError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, decodedAgentId]);
+  const agentResult = useFleetAgentDetail(decodedAgentId);
 
-  useEffect(() => {
-    void loadAgentData();
-  }, [loadAgentData]);
+  const loading = agentResult.status === "loading";
+  const error = agentResult.status === "error" ? agentResult.error : null;
+  const agentInfo = agentResult.status === "success" ? agentResult.data.agentInfo : null;
+  const logs = agentResult.status === "success" ? agentResult.data.logs : [];
+  const metrics = agentResult.status === "success" ? agentResult.data.metrics : [];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
@@ -110,7 +70,7 @@ export default function FleetAgentPage() {
           <Button
             size="small"
             variant="outlined"
-            onClick={() => void loadAgentData()}
+            onClick={() => void agentResult.refresh()}
             disabled={loading}
           >
             {loading ? <CircularProgress size={16} /> : "Refresh"}

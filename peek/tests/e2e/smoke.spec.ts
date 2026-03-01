@@ -1,7 +1,77 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
+
+/**
+ * Baseline of known pre-existing axe violations per page (tracked in #954).
+ *
+ * IMPORTANT: This is a temporary measure to prevent accessibility regressions
+ * while we work toward full WCAG 2.2 Level AA compliance. Each entry here
+ * represents a technical debt item that should be resolved rather than expanded.
+ *
+ * Maps page label → rule ID → maximum number of violating DOM nodes.
+ * The gate fails when a new rule fires or its node count exceeds the baseline.
+ */
+const A11Y_BASELINE: Record<string, Record<string, number>> = {
+  welcome: {
+    "color-contrast": 1,
+    "page-has-heading-one": 1,
+  },
+  "post-connect": {
+    "color-contrast": 2,
+    "heading-order": 1,
+  },
+  Metrics: {
+    "color-contrast": 2,
+  },
+  Traces: {
+    "aria-input-field-name": 2,
+    "aria-prohibited-attr": 1,
+    "color-contrast": 12,
+    "page-has-heading-one": 1,
+  },
+  "Query Lab": {
+    "aria-input-field-name": 2,
+    "aria-prohibited-attr": 1,
+    "color-contrast": 12,
+    "page-has-heading-one": 1,
+  },
+  Console: {
+    "color-contrast": 1,
+  },
+  Indices: {
+    "aria-progressbar-name": 1,
+    "button-name": 1,
+    "color-contrast": 1,
+  },
+};
+
+/**
+ * Run an axe accessibility scan and fail on any *new* violations.
+ * A violation is "new" if its rule ID is absent from the baseline or if the
+ * number of violating nodes exceeds the baselined count for that rule+page.
+ */
+async function checkA11y(page: Page, pageName: string) {
+  const results = await new AxeBuilder({ page }).analyze();
+  const baseline = A11Y_BASELINE[pageName] ?? {};
+
+  const newViolations = results.violations.filter((v) => {
+    const allowed = baseline[v.id];
+    if (allowed === undefined) return true;
+    return v.nodes.length > allowed;
+  });
+
+  expect(
+    newViolations.map(
+      (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
+    ),
+    `axe found new accessibility violations on "${pageName}".\n` +
+      `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
+      `See DEVELOPING.md for accessibility standards.`,
+  ).toEqual([]);
+}
 
 async function mockElasticsearch(page: Page) {
   await registerElasticsearchMocks(page, {
@@ -234,5 +304,19 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();
     await expect(page.getByText("Run a query to see results")).toBeHidden();
+  });
+
+  test("pages have no axe accessibility violations", async ({ page }) => {
+    await page.goto("");
+    await checkA11y(page, "welcome");
+
+    await connectToMockCluster(page);
+    await checkA11y(page, "post-connect");
+
+    for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
+      await page.getByRole("button", { name: nav, exact: true }).click();
+      await page.waitForLoadState("networkidle");
+      await checkA11y(page, nav);
+    }
   });
 });

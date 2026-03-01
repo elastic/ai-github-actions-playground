@@ -307,6 +307,70 @@ describe("success parsing", () => {
   });
 });
 
+// ── Response validation ───────────────────────────────────────────────────
+
+describe("response validation", () => {
+  it("rejects ES|QL response with missing columns", async () => {
+    vi.stubGlobal("fetch", mockFetchOnce({ values: [[1]] }));
+
+    const client = makeClient();
+    await expect(client.query({ query: "FROM test" })).rejects.toEqual(
+      expect.objectContaining({
+        status: 0,
+        message: expect.stringContaining("ES|QL query"),
+      }),
+    );
+  });
+
+  it("rejects cluster health response with invalid status enum", async () => {
+    vi.stubGlobal("fetch", mockFetchOnce({ status: "blue" }));
+
+    const client = makeClient();
+    await expect(client.getClusterHealth()).rejects.toEqual(
+      expect.objectContaining({
+        status: 0,
+        message: expect.stringContaining("cluster health"),
+      }),
+    );
+  });
+
+  it("accepts valid cluster health response through validation", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchOnce({ cluster_name: "test", status: "green", number_of_nodes: 3 }),
+    );
+
+    const client = makeClient();
+    const result = await client.getClusterHealth();
+    expect(result.status).toBe("green");
+    expect(result.number_of_nodes).toBe(3);
+  });
+
+  it("rejects cat indices response that is not an array", async () => {
+    vi.stubGlobal("fetch", mockFetchOnce({ indices: "bad" }));
+
+    const client = makeClient();
+    await expect(client.getCatIndices()).rejects.toEqual(
+      expect.objectContaining({
+        status: 0,
+        message: expect.stringContaining("cat indices"),
+      }),
+    );
+  });
+
+  it("rejects data streams response missing data_streams key", async () => {
+    vi.stubGlobal("fetch", mockFetchOnce({ streams: [] }));
+
+    const client = makeClient();
+    await expect(client.getDataStreams()).rejects.toEqual(
+      expect.objectContaining({
+        status: 0,
+        message: expect.stringContaining("data streams"),
+      }),
+    );
+  });
+});
+
 // ── Error handling ────────────────────────────────────────────────────────
 
 describe("error handling", () => {
