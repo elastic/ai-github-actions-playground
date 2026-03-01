@@ -91,20 +91,40 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   useEffect(() => {
+    let resolvedUsername: string | null = null;
     setSelectedUsername((current) => {
       if (users.length === 0) {
-        return requestedUsername ?? current;
+        resolvedUsername = requestedUsername ?? current;
+        return resolvedUsername;
       }
       if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
-        return requestedUsername;
+        resolvedUsername = requestedUsername;
+        return resolvedUsername;
       }
       // Preserve manual selection when no query param and current user still exists
       if (!requestedUsername && current && users.some((user) => user.username === current)) {
-        return current;
+        resolvedUsername = current;
+        return resolvedUsername;
       }
-      return users[0]?.username ?? null;
+      resolvedUsername = users[0]?.username ?? null;
+      return resolvedUsername;
     });
-  }, [requestedUsername, users]);
+    if (users.length === 0 || resolvedUsername === requestedUsername) {
+      return;
+    }
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+        if (resolvedUsername) {
+          nextParams.set("username", resolvedUsername);
+        } else {
+          nextParams.delete("username");
+        }
+        return nextParams;
+      },
+      { replace: true },
+    );
+  }, [requestedUsername, setSearchParams, users]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
