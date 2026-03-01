@@ -140,7 +140,7 @@ Use `make otel-replay-down` to tear everything down when done.
 
 ### Exploratory Testing Agents
 
-Seven scheduled agents creatively explore the app with Playwright. Each owns a
+Eight scheduled agents creatively explore the app with Playwright. Each owns a
 domain and invents novel interaction scenarios every run — they do NOT run
 pre-written test suites. Deterministic E2E tests run in CI instead.
 
@@ -151,6 +151,7 @@ pre-written test suites. Deterministic E2E tests run in CI instead.
 - `smoke-reset-visibility.yml` → **Explore: Indices, Data Streams & Pipelines** — table sorting, detail views, data management
 - `smoke-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
 - `customer-complaints.yml` → **Customer: Feature Gap Review** — missing features, feature requests, comparison to Kibana/Grafana/Elasticvue
+- `ui-designer-review.yml` → **Design: Modern UI Review** — design modernization, spacing, typography, cards, tables, empty states, loading patterns
 
 ### Visual Quality Checklist
 
