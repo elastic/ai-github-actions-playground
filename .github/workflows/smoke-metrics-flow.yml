@@ -66,6 +66,29 @@ jobs:
         done
         ```
 
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Metric card label readability**: After selecting a metric, are the
+           metric name labels (e.g. "system.cpu.total.norm.pct") readable at
+           their font size? Are they truncated with a tooltip?
+
+        2. **Chart axis label contrast**: After rendering a chart, inspect the
+           axis labels in your screenshot. Are they readable in dark mode?
+
+        3. **Empty state (no metric selected)**: Navigate to Metrics without
+           selecting a metric. Verify there is a meaningful empty state with
+           an icon, title, and description — not just a blank panel.
+
+        4. **Search empty state**: Search for a metric name that does not exist
+           (e.g. "zzz.nonexistent"). Verify the no-results state is visually
+           complete.
+
+        5. **Dark mode readability**: Switch to dark mode. Select a metric and
+           take a screenshot. Check chart line colors, axis labels, and the
+           metric selector dropdown for contrast issues.
+
         ## Output rules
 
         - **Silence is better than noise.** Only file an issue for genuine bugs.

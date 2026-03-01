@@ -322,7 +322,7 @@ export default function ProfilingPage() {
             if (viewMode !== "topFunctions") setRawQuery(event.target.value);
           }}
           InputProps={{ readOnly: viewMode === "topFunctions" }}
-          InputLabelProps={{ sx: { color: "text.secondary" } }}
+          InputLabelProps={{ sx: { color: "text.primary" } }}
         />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
           <Button variant="contained" size="small" onClick={handleRun} disabled={loading}>
@@ -339,7 +339,7 @@ export default function ProfilingPage() {
           stacktraces.length === 0 &&
           !timelineResult && (
             <Box sx={{ p: 3 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.primary">
                 Run the selected view to load profiling data.
               </Typography>
             </Box>

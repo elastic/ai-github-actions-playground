@@ -81,6 +81,30 @@ jobs:
         done
         ```
 
+        ## Visual quality checks
+
+        Although your primary focus is missing features, also note visual
+        quality issues a paying customer would complain about:
+
+        1. **Dark mode as a professional user**: Switch to dark mode and use
+           the app as you normally would. Note anything hard to read,
+           misaligned, or visually rough.
+
+        2. **Filter bar ergonomics**: The Traces page filter bar has several
+           controls. A Kibana user expects aligned, consistent-height controls.
+           A misaligned toolbar signals "unfinished" to professional users.
+
+        3. **Empty state quality**: You will inevitably land on pages with no
+           data. Are empty states informative and polished? Compare to Kibana
+           or Grafana's empty states.
+
+        4. **Typography consistency**: Are headings, body text, labels, and
+           captions consistent across pages? Do some pages use much larger
+           or smaller text than others?
+
+        If you find visual quality issues, include them in your issue under
+        a "Polish gaps" section.
+
         ## Output rules
 
         - File **one** issue per run framed as customer feedback.
@@ -89,7 +113,8 @@ jobs:
           it yet."
         - Include 3-5 specific, actionable feature requests per issue.
         - Include screenshots showing where the gap is visible.
-        - Do NOT file issues about bugs or styling. Only missing features.
+        - Do NOT file issues about bugs. Feature gaps and visual polish
+          gaps are both fair game.
         - If you genuinely can't find any gaps (unlikely), do not open
           an issue.
     secrets:

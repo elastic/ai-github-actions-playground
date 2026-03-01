@@ -147,11 +147,11 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                   px: 2,
                   py: 0.5,
                   display: "block",
-                  color: "text.secondary",
+                  color: "text.primary",
                   fontWeight: 600,
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
-                  fontSize: "0.65rem",
+                  fontSize: "0.7rem",
                 }}
               >
                 {section.label}
@@ -234,7 +234,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
             <WarningAmberIcon
               fontSize="small"
               aria-label={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
-              sx={{ color: "warning.main" }}
+              sx={{ color: "text.secondary" }}
             />
           </Tooltip>
         </Box>

@@ -28,9 +28,12 @@ jobs:
 
         1. `cd peek && npx playwright test tests/e2e/love-audit.spec.ts --reporter=list 2>&1 | tee /tmp/love-audit-output.txt`
 
-        The test visits every major page (Cluster Overview, Data Streams, Indices,
-        Ingest Pipelines, Query Lab, Metrics, Console, Users, Roles, Dashboards,
-        Fleet) with a fully mocked Elasticsearch cluster. For each page it:
+        The test visits every major page (Cluster Overview, Cluster Health,
+        Data Streams, Indices, Ingest Pipelines, Traces, Add Data, Query Lab,
+        Metrics, Console, Chat, Users, Roles, Dashboards, Fleet, Docs) with a
+        fully mocked Elasticsearch cluster. Cluster Health is audited across
+        all 6 sub-tabs (Overview, Nodes, Tasks, Capacity, Shards, Resilience).
+        For each page it:
         - takes a full-page screenshot (saved to `peek/test-results/love-audit-*.png`)
         - runs axe-core accessibility checks and logs violations
         - captures browser console errors and warnings
@@ -52,8 +55,29 @@ jobs:
            - Buttons or controls that look disabled when they shouldn't be
            - Color contrast or readability problems
            - Anything that looks "off" or unpolished
-        4. Cross-reference the accessibility violations from the test output.
-        5. For any page that shows issues, read its source code under `peek/src/components/`
+        4. **Specifically look for these visual patterns** (from the Feb 2026 audit):
+           - **Filter bar height mismatches** — on the Traces page, check if the
+             service name field, min/max duration fields, Apply button, time
+             selector, and Error/OK chips are all the same height. Read the DOM
+             dump and compare element bounding rects.
+           - **text.secondary contrast on dark mode** — sidebar section headers
+             ("WORKSPACE", "SYSTEM", "HELP"), metric card subtitles, table
+             column headers, and empty state text may be nearly invisible.
+           - **Empty state consistency** — Traces (no query run), Chat
+             (unconfigured LLM), Add Data, and Docs should all have polished
+             empty states: centered icon + title + helper text. Not just a
+             blank panel or bare text.
+           - **Fieldset legend visibility** — look for `<fieldset>` elements in
+             DOM dumps. The `<legend>` text must not be clipped or transparent.
+           - **Metric card label readability** — in Cluster Overview and Cluster
+             Health, verify stat card labels have visible contrast and are not
+             truncated.
+           - **axe-core color-contrast** — this rule is now enabled. Every
+             violation is a genuine defect. Pay particular attention to
+             violations on sidebar labels, table headers, and `text.secondary`
+             elements.
+        5. Cross-reference the accessibility violations from the test output.
+        6. For any page that shows issues, read its source code under `peek/src/components/`
            to understand the root cause and suggest a fix direction.
 
         ## Output rules

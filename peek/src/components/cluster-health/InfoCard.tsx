@@ -28,7 +28,7 @@ export default function InfoCard({ title, value, detail, severity }: InfoCardPro
       role="group"
       aria-label={title}
     >
-      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+      <Typography variant="subtitle2" color="text.primary" gutterBottom>
         {title}
       </Typography>
       <Typography variant="h5">{value}</Typography>

@@ -66,6 +66,31 @@ jobs:
         done
         ```
 
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Field name contrast in Data Streams**: Navigate to Data Streams,
+           select a stream, and look at the field names in the detail panel.
+           In dark mode, are they readable? Field names using text.secondary
+           can wash out against dark backgrounds.
+
+        2. **Table column header contrast**: On the Indices page and Data
+           Streams page, inspect table column headers in dark mode. Are they
+           visible against the dark background?
+
+        3. **Pipeline processor fieldset legends**: Open a pipeline in Ingest
+           Pipelines. Each processor section may use a `<fieldset>` border
+           with a `<legend>` label. Check that the label is fully visible.
+
+        4. **Long index name truncation**: Check how very long index names
+           (e.g. `.ds-logs-nginx.access-default-2026.02.01-000001`) are
+           displayed. Are they truncated gracefully with a tooltip?
+
+        5. **Empty state consistency**: Navigate to Data Streams or Ingest
+           Pipelines with no data. Both should show a polished empty state
+           with an icon + title + helper text (not just bare text).
+
         ## Output rules
 
         - **Silence is better than noise.** Only file an issue for genuine bugs.

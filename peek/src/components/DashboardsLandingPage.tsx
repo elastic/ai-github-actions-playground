@@ -586,7 +586,7 @@ export default function DashboardsLandingPage() {
                   {entry.description && (
                     <Typography
                       variant="body2"
-                      color="text.secondary"
+                      color="text.primary"
                       sx={{
                         mb: 1,
                         overflow: "hidden",
@@ -600,10 +600,10 @@ export default function DashboardsLandingPage() {
                     </Typography>
                   )}
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.primary">
                       {entry.panels.length} panel{entry.panels.length !== 1 ? "s" : ""}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.primary">
                       Updated {new Date(entry.updatedAt).toLocaleDateString()}
                     </Typography>
                   </Stack>

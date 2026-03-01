@@ -275,6 +275,7 @@ describe("AppSidebar", () => {
       canCreateApiKeys: true,
       canReadSecurityUsers: false,
       canReadSecurityRoles: true,
+      canReadApiKeys: true,
     });
     renderSidebar();
 
@@ -289,6 +290,7 @@ describe("AppSidebar", () => {
       canCreateApiKeys: true,
       canReadSecurityUsers: true,
       canReadSecurityRoles: false,
+      canReadApiKeys: true,
     });
     renderSidebar();
 
@@ -311,11 +313,12 @@ describe("AppSidebar", () => {
       canCreateApiKeys: true,
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
+      canReadApiKeys: false,
     });
     renderSidebar();
 
     expect(
-      screen.getByLabelText(/2 nav items hidden due to insufficient permissions/i),
+      screen.getByLabelText(/3 nav items hidden due to insufficient permissions/i),
     ).toBeInTheDocument();
   });
 
@@ -326,6 +329,7 @@ describe("AppSidebar", () => {
       canCreateApiKeys: true,
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
+      canReadApiKeys: true,
     });
     renderSidebar();
 

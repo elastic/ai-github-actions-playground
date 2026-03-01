@@ -224,6 +224,17 @@ describe("CommandPalette", () => {
     expect(screen.getAllByText("Dashboards").length).toBeGreaterThanOrEqual(1);
   });
 
+  it("excludes parameterized and hidden routes from navigation commands", () => {
+    useConnectionStore.getState().setConnected(true);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // Fleet Agent Detail has showInSidebar: false and a parameterized path — must not appear
+    expect(screen.queryByText("Fleet Agent Detail")).not.toBeInTheDocument();
+    // Cluster Tasks has showInSidebar: false — must not appear as a Navigation command
+    expect(screen.queryByText("Cluster Tasks")).not.toBeInTheDocument();
+  });
+
   it("shows Favorite Dashboards group when a dashboard is favorited", () => {
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
