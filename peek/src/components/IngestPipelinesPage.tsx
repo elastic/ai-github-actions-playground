@@ -241,7 +241,7 @@ export default function IngestPipelinesPage() {
               </ListItem>
             ))}
             {!loading && filteredPipelines.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.primary" sx={{ p: 2 }}>
                 No pipelines found.
               </Typography>
             )}

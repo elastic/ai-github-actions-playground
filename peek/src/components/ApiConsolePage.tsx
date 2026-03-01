@@ -185,9 +185,10 @@ function RequestCard({
           onKeyDown={(e) => {
             if (e.key === "Enter") onSend(entry.id);
           }}
+          label="Path"
           placeholder="/_cat/indices?v"
           sx={{ flex: 1, fontFamily: "monospace" }}
-          inputProps={{ style: { fontFamily: "monospace" } }}
+          inputProps={{ style: { fontFamily: "monospace" }, "aria-label": "Request path" }}
         />
 
         <Button

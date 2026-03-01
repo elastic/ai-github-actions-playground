@@ -166,7 +166,7 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     No agents found in logs-elastic_agent-* for the last hour.
                   </Typography>
                 </TableCell>
