@@ -4,7 +4,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import importPlugin from "eslint-plugin-import";
-import muiPlugin from "eslint-plugin-mui";
+import muiPlugin from "@notnedm/eslint-plugin-mui";
 import testingLibrary from "eslint-plugin-testing-library";
 import eslintConfigPrettier from "eslint-config-prettier";
 

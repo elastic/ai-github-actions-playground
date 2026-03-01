@@ -40,7 +40,7 @@ export default {
     return {
       JSXOpeningElement(node) {
         const name = node.name;
-        if (!name || name.name !== "Typography") return;
+        if (name.type !== "JSXIdentifier" || name.name !== "Typography") return;
 
         for (const attr of node.attributes) {
           if (

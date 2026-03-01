@@ -13,8 +13,8 @@ export default {
     },
   },
   create(context) {
-    const HEX_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-    const RGB_RE = /^rgba?\(/;
+    const HEX_RE = /#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})/;
+    const RGB_RE = /rgba?\(.*?\)/;
 
     function isColorLiteral(node) {
       return (
@@ -26,9 +26,7 @@ export default {
 
     function isTemplateLiteralWithColor(node) {
       if (node.type !== "TemplateLiteral") return false;
-      return node.quasis.some(
-        (q) => HEX_RE.test(q.value.raw.trim()) || RGB_RE.test(q.value.raw.trim()),
-      );
+      return node.quasis.some((q) => HEX_RE.test(q.value.raw) || RGB_RE.test(q.value.raw));
     }
 
     /** Check whether a node sits inside an `sx` prop or a `style` prop. */
@@ -48,7 +46,7 @@ export default {
     }
 
     /** Check whether the file is an ECharts option builder (heuristic: file imports echarts). */
-    function isEChartsFile() {
+    function checkIsEChartsFile() {
       const sourceCode = context.sourceCode ?? context.getSourceCode();
       const ast = sourceCode.ast;
       return ast.body.some(
@@ -59,21 +57,26 @@ export default {
       );
     }
 
+    const fileIsECharts = checkIsEChartsFile();
+
     function report(node) {
-      const value = node.type === "Literal" ? node.value : "<template literal>";
+      const value =
+        node.type === "Literal"
+          ? node.value
+          : node.quasis.map((q) => q.value.raw).join("${expression}");
       context.report({ node, messageId: "noHardcodedColor", data: { value } });
     }
 
     return {
       Literal(node) {
         if (!isColorLiteral(node)) return;
-        if (isInsideSxOrStyle(node) || isEChartsFile()) {
+        if (fileIsECharts || isInsideSxOrStyle(node)) {
           report(node);
         }
       },
       TemplateLiteral(node) {
         if (!isTemplateLiteralWithColor(node)) return;
-        if (isInsideSxOrStyle(node) || isEChartsFile()) {
+        if (fileIsECharts || isInsideSxOrStyle(node)) {
           report(node);
         }
       },

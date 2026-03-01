@@ -22,13 +22,11 @@ export default {
   },
   create(context) {
     const max = (context.options[0] && context.options[0].max) || 200;
+    const sourceCode = context.sourceCode ?? context.getSourceCode();
 
     return {
       Program(node) {
-        const sourceCode = context.sourceCode ?? context.getSourceCode();
-        const lines = sourceCode.lines
-          ? sourceCode.lines.length
-          : sourceCode.getText().split("\n").length;
+        const lines = sourceCode.lines.length;
         if (lines > max) {
           context.report({
             node,

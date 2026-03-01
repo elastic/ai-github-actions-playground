@@ -27,11 +27,24 @@ describe("peek/consistent-typography-variants", () => {
           code: `<Typography>text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // Custom options
+        {
+          code: `<Typography variant="h1">text</Typography>`,
+          options: [{ allowed: ["h1"] }],
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
       ],
       invalid: [
         // h3 is not in the allowed set
         {
           code: `<Typography variant="h3">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidVariant" }],
+        },
+        // Off-scale with custom options
+        {
+          code: `<Typography variant="body1">text</Typography>`,
+          options: [{ allowed: ["h1"] }],
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidVariant" }],
         },

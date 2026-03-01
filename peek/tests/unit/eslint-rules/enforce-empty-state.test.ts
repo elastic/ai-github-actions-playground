@@ -35,6 +35,10 @@ describe("peek/enforce-empty-state", () => {
         },
         // No empty-data pattern at all
         { code: `function Component() { if (x > 5) { doSomething(); } }` },
+        // Inline JSX usage without import (e.g. from global or other means)
+        {
+          code: `function Component() { return data.length === 0 ? <EmptyState /> : <div />; }`,
+        },
       ],
       invalid: [
         // .length === 0 without EmptyState usage
