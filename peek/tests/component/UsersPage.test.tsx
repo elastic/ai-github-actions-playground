@@ -236,6 +236,28 @@ describe("UsersPage", () => {
     expect(getSecurityUsersMock).toHaveBeenCalledTimes(2);
   });
 
+  it("preserves manual selection when refreshing without ?username=", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    await user.click(screen.getByRole("button", { name: /elastic/i }));
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+
+    await user.click(screen.getByRole("button", { name: /refresh/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 6, name: "elastic" })).toBeInTheDocument();
+    });
+  });
+
   it("navigates to /roles?role=<name> when a role chip is clicked", async () => {
     const user = userEvent.setup();
     getCapabilitiesMock.mockResolvedValue(CAPS_OK);
@@ -308,5 +330,19 @@ describe("UsersPage", () => {
     await user.click(screen.getByRole("link", { name: "Switch to alice" }));
 
     expect(await screen.findByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
+  });
+
+  it("falls back to the first user when ?username= points to an unknown user", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=does-not-exist"]}>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
   });
 });

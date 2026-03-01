@@ -175,4 +175,26 @@ describe("App shell visibility", () => {
     expect(redoSpy).not.toHaveBeenCalled();
     cmEditor.remove();
   });
+
+  it("sets document.title based on the current route", () => {
+    render(
+      <MemoryRouter initialEntries={["/docs"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(document.title).toBe("Docs — Elastic Peek");
+  });
+
+  it("falls back to Elastic Peek for unknown routes", () => {
+    document.title = "Previous Title";
+    render(
+      <MemoryRouter initialEntries={["/unknown-page-that-does-not-exist"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    // Unknown routes redirect to /dashboards, so title reflects Dashboards
+    expect(document.title).toBe("Dashboards — Elastic Peek");
+  });
 });
