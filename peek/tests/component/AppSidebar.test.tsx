@@ -267,4 +267,70 @@ describe("AppSidebar", () => {
 
     expect(useUIStore.getState().themeMode).toBe("light");
   });
+
+  it("hides Users nav item when canReadSecurityUsers is false", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: true,
+    });
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /^users$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /roles/i })).toBeInTheDocument();
+  });
+
+  it("hides Roles nav item when canReadSecurityRoles is false", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: false,
+    });
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /roles/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^users$/i })).toBeInTheDocument();
+  });
+
+  it("shows both Users and Roles when capabilities are null (not yet fetched)", () => {
+    useConnectionStore.getState().setConnected(true);
+    renderSidebar();
+
+    expect(screen.getByRole("button", { name: /^users$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /roles/i })).toBeInTheDocument();
+  });
+
+  it("shows warning icon when items are hidden due to permissions", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+    });
+    renderSidebar();
+
+    expect(
+      screen.getByLabelText(/2 nav items hidden due to insufficient permissions/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show warning icon when all permissions are granted", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+    });
+    renderSidebar();
+
+    expect(
+      screen.queryByLabelText(/hidden due to insufficient permissions/i),
+    ).not.toBeInTheDocument();
+  });
 });
