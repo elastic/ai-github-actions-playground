@@ -1,6 +1,9 @@
 PEEK_DIR := peek
 
-.PHONY: help setup serve serve-proxy serve-background build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
+# Base ref for changed-file targets (override: make lint-changed BASE=HEAD)
+BASE ?= main
+
+.PHONY: help setup serve serve-proxy serve-background build lint lint-changed format format-changed ci check clean preview test test-unit test-unit-changed test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
@@ -15,11 +18,14 @@ help:
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - Prettier format check + ESLint + TypeScript type check"
+	@echo "  lint-changed     - Like lint, but Prettier + ESLint run only on files changed since BASE (default: main)"
 	@echo "  format           - Auto-format code with Prettier"
+	@echo "  format-changed   - Like format, but only on files changed since BASE"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
 	@echo "  test-unit        - Run unit tests"
+	@echo "  test-unit-changed - Run unit tests related to files changed since BASE"
 	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
@@ -114,6 +120,44 @@ ci:
 	@echo "✓ CI passed: lint + coverage gate + build all passed."
 
 check: ci
+
+# ---------------------------------------------------------------------------
+# Incremental targets — only touch files changed since BASE (default: main).
+# Override the base ref:  make lint-changed BASE=HEAD
+# ---------------------------------------------------------------------------
+
+lint-changed:
+	@echo "Detecting changed files against '$(BASE)'..."
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
+	if [ -n "$$CHANGED" ]; then \
+		echo "Running Prettier format check on changed files..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | xargs npx prettier --check) && \
+		echo "" && \
+		echo "Running ESLint on changed files..." && \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | xargs npx eslint); \
+	else \
+		echo "No changed source files found — skipping Prettier and ESLint."; \
+	fi
+	@echo ""
+	@echo "Running TypeScript type check (full project)..."
+	@cd $(PEEK_DIR) && npx tsc --noEmit
+	@echo ""
+	@echo "✓ All checks passed."
+
+format-changed:
+	@echo "Detecting changed files against '$(BASE)'..."
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
+	if [ -n "$$CHANGED" ]; then \
+		echo "Formatting changed files..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | xargs npx prettier --write); \
+		echo "✓ Formatting complete."; \
+	else \
+		echo "No changed source files to format."; \
+	fi
+
+test-unit-changed:
+	@echo "Running unit tests for changed files (against $(BASE))..."
+	@cd $(PEEK_DIR) && npx vitest run --config vitest.config.ts --changed $(BASE) --passWithNoTests
 
 test: test-unit test-integration test-e2e
 
