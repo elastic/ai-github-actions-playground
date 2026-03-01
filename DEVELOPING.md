@@ -21,9 +21,8 @@
 
 - **Node.js** `^20.19.0` or `>=22.12.0` (required by Vite 7)
 - **npm** `>=10` (bundled with Node.js 20/22)
-- **GNU Make** — pre-installed on macOS and most Linux distributions. On Windows, install via [Chocolatey](https://chocolatey.org/) (`choco install make`), [Scoop](https://scoop.sh/) (`scoop install make`), or use WSL.
-
-Use a version manager such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to switch Node versions quickly. A `.nvmrc` file is included in this repo — run `nvm use` or `fnm use` at the repo root to activate the correct version automatically.
+- **GNU Make** (pre-installed on macOS/Linux)
+- `.nvmrc` included — run `nvm use` or `fnm use` to activate the correct version
 
 ## Quick Start
 
@@ -46,106 +45,37 @@ make otel-down         # stop and remove local OTel stack
 make otel-cloud-up     # send OTel data to a remote cluster (set ES_URL, ES_API_KEY)
 ```
 
-> **Note:** `make serve` and `make serve-proxy` auto-install dependencies. The other targets (`lint`, `format`, `build`, `test-*`) assume dependencies are already installed — run `make setup` once first.
-
-If `make` is unavailable, run the equivalent npm commands directly from the `peek/` directory:
-
-```bash
-cd peek
-npm install        # install dependencies (replaces make setup)
-npm run dev        # start dev server (replaces make serve)
-npm run build      # production build (replaces make build)
-npm run lint       # lint (replaces make lint)
-npm run format     # format (replaces make format)
-npm run electron:dev   # start Electron dev mode (replaces make electron-dev)
-npm run electron:build # build Electron app (replaces make electron-build)
-npm run electron:dist  # package for distribution (replaces make electron-dist)
-```
-
-> **Pre-commit hook:** `make setup` (or `npm install` inside `peek/`) also installs a [husky](https://typicode.github.io/husky/) pre-commit hook that automatically runs Prettier (format) and ESLint (lint) on staged files via [lint-staged](https://github.com/lint-staged/lint-staged). This keeps committed code consistently formatted and lint-free.
+`make setup` must run first. `make serve` and `make serve-proxy` auto-install dependencies. A husky pre-commit hook runs Prettier + ESLint on staged files.
 
 ## Running with a Proxy
 
-Use `make serve-proxy` (or `ES_URL=... npm run dev` in the `peek/` directory) to start the Vite dev server with a built-in proxy. The proxy forwards requests to your Elasticsearch cluster, so no CORS configuration is needed on Elasticsearch.
+`make serve-proxy` starts Vite with a built-in proxy — no CORS configuration needed on Elasticsearch.
 
 ```bash
 ES_URL=http://localhost:9200 make serve-proxy
 ```
 
-Then enter `http://localhost:3000/_es` as the Elasticsearch URL when connecting the dashboard. The `/_es` prefix proxies all Elasticsearch API requests (connection validation, cluster health, queries, data streams, field caps, API console, etc.) to `ES_URL`.
-
-```
-┌─────────────┐    /_es/*       ┌──────────────────┐    /*             ┌────────────────────┐
-│   Browser    │ ─────────────▶  │  Vite dev server  │ ─────────────▶  │   Elasticsearch    │
-│              │ ◀─────────────  │  (localhost:3000) │ ◀─────────────  │   cluster          │
-└─────────────┘    JSON          └──────────────────┘    JSON          └────────────────────┘
-```
+Connect to `http://localhost:3000/_es` in the dashboard. The `/_es` prefix proxies all ES API requests to `ES_URL`.
 
 ## Electron Mode
 
-Electron mode packages Peek as a native desktop application. The Electron main process handles Elasticsearch requests over IPC, which means the browser-side CORS restriction no longer applies — no proxy or CORS configuration is required. Use this runtime when:
+Electron packages Peek as a native desktop app. ES requests go over IPC — no CORS or proxy needed.
 
-- You cannot or do not want to add CORS headers to Elasticsearch.
-- You want a native desktop app rather than a browser tab.
-- You are distributing Peek to users who should not need to manage a local proxy.
+```bash
+make electron-dev    # dev mode with hot-reload + DevTools
+make electron-build  # compile renderer + main process
+make electron-dist   # package distributable (dmg/exe/AppImage) to peek/dist-packages/
+```
 
-### When to choose each runtime
-
-| Runtime | Requires CORS on ES? | Requires local proxy? | Distribution |
+| Runtime | CORS on ES? | Proxy? | Distribution |
 | --- | --- | --- | --- |
 | Browser (direct) | Yes | No | Static site / GitHub Pages |
-| Browser + proxy (`make serve-proxy`) | No | Yes (Vite or nginx) | Docker image |
-| Electron (`make electron-dev`) | No | No | Native desktop app |
-
-### Running in Electron
-
-```bash
-make electron-dev   # start Electron app in dev mode (Vite hot-reload + DevTools)
-```
-
-Enter your Elasticsearch URL and credentials in the connection dialog just as you would in browser mode. The app automatically uses the IPC transport instead of `fetch` when running inside Electron.
-
-### Building and distributing
-
-```bash
-make electron-build  # compile renderer (peek/dist/) + main process (peek/dist-electron/)
-make electron-dist   # package distributable: macOS .dmg / Windows .exe / Linux .AppImage
-                     # output written to peek/dist-packages/
-```
-
-The packaged app is self-contained — users do not need Node.js, npm, or a proxy server installed.
-
-**Architecture (Electron mode):**
-```
-┌─────────────────────────────────────────────────┐
-│  Electron app                                    │
-│  ┌──────────────┐  IPC   ┌────────────────────┐ │
-│  │  Renderer    │ ─────▶  │  Main process      │ │     ┌────────────────────┐
-│  │  (React UI)  │ ◀─────  │  (Node.js / IPC    │ │────▶│   Elasticsearch    │
-│  └──────────────┘        │   handlers)         │ │◀────│   cluster          │
-│                           └────────────────────┘ │     └────────────────────┘
-└─────────────────────────────────────────────────┘
-```
+| Browser + proxy | No | Yes | Docker image |
+| Electron | No | No | Native desktop app |
 
 ## Architecture
 
-The dashboard is a static single-page application. Elasticsearch queries are made directly from the browser, or via a local proxy that avoids CORS.
-
-**Direct mode** (requires CORS on Elasticsearch):
-```
-┌─────────────┐    ES|QL     ┌────────────────────┐
-│   Browser    │ ──────────▶  │   Elasticsearch    │
-│  (static)    │ ◀──────────  │   cluster          │
-└─────────────┘    JSON       └────────────────────┘
-```
-
-**Proxy mode** (no CORS required):
-```
-┌─────────────┐    /_es/*       ┌───────────┐    /*            ┌────────────────────┐
-│   Browser    │ ─────────────▶  │   Proxy   │ ─────────────▶  │   Elasticsearch    │
-│              │ ◀─────────────  │  (local)  │ ◀─────────────  │   cluster          │
-└─────────────┘    JSON          └───────────┘    JSON          └────────────────────┘
-```
+Static SPA. Three runtimes: direct browser→ES (requires CORS), browser→proxy→ES (no CORS), or Electron IPC (no CORS). See § Electron Mode for the comparison table.
 
 ### Key Design Decisions
 
@@ -162,6 +92,23 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 4. Give the descriptor a unique `order` value so it appears in the desired picker order.
 
 `vizRegistry.tsx` discovers descriptor modules automatically with `import.meta.glob`, so no central registration file edits are required for new visualization types.
+
+## Perses Architecture
+
+Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, ECharts-based). For visual/theming rules (tooltip style, colors, series behavior), see DESIGN_LANGUAGE.md § Charts. For the full migration roadmap, see PERSES_MIGRATION_PLAN.md.
+
+**Architecture layers:**
+
+- **Data model** — dashboards serialize to the Perses resource format (`kind: "Dashboard"`, panels as `kind: "Panel"` with plugin kinds). Adapters in `services/perses/dashboardAdapters.ts` convert between internal `DashboardDefinition` and the Perses wire format.
+- **Panel plugins** — each visualization type maps to a Perses plugin kind via `VISUALIZATION_TO_PLUGIN_KIND` in the adapter layer (`TimeSeriesChart`, `StatChart`, `GaugeChart`, `BarChart`, `TablePanel`, `PieChart`, `ScatterChart`, `HeatMapChart`, `HistogramChart`, `MarkdownPanel`).
+- **Viz registry** — `vizRegistry.tsx` and `components/perses/panelRegistry.ts` use the same `VizRegistryEntry` interface. Registry entries are auto-discovered from `visualizations/registry/*.tsx`.
+- **Rendering** — charts render through `EChartWrapper`, which wraps the ECharts core that Perses itself uses internally. Do not import ECharts directly in new chart components; use `EChartWrapper` or Perses's `@perses-dev/components` `EChart` component.
+- **Theming** — `useEChartTheme()` produces ECharts-compatible options from MUI palette tokens. This hook is modeled on Perses's `generateChartsTheme` and will be replaced by Perses's `ChartsProvider` context once the migration completes. Until then, all chart theming flows through this single hook — charts never set their own colors.
+
+**Code-structure rules for chart components:**
+
+- Chart components receive data via `VizRendererProps`. They do not fetch data — the panel container handles queries.
+- New chart types must be registered as a `VizRegistryDescriptor` in `visualizations/registry/`. One file per chart type.
 
 ## Adding a New Elasticsearch Endpoint
 
@@ -188,129 +135,61 @@ This structure ensures that **adding types to an existing domain** only touches 
 
 ## Docker
 
-The `Dockerfile` produces a self-contained image that serves the built dashboard with nginx and proxies `/_es/*` to Elasticsearch. No CORS configuration on Elasticsearch is required.
+Self-contained image: nginx serves the built dashboard and proxies `/_es/*` to Elasticsearch (no CORS needed).
 
 ```bash
 make docker-build                              # build the image
-make docker-run                                # run against host Elasticsearch (port 9200)
+make docker-run                                # run against localhost:9200
 ES_URL=https://my-cluster:9200 make docker-run # run against a remote cluster
 ```
 
-Or with Docker Compose:
-
-```bash
-ES_URL=http://my-elasticsearch:9200 docker compose up
-```
-
-Open `http://localhost:8080` and enter `http://localhost:8080/_es` as the Elasticsearch URL. The nginx proxy inside the container forwards `/_es` requests (with path rewriting) to `ES_URL`. See `docker/nginx.conf.template` for the proxy configuration.
+Connect to `http://localhost:8080/_es`. See `docker/nginx.conf.template` for proxy config.
 
 ## OTel Telemetry Stack
 
 Generate real telemetry in `metrics-*`, `traces-*`, and `logs-*` indices using an EDOT collector and synthetic generators.
 
-### Local (with Elasticsearch)
+### Local
 
 ```bash
-make otel-up      # starts ES + EDOT collector + otelgen traces & logs
+make otel-up      # ES (localhost:9200) + EDOT collector + otelgen traces/logs + Fleet agent simulator
 make otel-logs    # tail collector logs
-make otel-down    # stop and remove everything
+make otel-down    # stop everything
 ```
 
-This starts:
-- Elasticsearch (`http://localhost:9200`)
-- EDOT collector (Elastic Agent in OTel mode — `hostmetrics` + OTLP receiver + ES exporter)
-- otelgen traces generator (synthetic multi-service traces via OTLP)
-- otelgen logs generator (synthetic logs via OTLP)
-- Fleet agent simulator that writes representative Fleet documents to `fleet-agents-sim` for Cluster Overview testing
-
-### Remote (Elastic Cloud or any ES endpoint)
+### Remote
 
 ```bash
 ES_URL=https://my-cluster.es.cloud:443 ES_API_KEY=... make otel-cloud-up
-make otel-cloud-logs
 make otel-cloud-down
-```
-
-This starts only the EDOT collector and generators — no local Elasticsearch.
-
-### Quick data check
-
-```bash
-curl -s -X POST 'http://localhost:9200/_query' \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"FROM metrics-hostmetricsreceiver-default | STATS count = COUNT(*) BY dataset = data_stream.dataset, metric_type = type | SORT count DESC"}'
 ```
 
 ### OTLP Fixture Capture & Replay
 
-Pre-captured OTLP data in `peek/fixtures/otlp/` can be replayed into a fresh
-Elasticsearch without running the generators. This is faster and deterministic.
+Pre-captured OTLP data in `peek/fixtures/otlp/` — faster and deterministic, no generators needed.
 
 ```bash
 make otel-replay-up    # start ES + EDOT collector in replay mode
-make otel-replay       # replay OTLP fixtures + seed non-OTLP data (web_logs, orders, pipelines)
-make test-e2e-live     # run Playwright tests against real data
+make otel-replay       # replay fixtures + seed non-OTLP data (web_logs, orders, pipelines)
+make test-e2e-live     # Playwright tests against real data
 make otel-replay-down  # stop everything
 ```
 
-The replay script (`peek/scripts/otel-replay.mjs`) reads `.jsonl.gz` fixtures,
-rewrites timestamps to be relative to now, and sends via OTLP/HTTP to the
-collector. Data flows through the same elasticapm pipeline as live data.
-
-To re-capture fixtures from the live stack:
-
-```bash
-make otel-capture       # start OTel stack with file exporters
-# wait ~30 seconds
-make otel-capture-down  # stop and gzip captures
-# commit peek/fixtures/otlp/*.jsonl.gz
-```
-
-See `peek/fixtures/otlp/README.md` for details.
+Re-capture: `make otel-capture`, wait ~30s, `make otel-capture-down`. See `peek/fixtures/otlp/README.md`.
 
 ## Fleet Harness
 
-Use this harness to run a real Fleet Server stack with enrolled Elastic Agents. This produces the actual Fleet and agent telemetry data streams that the Fleet page consumes.
+Real Fleet Server stack with enrolled Elastic Agents. Allow 3-5 minutes for full initialization.
 
 ```bash
-make fleet-harness-up
+make fleet-harness-up     # ES (localhost:9220, elastic/changeme) + Kibana + Fleet Server + 2 agents
+make fleet-harness-down   # stop everything
+make fleet-harness-logs   # tail Fleet Server logs
 ```
-
-This starts (allow 3-5 minutes for full initialization):
-
-- Elasticsearch with security enabled (`http://localhost:9220`, user `elastic`, password `changeme`)
-- Kibana with Fleet auto-configuration (`http://localhost:5601`)
-- Fleet Server (`http://localhost:8220`)
-- Two enrolled Elastic Agents (`agent-host-01`, `agent-host-02`)
-
-Data streams produced:
-
-- `metrics-fleet_server.agent_status-default` — aggregate agent counts
-- `metrics-fleet_server.agent_versions-default` — agent count per version
-- `logs-fleet_server.output_health-default` — output health
-- `logs-elastic_agent-default` — agent logs
-- `metrics-elastic_agent.*-default` — agent metrics (CPU, memory)
 
 Connect Peek to `http://localhost:9220` with credentials `elastic` / `changeme`.
 
-Stop with:
-
-```bash
-make fleet-harness-down
-```
-
-Tail Fleet Server logs:
-
-```bash
-make fleet-harness-logs
-```
-
-Quick data check:
-
-```bash
-curl -sf -u elastic:changeme \
-  'http://localhost:9220/_cat/indices/metrics-fleet_server*,logs-fleet_server*,logs-elastic_agent*,metrics-elastic_agent*?v&h=index,docs.count,store.size'
-```
+Data streams: `metrics-fleet_server.agent_status-default`, `metrics-fleet_server.agent_versions-default`, `logs-fleet_server.output_health-default`, `logs-elastic_agent-default`, `metrics-elastic_agent.*-default`.
 
 ## Testing
 
@@ -321,16 +200,12 @@ make test-e2e         # Playwright browser tests (starts dev server automaticall
 make test             # run all (unit, integration, e2e)
 ```
 
-Unit tests (`peek/tests/unit/`) run in jsdom via Vitest. Integration tests (`peek/tests/integration/`) use [Testcontainers](https://testcontainers.com/) to start a real Elasticsearch instance, seed test data, and run ES|QL queries through the app's `executeEsql` service. **Docker must be running** for integration tests.
+Unit tests run in jsdom via Vitest. Integration tests use Testcontainers (**Docker must be running**). E2E tests use Playwright — run `npx playwright install chromium` if the browser binary is missing.
 
-E2E tests (`peek/tests/e2e/`) use [Playwright](https://playwright.dev/) to launch a real browser against the Vite dev server. Playwright and the Chromium browser are installed as devDependencies — run `npx playwright install chromium` if the browser binary is missing.
-
-To run E2E tests against live Elasticsearch data, start the OTel harness first:
+E2E with live data:
 
 ```bash
-make otel-up                                 # start ES + EDOT collector
-ES_URL=http://localhost:9200 make test-e2e   # run e2e tests with proxy
-make otel-down                               # stop when done
+make otel-up && ES_URL=http://localhost:9200 make test-e2e && make otel-down
 ```
 
 ### Exploratory Testing Agents
@@ -350,39 +225,22 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 | Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `explore-customer-feedback.yml` |
 | Design: Modern UI Review | Design modernization, spacing, typography, cards, tables, empty states, loading patterns | `ui-designer-review.yml` |
 
-Each agent writes and runs its own Playwright scripts to navigate, click, type,
-and inspect. They report only genuine bugs found through hands-on exploration.
+Agents use **Playwright MCP tools** (`browser_navigate`, `browser_click`,
+`browser_type`, `browser_snapshot`, `browser_take_screenshot`) for interactive
+browser exploration. They do NOT write Node.js scripts — the MCP tools allow
+step-by-step interaction where the agent sees the page state after each action
+and adapts. They report only genuine bugs.
 
 #### Handling failures during exploration
 
-When a Playwright interaction fails (timeout, element not found, unexpected state):
-
-1. **Do not retry the same action more than twice.** If it fails twice, the page
-   state is different from what you expected — retrying won't help.
-2. **Diagnose before moving on.** Take a screenshot at the point of failure.
-   Inspect the DOM to see what's actually on the page. Check if the element
-   exists with a different selector, or if the UI is in an unexpected state.
-3. **Adapt or report.** Either work around the failure (try a different selector,
-   a different interaction path, or skip to the next scenario) or report the
-   failure as a finding — a persistent timeout on an expected UI element is
-   itself a potential bug worth filing.
-4. **Never claim you verified something you didn't.** If a scenario failed and
-   you skipped it, say so in your output. Do not list it as "verified" or
-   "no issues found."
-
-### Testing Philosophy
-
-- **Test behavior, not implementation** — assert on what the user sees and what the system does, not internal wiring.
-- **Fast by default** — all unit and component tests run in jsdom via Vitest with no browser, Docker, or network.
-- **Component tests over E2E** — render real React components with `@testing-library/react` + `userEvent` to catch rendering bugs and interaction flows.
-- **No trivial tests** — every test should describe a behavior someone cares about; skip "renders without crashing" tests with zero assertions.
-- **Mock at boundaries** — mock `fetch`, `localStorage`, `echarts/core`; everything else uses real code paths.
+- Do not retry the same action more than twice — the page state is different from expected.
+- Diagnose before moving on: use `browser_take_screenshot` and `browser_snapshot` to see what's on the page.
+- Adapt (different selector/path) or report the failure as a finding.
+- Never claim you verified something you didn't — if it failed and you skipped it, say so.
 
 ### CI
 
-`make ci` runs lint + unit tests + build on every push to `main` and on every PR that touches `peek/**`. Integration tests are not part of the default CI pipeline — run them locally with `make test-integration`.
-
-Production builds (`make build`) output to `peek/dist/` and are deployed to GitHub Pages by the `deploy-pages.yml` workflow on every push to `main`.
+`make ci` runs lint + unit tests + build on every push to `main` and on PRs touching `peek/**`. Integration tests run locally only (`make test-integration`). Production builds deploy to GitHub Pages via `deploy-pages.yml`.
 
 ## Engineering Standards
 
@@ -403,20 +261,45 @@ Many rules (no `any`, `import type`, import ordering, no duplicate imports) are 
 
 Use the simplest solution that works, in this order: `useState` → derived state (compute during render) → `useReducer` → React Context → URL state → Zustand.
 
+### UI Components
+
+Shared layout and feedback components (`EmptyState`, `ContentSkeleton`, `PageHeader`) are specified in DESIGN_LANGUAGE.md § Components. Use them instead of one-off implementations.
+
 ### Testing Standards
 
-- Include at least one `vitest-axe` accessibility check per component test suite (`expect(await axe(container)).toHaveNoViolations()`).
 - Test behavior (what the user sees), not implementation details (internal state, hook call counts).
 - Test error states, loading states, and empty states — not just the happy path.
+- Include at least one `vitest-axe` accessibility check per component test suite.
+- Prefer component tests (`@testing-library/react` + `userEvent`) over E2E for rendering and interaction.
+- Mock at boundaries (`fetch`, `localStorage`, `echarts/core`); everything else uses real code paths.
+- No trivial tests — skip "renders without crashing" with zero assertions.
+
+### Banned Code Patterns
+
+See DESIGN_LANGUAGE.md § Banned Patterns for visual/design bans (inline hex, drop shadows, disallowed variants, etc.).
+
+```tsx
+// ❌ Barrel MUI imports (breaks tree-shaking)
+import { Box, Typography } from '@mui/material';
+// ✅
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+
+// ❌ Direct ECharts import in chart components
+import * as echarts from 'echarts/core';
+// ✅ Use the wrapper or Perses component
+import EChartWrapper from './EChartWrapper';
+
+// ❌ Fetching data inside a chart component
+useEffect(() => { fetchData(query) }, [query]);
+// ✅ Chart components receive data via VizRendererProps — the panel container fetches
+```
 
 ## Accessibility Standards
 
-This project targets **WCAG 2.2 Level AA** conformance. Many structural issues (missing alt text, invalid ARIA, click without keyboard, missing labels) are caught by `eslint-plugin-jsx-a11y` and `vitest-axe`. This section covers what automation cannot catch.
+This project targets **WCAG 2.2 Level AA** conformance. For contrast ratios, color usage rules, and visual accessibility requirements, see DESIGN_LANGUAGE.md § Accessibility.
 
-### Color & Contrast
-
-- 4.5:1 contrast ratio for normal text, 3:1 for large text (>= 18pt or >= 14pt bold), 3:1 for UI components and graphical objects.
-- Never use color as the sole means of conveying information — add an icon, text, or pattern.
+Many structural issues (missing alt text, invalid ARIA, click without keyboard, missing labels) are caught by `eslint-plugin-jsx-a11y` and `vitest-axe`. This section covers the implementation guidance that automation cannot catch.
 
 ### Keyboard & Focus
 
@@ -443,7 +326,7 @@ This project targets **WCAG 2.2 Level AA** conformance. Many structural issues (
 For any PR that modifies UI, verify the items that CI cannot check automatically:
 
 - [ ] Interactive elements are keyboard accessible (tab, activate, dismiss)
-- [ ] Color contrast meets the ratios above
+- [ ] Color contrast meets DESIGN_LANGUAGE.md § Accessibility ratios
 - [ ] Color is not the sole indicator of meaning
 - [ ] Focus is managed correctly on route changes and dialog open/close
 - [ ] Loading, empty, and error states are handled and designed

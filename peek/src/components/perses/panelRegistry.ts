@@ -1,12 +1,12 @@
 import type { VisualizationType } from "../../types";
-import type { VizRegistryDescriptor, VizRegistryEntry } from "../visualizations/vizRegistry";
+import type { VizRegistryEntry } from "../visualizations/vizRegistry";
+import { getPersesPanelPluginKind } from "../../services/perses/panelPluginKinds";
 
 export type PersesPanelEntry = VizRegistryEntry;
 
-const panelRegistryModules = import.meta.glob<{ default: VizRegistryDescriptor }>(
-  "../visualizations/registry/*.tsx",
-  { eager: true },
-);
+const panelRegistryModules = import.meta.glob<{
+  default: { order: number; entry: VizRegistryEntry };
+}>("../visualizations/registry/*.tsx", { eager: true });
 
 const persesPanelEntries = Object.values(panelRegistryModules)
   .map((module) => module.default)
@@ -23,7 +23,11 @@ export const PERSES_PANEL_TYPES = persesPanelEntries.map((entry) => entry.type) 
 ];
 
 export function getPersesPanelEntry(type: VisualizationType): PersesPanelEntry | undefined {
-  return persesPanelEntries.find((entry) => entry.type === type);
+  return getPersesPanelEntryByPluginKind(getPersesPanelPluginKind(type));
+}
+
+export function getPersesPanelEntryByPluginKind(kind: string): PersesPanelEntry | undefined {
+  return persesPanelEntries.find((entry) => getPersesPanelPluginKind(entry.type) === kind);
 }
 
 export function getAllPersesPanelEntries(): readonly PersesPanelEntry[] {
