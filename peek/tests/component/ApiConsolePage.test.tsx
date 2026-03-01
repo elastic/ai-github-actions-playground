@@ -222,4 +222,16 @@ describe("ApiConsolePage", () => {
 
     expect(screen.getAllByRole("button", { name: /send/i })).toHaveLength(1);
   });
+
+  it("prepends a draft entry and clears the draft on mount", () => {
+    act(() => {
+      useApiConsoleStore.getState().setConsoleDraft({ method: "GET", path: "/my-index/_mapping" });
+    });
+
+    render(<ApiConsolePage />);
+
+    const pathInputs = screen.getAllByPlaceholderText("/_cat/indices?v");
+    expect(pathInputs[0]).toHaveValue("/my-index/_mapping");
+    expect(useApiConsoleStore.getState().consoleDraft).toBeNull();
+  });
 });

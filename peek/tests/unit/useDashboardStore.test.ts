@@ -382,6 +382,31 @@ describe("useDashboardStore exportDashboard / importDashboard round-trip", () =>
     expect(state.dashboard.title).toBe("Round-Trip Test");
     expect(state.dashboard.timeRange).toEqual({ from: "now-30d", to: "now" });
   });
+
+  it("exports dashboards using the Perses dashboard shape", () => {
+    const exported = JSON.parse(useDashboardStore.getState().exportDashboard()) as {
+      kind: string;
+      metadata?: { name?: string };
+      spec?: { panels?: Record<string, unknown> };
+    };
+    const state = useDashboardStore.getState();
+
+    expect(exported.kind).toBe("Dashboard");
+    expect(exported.metadata?.name).toBe(state.dashboard.id);
+    expect(Object.keys(exported.spec?.panels ?? {})).toContain(state.dashboard.panels[0].id);
+  });
+
+  it("exports workspaces using the Perses workspace shape", () => {
+    const exported = JSON.parse(useDashboardStore.getState().exportWorkspace()) as {
+      kind: string;
+      spec?: { dashboards?: unknown[]; activeDashboardId?: string };
+    };
+    const state = useDashboardStore.getState();
+
+    expect(exported.kind).toBe("Workspace");
+    expect(exported.spec?.dashboards?.length).toBe(state.dashboards.length);
+    expect(exported.spec?.activeDashboardId).toBe(state.activeDashboardId);
+  });
 });
 
 describe("useDashboardStore importDashboard", () => {

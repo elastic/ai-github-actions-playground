@@ -45,6 +45,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import type { DashboardDefinition } from "../types";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { toPersesDashboard } from "../services/perses/dashboardAdapters";
 
 export default function DashboardsLandingPage() {
   const navigate = useNavigate();
@@ -344,7 +345,7 @@ export default function DashboardsLandingPage() {
 
   const handleExportDashboard = useCallback(() => {
     if (!menuDashboard) return;
-    const json = JSON.stringify(menuDashboard, null, 2);
+    const json = JSON.stringify(toPersesDashboard(menuDashboard), null, 2);
     const safeTitle = menuDashboard.title.replace(/\s+/g, "-").toLowerCase();
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
