@@ -36,6 +36,7 @@ import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import DriftRadarMap from "../visualizations/DriftRadarMap";
+import EmptyState from "../EmptyState";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
@@ -968,7 +969,9 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : (
-                <CenteredEmptyState message="No spans found for this trace" sx={{ flex: 1 }} />
+                <Box sx={{ flex: 1 }}>
+                  <EmptyState heading="No spans found for this trace" />
+                </Box>
               )}
             </Paper>
           )}
