@@ -1,5 +1,19 @@
+import type { z } from "zod";
+
 import type { components, operations } from "./types.generated";
 import { executeRawRequest } from "./rawRequest";
+import {
+  validateResponse,
+  esqlQueryResponseSchema,
+  clusterHealthResponseSchema,
+  clusterStatsResponseSchema,
+  nodesInfoResponseSchema,
+  nodesStatsResponseSchema,
+  catIndicesResponseSchema,
+  fieldCapsResponseSchema,
+  getDataStreamsResponseSchema,
+  getIngestPipelinesResponseSchema,
+} from "./responseSchemas";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases from the generated OpenAPI types
@@ -570,6 +584,26 @@ export class ElasticsearchClient {
     );
   }
 
+  /**
+   * Like `_fetch`, but validates the response against a zod schema before
+   * returning.  Validation failures are thrown as `ElasticsearchError` so
+   * callers get an actionable message instead of a cryptic render crash.
+   *
+   * The schema is intentionally permissive (`.passthrough()`) — it validates
+   * the fields the app depends on while allowing extra fields through.  The
+   * return type `T` is the narrower TypeScript type the caller expects.
+   */
+  private async _fetchValidated<T>(
+    path: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: z.ZodType<any>,
+    label: string,
+    options?: RequestInit & { signal?: AbortSignal },
+  ): Promise<T> {
+    const raw = await this._fetch<unknown>(path, options);
+    return validateResponse(schema, raw, label) as T;
+  }
+
   // -------------------------------------------------------------------------
   // ES|QL
   // -------------------------------------------------------------------------
@@ -579,11 +613,16 @@ export class ElasticsearchClient {
     signal?: AbortSignal,
   ): Promise<EsqlQueryResponse & { executionTimeMs: number }> {
     const start = Date.now();
-    const data = await this._fetch<EsqlQueryResponse>("/_query?format=json", {
-      method: "POST",
-      body: JSON.stringify(params),
-      signal,
-    });
+    const data = await this._fetchValidated<EsqlQueryResponse>(
+      "/_query?format=json",
+      esqlQueryResponseSchema,
+      "ES|QL query",
+      {
+        method: "POST",
+        body: JSON.stringify(params),
+        signal,
+      },
+    );
     return { ...data, executionTimeMs: Date.now() - start };
   }
 
@@ -600,11 +639,21 @@ export class ElasticsearchClient {
     signal?: AbortSignal,
   ): Promise<ClusterHealthResponse> {
     const path = level ? `/_cluster/health?level=${level}` : "/_cluster/health";
-    return this._fetch<ClusterHealthResponse>(path, { signal });
+    return this._fetchValidated<ClusterHealthResponse>(
+      path,
+      clusterHealthResponseSchema,
+      "cluster health",
+      { signal },
+    );
   }
 
   async getClusterStats(signal?: AbortSignal): Promise<ClusterStatsResponse> {
-    return this._fetch<ClusterStatsResponse>("/_cluster/stats", { signal });
+    return this._fetchValidated<ClusterStatsResponse>(
+      "/_cluster/stats",
+      clusterStatsResponseSchema,
+      "cluster stats",
+      { signal },
+    );
   }
 
   async getPendingTasks(signal?: AbortSignal): Promise<ClusterPendingTasksResponse> {
@@ -612,12 +661,19 @@ export class ElasticsearchClient {
   }
 
   async getNodes(signal?: AbortSignal): Promise<NodesInfoResponse> {
-    return this._fetch<NodesInfoResponse>("/_nodes", { signal });
+    return this._fetchValidated<NodesInfoResponse>(
+      "/_nodes",
+      nodesInfoResponseSchema,
+      "nodes info",
+      { signal },
+    );
   }
 
   async getNodeStats(signal?: AbortSignal): Promise<NodesStatsResponse> {
-    return this._fetch<NodesStatsResponse>(
+    return this._fetchValidated<NodesStatsResponse>(
       "/_nodes/stats/os,jvm,process,thread_pool,breakers,indices,fs,ingest",
+      nodesStatsResponseSchema,
+      "nodes stats",
       { signal },
     );
   }
@@ -672,7 +728,14 @@ export class ElasticsearchClient {
 
   async getDataStreams(name?: string, signal?: AbortSignal): Promise<GetDataStreamsResponse> {
     const path = name ? `/_data_stream/${encodeURIComponent(name)}` : "/_data_stream";
-    return this._fetch<GetDataStreamsResponse>(path, { signal });
+    return this._fetchValidated<GetDataStreamsResponse>(
+      path,
+      getDataStreamsResponseSchema,
+      "data streams",
+      {
+        signal,
+      },
+    );
   }
 
   async getFieldCaps(
@@ -685,11 +748,18 @@ export class ElasticsearchClient {
     params.set("fields", normalizedFields.length > 0 ? normalizedFields.join(",") : "*");
     const query = params.toString();
     const path = `/${encodeURIComponent(index)}/_field_caps${query ? `?${query}` : ""}`;
-    return this._fetch<FieldCapsResponse>(path, { signal });
+    return this._fetchValidated<FieldCapsResponse>(path, fieldCapsResponseSchema, "field caps", {
+      signal,
+    });
   }
 
   async getCatIndices(signal?: AbortSignal): Promise<CatIndexRecord[]> {
-    return this._fetch<CatIndexRecord[]>("/_cat/indices?format=json&bytes=b", { signal });
+    return this._fetchValidated<CatIndexRecord[]>(
+      "/_cat/indices?format=json&bytes=b",
+      catIndicesResponseSchema,
+      "cat indices",
+      { signal },
+    );
   }
 
   async getIndexStats(index: string, signal?: AbortSignal): Promise<IndexStatsResponse> {
@@ -739,7 +809,12 @@ export class ElasticsearchClient {
   }
 
   async getIngestPipelines(signal?: AbortSignal): Promise<GetIngestPipelinesResponse> {
-    return this._fetch<GetIngestPipelinesResponse>("/_ingest/pipeline", { signal });
+    return this._fetchValidated<GetIngestPipelinesResponse>(
+      "/_ingest/pipeline",
+      getIngestPipelinesResponseSchema,
+      "ingest pipelines",
+      { signal },
+    );
   }
 
   async simulateIngestPipeline(
