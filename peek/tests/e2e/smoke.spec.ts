@@ -5,32 +5,66 @@ import AxeBuilder from "@axe-core/playwright";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
 /**
- * Known pre-existing axe violations (tracked in issue #954).
- * These are excluded from the CI gate so it can catch *new* violations
- * while existing ones are fixed incrementally.
+ * Baseline of known pre-existing axe violations per page (tracked in #954).
+ * Maps page label → rule ID → maximum number of violating DOM nodes.
+ * The gate fails when a new rule fires or its node count exceeds the baseline,
+ * ensuring new violations of already-known rule categories are still caught.
  */
-const KNOWN_VIOLATION_RULES = [
-  "aria-input-field-name",
-  "aria-progressbar-name",
-  "aria-prohibited-attr",
-  "button-name",
-  "color-contrast",
-  "heading-order",
-  "list",
-  "page-has-heading-one",
-  "region",
-  "scrollable-region-focusable",
-];
+const A11Y_BASELINE: Record<string, Record<string, number>> = {
+  welcome: {
+    "color-contrast": 1,
+    "page-has-heading-one": 1,
+  },
+  "post-connect": {
+    "color-contrast": 2,
+    "heading-order": 1,
+  },
+  Metrics: {
+    "color-contrast": 2,
+  },
+  Traces: {
+    "aria-input-field-name": 2,
+    "aria-prohibited-attr": 1,
+    "color-contrast": 12,
+    "page-has-heading-one": 1,
+  },
+  "Query Lab": {
+    "aria-input-field-name": 2,
+    "aria-prohibited-attr": 1,
+    "color-contrast": 12,
+    "page-has-heading-one": 1,
+  },
+  Console: {
+    "color-contrast": 1,
+  },
+  Indices: {
+    "aria-progressbar-name": 1,
+    "button-name": 1,
+    "color-contrast": 1,
+  },
+};
 
 /**
- * Run an axe accessibility scan and fail if any new violations are found.
- * Pre-existing violations tracked in issue #954 are excluded.
+ * Run an axe accessibility scan and fail on any *new* violations.
+ * A violation is "new" if its rule ID is absent from the baseline or if the
+ * number of violating nodes exceeds the baselined count for that rule+page.
  */
-async function checkA11y(page: Page) {
-  const results = await new AxeBuilder({ page }).disableRules(KNOWN_VIOLATION_RULES).analyze();
-  expect(results.violations, `axe found ${results.violations.length} a11y violation(s)`).toEqual(
-    [],
-  );
+async function checkA11y(page: Page, pageName: string) {
+  const results = await new AxeBuilder({ page }).analyze();
+  const baseline = A11Y_BASELINE[pageName] ?? {};
+
+  const newViolations = results.violations.filter((v) => {
+    const allowed = baseline[v.id];
+    if (allowed === undefined) return true;
+    return v.nodes.length > allowed;
+  });
+
+  expect(
+    newViolations.map(
+      (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
+    ),
+    `axe found new a11y violation(s) on "${pageName}"`,
+  ).toEqual([]);
 }
 
 async function mockElasticsearch(page: Page) {
@@ -268,15 +302,15 @@ test.describe("smoke – site navigation", () => {
 
   test("pages have no axe accessibility violations", async ({ page }) => {
     await page.goto("");
-    await checkA11y(page);
+    await checkA11y(page, "welcome");
 
     await connectToMockCluster(page);
-    await checkA11y(page);
+    await checkA11y(page, "post-connect");
 
     for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
       await page.getByRole("button", { name: nav, exact: true }).click();
       await page.waitForLoadState("networkidle");
-      await checkA11y(page);
+      await checkA11y(page, nav);
     }
   });
 });
