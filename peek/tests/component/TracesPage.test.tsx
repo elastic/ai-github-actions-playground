@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 
 import TracesPage from "../../src/components/traces/TracesPage";
 import { useTracesStore } from "../../src/store/useTracesStore";
@@ -42,6 +42,11 @@ function isDriftRadarQuery(query: string): boolean {
     !query.includes("parent.id IS NULL") &&
     !query.includes("STATS request_count")
   );
+}
+
+function LocationSearch() {
+  const location = useLocation();
+  return <div data-testid="location-search">{location.search}</div>;
 }
 
 describe("TracesPage duration filter", () => {
@@ -242,5 +247,57 @@ describe("TracesPage auto-run on quick filter changes", () => {
 
     const queries = mockRunQuery.mock.calls.map(([query]) => String(query));
     expect(queries.some(isDriftRadarQuery)).toBe(true);
+  });
+});
+
+describe("TracesPage URL search params", () => {
+  beforeEach(() => {
+    capturedCallbacks = [];
+    mockRunQuery.mockClear();
+    useTracesStore.setState({
+      filters: { ...EMPTY_FILTERS },
+      rawQuery: null,
+      selectedTraceId: null,
+      selectedTraceSpans: [],
+      selectedSpanId: null,
+      viewMode: "list",
+      drawerOpen: false,
+    });
+  });
+
+  it("hydrates key trace state from URL params", () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          "/traces?service=checkout-service&from=NOW()%20-%2015%20minutes&to=NOW()&view=scatter&traceId=abc123&rawQuery=FROM%20traces-*",
+        ]}
+      >
+        <TracesPage />
+      </MemoryRouter>,
+    );
+
+    const state = useTracesStore.getState();
+    expect(state.filters.services).toEqual(["checkout-service"]);
+    expect(state.filters.timeFrom).toBe("NOW() - 15 minutes");
+    expect(state.filters.timeTo).toBe("NOW()");
+    expect(state.viewMode).toBe("scatter");
+    expect(state.selectedTraceId).toBe("abc123");
+    expect(state.rawQuery).toBe("FROM traces-*");
+  });
+
+  it("writes view and service filter updates to URL params", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/traces"]}>
+        <TracesPage />
+        <LocationSearch />
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByPlaceholderText("Service name"), "payments{enter}");
+    await user.click(screen.getByText("Scatter"));
+
+    expect(screen.getByTestId("location-search").textContent).toContain("service=payments");
+    expect(screen.getByTestId("location-search").textContent).toContain("view=scatter");
   });
 });

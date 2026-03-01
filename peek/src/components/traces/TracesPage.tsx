@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -55,6 +55,7 @@ import {
 } from "./traceQueryBuilder";
 import type { TraceFilters } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
+import { useTracesSearchParams } from "./useTracesSearchParams";
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -110,14 +111,108 @@ export default function TracesPage() {
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
+  const hasHydratedFromUrlRef = useRef(false);
+  const skipNextRawQueryResetRef = useRef(false);
+
+  const {
+    services: urlServices,
+    timeFrom: urlTimeFrom,
+    timeTo: urlTimeTo,
+    viewMode: urlViewMode,
+    traceId: urlTraceId,
+    rawQuery: urlRawQuery,
+    setServices: setUrlServices,
+    setTimeRange: setUrlTimeRange,
+    setViewMode: setUrlViewMode,
+    setTraceId: setUrlTraceId,
+    setRawQuery: setUrlRawQuery,
+  } = useTracesSearchParams({
+    services: filters.services,
+    timeFrom: filters.timeFrom,
+    timeTo: filters.timeTo,
+    viewMode,
+    traceId: selectedTraceId,
+    rawQuery,
+  });
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
 
   // Clear user edits when filters change so the generated query takes effect
   useEffect(() => {
+    if (skipNextRawQueryResetRef.current) {
+      skipNextRawQueryResetRef.current = false;
+      return;
+    }
     setRawQuery(null);
   }, [filters, setRawQuery]);
+
+  useEffect(() => {
+    const state = useTracesStore.getState();
+    const servicesChanged =
+      state.filters.services.length !== urlServices.length ||
+      state.filters.services.some((service, index) => service !== urlServices[index]);
+    const timeChanged =
+      state.filters.timeFrom !== urlTimeFrom || state.filters.timeTo !== urlTimeTo;
+
+    if (servicesChanged || timeChanged) {
+      updateFilters({
+        services: urlServices,
+        timeFrom: urlTimeFrom,
+        timeTo: urlTimeTo,
+      });
+    }
+    if (state.viewMode !== urlViewMode) {
+      setViewMode(urlViewMode);
+    }
+    if (state.selectedTraceId !== urlTraceId) {
+      setSelectedTraceId(urlTraceId);
+    }
+    if (state.rawQuery !== urlRawQuery) {
+      skipNextRawQueryResetRef.current = urlRawQuery !== null;
+      setRawQuery(urlRawQuery);
+    }
+    hasHydratedFromUrlRef.current = true;
+  }, [
+    setRawQuery,
+    setSelectedTraceId,
+    setViewMode,
+    updateFilters,
+    urlRawQuery,
+    urlServices,
+    urlTimeFrom,
+    urlTimeTo,
+    urlTraceId,
+    urlViewMode,
+  ]);
+
+  useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
+    setUrlServices(filters.services, { replace: true });
+  }, [filters.services, setUrlServices]);
+
+  useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
+    setUrlTimeRange(filters.timeFrom, filters.timeTo, { replace: true });
+  }, [filters.timeFrom, filters.timeTo, setUrlTimeRange]);
+
+  useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
+    setUrlViewMode(viewMode, { replace: true });
+  }, [setUrlViewMode, viewMode]);
+
+  useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
+    setUrlTraceId(selectedTraceId, { replace: true });
+  }, [selectedTraceId, setUrlTraceId]);
+
+  useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
+    const timer = setTimeout(() => {
+      setUrlRawQuery(rawQuery, { replace: true });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [rawQuery, setUrlRawQuery]);
 
   // Main search query
   const {
@@ -240,9 +335,8 @@ export default function TracesPage() {
       setSelectedTraceId(traceId);
       setSelectedRootSpanId(spanId ?? null);
       setSelectedTraceTimestamp(timestamp ?? null);
-      runDetailQuery(buildTraceDetailQuery(traceId));
     },
-    [setSelectedTraceId, runDetailQuery],
+    [setSelectedTraceId],
   );
 
   const handleOpenInDiscover = useCallback(
@@ -258,6 +352,11 @@ export default function TracesPage() {
     setSelectedRootSpanId(null);
     setSelectedTraceTimestamp(null);
   }, [setSelectedTraceId]);
+
+  useEffect(() => {
+    if (!selectedTraceId) return;
+    runDetailQuery(buildTraceDetailQuery(selectedTraceId));
+  }, [runDetailQuery, selectedTraceId]);
 
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
