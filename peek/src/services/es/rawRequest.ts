@@ -61,7 +61,7 @@ export async function executeRawRequest(
     );
     const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
     let responseBody: unknown;
-    if (contentType.includes("application/json")) {
+    if (contentType.includes("application/json") || contentType.includes("+json")) {
       responseBody = await response.json().catch(() => null);
     } else {
       const text = await response.text().catch(() => "");

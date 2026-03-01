@@ -96,6 +96,18 @@ describe("executeRawRequest", () => {
     expect(result).toEqual({ status: 200, body: { hits: { total: 1 } } });
   });
 
+  it("parses JSON responses for +json media types", async () => {
+    const doFetch: DoFetch = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/vnd.elasticsearch+json" },
+      }),
+    );
+
+    const result = await executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
+    expect(result).toEqual({ status: 200, body: { ok: true } });
+  });
+
   it("parses plain-text responses when content-type is not JSON", async () => {
     const doFetch: DoFetch = vi
       .fn()
