@@ -86,14 +86,26 @@ describe("listFields", () => {
 
     await listFields(client, "metrics-*", controller.signal);
 
-    expect(queryFn).toHaveBeenCalledWith(expect.anything(), controller.signal);
+    expect(queryFn).toHaveBeenCalledTimes(2);
+    expect(queryFn).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ query: expect.any(String) }),
+      controller.signal,
+    );
+    expect(queryFn).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ query: expect.any(String) }),
+      controller.signal,
+    );
   });
 
   it("rejects unsafe index patterns", async () => {
-    const client = makeMockClient(vi.fn());
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
     await expect(listFields(client, 'metrics-* | DROP TABLE "x"')).rejects.toThrow(
       "Invalid index pattern",
     );
+    expect(queryFn).not.toHaveBeenCalled();
   });
 });
 
@@ -189,17 +201,19 @@ describe("getFieldValues", () => {
     await getFieldValues(client, "metrics-*", "host.name", 5000);
     expect(queryFn).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: expect.stringContaining("LIMIT 1000"),
+        query: expect.stringMatching(/\bLIMIT 1000\b/),
       }),
       undefined,
     );
   });
 
   it("rejects unsafe index patterns", async () => {
-    const client = makeMockClient(vi.fn());
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
     await expect(getFieldValues(client, 'metrics-* | DROP TABLE "x"', "host.name")).rejects.toThrow(
       "Invalid index pattern",
     );
+    expect(queryFn).not.toHaveBeenCalled();
   });
 });
 
@@ -248,9 +262,11 @@ describe("getFieldCardinality", () => {
   });
 
   it("rejects unsafe index patterns", async () => {
-    const client = makeMockClient(vi.fn());
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
     await expect(
       getFieldCardinality(client, 'metrics-* | DROP TABLE "x"', ["host.name"]),
     ).rejects.toThrow("Invalid index pattern");
+    expect(queryFn).not.toHaveBeenCalled();
   });
 });
