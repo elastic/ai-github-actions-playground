@@ -34,6 +34,7 @@ export default function ApiKeysPage() {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadRequestRef = useRef(0);
 
   const selectedKey = useMemo(
     () => keys.find((k) => k.id === selectedKeyId) ?? null,
@@ -52,6 +53,7 @@ export default function ApiKeysPage() {
 
   const loadKeys = useCallback(async () => {
     if (!connection) return;
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError(null);
     setAccessNotice(null);
@@ -63,6 +65,7 @@ export default function ApiKeysPage() {
         canRead: (caps) => caps.canReadApiKeys,
         authDeniedNotice: "Your credentials cannot list API keys.",
       });
+      if (requestId !== loadRequestRef.current) return;
       setAccessNotice(result.notice);
       if (result.error !== null) {
         setError(result.error);
@@ -79,7 +82,9 @@ export default function ApiKeysPage() {
         setSelectedKeyId(null);
       }
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestRef.current) {
+        setLoading(false);
+      }
     }
   }, [connection]);
 

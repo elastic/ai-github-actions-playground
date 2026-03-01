@@ -71,6 +71,38 @@ const API_KEYS_RESPONSE = {
       invalidated: true,
       metadata: {},
     },
+    {
+      id: "key-4",
+      name: "stale-key",
+      username: "ops",
+      creation: NOW - 120 * 86_400_000,
+      expiration: NOW + 20 * 86_400_000,
+      invalidated: false,
+      metadata: {},
+    },
+    {
+      id: "key-5",
+      name: "orphaned-key",
+      username: "",
+      creation: NOW - 20 * 86_400_000,
+      expiration: NOW + 20 * 86_400_000,
+      invalidated: false,
+      metadata: {},
+    },
+    {
+      id: "key-6",
+      name: "privileged-key",
+      username: "admin",
+      creation: NOW - 20 * 86_400_000,
+      expiration: NOW + 20 * 86_400_000,
+      invalidated: false,
+      role_descriptors: {
+        role: {
+          cluster: ["manage_security"],
+        },
+      },
+      metadata: {},
+    },
   ],
 };
 
@@ -131,6 +163,32 @@ describe("ApiKeysPage", () => {
 
     await screen.findByRole("heading", { level: 6, name: "old-invalidated-key" });
     expect(screen.getByText("Invalidated")).toBeInTheDocument();
+  });
+
+  it("shows stale, orphaned, and high-privilege risk chips", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <ApiKeysPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "ingest-key" });
+
+    await user.click(screen.getByRole("button", { name: /stale-key/i }));
+    await screen.findByRole("heading", { level: 6, name: "stale-key" });
+    expect(screen.getByText("Stale (>90 days)")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /orphaned-key/i }));
+    await screen.findByRole("heading", { level: 6, name: "orphaned-key" });
+    expect(screen.getByText("Orphaned (no owner)")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /privileged-key/i }));
+    await screen.findByRole("heading", { level: 6, name: "privileged-key" });
+    expect(screen.getByText("High privilege")).toBeInTheDocument();
   });
 
   it("filters the list by search term", async () => {
