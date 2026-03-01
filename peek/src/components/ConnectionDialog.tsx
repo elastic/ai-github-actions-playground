@@ -229,9 +229,9 @@ export default function ConnectionDialog() {
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Enter your Elasticsearch endpoint and credentials. The connection is made directly from
-            your browser — no data passes through any intermediary server. Ensure CORS is configured
-            on your cluster.
+            Enter your Elasticsearch endpoint and credentials. By default, the connection is made
+            directly from your browser. If Proxy URL is configured, requests are sent through that
+            proxy. Ensure CORS is configured on your cluster.
           </Typography>
           <Alert severity="warning" sx={{ py: 0 }}>
             Elasticsearch Serverless is not supported — it does not allow the CORS configuration
@@ -459,7 +459,7 @@ export default function ConnectionDialog() {
                 setApiKey(e.target.value);
                 setActiveProfileId(null);
               }}
-              helperText="Stored in session storage — cleared when the browser tab closes"
+              helperText="In browser mode, stored in session storage and cleared when the tab closes; in Electron, stored in the OS credential store."
               slotProps={{
                 input: {
                   endAdornment: (
@@ -497,7 +497,7 @@ export default function ConnectionDialog() {
                   setPassword(e.target.value);
                   setActiveProfileId(null);
                 }}
-                helperText="Stored in session storage — cleared when the browser tab closes"
+                helperText="In browser mode, stored in session storage and cleared when the tab closes; in Electron, stored in the OS credential store."
                 slotProps={{
                   input: {
                     endAdornment: (
