@@ -353,6 +353,9 @@ export default function AddDataPage() {
   }, [derivedOtlpUrl]);
   const version = clusterVersion ?? "<VERSION>";
   const apiKey = apiKeyValue ?? "<YOUR_API_KEY>";
+  const hasEndpoint =
+    endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connection?.url);
+  const prefilledCount = [apiKeyValue, hasEndpoint, clusterVersion].filter(Boolean).length;
   const activeGuide = useMemo(() => PLATFORM_GUIDES[platform], [platform]);
 
   const handleCreateApiKey = useCallback(async () => {
@@ -525,7 +528,7 @@ export default function AddDataPage() {
           />
           <Alert severity="info">
             {apiKeyValue
-              ? "Your generated API key, "
+              ? "Your generated API key" + (hasEndpoint || clusterVersion ? ", " : " ")
               : "Generate an API key below (or provide your own) — "}
             {endpointType === "managed_otlp" && derivedOtlpUrl
               ? "OTLP endpoint, "
@@ -538,7 +541,7 @@ export default function AddDataPage() {
               ? Boolean(derivedOtlpUrl)
               : Boolean(connection?.url)) ||
             clusterVersion
-              ? "have been pre-filled in the command above."
+              ? (prefilledCount > 1 ? "have" : "has") + " been pre-filled in the command above."
               : "Replace the placeholders before running."}
             {!apiKeyValue && (
               <>
