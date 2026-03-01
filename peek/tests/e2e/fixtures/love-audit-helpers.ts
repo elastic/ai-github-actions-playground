@@ -73,17 +73,25 @@ export async function checkForMuiErrors(page: Page): Promise<string[]> {
   return errors;
 }
 
+async function writeAuditArtifact(filename: string, content: string): Promise<void> {
+  const fs = await import("fs");
+  const path = await import("path");
+  const dir = path.resolve("test-results");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, filename), content, "utf-8");
+}
+
 export async function dumpDOM(page: Page, pageName: string, prefix: string) {
   const html = await page.evaluate(() => {
     const main = document.querySelector("main") ?? document.querySelector("#root") ?? document.body;
     return main.innerHTML;
   });
-  const fs = await import("fs");
-  const path = await import("path");
-  const dir = path.resolve("test-results");
-  fs.mkdirSync(dir, { recursive: true });
-  const slug = pageName.toLowerCase().replace(/\s+/g, "-");
-  fs.writeFileSync(path.join(dir, `${prefix}-dom-${slug}.html`), html, "utf-8");
+  await writeAuditArtifact(`${prefix}-dom-${slug(pageName)}.html`, html);
+}
+
+export async function captureAriaSnapshot(page: Page, pageName: string, prefix: string) {
+  const ariaYaml = await page.locator("body").ariaSnapshot();
+  await writeAuditArtifact(`${prefix}-aria-${slug(pageName)}.yaml`, ariaYaml);
 }
 
 export function logDiagnostics(
@@ -128,6 +136,7 @@ async function captureTabScreenshots(
       path: `test-results/${prefix}-${section}-${slug(tab)}.png`,
       fullPage: true,
     });
+    await captureAriaSnapshot(page, `${section}-${tab}`, prefix);
   }
 }
 
@@ -146,6 +155,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-cluster-health-overview.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "cluster-health-overview", prefix);
       await captureTabScreenshots(page, prefix, "cluster-health", [
         "Nodes",
         "Tasks",
@@ -165,6 +175,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-indices-overview.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "indices-overview", prefix);
       // Navigate through sub-tabs
       for (const tab of ["Mappings", "Settings", "Stats", "Disk Usage"]) {
         await page.getByRole("tab", { name: tab }).click();
@@ -173,6 +184,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
           path: `test-results/${prefix}-indices-${slug(tab)}.png`,
           fullPage: true,
         });
+        await captureAriaSnapshot(page, `indices-${tab}`, prefix);
       }
     },
   },
@@ -186,6 +198,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-add-data-default.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "add-data-default", prefix);
       await captureTabScreenshots(
         page,
         prefix,
@@ -201,9 +214,10 @@ export const COMMON_PAGES: PageAuditConfig[] = [
     navButton: "Metrics",
     afterNav: async (page, prefix) => {
       await page.screenshot({
-        path: `test-results/${prefix}-metrics.png`,
+        path: `test-results/${prefix}-metrics-pre-search.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "metrics-pre-search", prefix);
       const metricSearch = page.getByLabel("Search metrics");
       await metricSearch.fill("system.cpu");
       await page.waitForLoadState("networkidle");
@@ -211,6 +225,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-metrics-search.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "metrics-search", prefix);
     },
   },
   { name: "Console", navButton: "Console" },
@@ -272,6 +287,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-profiling-stacktraces-expanded.png`,
         fullPage: true,
       });
+      await captureAriaSnapshot(page, "profiling-stacktraces-expanded", prefix);
 
       // Check frame resolution
       const expandedText = await page.locator("table").textContent();
@@ -356,6 +372,7 @@ export function registerLoveAuditTests(
           fullPage: true,
         });
         await dumpDOM(page, pageConfig.name, prefix);
+        await captureAriaSnapshot(page, pageConfig.name, prefix);
         const muiErrors = await checkForMuiErrors(page);
         const a11y = await runAccessibilityCheck(page, pageConfig.name);
         logDiagnostics(pageConfig.name, consoleLogs, muiErrors, a11y.length);

@@ -135,7 +135,7 @@ ES_URL=http://localhost:9200 make serve-proxy
 # Then open http://localhost:3000 and connect to http://localhost:3000/_es
 ```
 
-This is the same data the `smoke-live-es.yml` agent explores against.
+This is the same data the `explore-live-es.yml` agent explores against.
 Use `make otel-replay-down` to tear everything down when done.
 
 ### Exploratory Testing Agents
@@ -144,13 +144,13 @@ Eight scheduled agents creatively explore the app with Playwright. Each owns a
 domain and invents novel interaction scenarios every run — they do NOT run
 pre-written test suites. Deterministic E2E tests run in CI instead.
 
-- `smoke-welcome-flow.yml` → **Explore: Connection & Onboarding** — connection dialog, auth tabs, disconnect/reconnect, keyboard nav
-- `smoke-metrics-flow.yml` → **Explore: Metrics & Charts** — metric search, chart rendering, time ranges, state persistence
-- `smoke-traces-flow.yml` → **Explore: Traces & Service Map** — span trees, service map, trace-to-query pivot, navigation
-- `smoke-auth-tab-switch.yml` → **Explore: Query Lab & Console** — ES|QL queries, result tables, API Console, error handling
-- `smoke-reset-visibility.yml` → **Explore: Indices, Data Streams & Pipelines** — table sorting, detail views, data management
-- `smoke-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
-- `customer-complaints.yml` → **Customer: Feature Gap Review** — missing features, feature requests, comparison to Kibana/Grafana/Elasticvue
+- `explore-connection.yml` → **Explore: Connection & Onboarding** — connection dialog, auth tabs, disconnect/reconnect, keyboard nav
+- `explore-metrics.yml` → **Explore: Metrics & Charts** — metric search, chart rendering, time ranges, state persistence
+- `explore-traces.yml` → **Explore: Traces & Service Map** — span trees, service map, trace-to-query pivot, navigation
+- `explore-query-lab.yml` → **Explore: Query Lab & Console** — ES|QL queries, result tables, API Console, error handling
+- `explore-data-management.yml` → **Explore: Indices, Data Streams & Pipelines** — table sorting, detail views, data management
+- `explore-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
+- `explore-customer-feedback.yml` → **Customer: Feature Gap Review** — missing features, feature requests, comparison to Kibana/Grafana/Elasticvue
 - `ui-designer-review.yml` → **Design: Modern UI Review** — design modernization, spacing, typography, cards, tables, empty states, loading patterns
 
 ### Visual Quality Checklist

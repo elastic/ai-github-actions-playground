@@ -41,9 +41,9 @@ import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
-import { getAllVizEntries, getVizEntry } from "./visualizations/vizRegistry";
 import { formatEsqlQuery } from "./discoverUtils";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
+import { getAllPersesPanelEntries, getPersesPanelEntry } from "./perses/panelRegistry";
 
 export default function PanelEditor() {
   const editingId = useUIStore((s) => s.editingPanelId);
@@ -109,7 +109,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     (newViz: VisualizationType) => {
       setViz(newViz);
       const next = defaultOptions(newViz);
-      const supportsOptions = getVizEntry(newViz)?.supportsOptions ?? false;
+      const supportsOptions = getPersesPanelEntry(newViz)?.supportsOptions ?? false;
       const currentFormat = (options as { format?: FormatOptions }).format;
       setOptions(supportsOptions && currentFormat ? { ...next, format: currentFormat } : next);
     },
@@ -157,7 +157,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setEditingId(null);
   }, [editingId, removePanel, setEditingId]);
 
-  const showOptions = getVizEntry(viz)?.supportsOptions ?? false;
+  const showOptions = getPersesPanelEntry(viz)?.supportsOptions ?? false;
   const isMarkdown = viz === "markdown";
 
   return (
@@ -327,7 +327,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
             size="small"
             sx={{ flexWrap: "wrap" }}
           >
-            {getAllVizEntries().map((entry) => (
+            {getAllPersesPanelEntries().map((entry) => (
               <ToggleButton key={entry.type} value={entry.type} title={entry.label}>
                 {entry.icon}
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
