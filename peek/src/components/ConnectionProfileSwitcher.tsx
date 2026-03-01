@@ -199,6 +199,9 @@ export default function ConnectionProfileSwitcher() {
                               from: { rotate: "0deg" },
                               to: { rotate: "360deg" },
                             },
+                            "@media (prefers-reduced-motion: reduce)": {
+                              animation: "none",
+                            },
                           }
                         : undefined
                     }
