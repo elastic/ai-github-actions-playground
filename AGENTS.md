@@ -13,15 +13,24 @@ Persist outcomes through safe outputs (comments/issues/PRs), because uncaptured 
 
 See ./peek
 
+## Environment Setup
+
+**Before running any build, lint, or test command**, you must install dependencies. This is a Node.js project — nothing works without `node_modules`.
+
+```bash
+cd peek && npm ci   # install dependencies from lockfile (fast, deterministic)
+```
+
+Always run this first. Do not use `npm install` — use `npm ci` which is faster in CI because it skips dependency resolution and installs exactly what the lockfile specifies.
+
 ## Common Commands
 
 ```bash
-make setup   # install dependencies
-make serve   # start dev server
-make build   # production build
 make lint    # Prettier + ESLint + TypeScript type checking
+make build   # production build (runs tsc + vite build)
+make serve   # start dev server
 make format  # auto-format code with Prettier
-make check   # run all checks then build (equivalent to CI)
+make check   # lint + unit tests + build (equivalent to CI)
 ```
 
 ## Playwright (Screenshots & E2E Testing)
