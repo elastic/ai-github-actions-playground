@@ -12,6 +12,8 @@ A warning indicates partial data retrieval, usually caused by missing API permis
 
 Use this page before deeper investigation to confirm cluster state and quickly spot red or yellow health conditions.
 
+For deeper operational monitoring — including task backlogs, capacity pressure, shard distribution, and resilience signals — open **Cluster Health** from the sidebar.
+
 ## Stack information surfaces
 
 Cluster Overview now combines cluster identity and health with broader stack-level telemetry:

@@ -15,6 +15,12 @@ Provider-specific format examples:
 
 The Model ID field is required when the toggle is on; Chat will show a validation error if the field is left empty. Turning the toggle off restores the preset dropdown. If the model you had entered is not in the preset list, the selection automatically reverts to the first preset for that provider.
 
+## Elastic Docs search in chat
+
+Enable the **Enable Elastic Docs search in chat** toggle to give the Chat assistant access to Elastic documentation search. When enabled, the assistant can look up Elasticsearch features, APIs, ES|QL syntax, and configuration details from the official Elastic documentation during a conversation.
+
+This toggle is off by default. Enabling it adds a documentation search tool to the chat runtime that communicates with the Elastic Docs service. Disable it to restrict the assistant to cluster-local tools only.
+
 LLM credentials are stored in session storage only and are cleared when the browser session ends.
 
 Use Reset LLM Settings when rotating credentials or switching environments to avoid stale configuration.
