@@ -32,8 +32,6 @@ import { useIndices, useIndexDetail } from "../hooks/useIndices";
 
 import EmptyState from "./EmptyState";
 
-import EmptyState from "./EmptyState";
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
