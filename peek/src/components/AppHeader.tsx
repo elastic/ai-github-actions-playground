@@ -15,7 +15,8 @@ import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
+import { useDashboardHistoryStore } from "../store/useDashboardHistoryStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
@@ -39,29 +40,25 @@ const REFRESH_INTERVAL_PRESETS = [
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function AppHeader() {
-  const {
-    dashboard,
-    setTimeRange,
-    setRefreshInterval,
-    setTimeZone,
-    addPanel,
-    historyPast,
-    historyFuture,
-    undoDashboardChange,
-    redoDashboardChange,
-  } = useDashboardStore(
-    useShallow((s) => ({
-      dashboard: s.dashboard,
-      setTimeRange: s.setTimeRange,
-      setRefreshInterval: s.setRefreshInterval,
-      setTimeZone: s.setTimeZone,
-      addPanel: s.addPanel,
-      historyPast: s.historyPast,
-      historyFuture: s.historyFuture,
-      undoDashboardChange: s.undoDashboardChange,
-      redoDashboardChange: s.redoDashboardChange,
-    })),
-  );
+  const { dashboard, setTimeRange, setRefreshInterval, setTimeZone, addPanel } =
+    useDashboardEditorStore(
+      useShallow((s) => ({
+        dashboard: s.dashboard,
+        setTimeRange: s.setTimeRange,
+        setRefreshInterval: s.setRefreshInterval,
+        setTimeZone: s.setTimeZone,
+        addPanel: s.addPanel,
+      })),
+    );
+  const { historyPast, historyFuture, undoDashboardChange, redoDashboardChange } =
+    useDashboardHistoryStore(
+      useShallow((s) => ({
+        historyPast: s.historyPast,
+        historyFuture: s.historyFuture,
+        undoDashboardChange: s.undoDashboardChange,
+        redoDashboardChange: s.redoDashboardChange,
+      })),
+    );
   const { connected } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,

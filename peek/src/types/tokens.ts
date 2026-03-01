@@ -24,3 +24,6 @@ export type TypographyVariant =
   | "body2"
   | "caption"
   | "overline";
+
+/** Metric-only typography variants (stat values, KPI cards). */
+export type MetricTypographyVariant = "h3";

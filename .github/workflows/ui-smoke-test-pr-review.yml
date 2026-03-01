@@ -54,7 +54,7 @@ jobs:
           DEV_PID=$!
           SERVER_READY=false
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; then SERVER_READY=true; break; fi
+            if curl -sf http://127.0.0.1:3000/ai-github-actions-playground/ >/dev/null 2>&1; then SERVER_READY=true; break; fi
             sleep 1
           done
           if [ "$SERVER_READY" = false ]; then
