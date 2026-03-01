@@ -62,29 +62,6 @@ const thStyle: React.CSSProperties = {
   background: "inherit",
 };
 
-interface CenteredEmptyStateProps {
-  message: string;
-  sx?: React.ComponentProps<typeof Box>["sx"];
-}
-
-function CenteredEmptyState({ message, sx }: CenteredEmptyStateProps) {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100%",
-        ...sx,
-      }}
-    >
-      <Typography variant="body2" color="text.primary">
-        {message}
-      </Typography>
-    </Box>
-  );
-}
-
 export default function TracesPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((s) => s.connection);
@@ -853,7 +830,7 @@ export default function TracesPage() {
             {result &&
               viewMode === "timeseries" &&
               (rawQuery ? (
-                <CenteredEmptyState message="Time series view is not available for custom queries. Use filter chips to see trends." />
+                <EmptyState heading="Time series view is not available for custom queries. Use filter chips to see trends." />
               ) : timeseriesLoading ? (
                 <Box
                   sx={{
@@ -873,12 +850,12 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : (
-                <CenteredEmptyState message="Run search to load trace volume and latency trends." />
+                <EmptyState heading="Run search to load trace volume and latency trends." />
               ))}
             {result && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
-                  <CenteredEmptyState message="Select a trace in List or Scatter view to see its service map" />
+                  <EmptyState heading="Select a trace in List or Scatter view to see its service map" />
                 ) : detailLoading ? (
                   <Box
                     sx={{
@@ -900,7 +877,7 @@ export default function TracesPage() {
             )}
             {viewMode === "driftRadar" &&
               (rawQuery ? (
-                <CenteredEmptyState message="Drift Radar is not available for custom queries. Use filter chips to scope the window." />
+                <EmptyState heading="Drift Radar is not available for custom queries. Use filter chips to scope the window." />
               ) : driftRadarLoading || driftRadarBaselineLoading ? (
                 <Box
                   sx={{
@@ -923,9 +900,9 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : result !== null ? (
-                <CenteredEmptyState message="Run search to load the window service map." />
+                <EmptyState heading="Run search to load the window service map." />
               ) : (
-                <CenteredEmptyState message="Search for traces to load the Drift Radar service map." />
+                <EmptyState heading="Search for traces to load the Drift Radar service map." />
               ))}
           </Paper>
 
