@@ -9,6 +9,7 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import DevicesIcon from "@mui/icons-material/Devices";
 import { useShallow } from "zustand/react/shallow";
 
 import { isElasticsearchError } from "../services/es";
@@ -31,6 +32,7 @@ import FleetAgentsTable from "./fleet/FleetAgentsTable";
 import FleetOutputsList from "./fleet/FleetOutputsList";
 import FleetActivityList from "./fleet/FleetActivityList";
 import RefreshToolbar from "./RefreshToolbar";
+import EmptyState from "./EmptyState";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -409,17 +411,15 @@ function OverviewTab({
           </Stack>
         </>
       ) : (
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            No Fleet Server status metrics found in metrics-fleet_server.agent_status-*.
-          </Typography>
-          {agentInventoryTotal > 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              However, {agentInventoryTotal} agent{agentInventoryTotal !== 1 ? "s" : ""} found via
-              Elastic Agent logs. Switch to the Agents tab to view them.
-            </Typography>
-          )}
-        </Paper>
+        <EmptyState
+          icon={<DevicesIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+          heading="No Fleet Server status available"
+          description={
+            agentInventoryTotal > 0
+              ? `However, ${agentInventoryTotal} agent${agentInventoryTotal !== 1 ? "s" : ""} found via Elastic Agent logs. Switch to the Agents tab to view them.`
+              : "No Fleet Server status metrics found in metrics-fleet_server.agent_status-*."
+          }
+        />
       )}
 
       {/* Quick agent summary when no server status but agents exist */}

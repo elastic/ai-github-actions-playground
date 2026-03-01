@@ -366,10 +366,17 @@ export default function ExplorePage() {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
       {/* Top controls */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Typography variant="subtitle2" component="h1" color="text.secondary" sx={{ mb: 1 }}>
+        <Typography variant="h6" component="h1" sx={{ mb: 1 }}>
           Metrics
         </Typography>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            alignItems: "flex-start",
+            "& .MuiInputBase-root": { height: 40 },
+          }}
+        >
           {/* Index pattern */}
           <TextField
             size="small"

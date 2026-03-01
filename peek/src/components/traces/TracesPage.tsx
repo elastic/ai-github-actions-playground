@@ -392,7 +392,7 @@ export default function TracesPage() {
         <Box
           sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}
         >
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="h6" component="h1">
             Trace Search
           </Typography>
           <Button size="small" variant="text" onClick={resetFilters}>
@@ -472,7 +472,16 @@ export default function TracesPage() {
         </Box>
 
         {/* Quick filters row */}
-        <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            mb: 1,
+            flexWrap: "wrap",
+            alignItems: "center",
+            "& .MuiInputBase-root": { height: 36 },
+          }}
+        >
           <TextField
             size="small"
             placeholder="Service name"
@@ -481,7 +490,7 @@ export default function TracesPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleAddService();
             }}
-            sx={{ width: 160, "& .MuiInputBase-root": { height: 36 } }}
+            sx={{ width: 160 }}
           />
           <Button size="small" variant="outlined" onClick={handleAddService} sx={{ height: 36 }}>
             Add Service
@@ -492,7 +501,7 @@ export default function TracesPage() {
               placeholder="Min (ms)"
               value={minDurationInput}
               onChange={(e) => setMinDurationInput(e.target.value)}
-              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
+              sx={{ width: 100 }}
             />
             <Typography variant="body1" sx={{ px: 0.5 }}>
               —
@@ -502,7 +511,7 @@ export default function TracesPage() {
               placeholder="Max (ms)"
               value={maxDurationInput}
               onChange={(e) => setMaxDurationInput(e.target.value)}
-              sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
+              sx={{ width: 100 }}
             />
             <Button
               size="small"
