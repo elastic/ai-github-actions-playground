@@ -72,5 +72,7 @@ export const useTracesStore = create<TracesState>()((set) => ({
       selectedTraceId: null,
       selectedTraceSpans: [],
       selectedSpanId: null,
+      viewMode: "list",
+      drawerOpen: false,
     }),
 }));
