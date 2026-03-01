@@ -660,7 +660,10 @@ export default function TracesPage() {
           {/* Results view */}
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
             {!result && !searchLoading && viewMode !== "driftRadar" && (
-              <CenteredEmptyState message="Search for traces to see results" />
+              <EmptyState
+                heading="Search for traces"
+                description="Use the filters above to find traces by service name, duration, or status."
+              />
             )}
             {searchLoading && !result && (
               <Box
@@ -704,7 +707,14 @@ export default function TracesPage() {
                     {traceRows.map((row, idx) => (
                       <tr
                         key={`${row.traceId}-${idx}`}
+                        tabIndex={0}
                         onClick={() => handleSelectTrace(row.traceId, row.spanId, row.timestamp)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleSelectTrace(row.traceId, row.spanId, row.timestamp);
+                          }
+                        }}
                         style={{
                           cursor: "pointer",
                           backgroundColor:

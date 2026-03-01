@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 
 import App from "./App";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useConnectionStore } from "./store/useConnectionStore";
 import {
   getTracingConnectionSnapshot,
@@ -12,9 +13,11 @@ import {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </ErrorBoundary>
   </React.StrictMode>,
 );
 

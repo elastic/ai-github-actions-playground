@@ -16,14 +16,14 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
-import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services/es";
+import type { SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { useIngestPipelines } from "../hooks/useIngestPipelines";
 
 import EmptyState from "./EmptyState";
-
-type PipelineEntry = { name: string; pipeline: IngestPipeline };
 
 /**
  * Attempt to extract a human-readable message from a raw Elasticsearch error
@@ -90,13 +90,26 @@ function parseSimulateInput(input: string): Array<Record<string, unknown>> | nul
 
 export default function IngestPipelinesPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const pipelinesResult = useIngestPipelines();
+
+  const loading = pipelinesResult.status === "loading";
+  const error = pipelinesResult.status === "error" ? pipelinesResult.error : null;
+  const pipelinesData = pipelinesResult.status === "success" ? pipelinesResult.data : null;
+  const pipelines = useMemo(() => pipelinesData ?? [], [pipelinesData]);
 
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showRawError, setShowRawError] = useState(false);
-  const [pipelines, setPipelines] = useState<PipelineEntry[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+
+  // Auto-select the first pipeline when data loads
+  useEffect(() => {
+    if (!pipelinesData) return;
+    setSelectedName((current) =>
+      current && pipelinesData.some((p) => p.name === current)
+        ? current
+        : (pipelinesData[0]?.name ?? null),
+    );
+  }, [pipelinesData]);
 
   // Simulate state
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
@@ -110,36 +123,6 @@ export default function IngestPipelinesPage() {
     () => pipelines.find((p) => p.name === selectedName) ?? null,
     [pipelines, selectedName],
   );
-
-  const loadPipelines = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    setShowRawError(false);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.getIngestPipelines(),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (data !== null) {
-        const next = Object.entries(data)
-          .map(([name, pipeline]) => ({ name, pipeline }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setPipelines(next);
-        setSelectedName((current) =>
-          current && next.some((p) => p.name === current) ? current : (next[0]?.name ?? null),
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadPipelines();
-  }, [loadPipelines]);
 
   // Clear simulate results when selection changes
   useEffect(() => {
@@ -225,7 +208,12 @@ export default function IngestPipelinesPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Ingest Pipelines
           </Typography>
-          <Button size="small" variant="outlined" onClick={loadPipelines} disabled={loading}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={pipelinesResult.refresh}
+            disabled={loading}
+          >
             {loading ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
         </Stack>
@@ -553,11 +541,11 @@ export default function IngestPipelinesPage() {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ p: 1.5 }}>
-              <Typography variant="body2" color="text.secondary">
-                Select a pipeline.
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<AccountTreeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="Select a pipeline"
+              description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
+            />
           )}
         </Paper>
       </Box>

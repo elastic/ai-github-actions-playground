@@ -126,7 +126,7 @@ describe("TracesPage empty states", () => {
     expect(
       screen.getByText("Search for traces to load the Drift Radar service map."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Search for traces to see results")).not.toBeInTheDocument();
+    expect(screen.queryByText("Search for traces")).not.toBeInTheDocument();
   });
 
   it("shows no-results guidance in list view when a search returns zero traces", () => {

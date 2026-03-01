@@ -18,6 +18,7 @@ import Tooltip from "@mui/material/Tooltip";
 import CloseIcon from "@mui/icons-material/Close";
 import CodeIcon from "@mui/icons-material/Code";
 import SearchIcon from "@mui/icons-material/Search";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
@@ -47,6 +48,7 @@ import MetricSearch from "./MetricSearch";
 import MetricOverviewGrid from "./MetricOverviewGrid";
 import DimensionOverviewGrid from "./DimensionOverviewGrid";
 import DimensionSidebar from "./DimensionSidebar";
+import EmptyState from "./EmptyState";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
 
 function metricNamespaceOf(metricName: string): string {
@@ -612,25 +614,11 @@ export default function ExplorePage() {
             )}
 
             {!selectedMetric && queryResult.status === "idle" && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                  gap: 1,
-                }}
-              >
-                <SearchIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Select a namespace to start exploring
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Pick a namespace to see an overview of all its metrics, or search for a specific
-                  metric field
-                </Typography>
-              </Box>
+              <EmptyState
+                icon={<ShowChartIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                heading="Explore your metrics"
+                description="Pick a namespace to see an overview of all its metrics, or search for a specific metric field."
+              />
             )}
 
             {queryResult.status === "loading" && (
