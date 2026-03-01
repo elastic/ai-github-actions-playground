@@ -87,6 +87,14 @@ const baseOptions: ThemeOptions = {
         root: { textTransform: "none", minHeight: 36 },
       },
     },
+    MuiTypography: {
+      defaultProps: {
+        variantMapping: {
+          subtitle1: "p",
+          subtitle2: "p",
+        },
+      },
+    },
   },
 };
 

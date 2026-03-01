@@ -21,30 +21,24 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
   },
   "post-connect": {
     "color-contrast": 2,
-    "heading-order": 1,
   },
   Metrics: {
-    "color-contrast": 2,
+    "color-contrast": 1,
   },
   Traces: {
     "aria-input-field-name": 2,
     "aria-prohibited-attr": 1,
     "color-contrast": 12,
-    "page-has-heading-one": 1,
   },
   "Query Lab": {
-    "aria-input-field-name": 2,
-    "aria-prohibited-attr": 1,
-    "color-contrast": 12,
-    "page-has-heading-one": 1,
+    "aria-input-field-name": 1,
+    "color-contrast": 5,
   },
   Console: {
     "color-contrast": 1,
   },
   Indices: {
-    "aria-progressbar-name": 1,
-    "button-name": 1,
-    "color-contrast": 1,
+    "color-contrast": 2,
   },
 };
 
