@@ -98,9 +98,12 @@ serve-explore: setup
 	@echo "Replaying OTel fixtures + seeding data..."
 	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url http://localhost:9200 --wait-for-ready
-	@sleep 5
-	@curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' \
-		|| { echo "✗ Seed verification failed: web_logs missing"; exit 1; }
+	@for i in $$(seq 1 10); do \
+		curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count":[1-9]' && break; \
+		sleep 2; \
+	done
+	@curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count":[1-9]' \
+		|| { echo "✗ Seed verification failed: web_logs missing or empty"; exit 1; }
 	@echo "✓ Data seeded and verified"
 	@echo "Starting dev server with ES proxy..."
 	@cd $(PEEK_DIR) && ES_URL=http://localhost:9200 nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
