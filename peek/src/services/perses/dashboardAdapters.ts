@@ -44,14 +44,12 @@ function toVisualizationType(kind: string | undefined): VisualizationType | unde
 
 function toPanelQueries(panel: Pick<PanelDefinition, "query" | "queries">): string[] {
   const canonicalQueries =
-    panel.queries
-      ?.map((query) => query.trim())
-      .filter((query) => query.length > 0)
-      .map((query) => query) ?? [];
-  if (canonicalQueries.length > 0) {
-    return canonicalQueries;
+    panel.queries?.map((query) => query.trim()).filter((query) => query.length > 0) ?? [];
+  const primaryQuery = panel.query.trim();
+  if (canonicalQueries.length === 0) {
+    return primaryQuery.length > 0 ? [primaryQuery] : [];
   }
-  return [panel.query];
+  return primaryQuery.length > 0 ? [primaryQuery, ...canonicalQueries.slice(1)] : canonicalQueries;
 }
 
 function toPersesVariableKind(
