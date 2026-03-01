@@ -44,10 +44,10 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: ({ theme }) => ({
           backgroundImage: "none",
-          borderColor: theme.palette.border.subtle,
+          border: `1px solid ${theme.palette.border.subtle}`,
         }),
         outlined: ({ theme }) => ({
-          borderColor: theme.palette.border.subtle,
+          border: `1px solid ${theme.palette.border.subtle}`,
         }),
       },
     },
@@ -109,7 +109,7 @@ export const darkTheme = createTheme({
     secondary: { main: "#7DE2D1" },
     background: { default: "#111217", paper: "#25262E", subtle: "#1A1B22", elevated: "#2D2E36" },
     text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
-    border: { subtle: "#2D2E36", default: "#3D3F48", strong: "#5A5D68" },
+    border: { subtle: "#3D3F48", default: "#5A5D68", strong: "#7A7E8A" },
   },
 });
 
