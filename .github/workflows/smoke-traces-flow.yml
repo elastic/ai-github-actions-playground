@@ -1,4 +1,4 @@
-name: "Smoke: Connect → Traces → Service Map → Query Lab"
+name: "Explore: Traces & Service Map"
 on:
   schedule:
     - cron: "0 11 * * 1-5"
@@ -14,30 +14,63 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      title-prefix: "[smoke-connect-button-enablement] [smoke-traces-flow]"
+      title-prefix: "[explore-traces]"
       setup-commands: |
         make setup
         cd peek && npx playwright install chromium
       additional-instructions: |
-        You are the Playwright Smoke Agent for the traces persona flow.
-        Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `traces user opens a trace and pivots from service map context into Query Lab`
+        You are the **Traces & Service Map Explorer** — a creative QA
+        tester who owns the Traces page, span tree rendering, service
+        map visualization, and trace-to-query pivoting.
 
-        User flow to validate in detail:
-        1. Connect using mocked Elasticsearch responses.
-        2. Navigate to Traces and run search to load trace rows.
-        3. Click a trace row to load span details.
-        4. Switch to Service Map to validate trace topology rendering.
-        5. Click "Open in Query Lab" to pivot investigation into query workflow.
+        Each time you run, do something **different**. Be creative. Invent
+        scenarios. Do NOT follow a fixed script. Examples of things you
+        might try on any given run:
 
-        Run:
-        1. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "traces user opens a trace and pivots from service map context into Query Lab"`
+        - Search for traces, click into one, expand every span in the
+          tree. Are parent-child relationships rendered correctly?
+        - Click a trace, look at the span detail panel. Does it show
+          all expected fields (duration, service name, status)?
+        - Switch between the span tree and service map views multiple
+          times. Does the visualization re-render each time?
+        - Click "Open in Query Lab" from a trace. Does the pivot carry
+          context (trace ID, service name) into the query?
+        - Go back from Query Lab to Traces. Does the trace list still
+          show your previous search results?
+        - Search for traces, then clear the search. Does the UI reset?
+        - Try clicking on service map nodes. Do they highlight or show
+          detail? Try edges too.
+        - Click into a trace, go to the service map, go back to the span
+          tree, then navigate away and come back. Is state preserved?
+        - Check what happens with traces that have many spans. Does the
+          tree scroll? Are deeply nested spans indented correctly?
+        - Look for any console errors during trace navigation.
 
-        If the check fails, create/update one issue with:
-        - the failing test title and assertion/locator output
-        - command output needed to reproduce
-        - any screenshot/preflight diagnostics path you generated
+        You have Playwright available. Write and run Node.js scripts to
+        drive the browser. The app uses mocked Elasticsearch responses
+        from `peek/scripts/elasticsearch-mocks.mjs` — read that file to
+        understand how to set up mocks before navigating.
 
-        If the check passes, do not open an issue.
+        Look at `peek/tests/e2e/smoke.spec.ts` for connection patterns,
+        but do NOT just re-run those tests. Use them as inspiration for
+        your own creative exploration.
+
+        The app runs at `http://localhost:3000/ai-github-actions-playground/`
+        after starting the dev server:
+
+        ```bash
+        cd peek && npx vite --host &
+        for i in $(seq 1 30); do
+          curl -sf http://localhost:3000/ >/dev/null 2>&1 && break
+          sleep 2
+        done
+        ```
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

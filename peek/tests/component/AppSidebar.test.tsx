@@ -94,6 +94,10 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
+    expect(screen.getByRole("button", { name: /cluster health/i })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     expect(screen.getByRole("button", { name: /fleet/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
@@ -153,6 +157,26 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /cluster overview/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
+  });
+
+  it("navigates to Cluster Health when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster health/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
+  });
+
+  it("keeps detail cluster pages out of sidebar", () => {
+    useConnectionStore.getState().setConnected(true);
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /cluster tasks/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cluster capacity/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cluster shards/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cluster resilience/i })).not.toBeInTheDocument();
   });
 
   it("navigates to Fleet when clicked while connected", async () => {
@@ -242,5 +266,71 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
 
     expect(useUIStore.getState().themeMode).toBe("light");
+  });
+
+  it("hides Users nav item when canReadSecurityUsers is false", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: true,
+    });
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /^users$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /roles/i })).toBeInTheDocument();
+  });
+
+  it("hides Roles nav item when canReadSecurityRoles is false", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: false,
+    });
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /roles/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^users$/i })).toBeInTheDocument();
+  });
+
+  it("shows both Users and Roles when capabilities are null (not yet fetched)", () => {
+    useConnectionStore.getState().setConnected(true);
+    renderSidebar();
+
+    expect(screen.getByRole("button", { name: /^users$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /roles/i })).toBeInTheDocument();
+  });
+
+  it("shows warning icon when items are hidden due to permissions", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+    });
+    renderSidebar();
+
+    expect(
+      screen.getByLabelText(/2 nav items hidden due to insufficient permissions/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show warning icon when all permissions are granted", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+    });
+    renderSidebar();
+
+    expect(
+      screen.queryByLabelText(/hidden due to insufficient permissions/i),
+    ).not.toBeInTheDocument();
   });
 });

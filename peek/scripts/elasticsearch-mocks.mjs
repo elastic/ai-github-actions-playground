@@ -14,11 +14,19 @@ const DEFAULT_MOCK_DATA = {
     version: { number: "9.0.0" },
   },
   clusterHealth: {
+    cluster_name: "playwright-cluster",
     status: "green",
+    timed_out: false,
     number_of_nodes: 3,
+    number_of_data_nodes: 2,
     active_primary_shards: 12,
     active_shards: 24,
+    initializing_shards: 0,
+    relocating_shards: 0,
+    delayed_unassigned_shards: 0,
     unassigned_shards: 0,
+    number_of_in_flight_fetch: 0,
+    active_shards_percent_as_number: 100.0,
   },
   clusterStats: {
     indices: { count: 10, docs: { count: 500_000 }, store: { size_in_bytes: 1_073_741_824 } },
@@ -31,8 +39,19 @@ const DEFAULT_MOCK_DATA = {
     nodes: {
       n1: {
         name: "node-1",
-        os: { cpu: { percent: 25 } },
-        jvm: { mem: { heap_used_percent: 50 } },
+        os: {
+          cpu: { percent: 25, load_average: { "1m": 0.5, "5m": 0.4, "15m": 0.3 } },
+          mem: { used_percent: 72, total_in_bytes: 8_589_934_592, free_in_bytes: 2_404_909_674 },
+        },
+        jvm: {
+          mem: { heap_used_percent: 50 },
+          gc: {
+            collectors: {
+              young: { collection_count: 150, collection_time_in_millis: 3200 },
+              old: { collection_count: 2, collection_time_in_millis: 450 },
+            },
+          },
+        },
         fs: {
           total: {
             total_in_bytes: 500_000_000_000,
@@ -40,9 +59,47 @@ const DEFAULT_MOCK_DATA = {
           },
         },
         indices: { docs: { count: 500_000 }, shard_stats: { total_count: 12 } },
+        thread_pool: {
+          write: { active: 2, rejected: 0, completed: 10_000, queue: 0 },
+          search: { active: 5, rejected: 0, completed: 50_000, queue: 1 },
+          get: { active: 0, rejected: 0, completed: 1_000, queue: 0 },
+        },
+        breakers: {
+          parent: { limit_size_in_bytes: 4_294_967_296, estimated_size_in_bytes: 2_147_483_648, tripped: 0 },
+          fielddata: { limit_size_in_bytes: 1_717_986_918, estimated_size_in_bytes: 536_870_912, tripped: 0 },
+          request: { limit_size_in_bytes: 2_576_980_377, estimated_size_in_bytes: 0, tripped: 0 },
+          in_flight_requests: { limit_size_in_bytes: 4_294_967_296, estimated_size_in_bytes: 0, tripped: 0 },
+        },
+        process: { open_file_descriptors: 450, max_file_descriptors: 65_536 },
+        ingest: { total: { count: 1000, failed: 0, time_in_millis: 5000 } },
       },
     },
   },
+  clusterSettings: {
+    persistent: {},
+    transient: {},
+    defaults: {
+      "cluster.routing.allocation.disk.watermark.low": "85%",
+      "cluster.routing.allocation.disk.watermark.high": "90%",
+      "cluster.routing.allocation.disk.watermark.flood_stage": "95%",
+      "cluster.routing.allocation.enable": "all",
+    },
+  },
+  pendingTasks: { tasks: [] },
+  catShards: [
+    { index: "web-logs-2026.02", shard: "0", prirep: "p", state: "STARTED", docs: "125000", store: "262mb", node: "node-1" },
+    { index: "web-logs-2026.02", shard: "0", prirep: "r", state: "STARTED", docs: "125000", store: "262mb", node: "node-1" },
+  ],
+  catAllocation: [
+    { node: "node-1", shards: "24", "disk.indices": "500gb", "disk.used": "200gb", "disk.avail": "300gb", "disk.percent": "40" },
+  ],
+  recovery: {},
+  ilmExplain: { indices: {} },
+  allocationExplain: { error: { reason: "unable to find any unassigned shards to explain" } },
+  allocationExplainStatus: 400,
+  slmStats: { operation_mode: "RUNNING", policy_stats: [] },
+  snapshotStatus: { snapshots: [] },
+  ingestNodeStats: { nodes: { n1: { ingest: { total: { count: 1000, failed: 0 } } } } },
   hasPrivileges: {
     cluster: { manage_data_stream: true, read_security: true, manage_security: false },
   },
@@ -173,21 +230,36 @@ export async function registerElasticsearchMocks(
     if (path === "/_cluster/health") return json(resolved.clusterHealth);
     if (path === "/_cluster/stats") return json(resolved.clusterStats);
     if (path === "/_nodes" && method === "GET") return json(resolved.nodesInfo);
-    if (path === "/_nodes/stats") return json(resolved.nodesStats);
+    if (path.startsWith("/_nodes/stats")) return json(resolved.nodesStats);
 
     if (path === "/_security/user/_has_privileges") return json(resolved.hasPrivileges);
     if (path === "/_security/user" && method === "GET") return json(resolved.securityUsers);
     if (path === "/_security/role" && method === "GET") return json(resolved.securityRoles);
 
-    if (path === "/_cat/indices") return json(resolved.catIndices);
-    if (path === "/_data_stream") return json(resolved.dataStreams);
-    if (path.startsWith("/_resolve/index/")) return json(resolved.resolveIndex);
-    if (path.match(/\/_field_caps/)) return json(resolved.fieldCaps);
-    if (path.match(/^\/[^_][^/]*\/_mapping$/)) return json(resolved.indexMapping);
-    if (path.match(/^\/[^_][^/]*\/_settings$/)) return json(resolved.indexSettings);
-    if (path.match(/^\/[^_][^/]*\/_stats$/)) return json(resolved.indexStats);
+    if (path === "/_cluster/settings" && method === "GET") return json(resolved.clusterSettings);
+    if (path === "/_cluster/pending_tasks" && method === "GET") return json(resolved.pendingTasks);
+    if (path === "/_cluster/allocation/explain" && method === "POST") {
+      const status =
+        resolved.allocationExplainStatus ??
+        (resolved.allocationExplain?.error != null ? 400 : 200);
+      return json(resolved.allocationExplain, status);
+    }
+    if (path === "/_cat/shards" && method === "GET") return json(resolved.catShards);
+    if (path === "/_cat/allocation" && method === "GET") return json(resolved.catAllocation);
+    if (path.startsWith("/_recovery") && method === "GET") return json(resolved.recovery);
+    if (path.match(/\/_ilm\/explain/) && method === "GET") return json(resolved.ilmExplain);
+    if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);
+    if (path.startsWith("/_snapshot/") && method === "GET") return json(resolved.snapshotStatus);
+    if (path === "/_cat/indices" && method === "GET") return json(resolved.catIndices);
+    if (path === "/_data_stream" && method === "GET") return json(resolved.dataStreams);
+    if (path.startsWith("/_resolve/index/") && method === "GET") return json(resolved.resolveIndex);
+    if (path.match(/\/_field_caps/) && method === "GET") return json(resolved.fieldCaps);
+    if (path.match(/^\/[^_][^/]*\/_mapping$/) && method === "GET") return json(resolved.indexMapping);
+    if (path.match(/^\/[^_][^/]*\/_settings$/) && method === "GET")
+      return json(resolved.indexSettings);
+    if (path.match(/^\/[^_][^/]*\/_stats$/) && method === "GET") return json(resolved.indexStats);
 
-    if (path === "/_ingest/pipeline") return json(resolved.ingestPipelines);
+    if (path === "/_ingest/pipeline" && method === "GET") return json(resolved.ingestPipelines);
     if (path.startsWith("/_fleet/")) return json({});
 
     if (path === "/_query" && method === "POST") {

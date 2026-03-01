@@ -16,6 +16,7 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useUIStore } from "../store/useUIStore";
+import { createDefaultPanel } from "../dashboards/panel";
 
 import PanelContainer from "./PanelContainer";
 import {
@@ -52,13 +53,7 @@ export default function DashboardGrid() {
   );
 
   const handleAddPanel = useCallback(() => {
-    const newPanel = {
-      id: crypto.randomUUID(),
-      title: "New Panel",
-      query: "FROM logs-* | STATS count = COUNT(*) BY @timestamp | SORT @timestamp | LIMIT 50",
-      visualization: "timeseries" as const,
-      layout: { x: 0, y: Infinity, w: 6, h: 4 },
-    };
+    const newPanel = createDefaultPanel();
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
   }, [addPanel, setEditingPanelId]);

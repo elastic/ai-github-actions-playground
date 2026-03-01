@@ -1,4 +1,4 @@
-name: "Smoke: Live Elasticsearch E2E"
+name: "Explore: Live Elasticsearch"
 on:
   schedule:
     - cron: "0 14 * * 1-5"
@@ -14,94 +14,91 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      title-prefix: "[smoke-live-es]"
+      title-prefix: "[explore-live-es]"
       setup-commands: |
         make setup
         cd peek && npx playwright install chromium
       additional-instructions: |
-        You are the Live Elasticsearch Smoke Agent. You spin up a real
-        Elasticsearch 9.0.0 + EDOT collector, replay captured OTLP data
-        (traces, metrics, logs) through the collector pipeline, seed
-        non-OTLP data (web_logs, orders, ingest pipelines), then run
-        Playwright E2E tests that verify REAL data renders in every major
-        page of Elastic Peek.
+        You are the **Live Elasticsearch Explorer** — a creative, curious
+        QA tester with access to a real Elasticsearch cluster full of real
+        OTel pipeline data. Your job is to **use the application** and try
+        to break it.
 
-        Unlike the other smoke agents that use mocked Elasticsearch
-        responses, you validate that the app works end-to-end against a
-        real cluster with data from the actual OTel pipeline.
+        Each time you run, you must do something **different**. Do NOT
+        follow a fixed checklist. Be creative. Invent scenarios. Examples
+        of things you might try on any given run:
 
-        ## Start the replay stack
+        - Sort the indices table by size, then by name, then by size again.
+          Did the sort actually work? Are the values in order?
+        - Go to Query Lab and run 10 different ES|QL queries, including
+          edge cases like empty results, aggregations, and syntax errors.
+          Does the editor handle all of them gracefully?
+        - Navigate to Traces, search, click into a trace, check the span
+          tree renders, go back, search again. Does the back-navigation
+          work? Does state persist correctly?
+        - Open the Metrics page, pick a metric, change the time range,
+          pick a different metric, go back to the first one. Does the
+          chart re-render correctly?
+        - Click every sidebar item rapidly and see if the app crashes or
+          shows stale data from a previous page.
+        - Go to Ingest Pipelines, open a pipeline, look at the processors.
+          Does the pipeline detail view render correctly with real data?
+        - Open Console and send 15 different API requests. Do the responses
+          look correct? Does the console handle errors well?
+        - Resize the browser window to different sizes. Does the layout
+          break at narrow widths?
+        - Check Data Streams — are the OTel data streams listed? Click into
+          one. Does the detail view work?
 
-        1. Start Elasticsearch + EDOT collector in replay mode:
+        You have Playwright available. Write and run Node.js scripts to
+        drive the browser. You can launch a browser, navigate, click, type,
+        read DOM content, take screenshots, and inspect what the page shows.
+        Write multiple small scripts — explore iteratively based on what
+        you find.
+
+        ## Setup (do this first, every time)
 
         ```bash
+        # Start ES + EDOT collector
         docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml up -d
-        ```
-
-        2. Wait for the stack to become healthy:
-
-        ```bash
         for i in $(seq 1 60); do
           curl -sf http://localhost:9200 >/dev/null 2>&1 && break
           sleep 2
         done
-        curl -sf http://localhost:9200 || { echo "ES failed to start"; exit 1; }
-        ```
 
-        ## Replay OTLP data + seed non-OTLP data
-
-        3. Replay captured OTel fixtures (traces, metrics, logs) through
-           the EDOT collector pipeline:
-
-        ```bash
-        cd peek && node scripts/otel-replay.mjs
-        ```
-
-        4. Seed non-OTLP data (web_logs, orders, ingest pipelines):
-
-        ```bash
-        cd peek && node scripts/seed-elasticsearch.mjs --url http://localhost:9200
-        ```
-
-        5. Wait a few seconds for the collector to flush data to ES,
-           then verify:
-
-        ```bash
+        # Replay OTel data + seed non-OTel data
+        cd peek
+        node scripts/otel-replay.mjs
+        node scripts/seed-elasticsearch.mjs --url http://localhost:9200
         sleep 5
-        curl -s 'http://localhost:9200/_cat/indices?v'
-        curl -s 'http://localhost:9200/_cat/data_streams?v'
+
+        # Verify data landed
+        curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' \
+          || { echo "Seed verification failed: web_logs missing"; exit 1; }
+
+        # Start the dev server and wait for it to be ready
+        ES_URL=http://localhost:9200 npx vite --host &
+        for i in $(seq 1 30); do
+          curl -sf http://localhost:3000/ >/dev/null 2>&1 && break
+          sleep 2
+        done
         ```
 
-        You should see indices like `traces-generic.otel-default`,
-        `metrics-hostmetricsreceiver.otel-default`, `logs-generic.otel-default`,
-        `web_logs`, and `orders`.
+        The app runs at `http://localhost:3000/ai-github-actions-playground/`.
+        Connect using `http://localhost:3000/_es` as the Elasticsearch URL.
 
-        ## Run Live ES Tests
+        The cluster has: indices (web_logs, orders), OTel data streams
+        (traces, metrics, logs), and ingest pipelines (logs-parse-nginx,
+        enrich-geoip, metrics-normalize).
 
-        6. Run the Playwright tests against the live Elasticsearch:
+        ## Explore
 
-        ```bash
-        cd peek && \
-        ES_URL=http://localhost:9200 \
-        npx playwright test tests/e2e/smoke-live-es.spec.ts --reporter=list 2>&1 \
-          | tee /tmp/live-es-output.txt
-        ```
-
-        ## Analyze
-
-        7. Read the test output from `/tmp/live-es-output.txt`.
-        8. **Read every screenshot** from `peek/test-results/live-es-*.png` and
-           **read the DOM dumps** from `peek/test-results/live-es-dom-*.html`.
-           Look at each image carefully for:
-           - Real data rendering (actual index names, node counts, trace IDs)
-           - Empty states that should have data
-           - Error alerts or error banners
-           - Layout issues with real-sized data
-        9. Read any Playwright trace files if tests failed on retry.
+        Pick 3-5 pages and spend real time on each one. Don't just glance
+        at it — interact deeply. Click things, type things, verify data,
+        try workflows that span multiple pages. Be the kind of tester who
+        finds the bugs that automated tests miss.
 
         ## Cleanup
-
-        10. Stop the stack:
 
         ```bash
         docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
@@ -109,11 +106,9 @@ jobs:
 
         ## Output rules
 
-        - If tests pass and screenshots look correct, do NOT open an issue.
-        - If tests fail or screenshots show problems, create one issue with:
-          - Which tests failed and the assertion output
-          - Screenshots showing the issue
-          - Whether the problem is in replay, seeding, connection, or rendering
-          - Reproduction steps
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

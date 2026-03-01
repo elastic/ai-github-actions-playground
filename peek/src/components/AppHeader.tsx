@@ -20,6 +20,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
+import { createDefaultPanel } from "../dashboards/panel";
 
 import ConnectionProfileSwitcher from "./ConnectionProfileSwitcher";
 import DateRangePicker from "./DateRangePicker";
@@ -96,13 +97,7 @@ export default function AppHeader() {
   }, [refreshInterval, showTimeControls, setTimeRange]);
 
   const handleAddPanel = useCallback(() => {
-    const newPanel = {
-      id: crypto.randomUUID(),
-      title: "New Panel",
-      query: "FROM logs-* | STATS count = COUNT(*) BY @timestamp | SORT @timestamp | LIMIT 50",
-      visualization: "timeseries" as const,
-      layout: { x: 0, y: Infinity, w: 6, h: 4 },
-    };
+    const newPanel = createDefaultPanel();
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
   }, [addPanel, setEditingPanelId]);
