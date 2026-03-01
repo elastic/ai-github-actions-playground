@@ -8,11 +8,10 @@ import { useUIStore } from "../../src/store/useUIStore";
 import * as esService from "../../src/services/es";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
-vi.stubGlobal("localStorage", makeStorageMock());
-vi.stubGlobal("sessionStorage", makeStorageMock());
-
 describe("ConnectionProfileSwitcher expected behavior", () => {
   beforeEach(() => {
+    vi.stubGlobal("localStorage", makeStorageMock());
+    vi.stubGlobal("sessionStorage", makeStorageMock());
     localStorage.clear();
     sessionStorage.clear();
     resetAllStores();
