@@ -27,7 +27,9 @@ describe("ConnectionProfileSwitcher expected behavior", () => {
       .getState()
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
 
-    useConnectionStore.getState().setActiveProfileId(devId!);
+    expect(devId).toBeDefined();
+    expect(prodId).toBeDefined();
+    useConnectionStore.getState().setActiveProfileId(devId);
     useConnectionStore.getState().setConnection({ url: "https://dev.example.com", apiKey: "key" });
     useConnectionStore.getState().setConnected(true);
     useConnectionStore.getState().setCapabilities({
@@ -57,7 +59,7 @@ describe("ConnectionProfileSwitcher expected behavior", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
     });
-    expect(useConnectionStore.getState().profileHealthMap[prodId!]?.status).toBe("needs_attention");
-    expect(useConnectionStore.getState().profileHealthMap[devId!]).toBeUndefined();
+    expect(useConnectionStore.getState().profileHealthMap[prodId]?.status).toBe("needs_attention");
+    expect(useConnectionStore.getState().profileHealthMap[devId]).toBeUndefined();
   });
 });
