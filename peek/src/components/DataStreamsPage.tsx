@@ -20,6 +20,7 @@ import Typography from "@mui/material/Typography";
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
+import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
@@ -36,6 +37,7 @@ function toFieldRows(fieldCaps: FieldCapsResponse) {
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
@@ -162,6 +164,12 @@ export default function DataStreamsPage() {
     navigate(PAGE_MANIFEST.discover.path);
   }, [selectedName, navigate, setDiscoverQueryDraft]);
 
+  const handleInspectInConsole = useCallback(() => {
+    if (!selectedName) return;
+    setConsoleDraft({ method: "GET", path: `/_data_stream/${selectedName}` });
+    navigate(PAGE_MANIFEST.console.path);
+  }, [selectedName, navigate, setConsoleDraft]);
+
   const handleFieldStatsQuery = useCallback(
     (query: string) => {
       setDiscoverQueryDraft(query);
@@ -192,6 +200,14 @@ export default function DataStreamsPage() {
             onClick={handleOpenInDiscover}
           >
             Open in Query Lab
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={!selectedName}
+            onClick={handleInspectInConsole}
+          >
+            Inspect in Console
           </Button>
         </Stack>
       </Paper>

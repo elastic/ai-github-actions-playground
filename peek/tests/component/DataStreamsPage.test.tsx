@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
+import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { makeStorageMock, resetAllStores } from "../fixtures/test-utils";
 
 const { getDataStreamsMock, getFieldCapsMock, fetchFieldStatsMock } = vi.hoisted(() => ({
@@ -402,5 +403,32 @@ describe("DataStreamsPage", () => {
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: /close field stats/i })).not.toBeInTheDocument();
     });
+  });
+
+  it("navigates to Console with a data stream draft when Inspect in Console is clicked", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "logs-a" });
+    await user.click(screen.getByRole("button", { name: /inspect in console/i }));
+
+    expect(useApiConsoleStore.getState().consoleDraft).toEqual({
+      method: "GET",
+      path: "/_data_stream/logs-a",
+    });
+    expect(screen.getByTestId("location")).toHaveTextContent("/console");
   });
 });

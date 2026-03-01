@@ -26,6 +26,7 @@ import {
 } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
+import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { formatBytes } from "../utils/formatBytes";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
@@ -166,6 +167,7 @@ function MetaValue({
 export default function IndicesPage() {
   const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
@@ -285,6 +287,12 @@ export default function IndicesPage() {
     setDiscoverQueryDraft(`FROM ${selectedIndex} | LIMIT 50`);
     navigate(PAGE_MANIFEST.discover.path);
   }, [selectedIndex, navigate, setDiscoverQueryDraft]);
+
+  const handleInspectInConsole = useCallback(() => {
+    if (!selectedIndex) return;
+    setConsoleDraft({ method: "GET", path: `/${selectedIndex}/_mapping` });
+    navigate(PAGE_MANIFEST.console.path);
+  }, [selectedIndex, navigate, setConsoleDraft]);
 
   const handleAnalyzeDiskUsage = useCallback(async () => {
     if (!connection || !selectedIndex) return;
@@ -587,6 +595,14 @@ export default function IndicesPage() {
             onClick={handleOpenInQueryLab}
           >
             Open in Query Lab
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={!selectedIndex}
+            onClick={handleInspectInConsole}
+          >
+            Inspect in Console
           </Button>
         </Stack>
       </Paper>
