@@ -106,5 +106,6 @@ export const useFleetStore = create<FleetState>()((set) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setPartialErrors: (errors) => set({ partialErrors: errors }),
-  resetFilters: () => set({ agentFilter: { ...DEFAULT_FILTER } }),
+  resetFilters: () =>
+    set({ agentFilter: { ...DEFAULT_FILTER }, autoRefreshEnabled: true, lastUpdatedAt: null }),
 }));

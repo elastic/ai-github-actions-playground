@@ -168,6 +168,7 @@ describe("useFleetStore", () => {
         hasErrors: true,
         staleness: "critical",
       });
+      useFleetStore.setState({ autoRefreshEnabled: false, lastUpdatedAt: 123 });
       useFleetStore.getState().resetFilters();
       expect(useFleetStore.getState().agentFilter).toEqual({
         search: "",
@@ -175,6 +176,8 @@ describe("useFleetStore", () => {
         hasErrors: false,
         staleness: null,
       });
+      expect(useFleetStore.getState().autoRefreshEnabled).toBe(true);
+      expect(useFleetStore.getState().lastUpdatedAt).toBeNull();
     });
   });
 });
