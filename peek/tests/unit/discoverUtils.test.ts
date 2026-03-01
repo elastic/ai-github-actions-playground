@@ -49,7 +49,7 @@ describe("splitEsqlPipeline", () => {
     ]);
   });
 
-  it("does not split on pipes inside single-quoted strings", () => {
+  it("does not split on pipes inside single-quoted strings (no trailing stage)", () => {
     expect(splitEsqlPipeline("FROM logs-* | WHERE message == 'foo|bar'")).toEqual([
       "FROM logs-*",
       "WHERE message == 'foo|bar'",
@@ -89,7 +89,7 @@ describe("splitEsqlPipeline", () => {
     expect(splitEsqlPipeline("FROM logs-* | LIMIT 10 |")).toEqual(["FROM logs-*", "LIMIT 10"]);
   });
 
-  it("does not split on pipes inside single-quoted strings", () => {
+  it("does not split on pipes inside single-quoted strings (with trailing stage)", () => {
     expect(splitEsqlPipeline("FROM logs-* | WHERE message == 'foo|bar' | LIMIT 1")).toEqual([
       "FROM logs-*",
       "WHERE message == 'foo|bar'",
