@@ -8,6 +8,7 @@ export default defineConfig({
       "tests/component/**/*.test.{ts,tsx}",
     ],
     environment: "jsdom",
+    environmentMatchGlobs: [["tests/unit/**/*.test.ts", "node"]],
     setupFiles: ["./vitest.setup.ts"],
     css: false,
     coverage: {
