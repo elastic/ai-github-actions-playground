@@ -16,7 +16,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 6. [Security & Breaking Changes](#6-security--breaking-changes)
 7. [Performance & Architecture](#7-performance--architecture)
 8. [Idea Generation Agents](#8-idea-generation-agents)
-9. [Smoke Test Agents](#9-smoke-test-agents)
+9. [Exploratory Testing Agents](#9-exploratory-testing-agents)
 10. [CI/CD & Deployment](#10-cicd--deployment)
 11. [Team & Community Agents](#11-team--community-agents)
 12. [Project Management Agents](#12-project-management-agents)

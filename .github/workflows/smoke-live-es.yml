@@ -1,4 +1,4 @@
-name: "Smoke: Live Elasticsearch E2E"
+name: "Explore: Live Elasticsearch"
 on:
   schedule:
     - cron: "0 14 * * 1-5"
@@ -14,7 +14,7 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      title-prefix: "[smoke-live-es]"
+      title-prefix: "[explore-live-es]"
       setup-commands: |
         make setup
         cd peek && npx playwright install chromium

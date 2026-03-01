@@ -126,7 +126,7 @@ ES_URL=http://localhost:9200 make serve-proxy
 # Then open http://localhost:3000 and connect to http://localhost:3000/_es
 ```
 
-This is the same data the `smoke-live-es.yml` agent validates against.
+This is the same data the `smoke-live-es.yml` agent explores against.
 Use `make otel-replay-down` to tear everything down when done.
 
 ### Exploratory Testing Agents
