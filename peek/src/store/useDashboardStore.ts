@@ -2,8 +2,19 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { DashboardDefinition, DashboardParameter, PanelDefinition, TimeRange } from "../types";
-import { dashboardDefinitionSchema, workspaceSnapshotSchema } from "../schemas";
+import {
+  dashboardDefinitionSchema,
+  persesDashboardSchema,
+  persesWorkspaceSnapshotSchema,
+  workspaceSnapshotSchema,
+} from "../schemas";
 import { createDefaultDashboard } from "../dashboards/default";
+import {
+  fromPersesDashboard,
+  fromPersesWorkspaceSnapshot,
+  toPersesDashboard,
+  toPersesWorkspaceSnapshot,
+} from "../services/perses/dashboardAdapters";
 
 export { createDefaultDashboard };
 
@@ -156,6 +167,47 @@ function pushToHistory(
     ],
     historyFuture: [],
   };
+}
+
+function formatValidationError(error: {
+  issues: Array<{ path: PropertyKey[]; message: string }>;
+}): string {
+  return error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
+}
+
+function hydrateWorkspaceFromPersistedState(
+  persistedState: unknown,
+): { dashboards: DashboardDefinition[]; activeDashboardId: string } | null {
+  if (!persistedState || typeof persistedState !== "object") {
+    return null;
+  }
+  const record = persistedState as Record<string, unknown>;
+  if ("workspace" in record) {
+    const parsedWorkspace = persesWorkspaceSnapshotSchema.safeParse(record.workspace);
+    if (parsedWorkspace.success) {
+      return fromPersesWorkspaceSnapshot(parsedWorkspace.data);
+    }
+  }
+
+  const parsedPersesWorkspace = persesWorkspaceSnapshotSchema.safeParse(record);
+  if (parsedPersesWorkspace.success) {
+    return fromPersesWorkspaceSnapshot(parsedPersesWorkspace.data);
+  }
+
+  const parsedLegacyWorkspace = workspaceSnapshotSchema.safeParse(record);
+  if (parsedLegacyWorkspace.success) {
+    return parsedLegacyWorkspace.data;
+  }
+
+  const parsedLegacyDashboard = dashboardDefinitionSchema.safeParse(record.dashboard);
+  if (parsedLegacyDashboard.success) {
+    return {
+      dashboards: [parsedLegacyDashboard.data],
+      activeDashboardId: parsedLegacyDashboard.data.id,
+    };
+  }
+
+  return null;
 }
 
 const initialDashboard = createDefaultDashboard();
@@ -510,26 +562,41 @@ export const useDashboardStore = create<DashboardState>()(
 
       exportDashboard: () => {
         const { dashboard } = get();
-        return JSON.stringify(dashboard, null, 2);
+        return JSON.stringify(toPersesDashboard(dashboard), null, 2);
       },
 
       exportWorkspace: () => {
         const { dashboards, activeDashboardId } = get();
-        return JSON.stringify({ dashboards, activeDashboardId }, null, 2);
+        return JSON.stringify(toPersesWorkspaceSnapshot(dashboards, activeDashboardId), null, 2);
       },
 
       importDashboard: (json) => {
         try {
-          const result = dashboardDefinitionSchema.safeParse(JSON.parse(json));
-          if (!result.success) {
-            const error = result.error.issues
-              .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-              .join("; ");
-            console.error("Import failed:", error);
-            return { success: false, error };
+          const payload = JSON.parse(json);
+          const isPersesPayload =
+            !!payload &&
+            typeof payload === "object" &&
+            (payload as { kind?: unknown }).kind === "Dashboard";
+          let importedDashboard: DashboardDefinition;
+          if (isPersesPayload) {
+            const result = persesDashboardSchema.safeParse(payload);
+            if (!result.success) {
+              const error = formatValidationError(result.error);
+              console.error("Import failed:", error);
+              return { success: false, error };
+            }
+            importedDashboard = fromPersesDashboard(result.data);
+          } else {
+            const result = dashboardDefinitionSchema.safeParse(payload);
+            if (!result.success) {
+              const error = formatValidationError(result.error);
+              console.error("Import failed:", error);
+              return { success: false, error };
+            }
+            importedDashboard = result.data;
           }
           set((s) => ({
-            ...replaceActiveDashboard(s, result.data),
+            ...replaceActiveDashboard(s, importedDashboard),
             historyPast: [],
             historyFuture: [],
           }));
@@ -543,15 +610,33 @@ export const useDashboardStore = create<DashboardState>()(
 
       importWorkspace: (json) => {
         try {
-          const result = workspaceSnapshotSchema.safeParse(JSON.parse(json));
-          if (!result.success) {
-            const error = result.error.issues
-              .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-              .join("; ");
-            console.error("Workspace import failed:", error);
-            return { success: false, error };
+          const payload = JSON.parse(json);
+          const isPersesPayload =
+            !!payload &&
+            typeof payload === "object" &&
+            (payload as { kind?: unknown }).kind === "Workspace";
+          let dashboards: DashboardDefinition[];
+          let activeDashboardId: string;
+          if (isPersesPayload) {
+            const result = persesWorkspaceSnapshotSchema.safeParse(payload);
+            if (!result.success) {
+              const error = formatValidationError(result.error);
+              console.error("Workspace import failed:", error);
+              return { success: false, error };
+            }
+            const parsed = fromPersesWorkspaceSnapshot(result.data);
+            dashboards = parsed.dashboards;
+            activeDashboardId = parsed.activeDashboardId;
+          } else {
+            const result = workspaceSnapshotSchema.safeParse(payload);
+            if (!result.success) {
+              const error = formatValidationError(result.error);
+              console.error("Workspace import failed:", error);
+              return { success: false, error };
+            }
+            dashboards = result.data.dashboards;
+            activeDashboardId = result.data.activeDashboardId;
           }
-          const { dashboards, activeDashboardId } = result.data;
           if (new Set(dashboards.map((dashboard) => dashboard.id)).size !== dashboards.length) {
             const error = "dashboard IDs must be unique within a workspace import";
             console.error("Workspace import failed:", error);
@@ -610,31 +695,31 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: STORE_NAME,
-      version: 2,
+      version: 3,
       migrate: (persistedState) => {
-        const state = persistedState as Partial<DashboardState> | undefined;
-        if (!state) return persistedState;
-        if (Array.isArray(state.dashboards) && typeof state.activeDashboardId === "string") {
-          return persistedState;
-        }
-        if (state.dashboard) {
+        const hydrated = hydrateWorkspaceFromPersistedState(persistedState);
+        if (hydrated) {
           return {
-            ...state,
-            dashboards: [state.dashboard],
-            activeDashboardId: state.dashboard.id,
+            workspace: toPersesWorkspaceSnapshot(hydrated.dashboards, hydrated.activeDashboardId),
           };
         }
         const fresh = createDefaultDashboard();
         return {
-          dashboard: fresh,
-          dashboards: [fresh],
-          activeDashboardId: fresh.id,
+          workspace: toPersesWorkspaceSnapshot([fresh], fresh.id),
+        };
+      },
+      merge: (persistedState, currentState) => {
+        const hydrated = hydrateWorkspaceFromPersistedState(persistedState);
+        if (!hydrated) {
+          return currentState;
+        }
+        return {
+          ...currentState,
+          ...syncActiveState(hydrated.dashboards, hydrated.activeDashboardId),
         };
       },
       partialize: (state) => ({
-        dashboard: state.dashboard,
-        dashboards: state.dashboards,
-        activeDashboardId: state.activeDashboardId,
+        workspace: toPersesWorkspaceSnapshot(state.dashboards, state.activeDashboardId),
       }),
     },
   ),
