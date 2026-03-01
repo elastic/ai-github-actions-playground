@@ -118,7 +118,12 @@ async function captureTabScreenshots(
       throw new Error(`Expected tab "${tab}" to exist in ${section}`);
     }
     await tabEl.click();
-    await page.getByRole("tabpanel").waitFor({ state: "visible" });
+    const tabpanel = page.getByRole("tabpanel");
+    if ((await tabpanel.count()) > 0) {
+      await tabpanel.waitFor({ state: "visible" });
+    } else {
+      await page.waitForTimeout(500);
+    }
     await page.screenshot({
       path: `test-results/${prefix}-${section}-${slug(tab)}.png`,
       fullPage: true,
