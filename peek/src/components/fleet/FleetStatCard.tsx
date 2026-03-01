@@ -1,6 +1,8 @@
 import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 
 interface FleetStatCardProps {
   title: string;
@@ -19,33 +21,9 @@ export default function FleetStatCard({
   onClick,
   selected,
 }: FleetStatCardProps) {
-  return (
-    <Paper
-      variant="outlined"
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={
-        onClick
-          ? (event) => {
-              if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-                if (event.key !== "Enter") event.preventDefault();
-                onClick();
-              }
-            }
-          : undefined
-      }
-      sx={{
-        p: 1.5,
-        minWidth: 100,
-        flex: 1,
-        cursor: onClick ? "pointer" : "default",
-        borderColor: selected ? "primary.main" : undefined,
-        borderWidth: selected ? 2 : 1,
-        "&:hover": onClick ? { bgcolor: "action.hover" } : undefined,
-        transition: "border-color 0.2s",
-      }}
-    >
+  const theme = useTheme();
+  const content = (
+    <>
       <Typography variant="caption" color="text.secondary" noWrap>
         {title}
       </Typography>
@@ -59,6 +37,44 @@ export default function FleetStatCard({
           </Typography>
         )}
       </Box>
+    </>
+  );
+
+  const paperSx = {
+    p: 1.5,
+    minWidth: 100,
+    flex: 1,
+    borderColor: selected ? "primary.main" : undefined,
+    borderWidth: selected ? 2 : 1,
+    transition: "border-color 0.2s",
+  };
+
+  if (onClick) {
+    return (
+      <Paper variant="outlined" sx={paperSx}>
+        <ButtonBase
+          onClick={onClick}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            width: "100%",
+            textAlign: "left",
+            "&:hover": { bgcolor: "action.hover" },
+            "&.Mui-focusVisible": {
+              boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+            },
+          }}
+        >
+          {content}
+        </ButtonBase>
+      </Paper>
+    );
+  }
+
+  return (
+    <Paper variant="outlined" sx={paperSx}>
+      {content}
     </Paper>
   );
 }
