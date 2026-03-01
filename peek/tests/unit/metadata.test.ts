@@ -186,13 +186,15 @@ describe("getFieldValues", () => {
   });
 
   it("rejects non-positive limits", async () => {
-    const client = makeMockClient(vi.fn());
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
     await expect(getFieldValues(client, "metrics-*", "host.name", 0)).rejects.toThrow(
       "Invalid limit",
     );
     await expect(getFieldValues(client, "metrics-*", "host.name", -1)).rejects.toThrow(
       "Invalid limit",
     );
+    expect(queryFn).not.toHaveBeenCalled();
   });
 
   it("caps large limits to a safe maximum", async () => {
