@@ -3,6 +3,33 @@ import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import "vitest-axe/extend-expect";
 
+class StorageMock implements Storage {
+  private store: Record<string, string> = {};
+  get length() {
+    return Object.keys(this.store).length;
+  }
+  clear() {
+    this.store = {};
+  }
+  getItem(key: string) {
+    return this.store[key] || null;
+  }
+  key(index: number) {
+    return Object.keys(this.store)[index] || null;
+  }
+  removeItem(key: string) {
+    delete this.store[key];
+  }
+  setItem(key: string, value: string) {
+    this.store[key] = String(value);
+  }
+}
+
+// @ts-expect-error - overriding global for testing
+global.localStorage = new StorageMock();
+// @ts-expect-error - overriding global for testing
+global.sessionStorage = new StorageMock();
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
