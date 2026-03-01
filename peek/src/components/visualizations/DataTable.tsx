@@ -66,8 +66,10 @@ export interface SortState {
 }
 
 function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
-  const kept = order.filter((i) => allIndices.includes(i));
-  const missing = allIndices.filter((i) => !kept.includes(i));
+  const allSet = new Set(allIndices);
+  const kept = order.filter((i) => allSet.has(i));
+  const keptSet = new Set(kept);
+  const missing = allIndices.filter((i) => !keptSet.has(i));
   return [...kept, ...missing];
 }
 
@@ -108,7 +110,8 @@ export default memo(function DataTable({
     const visible = showEmptyColumns
       ? allColumnIndices
       : allColumnIndices.filter((i) => !emptyColumnIndices.has(i));
-    const ordered = resolvedColumnOrder.filter((i) => visible.includes(i));
+    const visibleSet = new Set(visible);
+    const ordered = resolvedColumnOrder.filter((i) => visibleSet.has(i));
     const pinned = ordered.filter((i) => pinnedColumns.has(i));
     const unpinned = ordered.filter((i) => !pinnedColumns.has(i));
     return [...pinned, ...unpinned];
