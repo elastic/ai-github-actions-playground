@@ -146,7 +146,8 @@ After approving, **wait** for the newly-started runs to complete before continui
 ## Step 4 — Check who made the last commit
 
 ```bash
-gh api repos/{owner}/{repo}/commits/<HEAD_SHA> --jq '.author.login // .commit.author.name'
+REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+gh api "repos/$REPO_SLUG/commits/<HEAD_SHA>" --jq '.author.login // .commit.author.name'
 ```
 
 ### If the last commit was a bot (`github-actions[bot]`, `copilot[bot]`, or any `*[bot]`)
@@ -249,7 +250,8 @@ gh workflow run trigger-mention-in-pr-by-id.yml \
   --field pull-request-number="<NUMBER>" \
   --field prompt="Please review this PR. Assess the changes for correctness, \
 code quality, and alignment with the project standards in DEVELOPING.md. \
-If the PR looks good, approve it. If changes are needed, request them."
+If the PR looks good, leave comments only (do not approve). \
+If changes are needed, request them."
 ```
 
 Then **wait** for the review to be submitted before continuing.
@@ -277,8 +279,10 @@ A PR is ready to merge when **all** of the following are true:
 
 - [ ] No merge conflicts
 - [ ] All required CI checks pass
-- [ ] At least one approving review
+- [ ] At least one approving review from a human maintainer (non-bot, non-author)
 - [ ] No unresolved `CHANGES_REQUESTED` reviews
+
+Ignore approvals from bot accounts (for example, usernames ending with `[bot]`).
 
 ```bash
 gh pr view <NUMBER> --json mergeable,mergeStateStatus,reviews,reviewDecision
