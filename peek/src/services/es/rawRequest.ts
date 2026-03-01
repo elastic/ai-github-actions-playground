@@ -78,7 +78,7 @@ export async function executeRawRequest(
   }
   const rawBody = body && body.trim() ? body : undefined;
   try {
-    let response!: Response;
+    let response: Response | undefined;
     for (let attempt = 0; ; attempt++) {
       try {
         response = await doFetch(
@@ -98,8 +98,10 @@ export async function executeRawRequest(
           throw err;
         }
       }
-      // attempt is always < RETRY_DELAYS_MS.length here (loop exits above otherwise)
-      await delay(RETRY_DELAYS_MS[attempt]!, controller.signal);
+      await delay(RETRY_DELAYS_MS[attempt] ?? 0, controller.signal);
+    }
+    if (!response) {
+      throw new Error("No response received");
     }
     const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
     let responseBody: unknown;
