@@ -1,0 +1,71 @@
+name: Run All Explore Tests
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch explore-connection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-connection.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-customer-feedback
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-customer-feedback.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-data-management
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-data-management.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-live-es
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-live-es.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-metrics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-metrics.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-query-lab
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-query-lab.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-traces
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-traces.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch ui-designer-review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ui-designer-review.yml --repo ${{ github.repository }}

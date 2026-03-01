@@ -1,0 +1,186 @@
+name: UI Smoke Test PR Review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "peek/**"
+      - "Makefile"
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+concurrency:
+  group: ui-smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test:
+    if: github.event.pull_request.draft == false
+    name: UI Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: peek/package-lock.json
+
+      - name: Install dependencies
+        run: cd peek && npm ci --no-audit --no-fund
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+      - name: Install Playwright Chromium
+        run: cd peek && npx playwright install chromium
+
+      - name: Run E2E smoke tests
+        id: smoke
+        working-directory: peek
+        run: |
+          npx playwright test tests/e2e/smoke.spec.ts --reporter=json --output-folder=test-results 2>&1 | tee /tmp/smoke-output.txt || true
+          npx playwright test tests/e2e/smoke.spec.ts --reporter=json > /tmp/smoke-results.json 2>/dev/null || true
+
+      - name: Start dev server for preflight
+        id: server
+        working-directory: peek
+        run: |
+          npm run dev -- --port 3000 --host 127.0.0.1 &
+          echo "pid=$!" >> "$GITHUB_OUTPUT"
+          sleep 8
+
+      - name: Run screenshot preflight
+        id: preflight
+        working-directory: peek
+        run: |
+          node scripts/screenshot-preflight.mjs \
+            --url http://127.0.0.1:3000/ai-github-actions-playground/ \
+            --output /tmp/screenshot-preflight.json \
+            --screenshot /tmp/screenshot-preflight.png || true
+
+      - name: Stop dev server
+        if: always()
+        run: kill ${{ steps.server.outputs.pid }} 2>/dev/null || true
+
+      - name: Build smoke test report
+        if: always()
+        id: report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // --- Smoke test results ---
+            let smokeTests = [];
+            let smokePassed = 0;
+            let smokeFailed = 0;
+            let smokeSkipped = 0;
+            try {
+              const raw = fs.readFileSync('/tmp/smoke-results.json', 'utf8');
+              const results = JSON.parse(raw);
+              for (const suite of results.suites ?? []) {
+                for (const spec of suite.specs ?? []) {
+                  for (const test of spec.tests ?? []) {
+                    const status = test.status === 'expected' ? '✅' : test.status === 'skipped' ? '⏭️' : '❌';
+                    const duration = test.results?.[0]?.duration ?? 0;
+                    smokeTests.push(`| ${status} | ${spec.title} | ${duration}ms |`);
+                    if (test.status === 'expected') smokePassed++;
+                    else if (test.status === 'skipped') smokeSkipped++;
+                    else smokeFailed++;
+                  }
+                }
+              }
+            } catch {
+              smokeTests.push('| ⚠️ | Could not parse smoke test results | - |');
+            }
+
+            // --- Preflight diagnostics ---
+            let preflight = { consoleErrors: [], pageErrors: [], uiErrors: [] };
+            try {
+              preflight = JSON.parse(fs.readFileSync('/tmp/screenshot-preflight.json', 'utf8'));
+            } catch {}
+
+            const significantConsoleErrors = (preflight.consoleErrors ?? []).filter(e =>
+              !(/fonts\.googleapis\.com/.test(e) || /fonts\.gstatic\.com/.test(e) || /ERR_NAME_NOT_RESOLVED/.test(e))
+            );
+
+            const hasIssues = smokeFailed > 0 || significantConsoleErrors.length > 0 ||
+              (preflight.pageErrors ?? []).length > 0 || (preflight.uiErrors ?? []).length > 0;
+
+            const verdict = hasIssues
+              ? '⚠️ **Issues detected** — please review the details below.'
+              : '✅ **All checks passed** — UI looks good!';
+
+            let body = `## 🔍 UI Smoke Test Report\n\n${verdict}\n\n`;
+            body += `### E2E Smoke Tests\n\n`;
+            body += `| Status | Test | Duration |\n|--------|------|----------|\n`;
+            body += smokeTests.join('\n') + '\n\n';
+            body += `**Summary:** ${smokePassed} passed, ${smokeFailed} failed, ${smokeSkipped} skipped\n\n`;
+
+            body += `### Screenshot Preflight Diagnostics\n\n`;
+            if (significantConsoleErrors.length > 0) {
+              body += `**Console Errors:**\n`;
+              for (const e of significantConsoleErrors) body += `- \`${e.slice(0, 200)}\`\n`;
+              body += '\n';
+            }
+            if ((preflight.pageErrors ?? []).length > 0) {
+              body += `**Page Errors:**\n`;
+              for (const e of preflight.pageErrors) body += `- \`${e.slice(0, 200)}\`\n`;
+              body += '\n';
+            }
+            if ((preflight.uiErrors ?? []).length > 0) {
+              body += `**UI Alert Errors:**\n`;
+              for (const e of preflight.uiErrors) body += `- \`${e.slice(0, 200)}\`\n`;
+              body += '\n';
+            }
+            if (significantConsoleErrors.length === 0 && (preflight.pageErrors ?? []).length === 0 && (preflight.uiErrors ?? []).length === 0) {
+              body += `No console errors, page errors, or UI alert errors detected.\n\n`;
+            }
+
+            if (hasIssues) {
+              body += `### Recommendations\n\n`;
+              if (smokeFailed > 0) body += `- 🔴 Fix failing E2E smoke tests before merging.\n`;
+              if (significantConsoleErrors.length > 0) body += `- 🟡 Investigate console errors — they may indicate runtime issues.\n`;
+              if ((preflight.pageErrors ?? []).length > 0) body += `- 🔴 Page errors detected — the app may not load correctly.\n`;
+              if ((preflight.uiErrors ?? []).length > 0) body += `- 🟡 UI error alerts are visible — check for user-facing error states.\n`;
+            }
+
+            // Post or update PR comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = '## 🔍 UI Smoke Test Report';
+            const existing = comments.find(c => c.body?.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-smoke-test-artifacts
+          retention-days: 14
+          path: |
+            /tmp/screenshot-preflight.json
+            /tmp/screenshot-preflight.png
+            peek/test-results/
