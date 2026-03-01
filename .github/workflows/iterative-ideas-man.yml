@@ -15,5 +15,6 @@ jobs:
     with:
       idea-size: "small"
       title-prefix: "[idea]"
+      setup-commands: "cd peek && npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

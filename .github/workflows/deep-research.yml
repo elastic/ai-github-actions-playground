@@ -16,5 +16,7 @@ jobs:
       github.event.issue.pull_request == null &&
       startsWith(github.event.comment.body, '/research')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-deep-research.lock.yml@main
+    with:
+      setup-commands: "cd peek && npm ci"
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

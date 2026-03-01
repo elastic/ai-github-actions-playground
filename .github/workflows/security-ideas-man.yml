@@ -16,5 +16,6 @@ jobs:
       persona: "a seasoned threat-hunter and SOC engineer who lives in dashboards, detection rules, and XDR alert queues"
       idea-size: "small"
       title-prefix: "[security idea]"
+      setup-commands: "cd peek && npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

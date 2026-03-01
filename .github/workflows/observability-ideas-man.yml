@@ -16,5 +16,6 @@ jobs:
       persona: "a seasoned SRE and platform engineer who lives in logs, metrics, and distributed traces"
       idea-size: "small"
       title-prefix: "[observability idea]"
+      setup-commands: "cd peek && npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

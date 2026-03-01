@@ -16,5 +16,6 @@ jobs:
       persona: "a search engineer and AI product builder who tunes relevance, embedding pipelines, and hybrid retrieval strategies"
       idea-size: "small"
       title-prefix: "[search idea]"
+      setup-commands: "cd peek && npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
