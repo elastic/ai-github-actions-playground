@@ -472,7 +472,13 @@ export default function IngestPipelinesPage() {
                                         >
                                           <Chip
                                             size="small"
-                                            label={pr.status ?? "unknown"}
+                                            label={
+                                              pr.status === "success"
+                                                ? "OK"
+                                                : pr.status === "error"
+                                                  ? "Error"
+                                                  : "Unknown"
+                                            }
                                             color={
                                               pr.status === "success"
                                                 ? "success"
