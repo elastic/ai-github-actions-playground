@@ -447,7 +447,9 @@ export default function AddDataPage() {
               ? "Elasticsearch endpoint, "
               : ""}
           {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
-          {apiKeyValue || connection?.url || clusterVersion
+          {apiKeyValue ||
+          (endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connection?.url)) ||
+          clusterVersion
             ? "have been pre-filled in the command above."
             : "Replace the placeholders before running."}
           {!apiKeyValue && (

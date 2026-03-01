@@ -253,7 +253,7 @@ describe("AddDataPage", () => {
     });
     useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
-    // fetch should only be called for cluster info, not for the probe
+    // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
     expect(fetchSpy).not.toHaveBeenCalledWith(
       expect.stringContaining(".ingest."),
       expect.anything(),
