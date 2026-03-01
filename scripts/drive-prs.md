@@ -70,38 +70,40 @@ gh pr view <NUMBER> --json mergeable,mergeStateStatus
 
 | `mergeable` | `mergeStateStatus` | Meaning |
 |-------------|-------------------|---------|
-| `CONFLICTING` | `dirty` | Has conflicts — **you can fix this** |
+| `CONFLICTING` | `dirty` | Has conflicts — **only you can fix this** |
 | `MERGEABLE` | `clean` / `has_hooks` / `blocked` | No conflicts |
 | `UNKNOWN` | any | GitHub hasn't computed it yet — re-check in 30 s |
 
-### If there are conflicts → resolve them
+### If there are conflicts → resolve them (you must do this, not the bot)
 
-1. Check out the branch locally:
+Bots cannot resolve merge conflicts. Use a **git worktree** so you can work on
+multiple PRs in parallel without polluting your main checkout:
 
-   ```bash
-   gh pr checkout <NUMBER>
-   ```
+```bash
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+git fetch origin main "$BRANCH"
 
-2. Rebase onto main (preferred over merge commits):
+# Create an isolated worktree for this PR
+git worktree add /tmp/pr-<NUMBER> "$BRANCH"
+cd /tmp/pr-<NUMBER>
 
-   ```bash
-   git fetch origin main
-   git rebase origin/main
-   ```
+git rebase origin/main
+# ... resolve conflicts, then:
+git add <files>
+GIT_EDITOR=true git rebase --continue
+git push --force-with-lease
 
-3. For each conflict, read both sides and resolve intelligently:
-   - Favour the PR branch's intent (it is the proposed change)
-   - Incorporate any non-overlapping changes from `main`
-   - Do not silently discard either side without understanding it
-4. After resolving:
+cd -
+git worktree remove /tmp/pr-<NUMBER>
+```
 
-   ```bash
-   git add <files>
-   git rebase --continue
-   git push --force-with-lease
-   ```
+Resolution guidelines:
+- Favour the PR branch's intent (it is the proposed change)
+- Incorporate any non-overlapping changes from `main`
+- Do not silently discard either side without understanding it
+- Run `npx tsc --noEmit` in `peek/` after resolving to catch type errors
 
-5. Return to Step 2 to confirm conflicts are cleared, then continue.
+Return to Step 2 to confirm conflicts are cleared, then continue.
 
 ---
 
@@ -201,12 +203,29 @@ gh run view <RUN_ID> --log-failed
 
 Determine whether the failure is:
 
-- **Caused by this PR's changes** → read the diff, understand the root cause,
-  fix the code, push. Return to Step 3.
+- **Caused by this PR's changes** → delegate the fix to the bot that owns the PR
+  (you should not fix non-conflict issues yourself):
 
   ```bash
-  gh pr diff <NUMBER>
+  # Determine the trigger based on PR author
+  AUTHOR=$(gh pr view <NUMBER> --json author --jq '.author.login')
+  # copilot-swe-agent[bot] → use @copilot
+  # github-actions[bot]    → use /ai
   ```
+
+  For a **`copilot-swe-agent[bot]`** PR:
+  ```bash
+  gh pr comment <NUMBER> --body "@copilot The CI is failing. Please investigate and fix:
+  <paste the relevant log snippet or error summary here>"
+  ```
+
+  For a **`github-actions[bot]`** PR:
+  ```bash
+  gh pr comment <NUMBER> --body "/ai The CI is failing. Please investigate and fix:
+  <paste the relevant log snippet or error summary here>"
+  ```
+
+  Then move to the next PR — come back after the bot pushes a fix.
 
 - **A flaky test or infrastructure issue** → re-run the failed jobs:
 
@@ -261,18 +280,37 @@ Then **wait** for the review to be submitted before continuing.
 
 ### Step 6a — Address review feedback
 
+Review feedback (CHANGES_REQUESTED) must be delegated back to the bot that owns
+the PR. **Do not fix non-conflict issues yourself.**
+
 1. Read the review comments:
 
    ```bash
    gh pr view <NUMBER> --json reviews,comments
    ```
 
-2. For each change request:
-   - Read the diff at the relevant line
-   - Apply the fix if it is straightforward and clearly correct
-   - If the fix requires architectural judgment, leave a reply explaining
-     why you are deferring rather than silently skipping it
-3. Push changes, then wait for CI (return to Step 3).
+2. Determine which trigger to use based on PR author:
+
+   | PR author | Trigger |
+   |-----------|---------|
+   | `copilot-swe-agent[bot]` | `@copilot` |
+   | `github-actions[bot]` | `/ai` |
+
+3. Post a comment delegating the fix:
+
+   For a **`copilot-swe-agent[bot]`** PR:
+   ```bash
+   gh pr comment <NUMBER> --body "@copilot Please address the review feedback:
+   <summarise the specific changes requested>"
+   ```
+
+   For a **`github-actions[bot]`** PR:
+   ```bash
+   gh pr comment <NUMBER> --body "/ai Please address the review feedback:
+   <summarise the specific changes requested>"
+   ```
+
+4. Move to the next PR — come back after the bot pushes changes and CI passes.
 
 ---
 
@@ -361,11 +399,22 @@ gh pr view <NUMBER>
 gh pr checks <NUMBER>
 gh pr diff <NUMBER>
 
-# Checkout, rebase onto main, push
-gh pr checkout <NUMBER>
-git fetch origin main && git rebase origin/main
-# ... resolve any conflicts ...
+# Resolve merge conflicts using a worktree (parallel-safe)
+BRANCH=$(gh pr view <NUMBER> --json headRefName --jq '.headRefName')
+git fetch origin main "$BRANCH"
+git worktree add /tmp/pr-<NUMBER> "$BRANCH"
+cd /tmp/pr-<NUMBER>
+GIT_EDITOR=true git rebase origin/main
+# ... resolve conflicts ...
 git push --force-with-lease
+cd -
+git worktree remove /tmp/pr-<NUMBER>
+
+# Delegate a fix to the bot (NOT for merge conflicts)
+AUTHOR=$(gh pr view <NUMBER> --json author --jq '.author.login')
+# copilot-swe-agent[bot] → @copilot  |  github-actions[bot] → /ai
+gh pr comment <NUMBER> --body "@copilot Please fix: <description>"
+gh pr comment <NUMBER> --body "/ai Please fix: <description>"
 
 # Kick CI manually
 gh workflow run ci.yml --ref <BRANCH>
