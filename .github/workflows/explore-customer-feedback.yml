@@ -15,7 +15,6 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
     with:
-      model: gemini-3.1-pro
       setup-commands: |
         make setup
         cd peek && npx playwright install chromium
