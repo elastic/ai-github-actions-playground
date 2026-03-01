@@ -21,9 +21,11 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import MemoryIcon from "@mui/icons-material/Memory";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ShieldIcon from "@mui/icons-material/Shield";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
 
 import type { UserCapabilities } from "../services/es";
 import ApiConsolePage from "../components/ApiConsolePage";
+import ApiKeysPage from "../components/ApiKeysPage";
 import ChatPage from "../components/ChatPage";
 import ClusterCapacityPage from "../components/ClusterCapacityPage";
 import ClusterHealthPage from "../components/ClusterHealthPage";
@@ -325,6 +327,20 @@ export const PAGE_MANIFEST = {
       order: 30,
       showInSidebar: true,
       icon: createElement(PeopleIcon, { fontSize: "small" }),
+    },
+  },
+  apiKeys: {
+    path: "/api-keys",
+    component: ApiKeysPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    requiredCapability: "canReadApiKeys",
+    nav: {
+      label: "API Keys",
+      group: "System",
+      order: 35,
+      showInSidebar: true,
+      icon: createElement(VpnKeyIcon, { fontSize: "small" }),
     },
   },
   roles: {

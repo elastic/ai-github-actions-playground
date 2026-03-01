@@ -94,6 +94,7 @@ describe("WelcomeScreen", () => {
       canCreateApiKeys: false,
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
+      canReadApiKeys: false,
     });
   });
 

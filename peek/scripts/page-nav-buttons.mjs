@@ -8,6 +8,7 @@ export const PAGE_NAV_BUTTONS = {
   traces: "Traces",
   console: "Console",
   users: "Users",
+  "api-keys": "API Keys",
   roles: "Roles",
   dashboards: "Dashboards",
   fleet: "Fleet",
