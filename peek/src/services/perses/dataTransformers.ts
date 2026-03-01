@@ -11,6 +11,22 @@ export interface StatDataPoint {
   value: number | null;
 }
 
+export interface BarChartSeriesData {
+  name: string;
+  values: number[];
+}
+
+export interface BarChartData {
+  categories: string[];
+  series: BarChartSeriesData[];
+}
+
+export interface GaugeDataPoint {
+  name: string;
+  value: number;
+  values: number[];
+}
+
 function isTimestampColumn(column: EsqlColumn): boolean {
   return column.name === TIMESTAMP_FIELD || DATE_TYPES.has(column.type);
 }
@@ -158,4 +174,95 @@ export function toStatData(data: EsqlResponse): StatDataPoint[] {
     name: data.columns[columnIndex]?.name ?? `value_${columnIndex}`,
     value: normalizeNumericValue(latestRow[columnIndex]),
   }));
+}
+
+export function toBarChartData(data: EsqlResponse): BarChartData {
+  const numericColumns = findNumericColumnIndices(data);
+  if (numericColumns.length === 0) {
+    return { categories: [], series: [] };
+  }
+
+  const dimensionColumns = findDimensionColumnIndices(data);
+  const categoryIndex = dimensionColumns[0] ?? -1;
+  const groupIndex = dimensionColumns.length >= 2 ? (dimensionColumns[1] ?? -1) : -1;
+
+  const categories =
+    categoryIndex >= 0
+      ? data.values.map((row) => String(row?.[categoryIndex] ?? "(empty)"))
+      : data.values.map((_, index) => String(index));
+
+  if (groupIndex < 0) {
+    return {
+      categories,
+      series: numericColumns.map((columnIndex) => ({
+        name: data.columns[columnIndex]?.name ?? `value_${columnIndex}`,
+        values: data.values.map((row) => {
+          const numeric = Number(row?.[columnIndex] ?? 0);
+          return Number.isFinite(numeric) ? numeric : 0;
+        }),
+      })),
+    };
+  }
+
+  const uniqueCategories = [...new Set(categories)];
+  const groupedRows = new Map<string, number[]>();
+  for (let index = 0; index < data.values.length; index++) {
+    const group = String(data.values[index]?.[groupIndex] ?? "(empty)");
+    const rows = groupedRows.get(group);
+    if (rows) {
+      rows.push(index);
+    } else {
+      groupedRows.set(group, [index]);
+    }
+  }
+
+  const series: BarChartSeriesData[] = [];
+  for (const groupName of Array.from(groupedRows.keys()).sort((a, b) => a.localeCompare(b))) {
+    const rows = groupedRows.get(groupName) ?? [];
+    for (const columnIndex of numericColumns) {
+      const columnName = data.columns[columnIndex]?.name ?? `value_${columnIndex}`;
+      const name = numericColumns.length > 1 ? `${columnName} (${groupName})` : groupName;
+      series.push({
+        name,
+        values: uniqueCategories.map((category) =>
+          rows.reduce((sum, rowIndex) => {
+            if (categories[rowIndex] !== category) {
+              return sum;
+            }
+            const numeric = Number(data.values[rowIndex]?.[columnIndex] ?? 0);
+            return Number.isFinite(numeric) ? sum + numeric : sum;
+          }, 0),
+        ),
+      });
+    }
+  }
+
+  return { categories: uniqueCategories, series };
+}
+
+export function toGaugeData(data: EsqlResponse): GaugeDataPoint | undefined {
+  const numericColumns = findNumericColumnIndices(data);
+  if (numericColumns.length === 0 || data.values.length === 0) {
+    return undefined;
+  }
+
+  const valueColumn = numericColumns[0];
+  if (valueColumn === undefined) {
+    return undefined;
+  }
+  const latestRowIndex = findLatestRowIndex(data, findTimestampColumnIndex(data));
+  const latestRow = data.values[latestRowIndex];
+  if (!latestRow) {
+    return undefined;
+  }
+
+  const value = Number(latestRow[valueColumn] ?? 0);
+  return {
+    name: data.columns[valueColumn]?.name ?? `value_${valueColumn}`,
+    value: Number.isFinite(value) ? value : 0,
+    values: data.values.map((row) => {
+      const numeric = Number(row?.[valueColumn] ?? 0);
+      return Number.isFinite(numeric) ? numeric : 0;
+    }),
+  };
 }
