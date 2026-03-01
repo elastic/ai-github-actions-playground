@@ -11,6 +11,8 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import List from "@mui/material/List";
@@ -31,6 +33,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
+import { deriveDefaultOtlpEndpoint } from "../services/telemetry/browserTracing";
 import type { ElasticsearchConnection } from "../types";
 
 type AuthType = "apiKey" | "userpass";
@@ -83,6 +86,17 @@ export default function ConnectionDialog() {
   const [password, setPassword] = useState(savedConn?.password ?? "");
   const [proxyUrl, setProxyUrl] = useState(savedConn?.proxyUrl ?? "");
   const [showProxy, setShowProxy] = useState(Boolean(savedConn?.proxyUrl));
+  const [otlpEnabled, setOtlpEnabled] = useState(savedConn?.otlpEnabled ?? false);
+  const [otlpEndpoint, setOtlpEndpoint] = useState(
+    savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""),
+  );
+  const [otlpUseElasticAuth, setOtlpUseElasticAuth] = useState(
+    savedConn?.otlpUseElasticAuth ?? true,
+  );
+  const [otlpApiKey, setOtlpApiKey] = useState(savedConn?.otlpApiKey ?? "");
+  const [showTelemetry, setShowTelemetry] = useState(
+    Boolean(savedConn?.otlpEnabled || savedConn?.otlpEndpoint || savedConn?.otlpApiKey),
+  );
   const [showSecret, setShowSecret] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -104,6 +118,13 @@ export default function ConnectionDialog() {
     setPassword(savedConn?.password ?? "");
     setProxyUrl(savedConn?.proxyUrl ?? "");
     setShowProxy(Boolean(savedConn?.proxyUrl));
+    setOtlpEnabled(savedConn?.otlpEnabled ?? false);
+    setOtlpEndpoint(savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""));
+    setOtlpUseElasticAuth(savedConn?.otlpUseElasticAuth ?? true);
+    setOtlpApiKey(savedConn?.otlpApiKey ?? "");
+    setShowTelemetry(
+      Boolean(savedConn?.otlpEnabled || savedConn?.otlpEndpoint || savedConn?.otlpApiKey),
+    );
   }, [savedConn]);
 
   const buildConnection = useCallback((): ElasticsearchConnection => {
@@ -113,14 +134,33 @@ export default function ConnectionDialog() {
         username: username.trim(),
         password: password.trim(),
         proxyUrl: proxyUrl.trim(),
+        otlpEnabled,
+        otlpEndpoint: otlpEndpoint.trim(),
+        otlpUseElasticAuth,
+        otlpApiKey: otlpApiKey.trim(),
       };
     }
     return {
       url: url.trim(),
       apiKey: apiKey.trim(),
       proxyUrl: proxyUrl.trim(),
+      otlpEnabled,
+      otlpEndpoint: otlpEndpoint.trim(),
+      otlpUseElasticAuth,
+      otlpApiKey: otlpApiKey.trim(),
     };
-  }, [url, authType, apiKey, username, password, proxyUrl]);
+  }, [
+    url,
+    authType,
+    apiKey,
+    username,
+    password,
+    proxyUrl,
+    otlpEnabled,
+    otlpEndpoint,
+    otlpUseElasticAuth,
+    otlpApiKey,
+  ]);
 
   const handleTest = useCallback(async () => {
     setTesting(true);
@@ -190,6 +230,11 @@ export default function ConnectionDialog() {
       setPassword(conn.password ?? "");
       setProxyUrl(conn.proxyUrl ?? "");
       setShowProxy(Boolean(conn.proxyUrl));
+      setOtlpEnabled(conn.otlpEnabled ?? false);
+      setOtlpEndpoint(conn.otlpEndpoint ?? deriveDefaultOtlpEndpoint(conn.url));
+      setOtlpUseElasticAuth(conn.otlpUseElasticAuth ?? true);
+      setOtlpApiKey(conn.otlpApiKey ?? "");
+      setShowTelemetry(Boolean(conn.otlpEnabled || conn.otlpEndpoint || conn.otlpApiKey));
       setActiveProfileId(profileId);
       setResult(null);
     },
@@ -411,8 +456,10 @@ export default function ConnectionDialog() {
             fullWidth
             value={url}
             onChange={(e) => {
-              setUrl(e.target.value);
+              const nextUrl = e.target.value;
+              setUrl(nextUrl);
               setActiveProfileId(null);
+              setOtlpEndpoint((prev) => (prev.trim() ? prev : deriveDefaultOtlpEndpoint(nextUrl)));
             }}
             helperText="The full URL including protocol and port"
           />
@@ -436,6 +483,67 @@ export default function ConnectionDialog() {
               }}
               helperText="Requests are sent to this URL; the Elasticsearch URL is forwarded as a header"
             />
+          </Collapse>
+          <Button
+            size="small"
+            onClick={() => setShowTelemetry(!showTelemetry)}
+            endIcon={showTelemetry ? <ExpandLess /> : <ExpandMore />}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            Browser Tracing (Experimental)
+          </Button>
+          <Collapse in={showTelemetry}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={otlpEnabled}
+                    onChange={(e) => {
+                      setOtlpEnabled(e.target.checked);
+                      setActiveProfileId(null);
+                    }}
+                  />
+                }
+                label="Enable browser tracing"
+              />
+              <TextField
+                label="OTLP traces endpoint"
+                placeholder={deriveDefaultOtlpEndpoint(url)}
+                fullWidth
+                value={otlpEndpoint}
+                onChange={(e) => {
+                  setOtlpEndpoint(e.target.value);
+                  setActiveProfileId(null);
+                }}
+                helperText="Defaults to /v1/traces on the connected cluster host."
+                disabled={!otlpEnabled}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={otlpUseElasticAuth}
+                    onChange={(e) => {
+                      setOtlpUseElasticAuth(e.target.checked);
+                      setActiveProfileId(null);
+                    }}
+                  />
+                }
+                label="Use Elasticsearch API key for OTLP auth"
+                disabled={!otlpEnabled}
+              />
+              <TextField
+                label="OTLP API key override (optional)"
+                fullWidth
+                type={showSecret ? "text" : "password"}
+                value={otlpApiKey}
+                onChange={(e) => {
+                  setOtlpApiKey(e.target.value);
+                  setActiveProfileId(null);
+                }}
+                helperText="If provided, this key is used instead of the Elasticsearch API key."
+                disabled={!otlpEnabled}
+              />
+            </Box>
           </Collapse>
           <Tabs
             value={authType}

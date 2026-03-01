@@ -18,6 +18,7 @@ import { isElectronAvailable } from "./createElectronStorage";
 import {
   CONNECTION_STORE_NAME,
   API_KEY_SESSION_SUFFIX,
+  OTLP_API_KEY_SESSION_SUFFIX,
   PASSWORD_SESSION_SUFFIX,
   PROFILE_SESSION_PREFIX,
   ENCRYPTED_STORE_SUFFIX,
@@ -26,6 +27,7 @@ import {
 const credentialsSchema = z
   .object({
     apiKey: z.unknown().optional(),
+    otlpApiKey: z.unknown().optional(),
     password: z.unknown().optional(),
   })
   .strict();
@@ -85,12 +87,20 @@ export const createConnectionProfileSlice: StateCreator<
           .catch(console.error);
         void window
           .electronAPI!.deleteCredential(
+            CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + OTLP_API_KEY_SESSION_SUFFIX,
+          )
+          .catch(console.error);
+        void window
+          .electronAPI!.deleteCredential(
             CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
           )
           .catch(console.error);
       } else {
         sessionStorage.removeItem(
           CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + API_KEY_SESSION_SUFFIX,
+        );
+        sessionStorage.removeItem(
+          CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + OTLP_API_KEY_SESSION_SUFFIX,
         );
         sessionStorage.removeItem(
           CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + PASSWORD_SESSION_SUFFIX,
@@ -123,8 +133,8 @@ export const createConnectionProfileSlice: StateCreator<
   lockProfile: async (id, pin) => {
     const profile = get().connectionProfiles.find((p) => p.id === id);
     if (!profile) return;
-    const { apiKey = "", password = "" } = profile.connection;
-    const payload = await encryptWithPin(pin, JSON.stringify({ apiKey, password }));
+    const { apiKey = "", password = "", otlpApiKey = "" } = profile.connection;
+    const payload = await encryptWithPin(pin, JSON.stringify({ apiKey, password, otlpApiKey }));
     // Re-check: profile may have been deleted while awaiting encryption.
     if (!get().connectionProfiles.some((p) => p.id === id)) return;
     localStorage.setItem(
@@ -150,10 +160,11 @@ export const createConnectionProfileSlice: StateCreator<
       const result = credentialsSchema.safeParse(JSON.parse(plaintext));
       if (!result.success) return false;
       const apiKey = typeof result.data.apiKey === "string" ? result.data.apiKey : "";
+      const otlpApiKey = typeof result.data.otlpApiKey === "string" ? result.data.otlpApiKey : "";
       const password = typeof result.data.password === "string" ? result.data.password : "";
       set((s) => ({
         connectionProfiles: s.connectionProfiles.map((p) =>
-          p.id === id ? { ...p, connection: { ...p.connection, apiKey, password } } : p,
+          p.id === id ? { ...p, connection: { ...p.connection, apiKey, otlpApiKey, password } } : p,
         ),
       }));
       return true;
