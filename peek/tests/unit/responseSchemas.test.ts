@@ -287,6 +287,11 @@ describe("getDataStreamsResponseSchema", () => {
   it("rejects a response missing data_streams", () => {
     expect(getDataStreamsResponseSchema.safeParse({}).success).toBe(false);
   });
+
+  it("rejects a data stream entry missing name", () => {
+    const data = { data_streams: [{ timestamp_field: { name: "@timestamp" } }] };
+    expect(getDataStreamsResponseSchema.safeParse(data).success).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

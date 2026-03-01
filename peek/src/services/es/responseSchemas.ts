@@ -139,7 +139,7 @@ export const fieldCapsResponseSchema = z
 
 export const getDataStreamsResponseSchema = z
   .object({
-    data_streams: z.array(z.object({}).passthrough()),
+    data_streams: z.array(z.object({ name: z.string() }).passthrough()),
   })
   .passthrough();
 
