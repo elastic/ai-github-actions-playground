@@ -61,7 +61,7 @@ interface NodeRow {
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Paper variant="outlined" sx={{ p: 2, height: "100%" }}>
-      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+      <Typography variant="subtitle2" color="text.primary" gutterBottom>
         {title}
       </Typography>
       {children}

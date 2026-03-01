@@ -36,6 +36,7 @@ import TraceScatterChart from "../visualizations/TraceScatterChart";
 import TraceServiceMap from "../visualizations/TraceServiceMap";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import DriftRadarMap from "../visualizations/DriftRadarMap";
+import EmptyState from "../EmptyState";
 
 import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql, formatSpanDuration } from "./traceUtils";
@@ -60,6 +61,29 @@ const thStyle: React.CSSProperties = {
   top: 0,
   background: "inherit",
 };
+
+interface CenteredEmptyStateProps {
+  message: string;
+  sx?: React.ComponentProps<typeof Box>["sx"];
+}
+
+function CenteredEmptyState({ message, sx }: CenteredEmptyStateProps) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+        ...sx,
+      }}
+    >
+      <Typography variant="body2" color="text.primary">
+        {message}
+      </Typography>
+    </Box>
+  );
+}
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -470,7 +494,9 @@ export default function TracesPage() {
               onChange={(e) => setMinDurationInput(e.target.value)}
               sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
             />
-            <Typography variant="body2">–</Typography>
+            <Typography variant="body1" sx={{ px: 0.5 }}>
+              —
+            </Typography>
             <TextField
               size="small"
               placeholder="Max (ms)"
@@ -632,18 +658,7 @@ export default function TracesPage() {
           {/* Results view */}
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
             {!result && !searchLoading && viewMode !== "driftRadar" && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Search for traces to see results
-                </Typography>
-              </Box>
+              <CenteredEmptyState message="Search for traces to see results" />
             )}
             {searchLoading && !result && (
               <Box
@@ -677,7 +692,7 @@ export default function TracesPage() {
                           colSpan={6}
                           style={{ padding: "24px 12px", textAlign: "center", color: "inherit" }}
                         >
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.primary">
                             No traces matched current filters. Adjust filters or widen the time
                             range.
                           </Typography>
@@ -817,19 +832,7 @@ export default function TracesPage() {
             {result &&
               viewMode === "timeseries" &&
               (rawQuery ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Time series view is not available for custom queries. Use filter chips to see
-                    trends.
-                  </Typography>
-                </Box>
+                <CenteredEmptyState message="Time series view is not available for custom queries. Use filter chips to see trends." />
               ) : timeseriesLoading ? (
                 <Box
                   sx={{
@@ -849,34 +852,12 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Run search to load trace volume and latency trends.
-                  </Typography>
-                </Box>
+                <CenteredEmptyState message="Run search to load trace volume and latency trends." />
               ))}
             {result && viewMode === "serviceMap" && (
               <Box sx={{ height: "100%" }}>
                 {!selectedTraceId ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      Select a trace in List or Scatter view to see its service map
-                    </Typography>
-                  </Box>
+                  <CenteredEmptyState message="Select a trace in List or Scatter view to see its service map" />
                 ) : detailLoading ? (
                   <Box
                     sx={{
@@ -898,19 +879,7 @@ export default function TracesPage() {
             )}
             {viewMode === "driftRadar" &&
               (rawQuery ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Drift Radar is not available for custom queries. Use filter chips to scope the
-                    window.
-                  </Typography>
-                </Box>
+                <CenteredEmptyState message="Drift Radar is not available for custom queries. Use filter chips to scope the window." />
               ) : driftRadarLoading || driftRadarBaselineLoading ? (
                 <Box
                   sx={{
@@ -933,31 +902,9 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : result !== null ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Run search to load the window service map.
-                  </Typography>
-                </Box>
+                <CenteredEmptyState message="Run search to load the window service map." />
               ) : (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Search for traces to load the Drift Radar service map.
-                  </Typography>
-                </Box>
+                <CenteredEmptyState message="Search for traces to load the Drift Radar service map." />
               ))}
           </Paper>
 
@@ -1022,12 +969,8 @@ export default function TracesPage() {
                   />
                 </Box>
               ) : (
-                <Box
-                  sx={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    No spans found for this trace
-                  </Typography>
+                <Box sx={{ flex: 1 }}>
+                  <EmptyState heading="No spans found for this trace" />
                 </Box>
               )}
             </Paper>

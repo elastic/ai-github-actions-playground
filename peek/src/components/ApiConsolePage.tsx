@@ -9,7 +9,6 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
-import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import Menu from "@mui/material/Menu";
 import Dialog from "@mui/material/Dialog";
@@ -18,6 +17,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import AddIcon from "@mui/icons-material/Add";
+import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -90,6 +90,7 @@ interface RequestCardProps {
   onUpdate: (id: string, updates: Partial<RequestEntry>) => void;
   onRemove: (id: string) => void;
   onSend: (id: string) => void;
+  onCancel: (id: string) => void;
   removable: boolean;
 }
 
@@ -100,6 +101,7 @@ function RequestCard({
   onUpdate,
   onRemove,
   onSend,
+  onCancel,
   removable,
 }: RequestCardProps) {
   const showBody = METHODS_WITH_BODY.includes(entry.method);
@@ -185,26 +187,33 @@ function RequestCard({
           onKeyDown={(e) => {
             if (e.key === "Enter") onSend(entry.id);
           }}
+          label="Path"
           placeholder="/_cat/indices?v"
           sx={{ flex: 1, fontFamily: "monospace" }}
-          inputProps={{ style: { fontFamily: "monospace" } }}
+          inputProps={{ style: { fontFamily: "monospace" }, "aria-label": "Request path" }}
         />
 
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={
-            entry.response?.status === "loading" ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <PlayArrowIcon />
-            )
-          }
-          onClick={() => onSend(entry.id)}
-          disabled={entry.response?.status === "loading" || !entry.path.trim()}
-        >
-          Send
-        </Button>
+        {entry.response?.status === "loading" ? (
+          <Button
+            variant="outlined"
+            size="small"
+            color="warning"
+            startIcon={<CancelIcon />}
+            onClick={() => onCancel(entry.id)}
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PlayArrowIcon />}
+            onClick={() => onSend(entry.id)}
+            disabled={!entry.path.trim()}
+          >
+            Send
+          </Button>
+        )}
 
         <Tooltip title={copiedCurl ? "Copied!" : "Copy as cURL"}>
           <span>
@@ -379,6 +388,15 @@ export default function ApiConsolePage() {
     setEntries((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
+  const cancelRequest = useCallback(
+    (id: string) => {
+      abortRefs.current.get(id)?.abort();
+      abortRefs.current.delete(id);
+      updateEntry(id, { response: null });
+    },
+    [updateEntry],
+  );
+
   const addEntry = useCallback(() => {
     setEntries((prev) => [...prev, makeEntry()]);
   }, []);
@@ -517,6 +535,7 @@ export default function ApiConsolePage() {
           onUpdate={updateEntry}
           onRemove={removeEntry}
           onSend={sendRequest}
+          onCancel={cancelRequest}
           removable={entries.length > 1}
         />
       ))}

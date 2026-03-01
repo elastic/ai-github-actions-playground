@@ -90,6 +90,8 @@ function useCommands(): Command[] {
     for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<
       [PageId, (typeof PAGE_MANIFEST)[PageId]]
     >) {
+      if (!config.nav.showInSidebar) continue;
+      if (config.path.includes(":")) continue;
       if (config.requiresConnection && !connected) continue;
       if (config.path === location.pathname) continue;
       commands.push({

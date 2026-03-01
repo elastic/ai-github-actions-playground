@@ -502,11 +502,7 @@ export default function DiscoverPage() {
           </Box>
           <Box sx={{ flex: 1, overflow: "auto" }}>
             {columns.length === 0 ? (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ p: 1.5, display: "block" }}
-              >
+              <Typography variant="caption" color="text.primary" sx={{ p: 1.5, display: "block" }}>
                 Run a query to see fields
               </Typography>
             ) : (
@@ -732,7 +728,7 @@ export default function DiscoverPage() {
                 height: "100%",
               }}
             >
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.primary">
                 Run a query to see results
               </Typography>
             </Box>
