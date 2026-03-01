@@ -4,6 +4,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -341,18 +342,8 @@ export default function DimensionOverviewGrid({
         {isLoading &&
           dimsWithData.length === 0 &&
           dimensionFields.slice(0, 6).map((field) => (
-            <Paper
-              key={`loading-${field.name}`}
-              variant="outlined"
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: 180,
-                p: 1,
-              }}
-            >
-              <CircularProgress size={24} />
+            <Paper key={`loading-${field.name}`} variant="outlined" sx={{ minHeight: 180, p: 1 }}>
+              <Skeleton variant="rounded" height="100%" />
             </Paper>
           ))}
       </Box>

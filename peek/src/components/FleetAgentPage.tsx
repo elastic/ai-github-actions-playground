@@ -20,6 +20,7 @@ import {
 import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 
+import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
@@ -85,9 +86,7 @@ export default function FleetAgentPage() {
       {error && <Alert severity="error">{error}</Alert>}
 
       {loading && !agentInfo ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress />
-        </Box>
+        <ContentSkeleton variant="cards" />
       ) : !agentInfo && !loading ? (
         <Alert severity="warning">
           Agent {decodedAgentId} not found in recent Elastic Agent logs.
