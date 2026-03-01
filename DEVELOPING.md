@@ -312,7 +312,7 @@ make otel-down                               # stop when done
 
 ### Exploratory Testing Agents
 
-Six scheduled agents creatively explore the app with Playwright. Each owns a
+Seven scheduled agents creatively explore the app with Playwright. Each owns a
 domain of the application and invents novel interaction scenarios every run.
 They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 
@@ -324,6 +324,7 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 | Query Lab & Console | ES\|QL queries, result tables, API Console | `smoke-auth-tab-switch.yml` |
 | Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `smoke-reset-visibility.yml` |
 | Live Elasticsearch | All pages with real OTel data and a real cluster | `smoke-live-es.yml` |
+| Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `customer-complaints.yml` |
 
 Each agent writes and runs its own Playwright scripts to navigate, click, type,
 and inspect. They report only genuine bugs found through hands-on exploration.
