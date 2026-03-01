@@ -126,19 +126,21 @@ ES_URL=http://localhost:9200 make serve-proxy
 # Then open http://localhost:3000 and connect to http://localhost:3000/_es
 ```
 
-This is the same data the `smoke-live-es.yml` agent validates against.
+This is the same data the `smoke-live-es.yml` agent explores against.
 Use `make otel-replay-down` to tear everything down when done.
 
-### Scheduled Playwright Smoke Agents
+### Exploratory Testing Agents
 
-The first 5 scheduled smoke plans map one-to-one to the existing tests in
-`peek/tests/e2e/smoke.spec.ts`:
+Six scheduled agents creatively explore the app with Playwright. Each owns a
+domain and invents novel interaction scenarios every run — they do NOT run
+pre-written test suites. Deterministic E2E tests run in CI instead.
 
-- `smoke-welcome-flow.yml` → `onboarding user reaches the connect entrypoint from the welcome screen`
-- `smoke-metrics-flow.yml` → `metrics user connects, picks a metric, and gets a line chart-ready result`
-- `smoke-auth-tab-switch.yml` → `security-focused user validates auth tab switching before submitting credentials`
-- `smoke-traces-flow.yml` → `traces user opens a trace and pivots from service map context into Query Lab`
-- `smoke-reset-visibility.yml` → `ops user confirms connection guardrails and can reset back to the landing state`
+- `smoke-welcome-flow.yml` → **Explore: Connection & Onboarding** — connection dialog, auth tabs, disconnect/reconnect, keyboard nav
+- `smoke-metrics-flow.yml` → **Explore: Metrics & Charts** — metric search, chart rendering, time ranges, state persistence
+- `smoke-traces-flow.yml` → **Explore: Traces & Service Map** — span trees, service map, trace-to-query pivot, navigation
+- `smoke-auth-tab-switch.yml` → **Explore: Query Lab & Console** — ES|QL queries, result tables, API Console, error handling
+- `smoke-reset-visibility.yml` → **Explore: Indices, Data Streams & Pipelines** — table sorting, detail views, data management
+- `smoke-live-es.yml` → **Explore: Live Elasticsearch** — real OTel data, full stack, all pages with real cluster
 
 ### UI Smoke Test PR Review
 

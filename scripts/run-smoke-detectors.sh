@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # run-smoke-detectors.sh
 #
-# Helper script to manually trigger all Smoke test workflows in this
+# Helper script to manually trigger all Explore agent workflows in this
 # repository via the GitHub CLI (gh).
 #
 # Prerequisites:
@@ -40,14 +40,14 @@ if [[ -n "$REPO" ]]; then
   REPO_ARGS=(--repo "$REPO")
 fi
 
-# Smoke test workflows that support workflow_dispatch
+# Explore agent workflows that support workflow_dispatch
 WORKFLOWS=(
-  "smoke-auth-tab-switch.yml"
-  "smoke-live-es.yml"
-  "smoke-metrics-flow.yml"
-  "smoke-reset-visibility.yml"
-  "smoke-traces-flow.yml"
   "smoke-welcome-flow.yml"
+  "smoke-metrics-flow.yml"
+  "smoke-traces-flow.yml"
+  "smoke-auth-tab-switch.yml"
+  "smoke-reset-visibility.yml"
+  "smoke-live-es.yml"
 )
 
 # Verify gh is available
@@ -56,7 +56,7 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
-echo "Triggering Smoke test workflows..."
+echo "Triggering Explore agent workflows..."
 echo ""
 
 FAILED=()
@@ -73,7 +73,7 @@ done
 
 echo ""
 if [[ ${#FAILED[@]} -eq 0 ]]; then
-  echo "All smoke workflows triggered successfully."
+  echo "All explore workflows triggered successfully."
 else
   echo "The following workflows could not be triggered:" >&2
   for w in "${FAILED[@]}"; do

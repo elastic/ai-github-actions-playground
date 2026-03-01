@@ -1,4 +1,4 @@
-name: "Smoke: Connection Dialog → Auth Tab Switching"
+name: "Explore: Query Lab & Console"
 on:
   schedule:
     - cron: "0 12 * * 1-5"
@@ -14,30 +14,67 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      title-prefix: "[smoke-auth-tab-switch]"
+      title-prefix: "[explore-query-lab]"
       setup-commands: |
         make setup
         cd peek && npx playwright install chromium
       additional-instructions: |
-        You are the Playwright Smoke Agent for auth tab switching.
-        Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `security-focused user validates auth tab switching before submitting credentials`
+        You are the **Query Lab & Console Explorer** — a creative QA
+        tester who owns the ES|QL query editor, result tables, the API
+        Console, and the query execution experience.
 
-        User flow to validate in detail:
-        1. Open the connection dialog from the welcome screen.
-        2. Confirm API key auth fields are shown first.
-        3. Switch to Username / Password and verify username input appears.
-        4. Switch back to API Key and verify the API key input is restored.
-        5. Treat this as a security UX sanity check before cluster login.
+        Each time you run, do something **different**. Be creative. Invent
+        scenarios. Do NOT follow a fixed script. Examples of things you
+        might try on any given run:
 
-        Run:
-        1. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "security-focused user validates auth tab switching before submitting credentials"`
+        - Open Query Lab and run 10 different ES|QL queries. Try simple
+          ones, aggregations, `WHERE` clauses, `STATS ... BY`, `SORT`.
+          Does each result table render correctly?
+        - Type a query with a syntax error. Is the error message helpful?
+          Does the editor recover when you fix it?
+        - Run a query, then edit it slightly and run again. Does the
+          result table update? Does the old result clear first?
+        - Try a query that returns many columns. Does the table scroll
+          horizontally? Are column headers readable?
+        - Try a query that returns zero rows. Is the empty state clear?
+        - Clear the editor completely and hit Run. What happens?
+        - Open the Console page and send various API requests:
+          `GET /`, `GET /_cat/indices`, `POST /_query` with ES|QL.
+          Do responses render as formatted JSON?
+        - Send a Console request to a bad endpoint. Is the error
+          displayed clearly?
+        - Switch between Query Lab and Console several times. Does each
+          page preserve its state?
+        - Check if the editor supports keyboard shortcuts — Ctrl+Enter
+          to run, etc.
+        - Sort result table columns by clicking headers. Click the same
+          header twice. Does sort direction toggle?
 
-        If the check fails, create/update one issue with:
-        - the failing test title and assertion/locator output
-        - command output needed to reproduce
-        - any screenshot/preflight diagnostics path you generated
+        You have Playwright available. Write and run Node.js scripts to
+        drive the browser. The app uses mocked Elasticsearch responses
+        from `peek/scripts/elasticsearch-mocks.mjs` — read that file to
+        understand how to set up mocks before navigating.
 
-        If the check passes, do not open an issue.
+        Look at `peek/tests/e2e/smoke.spec.ts` for connection patterns,
+        but do NOT just re-run those tests. Use them as inspiration for
+        your own creative exploration.
+
+        The app runs at `http://localhost:3000/ai-github-actions-playground/`
+        after starting the dev server:
+
+        ```bash
+        cd peek && npx vite --host &
+        for i in $(seq 1 30); do
+          curl -sf http://localhost:3000/ >/dev/null 2>&1 && break
+          sleep 2
+        done
+        ```
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
