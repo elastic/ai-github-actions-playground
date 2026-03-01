@@ -744,7 +744,13 @@ export default function TracesPage() {
                 <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
               </Box>
             )}
-            {searchResult && viewMode === "list" && (
+            {searchResult && viewMode === "list" && traceRows.length === 0 && (
+              <EmptyState
+                heading="No traces matched current filters."
+                description="Adjust filters or widen the time range."
+              />
+            )}
+            {searchResult && viewMode === "list" && traceRows.length > 0 && (
               <TraceTable
                 traceRows={traceRows}
                 selectedTraceId={selectedTraceId}
