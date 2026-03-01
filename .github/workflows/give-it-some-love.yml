@@ -77,7 +77,7 @@ jobs:
              violations on sidebar labels, table headers, and `text.secondary`
              elements.
         5. Cross-reference the accessibility violations from the test output.
-        5. For any page that shows issues, read its source code under `peek/src/components/`
+        6. For any page that shows issues, read its source code under `peek/src/components/`
            to understand the root cause and suggest a fix direction.
 
         ## Output rules

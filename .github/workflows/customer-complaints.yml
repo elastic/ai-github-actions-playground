@@ -113,7 +113,8 @@ jobs:
           it yet."
         - Include 3-5 specific, actionable feature requests per issue.
         - Include screenshots showing where the gap is visible.
-        - Do NOT file issues about bugs or styling. Only missing features.
+        - Do NOT file issues about bugs. Feature gaps and visual polish
+          gaps are both fair game.
         - If you genuinely can't find any gaps (unlikely), do not open
           an issue.
     secrets:

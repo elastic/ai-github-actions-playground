@@ -68,7 +68,7 @@ jobs:
            distributions, and real task backlogs, which may expose formatting
            or truncation issues not visible in mocks.
         6. Cross-reference the accessibility violations from the test output.
-        5. For any page that shows issues, read its source code under `peek/src/components/`
+        7. For any page that shows issues, read its source code under `peek/src/components/`
            to understand the root cause and suggest a fix direction.
 
         ## Output rules
