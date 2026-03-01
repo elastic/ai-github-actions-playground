@@ -44,7 +44,7 @@ import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { useShallow } from "zustand/react/shallow";
 
 import type { DashboardDefinition } from "../types";
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { toPersesDashboard } from "../services/perses/dashboardAdapters";
 
 import PageHeader from "./PageHeader";
@@ -65,7 +65,7 @@ export default function DashboardsLandingPage() {
     exportWorkspace,
     importDashboard,
     importWorkspace,
-  } = useDashboardStore(
+  } = useDashboardCatalogStore(
     useShallow((s) => ({
       dashboards: s.dashboards,
       activeDashboardId: s.activeDashboardId,

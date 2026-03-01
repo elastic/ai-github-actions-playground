@@ -108,13 +108,15 @@ Four levels. Each maps to exactly one MUI Typography `variant`.
 ```
 Role              MUI variant    Size    Weight    Line-Height   Use
 ────────────────  ───────────    ──────  ────────  ────────────  ──────────────────────────
-Page Title        h5             20px    600       1.2           One per page, top-left
+Page Title        h6             20px    600       1.4           One per page, top-left (via PageHeader)
+Large Display     h5             24px    600       1.4           Stat values, welcome headings
 Section Header    subtitle1      14px    600       1.3           Card titles, group labels
+Subsection        subtitle2      14px    500       1.3           Secondary headings, chip labels
 Body              body1          14px    400       1.5           All prose and UI text
 Caption / Data    body2          12px    400       1.4           Table headers, axis labels
 ```
 
-Only these four variants are permitted in page content. Do not introduce new uses of `h4`, `h6`, `subtitle2`, or `overline`.
+These variants plus `caption` and `overline` are the approved set for page content. Do not introduce new uses of `h4`.
 
 ### Monospace Text
 
@@ -359,3 +361,189 @@ series: [{ itemStyle: { color: '#0077CC' } }]
 // ✅ Colors come from useEChartTheme() or ChartsProvider
 const theme = useEChartTheme();
 ```
+
+---
+
+## Component Patterns for Agents
+
+### Reusable component interfaces
+
+```tsx
+// src/components/PageHeader.tsx
+interface PageHeaderProps {
+  title: string;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+}
+```
+
+- Wrap headers in `<Paper variant="outlined" sx={{ p: 1.5 }}>`.
+- Use `actions` for right-aligned controls.
+- Title renders as `<Typography variant="h6" component="h1">`.
+
+```tsx
+// src/components/EmptyState.tsx
+interface EmptyStateProps {
+  icon?: React.ReactNode;
+  heading: string;
+  description?: string;
+  action?: React.ReactNode;
+  size?: "small" | "medium"; // default "medium"
+}
+```
+
+- Use `size="small"` for inline panel/card empty states.
+- Use `size="medium"` for page-level empty states.
+- Empty-data branches are enforced by the `enforce-empty-state` ESLint rule.
+
+```tsx
+// src/components/ContentSkeleton.tsx
+interface ContentSkeletonProps {
+  variant: "table" | "cards" | "chart";
+}
+```
+
+- Use while loading in the same container that will render real content.
+
+### Standard page layout pattern
+
+```tsx
+return (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+    <Paper variant="outlined" sx={{ p: 1.5 }}>
+      <PageHeader
+        title="Page Name"
+        actions={<Button size="small">Action</Button>}
+      />
+    </Paper>
+
+    <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto", p: 1.5 }}>
+      {loading && <ContentSkeleton variant="table" />}
+      {!loading && data.length === 0 && (
+        <EmptyState heading="No items found" description="Try adjusting filters." />
+      )}
+      {!loading && data.length > 0 && <DataTable rows={data} />}
+    </Paper>
+  </Box>
+);
+```
+
+### Canonical templates
+
+#### Table page (sorting + pagination)
+
+```tsx
+const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(25);
+const [sortBy, setSortBy] = useState<string>("name");
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+function handleSortChange(nextSortBy: string, nextDirection: "asc" | "desc") {
+  setSortBy(nextSortBy);
+  setSortDirection(nextDirection);
+  setPage(0);
+}
+
+return (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+    <Paper variant="outlined" sx={{ p: 1.5 }}>
+      <PageHeader title="Indices" actions={<Button size="small">Refresh</Button>} />
+    </Paper>
+    <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto", p: 1.5 }}>
+      {loading && <ContentSkeleton variant="table" />}
+      {!loading && rows.length === 0 && <EmptyState heading="No data" description="Try adjusting filters." />}
+      {!loading && rows.length > 0 && (
+        <DataTable
+          rows={rows}
+          page={page}
+          pageSize={pageSize}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          onSortChange={handleSortChange}
+        />
+      )}
+    </Paper>
+  </Box>
+);
+```
+
+#### Form dialog (validation + submit/cancel)
+
+```tsx
+function SaveViewDialog({ open, onCancel, onSaved }: Props) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    if (!name.trim()) {
+      setError("Name is required.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await saveView({ name: name.trim() });
+      onSaved();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Failed to save view.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onCancel} fullWidth maxWidth="sm">
+      <DialogTitle>Save view</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          fullWidth
+          label="Name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          error={Boolean(error)}
+          helperText={error ?? " "}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel} disabled={submitting}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+          {submitting ? "Saving..." : "Save"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+```
+
+### Spacing decision table
+
+MUI spacing multiplier = `n × 8px`. Only values in the `SpaceToken` set are permitted: `0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6`.
+
+| Context | Token | px | Example |
+|---------|-------|----|---------|
+| Container padding | `1.5` | 12px | `<Paper sx={{ p: 1.5 }}>` |
+| Gap between sections | `1` | 8px | `<Box sx={{ gap: 1 }}>` |
+| Inline element gap | `0.5` | 4px | `<Box sx={{ gap: 0.5 }}>` |
+| Section margin | `2` | 16px | `<Box sx={{ mt: 2 }}>` |
+| Dense list item padding | `0.5` | 4px | `<ListItemButton sx={{ py: 0.5 }}>` |
+
+### Design tokens reference
+
+Use `src/types/tokens.ts` (`peek/src/types/tokens.ts` at repo root) for agent-safe token unions:
+
+- `StatusColor`: `"healthy" | "warning" | "critical" | "unknown" | "info"`
+- `SpaceToken`: `0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 6`
+- `TypographyVariant`: `"h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2" | "caption" | "overline"`
+- `MetricTypographyVariant`: `"h3"`
+
+### Banned implementation patterns (agent checklist)
+
+- Never use `CircularProgress` for page-level loading; use `ContentSkeleton`.
+- Never use raw `<div onClick>` / `<Box onClick>`; use `Button`, `IconButton`, `ButtonBase`, or `ListItemButton`.
+- Never use hardcoded hex colors in `sx`; use theme tokens (`theme.palette.*` / token keys).
+- Never return bare empty-state placeholders like `<div />` or `<Typography>No data</Typography>`; use `<EmptyState />`.
+- Typography variants for generated UI must be limited to: `h3` (metric values only), `h5` (large display values), `h6` (page titles via PageHeader), `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, `overline`. Never use `h4`.

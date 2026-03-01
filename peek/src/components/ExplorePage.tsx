@@ -23,7 +23,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
 
-import { useDashboardStore } from "../store/useDashboardStore";
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
+import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
@@ -61,14 +62,14 @@ function metricNamespaceOf(metricName: string): string {
 
 export default function ExplorePage() {
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
-  const { dashboard, addPanel, setTimeRange, activeDashboardId } = useDashboardStore(
+  const { dashboard, addPanel, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
       dashboard: s.dashboard,
       addPanel: s.addPanel,
       setTimeRange: s.setTimeRange,
-      activeDashboardId: s.activeDashboardId,
     })),
   );
+  const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const connection = useConnectionStore((s) => s.connection);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);

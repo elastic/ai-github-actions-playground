@@ -15,7 +15,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev -- --port 3000",
-    port: 3000,
+    url: "http://127.0.0.1:3000/ai-github-actions-playground/",
     reuseExistingServer: !process.env.CI,
     timeout: process.env.CI ? 120_000 : undefined,
   },

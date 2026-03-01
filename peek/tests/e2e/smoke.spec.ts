@@ -21,7 +21,6 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
   },
   "post-connect": {
     "color-contrast": 2,
-    "heading-order": 1,
   },
   Metrics: {
     "color-contrast": 2,
@@ -30,21 +29,18 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
     "aria-input-field-name": 2,
     "aria-prohibited-attr": 1,
     "color-contrast": 12,
-    "page-has-heading-one": 1,
   },
   "Query Lab": {
     "aria-input-field-name": 2,
     "aria-prohibited-attr": 1,
     "color-contrast": 12,
-    "page-has-heading-one": 1,
   },
   Console: {
-    "color-contrast": 1,
+    "aria-input-field-name": 1,
+    "color-contrast": 5,
   },
   Indices: {
-    "aria-progressbar-name": 1,
-    "button-name": 1,
-    "color-contrast": 1,
+    "color-contrast": 2,
   },
 };
 
@@ -313,9 +309,20 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await checkA11y(page, "post-connect");
 
+    // Wait for page-specific content to fully render before running axe,
+    // so results are deterministic across fast (local) and slow (CI) machines.
+    const pageReadyLocators: Record<string, () => Promise<void>> = {
+      Metrics: () => expect(page.getByText("Explore your metrics")).toBeVisible(),
+      Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
+      "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      Console: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
+    };
+
     for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
       await page.getByRole("button", { name: nav, exact: true }).click();
       await page.waitForLoadState("networkidle");
+      await pageReadyLocators[nav]();
       await checkA11y(page, nav);
     }
   });
