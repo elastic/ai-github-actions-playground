@@ -104,6 +104,24 @@ export function slug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, "-");
 }
 
+async function captureTabScreenshots(
+  page: Page,
+  prefix: string,
+  section: string,
+  tabs: string[],
+): Promise<void> {
+  for (const tab of tabs) {
+    const tabEl = page.getByRole("tab", { name: tab });
+    if ((await tabEl.count()) === 0) continue;
+    await tabEl.click();
+    await page.getByRole("tabpanel").waitFor({ state: "visible" });
+    await page.screenshot({
+      path: `test-results/${prefix}-${section}-${slug(tab)}.png`,
+      fullPage: true,
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Shared page definitions
 // ---------------------------------------------------------------------------
@@ -119,14 +137,13 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-cluster-health-overview.png`,
         fullPage: true,
       });
-      for (const tab of ["Nodes", "Tasks", "Capacity", "Shards", "Resilience"]) {
-        await page.getByRole("tab", { name: tab }).click();
-        await page.getByRole("tabpanel").waitFor({ state: "visible" });
-        await page.screenshot({
-          path: `test-results/${prefix}-cluster-health-${slug(tab)}.png`,
-          fullPage: true,
-        });
-      }
+      await captureTabScreenshots(page, prefix, "cluster-health", [
+        "Nodes",
+        "Tasks",
+        "Capacity",
+        "Shards",
+        "Resilience",
+      ]);
     },
   },
   { name: "Data Streams", navButton: "Data Streams" },
@@ -160,17 +177,12 @@ export const COMMON_PAGES: PageAuditConfig[] = [
         path: `test-results/${prefix}-add-data-default.png`,
         fullPage: true,
       });
-      for (const tab of ["Docker", "Linux", "macOS", "Windows"]) {
-        const tabEl = page.getByRole("tab", { name: tab });
-        if ((await tabEl.count()) > 0) {
-          await tabEl.click();
-          await page.getByRole("tabpanel").waitFor({ state: "visible" });
-          await page.screenshot({
-            path: `test-results/${prefix}-add-data-${slug(tab)}.png`,
-            fullPage: true,
-          });
-        }
-      }
+      await captureTabScreenshots(page, prefix, "add-data", [
+        "Docker",
+        "Linux",
+        "macOS",
+        "Windows",
+      ]);
     },
   },
   { name: "Query Lab", navButton: "Query Lab" },
