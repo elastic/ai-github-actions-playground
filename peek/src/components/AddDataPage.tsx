@@ -20,7 +20,6 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
-import { PAGE_MANIFEST } from "../routes/manifest";
 
 // ---------------------------------------------------------------------------
 // Endpoint type helpers
@@ -101,9 +100,9 @@ export async function detectTelemetrySignals(
 }
 
 const SIGNAL_NAV: Record<TelemetrySignal, { label: string; path: string }> = {
-  metrics: { label: "Metrics", path: PAGE_MANIFEST.explore.path },
-  traces: { label: "Traces", path: PAGE_MANIFEST.traces.path },
-  logs: { label: "Query Lab", path: PAGE_MANIFEST.discover.path },
+  metrics: { label: "Metrics", path: "/explore" },
+  traces: { label: "Traces", path: "/traces" },
+  logs: { label: "Query Lab", path: "/discover" },
 };
 
 // ---------------------------------------------------------------------------
