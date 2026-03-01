@@ -82,7 +82,8 @@ function formatPercent(value: number | null): string {
   return `${value.toFixed(0)}%`;
 }
 
-const NODE_STAT_UNAVAILABLE_HINT = "Node stats unavailable — may require the monitor privilege";
+const NODE_STAT_UNAVAILABLE_HINT =
+  "Node stats unavailable — requires the monitor cluster privilege";
 
 function renderNodeStat(formatted: string) {
   if (formatted === "Unavailable") {
