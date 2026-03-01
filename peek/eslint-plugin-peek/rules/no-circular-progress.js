@@ -25,13 +25,6 @@ export default {
     let hasCircularProgressUsage = false;
     let hasDisallowedUsage = false;
 
-    function getJSXElementName(node) {
-      if (!node) return null;
-      if (node.type === "JSXIdentifier") return node.name;
-      if (node.type === "JSXMemberExpression") return node.property.name;
-      return null;
-    }
-
     function getJSXRootName(node) {
       if (!node) return null;
       if (node.type === "JSXIdentifier") return node.name;
@@ -61,11 +54,16 @@ export default {
       let current = node.parent;
       while (current) {
         if (current.type === "JSXElement") {
-          const openingName = getJSXElementName(current.openingElement?.name);
-          if (openingName === "Button") return true;
+          const openingName = current.openingElement?.name;
+          if (openingName?.type === "JSXIdentifier" && openingName.name === "Button") {
+            return true;
+          }
         }
-        if (current.type === "JSXOpeningElement" && getJSXElementName(current.name) === "Button") {
-          return true;
+        if (current.type === "JSXOpeningElement") {
+          const openingName = current.name;
+          if (openingName.type === "JSXIdentifier" && openingName.name === "Button") {
+            return true;
+          }
         }
         current = current.parent;
       }

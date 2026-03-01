@@ -104,6 +104,21 @@ describe("peek/no-circular-progress", () => {
           filename: "src/components/UsersPage.tsx",
           errors: [{ messageId: "noCircularProgressImport" }],
         },
+        {
+          code: `
+            import CircularProgress from "@mui/material/CircularProgress";
+            function Component() {
+              return (
+                <Foo.Button>
+                  <CircularProgress />
+                </Foo.Button>
+              );
+            }
+          `,
+          filename: "src/components/UsersPage.tsx",
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "noCircularProgressImport" }],
+        },
       ],
     });
   });
