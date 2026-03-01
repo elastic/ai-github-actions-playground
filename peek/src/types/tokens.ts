@@ -16,6 +16,7 @@ export type SpaceToken = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 6;
  * Components should restrict their `variant` prop to this set.
  */
 export type TypographyVariant =
+  | "h3"
   | "h5"
   | "h6"
   | "subtitle1"

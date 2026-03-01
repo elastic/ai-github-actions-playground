@@ -359,3 +359,95 @@ series: [{ itemStyle: { color: '#0077CC' } }]
 // ✅ Colors come from useEChartTheme() or ChartsProvider
 const theme = useEChartTheme();
 ```
+
+---
+
+## Component Patterns for Agents
+
+### Reusable component interfaces
+
+```tsx
+// src/components/PageHeader.tsx
+interface PageHeaderProps {
+  title: string;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+}
+```
+
+- Wrap headers in `<Paper variant="outlined" sx={{ p: 1.5 }}>`.
+- Use `actions` for right-aligned controls.
+- Title renders as `<Typography variant="h6" component="h1">`.
+
+```tsx
+// src/components/EmptyState.tsx
+interface EmptyStateProps {
+  icon?: React.ReactNode;
+  heading: string;
+  description?: string;
+  action?: React.ReactNode;
+  size?: "small" | "medium"; // default "medium"
+}
+```
+
+- Use `size="small"` for inline panel/card empty states.
+- Use `size="medium"` for page-level empty states.
+- Empty-data branches are enforced by the `enforce-empty-state` ESLint rule.
+
+```tsx
+// src/components/ContentSkeleton.tsx
+interface ContentSkeletonProps {
+  variant: "table" | "cards" | "chart";
+}
+```
+
+- Use while loading in the same container that will render real content.
+
+### Standard page layout pattern
+
+```tsx
+return (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+    <Paper variant="outlined" sx={{ p: 1.5 }}>
+      <PageHeader
+        title="Page Name"
+        actions={<Button size="small">Action</Button>}
+      />
+    </Paper>
+
+    <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto", p: 1.5 }}>
+      {loading && <ContentSkeleton variant="table" />}
+      {!loading && data.length === 0 && (
+        <EmptyState heading="No items found" description="Try adjusting filters." />
+      )}
+      {!loading && data.length > 0 && <DataTable rows={data} />}
+    </Paper>
+  </Box>
+);
+```
+
+### Spacing decision table
+
+| Context | Token | Example |
+|---------|-------|---------|
+| Container padding | `1.5` | `<Paper sx={{ p: 1.5 }}>` |
+| Gap between sections | `1` | `<Box sx={{ gap: 1 }}>` |
+| Inline element gap | `0.5` | `<Box sx={{ gap: 0.5 }}>` |
+| Section margin | `2` | `<Box sx={{ mt: 2 }}>` |
+| Dense list item padding | `0.5` | `<ListItemButton sx={{ py: 0.5 }}>` |
+
+### Design tokens reference
+
+Use `src/types/tokens.ts` (`peek/src/types/tokens.ts` at repo root) for agent-safe token unions:
+
+- `StatusColor`: `"healthy" | "warning" | "critical" | "unknown" | "info"`
+- `SpaceToken`: `0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 6`
+- `TypographyVariant`: `"h3" | "h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2" | "caption" | "overline"`
+
+### Banned implementation patterns (agent checklist)
+
+- Never use `CircularProgress` for page-level loading; use `ContentSkeleton`.
+- Never use raw `<div onClick>` / `<Box onClick>`; use `Button`, `IconButton`, `ButtonBase`, or `ListItemButton`.
+- Never use hardcoded hex colors in `sx`; use theme tokens (`theme.palette.*` / token keys).
+- Never return bare empty-state placeholders like `<div />` or `<Typography>No data</Typography>`; use `<EmptyState />`.
+- Typography variants for generated UI must be limited to: `h3`, `h5`, `h6`, `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, `overline`.
