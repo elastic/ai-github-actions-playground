@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-explorers.sh
+# run-smoke-detectors.sh
 #
 # Helper script to manually trigger all Explore agent workflows in this
 # repository via the GitHub CLI (gh).
