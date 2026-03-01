@@ -26,4 +26,6 @@ Click **Analyze disk usage** to run a field-level disk analysis. This calls `POS
 
 Click **Open in Query Lab** to seed an ES|QL query for the selected index and continue analysis with full query control.
 
+Click **Inspect in Console** to open the API Console with a prefilled `GET /{index}/_mapping` request for the selected index. From there you can execute the request, edit it, or build further API calls.
+
 If indices fail to load, refresh the page and verify that your role has access to the `_cat/indices`, `_mapping`, `_settings`, and `_stats` APIs.
