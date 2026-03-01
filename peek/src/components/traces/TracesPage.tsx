@@ -654,7 +654,7 @@ export default function TracesPage() {
               </Box>
             )}
             {result && viewMode === "list" && (
-              <Box sx={{ height: "100%", overflow: "auto" }}>
+              <Box sx={{ height: "100%" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                   <thead>
                     <tr>

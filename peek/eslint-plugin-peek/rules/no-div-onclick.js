@@ -17,12 +17,19 @@ export default {
     function isOnlyStopPropagation(node) {
       if (!node.value || node.value.type !== "JSXExpressionContainer") return false;
       const expression = node.value.expression;
+      if (expression.type !== "ArrowFunctionExpression") return false;
+
+      const firstParam = expression.params[0];
+      const eventParamName =
+        firstParam && firstParam.type === "Identifier" ? firstParam.name : null;
+      if (!eventParamName) return false;
 
       // Case: (e) => e.stopPropagation()
       if (
-        expression.type === "ArrowFunctionExpression" &&
         expression.body.type === "CallExpression" &&
         expression.body.callee.type === "MemberExpression" &&
+        expression.body.callee.object.type === "Identifier" &&
+        expression.body.callee.object.name === eventParamName &&
         expression.body.callee.property.name === "stopPropagation"
       ) {
         return true;
@@ -30,12 +37,13 @@ export default {
 
       // Case: (e) => { e.stopPropagation(); }
       if (
-        expression.type === "ArrowFunctionExpression" &&
         expression.body.type === "BlockStatement" &&
         expression.body.body.length === 1 &&
         expression.body.body[0].type === "ExpressionStatement" &&
         expression.body.body[0].expression.type === "CallExpression" &&
         expression.body.body[0].expression.callee.type === "MemberExpression" &&
+        expression.body.body[0].expression.callee.object.type === "Identifier" &&
+        expression.body.body[0].expression.callee.object.name === eventParamName &&
         expression.body.body[0].expression.callee.property.name === "stopPropagation"
       ) {
         return true;

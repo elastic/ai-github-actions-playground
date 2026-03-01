@@ -64,7 +64,7 @@ export default function MarkdownPanel({ content, connection, timeRange, paramete
         },
         "& h1,& h2,& h3,& h4,& h5,& h6": { mt: 1, mb: 0.5 },
         "& hr": { my: 1, borderColor: "divider" },
-        "& li": { mb: 0.25 },
+        "& li": { mb: 0.5 },
         "& p": { mt: 0, mb: 1 },
         "& pre": {
           overflow: "auto",

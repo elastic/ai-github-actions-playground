@@ -125,7 +125,8 @@ export default function AppHeader() {
           variant="h6"
           sx={{
             mr: 1,
-            background: "linear-gradient(135deg, #0077CC 0%, #00BFB3 100%)",
+            background: (theme) =>
+              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
             backgroundClip: "text",
             color: "transparent",
             lineHeight: 1,

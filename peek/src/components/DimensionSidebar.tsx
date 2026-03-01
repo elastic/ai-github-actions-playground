@@ -8,6 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import TextField from "@mui/material/TextField";
@@ -189,7 +190,7 @@ export default function DimensionSidebar({
         )}
         <Typography variant="caption" color="text.secondary" display="block">
           {dimensionFields.length} fields — select to expand, use{" "}
-          <GroupWorkIcon aria-label="group by" sx={{ verticalAlign: "middle", fontSize: 10 }} /> to
+          <GroupWorkIcon aria-hidden="true" sx={{ verticalAlign: "middle", fontSize: 10 }} /> to
           group by
         </Typography>
         <TextField
@@ -207,7 +208,7 @@ export default function DimensionSidebar({
             const state = dimensionStates[field.name];
             const isGroupBy = groupBy === field.name;
             return (
-              <Box key={field.name}>
+              <ListItem key={field.name} disablePadding sx={{ display: "block" }}>
                 <ListItemButton
                   selected={isGroupBy}
                   onClick={() => handleToggleExpand(field.name)}
@@ -255,42 +256,43 @@ export default function DimensionSidebar({
                   ) : state?.values.length ? (
                     <List dense disablePadding>
                       {state.values.map((v) => (
-                        <ListItemButton
-                          key={v.value}
-                          sx={{ pl: 3, py: 0 }}
-                          onClick={() =>
-                            onAddFilter({ field: field.name, op: "==", value: v.value })
-                          }
-                        >
-                          <ListItemText
-                            primary={
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <Typography
-                                  variant="caption"
-                                  noWrap
-                                  sx={{ flex: 1 }}
-                                  title={v.value}
+                        <ListItem key={v.value} disablePadding>
+                          <ListItemButton
+                            sx={{ pl: 3, py: 0 }}
+                            onClick={() =>
+                              onAddFilter({ field: field.name, op: "==", value: v.value })
+                            }
+                          >
+                            <ListItemText
+                              primary={
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                  }}
                                 >
-                                  {v.value}
+                                  <Typography
+                                    variant="caption"
+                                    noWrap
+                                    sx={{ flex: 1 }}
+                                    title={v.value}
+                                  >
+                                    {v.value}
+                                  </Typography>
+                                  <Tooltip title="Add as filter">
+                                    <FilterListIcon sx={{ ml: 0.5, opacity: 0.5, fontSize: 12 }} />
+                                  </Tooltip>
+                                </Box>
+                              }
+                              secondary={
+                                <Typography variant="caption" color="text.secondary">
+                                  {v.count.toLocaleString()} docs
                                 </Typography>
-                                <Tooltip title="Add as filter">
-                                  <FilterListIcon sx={{ ml: 0.5, opacity: 0.5, fontSize: 12 }} />
-                                </Tooltip>
-                              </Box>
-                            }
-                            secondary={
-                              <Typography variant="caption" color="text.secondary">
-                                {v.count.toLocaleString()} docs
-                              </Typography>
-                            }
-                          />
-                        </ListItemButton>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
                       ))}
                     </List>
                   ) : (
@@ -303,7 +305,7 @@ export default function DimensionSidebar({
                     </Typography>
                   )}
                 </Collapse>
-              </Box>
+              </ListItem>
             );
           })}
         </List>

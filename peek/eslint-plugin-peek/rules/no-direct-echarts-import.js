@@ -19,12 +19,13 @@ export default {
         if (typeof source === "string" && source.startsWith("echarts")) {
           // Allow in EChartWrapper itself and in tests
           const filename = context.getFilename ? context.getFilename() : context.filename;
+          const normalizedFilename = filename.replace(/\\/g, "/");
           if (
-            filename.endsWith("EChartWrapper.tsx") ||
-            filename.endsWith("PersesEChartWrapper.tsx") ||
-            filename.includes("/tests/") ||
-            filename.endsWith(".test.ts") ||
-            filename.endsWith(".test.tsx")
+            normalizedFilename.endsWith("EChartWrapper.tsx") ||
+            normalizedFilename.endsWith("PersesEChartWrapper.tsx") ||
+            normalizedFilename.includes("/tests/") ||
+            normalizedFilename.endsWith(".test.ts") ||
+            normalizedFilename.endsWith(".test.tsx")
           ) {
             return;
           }

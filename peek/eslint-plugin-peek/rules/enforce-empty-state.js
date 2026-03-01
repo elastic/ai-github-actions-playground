@@ -13,9 +13,6 @@ export default {
     },
   },
   create(context) {
-    /** Track whether this file imports EmptyState */
-    let hasEmptyStateImport = false;
-
     /**
      * Detect common empty-data test patterns:
      *   data.length === 0, items.length === 0, arr.length == 0
@@ -72,17 +69,6 @@ export default {
     }
 
     return {
-      ImportDeclaration(node) {
-        if (
-          node.specifiers.some(
-            (s) =>
-              (s.type === "ImportDefaultSpecifier" || s.type === "ImportSpecifier") &&
-              s.local.name === "EmptyState",
-          )
-        ) {
-          hasEmptyStateImport = true;
-        }
-      },
       IfStatement(node) {
         if (!isEmptyDataTest(node.test)) return;
         if (containsEmptyStateJSX(node.consequent)) return;
@@ -90,7 +76,7 @@ export default {
       },
       ConditionalExpression(node) {
         if (!isEmptyDataTest(node.test)) return;
-        if (containsEmptyStateJSX(node.consequent) || containsEmptyStateJSX(node.alternate)) return;
+        if (containsEmptyStateJSX(node.consequent)) return;
         context.report({ node: node.test, messageId: "missingEmptyState" });
       },
     };
