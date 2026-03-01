@@ -2,10 +2,8 @@ import { useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import Typography from "@mui/material/Typography";
 
 import { useClusterHealthData } from "../hooks/useClusterHealthData";
 
@@ -17,6 +15,7 @@ import RefreshToolbar from "./RefreshToolbar";
 import ResilienceSignalsView from "./cluster-health/ResilienceSignalsView";
 import ShardDistributionView from "./cluster-health/ShardDistributionView";
 import TaskBacklogView from "./cluster-health/TaskBacklogView";
+import PageHeader from "./PageHeader";
 
 export type ClusterHealthView =
   | "overview"
@@ -69,19 +68,19 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: 0, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
-            Cluster Health
-          </Typography>
-          <RefreshToolbar
-            lastUpdatedAt={lastUpdatedAt}
-            refreshIntervalSeconds={refreshIntervalMs / 1000}
-            refreshOptions={CLUSTER_HEALTH_REFRESH_OPTIONS}
-            onIntervalChange={(s) => setRefreshIntervalMs(s * 1000)}
-            onRefresh={refresh}
-            loading={loading}
-          />
-        </Stack>
+        <PageHeader
+          title="Cluster Health"
+          actions={
+            <RefreshToolbar
+              lastUpdatedAt={lastUpdatedAt}
+              refreshIntervalSeconds={refreshIntervalMs / 1000}
+              refreshOptions={CLUSTER_HEALTH_REFRESH_OPTIONS}
+              onIntervalChange={(s) => setRefreshIntervalMs(s * 1000)}
+              onRefresh={refresh}
+              loading={loading}
+            />
+          }
+        />
       </Paper>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
