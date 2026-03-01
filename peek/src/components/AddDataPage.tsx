@@ -495,55 +495,59 @@ export default function AddDataPage() {
           <Tab value="windows" label="Windows" />
         </Tabs>
 
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="subtitle2" sx={{ flex: 1 }}>
-            {activeGuide.label} quickstart
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            href={activeGuide.quickstartUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            endIcon={<OpenInNewIcon fontSize="small" />}
-          >
-            Open official docs
-          </Button>
-        </Stack>
+        <Box role="tabpanel">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="subtitle2" sx={{ flex: 1 }}>
+              {activeGuide.label} quickstart
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              href={activeGuide.quickstartUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              endIcon={<OpenInNewIcon fontSize="small" />}
+            >
+              Open official docs
+            </Button>
+          </Stack>
 
-        <TextField
-          label="Starter command"
-          value={activeGuide.command({ esUrl, version, apiKey, endpointType, otlpUrl })}
-          multiline
-          minRows={7}
-          fullWidth
-          slotProps={{
-            input: { readOnly: true, sx: { fontFamily: "monospace", fontSize: "0.8rem" } },
-            inputLabel: { sx: { color: "text.primary" } },
-          }}
-        />
-        <Alert severity="info">
-          {apiKeyValue
-            ? "Your generated API key, "
-            : "Generate an API key below (or provide your own) — "}
-          {endpointType === "managed_otlp" && derivedOtlpUrl
-            ? "OTLP endpoint, "
-            : connection?.url
-              ? "Elasticsearch endpoint, "
-              : ""}
-          {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
-          {apiKeyValue ||
-          (endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connection?.url)) ||
-          clusterVersion
-            ? "have been pre-filled in the command above."
-            : "Replace the placeholders before running."}
-          {!apiKeyValue && (
-            <>
-              {" "}
-              Replace <code>&lt;YOUR_API_KEY&gt;</code> with a generated or existing key.
-            </>
-          )}
-        </Alert>
+          <TextField
+            label="Starter command"
+            value={activeGuide.command({ esUrl, version, apiKey, endpointType, otlpUrl })}
+            multiline
+            minRows={7}
+            fullWidth
+            slotProps={{
+              input: { readOnly: true, sx: { fontFamily: "monospace", fontSize: "0.8rem" } },
+              inputLabel: { sx: { color: "text.primary" } },
+            }}
+          />
+          <Alert severity="info">
+            {apiKeyValue
+              ? "Your generated API key, "
+              : "Generate an API key below (or provide your own) — "}
+            {endpointType === "managed_otlp" && derivedOtlpUrl
+              ? "OTLP endpoint, "
+              : connection?.url
+                ? "Elasticsearch endpoint, "
+                : ""}
+            {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
+            {apiKeyValue ||
+            (endpointType === "managed_otlp"
+              ? Boolean(derivedOtlpUrl)
+              : Boolean(connection?.url)) ||
+            clusterVersion
+              ? "have been pre-filled in the command above."
+              : "Replace the placeholders before running."}
+            {!apiKeyValue && (
+              <>
+                {" "}
+                Replace <code>&lt;YOUR_API_KEY&gt;</code> with a generated or existing key.
+              </>
+            )}
+          </Alert>
+        </Box>
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>

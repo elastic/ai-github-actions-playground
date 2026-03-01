@@ -96,7 +96,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
         ))}
       </Tabs>
 
-      <Paper variant="outlined" sx={{ p: 2, flex: 1, overflow: "auto" }}>
+      <Paper role="tabpanel" variant="outlined" sx={{ p: 2, flex: 1, overflow: "auto" }}>
         {activeTab === "overview" && <OverviewView data={data} />}
         {activeTab === "nodes" && <NodeDetailTable data={data} />}
         {activeTab === "taskBacklog" && <TaskBacklogView data={data} />}

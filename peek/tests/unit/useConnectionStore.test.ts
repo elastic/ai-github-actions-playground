@@ -147,13 +147,16 @@ describe("useConnectionStore connection profiles", () => {
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
     const apiKeyKey = `elastic-peek-connection:profile:${id}:apiKey`;
+    const otlpApiKeyKey = `elastic-peek-connection:profile:${id}:otlpApiKey`;
     const passwordKey = `elastic-peek-connection:profile:${id}:password`;
     sessionStorage.setItem(apiKeyKey, "dev-key");
+    sessionStorage.setItem(otlpApiKeyKey, "otlp-key");
     sessionStorage.setItem(passwordKey, "dev-pass");
 
     useConnectionStore.getState().deleteConnectionProfile(id!);
 
     expect(sessionStorage.getItem(apiKeyKey)).toBeNull();
+    expect(sessionStorage.getItem(otlpApiKeyKey)).toBeNull();
     expect(sessionStorage.getItem(passwordKey)).toBeNull();
   });
 
