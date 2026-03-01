@@ -122,7 +122,7 @@ async function captureTabScreenshots(
     if ((await tabpanel.count()) > 0) {
       await tabpanel.waitFor({ state: "visible" });
     } else {
-      await page.waitForTimeout(500);
+      await page.getByRole("tab", { name: tab, selected: true }).waitFor({ state: "visible" });
     }
     await page.screenshot({
       path: `test-results/${prefix}-${section}-${slug(tab)}.png`,
