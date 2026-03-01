@@ -61,7 +61,7 @@ When a change affects the visual appearance of the dashboard, you **must** captu
 ```bash
 cd peek && npm run dev &
 DEV_PID=$!
-for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000 >/dev/null && break; sleep 1; done
+for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000/ai-github-actions-playground/ >/dev/null && break; sleep 1; done
 ```
 
 2. Run the screenshot preflight, passing `--url` with the route that shows your feature (not the default connections page):
