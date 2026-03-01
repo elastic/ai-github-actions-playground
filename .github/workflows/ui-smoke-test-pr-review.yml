@@ -41,15 +41,14 @@ jobs:
         id: smoke
         working-directory: peek
         run: |
-          npx playwright test tests/e2e/smoke.spec.ts --reporter=json --output-folder=test-results 2>&1 | tee /tmp/smoke-output.txt || true
-          npx playwright test tests/e2e/smoke.spec.ts --reporter=json > /tmp/smoke-results.json 2>/dev/null || true
+          npx playwright test tests/e2e/smoke.spec.ts --reporter=json --output-folder=test-results > /tmp/smoke-results.json 2>&1 || true
+          cat /tmp/smoke-results.json
 
       - name: Start dev server for preflight
-        id: server
         working-directory: peek
         run: |
-          npm run dev -- --port 3000 --host 127.0.0.1 &
-          echo "pid=$!" >> "$GITHUB_OUTPUT"
+          npx vite --port 3000 --host 127.0.0.1 &
+          echo "$!" > /tmp/dev-server.pid
           sleep 8
 
       - name: Run screenshot preflight
@@ -63,7 +62,7 @@ jobs:
 
       - name: Stop dev server
         if: always()
-        run: kill ${{ steps.server.outputs.pid }} 2>/dev/null || true
+        run: kill "$(cat /tmp/dev-server.pid 2>/dev/null)" 2>/dev/null || true
 
       - name: Build smoke test report
         if: always()
