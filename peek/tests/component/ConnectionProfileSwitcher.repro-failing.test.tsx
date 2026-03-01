@@ -58,5 +58,6 @@ describe("ConnectionProfileSwitcher expected behavior", () => {
       canReadSecurityRoles: true,
     });
     expect(useConnectionStore.getState().profileHealthMap[prodId!]?.status).toBe("needs_attention");
+    expect(useConnectionStore.getState().profileHealthMap[devId!]).toBeUndefined();
   });
 });
