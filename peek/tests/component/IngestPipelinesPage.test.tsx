@@ -269,7 +269,11 @@ describe("IngestPipelinesPage", () => {
       docs: [
         {
           doc: { _source: { env: "production" } },
-          processor_results: [{ processor_type: "set", status: "success" }],
+          processor_results: [
+            { processor_type: "set", status: "success" },
+            { processor_type: "rename", status: "error" },
+            { processor_type: "drop", status: "unexpected_status" },
+          ],
         },
       ],
     });
@@ -298,6 +302,8 @@ describe("IngestPipelinesPage", () => {
       expect(screen.getByTestId("simulate-result").textContent).toContain("set");
     });
     expect(screen.getByTestId("processor-trace-status-0-0")).toHaveTextContent("OK");
+    expect(screen.getByTestId("processor-trace-status-0-1")).toHaveTextContent("Error");
+    expect(screen.getByTestId("processor-trace-status-0-2")).toHaveTextContent("Unknown");
   });
 
   it("shows a simulate error when the API call fails", async () => {
