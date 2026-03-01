@@ -40,7 +40,7 @@ type AuthType = "apiKey" | "userpass";
 
 function shouldShowTelemetryPanel(conn?: ElasticsearchConnection | null): boolean {
   if (!conn) return false;
-  if (conn.otlpEnabled || conn.otlpApiKey) return true;
+  if (conn.otlpEnabled || Boolean(conn.otlpApiKey?.trim())) return true;
   const endpoint = conn.otlpEndpoint?.trim();
   if (!endpoint) return false;
   return endpoint !== deriveDefaultOtlpEndpoint(conn.url);
