@@ -168,10 +168,12 @@ interface CreateApiKeyResponse {
 // ---------------------------------------------------------------------------
 
 const MAX_RETRIES = 3;
-const RETRY_STATUSES = new Set([429, 503]);
+const RETRY_STATUSES = new Set([429, 503, 504]);
 const INITIAL_BACKOFF_MS = 500;
 
 function sleepAbortable(ms: number, signal?: AbortSignal | null): Promise<void> {
+  const jitter = ms * 0.1;
+  const jitteredMs = ms + (Math.random() * jitter * 2 - jitter);
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
       reject(signal.reason);
@@ -184,7 +186,7 @@ function sleepAbortable(ms: number, signal?: AbortSignal | null): Promise<void> 
     const timer = setTimeout(() => {
       signal?.removeEventListener("abort", onAbort);
       resolve();
-    }, ms);
+    }, jitteredMs);
     signal?.addEventListener("abort", onAbort, { once: true });
   });
 }

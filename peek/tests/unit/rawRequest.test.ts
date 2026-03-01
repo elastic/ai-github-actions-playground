@@ -250,7 +250,7 @@ describe("executeRawRequest", () => {
         .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
 
       const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
-      await vi.advanceTimersByTimeAsync(RETRY_DELAYS_MS[0]!);
+      await vi.runAllTimersAsync();
       const result = await pending;
 
       expect(result).toEqual({ status: 200, body: { ok: true } });
@@ -269,7 +269,7 @@ describe("executeRawRequest", () => {
         .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
 
       const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
-      await vi.advanceTimersByTimeAsync(RETRY_DELAYS_MS[0]!);
+      await vi.runAllTimersAsync();
       const result = await pending;
 
       expect(result).toEqual({ status: 200, body: { ok: true } });
@@ -279,7 +279,45 @@ describe("executeRawRequest", () => {
     }
   });
 
-  it("does not retry on 4xx responses", async () => {
+  it("retries on 429 (Too Many Requests)", async () => {
+    vi.useFakeTimers();
+    try {
+      const doFetch: DoFetch = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ error: "too many requests" }, { status: 429 }))
+        .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
+
+      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      expect(result).toEqual({ status: 200, body: { ok: true } });
+      expect(doFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("retries on 504 (Gateway Timeout)", async () => {
+    vi.useFakeTimers();
+    try {
+      const doFetch: DoFetch = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ error: "timeout" }, { status: 504 }))
+        .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
+
+      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      expect(result).toEqual({ status: 200, body: { ok: true } });
+      expect(doFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not retry on 4xx responses (except 429)", async () => {
     const doFetch: DoFetch = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ error: "bad request" }, { status: 400 }));
@@ -298,9 +336,7 @@ describe("executeRawRequest", () => {
         .mockResolvedValue(jsonResponse({ error: "unavailable" }, { status: 503 }));
 
       const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/_search");
-      for (const d of RETRY_DELAYS_MS) {
-        await vi.advanceTimersByTimeAsync(d);
-      }
+      await vi.runAllTimersAsync();
       const result = await pending;
 
       expect(result).toEqual({ status: 503, body: { error: "unavailable" } });

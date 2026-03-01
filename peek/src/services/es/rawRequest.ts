@@ -26,8 +26,21 @@ function isAbortError(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
 }
 
+/** Status codes that should trigger an automatic retry. */
+const RETRY_STATUSES = new Set([429, 503, 504]);
+
+/**
+ * Adds a small amount of random jitter (±10%) to a delay to prevent multiple
+ * clients from retrying at the exact same moment.
+ */
+function addJitter(ms: number): number {
+  const jitter = ms * 0.1;
+  return ms + (Math.random() * jitter * 2 - jitter);
+}
+
 /** Signal-aware delay that rejects immediately when the signal fires. */
 function delay(ms: number, signal: AbortSignal): Promise<void> {
+  const jitteredMs = addJitter(ms);
   return new Promise<void>((resolve, reject) => {
     if (signal.aborted) {
       reject(signal.reason);
@@ -40,7 +53,7 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
     const id = setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
       resolve();
-    }, ms);
+    }, jitteredMs);
     signal.addEventListener("abort", onAbort, { once: true });
   });
 }
@@ -90,7 +103,9 @@ export async function executeRawRequest(
             signal: controller.signal,
           },
         );
-        if (response.status < 500 || attempt >= RETRY_DELAYS_MS.length) {
+
+        const isRetryableStatus = RETRY_STATUSES.has(response.status) || response.status >= 500;
+        if (!isRetryableStatus || attempt >= RETRY_DELAYS_MS.length) {
           break;
         }
       } catch (err) {

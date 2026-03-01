@@ -469,9 +469,9 @@ describe("retry logic", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(3);
   });
 
-  it("retries on 503 and succeeds on a later attempt", async () => {
+  it("retries on 504 and succeeds on a later attempt", async () => {
     const fetchSpy = mockFetchSequence(
-      { body: { error: { reason: "unavailable" } }, init: { status: 503 } },
+      { body: { error: { reason: "gateway timeout" } }, init: { status: 504 } },
       { body: { cluster_name: "recovered" }, init: { status: 200 } },
     );
     vi.stubGlobal("fetch", fetchSpy);
