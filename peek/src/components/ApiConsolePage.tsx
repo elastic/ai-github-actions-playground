@@ -320,17 +320,35 @@ export default function ApiConsolePage() {
 
   const persistedEntries = useApiConsoleStore((s) => s.entries);
   const setPersistedEntries = useApiConsoleStore((s) => s.setEntries);
+  const consoleDraft = useApiConsoleStore((s) => s.consoleDraft);
+  const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
 
-  const [entries, setEntries] = useState<RequestEntry[]>(() =>
-    persistedEntries.length > 0
-      ? persistedEntries.map((p) => ({ ...p, method: p.method as HttpMethod, response: null }))
-      : [makeEntry()],
-  );
+  const [entries, setEntries] = useState<RequestEntry[]>(() => {
+    const base =
+      persistedEntries.length > 0
+        ? persistedEntries.map((p) => ({ ...p, method: p.method as HttpMethod, response: null }))
+        : [makeEntry()];
+    if (consoleDraft) {
+      return [
+        makeEntry({ method: consoleDraft.method as HttpMethod, path: consoleDraft.path }),
+        ...base,
+      ];
+    }
+    return base;
+  });
   const entriesRef = useRef(entries);
   const abortRefs = useRef<Map<string, AbortController>>(new Map());
 
   const [overflowMenuAnchor, setOverflowMenuAnchor] = useState<null | HTMLElement>(null);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
+  // Clear the draft after it has been consumed during initialization
+  useEffect(() => {
+    if (consoleDraft) {
+      setConsoleDraft(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     entriesRef.current = entries;
