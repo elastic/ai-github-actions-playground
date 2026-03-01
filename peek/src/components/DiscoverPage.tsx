@@ -130,10 +130,10 @@ export default function DiscoverPage() {
     buildRequest,
     onSuccess: (data, executedQuery, executedStepIndex) => {
       setResult(data);
+      appendQueryToHistory(executedQuery);
       if (executedStepIndex === null) {
         if (discoverQueryDraft) setDiscoverQueryDraft(null);
         setQuery(executedQuery);
-        appendQueryToHistory(executedQuery);
       }
       // By default select all fields
       setSelectedFields(new Set(data.columns.map((c) => c.name)));
