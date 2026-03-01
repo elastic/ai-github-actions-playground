@@ -473,7 +473,7 @@ Eight Playwright-powered exploratory agents run on weekdays. Each owns a domain 
 | **Feature Gap Review** | `explore-customer-feedback.yml` | 16:00 UTC | Missing features vs Kibana/Grafana/Elasticvue expectations |
 | **Modern UI Review** | `ui-designer-review.yml` | 17:00 UTC | Design modernization vs Linear/Vercel/Stripe standards |
 
-Exploratory agents use `gh-aw-internal-gemini-cli.lock.yml` (Gemini) with creative Playwright exploration instructions. The Modern UI Review agent uses `gh-aw-scheduled-audit.lock.yml` (Copilot).
+Exploratory agents use `internal-gemini-cli.lock.yml` (Gemini) with creative Playwright exploration instructions. The Modern UI Review agent uses `gh-aw-scheduled-audit.lock.yml` (Copilot).
 
 ### Give It Some Love
 
