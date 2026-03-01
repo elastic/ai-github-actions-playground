@@ -50,7 +50,9 @@ export function deriveOtlpEndpoint(esUrl: string): string | null {
 /**
  * Probe the derived OTLP ingest endpoint to check if it is reachable.
  * Uses `mode: "no-cors"` so the browser won't block on missing CORS headers —
- * if the host exists the fetch resolves; if DNS / host is unreachable it rejects.
+ * if the host exists the fetch resolves (with an opaque response); if DNS or
+ * the host is unreachable the fetch rejects.  This means the probe only checks
+ * network-level reachability and cannot inspect the HTTP status code.
  */
 export async function probeOtlpEndpoint(otlpUrl: string, timeoutMs = 5000): Promise<boolean> {
   try {

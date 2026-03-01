@@ -232,6 +232,18 @@ describe("probeOtlpEndpoint", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
     expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(false);
   });
+
+  it("returns false when fetch times out", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_url, opts) =>
+        new Promise((_resolve, reject) => {
+          (opts as RequestInit).signal?.addEventListener("abort", () =>
+            reject(new DOMException("Aborted", "AbortError")),
+          );
+        }),
+    );
+    expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud", 50)).toBe(false);
+  });
 });
 
 describe("deriveOtlpEndpoint", () => {
