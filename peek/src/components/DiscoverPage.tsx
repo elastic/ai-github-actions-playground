@@ -103,11 +103,16 @@ export default function DiscoverPage() {
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
   const effectiveQuery = discoverQueryDraft ?? query;
+  const skipInitialResultSync = useRef(hasDiscoverQueryDraft);
 
   useEffect(() => {
     setDiscoverLastQuery(query);
   }, [query, setDiscoverLastQuery]);
   useEffect(() => {
+    if (skipInitialResultSync.current) {
+      skipInitialResultSync.current = false;
+      return;
+    }
     setDiscoverLastResult(result);
   }, [result, setDiscoverLastResult]);
 
