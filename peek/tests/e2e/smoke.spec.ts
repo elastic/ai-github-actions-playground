@@ -199,11 +199,20 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
+    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryInput = queryEditor.getByRole("textbox");
+    const queryText = "FROM logs-* | SORT @timestamp | LIMIT 1";
+
     // Open Query Lab
     await page.getByRole("button", { name: "Query Lab", exact: true }).click();
     await expect(page).toHaveURL(/\/discover$/);
 
-    // Run the default query — the mock returns @timestamp + message columns
+    await queryInput.click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.type(queryText);
+    await expect(queryInput).toContainText(queryText);
+
+    // Run query — the mock returns @timestamp + message columns
     await page.getByRole("button", { name: "Run" }).click();
     await expect(page.getByText("Run a query to see results")).toBeHidden();
     // Verify results rendered (default mock: columns @timestamp, message, 1 row)
@@ -220,6 +229,7 @@ test.describe("smoke – site navigation", () => {
     await expect(page).toHaveURL(/\/discover$/);
 
     // Verify query text and results are still present
+    await expect(queryInput).toContainText(queryText);
     await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();

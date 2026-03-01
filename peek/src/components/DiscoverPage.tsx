@@ -88,10 +88,14 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
+  const hasDiscoverQueryDraft = discoverQueryDraft !== null;
   const [query, setQuery] = useState(discoverLastQuery);
-  const [result, setResult] = useState<EsqlResponse | null>(discoverLastResult);
+  const [result, setResult] = useState<EsqlResponse | null>(
+    hasDiscoverQueryDraft ? null : discoverLastResult,
+  );
   const [selectedFields, setSelectedFields] = useState<Set<string>>(
-    () => new Set(discoverLastResult?.columns?.map((c) => c.name) ?? []),
+    () =>
+      new Set(hasDiscoverQueryDraft ? [] : (discoverLastResult?.columns?.map((c) => c.name) ?? [])),
   );
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
