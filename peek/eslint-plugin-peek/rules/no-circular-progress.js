@@ -32,6 +32,13 @@ export default {
       return null;
     }
 
+    function getJSXRootName(node) {
+      if (!node) return null;
+      if (node.type === "JSXIdentifier") return node.name;
+      if (node.type === "JSXMemberExpression") return getJSXRootName(node.object);
+      return null;
+    }
+
     function getNumericSizeProp(openingElement) {
       const sizeAttr = openingElement.attributes.find(
         (attr) => attr.type === "JSXAttribute" && attr.name.name === "size",
@@ -74,8 +81,8 @@ export default {
         }
       },
       JSXOpeningElement(node) {
-        const elementName = getJSXElementName(node.name);
-        if (!elementName || !localNames.has(elementName)) return;
+        const rootName = getJSXRootName(node.name);
+        if (!rootName || !localNames.has(rootName)) return;
 
         hasCircularProgressUsage = true;
         const size = getNumericSizeProp(node);

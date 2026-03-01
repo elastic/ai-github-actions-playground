@@ -38,6 +38,22 @@ describe("peek/no-circular-progress", () => {
         {
           code: `
             import CircularProgress from "@mui/material/CircularProgress";
+            const SomeComponent = { CircularProgress };
+            function Component() {
+              return (
+                <>
+                  <CircularProgress size={14} />
+                  <SomeComponent.CircularProgress />
+                </>
+              );
+            }
+          `,
+          filename: "src/components/UsersPage.tsx",
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
+        {
+          code: `
+            import CircularProgress from "@mui/material/CircularProgress";
             function Component() {
               return <CircularProgress />;
             }
