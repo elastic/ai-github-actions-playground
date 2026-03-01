@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -26,6 +26,7 @@ import { loadSecurityResource } from "./securityResourceLoader";
 
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedUsername = searchParams.get("username");
@@ -91,25 +92,24 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   useEffect(() => {
-    let resolvedUsername: string | null = null;
-    setSelectedUsername((current) => {
-      if (users.length === 0) {
-        resolvedUsername = requestedUsername ?? current;
-        return resolvedUsername;
-      }
-      if (requestedUsername && users.some((user) => user.username === requestedUsername)) {
-        resolvedUsername = requestedUsername;
-        return resolvedUsername;
-      }
-      // Preserve manual selection when no query param and current user still exists
-      if (!requestedUsername && current && users.some((user) => user.username === current)) {
-        resolvedUsername = current;
-        return resolvedUsername;
-      }
-      resolvedUsername = users[0]?.username ?? null;
-      return resolvedUsername;
-    });
-    if (users.length === 0 || resolvedUsername === requestedUsername) {
+    const resolvedUsername =
+      users.length === 0
+        ? (requestedUsername ?? selectedUsername)
+        : requestedUsername && users.some((user) => user.username === requestedUsername)
+          ? requestedUsername
+          : !requestedUsername &&
+              selectedUsername &&
+              users.some((user) => user.username === selectedUsername)
+            ? selectedUsername
+            : (users[0]?.username ?? null);
+    if (resolvedUsername !== selectedUsername) {
+      setSelectedUsername(resolvedUsername);
+    }
+    if (
+      users.length === 0 ||
+      resolvedUsername === requestedUsername ||
+      !location.pathname.startsWith("/users")
+    ) {
       return;
     }
     setSearchParams(
@@ -124,7 +124,7 @@ export default function UsersPage() {
       },
       { replace: true },
     );
-  }, [requestedUsername, setSearchParams, users]);
+  }, [location.pathname, requestedUsername, selectedUsername, setSearchParams, users]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
