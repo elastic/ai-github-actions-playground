@@ -908,7 +908,7 @@ export default function TracesPage() {
                     height: "100%",
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     Drift Radar is not available for custom queries. Use filter chips to scope the
                     window.
                   </Typography>
@@ -943,7 +943,7 @@ export default function TracesPage() {
                     height: "100%",
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     Run search to load the window service map.
                   </Typography>
                 </Box>
@@ -956,7 +956,7 @@ export default function TracesPage() {
                     height: "100%",
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     Search for traces to load the Drift Radar service map.
                   </Typography>
                 </Box>
@@ -1027,7 +1027,7 @@ export default function TracesPage() {
                 <Box
                   sx={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.primary">
                     No spans found for this trace
                   </Typography>
                 </Box>
