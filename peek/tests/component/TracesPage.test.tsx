@@ -36,6 +36,14 @@ vi.mock("../../src/components/visualizations/DriftRadarMap", () => ({ default: (
 vi.mock("../../src/components/visualizations/TimeSeriesChart", () => ({ default: () => null }));
 vi.mock("../../src/components/traces/SpanDetailDrawer", () => ({ default: () => null }));
 
+function isDriftRadarQuery(query: string): boolean {
+  return (
+    query.includes("FROM traces-*") &&
+    !query.includes("parent.id IS NULL") &&
+    !query.includes("STATS request_count")
+  );
+}
+
 describe("TracesPage duration filter", () => {
   beforeEach(() => {
     mockRunQuery.mockClear();
@@ -213,9 +221,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     );
 
     mockRunQuery.mockClear();
-    // MUI Chip renders the delete icon with a data-testid of "CancelIcon"
-    const deleteButton = screen.getByTestId("CancelIcon");
-    await user.click(deleteButton);
+    const statusChip = screen.getByRole("button", { name: /status:\s*Error/i });
+    await user.click(statusChip);
+    await user.keyboard("{backspace}");
 
     expect(mockRunQuery).toHaveBeenCalled();
     expect(useTracesStore.getState().filters.statusCodes).not.toContain("Error");
@@ -234,13 +242,6 @@ describe("TracesPage auto-run on quick filter changes", () => {
     await user.click(screen.getByText("Error"));
 
     const queries = mockRunQuery.mock.calls.map(([query]) => String(query));
-    expect(
-      queries.some(
-        (query) =>
-          query.includes("FROM traces-*") &&
-          !query.includes("parent.id IS NULL") &&
-          !query.includes("STATS request_count"),
-      ),
-    ).toBe(true);
+    expect(queries.some(isDriftRadarQuery)).toBe(true);
   });
 });
