@@ -27,12 +27,14 @@ vi.stubGlobal("sessionStorage", makeStorageMock());
 
 const CAPS_OK = {
   canManageDataStreams: false,
+  canCreateApiKeys: true,
   canReadSecurityUsers: true,
   canReadSecurityRoles: true,
   canReadApiKeys: true,
 };
 const CAPS_NO_READ = {
   canManageDataStreams: false,
+  canCreateApiKeys: false,
   canReadSecurityUsers: false,
   canReadSecurityRoles: false,
   canReadApiKeys: false,

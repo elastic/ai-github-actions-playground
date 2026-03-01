@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -33,6 +33,7 @@ export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedKey = useMemo(
     () => keys.find((k) => k.id === selectedKeyId) ?? null,
@@ -86,6 +87,14 @@ export default function ApiKeysPage() {
     void loadKeys();
   }, [loadKeys]);
 
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const filteredKeys = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return keys;
@@ -98,7 +107,10 @@ export default function ApiKeysPage() {
     const copied = await copyToClipboard("GET /_security/api_key");
     if (!copied) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+    }
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   }, []);
 
   return (
