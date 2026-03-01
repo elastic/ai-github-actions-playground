@@ -460,7 +460,7 @@ Files issues with specific library references, documentation links, and simplifi
 
 ## 9. Exploratory Testing Agents
 
-Seven Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents only file issues for genuine bugs found through hands-on exploration.
+Seven Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents file issues aligned to their mission (bug reports for smoke explorers, feature-gap feedback for customer review).
 
 | Agent | File | Schedule | Domain |
 |-------|------|----------|--------|
@@ -654,5 +654,5 @@ All agents are coached to:
 | 13:00 | Breaking Changes, Framework Practices, Explore: Data Mgmt, UX Patrol | Vector Search Ideas | | |
 | 14:00 | Explore: Live ES, Flaky Tests, Performance Profiler | | Refactor Opportunist | |
 | 15:00 | Stale Issues | | | Give It Some Love |
-| 16:00 | Autonomy Atomicity | | | |
+| 16:00 | Autonomy Atomicity, Feature Gap Review | | | |
 | 17:00 | Information Architecture | | | |
