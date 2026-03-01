@@ -253,7 +253,6 @@ export default function MetricOverviewGrid({
                     boxShadow: 1,
                   },
                   "&.Mui-focusVisible": {
-                    borderColor: theme.palette.primary.main,
                     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
                   },
                   display: "flex",
