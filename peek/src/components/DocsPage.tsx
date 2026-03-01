@@ -101,11 +101,39 @@ export default function DocsPage() {
             <Typography variant="h6" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
-            {section.body.map((paragraph, index) => (
-              <Typography key={index} variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {paragraph}
-              </Typography>
-            ))}
+            {section.body.map((paragraph, index) => {
+              const h2Match = paragraph.match(/^##\s+(.+)$/);
+              if (h2Match) {
+                return (
+                  <Typography
+                    key={index}
+                    variant="subtitle1"
+                    fontWeight={600}
+                    sx={{ mt: 2, mb: 1 }}
+                  >
+                    {h2Match[1]}
+                  </Typography>
+                );
+              }
+              const h3Match = paragraph.match(/^###\s+(.+)$/);
+              if (h3Match) {
+                return (
+                  <Typography
+                    key={index}
+                    variant="subtitle2"
+                    fontWeight={600}
+                    sx={{ mt: 1.5, mb: 0.5 }}
+                  >
+                    {h3Match[1]}
+                  </Typography>
+                );
+              }
+              return (
+                <Typography key={index} variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {paragraph}
+                </Typography>
+              );
+            })}
             <Divider sx={{ mt: 2 }} />
           </Box>
         ))}
