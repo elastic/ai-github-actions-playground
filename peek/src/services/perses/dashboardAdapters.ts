@@ -1,46 +1,15 @@
 import type { z } from "zod";
 
 import type { persesDashboardSchema, persesWorkspaceSnapshotSchema } from "../../schemas";
-import type {
-  DashboardDefinition,
-  DashboardParameter,
-  PanelDefinition,
-  VisualizationType,
-} from "../../types";
+import type { DashboardDefinition, DashboardParameter, PanelDefinition } from "../../types";
+
+import {
+  getPersesPanelPluginKind,
+  getVisualizationTypeForPersesPanelKind,
+} from "./panelPluginKinds";
 
 export type PersesDashboardDefinition = z.infer<typeof persesDashboardSchema>;
 export type PersesWorkspaceSnapshot = z.infer<typeof persesWorkspaceSnapshotSchema>;
-
-const VISUALIZATION_TO_PLUGIN_KIND: Record<VisualizationType, string> = {
-  timeseries: "TimeSeriesChart",
-  stat: "StatChart",
-  gauge: "GaugeChart",
-  bar: "BarChart",
-  table: "TablePanel",
-  pie: "PieChart",
-  scatter: "ScatterChart",
-  heatmap: "HeatMapChart",
-  histogram: "HistogramChart",
-  markdown: "MarkdownPanel",
-};
-
-const PLUGIN_KIND_TO_VISUALIZATION: Record<string, VisualizationType> = Object.fromEntries(
-  Object.entries(VISUALIZATION_TO_PLUGIN_KIND).map(([visualization, pluginKind]) => [
-    pluginKind,
-    visualization as VisualizationType,
-  ]),
-) as Record<string, VisualizationType>;
-
-function toPluginKind(visualization: VisualizationType): string {
-  return VISUALIZATION_TO_PLUGIN_KIND[visualization];
-}
-
-function toVisualizationType(kind: string | undefined): VisualizationType | undefined {
-  if (!kind) {
-    return undefined;
-  }
-  return PLUGIN_KIND_TO_VISUALIZATION[kind] ?? (kind as VisualizationType);
-}
 
 function toPanelQueries(panel: Pick<PanelDefinition, "query" | "queries">): string[] {
   const canonicalQueries =
@@ -103,7 +72,7 @@ export function toPersesDashboard(dashboard: DashboardDefinition): PersesDashboa
               display: { name: panel.title },
               layout: panel.layout,
               plugin: {
-                kind: toPluginKind(panel.visualization),
+                kind: getPersesPanelPluginKind(panel.visualization),
                 spec: panel.options as Record<string, unknown> | undefined,
               },
               queries: toPanelQueries(panel).map((query) => ({
@@ -141,7 +110,9 @@ export function fromPersesDashboard(dashboard: PersesDashboardDefinition): Dashb
         canonicalQueries.length > 0 ? canonicalQueries : panel.spec.query ? [panel.spec.query] : [];
       const query = queries[0] ?? "";
       const visualization =
-        toVisualizationType(panel.spec.plugin?.kind) ?? panel.spec.visualization ?? "timeseries";
+        getVisualizationTypeForPersesPanelKind(panel.spec.plugin?.kind) ??
+        panel.spec.visualization ??
+        "timeseries";
       const options = panel.spec.plugin?.spec ?? panel.spec.options;
       return {
         id,
