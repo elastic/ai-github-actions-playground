@@ -125,6 +125,8 @@ export const createConnectionProfileSlice: StateCreator<
     if (!profile) return;
     const { apiKey = "", password = "" } = profile.connection;
     const payload = await encryptWithPin(pin, JSON.stringify({ apiKey, password }));
+    // Re-check: profile may have been deleted while awaiting encryption.
+    if (!get().connectionProfiles.some((p) => p.id === id)) return;
     localStorage.setItem(
       CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + ENCRYPTED_STORE_SUFFIX,
       JSON.stringify(payload),
