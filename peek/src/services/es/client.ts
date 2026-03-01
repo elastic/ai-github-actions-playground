@@ -228,6 +228,22 @@ export interface SecurityRole {
 export type GetSecurityUsersResponse = Record<string, SecurityUser>;
 export type GetSecurityRolesResponse = Record<string, SecurityRole>;
 
+/** One API key entry returned by GET /_security/api_key */
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  username: string;
+  creation: number;
+  expiration?: number | null;
+  invalidated: boolean;
+  metadata?: Record<string, unknown>;
+  realm?: string;
+}
+
+export interface GetApiKeysResponse {
+  api_keys: ApiKeyInfo[];
+}
+
 /** One record from GET /_cat/indices?format=json&bytes=b */
 export interface CatIndexRecord {
   index: string;
@@ -369,6 +385,8 @@ export interface UserCapabilities {
   canReadSecurityUsers: boolean;
   /** Whether the user can read role definitions from the security API. */
   canReadSecurityRoles: boolean;
+  /** Whether the user can list/query API keys for audit. */
+  canReadApiKeys: boolean;
 }
 
 /** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
@@ -694,6 +712,10 @@ export class ElasticsearchClient {
     return this._fetch<GetSecurityRolesResponse>("/_security/role", { signal });
   }
 
+  async getApiKeys(signal?: AbortSignal): Promise<GetApiKeysResponse> {
+    return this._fetch<GetApiKeysResponse>("/_security/api_key", { signal });
+  }
+
   async getTopFunctions(
     body: ProfilingTopFunctionsRequest,
     signal?: AbortSignal,
@@ -762,6 +784,7 @@ export class ElasticsearchClient {
         canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
+        canReadApiKeys: canCreateApiKeys,
       };
     } catch {
       // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
@@ -770,6 +793,7 @@ export class ElasticsearchClient {
         canCreateApiKeys: false,
         canReadSecurityUsers: false,
         canReadSecurityRoles: false,
+        canReadApiKeys: false,
       };
     }
   }
