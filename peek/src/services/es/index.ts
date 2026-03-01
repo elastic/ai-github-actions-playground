@@ -4,59 +4,24 @@ export type { DoFetch, RawRequestError } from "./rawRequest";
 export { buildEsqlRequest } from "./buildEsqlRequest";
 export type { BuildEsqlRequestOptions } from "./buildEsqlRequest";
 export { fetchCapabilitiesForConnection } from "./connectionHandshake";
-export type {
-  ElasticsearchConnection,
-  ElasticsearchError,
-  EsqlError,
-  EsqlColumn,
-  EsqlResult,
-  EsqlResponse,
-  AsyncEsqlResult,
-  EsqlQueryRequest,
-  EsqlQueryParams,
-  EsqlQueryResponse,
-  ClusterInfoResponse,
-  ClusterHealthResponse,
-  ClusterPendingTask,
-  ClusterPendingTasksResponse,
-  CatAllocationRecord,
-  CatShardRecord,
-  ClusterStatsResponse,
-  NodesInfoNode,
-  NodesInfoResponse,
-  NodeStatsNode,
-  NodesStatsResponse,
-  RecoveryResponse,
-  IlmExplainResponse,
-  SlmStatsResponse,
-  SnapshotStatusResponse,
-  NodesIngestStatsResponse,
-  ClusterSettingsResponse,
-  ClusterAllocationExplainResponse,
-  ResolveIndexResponse,
-  GetDataStreamsResponse,
-  DataStreamInfo,
-  ResolveIndexDataStreamInfo,
-  FieldCapsResponse,
-  FieldCapability,
-  SecurityUser,
-  SecurityRole,
-  GetSecurityUsersResponse,
-  GetSecurityRolesResponse,
-  UserCapabilities,
-  ApiKeyInfo,
-  GetApiKeysResponse,
-  ProfilingTopFunctionsRequest,
-  CatIndexRecord,
-  IndexStatsData,
-  IndexStatsResponse,
-  DiskUsageFieldStats,
-  DiskUsageIndexEntry,
-  DiskUsageResponse,
-  IngestPipeline,
-  GetIngestPipelinesResponse,
-  SimulateIngestPipelineResponse,
-} from "./client";
+
+// ---------------------------------------------------------------------------
+// Core client types (connection, error shapes)
+// ---------------------------------------------------------------------------
+
+export type { ElasticsearchConnection, ElasticsearchError, EsqlError } from "./client";
+
+// ---------------------------------------------------------------------------
+// Domain-specific types — each module owns its own types so that new endpoint
+// additions only require editing the relevant domain file.
+// ---------------------------------------------------------------------------
+
+export type * from "./esqlTypes";
+export type * from "./clusterTypes";
+export type * from "./indicesTypes";
+export type * from "./securityTypes";
+export type * from "./ingestTypes";
+export type * from "./profilingTypes";
 
 export {
   buildExplorerQuery,

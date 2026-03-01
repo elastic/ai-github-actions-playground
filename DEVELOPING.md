@@ -10,7 +10,7 @@
 | `peek/src/dashboards/` | Default dashboard definitions |
 | `peek/src/docs/` | Embedded in-product documentation content |
 | `peek/src/schemas.ts` | Zod validation schemas for import/export |
-| `peek/src/services/` | Elasticsearch ES|QL client |
+| `peek/src/services/` | Elasticsearch client and domain-specific type modules |
 | `peek/src/store/` | Zustand state management |
 | `peek/tests/unit/` | Unit tests (Vitest + jsdom) |
 | `peek/tests/integration/` | Integration tests (Testcontainers + Elasticsearch) |
@@ -162,6 +162,29 @@ The dashboard is a static single-page application. Elasticsearch queries are mad
 4. Give the descriptor a unique `order` value so it appears in the desired picker order.
 
 `vizRegistry.tsx` discovers descriptor modules automatically with `import.meta.glob`, so no central registration file edits are required for new visualization types.
+
+## Adding a New Elasticsearch Endpoint
+
+The Elasticsearch service layer in `peek/src/services/es/` is organized into **domain-specific type modules** so that contributors working on unrelated ES capabilities (e.g. security vs. ingest) do not need to edit the same files.
+
+| File | Purpose |
+| --- | --- |
+| `esqlTypes.ts` | ES\|QL query/response types |
+| `clusterTypes.ts` | Cluster health, nodes, stats, allocation, recovery, ILM, SLM types |
+| `indicesTypes.ts` | Index, data stream, field capability types |
+| `securityTypes.ts` | Users, roles, API keys, capabilities types |
+| `ingestTypes.ts` | Ingest pipeline types |
+| `profilingTypes.ts` | Profiling types |
+| `client.ts` | `ElasticsearchClient` class (methods + core connection/error types) |
+| `index.ts` | Barrel re-exports — uses `export type *` from domain modules |
+
+**To add types for a new or existing ES endpoint domain:**
+
+1. Add your types to the relevant `*Types.ts` file (e.g. `securityTypes.ts` for a new security API type). If the domain doesn't exist yet, create a new `<domain>Types.ts` file and add a `export type * from "./<domain>Types"` line to `index.ts`.
+2. Add the corresponding method to `ElasticsearchClient` in `client.ts`, importing the type from the domain file.
+3. If you created a new domain type file, add a `export type { ... } from "./<domain>Types"` re-export block to `client.ts` for backward compatibility.
+
+This structure ensures that **adding types to an existing domain** only touches the domain's type file and `client.ts` (for the method), and never requires editing the barrel `index.ts`.
 
 ## Docker
 
