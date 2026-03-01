@@ -1,6 +1,6 @@
 PEEK_DIR := peek
 
-.PHONY: help setup serve serve-proxy serve-background build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
+.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint format ci check clean preview test test-unit test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
@@ -12,6 +12,8 @@ help:
 	@echo "  serve            - Install deps + start Vite dev server (http://localhost:3000)"
 	@echo "  serve-proxy      - Install deps + start dev server with Elasticsearch proxy (set ES_URL)"
 	@echo "  serve-background - Start dev server in background and wait until ready"
+	@echo "  serve-explore    - Start ES + seed data + dev server (for explore agents)"
+	@echo "  explore-down     - Stop the exploration stack (ES + dev server)"
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - Prettier format check + ESLint + TypeScript type check"
@@ -78,6 +80,65 @@ serve-background: setup
 	else \
 		echo "✗ Dev server failed to start. Logs:"; cat /tmp/vite-dev-server.log; exit 1; \
 	fi
+
+serve-explore: setup
+	@echo "Starting Elasticsearch..."
+	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml up -d
+	@echo "Waiting for Elasticsearch to be ready..."
+	@for i in $$(seq 1 60); do \
+		curl -sf http://localhost:9200 >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
+	@if ! curl -sf http://localhost:9200 >/dev/null 2>&1; then \
+		echo "✗ Elasticsearch failed to start. Logs:"; \
+		docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml logs elasticsearch; \
+		exit 1; \
+	fi
+	@echo "✓ Elasticsearch ready at http://localhost:9200"
+	@echo "Replaying OTel fixtures + seeding data..."
+	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
+	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url http://localhost:9200 --wait-for-ready
+	@echo "Waiting for seeded data to be searchable..."
+	@for i in $$(seq 1 30); do \
+		curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' && break; \
+		sleep 2; \
+	done
+	@curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' \
+		|| { echo "✗ Seed verification failed: web_logs missing"; exit 1; }
+	@echo "✓ Data seeded and verified"
+	@echo "Starting dev server..."
+	@if [ -f /tmp/vite-dev-server.pid ]; then \
+		old_pid=$$(cat /tmp/vite-dev-server.pid); \
+		if kill -0 $$old_pid 2>/dev/null; then \
+			kill $$old_pid 2>/dev/null; \
+			sleep 1; \
+		fi; \
+		rm -f /tmp/vite-dev-server.pid; \
+	fi
+	@cd $(PEEK_DIR) && nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid
+	@for i in $$(seq 1 30); do \
+		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
+	@if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then \
+		echo "✓ Dev server running at http://localhost:3000 (PID: $$(cat /tmp/vite-dev-server.pid))"; \
+	else \
+		echo "✗ Dev server failed to start. Logs:"; cat /tmp/vite-dev-server.log; exit 1; \
+	fi
+	@echo ""
+	@echo "✓ Ready for exploration!"
+	@echo "  App:    http://localhost:3000/ai-github-actions-playground/"
+	@echo "  ES URL: http://localhost:9200 (enter this in the connection dialog)"
+
+explore-down:
+	@echo "Stopping exploration stack..."
+	@if [ -f /tmp/vite-dev-server.pid ]; then \
+		pid=$$(cat /tmp/vite-dev-server.pid); \
+		if kill -0 $$pid 2>/dev/null; then kill $$pid; fi; \
+		rm -f /tmp/vite-dev-server.pid; \
+	fi
+	@docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
+	@echo "✓ Stopped."
 
 build:
 	@echo "Building for production..."

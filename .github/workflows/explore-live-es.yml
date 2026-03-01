@@ -16,8 +16,7 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
     with:
       setup-commands: |
-        make setup
-        cd peek && npx playwright install chromium
+        make serve-explore
       additional-instructions: |
         You are the **Live Elasticsearch Explorer** — a creative, curious
         QA tester with access to a real Elasticsearch cluster full of real
@@ -50,55 +49,21 @@ jobs:
         - Check Data Streams — are the OTel data streams listed? Click into
           one. Does the detail view work?
 
-        You have Playwright available. Write and run Node.js scripts to
-        drive the browser. You can launch a browser, navigate, click, type,
-        read DOM content, take screenshots, and inspect what the page shows.
-        Write multiple small scripts — explore iteratively based on what
-        you find.
+        ## Getting started
 
-        ## Setup (do this first, every time)
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a real Elasticsearch cluster containing indices (web_logs,
+        orders), OTel data streams (traces, metrics, logs), and ingest
+        pipelines (logs-parse-nginx, enrich-geoip, metrics-normalize).
 
-        ```bash
-        # Start ES + EDOT collector
-        docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml up -d
-        for i in $(seq 1 60); do
-          curl -sf http://localhost:9200 >/dev/null 2>&1 && break
-          sleep 2
-        done
-
-        # Replay OTel data + seed non-OTel data
-        cd peek
-        node scripts/otel-replay.mjs
-        node scripts/seed-elasticsearch.mjs --url http://localhost:9200
-        sleep 5
-
-        # Verify data landed
-        curl -sf 'http://localhost:9200/web_logs/_count' | grep -q '"count"' \
-          || { echo "Seed verification failed: web_logs missing"; exit 1; }
-
-        # Start the dev server and wait for it to be ready
-        ES_URL=http://localhost:9200 make serve-background
-        ```
-
-        The app runs at `http://localhost:3000/ai-github-actions-playground/`.
-        Connect using `http://localhost:3000/_es` as the Elasticsearch URL.
-
-        The cluster has: indices (web_logs, orders), OTel data streams
-        (traces, metrics, logs), and ingest pipelines (logs-parse-nginx,
-        enrich-geoip, metrics-normalize).
-
-        ## Explore
-
-        Pick 3-5 pages and spend real time on each one. Don't just glance
-        at it — interact deeply. Click things, type things, verify data,
-        try workflows that span multiple pages. Be the kind of tester who
-        finds the bugs that automated tests miss.
-
-        ## Cleanup
-
-        ```bash
-        docker compose -f docker-compose.otel-es.yml -f docker-compose.otel-replay.yml down -v
-        ```
+        1. `browser_navigate` to the app URL above.
+        2. In the connection dialog, enter `http://localhost:9200` as the
+           Elasticsearch URL, then click Connect.
+        3. Pick 3-5 pages and spend real time on each one. Don't just glance
+           at it — interact deeply. Use `browser_snapshot` after each action
+           to see what changed, and `browser_take_screenshot` to capture
+           evidence. Be the kind of tester who finds the bugs that automated
+           tests miss.
 
         ## Visual quality checks
 
