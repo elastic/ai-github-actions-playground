@@ -60,6 +60,13 @@ Once approved, a maintainer assigns the issue to an AI agent. The agent creates 
 - **Features**: Explain the use case, provide examples, and include step-by-step instructions
 - **Be specific**: Name the files, components, and test cases the agent should touch
 
+## Accessibility
+
+All PRs are gated by an automated axe accessibility check in CI. The Playwright smoke suite runs axe scans on key pages — any new violation will fail CI.
+
+- **Component tests**: Use `renderWithA11y` from `peek/tests/helpers/renderWithA11y.tsx` to include an axe check in new component test suites
+- **E2E tests**: The smoke spec (`peek/tests/e2e/smoke.spec.ts`) runs axe on every core page automatically
+
 ## Documentation Updates
 
 Feature and UX changes should include matching documentation updates in `peek/src/docs/` for user-facing behavior changes.

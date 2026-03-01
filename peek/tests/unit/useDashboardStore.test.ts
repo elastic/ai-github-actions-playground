@@ -364,13 +364,21 @@ describe("useDashboardStore exportDashboard / importDashboard round-trip", () =>
     const exported = JSON.parse(useDashboardStore.getState().exportDashboard()) as {
       kind: string;
       metadata?: { name?: string };
-      spec?: { panels?: Record<string, unknown> };
+      spec?: {
+        panels?: Record<
+          string,
+          { spec?: { plugin?: { kind?: string }; queries?: Array<{ spec?: { query?: string } }> } }
+        >;
+      };
     };
     const state = useDashboardStore.getState();
+    const exportedPanel = exported.spec?.panels?.[state.dashboard.panels[0].id];
 
     expect(exported.kind).toBe("Dashboard");
     expect(exported.metadata?.name).toBe(state.dashboard.id);
     expect(Object.keys(exported.spec?.panels ?? {})).toContain(state.dashboard.panels[0].id);
+    expect(exportedPanel?.spec?.plugin?.kind).toBeDefined();
+    expect(exportedPanel?.spec?.queries?.[0]?.spec?.query).toBe(state.dashboard.panels[0].query);
   });
 
   it("exports workspaces using the Perses workspace shape", () => {
@@ -403,6 +411,67 @@ describe("useDashboardStore importDashboard", () => {
     expect(state.dashboard.title).toBe("Test Dashboard");
     expect(state.dashboard.panels).toHaveLength(1);
     expect(state.dashboard.panels[0].id).toBe("panel-1");
+  });
+
+  it("imports a canonical Perses dashboard panel spec", () => {
+    const result = useDashboardStore.getState().importDashboard(
+      JSON.stringify({
+        kind: "Dashboard",
+        metadata: { name: "dash-perses" },
+        spec: {
+          display: { name: "Perses Dashboard" },
+          panels: {
+            "panel-1": {
+              kind: "Panel",
+              spec: {
+                display: { name: "Panel One" },
+                layout: { x: 0, y: 0, w: 6, h: 4 },
+                plugin: { kind: "TimeSeriesChart", spec: { smooth: true } },
+                queries: [{ kind: "EsqlQuery", spec: { query: "FROM logs-* | LIMIT 5" } }],
+              },
+            },
+          },
+          timeRange: { from: "now-15m", to: "now" },
+        },
+      }),
+    );
+
+    expect(result).toEqual({ success: true });
+    const panel = useDashboardStore.getState().dashboard.panels[0];
+    expect(panel.query).toBe("FROM logs-* | LIMIT 5");
+    expect(panel.visualization).toBe("timeseries");
+    expect(panel.options).toEqual({ smooth: true });
+  });
+
+  it("imports a legacy Perses dashboard panel spec", () => {
+    const result = useDashboardStore.getState().importDashboard(
+      JSON.stringify({
+        kind: "Dashboard",
+        metadata: { name: "dash-legacy-perses" },
+        spec: {
+          display: { name: "Legacy Perses Dashboard" },
+          panels: {
+            "panel-1": {
+              kind: "Panel",
+              spec: {
+                display: { name: "Panel One" },
+                query: "FROM logs-* | LIMIT 3",
+                visualization: "bar",
+                layout: { x: 0, y: 0, w: 6, h: 4 },
+                options: { stacked: true },
+              },
+            },
+          },
+          timeRange: { from: "now-15m", to: "now" },
+        },
+      }),
+    );
+
+    expect(result).toEqual({ success: true });
+    const panel = useDashboardStore.getState().dashboard.panels[0];
+    expect(panel.query).toBe("FROM logs-* | LIMIT 3");
+    expect(panel.visualization).toBe("bar");
+    expect(panel.options).toEqual({ stacked: true });
   });
 
   it("imports a valid dashboard with a valid timezone", () => {

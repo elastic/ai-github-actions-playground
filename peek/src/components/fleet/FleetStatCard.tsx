@@ -24,7 +24,7 @@ export default function FleetStatCard({
   const theme = useTheme();
   const content = (
     <>
-      <Typography variant="caption" color="text.primary" noWrap>
+      <Typography variant="caption" color="text.secondary" noWrap>
         {title}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
