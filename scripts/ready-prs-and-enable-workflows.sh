@@ -110,8 +110,8 @@ else
     echo "  PR #$pr_number: $pr_title"
 
     ACTION_REQUIRED_RUNS=$(gh run list "${REPO_ARGS[@]}" --limit 200 \
-      --json databaseId,status,workflowName,event,headSha \
-      --jq '.[] | select(.event == "pull_request" and .status == "action_required" and .headSha == "'"$pr_sha"'") | "\(.databaseId)\t\(.workflowName)"')
+      --json databaseId,status,conclusion,workflowName,event,headSha \
+      --jq '.[] | select(.event == "pull_request" and (.status == "action_required" or .conclusion == "action_required") and .headSha == "'"$pr_sha"'") | "\(.databaseId)\t\(.workflowName)"')
 
     if [[ -z "$ACTION_REQUIRED_RUNS" ]]; then
       echo "    No runs awaiting approval."
@@ -123,6 +123,9 @@ else
       printf "    %-45s" "$workflow_name"
       if output=$(gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/approve" 2>&1); then
         echo "✓ approved"
+        APPROVED_RUNS=$((APPROVED_RUNS + 1))
+      elif output=$(gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/rerun" 2>&1); then
+        echo "✓ re-run"
         APPROVED_RUNS=$((APPROVED_RUNS + 1))
       else
         echo "✗ failed"
