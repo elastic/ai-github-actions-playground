@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 
 interface FleetStatCardProps {
   title: string;
@@ -20,6 +21,7 @@ export default function FleetStatCard({
   onClick,
   selected,
 }: FleetStatCardProps) {
+  const theme = useTheme();
   const content = (
     <>
       <Typography variant="caption" color="text.secondary" noWrap>
@@ -59,6 +61,9 @@ export default function FleetStatCard({
             width: "100%",
             textAlign: "left",
             "&:hover": { bgcolor: "action.hover" },
+            "&.Mui-focusVisible": {
+              boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+            },
           }}
         >
           {content}

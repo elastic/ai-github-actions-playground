@@ -280,6 +280,10 @@ export default function DimensionOverviewGrid({
                     borderColor: theme.palette.primary.main,
                     boxShadow: 1,
                   },
+                  "&.Mui-focusVisible": {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+                  },
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "stretch",
