@@ -13,6 +13,14 @@ The page links to official quickstart guides and provides starter commands whose
 
 If your credentials have API key privileges, you can generate a collector key directly in-app. Otherwise, use the Elasticsearch Create API key API or ask an administrator to provision one.
 
+## Verify ingestion
+
+After starting the collector, click **Verify ingestion** to check whether telemetry data streams have appeared in Elasticsearch:
+
+- **found** — telemetry data was detected. The alert lists the signal types found (e.g. logs, metrics, traces) and provides navigation buttons to jump directly to the corresponding page for each signal.
+- **not_found** — no telemetry data streams were found yet. Make sure the collector is running and try again in a few moments. A link to the OpenTelemetry troubleshooting docs is provided.
+- **error** — the verification request failed. Check your connection and permissions, then retry.
+
 Official references:
 
 - https://www.elastic.co/docs/solutions/observability/get-started

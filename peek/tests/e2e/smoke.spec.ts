@@ -66,6 +66,16 @@ async function mockElasticsearch(page: Page) {
         };
       }
 
+      if (query.includes("FROM logs-*")) {
+        return {
+          columns: [
+            { name: "@timestamp", type: "date" },
+            { name: "message", type: "keyword" },
+          ],
+          values: [["2026-02-23T10:00:00.000Z", "Hello World"]],
+        };
+      }
+
       if (query.includes("FROM traces-*")) {
         return {
           columns: [
@@ -183,5 +193,46 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await page.getByRole("button", { name: /Reset/i }).click();
     await expect(page.getByRole("heading", { name: "Elastic Peek" })).toBeVisible();
+  });
+
+  test("query lab preserves query text and results after navigating to Console and back", async ({
+    page,
+  }) => {
+    await connectToMockCluster(page);
+    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryInput = queryEditor.getByRole("textbox");
+    const queryText = "FROM logs-* | SORT @timestamp | LIMIT 1";
+
+    // Open Query Lab
+    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await expect(page).toHaveURL(/\/discover$/);
+
+    await queryInput.click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.type(queryText);
+    await expect(queryInput).toContainText(queryText);
+
+    // Run query — the mock returns @timestamp + message columns
+    await page.getByRole("button", { name: "Run" }).click();
+    await expect(page.getByText("Run a query to see results")).toBeHidden();
+    // Verify results rendered (default mock: columns @timestamp, message, 1 row)
+    await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();
+
+    // Navigate away to Console
+    await page.getByRole("button", { name: "Console", exact: true }).click();
+    await expect(page).toHaveURL(/\/console$/);
+
+    // Navigate back to Query Lab
+    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await expect(page).toHaveURL(/\/discover$/);
+
+    // Verify query text and results are still present
+    await expect(queryInput).toContainText(queryText);
+    await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();
+    await expect(page.getByText("Run a query to see results")).toBeHidden();
   });
 });

@@ -13,6 +13,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import {
@@ -81,6 +82,22 @@ function formatPercent(value: number | null): string {
   return `${value.toFixed(0)}%`;
 }
 
+const NODE_STAT_UNAVAILABLE_HINT =
+  "Node stats unavailable — requires the monitor cluster privilege";
+
+function renderNodeStat(formatted: string) {
+  if (formatted === "Unavailable") {
+    return (
+      <Tooltip title={NODE_STAT_UNAVAILABLE_HINT} arrow>
+        <Typography variant="body2" component="span" color="text.secondary">
+          Unavailable
+        </Typography>
+      </Tooltip>
+    );
+  }
+  return formatted;
+}
+
 function renderCount(value: number | null) {
   if (value === null) {
     return (
@@ -133,6 +150,7 @@ export default function ClusterOverviewPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
+  const [partialDismissed, setPartialDismissed] = useState(false);
   const [data, setData] = useState<OverviewData>({
     clusterInfo: null,
     clusterHealth: null,
@@ -151,6 +169,7 @@ export default function ClusterOverviewPage() {
     setLoading(true);
     setError(null);
     setPartialErrors([]);
+    setPartialDismissed(false);
     try {
       const { data: results, error } = await runConnectionRequest({
         connection,
@@ -287,8 +306,8 @@ export default function ClusterOverviewPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
-      {!error && partialErrors.length > 0 && (
-        <Alert severity="warning">
+      {!error && partialErrors.length > 0 && !partialDismissed && (
+        <Alert severity="warning" onClose={() => setPartialDismissed(true)}>
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       )}
@@ -304,7 +323,9 @@ export default function ClusterOverviewPage() {
               <InfoCard title="Cluster">
                 {clusterInfo ? (
                   <Stack spacing={1}>
-                    <Typography variant="h5">{clusterInfo.cluster_name}</Typography>
+                    <Typography variant="h5" component="div">
+                      {clusterInfo.cluster_name}
+                    </Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                       <Chip size="small" label={`UUID: ${clusterInfo.cluster_uuid}`} />
                       <Chip size="small" label={`Node: ${clusterInfo.name ?? "unknown"}`} />
@@ -337,7 +358,9 @@ export default function ClusterOverviewPage() {
               <InfoCard title="Version">
                 {clusterInfo?.version ? (
                   <Stack spacing={1}>
-                    <Typography variant="h5">{clusterInfo.version.number}</Typography>
+                    <Typography variant="h5" component="div">
+                      {clusterInfo.version.number}
+                    </Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                       <Chip
                         size="small"
@@ -470,11 +493,21 @@ export default function ClusterOverviewPage() {
                       <TableRow key={row.id}>
                         <TableCell>{row.name}</TableCell>
                         <TableCell>{row.roles.length > 0 ? row.roles.join(", ") : "—"}</TableCell>
-                        <TableCell align="right">{formatPercent(row.cpuPercent)}</TableCell>
-                        <TableCell align="right">{formatPercent(row.heapPercent)}</TableCell>
-                        <TableCell align="right">{formatPercent(row.diskUsedPercent)}</TableCell>
-                        <TableCell align="right">{formatCompactNumber(row.shardCount)}</TableCell>
-                        <TableCell align="right">{formatCompactNumber(row.docCount)}</TableCell>
+                        <TableCell align="right">
+                          {renderNodeStat(formatPercent(row.cpuPercent))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {renderNodeStat(formatPercent(row.heapPercent))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {renderNodeStat(formatPercent(row.diskUsedPercent))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {renderNodeStat(formatCompactNumber(row.shardCount))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {renderNodeStat(formatCompactNumber(row.docCount))}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

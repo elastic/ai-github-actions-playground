@@ -1,5 +1,5 @@
 import type { ElasticsearchClient, EsqlColumn } from "./client";
-import { escapeEsqlIdentifier } from "./esqlUtils";
+import { escapeEsqlIdentifier, validateEsqlIndexPattern } from "./esqlUtils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,10 +36,19 @@ const GAUGE_TYPES = new Set([
   "aggregate_metric_double",
 ]);
 
+const MAX_FIELD_VALUES_LIMIT = 1000;
+
 export function classifyMetricType(esqlType: string): MetricTypeClassification {
   if (COUNTER_TYPES.has(esqlType)) return "counter";
   if (GAUGE_TYPES.has(esqlType)) return "gauge";
   return "unknown";
+}
+
+function validateFieldValuesLimit(limit: number): number {
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new Error(`Invalid limit: ${limit}`);
+  }
+  return Math.min(limit, MAX_FIELD_VALUES_LIMIT);
 }
 
 // ---------------------------------------------------------------------------
@@ -55,13 +64,14 @@ export async function listFields(
   indexPattern: string,
   signal?: AbortSignal,
 ): Promise<FieldInfo[]> {
+  const safeIndexPattern = validateEsqlIndexPattern(indexPattern);
   // Try LIMIT 0 first — returns column metadata without data
-  const response = await client.query({ query: `FROM ${indexPattern} | LIMIT 0` }, signal);
+  const response = await client.query({ query: `FROM ${safeIndexPattern} | LIMIT 0` }, signal);
   let columns: EsqlColumn[] = response.columns;
 
   // Fall back to LIMIT 1 if LIMIT 0 returned no columns
   if (columns.length === 0) {
-    const fallback = await client.query({ query: `FROM ${indexPattern} | LIMIT 1` }, signal);
+    const fallback = await client.query({ query: `FROM ${safeIndexPattern} | LIMIT 1` }, signal);
     columns = fallback.columns;
   }
 
@@ -83,10 +93,12 @@ export async function getFieldValues(
   limit: number = 20,
   signal?: AbortSignal,
 ): Promise<FieldValueEntry[]> {
+  const safeIndexPattern = validateEsqlIndexPattern(indexPattern);
+  const safeLimit = validateFieldValuesLimit(limit);
   const escapedField = escapeEsqlIdentifier(field);
   const query =
-    `FROM ${indexPattern} | STATS count = COUNT(*) BY ${escapedField} | ` +
-    `SORT count DESC | LIMIT ${limit}`;
+    `FROM ${safeIndexPattern} | STATS count = COUNT(*) BY ${escapedField} | ` +
+    `SORT count DESC | LIMIT ${safeLimit}`;
   const response = await client.query({ query }, signal);
 
   // Expect two columns: count and the field
@@ -113,12 +125,13 @@ export async function getFieldCardinality(
   fields: string[],
   signal?: AbortSignal,
 ): Promise<Record<string, number>> {
+  const safeIndexPattern = validateEsqlIndexPattern(indexPattern);
   if (fields.length === 0) return {};
 
   const statsExprs = fields
     .map((f) => `${escapeEsqlIdentifier(`${f}_card`)} = COUNT_DISTINCT(${escapeEsqlIdentifier(f)})`)
     .join(", ");
-  const query = `FROM ${indexPattern} | STATS ${statsExprs}`;
+  const query = `FROM ${safeIndexPattern} | STATS ${statsExprs}`;
   const response = await client.query({ query }, signal);
 
   const result: Record<string, number> = {};

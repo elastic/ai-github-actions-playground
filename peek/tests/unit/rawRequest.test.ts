@@ -59,6 +59,17 @@ describe("executeRawRequest", () => {
     expect(url).toBe(`${BASE_URL}/_search`);
   });
 
+  it("trims surrounding whitespace from path", async () => {
+    const doFetch: DoFetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ ok: true }, { status: 200 }));
+
+    await executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "  /_cat/indices?v  ");
+
+    const [url] = (doFetch as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/_cat/indices?v`);
+  });
+
   it("normalizes baseUrl with trailing slashes", async () => {
     const doFetch: DoFetch = vi
       .fn()

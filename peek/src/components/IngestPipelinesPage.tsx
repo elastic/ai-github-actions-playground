@@ -21,7 +21,30 @@ import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services
 import { useConnectionStore } from "../store/useConnectionStore";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
+import EmptyState from "./EmptyState";
+
 type PipelineEntry = { name: string; pipeline: IngestPipeline };
+
+/**
+ * Attempt to extract a human-readable message from a raw Elasticsearch error
+ * string. Returns `null` when the error doesn't match a known pattern.
+ */
+function humanizeEsError(raw: string): string | null {
+  if (/unauthorized.*read_pipeline|manage_ingest_pipelines|manage_pipeline/i.test(raw)) {
+    return "Permission denied — your user role does not include the read_pipeline privilege required to view ingest pipelines.";
+  }
+  if (/unauthorized/i.test(raw)) {
+    const match = raw.match(/this action is granted by the cluster privileges \[([^\]]+)\]/);
+    const privileges = match?.[1];
+    return privileges
+      ? `Permission denied — this action requires one of: ${privileges}`
+      : "Permission denied — insufficient cluster privileges.";
+  }
+  if (/security_exception/i.test(raw)) {
+    return "Permission denied — a security exception occurred.";
+  }
+  return null;
+}
 
 /**
  * Parse the simulate input field into an array of Elasticsearch docs.
@@ -71,6 +94,7 @@ export default function IngestPipelinesPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showRawError, setShowRawError] = useState(false);
   const [pipelines, setPipelines] = useState<PipelineEntry[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
 
@@ -91,6 +115,7 @@ export default function IngestPipelinesPage() {
     if (!connection) return;
     setLoading(true);
     setError(null);
+    setShowRawError(false);
     try {
       const { data, error } = await runConnectionRequest({
         connection,
@@ -206,7 +231,32 @@ export default function IngestPipelinesPage() {
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && (
+        <Alert severity="error">
+          {humanizeEsError(error) ?? error}
+          {humanizeEsError(error) && (
+            <Collapse in={showRawError}>
+              <Typography
+                component="pre"
+                variant="caption"
+                sx={{ mt: 1, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+              >
+                {error}
+              </Typography>
+            </Collapse>
+          )}
+          {humanizeEsError(error) && (
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => setShowRawError((v) => !v)}
+              sx={{ mt: 0.5, p: 0, minWidth: 0, textTransform: "none" }}
+            >
+              {showRawError ? "Hide technical details" : "Technical details"}
+            </Button>
+          )}
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", gap: 1, minHeight: 0, flex: 1 }}>
         {/* Left panel: pipeline list */}
@@ -241,9 +291,10 @@ export default function IngestPipelinesPage() {
               </ListItem>
             ))}
             {!loading && filteredPipelines.length === 0 && (
-              <Typography variant="body2" color="text.primary" sx={{ p: 2 }}>
-                No pipelines found.
-              </Typography>
+              <EmptyState
+                heading="No pipelines found"
+                description="Try adjusting your search or check that ingest pipelines exist in the cluster"
+              />
             )}
           </List>
         </Paper>

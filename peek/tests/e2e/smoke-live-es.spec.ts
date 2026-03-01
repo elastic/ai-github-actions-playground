@@ -25,6 +25,7 @@ import type { Page } from "@playwright/test";
 import {
   collectConsoleLogs,
   dumpDOM,
+  captureAriaSnapshot,
   checkForMuiErrors,
   logDiagnostics,
 } from "./fixtures/love-audit-helpers";
@@ -55,6 +56,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Cluster Overview", "live-es");
+    await captureAriaSnapshot(page, "Cluster Overview", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Cluster Overview", consoleLogs, muiErrors, -1);
   });
@@ -71,6 +73,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Indices", "live-es");
+    await captureAriaSnapshot(page, "Indices", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Indices", consoleLogs, muiErrors, -1);
   });
@@ -87,6 +90,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Query Lab", "live-es");
+    await captureAriaSnapshot(page, "Query Lab", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Query Lab", consoleLogs, muiErrors, -1);
   });
@@ -108,6 +112,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Metrics", "live-es");
+    await captureAriaSnapshot(page, "Metrics", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Metrics", consoleLogs, muiErrors, -1);
   });
@@ -124,6 +129,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Traces", "live-es");
+    await captureAriaSnapshot(page, "Traces", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Traces", consoleLogs, muiErrors, -1);
   });
@@ -140,6 +146,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Data Streams", "live-es");
+    await captureAriaSnapshot(page, "Data Streams", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Data Streams", consoleLogs, muiErrors, -1);
   });
@@ -155,6 +162,7 @@ test.describe("smoke – live Elasticsearch", () => {
       fullPage: true,
     });
     await dumpDOM(page, "Ingest Pipelines", "live-es");
+    await captureAriaSnapshot(page, "Ingest Pipelines", "live-es");
     const muiErrors = await checkForMuiErrors(page);
     logDiagnostics("Ingest Pipelines", consoleLogs, muiErrors, -1);
   });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 
 import UsersPage from "../../src/components/UsersPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -236,6 +236,28 @@ describe("UsersPage", () => {
     expect(getSecurityUsersMock).toHaveBeenCalledTimes(2);
   });
 
+  it("preserves manual selection when refreshing without ?username=", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    await user.click(screen.getByRole("button", { name: /elastic/i }));
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+
+    await user.click(screen.getByRole("button", { name: /refresh/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 6, name: "elastic" })).toBeInTheDocument();
+    });
+  });
+
   it("navigates to /roles?role=<name> when a role chip is clicked", async () => {
     const user = userEvent.setup();
     getCapabilitiesMock.mockResolvedValue(CAPS_OK);
@@ -265,5 +287,62 @@ describe("UsersPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("location-display").textContent).toBe("/roles?role=superuser");
     });
+  });
+
+  it("pre-selects a user from the ?username= URL search param", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=elastic"]}>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    // elastic should be pre-selected rather than alice (first alphabetically)
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+    expect(screen.getByText("Enabled")).toBeInTheDocument();
+    expect(screen.getByText("superuser")).toBeInTheDocument();
+  });
+
+  it("updates selected user when ?username= query param changes on same route", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=elastic"]}>
+        <Routes>
+          <Route
+            path="/users"
+            element={
+              <>
+                <Link to="/users?username=alice">Switch to alice</Link>
+                <UsersPage />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "elastic" });
+    await user.click(screen.getByRole("link", { name: "Switch to alice" }));
+
+    expect(await screen.findByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
+  });
+
+  it("falls back to the first user when ?username= points to an unknown user", async () => {
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
+
+    render(
+      <MemoryRouter initialEntries={["/users?username=does-not-exist"]}>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "alice" });
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
   });
 });
