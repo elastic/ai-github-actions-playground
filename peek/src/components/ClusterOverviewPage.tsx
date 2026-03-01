@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -157,6 +157,7 @@ export default function ClusterOverviewPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const loadInFlightRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [partialErrors, setPartialErrors] = useState<string[]>([]);
   const [partialDismissed, setPartialDismissed] = useState(false);
@@ -174,7 +175,8 @@ export default function ClusterOverviewPage() {
   });
 
   const loadOverview = useCallback(async () => {
-    if (!connection) return;
+    if (!connection || loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
     setLoading(true);
     setError(null);
     setPartialErrors([]);
@@ -261,6 +263,7 @@ export default function ClusterOverviewPage() {
       }
     } finally {
       setLoading(false);
+      loadInFlightRef.current = false;
     }
   }, [connection]);
 
@@ -311,7 +314,6 @@ export default function ClusterOverviewPage() {
               size="small"
               variant="outlined"
               onClick={loadOverview}
-              disabled={loading}
               startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
               aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
             >

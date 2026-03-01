@@ -538,7 +538,6 @@ export default function IndicesPage() {
                 size="small"
                 variant="outlined"
                 onClick={indicesResult.refresh}
-                disabled={loadingIndices}
                 startIcon={
                   loadingIndices ? <CircularProgress size={14} aria-hidden="true" /> : undefined
                 }
