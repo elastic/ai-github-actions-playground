@@ -57,6 +57,7 @@
     "@opentelemetry/instrumentation-fetch": "^0.55.0",
     "@opentelemetry/instrumentation-user-interaction": "^0.55.0",
     "@opentelemetry/resources": "^2.2.0",
+    "@opentelemetry/sdk-trace-base": "^2.5.1",
     "@opentelemetry/sdk-trace-web": "^2.2.0",
     "@opentelemetry/semantic-conventions": "^1.37.0",
     "@perses-dev/components": "^0.52.0",
