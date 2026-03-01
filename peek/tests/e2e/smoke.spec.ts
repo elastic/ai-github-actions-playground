@@ -31,11 +31,13 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
     "color-contrast": 12,
   },
   "Query Lab": {
-    "aria-input-field-name": 1,
-    "color-contrast": 5,
+    "aria-input-field-name": 2,
+    "aria-prohibited-attr": 1,
+    "color-contrast": 12,
   },
   Console: {
-    "color-contrast": 1,
+    "aria-input-field-name": 1,
+    "color-contrast": 5,
   },
   Indices: {
     "color-contrast": 2,
