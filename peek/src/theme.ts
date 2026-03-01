@@ -44,10 +44,10 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: ({ theme }) => ({
           backgroundImage: "none",
-          borderColor: theme.palette.border?.subtle,
+          borderColor: theme.palette.border.subtle,
         }),
         outlined: ({ theme }) => ({
-          borderColor: theme.palette.border?.subtle,
+          borderColor: theme.palette.border.subtle,
         }),
       },
     },
@@ -55,7 +55,7 @@ const baseOptions: ThemeOptions = {
       defaultProps: { elevation: 0 },
       styleOverrides: {
         root: ({ theme }) => ({
-          borderBottom: `1px solid ${theme.palette.border?.subtle}`,
+          borderBottom: `1px solid ${theme.palette.border.subtle}`,
         }),
       },
     },
