@@ -310,20 +310,23 @@ ES_URL=http://localhost:9200 make test-e2e   # run e2e tests with proxy
 make otel-down                               # stop when done
 ```
 
-### Scheduled Playwright Smoke Agents
+### Exploratory Testing Agents
 
-The smoke agent plan runs five scheduled checks, each mapped to one Playwright smoke scenario:
+Six scheduled agents creatively explore the app with Playwright. Each owns a
+domain of the application and invents novel interaction scenarios every run.
+They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 
-| Scenario | Playwright test (`peek/tests/e2e/smoke.spec.ts`) | Workflow spec |
+| Agent | Domain | Workflow |
 | --- | --- | --- |
-| Welcome onboarding entry flow | `onboarding user reaches the connect entrypoint from the welcome screen` | `.github/workflows/smoke-welcome-flow.yml` |
-| Metrics user path to chart-ready state | `metrics user connects, picks a metric, and gets a line chart-ready result` | `.github/workflows/smoke-metrics-flow.yml` |
-| Credential mode switching guardrail | `security-focused user validates auth tab switching before submitting credentials` | `.github/workflows/smoke-auth-tab-switch.yml` |
-| Traces investigation to Query Lab pivot | `traces user opens a trace and pivots from service map context into Query Lab` | `.github/workflows/smoke-traces-flow.yml` |
-| Connection guardrail + reset recovery | `ops user confirms connection guardrails and can reset back to the landing state` | `.github/workflows/smoke-reset-visibility.yml` |
+| Connection & Onboarding | Connection dialog, auth tabs, disconnect/reconnect | `smoke-welcome-flow.yml` |
+| Metrics & Charts | Metric search, chart rendering, time ranges | `smoke-metrics-flow.yml` |
+| Traces & Service Map | Span trees, service map, trace-to-query pivot | `smoke-traces-flow.yml` |
+| Query Lab & Console | ES\|QL queries, result tables, API Console | `smoke-auth-tab-switch.yml` |
+| Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `smoke-reset-visibility.yml` |
+| Live Elasticsearch | All pages with real OTel data and a real cluster | `smoke-live-es.yml` |
 
-Each scheduled workflow asks the audit agent to run only its assigned smoke test with Playwright and open an issue when it fails, including failing test output plus screenshot/preflight diagnostics where available.
-Workflow files are placed in `.github/workflows/`.
+Each agent writes and runs its own Playwright scripts to navigate, click, type,
+and inspect. They report only genuine bugs found through hands-on exploration.
 
 ### Testing Philosophy
 

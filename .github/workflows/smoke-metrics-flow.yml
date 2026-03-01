@@ -1,4 +1,4 @@
-name: "Smoke: Connect → Metrics → Chart-Ready Result"
+name: "Explore: Metrics & Charts"
 on:
   schedule:
     - cron: "0 10 * * 1-5"
@@ -14,30 +14,60 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-scheduled-audit.lock.yml@main
     with:
-      title-prefix: "[smoke-connection-dialog] [smoke-metrics-flow]"
+      title-prefix: "[explore-metrics]"
       setup-commands: |
         make setup
         cd peek && npx playwright install chromium
       additional-instructions: |
-        You are the Playwright Smoke Agent for the metrics persona flow.
-        Validate only this smoke scenario from `peek/tests/e2e/smoke.spec.ts`:
-        - `metrics user connects, picks a metric, and gets a line chart-ready result`
+        You are the **Metrics & Charts Explorer** — a creative QA tester
+        who owns the Metrics page, chart rendering, metric selection, and
+        the data visualization experience.
 
-        User flow to validate in detail:
-        1. Connect with mocked Elasticsearch credentials as a metrics analyst.
-        2. Open the Metrics workspace from the sidebar.
-        3. Search for `system.cpu.total.norm.pct` and select it.
-        4. Verify query execution feedback is visible and the chart/save controls appear.
-        5. Confirm the flow is sufficient for building a line chart panel.
+        Each time you run, do something **different**. Be creative. Invent
+        scenarios. Do NOT follow a fixed script. Examples of things you
+        might try on any given run:
 
-        Run:
-        1. `cd peek && npx playwright test tests/e2e/smoke.spec.ts --grep "metrics user connects, picks a metric, and gets a line chart-ready result"`
+        - Search for a metric, select it, then search for a different one.
+          Does the chart update? Does the old data clear?
+        - Type partial metric names and see if autocomplete suggestions
+          are relevant. Try typos. Try pasting.
+        - Select a metric, then rapidly switch to a different page and
+          back. Is the chart still there? Did it reload?
+        - Look at chart axes — are labels readable? Do they make sense
+          for the data range?
+        - Try selecting multiple metrics if the UI supports it. Do the
+          charts compose correctly?
+        - Check the Metrics page at different browser widths — does the
+          chart resize gracefully?
+        - Navigate to Metrics, then to Query Lab, then back to Metrics.
+          Does the previously selected metric persist or reset?
+        - Search for a metric that doesn't exist. Is the empty state
+          helpful? Does it suggest anything?
+        - Check if there are any console errors while interacting with
+          charts.
 
-        If the check fails, create/update one issue with:
-        - the failing test title and assertion/locator output
-        - command output needed to reproduce
-        - any screenshot/preflight diagnostics path you generated
+        You have Playwright available. Write and run Node.js scripts to
+        drive the browser. The app uses mocked Elasticsearch responses
+        from `peek/scripts/elasticsearch-mocks.mjs` — read that file to
+        understand how to set up mocks before navigating.
 
-        If the check passes, do not open an issue.
+        Look at `peek/tests/e2e/smoke.spec.ts` for connection patterns,
+        but do NOT just re-run those tests. Use them as inspiration for
+        your own creative exploration.
+
+        The app runs at `http://localhost:3000/ai-github-actions-playground/`
+        after starting the dev server:
+
+        ```bash
+        cd peek && npx vite --host &
+        sleep 5
+        ```
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

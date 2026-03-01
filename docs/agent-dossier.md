@@ -458,19 +458,20 @@ Files issues with specific library references, documentation links, and simplifi
 
 ---
 
-## 9. Smoke Test Agents
+## 9. Exploratory Testing Agents
 
-Five Playwright-based smoke test agents run on weekdays, each validating a critical user flow. On failure they create issues with test output and screenshots. On pass they stay silent.
+Six Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents only file issues for genuine bugs found through hands-on exploration.
 
-| Agent | File | Schedule | Flow Tested |
-|-------|------|----------|-------------|
-| **Welcome Flow** | `smoke-welcome-flow.yml` | 09:00 UTC | Landing page -> "Connect to Elasticsearch" CTA visible |
-| **Metrics Flow** | `smoke-metrics-flow.yml` | 10:00 UTC | Connect -> pick metric -> get chart-ready result |
-| **Traces Flow** | `smoke-traces-flow.yml` | 11:00 UTC | Connect -> Traces -> span details -> Service Map -> "Open in Query Lab" |
-| **Auth Tab Switch** | `smoke-auth-tab-switch.yml` | 12:00 UTC | Connection dialog -> switch API Key / Username auth tabs -> fields restore |
-| **Reset Visibility** | `smoke-reset-visibility.yml` | 13:00 UTC | Connect -> guardrails validation -> Reset -> return to landing |
+| Agent | File | Schedule | Domain |
+|-------|------|----------|--------|
+| **Connection & Onboarding** | `smoke-welcome-flow.yml` | 09:00 UTC | Connection dialog, auth tabs, disconnect/reconnect, keyboard nav |
+| **Metrics & Charts** | `smoke-metrics-flow.yml` | 10:00 UTC | Metric search, chart rendering, time ranges, state persistence |
+| **Traces & Service Map** | `smoke-traces-flow.yml` | 11:00 UTC | Span trees, service map, trace-to-query pivot, navigation |
+| **Query Lab & Console** | `smoke-auth-tab-switch.yml` | 12:00 UTC | ES\|QL queries, result tables, API Console, error handling |
+| **Indices, Data Streams & Pipelines** | `smoke-reset-visibility.yml` | 13:00 UTC | Table sorting, detail views, data management |
+| **Live Elasticsearch** | `smoke-live-es.yml` | 14:00 UTC | All pages with real OTel data and a real cluster |
 
-All smoke tests use `gh-aw-scheduled-audit.lock.yml` with custom Playwright test instructions.
+All exploratory agents use `gh-aw-scheduled-audit.lock.yml` with creative Playwright exploration instructions.
 
 ### Give It Some Love
 
@@ -644,13 +645,13 @@ All agents are coached to:
 
 | Time (UTC) | Weekdays | Daily | Weekly (Mon) | Weekly (Wed) |
 |------------|----------|-------|--------------|--------------|
-| 09:00 | Welcome Smoke | Iterative Ideas, Project Summary | | |
-| 10:00 | Text Auditor, Metrics Smoke | Medium Ideas | | |
+| 09:00 | Explore: Connection | Iterative Ideas, Project Summary | | |
+| 10:00 | Text Auditor, Explore: Metrics | Medium Ideas | | |
 | 10:00 | Product Manager | | | |
-| 11:00 | Bug Hunter, Traces Smoke | Security Ideas | Newbie Contributor, Release Update | |
-| 12:00 | Auth Tab Smoke, Code Duplication | Observability Ideas | Agent Suggestions | |
-| 13:00 | Breaking Changes, Framework Practices, Reset Smoke, UX Patrol | Vector Search Ideas | | |
-| 14:00 | Flaky Tests, Performance Profiler | | Refactor Opportunist | |
+| 11:00 | Bug Hunter, Explore: Traces | Security Ideas | Newbie Contributor, Release Update | |
+| 12:00 | Explore: Query Lab, Code Duplication | Observability Ideas | Agent Suggestions | |
+| 13:00 | Breaking Changes, Framework Practices, Explore: Data Mgmt, UX Patrol | Vector Search Ideas | | |
+| 14:00 | Explore: Live ES, Flaky Tests, Performance Profiler | | Refactor Opportunist | |
 | 15:00 | Stale Issues | | | Give It Some Love |
 | 16:00 | Autonomy Atomicity | | | |
 | 17:00 | Information Architecture | | | |
