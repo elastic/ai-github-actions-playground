@@ -541,6 +541,12 @@ export default function ApiConsolePage() {
           removable={entries.length > 1}
         />
       ))}
+
+      {entries.length === 1 && entries[0] && !entries[0].response && (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mt: 2 }}>
+          Try <code>GET _cluster/health</code> or <code>GET _cat/indices?v</code> to get started.
+        </Typography>
+      )}
     </Box>
   );
 }

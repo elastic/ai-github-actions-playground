@@ -50,10 +50,25 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("button", { name: /docs/i })).toBeInTheDocument();
   });
 
-  it("renders Chat nav item regardless of connection state", () => {
+  it("renders AI assistant toggle button", () => {
     renderSidebar();
 
-    expect(screen.getByRole("button", { name: /chat/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /toggle ai assistant panel/i })).toBeInTheDocument();
+  });
+
+  it("toggles AI panel open state when AI button is clicked", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(false);
+
+    await user.click(screen.getByRole("button", { name: /toggle ai assistant panel/i }));
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: /toggle ai assistant panel/i }));
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(false);
   });
 
   it("disables connection-required items when disconnected", () => {

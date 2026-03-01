@@ -16,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
 import type { SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -262,16 +263,17 @@ export default function IngestPipelinesPage() {
           </Box>
           <Divider />
           <List dense sx={{ overflow: "auto", minHeight: 0, flex: 1 }}>
-            {filteredPipelines.map((entry) => (
-              <ListItem key={entry.name} disablePadding>
+            {filteredPipelines.map((p) => (
+              <ListItem key={p.name} disablePadding>
                 <ListItemButton
-                  selected={entry.name === selectedName}
-                  onClick={() => setSelectedName(entry.name)}
+                  selected={p.name === selectedName}
+                  onClick={() => setSelectedName(p.name)}
+                  data-testid={`pipeline-item-${p.name}`}
                 >
                   <ListItemText
-                    primary={entry.name}
-                    secondary={`${entry.pipeline.processors?.length ?? 0} processor${
-                      (entry.pipeline.processors?.length ?? 0) === 1 ? "" : "s"
+                    primary={p.name}
+                    secondary={`${p.pipeline.processors?.length ?? 0} processor${
+                      (p.pipeline.processors?.length ?? 0) === 1 ? "" : "s"
                     }`}
                   />
                 </ListItemButton>
@@ -540,11 +542,11 @@ export default function IngestPipelinesPage() {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ p: 1.5 }}>
-              <Typography variant="body2" color="text.secondary">
-                Select a pipeline.
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<AccountTreeIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+              heading="Select a pipeline"
+              description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
+            />
           )}
         </Paper>
       </Box>

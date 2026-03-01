@@ -19,6 +19,7 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import StorageIcon from "@mui/icons-material/Storage";
 
 import { type DiskUsageIndexEntry } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -28,6 +29,8 @@ import { formatBytes } from "../utils/formatBytes";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
+
+import EmptyState from "./EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -607,6 +610,7 @@ export default function IndicesPage() {
                 <ListItemButton
                   selected={idx.index === selectedIndex}
                   onClick={() => setSelectedIndex(idx.index)}
+                  data-testid={`index-item-${idx.index}`}
                 >
                   <Chip
                     size="small"
@@ -625,9 +629,15 @@ export default function IndicesPage() {
             ))}
             {!loadingIndices && filteredIndices.length === 0 && (
               <ListItem>
-                <Typography variant="body2" color="text.primary">
-                  No indices found.
-                </Typography>
+                <EmptyState
+                  icon={<StorageIcon sx={{ fontSize: 48, color: "text.secondary", mb: 0.5 }} />}
+                  heading="No user indices found"
+                  description={
+                    showSystemIndices
+                      ? "No indices match the current search filter."
+                      : "Toggle 'Show system indices' above to include system indices."
+                  }
+                />
               </ListItem>
             )}
           </List>
