@@ -60,7 +60,7 @@
     "@opentelemetry/sdk-trace-base": "^2.5.1",
     "@opentelemetry/sdk-trace-web": "^2.2.0",
     "@opentelemetry/semantic-conventions": "^1.37.0",
-    "@perses-dev/components": "^0.52.0",
+    "@perses-dev/components": "^0.53.0",
     "@perses-dev/core": "^0.53.0",
     "@uiw/react-codemirror": "^4.23.0",
     "ai": "^6.0.97",
