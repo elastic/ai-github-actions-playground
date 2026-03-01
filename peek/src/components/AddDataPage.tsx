@@ -20,6 +20,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
 
 // ---------------------------------------------------------------------------
 // Endpoint type helpers
@@ -302,14 +303,16 @@ export default function AddDataPage() {
   const capabilities = useConnectionStore((s) => s.capabilities);
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
-  const [creatingApiKey, setCreatingApiKey] = useState(false);
-  const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const endpointTypeManuallySetRef = useRef(false);
   /** `null` = not yet probed, `true` = reachable, `false` = unreachable */
   const [ingestAvailable, setIngestAvailable] = useState<boolean | null>(null);
+
+  const apiKeyResult = useAddDataApiKey();
+  const creatingApiKey = apiKeyResult.status === "loading";
+  const apiKeyValue = apiKeyResult.status === "success" ? apiKeyResult.data : null;
+  const apiKeyError = apiKeyResult.status === "error" ? apiKeyResult.error : null;
 
   // Fetch cluster version on mount so commands use the matching EDOT version
   useEffect(() => {
@@ -354,25 +357,6 @@ export default function AddDataPage() {
   const version = clusterVersion ?? "<VERSION>";
   const apiKey = apiKeyValue ?? "<YOUR_API_KEY>";
   const activeGuide = useMemo(() => PLATFORM_GUIDES[platform], [platform]);
-
-  const handleCreateApiKey = useCallback(async () => {
-    if (!connection) return;
-    setCreatingApiKey(true);
-    setApiKeyError(null);
-    setApiKeyValue(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const response = await client.createApiKey({
-        name: `peek-edot-${Date.now()}`,
-        metadata: { managed_by: "elastic-peek", purpose: "edot-onboarding" },
-      });
-      setApiKeyValue(response.encodedApiKey);
-    } catch (err) {
-      setApiKeyError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      setCreatingApiKey(false);
-    }
-  }, [connection]);
 
   const handleCopyApiKey = useCallback(async () => {
     if (!apiKeyValue) return;
@@ -559,7 +543,7 @@ export default function AddDataPage() {
               <Button
                 size="small"
                 variant="contained"
-                onClick={() => void handleCreateApiKey()}
+                onClick={() => void apiKeyResult.createKey()}
                 disabled={creatingApiKey}
               >
                 {creatingApiKey ? <CircularProgress size={16} /> : "Generate API key"}

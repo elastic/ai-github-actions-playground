@@ -17,11 +17,10 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import type { IngestPipeline, SimulateIngestPipelineResponse } from "../services/es";
+import type { SimulateIngestPipelineResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
-
-type PipelineEntry = { name: string; pipeline: IngestPipeline };
+import { useIngestPipelines } from "../hooks/useIngestPipelines";
 
 /**
  * Parse the simulate input field into an array of Elasticsearch docs.
@@ -67,12 +66,25 @@ function parseSimulateInput(input: string): Array<Record<string, unknown>> | nul
 
 export default function IngestPipelinesPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const pipelinesResult = useIngestPipelines();
+
+  const loading = pipelinesResult.status === "loading";
+  const error = pipelinesResult.status === "error" ? pipelinesResult.error : null;
+  const pipelinesData = pipelinesResult.status === "success" ? pipelinesResult.data : null;
+  const pipelines = useMemo(() => pipelinesData ?? [], [pipelinesData]);
 
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pipelines, setPipelines] = useState<PipelineEntry[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+
+  // Auto-select the first pipeline when data loads
+  useEffect(() => {
+    if (!pipelinesData) return;
+    setSelectedName((current) =>
+      current && pipelinesData.some((p) => p.name === current)
+        ? current
+        : (pipelinesData[0]?.name ?? null),
+    );
+  }, [pipelinesData]);
 
   // Simulate state
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
@@ -86,35 +98,6 @@ export default function IngestPipelinesPage() {
     () => pipelines.find((p) => p.name === selectedName) ?? null,
     [pipelines, selectedName],
   );
-
-  const loadPipelines = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.getIngestPipelines(),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (data !== null) {
-        const next = Object.entries(data)
-          .map(([name, pipeline]) => ({ name, pipeline }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setPipelines(next);
-        setSelectedName((current) =>
-          current && next.some((p) => p.name === current) ? current : (next[0]?.name ?? null),
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadPipelines();
-  }, [loadPipelines]);
 
   // Clear simulate results when selection changes
   useEffect(() => {
@@ -200,7 +183,12 @@ export default function IngestPipelinesPage() {
           <Typography variant="h6" component="h1" sx={{ flex: 1 }}>
             Ingest Pipelines
           </Typography>
-          <Button size="small" variant="outlined" onClick={loadPipelines} disabled={loading}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={pipelinesResult.refresh}
+            disabled={loading}
+          >
             {loading ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
         </Stack>
