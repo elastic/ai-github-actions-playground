@@ -469,9 +469,9 @@ describe("retry logic", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(3);
   });
 
-  it("retries on 503 and succeeds on a later attempt", async () => {
+  it("retries on 504 and succeeds on a later attempt", async () => {
     const fetchSpy = mockFetchSequence(
-      { body: { error: { reason: "unavailable" } }, init: { status: 503 } },
+      { body: { error: { reason: "gateway timeout" } }, init: { status: 504 } },
       { body: { cluster_name: "recovered" }, init: { status: 200 } },
     );
     vi.stubGlobal("fetch", fetchSpy);
@@ -688,12 +688,20 @@ describe("rawRequest", () => {
   });
 
   it("maps fetch failures to ElasticsearchError shape", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network down")));
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network down")));
 
-    const client = makeClient();
-    await expect(client.rawRequest("GET", "/")).rejects.toEqual(
-      expect.objectContaining({ status: 0, message: "network down" }),
-    );
+      const client = makeClient();
+      const pending = expect(client.rawRequest("GET", "/")).rejects.toEqual(
+        expect.objectContaining({ status: 0, message: "network down" }),
+      );
+      // Advance past retry back-off delays so the promise settles
+      await vi.advanceTimersByTimeAsync(60_000);
+      await pending;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
