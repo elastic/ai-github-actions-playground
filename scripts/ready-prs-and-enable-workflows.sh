@@ -104,6 +104,7 @@ if [[ -z "$OPEN_PRS" ]]; then
 else
   FAILED_APPROVALS=()
   APPROVED_RUNS=0
+  RERUN_RUNS=0
 
   while IFS=$'\t' read -r pr_number pr_title pr_sha; do
     [[ -z "$pr_number" ]] && continue
@@ -126,7 +127,7 @@ else
         APPROVED_RUNS=$((APPROVED_RUNS + 1))
       elif output=$(gh api -X POST "repos/$REPO_SLUG/actions/runs/$run_id/rerun" 2>&1); then
         echo "✓ re-run"
-        APPROVED_RUNS=$((APPROVED_RUNS + 1))
+        RERUN_RUNS=$((RERUN_RUNS + 1))
       else
         echo "✗ failed"
         echo "      $output" >&2
@@ -138,10 +139,10 @@ else
   done <<< "$OPEN_PRS"
 
   if [[ ${#FAILED_APPROVALS[@]} -eq 0 ]]; then
-    if [[ $APPROVED_RUNS -eq 0 ]]; then
-      echo "No PR workflow runs required approval."
+    if [[ $APPROVED_RUNS -eq 0 && $RERUN_RUNS -eq 0 ]]; then
+      echo "No PR workflow runs required approval or re-run."
     else
-      echo "Approved $APPROVED_RUNS workflow run(s)."
+      echo "Approved $APPROVED_RUNS workflow run(s), re-ran $RERUN_RUNS run(s)."
     fi
   else
     echo "The following workflow approvals failed:" >&2
