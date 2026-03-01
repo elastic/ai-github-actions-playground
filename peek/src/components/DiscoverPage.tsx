@@ -59,15 +59,31 @@ export default function DiscoverPage() {
   const addPanel = useDashboardStore((s) => s.addPanel);
   const activeDashboardId = useDashboardStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
-  const { discoverQueryDraft, setDiscoverQueryDraft, queryHistory, appendQueryToHistory } =
-    useQueryStore(
-      useShallow((s) => ({
-        discoverQueryDraft: s.discoverQueryDraft,
-        setDiscoverQueryDraft: s.setDiscoverQueryDraft,
-        queryHistory: s.queryHistory,
-        appendQueryToHistory: s.appendQueryToHistory,
-      })),
-    );
+  const {
+    discoverQueryDraft,
+    setDiscoverQueryDraft,
+    queryHistory,
+    appendQueryToHistory,
+    query,
+    setQuery,
+    result,
+    setResult,
+    selectedFields,
+    setSelectedFields,
+  } = useQueryStore(
+    useShallow((s) => ({
+      discoverQueryDraft: s.discoverQueryDraft,
+      setDiscoverQueryDraft: s.setDiscoverQueryDraft,
+      queryHistory: s.queryHistory,
+      appendQueryToHistory: s.appendQueryToHistory,
+      query: s.discoverQuery,
+      setQuery: s.setDiscoverQuery,
+      result: s.discoverResult,
+      setResult: s.setDiscoverResult,
+      selectedFields: s.discoverSelectedFields,
+      setSelectedFields: s.setDiscoverSelectedFields,
+    })),
+  );
   const refreshInterval = useDashboardStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
   );
@@ -76,9 +92,8 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
 
-  const [query, setQuery] = useState("FROM logs-* | SORT @timestamp | LIMIT 50");
-  const [result, setResult] = useState<EsqlResponse | null>(null);
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  // query, result, and selectedFields are now sourced from useQueryStore
+  // so they survive navigation (unmount/remount).
   const [fieldFilter, setFieldFilter] = useState("");
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
@@ -186,7 +201,7 @@ export default function DiscoverPage() {
       setExpandedInsight(null);
       insightQueryToColumnRef.current.clear();
     },
-    [discoverQueryDraft, setDiscoverQueryDraft, clearTimings],
+    [discoverQueryDraft, setDiscoverQueryDraft, clearTimings, setQuery],
   );
   const handleFormatQuery = useCallback(() => {
     handleQueryChange(formatEsqlQuery(effectiveQuery));
@@ -219,7 +234,7 @@ export default function DiscoverPage() {
       setQuery(newQuery);
       void runQuery(newQuery);
     },
-    [effectiveQuery, discoverQueryDraft, setDiscoverQueryDraft, runQuery],
+    [effectiveQuery, discoverQueryDraft, setDiscoverQueryDraft, setQuery, runQuery],
   );
   const handleSelectHistory = useCallback(
     (selectedQuery: string) => {
@@ -228,7 +243,7 @@ export default function DiscoverPage() {
       setQuery(selectedQuery);
       setHistoryAnchor(null);
     },
-    [setDiscoverQueryDraft, clearTimings],
+    [setDiscoverQueryDraft, clearTimings, setQuery],
   );
   const handleRunQueryRef = useRef(handleRunQuery);
   useEffect(() => {
@@ -256,18 +271,19 @@ export default function DiscoverPage() {
     return () => clearInterval(id);
   }, [connection, refreshInterval, effectiveQuery, loading, handleRunQuery]);
 
-  const toggleField = useCallback((name: string) => {
-    setSelectedFields((prev) => {
-      const next = new Set(prev);
+  const toggleField = useCallback(
+    (name: string) => {
+      const next = new Set(selectedFields);
       if (next.has(name)) {
         next.delete(name);
       } else {
         next.add(name);
       }
-      return next;
-    });
-    setTableVersion((prev) => prev + 1);
-  }, []);
+      setSelectedFields(next);
+      setTableVersion((prev) => prev + 1);
+    },
+    [selectedFields, setSelectedFields],
+  );
 
   const handleCreatePanel = useCallback(() => {
     const newPanel = {
@@ -306,22 +322,18 @@ export default function DiscoverPage() {
   );
 
   const selectVisibleFields = useCallback(() => {
-    setSelectedFields((prev) => {
-      const next = new Set(prev);
-      for (const col of visibleColumns) next.add(col.name);
-      return next;
-    });
+    const next = new Set(selectedFields);
+    for (const col of visibleColumns) next.add(col.name);
+    setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
-  }, [visibleColumns]);
+  }, [selectedFields, setSelectedFields, visibleColumns]);
 
   const deselectVisibleFields = useCallback(() => {
-    setSelectedFields((prev) => {
-      const next = new Set(prev);
-      for (const col of visibleColumns) next.delete(col.name);
-      return next;
-    });
+    const next = new Set(selectedFields);
+    for (const col of visibleColumns) next.delete(col.name);
+    setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
-  }, [visibleColumns]);
+  }, [selectedFields, setSelectedFields, visibleColumns]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
