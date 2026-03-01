@@ -158,16 +158,55 @@ const persesDisplaySchema = z.object({
   name: z.string().min(1),
 });
 
+const persesPanelPluginSchema = z.object({
+  kind: z.string().min(1),
+  spec: z.record(z.string(), z.unknown()).optional(),
+});
+
+const persesPanelQuerySchema = z
+  .object({
+    kind: z.string().min(1).optional(),
+    spec: z.object({ query: z.string() }).passthrough().optional(),
+    query: z.string().optional(),
+  })
+  .superRefine((query, ctx) => {
+    if (!query.query && !query.spec?.query) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["query"],
+        message: "query entry must include a query string",
+      });
+    }
+  });
+
+const persesPanelSpecSchema = z
+  .object({
+    display: persesDisplaySchema,
+    layout: panelLayoutSchema,
+    plugin: persesPanelPluginSchema.optional(),
+    queries: z.array(persesPanelQuerySchema).optional(),
+    refreshInterval: z.number().optional(),
+    // Legacy hybrid support for backward-compatible imports.
+    query: z.string().optional(),
+    visualization: visualizationTypeSchema.optional(),
+    options: z.record(z.string(), z.unknown()).optional(),
+  })
+  .superRefine((spec, ctx) => {
+    const hasCanonical = !!spec.plugin && (spec.queries?.length ?? 0) > 0;
+    const hasLegacy = typeof spec.query === "string" && !!spec.visualization;
+    if (!hasCanonical && !hasLegacy) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message:
+          "panel spec must include either canonical plugin+queries or legacy query+visualization fields",
+      });
+    }
+  });
+
 const persesPanelSchema = z.object({
   kind: z.literal("Panel"),
-  spec: z.object({
-    display: persesDisplaySchema,
-    query: z.string(),
-    visualization: visualizationTypeSchema,
-    layout: panelLayoutSchema,
-    options: z.record(z.string(), z.unknown()).optional(),
-    refreshInterval: z.number().optional(),
-  }),
+  spec: persesPanelSpecSchema,
 });
 
 const persesVariableSchema = z.object({

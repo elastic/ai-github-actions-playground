@@ -1,10 +1,46 @@
 import type { z } from "zod";
 
 import type { persesDashboardSchema, persesWorkspaceSnapshotSchema } from "../../schemas";
-import type { DashboardDefinition, DashboardParameter, PanelDefinition } from "../../types";
+import type {
+  DashboardDefinition,
+  DashboardParameter,
+  PanelDefinition,
+  VisualizationType,
+} from "../../types";
 
 export type PersesDashboardDefinition = z.infer<typeof persesDashboardSchema>;
 export type PersesWorkspaceSnapshot = z.infer<typeof persesWorkspaceSnapshotSchema>;
+
+const VISUALIZATION_TO_PLUGIN_KIND: Record<VisualizationType, string> = {
+  timeseries: "TimeSeriesChart",
+  stat: "StatChart",
+  gauge: "GaugeChart",
+  bar: "BarChart",
+  table: "TablePanel",
+  pie: "PieChart",
+  scatter: "ScatterChart",
+  heatmap: "HeatMapChart",
+  histogram: "HistogramChart",
+  markdown: "MarkdownPanel",
+};
+
+const PLUGIN_KIND_TO_VISUALIZATION: Record<string, VisualizationType> = Object.fromEntries(
+  Object.entries(VISUALIZATION_TO_PLUGIN_KIND).map(([visualization, pluginKind]) => [
+    pluginKind,
+    visualization as VisualizationType,
+  ]),
+) as Record<string, VisualizationType>;
+
+function toPluginKind(visualization: VisualizationType): string {
+  return VISUALIZATION_TO_PLUGIN_KIND[visualization];
+}
+
+function toVisualizationType(kind: string | undefined): VisualizationType | undefined {
+  if (!kind) {
+    return undefined;
+  }
+  return PLUGIN_KIND_TO_VISUALIZATION[kind] ?? (kind as VisualizationType);
+}
 
 function toPersesVariableKind(
   source: DashboardParameter["source"],
@@ -55,10 +91,12 @@ export function toPersesDashboard(dashboard: DashboardDefinition): PersesDashboa
             kind: "Panel",
             spec: {
               display: { name: panel.title },
-              query: panel.query,
-              visualization: panel.visualization,
               layout: panel.layout,
-              options: panel.options as Record<string, unknown> | undefined,
+              plugin: {
+                kind: toPluginKind(panel.visualization),
+                spec: panel.options as Record<string, unknown> | undefined,
+              },
+              queries: [{ kind: "EsqlQuery", spec: { query: panel.query } }],
               refreshInterval: panel.refreshInterval,
             },
           },
@@ -82,15 +120,22 @@ export function fromPersesDashboard(dashboard: PersesDashboardDefinition): Dashb
     archived: annotations?.archived,
     favoritedAt: annotations?.favoritedAt,
     preferredProfileId: annotations?.preferredProfileId,
-    panels: Object.entries(dashboard.spec.panels).map(([id, panel]) => ({
-      id,
-      title: panel.spec.display.name,
-      query: panel.spec.query,
-      visualization: panel.spec.visualization,
-      layout: panel.spec.layout,
-      options: panel.spec.options as PanelDefinition["options"],
-      refreshInterval: panel.spec.refreshInterval,
-    })),
+    panels: Object.entries(dashboard.spec.panels).map(([id, panel]) => {
+      const firstQuery = panel.spec.queries?.[0];
+      const query = firstQuery?.spec?.query ?? firstQuery?.query ?? panel.spec.query ?? "";
+      const visualization =
+        toVisualizationType(panel.spec.plugin?.kind) ?? panel.spec.visualization ?? "timeseries";
+      const options = panel.spec.plugin?.spec ?? panel.spec.options;
+      return {
+        id,
+        title: panel.spec.display.name,
+        query,
+        visualization,
+        layout: panel.spec.layout,
+        options: options as PanelDefinition["options"],
+        refreshInterval: panel.spec.refreshInterval,
+      };
+    }),
     parameters: dashboard.spec.variables?.map((variable) => ({
       name: variable.spec.name,
       label: variable.spec.display.name,
