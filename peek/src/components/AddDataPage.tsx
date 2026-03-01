@@ -614,21 +614,19 @@ export default function AddDataPage() {
         )}
         {verifyStatus === "found" && (
           <Alert severity="success" icon={<CheckCircleOutlineIcon />}>
-            Telemetry data detected! Found {Array.from(foundSignals).sort().join(", ")} data
-            streams.
+            Telemetry data detected! Found {Array.from(foundSignals).sort().join(", ")} data{" "}
+            {foundSignals.size === 1 ? "stream" : "streams"}.
             <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-              {(["metrics", "traces", "logs"] as const)
-                .filter((s) => foundSignals.has(s))
-                .map((s) => (
-                  <Button
-                    key={s}
-                    size="small"
-                    variant="outlined"
-                    onClick={() => navigate(SIGNAL_NAV[s].path)}
-                  >
-                    Go to {SIGNAL_NAV[s].label}
-                  </Button>
-                ))}
+              {SIGNAL_PREFIXES.filter((s) => foundSignals.has(s)).map((s) => (
+                <Button
+                  key={s}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => navigate(SIGNAL_NAV[s].path)}
+                >
+                  Go to {SIGNAL_NAV[s].label}
+                </Button>
+              ))}
             </Stack>
           </Alert>
         )}

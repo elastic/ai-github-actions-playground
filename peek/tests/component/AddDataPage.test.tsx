@@ -18,7 +18,7 @@ vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getClusterInfo: vi.fn().mockResolvedValue({ version: { number: "8.17.0" } }),
     createApiKey: vi.fn().mockResolvedValue({ id: "1", name: "k", encodedApiKey: "abc123" }),
-    getDataStreams: (...args: unknown[]) => mockGetDataStreams(...args),
+    getDataStreams: mockGetDataStreams,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
