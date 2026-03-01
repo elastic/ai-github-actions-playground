@@ -25,8 +25,8 @@ import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
 
-import FieldStatsPanel from "./FieldStatsPanel";
 import EmptyState from "./EmptyState";
+import FieldStatsPanel from "./FieldStatsPanel";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -264,9 +264,10 @@ export default function DataStreamsPage() {
               </ListItem>
             ))}
             {!loadingStreams && filteredStreams.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                No data streams found.
-              </Typography>
+              <EmptyState
+                heading="No data streams found"
+                description="Try adjusting your search or check that data streams exist in the cluster"
+              />
             )}
           </List>
         </Paper>

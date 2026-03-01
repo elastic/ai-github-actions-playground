@@ -292,9 +292,10 @@ export default function IngestPipelinesPage() {
               </ListItem>
             ))}
             {!loading && filteredPipelines.length === 0 && (
-              <Typography variant="body2" color="text.primary" sx={{ p: 2 }}>
-                No pipelines found.
-              </Typography>
+              <EmptyState
+                heading="No pipelines found"
+                description="Try adjusting your search or check that ingest pipelines exist in the cluster"
+              />
             )}
           </List>
         </Paper>

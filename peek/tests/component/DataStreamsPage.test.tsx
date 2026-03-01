@@ -268,7 +268,7 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("No data streams found.");
+    await screen.findByText("No data streams found");
     expect(screen.getByText("Select a data stream")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /open in query lab/i })).toBeDisabled();
   });

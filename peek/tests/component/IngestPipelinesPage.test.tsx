@@ -115,7 +115,7 @@ describe("IngestPipelinesPage", () => {
     await screen.findByText("my-pipeline");
     await user.type(screen.getByPlaceholderText("Search pipelines"), "does-not-exist");
 
-    await screen.findByText("No pipelines found.");
+    await screen.findByText("No pipelines found");
   });
 
   it("shows error alert when loading fails", async () => {

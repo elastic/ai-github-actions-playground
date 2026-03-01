@@ -42,13 +42,13 @@ fi
 
 # Explore agent workflows that support workflow_dispatch
 WORKFLOWS=(
-  "smoke-welcome-flow.yml"
-  "smoke-metrics-flow.yml"
-  "smoke-traces-flow.yml"
-  "smoke-auth-tab-switch.yml"
-  "smoke-reset-visibility.yml"
-  "smoke-live-es.yml"
-  "customer-complaints.yml"
+  "explore-connection.yml"
+  "explore-metrics.yml"
+  "explore-traces.yml"
+  "explore-query-lab.yml"
+  "explore-data-management.yml"
+  "explore-live-es.yml"
+  "explore-customer-feedback.yml"
   "ui-designer-review.yml"
 )
 
