@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { classifyMetricType, listFields, getFieldValues, getFieldCardinality } from "../../src/services/es/metadata";
+
+import {
+  classifyMetricType,
+  listFields,
+  getFieldValues,
+  getFieldCardinality,
+} from "../../src/services/es/metadata";
 import type { ElasticsearchClient } from "../../src/services/es/client";
 
 describe("classifyMetricType", () => {
@@ -37,14 +43,16 @@ function makeMockClient(queryFn: ElasticsearchClient["query"]): ElasticsearchCli
 
 describe("listFields", () => {
   it("returns fields from LIMIT 0 response", async () => {
-    const client = makeMockClient(vi.fn().mockResolvedValue({
-      columns: [
-        { name: "system.cpu.total.pct", type: "double" },
-        { name: "@timestamp", type: "date" },
-        { name: "host.name", type: "keyword" },
-      ],
-      values: [],
-    }));
+    const client = makeMockClient(
+      vi.fn().mockResolvedValue({
+        columns: [
+          { name: "system.cpu.total.pct", type: "double" },
+          { name: "@timestamp", type: "date" },
+          { name: "host.name", type: "keyword" },
+        ],
+        values: [],
+      }),
+    );
 
     const fields = await listFields(client, "metrics-*");
 
@@ -56,12 +64,11 @@ describe("listFields", () => {
   });
 
   it("falls back to LIMIT 1 when LIMIT 0 returns no columns", async () => {
-    const queryFn = vi.fn()
+    const queryFn = vi
+      .fn()
       .mockResolvedValueOnce({ columns: [], values: [] })
       .mockResolvedValueOnce({
-        columns: [
-          { name: "metric.name", type: "counter_long" },
-        ],
+        columns: [{ name: "metric.name", type: "counter_long" }],
         values: [[42]],
       });
 
@@ -69,9 +76,7 @@ describe("listFields", () => {
     const fields = await listFields(client, "metrics-*");
 
     expect(queryFn).toHaveBeenCalledTimes(2);
-    expect(fields).toEqual([
-      { name: "metric.name", type: "counter_long", metricType: "counter" },
-    ]);
+    expect(fields).toEqual([{ name: "metric.name", type: "counter_long", metricType: "counter" }]);
   });
 
   it("passes signal through to client.query", async () => {
@@ -81,26 +86,44 @@ describe("listFields", () => {
 
     await listFields(client, "metrics-*", controller.signal);
 
-    expect(queryFn).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(queryFn).toHaveBeenCalledTimes(2);
+    expect(queryFn).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ query: expect.any(String) }),
       controller.signal,
     );
+    expect(queryFn).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ query: expect.any(String) }),
+      controller.signal,
+    );
+  });
+
+  it("rejects unsafe index patterns", async () => {
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
+    await expect(listFields(client, 'metrics-* | DROP TABLE "x"')).rejects.toThrow(
+      "Invalid index pattern",
+    );
+    expect(queryFn).not.toHaveBeenCalled();
   });
 });
 
 describe("getFieldValues", () => {
   it("returns top-N values with counts", async () => {
-    const client = makeMockClient(vi.fn().mockResolvedValue({
-      columns: [
-        { name: "count", type: "long" },
-        { name: "host.name", type: "keyword" },
-      ],
-      values: [
-        [100, "web-01"],
-        [80, "web-02"],
-        [50, "web-03"],
-      ],
-    }));
+    const client = makeMockClient(
+      vi.fn().mockResolvedValue({
+        columns: [
+          { name: "count", type: "long" },
+          { name: "host.name", type: "keyword" },
+        ],
+        values: [
+          [100, "web-01"],
+          [80, "web-02"],
+          [50, "web-03"],
+        ],
+      }),
+    );
 
     const result = await getFieldValues(client, "metrics-*", "host.name", 10);
 
@@ -112,16 +135,18 @@ describe("getFieldValues", () => {
   });
 
   it("filters out null values", async () => {
-    const client = makeMockClient(vi.fn().mockResolvedValue({
-      columns: [
-        { name: "count", type: "long" },
-        { name: "host.name", type: "keyword" },
-      ],
-      values: [
-        [100, "web-01"],
-        [50, null],
-      ],
-    }));
+    const client = makeMockClient(
+      vi.fn().mockResolvedValue({
+        columns: [
+          { name: "count", type: "long" },
+          { name: "host.name", type: "keyword" },
+        ],
+        values: [
+          [100, "web-01"],
+          [50, null],
+        ],
+      }),
+    );
 
     const result = await getFieldValues(client, "metrics-*", "host.name");
 
@@ -129,10 +154,12 @@ describe("getFieldValues", () => {
   });
 
   it("returns empty array when columns are missing", async () => {
-    const client = makeMockClient(vi.fn().mockResolvedValue({
-      columns: [{ name: "other", type: "keyword" }],
-      values: [],
-    }));
+    const client = makeMockClient(
+      vi.fn().mockResolvedValue({
+        columns: [{ name: "other", type: "keyword" }],
+        values: [],
+      }),
+    );
 
     const result = await getFieldValues(client, "metrics-*", "host.name");
     expect(result).toEqual([]);
@@ -157,22 +184,54 @@ describe("getFieldValues", () => {
       undefined,
     );
   });
+
+  it("rejects non-positive limits", async () => {
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
+    await expect(getFieldValues(client, "metrics-*", "host.name", 0)).rejects.toThrow(
+      "Invalid limit",
+    );
+    await expect(getFieldValues(client, "metrics-*", "host.name", -1)).rejects.toThrow(
+      "Invalid limit",
+    );
+    expect(queryFn).not.toHaveBeenCalled();
+  });
+
+  it("caps large limits to a safe maximum", async () => {
+    const queryFn = vi.fn().mockResolvedValue({ columns: [], values: [] });
+    const client = makeMockClient(queryFn);
+    await getFieldValues(client, "metrics-*", "host.name", 5000);
+    expect(queryFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.stringMatching(/\bLIMIT 1000\b/),
+      }),
+      undefined,
+    );
+  });
+
+  it("rejects unsafe index patterns", async () => {
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
+    await expect(getFieldValues(client, 'metrics-* | DROP TABLE "x"', "host.name")).rejects.toThrow(
+      "Invalid index pattern",
+    );
+    expect(queryFn).not.toHaveBeenCalled();
+  });
 });
 
 describe("getFieldCardinality", () => {
   it("returns cardinality for multiple fields", async () => {
-    const client = makeMockClient(vi.fn().mockResolvedValue({
-      columns: [
-        { name: "host.name_card", type: "long" },
-        { name: "service.name_card", type: "long" },
-      ],
-      values: [[42, 5]],
-    }));
+    const client = makeMockClient(
+      vi.fn().mockResolvedValue({
+        columns: [
+          { name: "host.name_card", type: "long" },
+          { name: "service.name_card", type: "long" },
+        ],
+        values: [[42, 5]],
+      }),
+    );
 
-    const result = await getFieldCardinality(client, "metrics-*", [
-      "host.name",
-      "service.name",
-    ]);
+    const result = await getFieldCardinality(client, "metrics-*", ["host.name", "service.name"]);
 
     expect(result).toEqual({ "host.name": 42, "service.name": 5 });
   });
@@ -202,5 +261,14 @@ describe("getFieldCardinality", () => {
       }),
       undefined,
     );
+  });
+
+  it("rejects unsafe index patterns", async () => {
+    const queryFn = vi.fn();
+    const client = makeMockClient(queryFn);
+    await expect(
+      getFieldCardinality(client, 'metrics-* | DROP TABLE "x"', ["host.name"]),
+    ).rejects.toThrow("Invalid index pattern");
+    expect(queryFn).not.toHaveBeenCalled();
   });
 });

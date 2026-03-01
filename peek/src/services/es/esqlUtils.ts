@@ -20,3 +20,12 @@ export function validateEsqlIdentifier(key: string): string {
   }
   return key;
 }
+
+/** Validate an ES|QL index pattern used in FROM clauses */
+const SAFE_INDEX_PATTERN_RE = /^[A-Za-z0-9*_.-]+(?:,[A-Za-z0-9*_.-]+)*$/;
+export function validateEsqlIndexPattern(indexPattern: string): string {
+  if (!SAFE_INDEX_PATTERN_RE.test(indexPattern)) {
+    throw new Error(`Invalid index pattern: ${indexPattern}`);
+  }
+  return indexPattern;
+}
