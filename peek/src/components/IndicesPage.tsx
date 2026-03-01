@@ -17,6 +17,7 @@ import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import {
@@ -588,14 +589,18 @@ export default function IndicesPage() {
           <Button size="small" variant="outlined" onClick={loadIndices} disabled={loadingIndices}>
             {loadingIndices ? <CircularProgress size={16} /> : "Refresh"}
           </Button>
-          <Button
-            size="small"
-            variant="contained"
-            disabled={!selectedIndex}
-            onClick={handleOpenInQueryLab}
-          >
-            Open in Query Lab
-          </Button>
+          <Tooltip title={!selectedIndex ? "Select an index first" : ""}>
+            <span>
+              <Button
+                size="small"
+                variant="contained"
+                disabled={!selectedIndex}
+                onClick={handleOpenInQueryLab}
+              >
+                Open in Query Lab
+              </Button>
+            </span>
+          </Tooltip>
           <Button
             size="small"
             variant="outlined"
@@ -672,7 +677,7 @@ export default function IndicesPage() {
             ))}
             {!loadingIndices && filteredIndices.length === 0 && (
               <ListItem>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.primary">
                   No indices found.
                 </Typography>
               </ListItem>

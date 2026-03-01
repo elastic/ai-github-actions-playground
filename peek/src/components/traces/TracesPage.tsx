@@ -453,7 +453,9 @@ export default function TracesPage() {
               onChange={(e) => setMinDurationInput(e.target.value)}
               sx={{ width: 100, "& .MuiInputBase-root": { height: 36 } }}
             />
-            <Typography variant="body2">–</Typography>
+            <Typography variant="body1" sx={{ px: 0.5 }}>
+              —
+            </Typography>
             <TextField
               size="small"
               placeholder="Max (ms)"
@@ -623,7 +625,7 @@ export default function TracesPage() {
                   height: "100%",
                 }}
               >
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.primary">
                   Search for traces to see results
                 </Typography>
               </Box>

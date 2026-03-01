@@ -25,6 +25,7 @@ import { PAGE_MANIFEST } from "../routes/manifest";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EChartWrapper from "./visualizations/EChartWrapper";
+import EmptyState from "./EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -172,23 +173,10 @@ export default function MetricOverviewGrid({
 
   if (namespaceMetrics.length === 0) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          gap: 1,
-        }}
-      >
-        <Typography variant="body2" color="text.secondary">
-          No metrics found in the <strong>{namespace}</strong> namespace
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Try selecting a different namespace or adjusting the index pattern
-        </Typography>
-      </Box>
+      <EmptyState
+        heading={`No metrics found in the ${namespace} namespace`}
+        description="Try selecting a different namespace or adjusting the index pattern"
+      />
     );
   }
 
@@ -436,23 +424,10 @@ export default function MetricOverviewGrid({
         metricsWithData.length === 0 &&
         failedMetrics.length === 0 &&
         namespaceMetrics.length > 0 && (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              py: 4,
-              gap: 1,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              No metrics with data found in the selected time range
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Try expanding the time range or verifying that data is being ingested
-            </Typography>
-          </Box>
+          <EmptyState
+            heading="No metrics with data found in the selected time range"
+            description="Try expanding the time range or verifying that data is being ingested"
+          />
         )}
     </Box>
   );

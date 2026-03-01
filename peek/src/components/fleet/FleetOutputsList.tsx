@@ -21,7 +21,7 @@ const STATE_COLOR: Record<string, "success" | "warning" | "error" | "default"> =
 export default function FleetOutputsList({ outputs }: Props) {
   if (outputs.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+      <Typography variant="body2" color="text.primary" sx={{ p: 2 }}>
         No output health data found in logs-fleet_server.output_health-*.
       </Typography>
     );

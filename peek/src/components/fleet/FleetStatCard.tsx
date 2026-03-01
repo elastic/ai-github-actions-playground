@@ -46,7 +46,7 @@ export default function FleetStatCard({
         transition: "border-color 0.2s",
       }}
     >
-      <Typography variant="caption" color="text.secondary" noWrap>
+      <Typography variant="caption" color="text.primary" noWrap>
         {title}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
