@@ -1,0 +1,234 @@
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Paper from "@mui/material/Paper";
+import Switch from "@mui/material/Switch";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+
+import type { EsqlResponse } from "../../types";
+import type { TracesViewMode } from "../../store/useTracesStore";
+import ContentSkeleton from "../ContentSkeleton";
+import EmptyState from "../EmptyState";
+import TraceScatterChart from "../visualizations/TraceScatterChart";
+import TraceServiceMap from "../visualizations/TraceServiceMap";
+import TimeSeriesChart from "../visualizations/TimeSeriesChart";
+import DriftRadarMap from "../visualizations/DriftRadarMap";
+
+import { TraceTable } from "./TraceTable";
+import type { Span } from "./traceUtils";
+import type { TraceFilters } from "./traceQueryBuilder";
+
+interface TraceRow {
+  traceId: string;
+  spanId: string;
+  serviceName: string;
+  name: string;
+  durationUs: number;
+  status: string;
+  timestamp: string;
+}
+
+interface TraceResultsViewProps {
+  viewMode: TracesViewMode;
+  onViewModeChange: (mode: TracesViewMode) => void;
+  searchResult: EsqlResponse | null;
+  searchLoading: boolean;
+  traceRows: TraceRow[];
+  selectedTraceId: string | null;
+  onSelectTrace: (traceId: string, spanId?: string, timestamp?: string) => void;
+  maxDuration: number;
+  rawQuery: string | null;
+  timeseriesLoading: boolean;
+  timeseriesResult: EsqlResponse | null;
+  detailLoading: boolean;
+  selectedTraceSpans: Span[];
+  onServiceMapNodeClick: (serviceName: string) => void;
+  driftRadarLoading: boolean;
+  driftRadarBaselineLoading: boolean;
+  driftRadarSpans: Span[];
+  driftRadarBaselineSpans: Span[] | null;
+  driftRadarBaselineEnabled: boolean;
+  onDriftRadarBaselineChange: (enabled: boolean) => void;
+  filters: TraceFilters;
+}
+
+export default function TraceResultsView({
+  viewMode,
+  onViewModeChange,
+  searchResult,
+  searchLoading,
+  traceRows,
+  selectedTraceId,
+  onSelectTrace,
+  maxDuration,
+  rawQuery,
+  timeseriesLoading,
+  timeseriesResult,
+  detailLoading,
+  selectedTraceSpans,
+  onServiceMapNodeClick,
+  driftRadarLoading,
+  driftRadarBaselineLoading,
+  driftRadarSpans,
+  driftRadarBaselineSpans,
+  driftRadarBaselineEnabled,
+  onDriftRadarBaselineChange,
+  filters,
+}: TraceResultsViewProps) {
+  return (
+    <>
+      {/* View switcher */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center", mb: 1 }}>
+        {(["list", "timeseries", "scatter", "serviceMap", "driftRadar"] as TracesViewMode[]).map(
+          (mode) => (
+            <Chip
+              key={mode}
+              label={
+                mode === "list"
+                  ? "List"
+                  : mode === "timeseries"
+                    ? "Time Series"
+                    : mode === "scatter"
+                      ? "Scatter"
+                      : mode === "serviceMap"
+                        ? "Service Map"
+                        : "Drift Radar"
+              }
+              size="small"
+              variant={viewMode === mode ? "filled" : "outlined"}
+              color={viewMode === mode ? "primary" : "default"}
+              onClick={() => onViewModeChange(mode)}
+            />
+          ),
+        )}
+        {viewMode === "driftRadar" && filters.timeFrom && rawQuery == null && (
+          <Tooltip title="Compare with the previous time window of equal length to highlight new, regressed, or improved edges.">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={driftRadarBaselineEnabled}
+                  onChange={(e) => onDriftRadarBaselineChange(e.target.checked)}
+                />
+              }
+              label={<Typography variant="caption">Compare with previous window</Typography>}
+              sx={{ ml: 0.5 }}
+            />
+          </Tooltip>
+        )}
+      </Box>
+
+      {/* Results view */}
+      <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+        {!searchResult && !searchLoading && viewMode !== "driftRadar" && (
+          <EmptyState
+            heading="Search for traces"
+            description="Use the filters above to find traces by service name, duration, or status."
+          />
+        )}
+        {searchLoading && !searchResult && (
+          <Box sx={{ p: 2 }}>
+            <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
+          </Box>
+        )}
+        {searchResult && viewMode === "list" && traceRows.length === 0 && (
+          <EmptyState
+            heading="No traces matched current filters."
+            description="Adjust filters or widen the time range."
+          />
+        )}
+        {searchResult && viewMode === "list" && traceRows.length > 0 && (
+          <TraceTable
+            traceRows={traceRows}
+            selectedTraceId={selectedTraceId}
+            onSelectTrace={onSelectTrace}
+            maxDuration={maxDuration}
+          />
+        )}
+        {searchResult && viewMode === "scatter" && (
+          <TraceScatterChart
+            data={traceRows.map((r) => ({
+              timestamp: r.timestamp,
+              durationUs: r.durationUs,
+              serviceName: r.serviceName,
+              traceId: r.traceId,
+            }))}
+            onPointClick={(traceId) => onSelectTrace(traceId)}
+          />
+        )}
+        {searchResult &&
+          viewMode === "timeseries" &&
+          (rawQuery ? (
+            <EmptyState
+              heading="Time series view is not available for custom queries. Use filter chips to see trends."
+              description="Use filter chips instead of raw ES|QL to view trace volume and latency trends."
+            />
+          ) : timeseriesLoading ? (
+            <Box sx={{ p: 2 }}>
+              <ContentSkeleton variant="chart" />
+            </Box>
+          ) : timeseriesResult ? (
+            <Box sx={{ height: "100%" }}>
+              <TimeSeriesChart
+                data={timeseriesResult}
+                options={{ smooth: true, showArea: false, stacked: false }}
+              />
+            </Box>
+          ) : (
+            <EmptyState
+              heading="Run search to load trace volume and latency trends."
+              description="Apply filters and run search to populate time series metrics."
+            />
+          ))}
+        {searchResult && viewMode === "serviceMap" && (
+          <Box sx={{ height: "100%" }}>
+            {!selectedTraceId ? (
+              <EmptyState
+                heading="Select a trace in List or Scatter view to see its service map"
+                description="Choose a trace from List or Scatter view to render service relationships."
+              />
+            ) : detailLoading ? (
+              <Box sx={{ p: 2 }}>
+                <ContentSkeleton variant="chart" />
+              </Box>
+            ) : (
+              <TraceServiceMap spans={selectedTraceSpans} onNodeClick={onServiceMapNodeClick} />
+            )}
+          </Box>
+        )}
+        {viewMode === "driftRadar" &&
+          (rawQuery ? (
+            <EmptyState
+              heading="Drift Radar is not available for custom queries. Use filter chips to scope the window."
+              description="Use filter chips to define the current window before opening Drift Radar."
+            />
+          ) : driftRadarLoading || driftRadarBaselineLoading ? (
+            <Box sx={{ p: 2 }}>
+              <ContentSkeleton variant="chart" />
+            </Box>
+          ) : driftRadarSpans.length > 0 ? (
+            <Box sx={{ height: "100%" }}>
+              <DriftRadarMap
+                currentSpans={driftRadarSpans}
+                baselineSpans={
+                  driftRadarBaselineEnabled ? (driftRadarBaselineSpans ?? undefined) : undefined
+                }
+                onNodeClick={onServiceMapNodeClick}
+              />
+            </Box>
+          ) : searchResult !== null ? (
+            <EmptyState
+              heading="Run search to load the window service map."
+              description="Run search to load current-window traces for the Drift Radar map."
+            />
+          ) : (
+            <EmptyState
+              heading="Search for traces to load the Drift Radar service map."
+              description="Run a trace search to compare current and baseline service topology."
+            />
+          ))}
+      </Paper>
+    </>
+  );
+}
