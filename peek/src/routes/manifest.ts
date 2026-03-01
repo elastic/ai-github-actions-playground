@@ -22,6 +22,7 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ShieldIcon from "@mui/icons-material/Shield";
 
+import type { UserCapabilities } from "../services/es";
 import ApiConsolePage from "../components/ApiConsolePage";
 import ChatPage from "../components/ChatPage";
 import ClusterCapacityPage from "../components/ClusterCapacityPage";
@@ -53,6 +54,8 @@ export interface PageConfig {
   component: ComponentType;
   requiresConnection: boolean;
   showTimeControls: boolean;
+  /** Key of `UserCapabilities` that must be `true` for the page to appear in the sidebar. */
+  requiredCapability?: keyof UserCapabilities;
   nav: {
     label: string;
     group: NavGroup;
@@ -315,6 +318,7 @@ export const PAGE_MANIFEST = {
     component: UsersPage,
     requiresConnection: true,
     showTimeControls: false,
+    requiredCapability: "canReadSecurityUsers",
     nav: {
       label: "Users",
       group: "System",
@@ -328,6 +332,7 @@ export const PAGE_MANIFEST = {
     component: RolesPage,
     requiresConnection: true,
     showTimeControls: false,
+    requiredCapability: "canReadSecurityRoles",
     nav: {
       label: "Roles",
       group: "System",

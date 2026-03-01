@@ -12,11 +12,13 @@ import MenuItem from "@mui/material/MenuItem";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useState } from "react";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
-import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId } from "../routes/manifest";
+import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId, type PageConfig } from "../routes/manifest";
+import type { UserCapabilities } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 
@@ -25,6 +27,7 @@ interface NavItem {
   page: PageId;
   icon: React.ReactNode;
   requiresConnection?: boolean;
+  requiredCapability?: keyof UserCapabilities;
 }
 
 interface NavSection {
@@ -40,9 +43,7 @@ interface AppSidebarProps {
 function buildNavSections(): NavSection[] {
   const groups = new Map<string, NavItem[]>();
 
-  for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<
-    [PageId, (typeof PAGE_MANIFEST)[PageId]]
-  >) {
+  for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<[PageId, PageConfig]>) {
     if (!config.nav.showInSidebar) continue;
     const items = groups.get(config.nav.group) ?? [];
     items.push({
@@ -50,6 +51,7 @@ function buildNavSections(): NavSection[] {
       page,
       icon: config.nav.icon,
       requiresConnection: config.requiresConnection,
+      requiredCapability: config.requiredCapability,
     });
     groups.set(config.nav.group, items);
   }
@@ -64,8 +66,17 @@ function buildNavSections(): NavSection[] {
 
 const NAV_SECTIONS: NavSection[] = buildNavSections();
 
+/** Returns true when we positively know the user lacks a required capability. */
+function isHiddenByCapability(item: NavItem, capabilities: UserCapabilities | null): boolean {
+  if (!item.requiredCapability) return false;
+  if (!capabilities) return false; // not yet fetched — keep visible
+  return !capabilities[item.requiredCapability];
+}
+
 export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {
-  const connected = useConnectionStore((s) => s.connected);
+  const { connected, capabilities } = useConnectionStore(
+    useShallow((s) => ({ connected: s.connected, capabilities: s.capabilities })),
+  );
   const { themeMode, setConnectionDialogOpen, setThemeMode } = useUIStore(
     useShallow((s) => ({
       themeMode: s.themeMode,
@@ -77,6 +88,16 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
+
+  const hiddenCount = useMemo(
+    () =>
+      NAV_SECTIONS.reduce(
+        (count, section) =>
+          count + section.items.filter((item) => isHiddenByCapability(item, capabilities)).length,
+        0,
+      ),
+    [capabilities],
+  );
 
   return (
     <Box
@@ -112,85 +133,112 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           </IconButton>
         </Tooltip>
       </Box>
-      {NAV_SECTIONS.map((section) => (
-        <Box key={section.label} sx={{ pt: 1 }}>
-          {!collapsed && (
-            <Typography
-              variant="caption"
-              sx={{
-                px: 2,
-                py: 0.5,
-                display: "block",
-                color: "text.secondary",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontSize: "0.65rem",
-              }}
-            >
-              {section.label}
-            </Typography>
-          )}
-          <List dense disablePadding>
-            {section.items.map((item) => {
-              const itemPath = PAGE_MANIFEST[item.page].path;
-              const isActive =
-                location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
-              const isDisabled = item.requiresConnection && !connected;
-              const button = (
-                <ListItemButton
-                  selected={isActive}
-                  disabled={isDisabled}
-                  onClick={() => navigate(PAGE_MANIFEST[item.page].path)}
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={item.label}
-                  sx={{
-                    px: collapsed ? 1 : 2,
-                    py: 0.75,
-                    borderRadius: 1,
-                    mx: 0.5,
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    "&.Mui-selected": {
-                      bgcolor: "action.selected",
-                      "&:hover": { bgcolor: "action.selected" },
-                    },
-                  }}
-                >
-                  <ListItemIcon
+      {NAV_SECTIONS.map((section) => {
+        const visibleItems = section.items.filter(
+          (item) => !isHiddenByCapability(item, capabilities),
+        );
+        if (visibleItems.length === 0) return null;
+        return (
+          <Box key={section.label} sx={{ pt: 1 }}>
+            {!collapsed && (
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 2,
+                  py: 0.5,
+                  display: "block",
+                  color: "text.secondary",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  fontSize: "0.65rem",
+                }}
+              >
+                {section.label}
+              </Typography>
+            )}
+            <List dense disablePadding>
+              {visibleItems.map((item) => {
+                const itemPath = PAGE_MANIFEST[item.page].path;
+                const isActive =
+                  location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+                const isDisabled = item.requiresConnection && !connected;
+                const button = (
+                  <ListItemButton
+                    selected={isActive}
+                    disabled={isDisabled}
+                    onClick={() => navigate(PAGE_MANIFEST[item.page].path)}
+                    aria-current={isActive ? "page" : undefined}
+                    aria-label={item.label}
                     sx={{
-                      minWidth: collapsed ? 0 : 32,
-                      color: isActive ? "primary.main" : "inherit",
+                      px: collapsed ? 1 : 2,
+                      py: 0.75,
+                      borderRadius: 1,
+                      mx: 0.5,
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      "&.Mui-selected": {
+                        bgcolor: "action.selected",
+                        "&:hover": { bgcolor: "action.selected" },
+                      },
                     }}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  {!collapsed && (
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: "0.875rem",
-                        fontWeight: isActive ? 600 : 400,
+                    <ListItemIcon
+                      sx={{
+                        minWidth: collapsed ? 0 : 32,
                         color: isActive ? "primary.main" : "inherit",
                       }}
-                    />
-                  )}
-                </ListItemButton>
-              );
-              return (
-                <ListItem key={item.page} disablePadding>
-                  {collapsed ? (
-                    <Tooltip title={item.label} placement="right">
-                      {button}
-                    </Tooltip>
-                  ) : (
-                    button
-                  )}
-                </ListItem>
-              );
-            })}
-          </List>
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    {!collapsed && (
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{
+                          fontSize: "0.875rem",
+                          fontWeight: isActive ? 600 : 400,
+                          color: isActive ? "primary.main" : "inherit",
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                );
+                return (
+                  <ListItem key={item.page} disablePadding>
+                    {collapsed ? (
+                      <Tooltip title={item.label} placement="right">
+                        {button}
+                      </Tooltip>
+                    ) : (
+                      button
+                    )}
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Box>
+        );
+      })}
+      {hiddenCount > 0 && (
+        <Box
+          sx={{
+            px: collapsed ? 0 : 2,
+            py: 1,
+            display: "flex",
+            justifyContent: collapsed ? "center" : "flex-start",
+          }}
+        >
+          <Tooltip
+            title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
+            placement={collapsed ? "right" : "top"}
+          >
+            <WarningAmberIcon
+              fontSize="small"
+              aria-label={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
+              sx={{ color: "warning.main" }}
+            />
+          </Tooltip>
         </Box>
-      ))}
+      )}
       <Box
         sx={{
           mt: "auto",
