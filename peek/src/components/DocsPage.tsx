@@ -87,7 +87,13 @@ export default function DocsPage() {
         </Box>
       </Paper>
 
-      <Paper variant="outlined" sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+      <Paper
+        variant="outlined"
+        role="region"
+        aria-label="Documentation content"
+        tabIndex={0}
+        sx={{ flex: 1, overflowY: "auto", p: 2 }}
+      >
         {filteredSections.map((section) => (
           <Box key={section.id} id={section.id} sx={{ mb: 3, scrollMarginTop: 16 }}>
             {section.image && (
