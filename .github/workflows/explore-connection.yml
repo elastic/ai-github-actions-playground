@@ -55,11 +55,7 @@ jobs:
         after starting the dev server:
 
         ```bash
-        cd peek && npx vite --host &
-        for i in $(seq 1 30); do
-          curl -sf http://localhost:3000/ >/dev/null 2>&1 && break
-          sleep 2
-        done
+        make serve-background
         ```
 
         ## Visual quality checks
