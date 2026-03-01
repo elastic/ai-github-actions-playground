@@ -41,27 +41,47 @@ export default {
       return null;
     }
 
+    function getNumericValue(node) {
+      if (node.type === "Literal" && typeof node.value === "number") return node.value;
+      if (
+        node.type === "UnaryExpression" &&
+        node.operator === "-" &&
+        node.argument.type === "Literal" &&
+        typeof node.argument.value === "number"
+      ) {
+        return -node.argument.value;
+      }
+      return null;
+    }
+
+    function validateObjectExpression(expression) {
+      for (const property of expression.properties) {
+        if (property.type !== "Property") continue;
+        if (property.value.type === "ObjectExpression") {
+          validateObjectExpression(property.value);
+        }
+
+        const propertyName = getPropertyName(property);
+        if (!propertyName || !SPACING_KEYS.has(propertyName)) continue;
+        const value = getNumericValue(property.value);
+        if (value === null) continue;
+        if (SPACE_TOKENS.has(value)) continue;
+
+        context.report({
+          node: property.value,
+          messageId: "invalidSpacingToken",
+          data: { property: propertyName, value: String(value) },
+        });
+      }
+    }
+
     return {
       JSXAttribute(node) {
         if (node.name.name !== "sx") return;
         if (!node.value || node.value.type !== "JSXExpressionContainer") return;
         const expression = node.value.expression;
         if (expression.type !== "ObjectExpression") return;
-
-        for (const property of expression.properties) {
-          if (property.type !== "Property") continue;
-          const propertyName = getPropertyName(property);
-          if (!propertyName || !SPACING_KEYS.has(propertyName)) continue;
-          if (property.value.type !== "Literal" || typeof property.value.value !== "number")
-            continue;
-          if (SPACE_TOKENS.has(property.value.value)) continue;
-
-          context.report({
-            node: property.value,
-            messageId: "invalidSpacingToken",
-            data: { property: propertyName, value: String(property.value.value) },
-          });
-        }
+        validateObjectExpression(expression);
       },
     };
   },

@@ -25,6 +25,14 @@ describe("peek/enforce-spacing-tokens", () => {
           code: `<Box sx={{ borderRadius: 8, color: "text.primary" }} />`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        {
+          code: `<Box sx={{ p: 0, gap: 6 }} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
+        {
+          code: `<Box sx={{ "&:hover": { p: 2 } }} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
       ],
       invalid: [
         {
@@ -39,6 +47,16 @@ describe("peek/enforce-spacing-tokens", () => {
         },
         {
           code: `<Box sx={{ "mx": 9 }} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidSpacingToken" }],
+        },
+        {
+          code: `<Box sx={{ mt: -2 }} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidSpacingToken" }],
+        },
+        {
+          code: `<Box sx={{ "&:hover": { p: 5 } }} />`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidSpacingToken" }],
         },
