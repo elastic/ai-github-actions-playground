@@ -172,7 +172,10 @@ export default function ServiceInventoryPage() {
       { requests: 0, errors: 0 },
     );
     const avgLatencyMs =
-      serviceRows.reduce((acc, row) => acc + row.avgLatencyMs, 0) / serviceRows.length;
+      totals.requests > 0
+        ? serviceRows.reduce((acc, row) => acc + row.avgLatencyMs * row.requestCount, 0) /
+          totals.requests
+        : 0;
     return {
       totalRequests: totals.requests,
       totalErrors: totals.errors,
