@@ -33,6 +33,8 @@ make serve-proxy  # install deps + start dev server with Elasticsearch proxy (se
 make build        # production build to peek/dist/
 make lint         # Prettier + ESLint on changed files + full TypeScript type check (override: make lint BASE=HEAD~3)
 make lint-full    # Prettier + ESLint + TypeScript type check on all files
+make test-unit    # run unit tests for changed files only (override: make test-unit BASE=HEAD~3)
+make test-unit-full # run all unit tests
 make format       # auto-format changed files with Prettier (override: make format BASE=HEAD~3)
 make format-full  # auto-format all files with Prettier
 make check        # run all checks then build (equivalent to CI)
