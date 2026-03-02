@@ -147,6 +147,88 @@ describe("DataTable", () => {
     expect(screen.getByText("No data")).toBeInTheDocument();
   });
 
+  it("renders pagination showing total row count", () => {
+    const data: EsqlResponse = {
+      columns: [{ name: "val", type: "long" }],
+      values: Array.from({ length: 60 }, (_, i) => [i]),
+    };
+    render(<DataTable data={data} />);
+
+    expect(screen.getByText("1–25 of 60")).toBeInTheDocument();
+  });
+
+  it("paginates to the next page", async () => {
+    const user = userEvent.setup();
+    const data: EsqlResponse = {
+      columns: [{ name: "val", type: "long" }],
+      values: Array.from({ length: 60 }, (_, i) => [i]),
+    };
+    render(<DataTable data={data} />);
+
+    await user.click(screen.getByRole("button", { name: /next page/i }));
+
+    expect(screen.getByText("26–50 of 60")).toBeInTheDocument();
+  });
+
+  it("renders the Export CSV button when onExportCsv is provided", () => {
+    const onExportCsv = vi.fn();
+    render(<DataTable data={mockData} onExportCsv={onExportCsv} />);
+
+    expect(
+      screen.getByRole("button", { name: /export all results with selected columns as csv/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render the Export CSV button when onExportCsv is not provided", () => {
+    render(<DataTable data={mockData} />);
+
+    expect(
+      screen.queryByRole("button", { name: /export all results with selected columns as csv/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls onExportCsv when the Export CSV button is clicked", async () => {
+    const user = userEvent.setup();
+    const onExportCsv = vi.fn();
+    render(<DataTable data={mockData} onExportCsv={onExportCsv} />);
+
+    await user.click(
+      screen.getByRole("button", { name: /export all results with selected columns as csv/i }),
+    );
+
+    expect(onExportCsv).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides empty columns by default and shows a toggle link", () => {
+    const dataWithEmpty: EsqlResponse = {
+      columns: [
+        { name: "filled", type: "keyword" },
+        { name: "empty_col", type: "keyword" },
+      ],
+      values: [["val", null]],
+    };
+    render(<DataTable data={dataWithEmpty} />);
+
+    expect(screen.getByText(/1 empty column hidden/i)).toBeInTheDocument();
+    expect(screen.getByText("filled")).toBeInTheDocument();
+  });
+
+  it("shows empty columns when the Show link is clicked", async () => {
+    const user = userEvent.setup();
+    const dataWithEmpty: EsqlResponse = {
+      columns: [
+        { name: "filled", type: "keyword" },
+        { name: "empty_col", type: "keyword" },
+      ],
+      values: [["val", null]],
+    };
+    render(<DataTable data={dataWithEmpty} />);
+
+    await user.click(screen.getByText("Show"));
+
+    expect(screen.getByText("empty_col")).toBeInTheDocument();
+  });
+
   it("does not show expand button for short cell values", () => {
     render(<DataTable data={mockData} />);
 

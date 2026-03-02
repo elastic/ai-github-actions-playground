@@ -19,15 +19,62 @@ import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
 
+const resetConnection = () => useConnectionStore.getState().resetConnectionState();
+const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
+const resetExplorer = () => useExplorerStore.getState().reset();
+const resetFleet = () => useFleetStore.getState().resetFilters();
+const resetLlm = () => useLLMStore.getState().resetLLMState();
+const resetProfiling = () => useProfilingStore.getState().resetFilters();
+const resetQuery = () => useQueryStore.getState().resetQueryState();
+const resetTraces = () => useTracesStore.getState().resetFilters();
+const resetUi = () => useUIStore.getState().resetUIState();
+const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
+
 export const storeResetters: ReadonlyArray<() => void> = [
-  () => useConnectionStore.getState().resetConnectionState(),
-  () => useDashboardStore.getState().resetDashboardState(),
-  () => useExplorerStore.getState().reset(),
-  () => useFleetStore.getState().resetFilters(),
-  () => useLLMStore.getState().resetLLMState(),
-  () => useProfilingStore.getState().resetFilters(),
-  () => useQueryStore.getState().resetQueryState(),
-  () => useTracesStore.getState().resetFilters(),
-  () => useUIStore.getState().resetUIState(),
-  () => useApiConsoleStore.getState().resetApiConsoleState(),
+  resetConnection,
+  resetDashboard,
+  resetExplorer,
+  resetFleet,
+  resetLlm,
+  resetProfiling,
+  resetQuery,
+  resetTraces,
+  resetUi,
+  resetApiConsole,
+];
+
+export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = [
+  {
+    label: "Connection settings and credentials",
+    reset: resetConnection,
+  },
+  {
+    label: "Dashboard layouts and state",
+    reset: resetDashboard,
+  },
+  {
+    label: "Query Lab filters and queries",
+    reset: resetQuery,
+  },
+  {
+    label: "Traces, metrics, and fleet filters",
+    reset: () => {
+      resetTraces();
+      resetExplorer();
+      resetFleet();
+      resetProfiling();
+    },
+  },
+  {
+    label: "LLM and AI assistant configuration",
+    reset: resetLlm,
+  },
+  {
+    label: "UI preferences (theme, panel state)",
+    reset: resetUi,
+  },
+  {
+    label: "Console history and request state",
+    reset: resetApiConsole,
+  },
 ];

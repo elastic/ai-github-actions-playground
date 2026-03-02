@@ -334,8 +334,7 @@ export class ElasticsearchClient {
    */
   private async _fetchValidated<T>(
     path: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    schema: z.ZodType<any>,
+    schema: z.ZodTypeAny,
     label: string,
     options?: RequestInit & { signal?: AbortSignal },
   ): Promise<T> {
@@ -420,7 +419,7 @@ export class ElasticsearchClient {
 
   async getNodeStats(signal?: AbortSignal): Promise<NodesStatsResponse> {
     return this._fetchValidated<NodesStatsResponse>(
-      "/_nodes/stats/os,jvm,process,thread_pool,breakers,indices,fs,ingest",
+      "/_nodes/stats/os,jvm,process,thread_pool,breaker,indices,fs,ingest",
       nodesStatsResponseSchema,
       "nodes stats",
       { signal },

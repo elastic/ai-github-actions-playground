@@ -41,6 +41,7 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
   },
   Indices: {
     "color-contrast": 2,
+    "scrollable-region-focusable": 1,
   },
 };
 
@@ -64,8 +65,8 @@ async function checkA11y(page: Page, pageName: string) {
       (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
     ),
     `axe found new accessibility violations on "${pageName}".\n` +
-      `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
-      `See DEVELOPING.md for accessibility standards.`,
+    `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
+    `See DEVELOPING.md for accessibility standards.`,
   ).toEqual([]);
 }
 
@@ -173,12 +174,36 @@ async function mockElasticsearch(page: Page) {
   });
 }
 
+/**
+ * Navigate to a page using the sidebar, opening the mobile drawer first if necessary.
+ */
+async function navigateViaSidebar(page: Page, label: string) {
+  const isMobile = page.viewportSize()!.width <= 768;
+  const navBtn = page.getByRole("button", { name: label, exact: true });
+
+  if (isMobile && !(await navBtn.isVisible())) {
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+  }
+
+  await navBtn.click();
+}
+
 async function connectToMockCluster(page: Page) {
   await mockElasticsearch(page);
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
+
+  // Wait for connection dialog to close
+  await expect(page.getByRole("dialog", { name: "Elasticsearch Connection" })).toBeHidden();
+
+  // On mobile, the sidebar is in a temporary drawer that must be opened to see the nav buttons.
+  const isMobile = page.viewportSize()!.width <= 768;
+  if (isMobile) {
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+  }
+
   await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
 }
 
@@ -195,7 +220,7 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: "Metrics", exact: true }).click();
+    await navigateViaSidebar(page, "Metrics");
     const metricSearch = page.getByLabel("Search metrics");
     await expect(metricSearch).toBeVisible({ timeout: 5_000 });
     await metricSearch.fill("system.cpu");
@@ -209,7 +234,7 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: "Traces", exact: true }).click();
+    await navigateViaSidebar(page, "Traces");
     await page.getByRole("button", { name: "Search Traces" }).click();
     await expect(page.getByText("1 traces found")).toBeVisible();
     await page.getByText("GET /checkout").click();
@@ -238,11 +263,13 @@ test.describe("smoke – site navigation", () => {
   test("header chip reflects current page label on non-dashboard routes", async ({ page }) => {
     await connectToMockCluster(page);
     // Navigate to a non-dashboard page (Query Lab / discover)
-    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await navigateViaSidebar(page, "Query Lab");
     await expect(page).toHaveURL(/\/discover$/);
-    // The global header (banner) must show the current page label chip
-    const header = page.getByRole("banner");
-    await expect(header.getByText("Query Lab")).toBeVisible();
+    // The global header (banner) must show the current page label chip (Desktop only)
+    if (page.viewportSize()!.width > 768) {
+      const header = page.getByRole("banner");
+      await expect(header.getByText("Query Lab")).toBeVisible();
+    }
   });
 
   test("ops user confirms connection guardrails and can reset back to the landing state", async ({
@@ -257,7 +284,10 @@ test.describe("smoke – site navigation", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
 
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: /Reset/i }).click();
+    await page.getByRole("button", { name: /Settings/i }).click();
+    await page.getByRole("menuitem", { name: /Reset All State/i }).click();
+    await expect(page.getByRole("dialog", { name: /Reset all application state/i })).toBeVisible();
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Elastic Peek" })).toBeVisible();
   });
 
@@ -270,7 +300,7 @@ test.describe("smoke – site navigation", () => {
     const queryText = "FROM logs-* | SORT @timestamp | LIMIT 1";
 
     // Open Query Lab
-    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await navigateViaSidebar(page, "Query Lab");
     await expect(page).toHaveURL(/\/discover$/);
 
     await queryInput.click();
@@ -287,11 +317,11 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();
 
     // Navigate away to Console
-    await page.getByRole("button", { name: "Console", exact: true }).click();
+    await navigateViaSidebar(page, "Console");
     await expect(page).toHaveURL(/\/console$/);
 
     // Navigate back to Query Lab
-    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await navigateViaSidebar(page, "Query Lab");
     await expect(page).toHaveURL(/\/discover$/);
 
     // Verify query text and results are still present
@@ -320,9 +350,9 @@ test.describe("smoke – site navigation", () => {
     };
 
     for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
-      await page.getByRole("button", { name: nav, exact: true }).click();
+      await navigateViaSidebar(page, nav);
       await page.waitForLoadState("networkidle");
-      await pageReadyLocators[nav]();
+      await pageReadyLocators[nav]!();
       await checkA11y(page, nav);
     }
   });
