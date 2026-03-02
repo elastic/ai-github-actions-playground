@@ -235,7 +235,7 @@ export default function DimensionSidebar({
                         onSetGroupBy(isGroupBy ? null : field.name);
                       }}
                       color={isGroupBy ? "primary" : "default"}
-                      sx={{ p: 0.25 }}
+                      sx={{ p: 0.5 }}
                     >
                       <GroupWorkIcon sx={{ fontSize: 14 }} />
                     </IconButton>

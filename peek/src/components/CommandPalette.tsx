@@ -395,7 +395,7 @@ export default function CommandPalette() {
               variant="caption"
               sx={{
                 display: "block",
-                py: 0.75,
+                py: 1,
                 px: 2,
                 color: "text.secondary",
                 letterSpacing: "0.08em",
@@ -418,7 +418,7 @@ export default function CommandPalette() {
               component="li"
               sx={{
                 mx: 0.5,
-                py: 0.75,
+                py: 1,
                 px: 2,
                 borderRadius: 1,
               }}

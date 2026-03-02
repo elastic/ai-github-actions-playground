@@ -84,7 +84,7 @@ function ShardFailureList({ failures }: ShardFailureListProps) {
   return (
     <Box component="ul" sx={{ m: 0, pl: 2.5, listStyle: "disc" }}>
       {failures.map((f, i) => (
-        <Box component="li" key={i} sx={{ mb: 0.25 }}>
+        <Box component="li" key={i} sx={{ mb: 0.5 }}>
           <Typography variant="caption">
             {f.index !== undefined ? (
               <strong>{f.index}</strong>
@@ -237,7 +237,7 @@ export default function PartialResultPanel({
   return (
     <Paper variant="outlined" sx={{ borderColor: "warning.main" }}>
       {/* Header */}
-      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", py: 0.75, px: 1.5 }}>
+      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", py: 1, px: 1.5 }}>
         <IconButton
           size="small"
           onClick={() => setExpanded((prev) => !prev)}

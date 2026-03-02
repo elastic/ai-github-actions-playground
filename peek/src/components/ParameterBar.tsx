@@ -602,12 +602,12 @@ function ParameterControl({
       )}
 
       <Tooltip title="Edit variable">
-        <IconButton size="small" onClick={onEdit} sx={{ p: 0.25 }} aria-label="Edit variable">
+        <IconButton size="small" onClick={onEdit} sx={{ p: 0.5 }} aria-label="Edit variable">
           <EditIcon sx={{ fontSize: 14 }} />
         </IconButton>
       </Tooltip>
       <Tooltip title="Remove variable">
-        <IconButton size="small" onClick={onDelete} sx={{ p: 0.25 }} aria-label="Remove variable">
+        <IconButton size="small" onClick={onDelete} sx={{ p: 0.5 }} aria-label="Remove variable">
           <DeleteIcon sx={{ fontSize: 14 }} />
         </IconButton>
       </Tooltip>
