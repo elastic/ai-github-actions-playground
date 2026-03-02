@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { memo, useState, useEffect, useCallback, useRef } from "react";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -25,6 +25,7 @@ import type { PanelDefinition, EsqlResponse } from "../types";
 
 import { toCsv } from "./discoverUtils";
 import ContentSkeleton from "./ContentSkeleton";
+import ErrorBoundary from "./ErrorBoundary";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
 import { getPersesPanelEntry } from "./perses/panelRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
@@ -33,7 +34,7 @@ interface Props {
   panel: PanelDefinition;
 }
 
-export default function PanelContainer({ panel }: Props) {
+export default memo(function PanelContainer({ panel }: Props) {
   const connection = useConnectionStore((s) => s.connection);
   const { timeRange, timeZone, parameters, duplicatePanel } = useDashboardEditorStore(
     useShallow((s) => ({
@@ -281,16 +282,18 @@ export default function PanelContainer({ panel }: Props) {
 
       <Box sx={{ position: "relative", flex: 1, overflow: "auto", p: 1 }}>
         {!supportsQuery ? (
-          <PersesPanelRenderer
-            type={panel.visualization}
-            query={panel.query}
-            data={{ columns: [], values: [] } as EsqlResponse}
-            options={panel.options}
-            connection={connection}
-            timeRange={timeRange}
-            parameters={parameters}
-            timeZone={timeZone}
-          />
+          <ErrorBoundary>
+            <PersesPanelRenderer
+              type={panel.visualization}
+              query={panel.query}
+              data={{ columns: [], values: [] } as EsqlResponse}
+              options={panel.options}
+              connection={connection}
+              timeRange={timeRange}
+              parameters={parameters}
+              timeZone={timeZone}
+            />
+          </ErrorBoundary>
         ) : error ? (
           <Box
             sx={{
@@ -311,14 +314,16 @@ export default function PanelContainer({ panel }: Props) {
         ) : loading && !data ? (
           <ContentSkeleton variant="chart" />
         ) : data ? (
-          <PersesPanelRenderer
-            type={panel.visualization}
-            data={data}
-            options={panel.options}
-            onExportReady={handleExportReady}
-            onExportCsv={supportsCSVExport ? handleExportCsv : undefined}
-            timeZone={timeZone}
-          />
+          <ErrorBoundary>
+            <PersesPanelRenderer
+              type={panel.visualization}
+              data={data}
+              options={panel.options}
+              onExportReady={handleExportReady}
+              onExportCsv={supportsCSVExport ? handleExportCsv : undefined}
+              timeZone={timeZone}
+            />
+          </ErrorBoundary>
         ) : (
           <Box
             sx={{
@@ -336,4 +341,4 @@ export default function PanelContainer({ panel }: Props) {
       </Box>
     </Paper>
   );
-}
+});

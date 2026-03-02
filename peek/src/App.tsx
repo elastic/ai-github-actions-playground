@@ -228,7 +228,11 @@ export default function App() {
                 </Typography>
               </Box>
             </Box>
-            {connected && <AiAssistantDrawer isMobile={isMobile} />}
+            {connected && (
+              <ErrorBoundary>
+                <AiAssistantDrawer isMobile={isMobile} />
+              </ErrorBoundary>
+            )}
           </Box>
         </Box>
         <ConnectionDialog />
@@ -240,7 +244,9 @@ export default function App() {
           }}
           onCancel={() => setResetDialogOpen(false)}
         />
-        <PanelEditor />
+        <ErrorBoundary>
+          <PanelEditor />
+        </ErrorBoundary>
         <CommandPalette />
         <Toaster theme={themeMode} position="bottom-left" />
       </PersesProviders>
