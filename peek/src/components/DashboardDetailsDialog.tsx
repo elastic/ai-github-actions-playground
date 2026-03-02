@@ -49,11 +49,10 @@ function DashboardDetailsForm({
 
   const handleAddTag = useCallback(() => {
     const trimmed = tagInput.trim();
-    if (trimmed && !localTags.includes(trimmed)) {
-      setLocalTags((prev) => [...prev, trimmed]);
-    }
+    if (!trimmed) return;
+    setLocalTags((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
     setTagInput("");
-  }, [tagInput, localTags]);
+  }, [tagInput]);
 
   const handleRemoveTag = useCallback((tag: string) => {
     setLocalTags((prev) => prev.filter((t) => t !== tag));
