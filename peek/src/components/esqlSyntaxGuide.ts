@@ -459,3 +459,44 @@ FROM <index-pattern>                          // Source: what data to read
 - Auto-sized time buckets: BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)
 - Dashboard variables: Use ?variable_name for single-value controls and ??variable_name for field/function controls.
 `.trim();
+
+/**
+ * Slim field reference injected into the annotation overlay system prompt.
+ * Gives the model enough domain context to produce accurate plain-language
+ * descriptions of observability queries without the cost of the full guide.
+ */
+export const ESQL_ANNOTATION_CONTEXT = `
+## Elastic Observability Field Reference
+
+### Index Patterns → Signal Type
+logs-*, logs-*.otel-*, filebeat-* → log events
+metrics-*, metrics-*.otel-*, metricbeat-* → infrastructure metrics
+traces-apm*, traces-*.otel-* → APM traces and spans
+
+### Common Fields
+@timestamp — event time
+service.name — application/service name
+host.name — hostname
+log.level — debug | info | warn | error | fatal
+message — log message body
+error.message — error description
+error.type — exception class
+
+### Metric Fields (units matter)
+system.cpu.total.norm.pct — CPU usage, 0–1 (multiply by 100 for %)
+system.memory.used.pct — memory usage, 0–1
+system.memory.used.bytes — memory in bytes
+system.network.in.bytes / system.network.out.bytes — network throughput in bytes
+system.load.1 / .5 / .15 — 1/5/15-min load averages
+
+### Trace/Span Fields
+transaction.duration.us — transaction duration in **microseconds** (÷1000 = ms)
+span.duration.us — span duration in **microseconds**
+transaction.name — e.g. "GET /api/users"
+transaction.type — request | messaging | etc.
+span.type — db | external | cache | etc.
+span.subtype — postgresql | redis | http | etc.
+http.response.status_code — HTTP status integer
+db.statement — database query text
+trace.id / span.id — correlation IDs
+`.trim();
