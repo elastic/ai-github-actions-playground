@@ -211,9 +211,14 @@ export default function DimensionSidebar({
                   disablePadding
                   secondaryAction={
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Tooltip title="Group by this field">
+                      <Tooltip title={isGroupBy ? "Remove grouping" : "Group by this field"}>
                         <IconButton
                           size="small"
+                          aria-label={
+                            isGroupBy
+                              ? `Remove grouping by ${field.name}`
+                              : `Group by ${field.name}`
+                          }
                           onClick={(e) => {
                             e.stopPropagation();
                             onSetGroupBy(isGroupBy ? null : field.name);
@@ -224,11 +229,23 @@ export default function DimensionSidebar({
                           <GroupWorkIcon sx={{ fontSize: 14 }} />
                         </IconButton>
                       </Tooltip>
-                      {state?.expanded ? (
-                        <ExpandLessIcon sx={{ fontSize: 16 }} />
-                      ) : (
-                        <ExpandMoreIcon sx={{ fontSize: 16 }} />
-                      )}
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        aria-label={`${state?.expanded ? "Collapse" : "Expand"} ${field.name}`}
+                        aria-expanded={!!state?.expanded}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleToggleExpand(field.name);
+                        }}
+                        sx={{ p: 0.5 }}
+                      >
+                        {state?.expanded ? (
+                          <ExpandLessIcon sx={{ fontSize: 16 }} />
+                        ) : (
+                          <ExpandMoreIcon sx={{ fontSize: 16 }} />
+                        )}
+                      </IconButton>
                     </Box>
                   }
                 >

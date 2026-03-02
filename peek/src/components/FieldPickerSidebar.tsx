@@ -221,6 +221,7 @@ export default function FieldPickerSidebar({
             return (
               <Box key={col.name}>
                 <ListItem
+                  component="div"
                   disablePadding
                   secondaryAction={
                     <IconButton
