@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 
 import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -15,7 +16,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <HashRouter>
-        <App />
+        <NuqsAdapter>
+          <App />
+        </NuqsAdapter>
       </HashRouter>
     </ErrorBoundary>
   </React.StrictMode>,

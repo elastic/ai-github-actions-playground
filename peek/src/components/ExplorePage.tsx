@@ -22,7 +22,7 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
-import { createLoader, createSerializer, parseAsString, parseAsStringEnum } from "nuqs";
+import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
@@ -66,10 +66,6 @@ const exploreSearchUrlKeys = {
   selectedMetric: "metric",
   aggregation: "agg",
 };
-const loadExplorerSearch = createLoader(explorerSearchParsers, { urlKeys: exploreSearchUrlKeys });
-const serializeExplorerSearch = createSerializer(explorerSearchParsers, {
-  urlKeys: exploreSearchUrlKeys,
-});
 
 function isExplorerFilterOp(value: string): value is ExplorerFilter["op"] {
   return VALID_FILTER_OPS.has(value as ExplorerFilter["op"]);
@@ -131,8 +127,12 @@ export default function ExplorePage() {
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
+    urlKeys: exploreSearchUrlKeys,
+    history: "replace",
+  });
   const initialSearchRef = useRef(searchParams.toString());
-  const initialUrlStateRef = useRef(loadExplorerSearch(searchParams));
+  const initialUrlStateRef = useRef(urlState);
 
   const {
     indexPattern,
@@ -244,22 +244,18 @@ export default function ExplorePage() {
   // Sync URL state
   useEffect(() => {
     if (!hasHydratedFromUrlRef.current) return;
-    setSearchParams(
-      (prev) => {
-        const next = applyFilters(prev, filters);
-        return new URLSearchParams(
-          serializeExplorerSearch(next, {
-            indexPattern: indexPattern || null,
-            selectedMetric: selectedMetric || null,
-            aggregation,
-            groupBy: groupBy || null,
-            from: dashboard.timeRange.from,
-            to: dashboard.timeRange.to,
-          }),
-        );
-      },
-      { replace: true },
-    );
+    const syncUrlState = async () => {
+      await setUrlState({
+        indexPattern: indexPattern || null,
+        selectedMetric: selectedMetric || null,
+        aggregation,
+        groupBy: groupBy || null,
+        from: dashboard.timeRange.from,
+        to: dashboard.timeRange.to,
+      });
+      setSearchParams((prev) => applyFilters(prev, filters), { replace: true });
+    };
+    void syncUrlState();
   }, [
     indexPattern,
     selectedMetric,
@@ -267,6 +263,7 @@ export default function ExplorePage() {
     filters,
     groupBy,
     dashboard.timeRange,
+    setUrlState,
     setSearchParams,
   ]);
 

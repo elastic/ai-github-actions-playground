@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import type * as EsService from "../../src/services/es";
 import ExplorePage from "../../src/components/ExplorePage";
@@ -54,7 +55,12 @@ describe("ExplorePage", () => {
           "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01",
         ]}
       >
-        <ExplorePage />
+        <NuqsTestingAdapter
+          searchParams="?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01"
+          hasMemory
+        >
+          <ExplorePage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -80,7 +86,12 @@ describe("ExplorePage", () => {
           "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now",
         ]}
       >
-        <ExplorePage />
+        <NuqsTestingAdapter
+          searchParams="?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now"
+          hasMemory
+        >
+          <ExplorePage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
