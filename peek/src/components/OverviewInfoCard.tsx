@@ -17,6 +17,8 @@ export function OverviewInfoCard({ title, children, onClick }: OverviewInfoCardP
         height: "100%",
         p: 2,
         textAlign: "left",
+        bgcolor: "background.subtle",
+        borderColor: "border.subtle",
         ...(onClick && {
           cursor: "pointer",
           transition: "border-color 0.15s",
@@ -27,7 +29,7 @@ export function OverviewInfoCard({ title, children, onClick }: OverviewInfoCardP
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 }}
+        sx={{ letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}
         gutterBottom
         component="div"
       >

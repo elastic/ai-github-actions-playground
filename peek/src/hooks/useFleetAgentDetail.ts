@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { isElasticsearchError } from "../services/es";
 import {
   loadElasticAgentInfo,
   loadElasticAgentLogs,
@@ -10,7 +10,8 @@ import {
   type ElasticAgentMetricPoint,
 } from "../services/fleet";
 import type { DataFetchResult } from "../types/query";
-import { useConnectionStore } from "../store/useConnectionStore";
+
+import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 export interface FleetAgentDetailData {
   agentInfo: ElasticAgentInfo | null;
@@ -21,72 +22,50 @@ export interface FleetAgentDetailData {
 export function useFleetAgentDetail(agentId: string): DataFetchResult<FleetAgentDetailData> & {
   refresh: () => void;
 } {
-  const connection = useConnectionStore((s) => s.connection);
-  const [result, setResult] = useState<DataFetchResult<FleetAgentDetailData>>({ status: "idle" });
-  const inFlightRef = useRef(false);
-  const requestSeqRef = useRef(0);
+  const { connection, createQueryFn } = useEsQuery();
+  const query = useQuery({
+    queryKey: ["fleet-agent-detail", connection?.url, agentId],
+    queryFn: createQueryFn(async (client) => {
+      const [agent, agentLogs, agentMetrics] = await Promise.all([
+        loadElasticAgentInfo(client, agentId),
+        loadElasticAgentLogs(client, agentId, { size: 200 }),
+        loadElasticAgentMetrics(client, agentId, 60),
+      ]);
+      const fallbackAgent =
+        !agent && (agentLogs.length > 0 || agentMetrics.length > 0)
+          ? {
+              agentId,
+              hostname: agentId,
+              version: "unknown",
+              os: null,
+              lastSeen: agentLogs[0]?.timestamp ?? agentMetrics[0]?.timestamp ?? "",
+              logCount: agentLogs.length,
+              errorCount: agentLogs.filter((entry) => entry.level.toLowerCase() === "error").length,
+            }
+          : null;
+      return {
+        agentInfo: agent ?? fallbackAgent,
+        logs: agentLogs,
+        metrics: agentMetrics,
+      };
+    }),
+    enabled: Boolean(connection && agentId),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  useRefetchOnConnectionChange(connection, query.refetch);
 
-  const load = useCallback(
-    async (abortInFlight = true) => {
-      if (!connection || !agentId) {
-        inFlightRef.current = false;
-        setResult({ status: "idle" });
-        return;
-      }
-      if (!abortInFlight && inFlightRef.current) return;
-      const seq = ++requestSeqRef.current;
-      inFlightRef.current = true;
-      setResult({ status: "loading" });
-      try {
-        const client = new ElasticsearchClient(connection);
-        const [agent, agentLogs, agentMetrics] = await Promise.all([
-          loadElasticAgentInfo(client, agentId),
-          loadElasticAgentLogs(client, agentId, { size: 200 }),
-          loadElasticAgentMetrics(client, agentId, 60),
-        ]);
-        if (seq !== requestSeqRef.current) return;
-        const fallbackAgent =
-          !agent && (agentLogs.length > 0 || agentMetrics.length > 0)
-            ? {
-                agentId,
-                hostname: agentId,
-                version: "unknown",
-                os: null,
-                lastSeen: agentLogs[0]?.timestamp ?? agentMetrics[0]?.timestamp ?? "",
-                logCount: agentLogs.length,
-                errorCount: agentLogs.filter((entry) => entry.level.toLowerCase() === "error")
-                  .length,
-              }
-            : null;
-        setResult({
-          status: "success",
-          data: {
-            agentInfo: agent ?? fallbackAgent,
-            logs: agentLogs,
-            metrics: agentMetrics,
-          },
-        });
-      } catch (err) {
-        if (seq !== requestSeqRef.current) return;
-        setResult({
-          status: "error",
-          error: isElasticsearchError(err) ? err.message : String(err),
-        });
-      } finally {
-        if (seq === requestSeqRef.current) {
-          inFlightRef.current = false;
-        }
-      }
-    },
-    [connection, agentId],
-  );
+  const refresh = () => {
+    void query.refetch();
+  };
 
-  useEffect(() => {
-    void load();
-    return () => {
-      requestSeqRef.current++;
-    };
-  }, [load]);
-
-  return { ...result, refresh: load };
+  if (!connection || !agentId) return { status: "idle", refresh };
+  if (query.isFetching) return { status: "loading", refresh };
+  if (query.isError) {
+    const message = isElasticsearchError(query.error) ? query.error.message : String(query.error);
+    return { status: "error", error: message, refresh };
+  }
+  if (query.data) return { status: "success", data: query.data, refresh };
+  return { status: "idle", refresh };
 }
