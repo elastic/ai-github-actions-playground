@@ -146,7 +146,6 @@ export default function MetricSearch({
                   sx={{
                     height: 18,
                     fontSize: "0.65rem",
-                    "& .MuiChip-label": { px: 0.5 },
                   }}
                 />
                 <Chip
@@ -157,7 +156,6 @@ export default function MetricSearch({
                   sx={{
                     height: 18,
                     fontSize: "0.65rem",
-                    "& .MuiChip-label": { px: 0.5 },
                   }}
                 />
               </Box>

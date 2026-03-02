@@ -45,7 +45,7 @@ export default function App() {
   const handleRequestReset = () => setResetDialogOpen(true);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const dashboardTimeZone = useDashboardEditorStore((s) => s.dashboard.timeZone);
-  const isMobile = useMediaQuery("(max-width:767.95px)");
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
   const { resumeError, clearResumeError } = useSessionResume();
 

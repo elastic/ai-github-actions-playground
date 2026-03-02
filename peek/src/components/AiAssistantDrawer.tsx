@@ -71,10 +71,11 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       open={open}
       onClose={() => setOpen(false)}
       variant={isMobile ? "temporary" : "persistent"}
-      PaperProps={{
-        role: "complementary",
-        "aria-labelledby": titleId,
-        "data-ai-drawer": true,
+      slotProps={{
+        paper: {
+          role: "complementary",
+          "aria-labelledby": titleId,
+        },
       }}
       sx={{
         "& .MuiDrawer-paper": {
@@ -87,6 +88,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       }}
     >
       <Box
+        data-ai-drawer
         sx={{
           display: "flex",
           flexDirection: "column",

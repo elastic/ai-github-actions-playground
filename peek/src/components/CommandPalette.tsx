@@ -23,6 +23,7 @@ import StarIcon from "@mui/icons-material/Star";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import ChatIcon from "@mui/icons-material/Chat";
 import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
@@ -59,12 +60,21 @@ function useCommands(): Command[] {
       retestConnectionProfile: s.retestConnectionProfile,
     })),
   );
-  const { themeMode, setConnectionDialogOpen, setThemeMode, setCommandPaletteOpen } = useUIStore(
+  const {
+    themeMode,
+    setConnectionDialogOpen,
+    setThemeMode,
+    setCommandPaletteOpen,
+    aiPanelOpen,
+    setAiPanelOpen,
+  } = useUIStore(
     useShallow((s) => ({
       themeMode: s.themeMode,
       setConnectionDialogOpen: s.setConnectionDialogOpen,
       setThemeMode: s.setThemeMode,
       setCommandPaletteOpen: s.setCommandPaletteOpen,
+      aiPanelOpen: s.aiPanelOpen,
+      setAiPanelOpen: s.setAiPanelOpen,
     })),
   );
   const { queryHistory, setDiscoverQueryDraft } = useQueryStore(
@@ -127,6 +137,18 @@ function useCommands(): Command[] {
       onExecute: () => {
         setCommandPaletteOpen(false);
         setThemeMode(themeMode === "dark" ? "light" : "dark");
+      },
+    });
+
+    commands.push({
+      id: "action:ai-assistant",
+      label: "Toggle AI Assistant",
+      group: "Actions",
+      icon: <ChatIcon fontSize="small" />,
+      keywords: "ai assistant chat toggle open close",
+      onExecute: () => {
+        setCommandPaletteOpen(false);
+        setAiPanelOpen(!aiPanelOpen);
       },
     });
 
@@ -256,12 +278,14 @@ function useCommands(): Command[] {
     activeProfileId,
     location.pathname,
     themeMode,
+    aiPanelOpen,
     queryHistory,
     dashboards,
     navigate,
     setConnectionDialogOpen,
     setThemeMode,
     setCommandPaletteOpen,
+    setAiPanelOpen,
     setDiscoverQueryDraft,
     switchConnectionProfile,
     retestConnectionProfile,
@@ -305,6 +329,23 @@ export default function CommandPalette() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setOpen]);
+
+  // Global Ctrl/Cmd+Shift+A shortcut to toggle AI Assistant
+  const aiPanelOpen = useUIStore((s) => s.aiPanelOpen);
+  const setAiPanelOpen = useUIStore((s) => s.setAiPanelOpen);
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "a" && !e.repeat) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        if ((e.target as HTMLElement)?.isContentEditable) return;
+        e.preventDefault();
+        setAiPanelOpen(!aiPanelOpen);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [aiPanelOpen, setAiPanelOpen]);
 
   const handleExecute = useCallback((cmd: Command) => {
     cmd.onExecute();

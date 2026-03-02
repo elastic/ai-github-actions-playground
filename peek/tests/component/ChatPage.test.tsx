@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
+import { streamText } from "ai";
 
 import ChatPage from "../../src/components/ChatPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
@@ -20,7 +20,7 @@ vi.mock("@ai-sdk/openai", () => ({
 }));
 
 vi.mock("ai", () => ({
-  generateText: vi.fn(),
+  streamText: vi.fn(),
   tool: vi.fn((definition) => definition),
 }));
 
@@ -28,6 +28,15 @@ vi.mock("../../src/services/chatRuntime", () => ({
   buildChatRuntime: buildChatRuntimeMock,
   getChatRequestTimeoutMs: getChatRequestTimeoutMsMock,
 }));
+
+/** Create a mock streamText result with the given text content. */
+function mockStreamResult(text: string) {
+  return {
+    fullStream: (async function* () {
+      yield { type: "text-delta" as const, text };
+    })(),
+  };
+}
 
 describe("ChatPage", () => {
   beforeEach(() => {
@@ -109,7 +118,7 @@ describe("ChatPage", () => {
   it("sends a message and renders assistant reply", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
-    vi.mocked(generateText).mockResolvedValue({ text: "Assistant response" } as never);
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("Assistant response") as never);
 
     renderChat();
 
@@ -126,7 +135,7 @@ describe("ChatPage", () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
     useConnectionStore.getState().setConnection({ url: "http://localhost:9200", apiKey: "test" });
-    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("ok") as never);
 
     renderChat();
 
@@ -146,7 +155,7 @@ describe("ChatPage", () => {
     });
   });
 
-  it("passes runtime tools and systemPrompt to generateText", async () => {
+  it("passes runtime tools and systemPrompt to streamText", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
 
@@ -156,7 +165,7 @@ describe("ChatPage", () => {
       tools: mockTools,
       stopWhen: undefined,
     });
-    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("ok") as never);
 
     renderChat();
 
@@ -164,7 +173,7 @@ describe("ChatPage", () => {
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     await waitFor(() => {
-      expect(generateText).toHaveBeenCalledWith(
+      expect(streamText).toHaveBeenCalledWith(
         expect.objectContaining({
           system: "Custom system prompt",
           tools: mockTools,
@@ -173,7 +182,7 @@ describe("ChatPage", () => {
     });
   });
 
-  it("passes stopWhen from runtime to generateText", async () => {
+  it("passes stopWhen from runtime to streamText", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
 
@@ -183,7 +192,7 @@ describe("ChatPage", () => {
       tools: {},
       stopWhen: mockStopWhen,
     });
-    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("ok") as never);
 
     renderChat();
 
@@ -191,7 +200,7 @@ describe("ChatPage", () => {
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     await waitFor(() => {
-      expect(generateText).toHaveBeenCalledWith(
+      expect(streamText).toHaveBeenCalledWith(
         expect.objectContaining({
           stopWhen: mockStopWhen,
         }),
@@ -202,7 +211,13 @@ describe("ChatPage", () => {
   it("shows error alert and does not persist error text in chat bubble", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
-    vi.mocked(generateText).mockRejectedValue(new Error("API down"));
+    vi.mocked(streamText).mockReturnValue({
+      fullStream: {
+        [Symbol.asyncIterator]() {
+          return { next: () => Promise.reject(new Error("API down")) };
+        },
+      },
+    } as never);
 
     renderChat();
 
@@ -219,7 +234,7 @@ describe("ChatPage", () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
     useLLMStore.getState().setProvider("openrouter");
-    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("ok") as never);
 
     renderChat();
 
@@ -227,7 +242,7 @@ describe("ChatPage", () => {
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     await waitFor(() => {
-      expect(generateText).toHaveBeenCalledWith(
+      expect(streamText).toHaveBeenCalledWith(
         expect.objectContaining({
           model: expect.objectContaining({
             adapter: "chat",
@@ -255,7 +270,7 @@ describe("ChatPage", () => {
   it("uses timeout from getChatRequestTimeoutMs", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
-    vi.mocked(generateText).mockResolvedValue({ text: "ok" } as never);
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("ok") as never);
     getChatRequestTimeoutMsMock.mockReturnValue(30_000);
 
     renderChat();
@@ -267,6 +282,68 @@ describe("ChatPage", () => {
       expect(getChatRequestTimeoutMsMock).toHaveBeenCalledWith(
         expect.objectContaining({ apiKey: "sk-test-key" }),
       );
+    });
+  });
+
+  it("renders assistant messages as Markdown", async () => {
+    useLLMStore.getState().setApiKey("sk-test-key");
+    useLLMStore.getState().addMessage({ id: "1", role: "user", content: "Hello" });
+    useLLMStore
+      .getState()
+      .addMessage({ id: "2", role: "assistant", content: "**bold text** and `code`" });
+    renderChat();
+
+    // Markdown should render a <strong> element for bold text
+    const bold = screen.getByText("bold text");
+    expect(bold.tagName).toBe("STRONG");
+
+    // Inline code should be rendered in a <code> element
+    const code = screen.getByText("code");
+    expect(code.tagName).toBe("CODE");
+  });
+
+  it("shows tool call activity during streaming", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    let continueStream!: () => void;
+    const continueAfterToolCall = new Promise<void>((resolve) => {
+      continueStream = resolve;
+    });
+
+    // Create a stream that yields a tool-call, tool-result, then text
+    vi.mocked(streamText).mockReturnValue({
+      fullStream: (async function* () {
+        yield {
+          type: "tool-call" as const,
+          toolCallId: "tc-1",
+          toolName: "run_esql_query",
+          args: { query: "FROM metrics" },
+        };
+        await continueAfterToolCall;
+        yield {
+          type: "tool-result" as const,
+          toolCallId: "tc-1",
+          toolName: "run_esql_query",
+          output: { rowCount: 42 },
+        };
+        yield { type: "text-delta" as const, text: "Found some results" };
+      })(),
+    } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Run query");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Running query/)).toBeInTheDocument();
+    });
+
+    continueStream();
+
+    await waitFor(() => {
+      expect(screen.getByText(/42 rows/i)).toBeInTheDocument();
+      expect(screen.getByText("Found some results")).toBeInTheDocument();
     });
   });
 });

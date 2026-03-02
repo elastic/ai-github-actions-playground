@@ -110,8 +110,10 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
       anchor="right"
       open={open}
       onClose={handleClose}
-      PaperProps={{
-        sx: { width: { xs: "100%", sm: 480 }, display: "flex", flexDirection: "column" },
+      slotProps={{
+        paper: {
+          sx: { width: { xs: "100%", sm: 480 }, display: "flex", flexDirection: "column" },
+        },
       }}
     >
       {/* Header */}
