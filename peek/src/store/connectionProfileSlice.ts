@@ -25,6 +25,9 @@ import {
   ENCRYPTED_STORE_SUFFIX,
 } from "./connectionStorageAdapters";
 
+let latestSwitchRequestId = 0;
+const latestRequestIdByProfileId = new Map<string, number>();
+
 const credentialsSchema = z
   .object({
     apiKey: z.string().optional().catch(""),
@@ -142,8 +145,15 @@ export const createConnectionProfileSlice: StateCreator<
     if (!profile) {
       return { ok: false, profileName: null, message: "Connection profile not found" };
     }
+    const prevActiveProfileId = get().activeProfileId;
+    const requestId = ++latestSwitchRequestId;
+    latestRequestIdByProfileId.set(id, requestId);
+    set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
+      if (get().activeProfileId !== id || latestRequestIdByProfileId.get(id) !== requestId) {
+        return { ok: true, profileName: profile.name };
+      }
       set((s) => ({
         connection: profile.connection,
         connected: true,
@@ -161,16 +171,33 @@ export const createConnectionProfileSlice: StateCreator<
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
-      set((s) => ({
-        profileHealthMap: {
-          ...s.profileHealthMap,
-          [id]: {
-            status: "needs_attention",
-            checkedAt: new Date().toISOString(),
-            errorSummary: message,
-          },
-        },
-      }));
+      if (latestSwitchRequestId !== requestId) {
+        return { ok: false, profileName: profile.name, message };
+      }
+      set((s) => {
+        const prevStillExists =
+          prevActiveProfileId !== null &&
+          s.connectionProfiles.some((p) => p.id === prevActiveProfileId);
+        const targetStillExists = s.connectionProfiles.some((p) => p.id === id);
+        return {
+          activeProfileId:
+            s.activeProfileId === id
+              ? prevStillExists
+                ? prevActiveProfileId
+                : null
+              : s.activeProfileId,
+          profileHealthMap: targetStillExists
+            ? {
+                ...s.profileHealthMap,
+                [id]: {
+                  status: "needs_attention",
+                  checkedAt: new Date().toISOString(),
+                  errorSummary: message,
+                },
+              }
+            : s.profileHealthMap,
+        };
+      });
       return { ok: false, profileName: profile.name, message };
     }
   },
