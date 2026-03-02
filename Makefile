@@ -236,7 +236,7 @@ test-e2e:
 
 test-e2e-live:
 	@echo "Running live ES end-to-end tests..."
-	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npx playwright test tests/e2e/smoke-live-es.spec.ts --reporter=list
+	@cd $(PEEK_DIR) && ES_URL=$${ES_URL:-http://localhost:9200} npx playwright test tests/e2e/smoke-live-es.spec.ts --project=chromium --reporter=list
 
 seed-es:
 	@echo "Seeding Elasticsearch at $${ES_URL:-http://localhost:9200}..."
