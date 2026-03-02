@@ -89,10 +89,10 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       sx={{
         "& .MuiDrawer-paper": {
           top: "auto",
+          bottom: 0,
           boxSizing: "border-box",
           width: isMobile ? "min(100vw, 440px)" : AI_DRAWER_WIDTH,
           maxWidth: "100vw",
-          height: "100%",
         },
       }}
     >
