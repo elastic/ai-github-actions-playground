@@ -56,6 +56,7 @@ function summarizeError(raw: string): string {
 function TraceErrorAlerts({ errors }: { errors: (string | null)[] }) {
   const [expanded, setExpanded] = useState(false);
   const activeErrors = [...new Set(errors.filter((e): e is string => e != null))];
+  const summaries = [...new Set(activeErrors.map((error) => summarizeError(error)))];
   if (activeErrors.length === 0) return null;
 
   return (
@@ -74,7 +75,7 @@ function TraceErrorAlerts({ errors }: { errors: (string | null)[] }) {
       }
     >
       <AlertTitle>Query warning</AlertTitle>
-      {summarizeError(activeErrors[0]!)}
+      {summaries.join(" ")}
       <Collapse in={expanded}>
         <Box
           component="pre"

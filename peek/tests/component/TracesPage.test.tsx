@@ -23,11 +23,14 @@ vi.mock("../../src/components/llmCompletionExtension", () => ({
 // Collect onSuccess callbacks from each useEsqlQuery call; index 0 is the main search query
 let capturedCallbacks: Array<((data: EsqlResponse, query: string) => void) | undefined> = [];
 const mockRunQuery = vi.fn();
-let mockSearchError: string | null = null;
+let mockErrorsByHook: Array<string | null> = [];
+let esqlHookCallCount = 0;
 vi.mock("../../src/hooks/useEsqlQuery", () => ({
   useEsqlQuery: (opts: { onSuccess?: (data: EsqlResponse, query: string) => void }) => {
+    const hookIndex = esqlHookCallCount % 5;
+    esqlHookCallCount += 1;
     capturedCallbacks.push(opts.onSuccess);
-    return { runQuery: mockRunQuery, loading: false, error: mockSearchError };
+    return { runQuery: mockRunQuery, loading: false, error: mockErrorsByHook[hookIndex] ?? null };
   },
 }));
 
@@ -37,6 +40,11 @@ vi.mock("../../src/components/visualizations/TraceServiceMap", () => ({ default:
 vi.mock("../../src/components/visualizations/DriftRadarMap", () => ({ default: () => null }));
 vi.mock("../../src/components/visualizations/TimeSeriesChart", () => ({ default: () => null }));
 vi.mock("../../src/components/traces/SpanDetailDrawer", () => ({ default: () => null }));
+
+beforeEach(() => {
+  esqlHookCallCount = 0;
+  mockErrorsByHook = [];
+});
 
 function isDriftRadarQuery(query: string): boolean {
   return (
@@ -382,7 +390,6 @@ describe("TracesPage error alerts", () => {
   beforeEach(() => {
     capturedCallbacks = [];
     mockRunQuery.mockClear();
-    mockSearchError = null;
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
@@ -397,8 +404,13 @@ describe("TracesPage error alerts", () => {
   });
 
   it("shows a user-friendly warning with collapsible details when a search error occurs", async () => {
-    mockSearchError =
-      "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]";
+    mockErrorsByHook = [
+      "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]",
+      null,
+      null,
+      null,
+      null,
+    ];
 
     const user = userEvent.setup();
     render(
@@ -421,5 +433,28 @@ describe("TracesPage error alerts", () => {
     // Expanding details reveals the raw error
     await user.click(screen.getByRole("button", { name: "Show details" }));
     expect(screen.getByText(/second argument of \[COALESCE/)).toBeVisible();
+  });
+
+  it("summarizes all unique query error types", () => {
+    mockErrorsByHook = [
+      "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]",
+      "parsing_exception: mismatched input",
+      null,
+      null,
+      null,
+    ];
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByText(/A query type mismatch occurred\. Results may still be usable\./),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/The query could not be parsed\./)).toBeInTheDocument();
   });
 });
