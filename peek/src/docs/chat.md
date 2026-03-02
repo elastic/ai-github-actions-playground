@@ -16,15 +16,15 @@ Click the crosshair icon in the AI Assistant header to activate Explain Mode. Wh
 
 Chat has the following built-in tools available by default whenever an Elasticsearch connection is active:
 
-**run\_esql\_query** — Run an ES|QL query against the active Elasticsearch connection and return bounded results. Queries are subject to enforced timeouts and truncated result payloads before data is returned to the model.
+**run_esql_query** — Run an ES|QL query against the active Elasticsearch connection and return bounded results. Queries are subject to enforced timeouts and truncated result payloads before data is returned to the model.
 
-**get\_screen\_context** — Get a snapshot of what the user currently sees, including the current page, panels, queries, time range, filters, and visible data summaries. The assistant uses this to give context-aware answers.
+**get_screen_context** — Get a snapshot of what the user currently sees, including the current page, panels, queries, time range, filters, and visible data summaries. The assistant uses this to give context-aware answers.
 
-**navigate\_to\_page** — Navigate to a page in the Elastic Peek app. Use this when asking the assistant to go to a specific page such as Metrics, Traces, or Query Lab.
+**navigate_to_page** — Navigate to a page in the Elastic Peek app. Use this when asking the assistant to go to a specific page such as Metrics, Traces, or Query Lab.
 
-**set\_query\_lab\_query** — Set an ES|QL query in the Query Lab editor. This sets the draft query but does not execute it — the user can review and run it manually. The assistant also navigates to the Query Lab page after setting the query.
+**set_query_lab_query** — Set an ES|QL query in the Query Lab editor. This sets the draft query but does not execute it — the user can review and run it manually. The assistant also navigates to the Query Lab page after setting the query.
 
-**set\_time\_range** — Set the active time range on the current dashboard using date-math expressions (e.g. `now-15m`, `now-1h`, `now`).
+**set_time_range** — Set the active time range on the current dashboard using date-math expressions (e.g. `now-15m`, `now-1h`, `now`).
 
 ## Elastic Docs search
 
