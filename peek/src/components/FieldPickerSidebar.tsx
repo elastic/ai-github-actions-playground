@@ -10,6 +10,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -219,53 +220,59 @@ export default function FieldPickerSidebar({
             const isExpanded = expandedInsight === col.name;
             return (
               <Box key={col.name}>
-                <ListItemButton
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    py: 0.5,
-                    px: 0.5,
-                  }}
-                  onClick={() => onToggleField(col.name)}
-                >
-                  <Checkbox
-                    size="small"
-                    checked={selectedFields.has(col.name)}
-                    onChange={() => onToggleField(col.name)}
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{ p: 0.5 }}
-                  />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="caption" noWrap display="block" title={col.name}>
-                      {col.name}
-                    </Typography>
-                    <Chip
-                      label={col.type}
+                <ListItem
+                  disablePadding
+                  secondaryAction={
+                    <IconButton
                       size="small"
-                      color={getTypeColor(col.type)}
-                      sx={{
-                        height: 14,
-                        fontSize: "0.6rem",
-                        "& .MuiChip-label": { px: 0.5 },
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} insights for ${col.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleInsight(col.name, col.type);
                       }}
-                    />
-                  </Box>
-                  <IconButton
-                    size="small"
-                    aria-label={`${isExpanded ? "Collapse" : "Expand"} insights for ${col.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleInsight(col.name, col.type);
+                      sx={{ p: 0.5 }}
+                    >
+                      {isExpanded ? (
+                        <ExpandLessIcon sx={{ fontSize: 16 }} />
+                      ) : (
+                        <ExpandMoreIcon sx={{ fontSize: 16 }} />
+                      )}
+                    </IconButton>
+                  }
+                >
+                  <ListItemButton
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      py: 0.5,
+                      px: 0.5,
                     }}
-                    sx={{ p: 0.5 }}
+                    onClick={() => onToggleField(col.name)}
                   >
-                    {isExpanded ? (
-                      <ExpandLessIcon sx={{ fontSize: 16 }} />
-                    ) : (
-                      <ExpandMoreIcon sx={{ fontSize: 16 }} />
-                    )}
-                  </IconButton>
-                </ListItemButton>
+                    <Checkbox
+                      size="small"
+                      checked={selectedFields.has(col.name)}
+                      onChange={() => onToggleField(col.name)}
+                      onClick={(e) => e.stopPropagation()}
+                      sx={{ p: 0.5 }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="caption" noWrap display="block" title={col.name}>
+                        {col.name}
+                      </Typography>
+                      <Chip
+                        label={col.type}
+                        size="small"
+                        color={getTypeColor(col.type)}
+                        sx={{
+                          height: 14,
+                          fontSize: "0.6rem",
+                          "& .MuiChip-label": { px: 0.5 },
+                        }}
+                      />
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
                 <Collapse in={isExpanded}>
                   <Box sx={{ py: 1, px: 1.5, bgcolor: "action.hover" }}>
                     {insight?.loading && (

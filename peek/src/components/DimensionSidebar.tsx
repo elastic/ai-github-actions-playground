@@ -206,46 +206,54 @@ export default function DimensionSidebar({
             const state = dimensionStates[field.name];
             const isGroupBy = groupBy === field.name;
             return (
-              <ListItem key={field.name} disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  selected={isGroupBy}
-                  onClick={() => handleToggleExpand(field.name)}
-                  sx={{ py: 0.5, px: 1 }}
+              <li key={field.name}>
+                <ListItem
+                  disablePadding
+                  secondaryAction={
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Tooltip title="Group by this field">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSetGroupBy(isGroupBy ? null : field.name);
+                          }}
+                          color={isGroupBy ? "primary" : "default"}
+                          sx={{ p: 0.25 }}
+                        >
+                          <GroupWorkIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
+                      {state?.expanded ? (
+                        <ExpandLessIcon sx={{ fontSize: 16 }} />
+                      ) : (
+                        <ExpandMoreIcon sx={{ fontSize: 16 }} />
+                      )}
+                    </Box>
+                  }
                 >
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="caption" noWrap display="block" title={field.name}>
-                      {field.name}
-                    </Typography>
-                    <Chip
-                      label={field.type}
-                      size="small"
-                      color="default"
-                      sx={{
-                        height: 14,
-                        fontSize: "0.6rem",
-                        "& .MuiChip-label": { px: 0.5 },
-                      }}
-                    />
-                  </Box>
-                  <Tooltip title="Group by this field">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSetGroupBy(isGroupBy ? null : field.name);
-                      }}
-                      color={isGroupBy ? "primary" : "default"}
-                      sx={{ p: 0.25 }}
-                    >
-                      <GroupWorkIcon sx={{ fontSize: 14 }} />
-                    </IconButton>
-                  </Tooltip>
-                  {state?.expanded ? (
-                    <ExpandLessIcon sx={{ fontSize: 16 }} />
-                  ) : (
-                    <ExpandMoreIcon sx={{ fontSize: 16 }} />
-                  )}
-                </ListItemButton>
+                  <ListItemButton
+                    selected={isGroupBy}
+                    onClick={() => handleToggleExpand(field.name)}
+                    sx={{ py: 0.5, px: 1 }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="caption" noWrap display="block" title={field.name}>
+                        {field.name}
+                      </Typography>
+                      <Chip
+                        label={field.type}
+                        size="small"
+                        color="default"
+                        sx={{
+                          height: 14,
+                          fontSize: "0.6rem",
+                          "& .MuiChip-label": { px: 0.5 },
+                        }}
+                      />
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
                 <Collapse in={state?.expanded ?? false}>
                   {state?.loading ? (
                     <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
@@ -303,7 +311,7 @@ export default function DimensionSidebar({
                     </Typography>
                   )}
                 </Collapse>
-              </ListItem>
+              </li>
             );
           })}
         </List>
