@@ -460,9 +460,31 @@ describe("Fleet pages", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/However, 750 agents found via Elastic Agent logs\./),
+        screen.getByText(
+          /750 agents found via Elastic Agent logs; switch to the Agents tab to view them\./,
+        ),
       ).toBeInTheDocument();
     });
+  });
+
+  it("keeps last updated unset when all Fleet sources fail", async () => {
+    rawRequestMock.mockResolvedValue({
+      status: 403,
+      body: { error: { reason: "forbidden by role" } },
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Error: .*forbidden by role/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Last updated:\s*—/)).toBeInTheDocument();
   });
 
   it("surfaces non-404 Fleet search failures as partial warnings", async () => {
