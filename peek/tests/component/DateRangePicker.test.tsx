@@ -33,6 +33,8 @@ describe("DateRangePicker", () => {
     render(<DateRangePicker value={defaultRange} onChange={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /time range:/i }));
 
+    await user.clear(screen.getByLabelText("To"));
+    await user.type(screen.getByLabelText("To"), "2026-02-28T11:00");
     await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-02-28T12:00");
 
@@ -45,6 +47,8 @@ describe("DateRangePicker", () => {
     render(<DateRangePicker value={defaultRange} onChange={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /time range:/i }));
 
+    await user.clear(screen.getByLabelText("To"));
+    await user.type(screen.getByLabelText("To"), "2026-02-28T11:00");
     await user.clear(screen.getByLabelText("From"));
     await user.type(screen.getByLabelText("From"), "2026-02-28T11:00");
 
