@@ -28,13 +28,13 @@ import {
 let latestSwitchRequestId = 0;
 const latestRequestIdByProfileId = new Map<string, number>();
 const latestRetestIdByProfileId = new Map<string, number>();
-const latestProfileHealthSeq = new Map<string, number>();
+const latestProfileHealthSeqById = new Map<string, number>();
 
 export const clearConnectionProfileRequestTracking = () => {
   latestSwitchRequestId = 0;
   latestRequestIdByProfileId.clear();
   latestRetestIdByProfileId.clear();
-  latestProfileHealthSeq.clear();
+  latestProfileHealthSeqById.clear();
 };
 
 const credentialsSchema = z
@@ -98,7 +98,7 @@ export const createConnectionProfileSlice: StateCreator<
     set((s) => {
       latestRequestIdByProfileId.delete(id);
       latestRetestIdByProfileId.delete(id);
-      latestProfileHealthSeq.delete(id);
+      latestProfileHealthSeqById.delete(id);
       if (isElectronAvailable()) {
         // Fire-and-forget: credential deletion is async but UI update is sync.
         // Errors are logged but do not block the profile removal.
@@ -160,8 +160,8 @@ export const createConnectionProfileSlice: StateCreator<
     const prevActiveProfileId = get().activeProfileId;
     const requestId = ++latestSwitchRequestId;
     latestRequestIdByProfileId.set(id, requestId);
-    const healthSeq = (latestProfileHealthSeq.get(id) ?? 0) + 1;
-    latestProfileHealthSeq.set(id, healthSeq);
+    const healthSeq = (latestProfileHealthSeqById.get(id) ?? 0) + 1;
+    latestProfileHealthSeqById.set(id, healthSeq);
     set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
@@ -201,7 +201,7 @@ export const createConnectionProfileSlice: StateCreator<
                 : null
               : s.activeProfileId,
           profileHealthMap:
-            targetStillExists && latestProfileHealthSeq.get(id) === healthSeq
+            targetStillExists && latestProfileHealthSeqById.get(id) === healthSeq
               ? {
                   ...s.profileHealthMap,
                   [id]: {
@@ -224,13 +224,13 @@ export const createConnectionProfileSlice: StateCreator<
     }
     const retestId = (latestRetestIdByProfileId.get(id) ?? 0) + 1;
     latestRetestIdByProfileId.set(id, retestId);
-    const healthSeq = (latestProfileHealthSeq.get(id) ?? 0) + 1;
-    latestProfileHealthSeq.set(id, healthSeq);
+    const healthSeq = (latestProfileHealthSeqById.get(id) ?? 0) + 1;
+    latestProfileHealthSeqById.set(id, healthSeq);
     try {
       await fetchCapabilitiesForConnection(profile.connection);
       if (
         latestRetestIdByProfileId.get(id) !== retestId ||
-        latestProfileHealthSeq.get(id) !== healthSeq
+        latestProfileHealthSeqById.get(id) !== healthSeq
       ) {
         return { ok: true, profileName: profile.name };
       }
@@ -249,7 +249,7 @@ export const createConnectionProfileSlice: StateCreator<
       const message = isElasticsearchError(err) ? err.message : String(err);
       if (
         latestRetestIdByProfileId.get(id) !== retestId ||
-        latestProfileHealthSeq.get(id) !== healthSeq
+        latestProfileHealthSeqById.get(id) !== healthSeq
       ) {
         return { ok: false, profileName: profile.name, message };
       }
