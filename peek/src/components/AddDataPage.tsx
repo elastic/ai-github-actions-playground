@@ -222,7 +222,7 @@ export default function AddDataPage() {
                 : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
           </Alert>
         )}
-        {endpointType === "managed_otlp" && !derivedOtlpUrl && (
+        {endpointType === "managed_otlp" && !probeTargetOtlpUrl && (
           <Alert severity="info">
             Enter your managed OTLP endpoint. For Elastic Cloud, it follows the pattern
             https://&lt;id&gt;.ingest.&lt;region&gt;.&lt;provider&gt;.elastic.cloud
