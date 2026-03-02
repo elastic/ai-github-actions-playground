@@ -465,7 +465,7 @@ export default function DiscoverPage() {
             <EmptyState
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
-              description="Write an ES|QL query above and press Ctrl+Enter to run it."
+              description="Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
             />
           )}
           {loading && !result && (
