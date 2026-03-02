@@ -30,6 +30,7 @@ export {
   buildDimensionOverviewQuery,
   getDefaultAggregation,
   getAggregationOptions,
+  EXPLORER_AGGREGATIONS,
 } from "./queryBuilder";
 export type {
   MetricType,

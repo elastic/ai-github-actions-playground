@@ -22,6 +22,7 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
+import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
@@ -29,17 +30,14 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
-import {
-  useExplorerStore,
-  serializeExplorerState,
-  deserializeExplorerState,
-} from "../store/useExplorerStore";
+import { useExplorerStore } from "../store/useExplorerStore";
 import {
   ElasticsearchClient,
   isElasticsearchError,
   listFields,
   buildExplorerQuery,
   getAggregationOptions,
+  EXPLORER_AGGREGATIONS,
 } from "../services/es";
 import type { AggregationType, FieldInfo, ExplorerFilter } from "../services/es";
 import { buildTimeParams } from "../services/datemath";
@@ -52,6 +50,59 @@ import DimensionSidebar from "./DimensionSidebar";
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
+
+const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(["==", "!=", "LIKE"]);
+const parseAggregation = parseAsStringEnum<AggregationType>([...EXPLORER_AGGREGATIONS]);
+const explorerSearchParsers = {
+  indexPattern: parseAsString,
+  selectedMetric: parseAsString,
+  aggregation: parseAggregation,
+  groupBy: parseAsString,
+  from: parseAsString,
+  to: parseAsString,
+};
+const exploreSearchUrlKeys = {
+  indexPattern: "index",
+  selectedMetric: "metric",
+  aggregation: "agg",
+};
+
+function isExplorerFilterOp(value: string): value is ExplorerFilter["op"] {
+  return VALID_FILTER_OPS.has(value as ExplorerFilter["op"]);
+}
+
+function parseFilters(search: string): ExplorerFilter[] {
+  const params = new URLSearchParams(search);
+  const parsedFilters: ExplorerFilter[] = [];
+  for (const [key, value] of params.entries()) {
+    if (!key.startsWith("filter.")) continue;
+    const field = key.slice("filter.".length).trim();
+    if (!field) continue;
+    const colonIdx = value.indexOf(":");
+    if (colonIdx <= 0) continue;
+    const op = value.slice(0, colonIdx);
+    if (!isExplorerFilterOp(op)) continue;
+    parsedFilters.push({ field, op, value: value.slice(colonIdx + 1) });
+  }
+  return parsedFilters;
+}
+
+function applyFilters(
+  searchParams: URLSearchParams,
+  nextFilters: ExplorerFilter[],
+): URLSearchParams {
+  const next = new URLSearchParams(searchParams);
+  const filterKeys = Array.from(next.keys()).filter((key) => key.startsWith("filter."));
+  for (const key of filterKeys) {
+    next.delete(key);
+  }
+  for (const filter of nextFilters) {
+    const field = filter.field.trim();
+    if (!field || !VALID_FILTER_OPS.has(filter.op)) continue;
+    next.append(`filter.${field}`, `${filter.op}:${filter.value}`);
+  }
+  return next;
+}
 
 function metricNamespaceOf(metricName: string): string {
   const dot = metricName.indexOf(".");
@@ -76,7 +127,12 @@ export default function ExplorePage() {
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
+    urlKeys: exploreSearchUrlKeys,
+    history: "replace",
+  });
   const initialSearchRef = useRef(searchParams.toString());
+  const initialUrlStateRef = useRef(urlState);
 
   const {
     indexPattern,
@@ -128,6 +184,7 @@ export default function ExplorePage() {
 
   const abortRef = useRef<AbortController | null>(null);
   const hasHydratedFromUrlRef = useRef(false);
+  const skipInitialUrlSyncRef = useRef(true);
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -153,26 +210,26 @@ export default function ExplorePage() {
 
   // Restore explorer state from URL on first mount.
   useEffect(() => {
-    const restored = deserializeExplorerState(initialSearchRef.current);
-    if (restored.indexPattern) {
-      setIndexPattern(restored.indexPattern);
+    const initialUrlState = initialUrlStateRef.current;
+    if (initialUrlState.indexPattern) {
+      setIndexPattern(initialUrlState.indexPattern);
     }
-    if (restored.metric) {
-      setSelectedMetric(restored.metric);
-      setSelectedNamespace(metricNamespaceOf(restored.metric));
+    if (initialUrlState.selectedMetric) {
+      setSelectedMetric(initialUrlState.selectedMetric);
+      setSelectedNamespace(metricNamespaceOf(initialUrlState.selectedMetric));
     }
-    if (restored.aggregation) {
-      setAggregation(restored.aggregation);
+    if (initialUrlState.aggregation) {
+      setAggregation(initialUrlState.aggregation);
     }
-    if (restored.groupBy) {
-      setGroupBy(restored.groupBy);
+    if (initialUrlState.groupBy) {
+      setGroupBy(initialUrlState.groupBy);
     }
     clearFilters();
-    for (const filter of restored.filters) {
+    for (const filter of parseFilters(initialSearchRef.current)) {
       addFilter(filter);
     }
-    if (restored.from && restored.to) {
-      setTimeRange({ from: restored.from, to: restored.to });
+    if (initialUrlState.from && initialUrlState.to) {
+      setTimeRange({ from: initialUrlState.from, to: initialUrlState.to });
     }
     hasHydratedFromUrlRef.current = true;
   }, [
@@ -188,9 +245,27 @@ export default function ExplorePage() {
   // Sync URL state
   useEffect(() => {
     if (!hasHydratedFromUrlRef.current) return;
-    const state = { indexPattern, selectedMetric, aggregation, filters, groupBy };
-    const qs = serializeExplorerState(state, dashboard.timeRange);
-    setSearchParams(qs, { replace: true });
+    if (skipInitialUrlSyncRef.current) {
+      skipInitialUrlSyncRef.current = false;
+      return;
+    }
+    let cancelled = false;
+    const syncUrlState = async () => {
+      await setUrlState({
+        indexPattern: indexPattern || null,
+        selectedMetric: selectedMetric || null,
+        aggregation,
+        groupBy: groupBy || null,
+        from: dashboard.timeRange.from,
+        to: dashboard.timeRange.to,
+      });
+      if (cancelled) return;
+      setSearchParams((prev) => applyFilters(prev, filters), { replace: true });
+    };
+    void syncUrlState();
+    return () => {
+      cancelled = true;
+    };
   }, [
     indexPattern,
     selectedMetric,
@@ -198,6 +273,7 @@ export default function ExplorePage() {
     filters,
     groupBy,
     dashboard.timeRange,
+    setUrlState,
     setSearchParams,
   ]);
 

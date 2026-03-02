@@ -1,22 +1,6 @@
 import { create } from "zustand";
 
-import type { TimeRange } from "../types";
 import type { AggregationType, ExplorerFilter, FieldInfo, MetricType } from "../services/es";
-
-const VALID_AGGREGATIONS: AggregationType[] = [
-  "avg",
-  "sum",
-  "min",
-  "max",
-  "count",
-  "p50",
-  "p95",
-  "p99",
-];
-
-function isAggregationType(value: string | null): value is AggregationType {
-  return value !== null && VALID_AGGREGATIONS.includes(value as AggregationType);
-}
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -57,67 +41,6 @@ export interface ExplorerState {
   setQueryResult: (result: ExplorerState["queryResult"]) => void;
   setShowEsql: (show: boolean) => void;
   reset: () => void;
-}
-
-// ---------------------------------------------------------------------------
-// URL state serialization
-// ---------------------------------------------------------------------------
-
-export function serializeExplorerState(
-  state: Pick<
-    ExplorerState,
-    "indexPattern" | "selectedMetric" | "aggregation" | "filters" | "groupBy"
-  >,
-  timeRange: TimeRange,
-): string {
-  const params = new URLSearchParams();
-  if (state.indexPattern) params.set("index", state.indexPattern);
-  if (state.selectedMetric) params.set("metric", state.selectedMetric);
-  if (state.aggregation) params.set("agg", state.aggregation);
-  if (state.groupBy) params.set("groupBy", state.groupBy);
-  params.set("from", timeRange.from);
-  params.set("to", timeRange.to);
-  for (const f of state.filters) {
-    params.append(`filter.${f.field}`, `${f.op}:${f.value}`);
-  }
-  return params.toString();
-}
-
-export function deserializeExplorerState(search: string): {
-  indexPattern?: string;
-  metric?: string;
-  aggregation?: AggregationType;
-  groupBy?: string;
-  filters: ExplorerFilter[];
-  from?: string;
-  to?: string;
-} {
-  const params = new URLSearchParams(search);
-  const rawAgg = params.get("agg");
-  const filters: ExplorerFilter[] = [];
-  for (const [key, value] of params.entries()) {
-    if (key.startsWith("filter.")) {
-      const field = key.slice("filter.".length);
-      const colonIdx = value.indexOf(":");
-      if (colonIdx > 0) {
-        const op = value.slice(0, colonIdx) as ExplorerFilter["op"];
-        const val = value.slice(colonIdx + 1);
-        if (op === "==" || op === "!=" || op === "LIKE") {
-          filters.push({ field, op, value: val });
-        }
-      }
-    }
-  }
-
-  return {
-    indexPattern: params.get("index") ?? undefined,
-    metric: params.get("metric") ?? undefined,
-    aggregation: isAggregationType(rawAgg) ? rawAgg : undefined,
-    groupBy: params.get("groupBy") ?? undefined,
-    filters,
-    from: params.get("from") ?? undefined,
-    to: params.get("to") ?? undefined,
-  };
 }
 
 // ---------------------------------------------------------------------------

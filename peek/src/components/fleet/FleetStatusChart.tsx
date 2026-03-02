@@ -49,5 +49,5 @@ export default function FleetStatusChart({ status }: Props) {
     };
   }, [status, theme]);
 
-  return <EChartWrapper option={option} style={{ width: "100%", height: "100%" }} />;
+  return <EChartWrapper option={option} sx={{ width: "100%", height: "100%" }} />;
 }
