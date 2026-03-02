@@ -36,8 +36,7 @@ describe("buildDetailedScreenContext", () => {
     expect(ctx.queryLab!.lastQuery).toBe("FROM logs-* | SORT @timestamp | LIMIT 50");
   });
 
-  it("omits query lab when no draft and default session query", () => {
-    // Default session query always exists, so queryLab is always populated
+  it("includes query lab when default session query exists (even without draft)", () => {
     const ctx = buildDetailedScreenContext("/discover");
     expect(ctx.queryLab).toBeDefined();
   });
@@ -90,37 +89,33 @@ describe("buildDetailedScreenContext", () => {
 
   it("includes dashboard context when an active dashboard exists", () => {
     const state = useDashboardStore.getState();
-    // The default state should have an active dashboard
     const dash = state.dashboards.find((d) => d.id === state.activeDashboardId);
-    if (dash) {
-      const ctx = buildDetailedScreenContext("/dashboards");
-      expect(ctx.dashboard).toBeDefined();
-      expect(ctx.dashboard!.title).toBe(dash.title);
-    }
+    expect(dash).toBeDefined();
+    const ctx = buildDetailedScreenContext("/dashboards");
+    expect(ctx.dashboard).toBeDefined();
+    expect(ctx.dashboard!.title).toBe(dash!.title);
   });
 
   it("includes panel queries when include_data is true", () => {
     const state = useDashboardStore.getState();
     const dash = state.dashboards.find((d) => d.id === state.activeDashboardId);
-    if (dash && dash.panels.length > 0) {
-      const ctx = buildDetailedScreenContext("/dashboards", true);
-      expect(ctx.dashboard).toBeDefined();
-      // When include_data is true, panel queries should be present
-      const panelWithQuery = ctx.dashboard!.panels.find((p) => p.query);
-      expect(panelWithQuery).toBeDefined();
-    }
+    expect(dash).toBeDefined();
+    expect(dash!.panels.length).toBeGreaterThan(0);
+    const ctx = buildDetailedScreenContext("/dashboards", true);
+    expect(ctx.dashboard).toBeDefined();
+    const panelWithQuery = ctx.dashboard!.panels.find((p) => p.query);
+    expect(panelWithQuery).toBeDefined();
   });
 
   it("omits panel queries when include_data is false", () => {
     const state = useDashboardStore.getState();
     const dash = state.dashboards.find((d) => d.id === state.activeDashboardId);
-    if (dash && dash.panels.length > 0) {
-      const ctx = buildDetailedScreenContext("/dashboards", false);
-      expect(ctx.dashboard).toBeDefined();
-      // When include_data is false, panel queries should be undefined
-      for (const panel of ctx.dashboard!.panels) {
-        expect(panel.query).toBeUndefined();
-      }
+    expect(dash).toBeDefined();
+    expect(dash!.panels.length).toBeGreaterThan(0);
+    const ctx = buildDetailedScreenContext("/dashboards", false);
+    expect(ctx.dashboard).toBeDefined();
+    for (const panel of ctx.dashboard!.panels) {
+      expect(panel.query).toBeUndefined();
     }
   });
 

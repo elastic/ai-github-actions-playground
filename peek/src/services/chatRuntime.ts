@@ -164,7 +164,7 @@ const NAVIGABLE_PAGES = Object.entries(PAGE_MANIFEST)
   .filter(([, config]) => !config.path.includes(":"))
   .map(([key]) => key) as [PageId, ...PageId[]];
 
-function getScreenContextTool(pathname: string): ToolSet {
+function getScreenContextTool(getPathname: () => string): ToolSet {
   return {
     get_screen_context: tool({
       description:
@@ -175,7 +175,7 @@ function getScreenContextTool(pathname: string): ToolSet {
           .optional()
           .describe("When true, includes panel queries and result summaries."),
       }),
-      execute: async ({ include_data }) => buildDetailedScreenContext(pathname, include_data),
+      execute: async ({ include_data }) => buildDetailedScreenContext(getPathname(), include_data),
     }),
   };
 }
@@ -258,7 +258,7 @@ export async function buildChatRuntime({
 }> {
   const tools: ToolSet = {
     ...getLocalChatTools(connection),
-    ...getScreenContextTool(pathname),
+    ...getScreenContextTool(() => window.location.pathname),
     ...getBrowserControlTools(navigate),
   };
   const mcpInstructions: string[] = [];

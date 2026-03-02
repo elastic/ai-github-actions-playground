@@ -28,7 +28,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
   const setExplainModeActive = useUIStore((s) => s.setExplainModeActive);
   const clearMessages = useLLMStore((s) => s.clearMessages);
   const hasMessages = useLLMStore((s) => s.messages.length > 0);
-  const addMessage = useLLMStore((s) => s.addMessage);
+  const setPendingPrompt = useLLMStore((s) => s.setPendingPrompt);
 
   const handleExplainClick = useCallback(
     (e: MouseEvent) => {
@@ -41,16 +41,12 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       e.stopPropagation();
 
       const context = serializeClickedElement(target);
-      addMessage({
-        id: crypto.randomUUID(),
-        role: "user",
-        content: `Explain this element: ${context}`,
-      });
+      setPendingPrompt(`Explain this element: ${context}`);
 
       // Single-shot: deactivate after one click
       setExplainModeActive(false);
     },
-    [addMessage, setExplainModeActive],
+    [setPendingPrompt, setExplainModeActive],
   );
 
   useEffect(() => {

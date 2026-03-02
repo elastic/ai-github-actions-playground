@@ -22,6 +22,8 @@ describe("buildChatRuntime — new tools", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    // Set location so get_screen_context reads the correct pathname
+    window.history.pushState({}, "", "/discover");
   });
 
   it("includes get_screen_context tool", async () => {
@@ -58,13 +60,15 @@ describe("buildChatRuntime — new tools", () => {
     expect(tools).toHaveProperty("navigate_to_page");
   });
 
-  it("does not include navigate_to_page when navigate is not provided", async () => {
+  it("does not include browser control tools when navigate is not provided", async () => {
     const { tools } = await buildChatRuntime({
       config: defaultConfig,
       connection: null,
       pathname: "/discover",
     });
     expect(tools).not.toHaveProperty("navigate_to_page");
+    expect(tools).not.toHaveProperty("set_query_lab_query");
+    expect(tools).not.toHaveProperty("set_time_range");
   });
 
   it("navigate_to_page calls navigate with correct path", async () => {
@@ -136,5 +140,38 @@ describe("buildChatRuntime — new tools", () => {
     expect(result).toEqual({ set: true, from: "now-1h", to: "now" });
     const dashState = useDashboardStore.getState();
     expect(dashState.dashboard.timeRange).toEqual({ from: "now-1h", to: "now" });
+  });
+
+  it("set_time_range schema rejects invalid date-math expressions", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/dashboards",
+      navigate,
+    });
+    const timeTool = tools.set_time_range as {
+      inputSchema: { parse: (v: unknown) => unknown };
+    };
+    expect(() => timeTool.inputSchema.parse({ from: "invalid!", to: "now" })).toThrow();
+    expect(() => timeTool.inputSchema.parse({ from: "now-1h", to: "garbage" })).toThrow();
+  });
+
+  it("set_time_range schema accepts date-math and ISO dates", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/dashboards",
+      navigate,
+    });
+    const timeTool = tools.set_time_range as {
+      inputSchema: { parse: (v: unknown) => unknown };
+    };
+    expect(() => timeTool.inputSchema.parse({ from: "now-1h", to: "now" })).not.toThrow();
+    expect(() => timeTool.inputSchema.parse({ from: "now/d", to: "now" })).not.toThrow();
+    expect(() =>
+      timeTool.inputSchema.parse({ from: "2024-01-01", to: "2024-12-31" }),
+    ).not.toThrow();
   });
 });

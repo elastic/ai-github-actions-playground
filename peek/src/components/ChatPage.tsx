@@ -30,6 +30,8 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
     removeMessage,
     clearMessages,
     isConfigured,
+    pendingPrompt,
+    setPendingPrompt,
   } = useLLMStore(
     useShallow((s) => ({
       config: s.config,
@@ -39,6 +41,8 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       removeMessage: s.removeMessage,
       clearMessages: s.clearMessages,
       isConfigured: s.isConfigured,
+      pendingPrompt: s.pendingPrompt,
+      setPendingPrompt: s.setPendingPrompt,
     })),
   );
 
@@ -57,83 +61,99 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
     messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed || loading || !configured) return;
+  // Consume pending prompts (e.g. from click-to-explain)
+  const handleSendRef = useRef<(prompt: string) => void>();
 
-    setError(null);
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: trimmed,
-    };
-    addMessage(userMessage);
-    setInput("");
-
-    const assistantId = crypto.randomUUID();
-    addMessage({ id: assistantId, role: "assistant", content: "" });
-    setLoading(true);
-
-    const controller = new AbortController();
-    const timeoutMs = getChatRequestTimeoutMs(config);
-    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-      const { systemPrompt, tools, stopWhen } = await buildChatRuntime({
-        config,
-        connection,
-        pathname: location.pathname,
-        screenContextSummary,
-        signal: controller.signal,
-        navigate,
-      });
-
-      const openai = createOpenAI({
-        apiKey: config.apiKey,
-        ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
-      });
-      const model =
-        config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
-      const result = await generateText({
-        model,
-        system: systemPrompt,
-        messages: [
-          ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
-          { role: "user" as const, content: trimmed },
-        ],
-        tools,
-        ...(stopWhen ? { stopWhen } : {}),
-        abortSignal: controller.signal,
-      });
-
-      updateMessage(assistantId, result.text);
-    } catch (e) {
-      const errorMessage =
-        e instanceof DOMException && e.name === "AbortError"
-          ? "Request timed out. Please try again."
-          : e instanceof Error
-            ? e.message
-            : String(e);
-      removeMessage(assistantId);
-      setError(errorMessage);
-    } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
+  useEffect(() => {
+    if (pendingPrompt && !loading && configured) {
+      const prompt = pendingPrompt;
+      setPendingPrompt(null);
+      handleSendRef.current?.(prompt);
     }
-  }, [
-    input,
-    loading,
-    configured,
-    config,
-    messages,
-    addMessage,
-    updateMessage,
-    removeMessage,
-    connection,
-    location.pathname,
-    screenContextSummary,
-    navigate,
-  ]);
+  }, [pendingPrompt, loading, configured, setPendingPrompt]);
+
+  const handleSend = useCallback(
+    async (promptOverride?: string) => {
+      const trimmed = promptOverride?.trim() ?? input.trim();
+      if (!trimmed || loading || !configured) return;
+
+      setError(null);
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: trimmed,
+      };
+      addMessage(userMessage);
+      if (!promptOverride) setInput("");
+
+      const assistantId = crypto.randomUUID();
+      addMessage({ id: assistantId, role: "assistant", content: "" });
+      setLoading(true);
+
+      const controller = new AbortController();
+      const timeoutMs = getChatRequestTimeoutMs(config);
+      const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const { systemPrompt, tools, stopWhen } = await buildChatRuntime({
+          config,
+          connection,
+          pathname: location.pathname,
+          screenContextSummary,
+          signal: controller.signal,
+          navigate,
+        });
+
+        const openai = createOpenAI({
+          apiKey: config.apiKey,
+          ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+        });
+        const model =
+          config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
+        const result = await generateText({
+          model,
+          system: systemPrompt,
+          messages: [
+            ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+            { role: "user" as const, content: trimmed },
+          ],
+          tools,
+          ...(stopWhen ? { stopWhen } : {}),
+          abortSignal: controller.signal,
+        });
+
+        updateMessage(assistantId, result.text);
+      } catch (e) {
+        const errorMessage =
+          e instanceof DOMException && e.name === "AbortError"
+            ? "Request timed out. Please try again."
+            : e instanceof Error
+              ? e.message
+              : String(e);
+        removeMessage(assistantId);
+        setError(errorMessage);
+      } finally {
+        clearTimeout(timeoutId);
+        setLoading(false);
+      }
+    },
+    [
+      input,
+      loading,
+      configured,
+      config,
+      messages,
+      addMessage,
+      updateMessage,
+      removeMessage,
+      connection,
+      location.pathname,
+      screenContextSummary,
+      navigate,
+    ],
+  );
+
+  handleSendRef.current = handleSend;
 
   if (!configured) {
     return (

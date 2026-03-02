@@ -22,6 +22,7 @@ export interface ChatMessage {
 interface LLMState {
   config: LLMConfig;
   messages: ChatMessage[];
+  pendingPrompt: string | null;
 
   setProvider: (provider: LLMProvider) => void;
   setApiKey: (apiKey: string) => void;
@@ -34,6 +35,7 @@ interface LLMState {
   updateMessage: (id: string, content: string) => void;
   removeMessage: (id: string) => void;
   clearMessages: () => void;
+  setPendingPrompt: (prompt: string | null) => void;
   resetLLMConfig: () => void;
   resetLLMState: () => void;
 }
@@ -85,6 +87,7 @@ export const useLLMStore = create<LLMState>()(
     (set, get) => ({
       config: { ...DEFAULT_CONFIG },
       messages: [],
+      pendingPrompt: null,
 
       setProvider: (provider) =>
         set((s) => ({
@@ -115,6 +118,7 @@ export const useLLMStore = create<LLMState>()(
           messages: s.messages.filter((m) => m.id !== id),
         })),
       clearMessages: () => set({ messages: [] }),
+      setPendingPrompt: (prompt) => set({ pendingPrompt: prompt }),
       resetLLMConfig: () => {
         useLLMStore.persist.clearStorage();
         set({
@@ -126,6 +130,7 @@ export const useLLMStore = create<LLMState>()(
         set({
           config: { ...DEFAULT_CONFIG },
           messages: [],
+          pendingPrompt: null,
         });
       },
     }),
