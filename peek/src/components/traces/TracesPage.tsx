@@ -84,13 +84,12 @@ export default function TracesPage() {
   // Sync selectedTraceId with URL query parameter
   const [urlTraceId, setUrlTraceId] = useQueryState("traceId", parseAsString);
 
-  // URL → store: seed store from URL on mount
+  // URL → store: keep store in sync when URL changes (initial load + browser navigation)
   useEffect(() => {
-    if (urlTraceId && urlTraceId !== selectedTraceId) {
+    if (urlTraceId !== selectedTraceId) {
       setSelectedTraceId(urlTraceId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [urlTraceId, selectedTraceId, setSelectedTraceId]);
 
   // Store → URL: keep URL in sync when store changes
   useEffect(() => {
