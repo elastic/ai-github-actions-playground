@@ -20,6 +20,7 @@ import {
 } from "./sessionConnectionSlice";
 import {
   type ConnectionProfileSlice,
+  clearConnectionProfileRequestTracking,
   createConnectionProfileSlice,
 } from "./connectionProfileSlice";
 import {
@@ -41,6 +42,7 @@ export const useConnectionStore = create<ConnectionState>()(
       ...createConnectionProfileSlice(set, get, api),
 
       resetConnectionState: () => {
+        clearConnectionProfileRequestTracking();
         for (const profile of get().connectionProfiles) {
           localStorage.removeItem(
             CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + profile.id + ENCRYPTED_STORE_SUFFIX,
