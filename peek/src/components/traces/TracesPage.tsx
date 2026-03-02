@@ -2,6 +2,9 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Collapse from "@mui/material/Collapse";
+import Button from "@mui/material/Button";
 import { EditorView } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
@@ -33,6 +36,65 @@ import SpanDetailDrawer from "./SpanDetailDrawer";
 import TraceSearchPanel from "./TraceSearchPanel";
 import TraceDetailPanel from "./TraceDetailPanel";
 import TraceResultsView from "./TraceResultsView";
+
+/** User-facing summary for raw ES|QL / Elasticsearch parser errors. */
+function summarizeError(raw: string): string {
+  if (/second argument of \[.*\] must be \[.*\]/i.test(raw) || /type mismatch/i.test(raw)) {
+    return "A query type mismatch occurred. Results may still be usable.";
+  }
+  if (/verification_exception/i.test(raw) || /Found \d+ problem/i.test(raw)) {
+    return "The query encountered a validation issue.";
+  }
+  if (/parsing_exception/i.test(raw)) {
+    return "The query could not be parsed.";
+  }
+  return "A query error occurred.";
+}
+
+/** Renders non-blocking, collapsible error alerts for trace queries. */
+function TraceErrorAlerts({ errors }: { errors: (string | null)[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const activeErrors = [...new Set(errors.filter((e): e is string => e != null))];
+  if (activeErrors.length === 0) return null;
+
+  return (
+    <Alert
+      severity="warning"
+      sx={{ position: "relative", zIndex: 0, pointerEvents: "auto" }}
+      action={
+        <Button
+          color="inherit"
+          size="small"
+          onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
+        >
+          {expanded ? "Hide details" : "Show details"}
+        </Button>
+      }
+    >
+      <AlertTitle>Query warning</AlertTitle>
+      {summarizeError(activeErrors[0]!)}
+      <Collapse in={expanded}>
+        <Box
+          component="pre"
+          sx={{
+            maxHeight: 200,
+            overflow: "auto",
+            mt: 1,
+            p: 1,
+            borderRadius: 1,
+            bgcolor: "action.hover",
+            wordBreak: "break-word",
+            whiteSpace: "pre-wrap",
+            fontSize: "0.75rem",
+          }}
+        >
+          {activeErrors.join("\n\n")}
+        </Box>
+      </Collapse>
+    </Alert>
+  );
+}
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -358,11 +420,15 @@ export default function TracesPage() {
         searchResultCount={searchResult ? searchResult.values.length : null}
       />
 
-      {searchError && <Alert severity="error">{searchError}</Alert>}
-      {detailError && <Alert severity="error">{detailError}</Alert>}
-      {timeseriesError && <Alert severity="error">{timeseriesError}</Alert>}
-      {driftRadarError && <Alert severity="error">{driftRadarError}</Alert>}
-      {driftRadarBaselineError && <Alert severity="error">{driftRadarBaselineError}</Alert>}
+      <TraceErrorAlerts
+        errors={[
+          searchError,
+          detailError,
+          timeseriesError,
+          driftRadarError,
+          driftRadarBaselineError,
+        ]}
+      />
 
       {/* Content area */}
       <Box
