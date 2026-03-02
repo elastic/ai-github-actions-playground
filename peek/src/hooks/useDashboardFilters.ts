@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import type { DashboardDefinition } from "../types";
@@ -21,6 +21,10 @@ export function useDashboardFilters(dashboards: DashboardDefinition[]) {
     const raw = urlState.tags;
     return raw ? raw.split(",").filter(Boolean) : [];
   }, [urlState.tags]);
+  const selectedTagsRef = useRef(selectedTags);
+  useEffect(() => {
+    selectedTagsRef.current = selectedTags;
+  }, [selectedTags]);
   const sortField = urlState.sort;
   const showArchived = urlState.archived === true;
   const showFavoritesOnly = urlState.favorites === true;
@@ -48,12 +52,12 @@ export function useDashboardFilters(dashboards: DashboardDefinition[]) {
 
   const toggleTag = useCallback(
     (tag: string) => {
-      const updated = selectedTags.includes(tag)
-        ? selectedTags.filter((t) => t !== tag)
-        : [...selectedTags, tag];
+      const current = selectedTagsRef.current;
+      const updated = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
+      selectedTagsRef.current = updated;
       void setUrlState({ tags: updated.length > 0 ? updated.join(",") : null });
     },
-    [selectedTags, setUrlState],
+    [setUrlState],
   );
 
   const setSortField = useCallback(
