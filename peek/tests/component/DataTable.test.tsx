@@ -419,8 +419,10 @@ describe("DataTable", () => {
     const rows = screen.getAllByRole("row");
     await user.click(rows[1]!);
     expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[1]!.focus();
+    expect(rows[1]).toHaveFocus();
 
-    fireEvent.keyDown(rows[1]!, { key: "ArrowDown" });
+    await user.keyboard("{ArrowDown}");
 
     await waitFor(() => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("foo bar");
@@ -434,8 +436,10 @@ describe("DataTable", () => {
     const rows = screen.getAllByRole("row");
     await user.click(rows[2]!);
     expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[2]!.focus();
+    expect(rows[2]).toHaveFocus();
 
-    fireEvent.keyDown(rows[2]!, { key: "ArrowUp" });
+    await user.keyboard("{ArrowUp}");
 
     await waitFor(() => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("hello world");
@@ -449,8 +453,10 @@ describe("DataTable", () => {
     const rows = screen.getAllByRole("row");
     await user.click(rows[1]!);
     expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[1]!.focus();
+    expect(rows[1]).toHaveFocus();
 
-    fireEvent.keyDown(rows[1]!, { key: "ArrowUp" });
+    await user.keyboard("{ArrowUp}");
 
     expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("hello world");
   });
@@ -462,17 +468,22 @@ describe("DataTable", () => {
     const rows = screen.getAllByRole("row");
     await user.click(rows[3]!);
     expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[3]!.focus();
+    expect(rows[3]).toHaveFocus();
 
-    fireEvent.keyDown(rows[3]!, { key: "ArrowDown" });
+    await user.keyboard("{ArrowDown}");
 
     expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("aaa");
   });
 
-  it("does not navigate with arrow keys when inspector is closed", () => {
+  it("does not navigate with arrow keys when inspector is closed", async () => {
+    const user = userEvent.setup();
     render(<DataTable data={mockData} />);
 
     const rows = screen.getAllByRole("row");
-    fireEvent.keyDown(rows[1]!, { key: "ArrowDown" });
+    rows[1]!.focus();
+    expect(rows[1]).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
 
     expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument();
   });
@@ -490,8 +501,9 @@ describe("DataTable", () => {
     expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-0");
 
     nextPageButton.focus();
-    fireEvent.keyDown(nextPageButton, { key: "ArrowDown" });
-    fireEvent.keyDown(nextPageButton, { key: "ArrowUp" });
+    expect(nextPageButton).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{ArrowUp}");
 
     await waitFor(() => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-0");
@@ -510,15 +522,19 @@ describe("DataTable", () => {
     await user.click(screen.getByText("row-25"));
     let dataRows = screen.getAllByRole("row", { hidden: true }).slice(1);
     expect(dataRows[0]).toHaveAttribute("data-row-index", "0");
+    dataRows[0]!.focus();
+    expect(dataRows[0]).toHaveFocus();
 
-    fireEvent.keyDown(dataRows[0]!, { key: "ArrowDown" });
+    await user.keyboard("{ArrowDown}");
     await waitFor(() => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-26");
     });
     dataRows = screen.getAllByRole("row", { hidden: true }).slice(1);
     expect(dataRows[1]).toHaveAttribute("data-row-index", "1");
+    dataRows[1]!.focus();
+    expect(dataRows[1]).toHaveFocus();
 
-    fireEvent.keyDown(dataRows[1]!, { key: "ArrowUp" });
+    await user.keyboard("{ArrowUp}");
     await waitFor(() => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-25");
     });
