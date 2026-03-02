@@ -5,7 +5,7 @@ import Paper from "@mui/material/Paper";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import type { FieldInfo, ExplorerFilter , ElasticsearchClient } from "../../services/es";
+import type { FieldInfo, ExplorerFilter, ElasticsearchClient } from "../../services/es";
 import type { EsqlResponse } from "../../types";
 import DimensionSidebar from "../DimensionSidebar";
 import MetricOverviewGrid from "../MetricOverviewGrid";
