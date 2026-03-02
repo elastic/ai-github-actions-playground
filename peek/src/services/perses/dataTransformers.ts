@@ -129,14 +129,21 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
 
     if (hasLabels) {
       labels = {};
-      const labelParts: string[] = [];
-      const keyParts: string[] = [];
+      const labelNamesInOrder: string[] = [];
       for (let d = 0; d < dimensionColumns.length; d++) {
         const colIdx = dimensionColumns[d];
         if (colIdx === undefined) continue;
         const name = data.columns[colIdx]?.name ?? `label_${colIdx}`;
         const value = String(row[colIdx] ?? "");
+        if (!Object.hasOwn(labels, name)) {
+          labelNamesInOrder.push(name);
+        }
         labels[name] = value;
+      }
+      const labelParts: string[] = [];
+      const keyParts: string[] = [];
+      for (const name of labelNamesInOrder) {
+        const value = labels[name] ?? "";
         labelParts.push(`${name}=${value}`);
         // Use \0 within pairs and \x1f between pairs to avoid collision with label content
         keyParts.push(`${name}\0${value}`);
