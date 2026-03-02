@@ -3,6 +3,9 @@ import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import { COMPONENT_HEIGHTS } from "./types/tokens";
 
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
+const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
+const MOBILE_ICON_BUTTON_PADDING =
+  (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 
 const baseOptions: ThemeOptions = {
   typography: {
@@ -58,7 +61,7 @@ const baseOptions: ThemeOptions = {
           [MOBILE_OR_COARSE_QUERY]: {
             width: COMPONENT_HEIGHTS.touchTarget,
             height: COMPONENT_HEIGHTS.touchTarget,
-            padding: 12,
+            padding: MOBILE_ICON_BUTTON_PADDING,
           },
         },
       },
