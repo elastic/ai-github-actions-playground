@@ -31,8 +31,10 @@ make setup        # install Node.js dependencies (run this first)
 make serve        # install deps + start Vite dev server with hot reload
 make serve-proxy  # install deps + start dev server with Elasticsearch proxy (set ES_URL)
 make build        # production build to peek/dist/
-make lint         # Prettier + ESLint + TypeScript type checking
-make format       # auto-format code with Prettier
+make lint         # Prettier + ESLint on changed files + full TypeScript type check (override: make lint BASE=HEAD~3)
+make lint-full    # Prettier + ESLint + TypeScript type check on all files
+make format       # auto-format changed files with Prettier (override: make format BASE=HEAD~3)
+make format-full  # auto-format all files with Prettier
 make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
@@ -210,7 +212,7 @@ make otel-up && ES_URL=http://localhost:9200 make test-e2e && make otel-down
 
 ### Exploratory Testing Agents
 
-Eight scheduled agents creatively explore the app with Playwright. Each owns a
+Nine scheduled agents creatively explore the app with Playwright. Each owns a
 domain of the application and invents novel interaction scenarios every run.
 They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 
@@ -221,6 +223,7 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 | Traces & Service Map | Span trees, service map, trace-to-query pivot | `explore-traces.yml` |
 | Query Lab & Console | ES\|QL queries, result tables, API Console | `explore-query-lab.yml` |
 | Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `explore-data-management.yml` |
+| Mobile Responsiveness | Mobile viewport layout, tap targets, responsive breakpoints | `explore-mobile.yml` |
 | Live Elasticsearch | All pages with real OTel data and a real cluster | `explore-live-es.yml` |
 | Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `explore-customer-feedback.yml` |
 | Design: Modern UI Review | Design modernization, spacing, typography, cards, tables, empty states, loading patterns | `ui-designer-review.yml` |
