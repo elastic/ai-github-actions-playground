@@ -135,7 +135,7 @@ export default function FieldStatsPanel({
           <Typography variant="subtitle2" noWrap title={fieldName}>
             {fieldName}
           </Typography>
-          <Chip size="small" label={fieldType} sx={{ mt: 0.25 }} />
+          <Chip size="small" label={fieldType} sx={{ mt: 0.5 }} />
         </Box>
         <IconButton size="small" onClick={onClose} aria-label="Close field stats">
           <CloseIcon fontSize="small" />

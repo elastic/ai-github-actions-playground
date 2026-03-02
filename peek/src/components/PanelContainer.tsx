@@ -178,7 +178,7 @@ export default function PanelContainer({ panel }: Props) {
           display: "flex",
           alignItems: "center",
           minHeight: 36,
-          py: 0.75,
+          py: 1,
           px: 1.5,
           borderBottom: 1,
           borderColor: "divider",
@@ -206,8 +206,8 @@ export default function PanelContainer({ panel }: Props) {
               variant="caption"
               sx={{
                 mr: 0.5,
-                py: 0.125,
-                px: 0.75,
+                py: 0,
+                px: 1,
                 borderRadius: 1,
                 bgcolor: "action.hover",
                 color: "text.secondary",

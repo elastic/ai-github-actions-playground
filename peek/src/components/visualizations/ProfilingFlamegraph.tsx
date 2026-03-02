@@ -281,7 +281,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
               onClick={handleOpenInQueryLab}
               sx={{
                 ml: "auto",
-                py: 0.25,
+                py: 0.5,
                 px: 1,
                 border: 1,
                 borderColor: "divider",

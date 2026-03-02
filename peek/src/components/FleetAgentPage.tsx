@@ -287,7 +287,7 @@ function AgentLogs({
             sx={{
               display: "flex",
               gap: 1,
-              py: 0.25,
+              py: 0.5,
               borderBottom: "1px solid",
               borderColor: "divider",
               "&:last-child": { borderBottom: "none" },
