@@ -460,7 +460,7 @@ Files issues with specific library references, documentation links, and simplifi
 
 ## 9. Exploratory Testing Agents
 
-Eight Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents file issues aligned to their mission (bug reports for smoke explorers, feature-gap feedback for customer review).
+Nine Playwright-powered exploratory agents run on weekdays. Each owns a domain of the application and creatively invents novel interaction scenarios every run — they do NOT run pre-written test suites. Deterministic E2E tests run in CI instead. Agents file issues aligned to their mission (bug reports for smoke explorers, feature-gap feedback for customer review).
 
 | Agent | File | Schedule | Domain |
 |-------|------|----------|--------|
@@ -469,6 +469,7 @@ Eight Playwright-powered exploratory agents run on weekdays. Each owns a domain 
 | **Traces & Service Map** | `explore-traces.yml` | 11:00 UTC | Span trees, service map, trace-to-query pivot, navigation |
 | **Query Lab & Console** | `explore-query-lab.yml` | 12:00 UTC | ES\|QL queries, result tables, API Console, error handling |
 | **Indices, Data Streams & Pipelines** | `explore-data-management.yml` | 13:00 UTC | Table sorting, detail views, data management |
+| **Mobile Responsiveness** | `explore-mobile.yml` | 13:00 UTC | Mobile viewport layout, tap targets, responsive breakpoints |
 | **Live Elasticsearch** | `explore-live-es.yml` | 14:00 UTC | All pages with real OTel data and a real cluster |
 | **Feature Gap Review** | `explore-customer-feedback.yml` | 16:00 UTC | Missing features vs Kibana/Grafana/Elasticvue expectations |
 | **Modern UI Review** | `ui-designer-review.yml` | 17:00 UTC | Design modernization vs Linear/Vercel/Stripe standards |
@@ -500,8 +501,8 @@ Exploratory agents use `gh-aw-internal-gemini-cli.lock.yml` (Gemini) with creati
 | **Triggers** | PR or push to `main` (paths: `peek/**`, `Makefile`, CI workflow) |
 
 **What it does:** The primary CI pipeline. Two parallel jobs:
-1. **Lint & Build** — Node v24, `npm ci`, `make lint`, `make build`
-2. **Unit Tests** — Node v24, `npm ci`, `make test-unit-coverage`
+1. **Lint & Build** — Node v24, `npm ci`, `make build`. On PRs runs `make lint` (changed files only via `BASE`); on push to `main` runs `make lint-full`.
+2. **Unit Tests** — Node v24, `npm ci`. On PRs runs `make test-unit` (changed files only via `BASE`); on push to `main` runs `make test-unit-coverage` (full suite with coverage thresholds).
 
 Uses concurrency groups to cancel superseded runs.
 

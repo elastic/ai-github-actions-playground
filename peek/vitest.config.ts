@@ -26,10 +26,18 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      "echarts/charts": "echarts",
-      "echarts/components": "echarts",
-      "echarts/renderers": "echarts",
-    },
+    alias: [
+      { find: "echarts/charts", replacement: "echarts" },
+      { find: "echarts/components", replacement: "echarts" },
+      { find: "echarts/renderers", replacement: "echarts" },
+      // Force the ESM build of @perses-dev/components so that CSS font
+      // imports use ESM `import` statements (handled by vitest css:false)
+      // instead of CJS `require()` which crashes in the Node test environment.
+      // Regex enforces exact match only (not subpath imports).
+      {
+        find: /^@perses-dev\/components$/,
+        replacement: "@perses-dev/components/dist/index.js",
+      },
+    ],
   },
 });

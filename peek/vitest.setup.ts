@@ -43,8 +43,10 @@ vi.mock("echarts/core", () => ({
     off: vi.fn(),
     getWidth: vi.fn(() => 500),
     getHeight: vi.fn(() => 300),
+    getDataURL: vi.fn(() => "data:image/png;base64,mock"),
   })),
   use: vi.fn(),
+  connect: vi.fn(),
 }));
 
 vi.stubGlobal(
