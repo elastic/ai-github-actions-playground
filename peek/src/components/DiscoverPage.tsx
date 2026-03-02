@@ -138,6 +138,9 @@ export default function DiscoverPage() {
       setTableVersion((prev) => prev + 1);
       timingsCleared.current = false;
     },
+    onFailure: () => {
+      setResult(null);
+    },
   });
   const insightQueryToColumnRef = useRef(new Map<string, string>());
   const { runQuery: runInsightQuery } = useEsqlQuery({
@@ -498,6 +501,17 @@ export default function DiscoverPage() {
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
               description="Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<PlayArrowIcon />}
+                  onClick={handleRunQuery}
+                  disabled={!effectiveQuery.trim()}
+                >
+                  Run starter query
+                </Button>
+              }
             />
           )}
           {loading && !result && (

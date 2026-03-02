@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
@@ -135,6 +136,11 @@ export default function ExploreContentArea({
               icon={<ShowChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="Explore your metrics"
               description="Pick a namespace to see an overview of all its metrics, or search for a specific metric field."
+              action={
+                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+                  Select a namespace or metric above to get started
+                </Typography>
+              }
             />
           )}
 

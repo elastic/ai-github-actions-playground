@@ -65,6 +65,10 @@ export const EMPTY_FILTERS: TraceFilters = {
   timeTo: null,
 };
 
+function buildDurationUsExpression(fields: TraceFieldMapping): string {
+  return `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000.0)`;
+}
+
 /** Structured query parts returned by buildTraceSearchQueryParts */
 export interface TraceSearchQueryParts {
   body: string;
@@ -105,11 +109,11 @@ export function buildTraceSearchQueryParts(
   }
 
   if (filters.minDurationMs !== null) {
-    whereClauses.push(`${fields.durationUs} >= ${filters.minDurationMs * 1000}`);
+    whereClauses.push(`${buildDurationUsExpression(fields)} >= ${filters.minDurationMs * 1000}`);
   }
 
   if (filters.maxDurationMs !== null) {
-    whereClauses.push(`${fields.durationUs} <= ${filters.maxDurationMs * 1000}`);
+    whereClauses.push(`${buildDurationUsExpression(fields)} <= ${filters.maxDurationMs * 1000}`);
   }
 
   for (const tag of filters.tags) {
@@ -201,7 +205,7 @@ export function buildTraceTimeseriesQuery(
     limit: 10000,
     rootSpansOnly: true,
   });
-  return `${body} | EVAL duration_ms = ${fields.durationUs} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50, ${from}, ${to})`;
+  return `${body} | EVAL duration_ms = ${buildDurationUsExpression(fields)} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50, ${from}, ${to})`;
 }
 
 /**

@@ -11,7 +11,7 @@ export default function PageHeader({ title, description, actions }: PageHeaderPr
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="h6" component="h1">
+        <Typography variant="h5" component="h1">
           {title}
         </Typography>
         {description && (
