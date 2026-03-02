@@ -17,6 +17,11 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  toolCalls?: Array<{
+    toolCallId: string;
+    name: string;
+    result?: string;
+  }>;
 }
 
 interface LLMState {
@@ -33,6 +38,7 @@ interface LLMState {
 
   addMessage: (message: ChatMessage) => void;
   updateMessage: (id: string, content: string) => void;
+  updateMessageToolCalls: (id: string, toolCalls: ChatMessage["toolCalls"]) => void;
   removeMessage: (id: string) => void;
   clearMessages: () => void;
   setPendingPrompt: (prompt: string | null) => void;
@@ -112,6 +118,10 @@ export const useLLMStore = create<LLMState>()(
       updateMessage: (id, content) =>
         set((s) => ({
           messages: s.messages.map((m) => (m.id === id ? { ...m, content } : m)),
+        })),
+      updateMessageToolCalls: (id, toolCalls) =>
+        set((s) => ({
+          messages: s.messages.map((m) => (m.id === id ? { ...m, toolCalls } : m)),
         })),
       removeMessage: (id) =>
         set((s) => ({

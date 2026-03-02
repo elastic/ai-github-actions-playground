@@ -342,6 +342,7 @@ describe("ChatPage", () => {
     continueStream();
 
     await waitFor(() => {
+      expect(screen.getByText(/42 rows/i)).toBeInTheDocument();
       expect(screen.getByText("Found some results")).toBeInTheDocument();
     });
   });

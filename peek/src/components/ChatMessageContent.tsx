@@ -50,12 +50,12 @@ interface Props {
 /**
  * Renders message content inside a chat bubble.
  * Assistant messages are rendered as Markdown; user messages as plain text.
- * Active assistant messages show inline tool call progress.
+ * Assistant messages show inline tool call progress/results when present.
  */
 export default function ChatMessageContent({ content, role, isActiveAssistant, toolCalls }: Props) {
   return (
     <>
-      {isActiveAssistant && toolCalls.length > 0 && (
+      {toolCalls.length > 0 && (
         <Box sx={{ mb: content ? 1 : 0 }}>
           {toolCalls.map((tc) => (
             <Typography

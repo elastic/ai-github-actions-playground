@@ -30,6 +30,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
     messages,
     addMessage,
     updateMessage,
+    updateMessageToolCalls,
     removeMessage,
     clearMessages,
     isConfigured,
@@ -41,6 +42,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       messages: s.messages,
       addMessage: s.addMessage,
       updateMessage: s.updateMessage,
+      updateMessageToolCalls: s.updateMessageToolCalls,
       removeMessage: s.removeMessage,
       clearMessages: s.clearMessages,
       isConfigured: s.isConfigured,
@@ -57,7 +59,6 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toolCalls, setToolCalls] = useState<ToolActivity[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const configured = isConfigured();
 
@@ -91,7 +92,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       if (!promptOverride) setInput("");
 
       const assistantId = crypto.randomUUID();
-      addMessage({ id: assistantId, role: "assistant", content: "" });
+      addMessage({ id: assistantId, role: "assistant", content: "", toolCalls: [] });
       setLoading(true);
 
       const controller = new AbortController();
@@ -128,21 +129,24 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         });
 
         let text = "";
-        setToolCalls([]);
+        let assistantToolCalls: ToolActivity[] = [];
         for await (const part of result.fullStream) {
           if (part.type === "text-delta") {
             text += part.text;
             updateMessage(assistantId, text);
           } else if (part.type === "tool-call") {
-            setToolCalls((prev) => [...prev, { toolCallId: part.toolCallId, name: part.toolName }]);
+            assistantToolCalls = [
+              ...assistantToolCalls,
+              { toolCallId: part.toolCallId, name: part.toolName },
+            ];
+            updateMessageToolCalls(assistantId, assistantToolCalls);
           } else if (part.type === "tool-result") {
-            setToolCalls((prev) =>
-              prev.map((tc) =>
-                tc.toolCallId === part.toolCallId
-                  ? { ...tc, result: formatToolResult(part.toolName, part.output) }
-                  : tc,
-              ),
+            assistantToolCalls = assistantToolCalls.map((tc) =>
+              tc.toolCallId === part.toolCallId
+                ? { ...tc, result: formatToolResult(part.toolName, part.output) }
+                : tc,
             );
+            updateMessageToolCalls(assistantId, assistantToolCalls);
           }
         }
       } catch (e) {
@@ -167,6 +171,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       messages,
       addMessage,
       updateMessage,
+      updateMessageToolCalls,
       removeMessage,
       connection,
       location.pathname,
@@ -284,7 +289,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
                   content={msg.content}
                   role={msg.role}
                   isActiveAssistant={isActiveAssistant}
-                  toolCalls={toolCalls}
+                  toolCalls={msg.toolCalls ?? []}
                 />
               </Paper>
             </Box>
