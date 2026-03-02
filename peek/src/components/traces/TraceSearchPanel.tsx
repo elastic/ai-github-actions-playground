@@ -28,7 +28,7 @@ interface TraceSearchPanelProps {
   onRawQueryChange: (val: string) => void;
   onCreateEditor: (view: EditorView) => void;
   queryEditorExtensions: Extension[];
-  themeMode: string;
+  themeMode: "light" | "dark";
   searchLoading: boolean;
   onSearch: () => void;
   searchResultCount: number | null;
