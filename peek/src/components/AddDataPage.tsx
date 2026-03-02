@@ -21,6 +21,7 @@ import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import {
   deriveOtlpEndpoint,
   detectTelemetrySignals,
@@ -45,16 +46,7 @@ export default function AddDataPage() {
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
   const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-        copyTimeoutRef.current = null;
-      }
-    };
-  }, []);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const endpointTypeManuallySetRef = useRef(false);
@@ -118,9 +110,8 @@ export default function AddDataPage() {
     const ok = await copyToClipboard(apiKeyValue);
     if (!ok) return;
     setCopied(true);
-    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-  }, [apiKeyValue]);
+    scheduleCopyFeedbackReset();
+  }, [apiKeyValue, scheduleCopyFeedbackReset]);
 
   // ---- Ingestion verification ----
   type VerifyStatus = "idle" | "checking" | "found" | "not_found" | "error";

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { ElasticsearchClient, type SecurityUser } from "../services/es";
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
@@ -35,16 +36,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-        copyTimeoutRef.current = null;
-      }
-    };
-  }, []);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   const selectedUsername = useMemo(() => {
     if (users.length === 0) return urlUsername;
@@ -115,9 +107,8 @@ export default function UsersPage() {
     const copied = await copyToClipboard("GET /_security/user");
     if (!copied) return;
     setCopied(true);
-    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-  }, []);
+    scheduleCopyFeedbackReset();
+  }, [scheduleCopyFeedbackReset]);
 
   const handleSelectUser = useCallback(
     (username: string) => {

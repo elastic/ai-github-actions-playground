@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
@@ -14,6 +14,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 
 // -----------------------------------------------------------------------
 // Defensive types for the ES|QL profile payload.
@@ -178,24 +180,14 @@ interface QueryProfilePanelProps {
 export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
   const [expanded, setExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-        copyTimeoutRef.current = null;
-      }
-    };
-  }, []);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   const handleCopy = () => {
     if (!navigator.clipboard) return;
     void navigator.clipboard.writeText(JSON.stringify(profile, null, 2)).then(
       () => {
         setCopied(true);
-        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-        copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+        scheduleCopyFeedbackReset();
       },
       () => {
         // writeText rejected (e.g. permission denied) — fail silently
