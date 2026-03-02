@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -328,7 +330,7 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             print(f"{YELLOW}would kick CI{RESET}")
             kicked += 1
             continue
-        # Try re-running the latest CI run for this branch first.
+        # This can still exist when a matching-head run was created by a non-PR event.
         prev = [r for r in runs if r.get("name") == "CI"
                 and r.get("headBranch") == pr.branch and r.get("headSha") == pr.head_sha]
         if prev:
@@ -340,27 +342,26 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             except RuntimeError:
                 pass  # Fall through to empty commit
         # No CI run exists for the current head — push an empty commit to trigger one.
+        tmpdir = tempfile.mkdtemp(prefix=f"kick_ci_{pr.number}_", dir="/tmp/gh-aw/agent")
         try:
-            gh_text("api", f"repos/{ctx.repo_slug}/git/refs/heads/{pr.branch}",
-                     "-X", "PATCH", "-f", f"sha={pr.head_sha}", "--silent")
-            # Push empty commit via the API
             subprocess.run(
                 ["git", "clone", "--depth=1", "--branch", pr.branch,
-                 f"https://github.com/{ctx.repo_slug}.git", f"/tmp/_kick_{pr.number}"],
+                 f"https://github.com/{ctx.repo_slug}.git", tmpdir],
                 capture_output=True, check=True)
             subprocess.run(
-                ["git", "-C", f"/tmp/_kick_{pr.number}",
+                ["git", "-C", tmpdir,
                  "commit", "--allow-empty", "-m", "ci: trigger CI re-run"],
                 capture_output=True, check=True)
+            # Requires authenticated git credentials for github.com.
             subprocess.run(
-                ["git", "-C", f"/tmp/_kick_{pr.number}", "push"],
+                ["git", "-C", tmpdir, "push"],
                 capture_output=True, check=True)
-            subprocess.run(["rm", "-rf", f"/tmp/_kick_{pr.number}"], capture_output=True)
             print(f"{GREEN}✓ empty commit pushed{RESET}")
             kicked += 1
-        except (RuntimeError, subprocess.CalledProcessError):
-            subprocess.run(["rm", "-rf", f"/tmp/_kick_{pr.number}"], capture_output=True)
+        except subprocess.CalledProcessError:
             print(f"{RED}✗ failed to push empty commit{RESET}")
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
     if not kicked:
         print("  No bot PRs needed CI kicked.")
     else:
