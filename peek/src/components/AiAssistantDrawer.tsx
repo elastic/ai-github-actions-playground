@@ -72,7 +72,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       variant={isMobile ? "temporary" : "persistent"}
       slotProps={{
         paper: {
-          role: "complementary" as const,
+          role: "complementary",
           "aria-labelledby": "ai-drawer-title",
         },
       }}
