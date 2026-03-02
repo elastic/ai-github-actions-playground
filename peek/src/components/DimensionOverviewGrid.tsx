@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
@@ -232,7 +232,7 @@ export default function DimensionOverviewGrid({
         <Typography variant="body2" sx={{ flex: 1 }}>
           {shortMetric} — dimensions
         </Typography>
-        {isLoading && <CircularProgress size={16} />}
+        {isLoading && <LinearProgress sx={{ flexShrink: 0, width: 80 }} />}
         {!isLoading && (
           <Chip
             label={`${dimsWithData.length} of ${dimensionFields.length} dimensions with data`}
@@ -321,16 +321,7 @@ export default function DimensionOverviewGrid({
                       )}
                     />
                   ) : (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress size={16} />
-                    </Box>
+                    <Skeleton variant="rounded" height="100%" />
                   )}
                 </Box>
               </ButtonBase>
