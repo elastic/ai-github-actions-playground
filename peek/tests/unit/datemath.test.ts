@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
+
 import { resolveDateTime, buildTimeParams } from "../../src/services/datemath";
 
 // Fixed reference time for deterministic tests
@@ -74,9 +75,10 @@ describe("buildTimeParams", () => {
       "FROM logs-* | STATS doc_count = COUNT(*) BY time_bucket = BUCKET(@timestamp, 50, ?_tstart, ?_tend)";
     const params = buildTimeParams(query, { from: "now-1h", to: "now" });
 
-    expect(params).toHaveLength(2);
-    expect(params[0]).toEqual({ _tstart: "2025-06-15T11:00:00.000Z" });
-    expect(params[1]).toEqual({ _tend: "2025-06-15T12:00:00.000Z" });
+    expect(params).toEqual({
+      _tstart: "2025-06-15T11:00:00.000Z",
+      _tend: "2025-06-15T12:00:00.000Z",
+    });
   });
 
   it("returns only _tstart when only ?_tstart is used", () => {
@@ -84,14 +86,14 @@ describe("buildTimeParams", () => {
     const query = "FROM logs-* | WHERE @timestamp >= ?_tstart";
     const params = buildTimeParams(query, { from: "now-15m", to: "now" });
 
-    expect(params).toHaveLength(1);
-    expect(params[0]).toHaveProperty("_tstart");
+    expect(Object.keys(params)).toHaveLength(1);
+    expect(params).toHaveProperty("_tstart");
   });
 
-  it("returns empty array when query has no placeholders", () => {
+  it("returns empty object when query has no placeholders", () => {
     const query = "FROM logs-* | STATS COUNT(*)";
     const params = buildTimeParams(query, { from: "now-1h", to: "now" });
-    expect(params).toEqual([]);
+    expect(params).toEqual({});
   });
 
   it("falls back to raw values when date-math cannot be resolved", () => {
@@ -101,9 +103,9 @@ describe("buildTimeParams", () => {
       from: "2025-01-01T00:00:00.000Z",
       to: "2025-01-02T00:00:00.000Z",
     });
-    expect(params).toEqual([
-      { _tstart: "2025-01-01T00:00:00.000Z" },
-      { _tend: "2025-01-02T00:00:00.000Z" },
-    ]);
+    expect(params).toEqual({
+      _tstart: "2025-01-01T00:00:00.000Z",
+      _tend: "2025-01-02T00:00:00.000Z",
+    });
   });
 });

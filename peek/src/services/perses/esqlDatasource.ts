@@ -94,7 +94,7 @@ export function buildPersesEsqlRequest(
     },
   };
   const params = buildQueryParams(query, options.timeRange, options.parameters);
-  if (params.length > 0) {
+  if (Object.keys(params).length > 0) {
     request.params = params;
   }
   return request;
