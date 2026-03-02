@@ -15,6 +15,7 @@ import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import type { EsqlResponse } from "../../types";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
+import ResizableSplitPane from "../ResizableSplitPane";
 
 import { parseSpansFromEsql } from "./traceUtils";
 import type { Span } from "./traceUtils";
@@ -328,6 +329,7 @@ export default function TracesPage() {
       <Box
         sx={{
           display: "flex",
+          flex: 1,
           gap: 1,
           minHeight: 0,
         }}
@@ -342,42 +344,77 @@ export default function TracesPage() {
             minHeight: 0,
           }}
         >
-          <TraceResultsView
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            searchResult={searchResult}
-            searchLoading={searchLoading}
-            traceRows={traceRows}
-            selectedTraceId={selectedTraceId}
-            onSelectTrace={handleSelectTrace}
-            maxDuration={maxDuration}
-            rawQuery={rawQuery}
-            timeseriesLoading={timeseriesLoading}
-            timeseriesResult={timeseriesResult}
-            detailLoading={detailLoading}
-            selectedTraceSpans={selectedTraceSpans}
-            onServiceMapNodeClick={handleServiceMapNodeClick}
-            driftRadarLoading={driftRadarLoading}
-            driftRadarBaselineLoading={driftRadarBaselineLoading}
-            driftRadarSpans={driftRadarSpans}
-            driftRadarBaselineSpans={driftRadarBaselineSpans}
-            driftRadarBaselineEnabled={driftRadarBaselineEnabled}
-            onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
-            filters={filters}
-          />
-
-          {/* Trace Detail */}
-          {selectedTraceId && (
-            <TraceDetailPanel
-              selectedTraceId={selectedTraceId}
-              selectedTraceSpans={selectedTraceSpans}
-              detailLoading={detailLoading}
-              selectedSpanId={selectedSpanId}
-              onSpanClick={(spanId) => setSelectedSpanId(spanId)}
-              onOpenInQueryLab={() =>
-                handleOpenInDiscover(selectedTraceId, selectedRootSpanId, selectedTraceTimestamp)
+          {selectedTraceId ? (
+            <ResizableSplitPane
+              /* 45 % top / 55 % bottom keeps the waterfall chart majority-visible on load */
+              initialTopFraction={0.45}
+              minPaneHeight={140}
+              top={
+                <TraceResultsView
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  searchResult={searchResult}
+                  searchLoading={searchLoading}
+                  traceRows={traceRows}
+                  selectedTraceId={selectedTraceId}
+                  onSelectTrace={handleSelectTrace}
+                  maxDuration={maxDuration}
+                  rawQuery={rawQuery}
+                  timeseriesLoading={timeseriesLoading}
+                  timeseriesResult={timeseriesResult}
+                  detailLoading={detailLoading}
+                  selectedTraceSpans={selectedTraceSpans}
+                  onServiceMapNodeClick={handleServiceMapNodeClick}
+                  driftRadarLoading={driftRadarLoading}
+                  driftRadarBaselineLoading={driftRadarBaselineLoading}
+                  driftRadarSpans={driftRadarSpans}
+                  driftRadarBaselineSpans={driftRadarBaselineSpans}
+                  driftRadarBaselineEnabled={driftRadarBaselineEnabled}
+                  onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
+                  filters={filters}
+                />
               }
-              onClose={clearTraceSelection}
+              bottom={
+                <TraceDetailPanel
+                  selectedTraceId={selectedTraceId}
+                  selectedTraceSpans={selectedTraceSpans}
+                  detailLoading={detailLoading}
+                  selectedSpanId={selectedSpanId}
+                  onSpanClick={(spanId) => setSelectedSpanId(spanId)}
+                  onOpenInQueryLab={() =>
+                    handleOpenInDiscover(
+                      selectedTraceId,
+                      selectedRootSpanId,
+                      selectedTraceTimestamp,
+                    )
+                  }
+                  onClose={clearTraceSelection}
+                />
+              }
+            />
+          ) : (
+            <TraceResultsView
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              searchResult={searchResult}
+              searchLoading={searchLoading}
+              traceRows={traceRows}
+              selectedTraceId={selectedTraceId}
+              onSelectTrace={handleSelectTrace}
+              maxDuration={maxDuration}
+              rawQuery={rawQuery}
+              timeseriesLoading={timeseriesLoading}
+              timeseriesResult={timeseriesResult}
+              detailLoading={detailLoading}
+              selectedTraceSpans={selectedTraceSpans}
+              onServiceMapNodeClick={handleServiceMapNodeClick}
+              driftRadarLoading={driftRadarLoading}
+              driftRadarBaselineLoading={driftRadarBaselineLoading}
+              driftRadarSpans={driftRadarSpans}
+              driftRadarBaselineSpans={driftRadarBaselineSpans}
+              driftRadarBaselineEnabled={driftRadarBaselineEnabled}
+              onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
+              filters={filters}
             />
           )}
         </Box>
