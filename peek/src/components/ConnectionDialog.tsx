@@ -24,12 +24,17 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import { deriveDefaultOtlpEndpoint } from "../services/telemetry/browserTracing";
+import { deriveOtlpEndpoint } from "../utils/addDataUtils";
 import type { ElasticsearchConnection } from "../types";
 
 import ConnectionProfilesList from "./ConnectionProfilesList";
 import OtlpConfigPanel from "./OtlpConfigPanel";
 
 type AuthType = "apiKey" | "userpass";
+
+function deriveIngestUrlOrEmpty(url: string | undefined): string {
+  return deriveOtlpEndpoint(url ?? "") ?? "";
+}
 
 function shouldShowTelemetryPanel(conn?: ElasticsearchConnection | null): boolean {
   if (!conn) return false;
@@ -86,7 +91,11 @@ export default function ConnectionDialog() {
   const [username, setUsername] = useState(savedConn?.username ?? "");
   const [password, setPassword] = useState(savedConn?.password ?? "");
   const [proxyUrl, setProxyUrl] = useState(savedConn?.proxyUrl ?? "");
+  const [ingestUrl, setIngestUrl] = useState(
+    savedConn?.ingestUrl ?? deriveIngestUrlOrEmpty(savedConn?.url),
+  );
   const [showProxy, setShowProxy] = useState(Boolean(savedConn?.proxyUrl));
+  const [showAdvanced, setShowAdvanced] = useState(Boolean(savedConn?.ingestUrl));
   const [otlpEnabled, setOtlpEnabled] = useState(savedConn?.otlpEnabled ?? false);
   const [otlpEndpoint, setOtlpEndpoint] = useState(
     savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""),
@@ -109,7 +118,9 @@ export default function ConnectionDialog() {
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
     setProxyUrl(savedConn?.proxyUrl ?? "");
+    setIngestUrl(savedConn?.ingestUrl ?? deriveIngestUrlOrEmpty(savedConn?.url));
     setShowProxy(Boolean(savedConn?.proxyUrl));
+    setShowAdvanced(Boolean(savedConn?.ingestUrl));
     setOtlpEnabled(savedConn?.otlpEnabled ?? false);
     setOtlpEndpoint(savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""));
     setOtlpUseElasticAuth(savedConn?.otlpUseElasticAuth ?? Boolean(savedConn?.apiKey));
@@ -125,12 +136,18 @@ export default function ConnectionDialog() {
 
   const buildConnection = useCallback((): ElasticsearchConnection => {
     const nextOtlpUseElasticAuth = authType === "apiKey" && otlpUseElasticAuth;
+    const trimmedIngestUrl = ingestUrl.trim();
+    const derived = deriveIngestUrlOrEmpty(url.trim());
+    // Only persist ingestUrl when it differs from what we would auto-derive
+    const effectiveIngestUrl =
+      trimmedIngestUrl && trimmedIngestUrl !== derived ? trimmedIngestUrl : undefined;
     if (authType === "userpass") {
       return {
         url: url.trim(),
         username: username.trim(),
         password: password.trim(),
         proxyUrl: proxyUrl.trim(),
+        ingestUrl: effectiveIngestUrl,
         otlpEnabled,
         otlpEndpoint: otlpEndpoint.trim(),
         otlpUseElasticAuth: nextOtlpUseElasticAuth,
@@ -141,6 +158,7 @@ export default function ConnectionDialog() {
       url: url.trim(),
       apiKey: apiKey.trim(),
       proxyUrl: proxyUrl.trim(),
+      ingestUrl: effectiveIngestUrl,
       otlpEnabled,
       otlpEndpoint: otlpEndpoint.trim(),
       otlpUseElasticAuth: nextOtlpUseElasticAuth,
@@ -153,6 +171,7 @@ export default function ConnectionDialog() {
     username,
     password,
     proxyUrl,
+    ingestUrl,
     otlpEnabled,
     otlpEndpoint,
     otlpUseElasticAuth,
@@ -226,7 +245,9 @@ export default function ConnectionDialog() {
       setUsername(conn.username ?? "");
       setPassword(conn.password ?? "");
       setProxyUrl(conn.proxyUrl ?? "");
+      setIngestUrl(conn.ingestUrl ?? deriveIngestUrlOrEmpty(conn.url));
       setShowProxy(Boolean(conn.proxyUrl));
+      setShowAdvanced(Boolean(conn.ingestUrl));
       setOtlpEnabled(conn.otlpEnabled ?? false);
       setOtlpEndpoint(conn.otlpEndpoint ?? deriveDefaultOtlpEndpoint(conn.url));
       setOtlpUseElasticAuth(conn.otlpUseElasticAuth ?? Boolean(conn.apiKey));
@@ -277,12 +298,21 @@ export default function ConnectionDialog() {
             onChange={(e) => {
               const nextUrl = e.target.value;
               const previousDerived = deriveDefaultOtlpEndpoint(url);
+              const previousIngestDerived = deriveIngestUrlOrEmpty(url);
               setUrl(nextUrl);
               setActiveProfileId(null);
               setOtlpEndpoint((prev) => {
                 const trimmed = prev.trim();
                 if (!trimmed || trimmed === previousDerived) {
                   return deriveDefaultOtlpEndpoint(nextUrl);
+                }
+                return prev;
+              });
+              // Keep ingest URL in sync unless the user has manually overridden it
+              setIngestUrl((prev) => {
+                const trimmed = prev.trim();
+                if (!trimmed || trimmed === previousIngestDerived) {
+                  return deriveIngestUrlOrEmpty(nextUrl);
                 }
                 return prev;
               });
@@ -308,6 +338,30 @@ export default function ConnectionDialog() {
                 setActiveProfileId(null);
               }}
               helperText="Requests are sent to this URL; the Elasticsearch URL is forwarded as a header"
+            />
+          </Collapse>
+          <Button
+            size="small"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            endIcon={showAdvanced ? <ExpandLess /> : <ExpandMore />}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            Advanced Settings
+          </Button>
+          <Collapse in={showAdvanced}>
+            <TextField
+              label="Ingest URL"
+              placeholder={
+                deriveIngestUrlOrEmpty(url) ||
+                "https://<id>.ingest.<region>.<provider>.elastic.cloud"
+              }
+              fullWidth
+              value={ingestUrl}
+              onChange={(e) => {
+                setIngestUrl(e.target.value);
+                setActiveProfileId(null);
+              }}
+              helperText="Auto-detected from the Elasticsearch URL for Elastic Cloud. Used as the OTLP ingest endpoint for collector setup."
             />
           </Collapse>
           <Button

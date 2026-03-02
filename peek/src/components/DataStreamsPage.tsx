@@ -17,6 +17,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
+import { parseAsString, useQueryState } from "nuqs";
 
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -51,7 +52,10 @@ export default function DataStreamsPage() {
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useQueryState(
+    "search",
+    parseAsString.withDefault("").withOptions({ history: "replace" }),
+  );
   const [fieldSearch, setFieldSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const deferredFieldSearch = useDeferredValue(fieldSearch);
@@ -246,7 +250,7 @@ export default function DataStreamsPage() {
               fullWidth
               placeholder="Search streams"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => void setSearch(e.target.value)}
               inputProps={{ "aria-label": "Search streams" }}
             />
             <FormControlLabel

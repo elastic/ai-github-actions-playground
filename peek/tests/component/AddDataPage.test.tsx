@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AddDataPage from "../../src/components/AddDataPage";
 import {
   deriveOtlpEndpoint,
+  deriveIngestCandidates,
   probeOtlpEndpoint,
   detectTelemetrySignals,
 } from "../../src/utils/addDataUtils";
@@ -142,6 +143,36 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
     const alerts = screen.getAllByRole("alert");
     expect(alerts.some((a) => a.textContent?.includes("Could not reach OTLP endpoint"))).toBe(true);
+  });
+
+  it("uses first reachable ingest candidate for cloud.es.io commands", async () => {
+    resetAllStores();
+    useConnectionStore.getState().setConnection({
+      url: "https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io",
+      apiKey: "testkey",
+    });
+    useConnectionStore.setState({ capabilities: defaultCapabilities });
+    fetchSpy.mockImplementation((input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes(".cloud.es.io")) {
+        return Promise.reject(new TypeError("fetch failed"));
+      }
+      return Promise.resolve(new Response(null, { status: 200 }));
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
+    await user.click(screen.getByRole("tab", { name: "Linux" }));
+    expect(getCommandValue()).toContain(
+      "elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
+    );
   });
 
   it("shows placeholder guidance when OTLP endpoint cannot be derived", async () => {
@@ -393,6 +424,24 @@ describe("deriveOtlpEndpoint", () => {
     );
   });
 
+  it("derives ingest URL from cloud.es.io ES URL", () => {
+    expect(deriveOtlpEndpoint("https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io")).toBe(
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+    );
+  });
+
+  it("derives ingest URL from cloud.es.io Kibana URL (.kb.)", () => {
+    expect(deriveOtlpEndpoint("https://elastic-peek-010bd2.kb.us-central1.gcp.cloud.es.io")).toBe(
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+    );
+  });
+
+  it("handles cloud.es.io URL with trailing slash", () => {
+    expect(deriveOtlpEndpoint("https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io/")).toBe(
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+    );
+  });
+
   it("returns null for non-Elastic Cloud URL", () => {
     expect(deriveOtlpEndpoint("http://localhost:9200")).toBeNull();
   });
@@ -444,5 +493,41 @@ describe("detectTelemetrySignals", () => {
     } as unknown as ElasticsearchClient;
     const signals = await detectTelemetrySignals(client);
     expect(signals.size).toBe(0);
+  });
+});
+
+describe("deriveIngestCandidates", () => {
+  it("returns single candidate for elastic.cloud URLs", () => {
+    expect(deriveIngestCandidates("https://my-deploy.es.us-east-1.aws.elastic.cloud")).toEqual([
+      "https://my-deploy.ingest.us-east-1.aws.elastic.cloud",
+    ]);
+  });
+
+  it("returns two candidates for cloud.es.io URLs", () => {
+    const candidates = deriveIngestCandidates(
+      "https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io",
+    );
+    expect(candidates).toEqual([
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
+    ]);
+  });
+
+  it("returns two candidates for cloud.es.io Kibana URLs", () => {
+    const candidates = deriveIngestCandidates(
+      "https://elastic-peek-010bd2.kb.us-central1.gcp.cloud.es.io",
+    );
+    expect(candidates).toEqual([
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
+    ]);
+  });
+
+  it("returns empty array for non-cloud URLs", () => {
+    expect(deriveIngestCandidates("http://localhost:9200")).toEqual([]);
+  });
+
+  it("returns empty array for invalid URLs", () => {
+    expect(deriveIngestCandidates("not-a-url")).toEqual([]);
   });
 });
