@@ -85,8 +85,7 @@ export default tseslint.config(
     files: ["src/components/**/*.tsx"],
     plugins: { peek: peekPlugin },
     rules: {
-      // TODO(#1051): Reduce max to 200 once existing large components are decomposed.
-      "peek/max-component-lines": ["warn", { max: 500 }],
+      "peek/max-component-lines": ["warn", { max: 200 }],
       "peek/enforce-empty-state": "error",
       "peek/no-circular-progress": "error",
     },

@@ -3,8 +3,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -25,54 +23,12 @@ import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 import { isNumericType } from "./chartUtils";
 import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
+import TruncatedCell from "./TruncatedCell";
+import DataTableColumnMenu from "./DataTableColumnMenu";
+import type { SortState } from "./dataTableUtils";
+import { PINNED_COLUMN_MIN_WIDTH, reconcileColumnOrder } from "./dataTableUtils";
 
-type SortDirection = "asc" | "desc";
-
-const PINNED_COLUMN_MIN_WIDTH = 120;
-const CELL_TRUNCATE_LENGTH = 200;
-
-function TruncatedCell({ value }: { value: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const needsTruncation = value.length > CELL_TRUNCATE_LENGTH;
-  if (!needsTruncation) return <>{value}</>;
-  return (
-    <span>
-      <Tooltip title={expanded ? "" : value}>
-        <span>{expanded ? value : value.slice(0, CELL_TRUNCATE_LENGTH) + "…"}</span>
-      </Tooltip>
-      <Button
-        size="small"
-        variant="text"
-        onClick={(e) => {
-          e.stopPropagation();
-          setExpanded((v) => !v);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-          }
-        }}
-        aria-label={expanded ? "Collapse cell value" : "Expand cell value"}
-        sx={{ verticalAlign: "baseline", minWidth: 0, ml: 0.5, p: 0, fontSize: "0.7rem" }}
-      >
-        {expanded ? "less" : "more"}
-      </Button>
-    </span>
-  );
-}
-
-export interface SortState {
-  columnName: string;
-  direction: SortDirection;
-}
-
-function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
-  const allSet = new Set(allIndices);
-  const kept = order.filter((i) => allSet.has(i));
-  const keptSet = new Set(kept);
-  const missing = allIndices.filter((i) => !keptSet.has(i));
-  return [...kept, ...missing];
-}
+export type { SortState } from "./dataTableUtils";
 
 interface Props {
   data: EsqlResponse;
@@ -80,7 +36,7 @@ interface Props {
   onExportCsv?: () => void;
   onRemoveColumn?: (name: string) => void;
   currentSort?: SortState | null;
-  onSortChange?: (columnName: string, direction: SortDirection | null) => void;
+  onSortChange?: (columnName: string, direction: "asc" | "desc" | null) => void;
 }
 
 export default memo(function DataTable({
@@ -179,6 +135,22 @@ export default memo(function DataTable({
     setMenuColumnIndex(null);
   }, []);
 
+  const handlePinColumn = useCallback((colIdx: number) => {
+    setPinnedColumns((prev) => {
+      const next = new Set(prev);
+      next.add(colIdx);
+      return next;
+    });
+  }, []);
+
+  const handleUnpinColumn = useCallback((colIdx: number) => {
+    setPinnedColumns((prev) => {
+      const next = new Set(prev);
+      next.delete(colIdx);
+      return next;
+    });
+  }, []);
+
   if (data.columns.length === 0) {
     return <EmptyState size="small" heading="No data" />;
   }
@@ -219,7 +191,8 @@ export default memo(function DataTable({
           <TableHead>
             <TableRow>
               {orderedVisibleColumnIndices.map((colIdx) => {
-                const col = data.columns[colIdx]!;
+                const col = data.columns[colIdx];
+                if (!col) return null;
                 const isSorted = currentSort?.columnName === col.name;
                 const isPinned = pinnedColumns.has(colIdx);
                 const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
@@ -269,7 +242,6 @@ export default memo(function DataTable({
                             isPinned
                               ? {
                                   overflow: "hidden",
-                                  "& .MuiTableSortLabel-root": { overflow: "hidden" },
                                 }
                               : {}
                           }
@@ -423,90 +395,19 @@ export default memo(function DataTable({
         columns={data.columns}
         row={inspectedRow}
       />
-      <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
-        <MenuItem
-          disabled={!onSortChange}
-          onClick={() => {
-            if (menuColumnIndex !== null && onSortChange) {
-              const col = data.columns[menuColumnIndex];
-              if (col) onSortChange(col.name, "asc");
-              setPage(0);
-            }
-            closeMenu();
-          }}
-        >
-          Sort A→Z
-        </MenuItem>
-        <MenuItem
-          disabled={!onSortChange}
-          onClick={() => {
-            if (menuColumnIndex !== null && onSortChange) {
-              const col = data.columns[menuColumnIndex];
-              if (col) onSortChange(col.name, "desc");
-              setPage(0);
-            }
-            closeMenu();
-          }}
-        >
-          Sort Z→A
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuColumnIndex !== null) moveColumn(menuColumnIndex, "left");
-            closeMenu();
-          }}
-        >
-          Move column left
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuColumnIndex !== null) moveColumn(menuColumnIndex, "right");
-            closeMenu();
-          }}
-        >
-          Move column right
-        </MenuItem>
-        <MenuItem
-          disabled={menuColumnIndex === null || !onRemoveColumn}
-          onClick={() => {
-            if (menuColumnIndex !== null) {
-              const column = data.columns[menuColumnIndex];
-              if (column && onRemoveColumn) onRemoveColumn(column.name);
-            }
-            closeMenu();
-          }}
-        >
-          Remove column
-        </MenuItem>
-        {menuColumnIndex !== null && !pinnedColumns.has(menuColumnIndex) && (
-          <MenuItem
-            onClick={() => {
-              setPinnedColumns((prev) => {
-                const next = new Set(prev);
-                next.add(menuColumnIndex);
-                return next;
-              });
-              closeMenu();
-            }}
-          >
-            Pin left
-          </MenuItem>
-        )}
-        {menuColumnIndex !== null && pinnedColumns.has(menuColumnIndex) && (
-          <MenuItem
-            onClick={() => {
-              setPinnedColumns((prev) => {
-                const next = new Set(prev);
-                next.delete(menuColumnIndex);
-                return next;
-              });
-              closeMenu();
-            }}
-          >
-            Unpin
-          </MenuItem>
-        )}
-      </Menu>
+      <DataTableColumnMenu
+        data={data}
+        menuAnchor={menuAnchor}
+        menuColumnIndex={menuColumnIndex}
+        pinnedColumns={pinnedColumns}
+        onSortChange={onSortChange}
+        onRemoveColumn={onRemoveColumn}
+        onMoveColumn={moveColumn}
+        onPinColumn={handlePinColumn}
+        onUnpinColumn={handleUnpinColumn}
+        onClose={closeMenu}
+        onResetPage={() => setPage(0)}
+      />
     </Box>
   );
 });
