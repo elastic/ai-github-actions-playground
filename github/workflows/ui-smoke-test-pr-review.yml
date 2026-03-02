@@ -35,11 +35,14 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
       - name: Install Playwright Browsers & Deps
-        run: npx playwright install --with-deps chromium webkit
+        run: npx playwright install --with-deps ${PLAYWRIGHT_BROWSERS}
         working-directory: peek
+        env:
+          PLAYWRIGHT_BROWSERS: "chromium webkit"
 
       - name: Run E2E smoke tests
         id: smoke
+        continue-on-error: true
         working-directory: peek
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: smoke-results.json
@@ -47,10 +50,14 @@ jobs:
 
       - name: Run screenshot preflight
         id: preflight
+        if: always()
+        continue-on-error: true
         working-directory: peek
         run: |
           npm run dev -- --port 3000 &
           DEV_PID=$!
+          PREFLIGHT_EXIT=0
+          trap 'PREFLIGHT_EXIT=${PREFLIGHT_EXIT:-$?}; kill "$DEV_PID" 2>/dev/null || true; exit "$PREFLIGHT_EXIT"' EXIT
           SERVER_READY=false
           for i in $(seq 1 30); do
             if curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null 2>&1; then SERVER_READY=true; break; fi
@@ -58,16 +65,16 @@ jobs:
           done
           if [ "$SERVER_READY" = false ]; then
             echo "::error::Dev server failed to start within 30 seconds"
-            kill "$DEV_PID" 2>/dev/null || true
+            PREFLIGHT_EXIT=1
             exit 1
           fi
+          set +e
           node scripts/screenshot-preflight.mjs \
             --url http://localhost:3000/ai-github-actions-playground/ \
             --output screenshot-preflight.json \
             --screenshot screenshot.png
           PREFLIGHT_EXIT=$?
-          kill "$DEV_PID" 2>/dev/null || true
-          exit "$PREFLIGHT_EXIT"
+          set -e
 
       - name: Upload artifacts
         if: always()
@@ -206,6 +213,7 @@ jobs:
             // ── Parse preflight diagnostics ───────────────────────────
             let preflightSection = "";
             let preflightClean = false;
+            let preflightParsed = false;
 
             try {
               const diag = JSON.parse(
@@ -226,6 +234,7 @@ jobs:
                 consoleErrors.length === 0 &&
                 pageErrors.length === 0 &&
                 uiErrors.length === 0;
+              preflightParsed = true;
 
               let details = "";
               if (preflightClean) {
@@ -286,7 +295,11 @@ jobs:
                 "🔧 Fix failing E2E smoke tests before merging.",
               );
             }
-            if (!preflightClean) {
+            if (!preflightParsed) {
+              recommendations.push(
+                "🔧 Screenshot preflight diagnostics were unavailable or invalid — rerun this workflow and verify `peek/screenshot-preflight.json` is generated.",
+              );
+            } else if (!preflightClean) {
               recommendations.push(
                 "🔧 Investigate console or page errors reported by the screenshot preflight.",
               );
@@ -296,14 +309,23 @@ jobs:
                 "⚠️ Flaky tests detected — consider stabilizing them.",
               );
             }
-            if (smokeResultsParsed && testCount.failed === 0 && preflightClean) {
+            if (
+              smokeResultsParsed &&
+              testCount.failed === 0 &&
+              preflightParsed &&
+              preflightClean
+            ) {
               recommendations.push(
                 "✨ All smoke tests pass and no UI errors detected. Ready for review.",
               );
             }
 
             // ── Compose comment ───────────────────────────────────────
-            const allGood = smokeResultsParsed && testCount.failed === 0 && preflightClean;
+            const allGood =
+              smokeResultsParsed &&
+              testCount.failed === 0 &&
+              preflightParsed &&
+              preflightClean;
             const statusEmoji = allGood ? "✅" : "❌";
             const MARKER = "<!-- ui-smoke-test-pr-review -->";
 
@@ -349,3 +371,11 @@ jobs:
               });
               core.info("Created new PR comment");
             }
+
+      - name: Fail if smoke or preflight failed
+        if: always()
+        run: |
+          if [ "${{ steps.smoke.outcome }}" = "failure" ] || [ "${{ steps.preflight.outcome }}" = "failure" ]; then
+            echo "::error::Smoke and/or screenshot preflight checks failed"
+            exit 1
+          fi
