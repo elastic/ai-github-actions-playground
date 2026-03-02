@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -205,7 +204,7 @@ export default function IndicesPage() {
             minHeight: 0,
           }}
         >
-          <Box sx={{ p: 1 }}>
+          <Box sx={{ p: 1, borderBottom: 1, borderColor: "border.subtle" }}>
             <TextField
               size="small"
               fullWidth
@@ -231,7 +230,6 @@ export default function IndicesPage() {
               sx={{ mt: 0.5, ml: 0 }}
             />
           </Box>
-          <Divider />
           <List
             dense
             sx={{ flex: 1, minHeight: 0, overflow: "auto" }}

@@ -498,6 +498,17 @@ export default function DiscoverPage() {
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
               description="Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<PlayArrowIcon />}
+                  onClick={handleRunQuery}
+                  disabled={!effectiveQuery.trim()}
+                >
+                  Run starter query
+                </Button>
+              }
             />
           )}
           {loading && !result && (
