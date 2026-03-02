@@ -45,6 +45,8 @@ export const COMPONENT_HEIGHTS = {
   sidebarNavItem: 32,
   /** Toolbar row height including vertical padding (44 px). */
   toolbarRow: 44,
+  /** Tab control height (36 px). */
+  tab: 36,
   /** Minimum touch-target size for mobile / coarse pointer (44 px). */
   touchTarget: 44,
 } as const;

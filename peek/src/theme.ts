@@ -121,7 +121,7 @@ const baseOptions: ThemeOptions = {
     },
     MuiTab: {
       styleOverrides: {
-        root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.input },
+        root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.tab },
       },
     },
     MuiTypography: {
