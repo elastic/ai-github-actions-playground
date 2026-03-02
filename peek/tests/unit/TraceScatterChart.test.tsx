@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import TraceScatterChart from "../../src/components/visualizations/TraceScatterChart";
 
@@ -29,7 +29,7 @@ vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
 
 vi.mock("@perses-dev/components", () => ({
   EChart: function MockEChart(props: Record<string, unknown>) {
-    const inst = mockInit(null, props.theme);
+    const inst = useMemo(() => mockInit(null, props.theme), [props.theme]);
     inst.setOption(props.option, true);
     const ref = props._instance as React.MutableRefObject<unknown> | undefined;
     useEffect(() => {
