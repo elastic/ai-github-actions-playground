@@ -114,7 +114,7 @@ describe("buildExplorerQuery", () => {
 
   it("builds count aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "count" }));
-    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("COUNT(*)");
     expect(result.yAxisLabel).toBe("Count pct");
   });
 
@@ -233,7 +233,7 @@ describe("buildOverviewQuery", () => {
 
   it("uses count aggregation for counter metrics", () => {
     const result = buildOverviewQuery(makeOverviewQuery({ metricType: "counter" }));
-    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("COUNT(*)");
   });
 
   it("includes time range in WHERE clause", () => {
@@ -296,7 +296,7 @@ describe("buildDimensionOverviewQuery", () => {
 
   it("uses count aggregation for counter metrics", () => {
     const result = buildDimensionOverviewQuery(makeDimensionQuery({ metricType: "counter" }));
-    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("COUNT(*)");
   });
 
   it("escapes dimension field with backticks", () => {

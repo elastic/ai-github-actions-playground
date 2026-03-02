@@ -90,7 +90,7 @@ function buildAggExpression(aggregation: AggregationType, field: string): string
     case "max":
       return `MAX(${escapedField})`;
     case "count":
-      return `COUNT(${escapedField})`;
+      return `COUNT(*)`;
     case "p50":
       return `PERCENTILE(${escapedField}, 50)`;
     case "p95":
