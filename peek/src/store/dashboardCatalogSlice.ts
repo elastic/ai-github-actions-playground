@@ -1,7 +1,7 @@
 /**
  * Dashboard catalog slice — multi-dashboard CRUD operations.
  *
- * Handles creating, renaming, duplicating, archiving, favouriting,
+ * Handles creating, renaming, duplicating, archiving, favoriting,
  * deleting, and restoring dashboards, as well as switching the active
  * dashboard. Shared helper functions live in `dashboardStoreUtils.ts`.
  */

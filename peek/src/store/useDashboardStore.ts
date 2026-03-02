@@ -93,8 +93,9 @@ export const useDashboardStore = create<DashboardState>()(
           if (!result.success || !result.dashboards || !result.activeDashboardId) {
             return { success: result.success, error: result.error };
           }
+          const { dashboards, activeDashboardId } = result;
           set(() => ({
-            ...syncActiveState(result.dashboards!, result.activeDashboardId!),
+            ...syncActiveState(dashboards, activeDashboardId),
             historyPast: [],
             historyFuture: [],
           }));
