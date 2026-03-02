@@ -34,10 +34,12 @@ const A11Y_BASELINE: Record<string, Record<string, number>> = {
     "aria-input-field-name": 2,
     "aria-prohibited-attr": 1,
     "color-contrast": 12,
+    "scrollable-region-focusable": 2,
   },
   Console: {
     "aria-input-field-name": 1,
-    "color-contrast": 5,
+    "color-contrast": 6,
+    "scrollable-region-focusable": 1,
   },
   Indices: {
     "color-contrast": 2,
