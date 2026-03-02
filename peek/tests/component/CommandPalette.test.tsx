@@ -466,3 +466,93 @@ describe("CommandPalette — Connection Profiles group", () => {
     fetchCapsSpy.mockRestore();
   });
 });
+
+describe("CommandPalette — Recent Commands group", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    resetAllStores();
+  });
+
+  it("does not show Recent Commands group when no commands have been executed", () => {
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.queryByText("Recent Commands")).not.toBeInTheDocument();
+  });
+
+  it("shows Recent Commands group after executing a command", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.click(screen.getByText("Connection Settings"));
+
+    // Re-open the palette
+    useUIStore.getState().setCommandPaletteOpen(true);
+
+    await waitFor(() => {
+      expect(screen.getByText("Recent Commands")).toBeInTheDocument();
+    });
+  });
+
+  it("records executed command ID in the store", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.click(screen.getByText("Connection Settings"));
+
+    expect(useUIStore.getState().recentCommandIds).toContain("action:connection");
+  });
+
+  it("deduplicates repeated commands and moves them to the front", () => {
+    useUIStore.getState().addRecentCommandId("action:connection");
+    useUIStore.getState().addRecentCommandId("action:theme");
+    useUIStore.getState().addRecentCommandId("action:connection");
+
+    const ids = useUIStore.getState().recentCommandIds;
+    expect(ids).toEqual(["action:connection", "action:theme"]);
+  });
+
+  it("limits recent commands to 5", () => {
+    for (let i = 0; i < 7; i++) {
+      useUIStore.getState().addRecentCommandId(`cmd:${i}`);
+    }
+
+    expect(useUIStore.getState().recentCommandIds).toHaveLength(5);
+    expect(useUIStore.getState().recentCommandIds[0]).toBe("cmd:6");
+  });
+
+  it("hides Recent Commands group when search input is not empty", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().addRecentCommandId("action:connection");
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.getByText("Recent Commands")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Search commands"), "theme");
+
+    await waitFor(() => {
+      expect(screen.queryByText("Recent Commands")).not.toBeInTheDocument();
+    });
+  });
+
+  it("persists recent command IDs across store rehydration", () => {
+    useUIStore.getState().addRecentCommandId("action:connection");
+    useUIStore.getState().addRecentCommandId("action:theme");
+
+    // Verify persistence config includes recentCommandIds
+    const persisted = JSON.parse(localStorage.getItem("elastic-peek-ui") || "{}");
+    expect(persisted.state.recentCommandIds).toEqual(["action:theme", "action:connection"]);
+  });
+
+  it("clears recent command IDs on resetUIState", () => {
+    useUIStore.getState().addRecentCommandId("action:connection");
+    expect(useUIStore.getState().recentCommandIds).toHaveLength(1);
+
+    useUIStore.getState().resetUIState();
+    expect(useUIStore.getState().recentCommandIds).toEqual([]);
+  });
+});
