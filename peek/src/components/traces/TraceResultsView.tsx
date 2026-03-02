@@ -130,6 +130,7 @@ export default function TraceResultsView({
             icon={<SearchIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
             heading="Search for traces"
             description="Use the filters above to find traces by service name, duration, or status."
+            addDataHref="/add-data"
             action={
               onSearch ? (
                 <Button
