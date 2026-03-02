@@ -112,6 +112,10 @@ export default function AppSidebar({
     [capabilities],
   );
   const hiddenCount = hiddenItems.length;
+  const hiddenLabel =
+    hiddenCount > 0
+      ? `${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`
+      : "";
 
   return (
     <Box
@@ -262,14 +266,11 @@ export default function AppSidebar({
             px: isCollapsed ? 0 : 2,
           }}
         >
-          <Tooltip
-            title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`}
-            placement={isCollapsed ? "right" : "top"}
-          >
+          <Tooltip title={hiddenLabel} placement={isCollapsed ? "right" : "top"}>
             <WarningAmberIcon
               fontSize="small"
-              titleAccess={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`}
-              sx={{ color: "text.secondary", cursor: "pointer" }}
+              titleAccess={hiddenLabel}
+              sx={{ color: "text.secondary" }}
             />
           </Tooltip>
         </Box>
