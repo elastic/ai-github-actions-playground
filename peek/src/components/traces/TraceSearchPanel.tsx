@@ -157,10 +157,6 @@ export default function TraceSearchPanel({
           mb: 1,
           "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
-          "& .MuiOutlinedInput-root": {
-            height: TOOLBAR_CONTROL_MIN_HEIGHT,
-            minHeight: TOOLBAR_CONTROL_MIN_HEIGHT,
-          },
           "& .MuiSelect-select.MuiInputBase-inputSizeSmall": { paddingBlock: "4.5px" },
         }}
       >
@@ -203,7 +199,10 @@ export default function TraceSearchPanel({
             placeholder="Min (ms)"
             value={minDurationInput}
             onChange={(e) => setMinDurationInput(e.target.value)}
-            sx={{ width: 100 }}
+            sx={{
+              width: 100,
+              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+            }}
           />
           <Typography variant="body1" sx={{ px: 0.5 }}>
             —
@@ -213,7 +212,10 @@ export default function TraceSearchPanel({
             placeholder="Max (ms)"
             value={maxDurationInput}
             onChange={(e) => setMaxDurationInput(e.target.value)}
-            sx={{ width: 100 }}
+            sx={{
+              width: 100,
+              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+            }}
           />
           <Button
             size="small"
@@ -236,7 +238,10 @@ export default function TraceSearchPanel({
               applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
             }
           }}
-          sx={{ minWidth: 150 }}
+          sx={{
+            minWidth: 150,
+            "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+          }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
             <MenuItem key={opt.label} value={opt.from ?? ""}>
