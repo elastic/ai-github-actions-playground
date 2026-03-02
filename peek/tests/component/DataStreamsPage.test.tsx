@@ -156,6 +156,32 @@ describe("DataStreamsPage", () => {
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
   });
 
+  it("truncates long data stream names with a title tooltip", async () => {
+    const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        {
+          name: longName,
+          status: "YELLOW",
+          generation: 1,
+          template: "logs",
+          indices: [{ index_name: `${longName}-000001` }],
+        },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
+
+    const list = await screen.findByRole("list");
+    const listLabel = await within(list).findByText(longName);
+    expect(listLabel).toHaveAttribute("title", longName);
+  });
+
   it("shows system streams when the toggle is enabled", async () => {
     const user = userEvent.setup();
 

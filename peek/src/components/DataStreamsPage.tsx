@@ -270,9 +270,11 @@ export default function DataStreamsPage() {
                     primary={stream.name}
                     primaryTypographyProps={{
                       noWrap: true,
+                      title: stream.name,
                       sx: { fontFamily: "monospace", fontSize: "0.85rem" },
                     }}
                     secondaryTypographyProps={{ component: "span" }}
+                    sx={{ minWidth: 0 }}
                     secondary={
                       <Box
                         component="span"
