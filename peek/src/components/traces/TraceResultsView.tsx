@@ -1,10 +1,12 @@
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import SearchIcon from "@mui/icons-material/Search";
 
 import type { EsqlResponse } from "../../types";
 import type { TracesViewMode } from "../../store/useTracesStore";
@@ -59,6 +61,7 @@ interface TraceResultsViewProps {
   driftRadarBaselineEnabled: boolean;
   onDriftRadarBaselineChange: (enabled: boolean) => void;
   filters: TraceFilters;
+  onSearch?: () => void;
 }
 
 export default function TraceResultsView({
@@ -83,6 +86,7 @@ export default function TraceResultsView({
   driftRadarBaselineEnabled,
   onDriftRadarBaselineChange,
   filters,
+  onSearch,
 }: TraceResultsViewProps) {
   return (
     <Box
@@ -123,8 +127,21 @@ export default function TraceResultsView({
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {!searchResult && !searchLoading && viewMode !== "driftRadar" && (
           <EmptyState
+            icon={<SearchIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
             heading="Search for traces"
             description="Use the filters above to find traces by service name, duration, or status."
+            action={
+              onSearch ? (
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<SearchIcon />}
+                  onClick={onSearch}
+                >
+                  Search Traces
+                </Button>
+              ) : undefined
+            }
           />
         )}
         {searchLoading && !searchResult && viewMode !== "driftRadar" && (
