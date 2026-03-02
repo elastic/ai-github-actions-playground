@@ -346,6 +346,7 @@ export default function TracesPage() {
         >
           {selectedTraceId ? (
             <ResizableSplitPane
+              /* 45 % top / 55 % bottom keeps the waterfall chart majority-visible on load */
               initialTopFraction={0.45}
               minPaneHeight={140}
               top={
