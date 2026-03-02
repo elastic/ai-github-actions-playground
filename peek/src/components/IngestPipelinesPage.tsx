@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -34,6 +34,11 @@ export default function IngestPipelinesPage() {
     if (selectedName && pipelinesData.some((p) => p.name === selectedName)) return selectedName;
     return pipelinesData[0]?.name ?? null;
   }, [pipelinesData, selectedName]);
+
+  useEffect(() => {
+    if (!effectiveSelectedName || effectiveSelectedName === selectedName) return;
+    setSelectedName(effectiveSelectedName);
+  }, [effectiveSelectedName, selectedName]);
 
   const selectedPipeline = useMemo(
     () => pipelines.find((p) => p.name === effectiveSelectedName) ?? null,

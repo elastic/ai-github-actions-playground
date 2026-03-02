@@ -61,7 +61,7 @@ export default function ExploreContentArea({
   return (
     <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
       {/* Dimension sidebar — only show in full detail mode */}
-      {selectedMetric && !showDimensionOverview && (
+      {selectedMetric && !showOverview && !showDimensionOverview && (
         <DimensionSidebar
           fields={fields}
           client={client}
@@ -74,14 +74,14 @@ export default function ExploreContentArea({
       )}
 
       {/* Namespace overview grid */}
-      {showOverview && (
+      {showOverview && selectedNamespace && (
         <Paper
           variant="outlined"
           sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
         >
           <MetricOverviewGrid
             fields={fields}
-            namespace={selectedNamespace!}
+            namespace={selectedNamespace}
             indexPattern={indexPattern}
             timeRange={timeRange}
             client={client}
@@ -91,14 +91,14 @@ export default function ExploreContentArea({
       )}
 
       {/* Dimension overview grid — metric selected, no groupBy yet */}
-      {showDimensionOverview && (
+      {showDimensionOverview && selectedMetric && (
         <Paper
           variant="outlined"
           sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
         >
           <DimensionOverviewGrid
             fields={fields}
-            metricField={selectedMetric!}
+            metricField={selectedMetric}
             metricType={metricType}
             metricNamespace={selectedMetricNamespace}
             indexPattern={indexPattern}
