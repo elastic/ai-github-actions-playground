@@ -86,4 +86,26 @@ describe("repro: switchConnectionProfile race", () => {
       errorSummary: null,
     });
   });
+
+  it("does not restore a deleted previous profile on rollback", async () => {
+    const profileAId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("A", { url: "(a.example.com/redacted)", apiKey: "a-key" });
+    const profileBId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("B", { url: "(b.example.com/redacted)", apiKey: "b-key" });
+
+    useConnectionStore.getState().setActiveProfileId(profileBId!);
+
+    vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      throw new Error("switch failed");
+    });
+
+    const switchATask = useConnectionStore.getState().switchConnectionProfile(profileAId!);
+    useConnectionStore.getState().deleteConnectionProfile(profileBId!);
+    await switchATask;
+
+    expect(useConnectionStore.getState().activeProfileId).toBeNull();
+  });
 });

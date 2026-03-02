@@ -172,17 +172,27 @@ export const createConnectionProfileSlice: StateCreator<
       if (latestSwitchRequestId !== requestId) {
         return { ok: false, profileName: profile.name, message };
       }
-      set((s) => ({
-        activeProfileId: s.activeProfileId === id ? prevActiveProfileId : s.activeProfileId,
-        profileHealthMap: {
-          ...s.profileHealthMap,
-          [id]: {
-            status: "needs_attention",
-            checkedAt: new Date().toISOString(),
-            errorSummary: message,
+      set((s) => {
+        const prevStillExists =
+          prevActiveProfileId !== null &&
+          s.connectionProfiles.some((p) => p.id === prevActiveProfileId);
+        return {
+          activeProfileId:
+            s.activeProfileId === id
+              ? prevStillExists
+                ? prevActiveProfileId
+                : null
+              : s.activeProfileId,
+          profileHealthMap: {
+            ...s.profileHealthMap,
+            [id]: {
+              status: "needs_attention",
+              checkedAt: new Date().toISOString(),
+              errorSummary: message,
+            },
           },
-        },
-      }));
+        };
+      });
       return { ok: false, profileName: profile.name, message };
     }
   },
