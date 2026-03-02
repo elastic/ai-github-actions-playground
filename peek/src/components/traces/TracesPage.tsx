@@ -14,7 +14,6 @@ import { useConnectionStore } from "../../store/useConnectionStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
-import type { EsqlResponse } from "../../types";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import ResizableSplitPane from "../ResizableSplitPane";
 
@@ -56,6 +55,10 @@ export default function TracesPage() {
     viewMode,
     setViewMode,
     resetFilters,
+    searchResult,
+    setSearchResult,
+    timeseriesResult,
+    setTimeseriesResult,
   } = useTracesStore(
     useShallow((s) => ({
       filters: s.filters,
@@ -73,11 +76,13 @@ export default function TracesPage() {
       viewMode: s.viewMode,
       setViewMode: s.setViewMode,
       resetFilters: s.resetFilters,
+      searchResult: s.searchResult,
+      setSearchResult: s.setSearchResult,
+      timeseriesResult: s.timeseriesResult,
+      setTimeseriesResult: s.setTimeseriesResult,
     })),
   );
 
-  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
-  const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
@@ -96,14 +101,6 @@ export default function TracesPage() {
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
-
-  // Clear stale trace selection when leaving the page so we don't
-  // show a detail panel next to an empty results list on return.
-  useEffect(() => {
-    return () => {
-      setSelectedTraceId(null);
-    };
-  }, [setSelectedTraceId]);
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
@@ -190,13 +187,14 @@ export default function TracesPage() {
 
   const runTraceQueries = useCallback(
     (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
+      setSearchResult(null);
       setTimeseriesResult(null);
       runSearchQuery(query);
       if (includeTimeseries) {
         runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
       }
     },
-    [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
+    [filters, rawQuery, runSearchQuery, runTimeseriesQuery, setSearchResult, setTimeseriesResult],
   );
 
   const runDriftRadarQueries = useCallback(
