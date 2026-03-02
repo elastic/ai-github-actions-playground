@@ -212,10 +212,12 @@ describe("IndicesPage", () => {
   });
 
   it("restores search, selected index, and tab from URL on mount", async () => {
-    renderPage(["/?search=logs&index=logs-app&tab=mappings"]);
+    const indexName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
+    renderPage([`/?search=metrics&index=${encodeURIComponent(indexName)}&tab=settings`]);
 
-    expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("logs");
-    expect(await screen.findByText("@timestamp")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("metrics");
+    expect(await screen.findByRole("heading", { level: 2, name: indexName })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /settings/i })).toHaveAttribute("aria-selected", "true");
   });
 
   it("clears the detail panel when search excludes the selected index", async () => {
