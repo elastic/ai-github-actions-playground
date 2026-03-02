@@ -164,6 +164,7 @@ describe("IndicesPage", () => {
     renderPage();
     // Wait for list to load
     const listEl = await screen.findByRole("list", { name: /index list/i });
+    await within(listEl).findByText("logs-app");
 
     // Both visible non-system indices should appear in the list
     expect(within(listEl).getAllByText("logs-app").length).toBeGreaterThan(0);

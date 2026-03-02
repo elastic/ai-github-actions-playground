@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,11 +13,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import type { Extension } from "@codemirror/state";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import PageHeader from "../PageHeader";
+import QueryAnnotationOverlay from "../QueryAnnotationOverlay";
 
 import { getServiceColor } from "./traceColors";
 import type { TraceFilters } from "./traceQueryBuilder";
@@ -36,6 +37,8 @@ interface TraceSearchPanelProps {
   searchResultCount: number | null;
 }
 
+const TOOLBAR_CONTROL_MIN_HEIGHT = 32;
+
 export default function TraceSearchPanel({
   filters,
   resetFilters,
@@ -51,6 +54,20 @@ export default function TraceSearchPanel({
 }: TraceSearchPanelProps) {
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
+  const [editorFocused, setEditorFocused] = useState(false);
+
+  const editorExtensions = useMemo(
+    () => [
+      ...queryEditorExtensions,
+      EditorView.focusChangeEffect.of((_state, focusing) => {
+        setEditorFocused(focusing);
+        return null;
+      }),
+    ],
+    // queryEditorExtensions is stable (useMemo([], []) in TracesPage); setEditorFocused is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
@@ -155,6 +172,7 @@ export default function TraceSearchPanel({
           mb: 1,
           "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
+          "& .MuiSelect-select.MuiInputBase-inputSizeSmall": { paddingBlock: "4.5px" },
         }}
       >
         <Autocomplete
@@ -185,7 +203,10 @@ export default function TraceSearchPanel({
           renderInput={(params) => (
             <TextField {...params} size="small" placeholder="Service name" />
           )}
-          sx={{ minWidth: 160 }}
+          sx={{
+            minWidth: 160,
+            "& .MuiInputBase-root": { minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
+          }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <TextField
@@ -193,7 +214,10 @@ export default function TraceSearchPanel({
             placeholder="Min (ms)"
             value={minDurationInput}
             onChange={(e) => setMinDurationInput(e.target.value)}
-            sx={{ width: 100 }}
+            sx={{
+              width: 100,
+              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+            }}
           />
           <Typography variant="body1" sx={{ px: 0.5 }}>
             —
@@ -203,9 +227,17 @@ export default function TraceSearchPanel({
             placeholder="Max (ms)"
             value={maxDurationInput}
             onChange={(e) => setMaxDurationInput(e.target.value)}
-            sx={{ width: 100 }}
+            sx={{
+              width: 100,
+              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+            }}
           />
-          <Button size="small" variant="outlined" onClick={handleApplyDuration}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleApplyDuration}
+            sx={{ minHeight: TOOLBAR_CONTROL_MIN_HEIGHT }}
+          >
             Apply
           </Button>
         </Stack>
@@ -221,7 +253,10 @@ export default function TraceSearchPanel({
               applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
             }
           }}
-          sx={{ minWidth: 150 }}
+          sx={{
+            minWidth: 150,
+            "&.MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+          }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
             <MenuItem key={opt.label} value={opt.from ?? ""}>
@@ -237,7 +272,7 @@ export default function TraceSearchPanel({
               size="medium"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
-              sx={{ height: 32 }}
+              sx={{ height: TOOLBAR_CONTROL_MIN_HEIGHT }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({
@@ -256,22 +291,30 @@ export default function TraceSearchPanel({
 
       {/* ES|QL editor */}
       <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-        <CodeMirror
-          value={effectiveQuery}
-          onChange={onRawQueryChange}
-          onCreateEditor={onCreateEditor}
-          extensions={queryEditorExtensions}
-          theme={themeMode}
-          height="120px"
-          basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-          aria-label="Trace search query editor"
-        />
+        <Box sx={{ position: "relative" }}>
+          <CodeMirror
+            value={effectiveQuery}
+            onChange={onRawQueryChange}
+            onCreateEditor={onCreateEditor}
+            extensions={editorExtensions}
+            theme={themeMode}
+            height="120px"
+            basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
+            aria-label="Trace search query editor"
+          />
+          <QueryAnnotationOverlay
+            query={effectiveQuery}
+            editorFocused={editorFocused}
+            height={120}
+          />
+        </Box>
       </Box>
 
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Button
           variant="contained"
           size="small"
+          sx={{ minHeight: TOOLBAR_CONTROL_MIN_HEIGHT }}
           startIcon={
             searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
           }

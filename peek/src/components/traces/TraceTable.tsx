@@ -8,6 +8,8 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 
+import { formatTimestamp } from "../../utils/formatDate";
+
 import { getServiceColor } from "./traceColors";
 import { formatSpanDuration } from "./traceUtils";
 import type { Span } from "./traceUtils";
@@ -138,7 +140,7 @@ export function TraceTable({
                   />
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.75rem" }}>
-                  {row.timestamp ? new Date(row.timestamp).toLocaleString() : "—"}
+                  {row.timestamp ? formatTimestamp(row.timestamp) : "—"}
                 </TableCell>
               </TableRow>
             );

@@ -19,6 +19,7 @@ import Typography from "@mui/material/Typography";
 import { ElasticsearchClient, type ApiKeyInfo } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
+import { formatTimestamp } from "../utils/formatDate";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
 import { loadSecurityResource } from "./securityResourceLoader";
@@ -237,13 +238,13 @@ export default function ApiKeysPage() {
                 <strong>ID:</strong> {displayedKey.id}
               </Typography>
               <Typography variant="body2">
-                <strong>Created:</strong> {new Date(displayedKey.creation).toLocaleString()} (
+                <strong>Created:</strong> {formatTimestamp(displayedKey.creation)} (
                 {ageLabel(displayedKey.creation)} ago)
               </Typography>
               <Typography variant="body2">
                 <strong>Expires:</strong>{" "}
                 {displayedKey.expiration != null
-                  ? new Date(displayedKey.expiration).toLocaleString()
+                  ? formatTimestamp(displayedKey.expiration)
                   : "Never"}
               </Typography>
               {displayedKey.realm && (

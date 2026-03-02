@@ -267,15 +267,25 @@ export default function TracesPage() {
       return idx !== undefined ? row[idx] : null;
     };
 
-    return searchResult.values.map((row) => ({
-      traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
-      spanId: String(get(row, DEFAULT_FIELD_MAPPING.spanId) ?? ""),
-      serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
-      name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
-      durationUs: Number(get(row, DEFAULT_FIELD_MAPPING.durationUs) ?? 0),
-      status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
-      timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
-    }));
+    return searchResult.values.map((row) => {
+      const parsedDurationUs = Number(get(row, DEFAULT_FIELD_MAPPING.durationUs) ?? NaN);
+      const parsedDurationNs = Number(get(row, DEFAULT_FIELD_MAPPING.durationNs) ?? NaN);
+      const durationUs =
+        Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
+          ? parsedDurationUs
+          : Number.isFinite(parsedDurationNs) && parsedDurationNs > 0
+            ? parsedDurationNs / 1000
+            : 0;
+      return {
+        traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
+        spanId: String(get(row, DEFAULT_FIELD_MAPPING.spanId) ?? ""),
+        serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
+        name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
+        durationUs,
+        status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
+        timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
+      };
+    });
   }, [searchResult]);
 
   const maxDuration = useMemo(

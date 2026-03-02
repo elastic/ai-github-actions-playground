@@ -57,8 +57,8 @@ describe("buildTraceSearchQuery", () => {
       maxDurationMs: 5000,
     };
     const query = buildTraceSearchQuery(filters);
-    expect(query).toContain("attributes.span.duration.us >= 100000");
-    expect(query).toContain("attributes.span.duration.us <= 5000000");
+    expect(query).toContain("COALESCE(attributes.span.duration.us, duration / 1000.0) >= 100000");
+    expect(query).toContain("COALESCE(attributes.span.duration.us, duration / 1000.0) <= 5000000");
   });
 
   it("includes tag filters", () => {
@@ -293,6 +293,13 @@ describe("buildTraceTimeseriesQuery", () => {
     const query = buildTraceTimeseriesQuery(filters);
     expect(query).toContain('service.name IN ("api-gw")');
     expect(query).toContain("parent.id IS NULL");
+  });
+
+  it("normalizes latency to include rows with only ns duration", () => {
+    const query = buildTraceTimeseriesQuery(EMPTY_FILTERS);
+    expect(query).toContain(
+      "EVAL duration_ms = COALESCE(attributes.span.duration.us, duration / 1000.0) / 1000.0",
+    );
   });
 
   it("uses timeFrom/timeTo from filters for BUCKET bounds", () => {
