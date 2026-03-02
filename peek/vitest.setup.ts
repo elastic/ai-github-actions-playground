@@ -1,7 +1,9 @@
-import { vi, afterEach } from "vitest";
+import { vi, afterEach, expect } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import "vitest-axe/extend-expect";
+import * as matchers from "vitest-axe/matchers";
+
+expect.extend(matchers);
 
 class StorageMock implements Storage {
   private store: Record<string, string> = {};
