@@ -1,13 +1,20 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
+import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
 import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useTheme } from "@mui/material/styles";
 
 import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
@@ -180,7 +187,9 @@ export default function DimensionOverviewGrid({
     [indexPattern, metricField, metricType, timeRange],
   );
 
-  const { results } = useBatchedOverviewQueries({
+  const [failedExpanded, setFailedExpanded] = useState(false);
+
+  const { results, retryFailed } = useBatchedOverviewQueries({
     items: dimensionFields,
     client,
     scopeKey,
@@ -190,6 +199,10 @@ export default function DimensionOverviewGrid({
 
   const dimsWithData = useMemo(() => {
     return dimensionFields.filter((f) => hasOverviewData(results[f.name]));
+  }, [dimensionFields, results]);
+
+  const failedDims = useMemo(() => {
+    return dimensionFields.filter((f) => results[f.name]?.status === "error");
   }, [dimensionFields, results]);
 
   const isLoading = useMemo(
@@ -234,11 +247,22 @@ export default function DimensionOverviewGrid({
         </Typography>
         {isLoading && <LinearProgress sx={{ flexShrink: 0, width: 80 }} />}
         {!isLoading && (
-          <Chip
-            label={`${dimsWithData.length} of ${dimensionFields.length} dimensions with data`}
-            size="small"
-            variant="outlined"
-          />
+          <>
+            <Chip
+              label={`${dimsWithData.length} of ${dimensionFields.length} dimensions with data`}
+              size="small"
+              variant="outlined"
+            />
+            {failedDims.length > 0 && (
+              <Chip
+                label={`${failedDims.length} failed`}
+                size="small"
+                variant="outlined"
+                color="error"
+                icon={<ErrorOutlineIcon />}
+              />
+            )}
+          </>
         )}
         <Button size="small" variant="outlined" onClick={onViewUngrouped}>
           View ungrouped
@@ -339,26 +363,111 @@ export default function DimensionOverviewGrid({
           ))}
       </Box>
 
-      {/* Empty state after loading */}
-      {!isLoading && dimsWithData.length === 0 && dimensionFields.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            py: 4,
-          }}
-        >
-          <Typography variant="body2" color="text.primary">
-            No dimensions with data found in the selected time range
-          </Typography>
-          <Button size="small" onClick={onViewUngrouped}>
-            View ungrouped metric
-          </Button>
+      {/* Failed dimensions expandable section */}
+      {!isLoading && failedDims.length > 0 && (
+        <Box sx={{ mt: 1 }}>
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+            <IconButton
+              size="small"
+              onClick={() => setFailedExpanded((prev) => !prev)}
+              aria-expanded={failedExpanded}
+              aria-label={
+                failedExpanded ? "Collapse failed dimensions" : "Expand failed dimensions"
+              }
+            >
+              {failedExpanded ? (
+                <ExpandLessIcon fontSize="small" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" />
+              )}
+            </IconButton>
+            <Typography variant="caption" color="error" sx={{ fontWeight: 600 }}>
+              {failedDims.length} failed dimension{failedDims.length !== 1 ? "s" : ""}
+            </Typography>
+            <Tooltip title="Retry all failed dimension queries">
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<RefreshIcon />}
+                onClick={retryFailed}
+                sx={{ ml: 1 }}
+              >
+                Retry failed
+              </Button>
+            </Tooltip>
+          </Box>
+          <Collapse in={failedExpanded}>
+            <Box
+              component="ul"
+              sx={{ m: 0, mt: 0.5, p: 0, listStyle: "none" }}
+              role="list"
+              aria-label="Failed dimensions"
+            >
+              {failedDims.map((field) => {
+                const reason = results[field.name]?.errorReason ?? "Unknown error";
+                return (
+                  <Box
+                    key={field.name}
+                    component="li"
+                    sx={{
+                      display: "flex",
+                      gap: 1,
+                      alignItems: "center",
+                      py: 0.5,
+                      px: 1,
+                      borderBottom: `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
+                    <ErrorOutlineIcon fontSize="small" color="error" />
+                    <Typography
+                      variant="caption"
+                      sx={{ flex: 1, fontWeight: 600 }}
+                      noWrap
+                      title={field.name}
+                    >
+                      {field.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ flex: 2 }}
+                      noWrap
+                      title={reason}
+                    >
+                      {reason}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Collapse>
         </Box>
       )}
+
+      {/* Empty state after loading */}
+      {!isLoading &&
+        dimsWithData.length === 0 &&
+        failedDims.length === 0 &&
+        dimensionFields.length > 0 && (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              py: 4,
+            }}
+          >
+            <Typography variant="body2" color="text.primary">
+              No dimensions with data found in the selected time range
+            </Typography>
+            <Button size="small" onClick={onViewUngrouped}>
+              View ungrouped metric
+            </Button>
+          </Box>
+        )}
     </Box>
   );
 }

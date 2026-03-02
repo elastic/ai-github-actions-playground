@@ -247,9 +247,10 @@ export default function TraceSearchPanel({
             <Chip
               key={status}
               label={status}
-              size="small"
+              size="medium"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
+              sx={{ height: 32 }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({
