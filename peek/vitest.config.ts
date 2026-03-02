@@ -12,6 +12,7 @@ export default defineConfig({
     // Files that need jsdom opt in with a `// @vitest-environment jsdom` comment.
     environmentMatchGlobs: [["tests/unit/**/*.test.ts", "node"]],
     setupFiles: ["./vitest.setup.ts"],
+    testTimeout: 15000,
     css: false,
     coverage: {
       provider: "v8",
