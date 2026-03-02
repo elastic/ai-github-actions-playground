@@ -22,6 +22,7 @@ import QueryAnnotationOverlay from "../QueryAnnotationOverlay";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import { getServiceColor } from "./traceColors";
+import { formatStatusLabel } from "./traceUtils";
 import type { TraceFilters } from "./traceQueryBuilder";
 
 interface TraceSearchPanelProps {
@@ -108,7 +109,7 @@ export default function TraceSearchPanel({
         {filters.statusCodes.map((status) => (
           <Chip
             key={status}
-            label={`status: ${status === "OK" ? "Success" : status}`}
+            label={`status: ${formatStatusLabel(status)}`}
             size="small"
             color={status === "Error" ? "error" : "default"}
             deleteIcon={

@@ -264,6 +264,38 @@ describe("SpanDetailDrawer – invalid timestamp", () => {
   });
 });
 
+describe("SpanDetailDrawer – status label consistency", () => {
+  it('displays "Success" for a span with status "OK"', () => {
+    const span = makeSpan({ status: "OK" });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Success")).toBeInTheDocument();
+  });
+
+  it('displays "Error" for a span with status "Error"', () => {
+    const span = makeSpan({ status: "Error" });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Error")).toBeInTheDocument();
+  });
+});
+
 describe("SpanDetailDrawer – copy action", () => {
   it("does not throw when navigator.clipboard is unavailable", async () => {
     const user = userEvent.setup();
