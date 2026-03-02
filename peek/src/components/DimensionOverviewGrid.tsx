@@ -19,7 +19,7 @@ import { useTheme } from "@mui/material/styles";
 import { EChart } from "@perses-dev/components";
 
 import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
-import { buildDimensionOverviewQuery } from "../services/es";
+import { buildDimensionOverviewQuery, isDimensionField } from "../services/es";
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 
@@ -153,13 +153,7 @@ export default function DimensionOverviewGrid({
 
   // Discover dimension fields — same logic as DimensionSidebar
   const dimensionFields = useMemo(() => {
-    const base = fields.filter(
-      (f) =>
-        f.metricType === "unknown" &&
-        f.type !== "date" &&
-        f.type !== "date_nanos" &&
-        f.name !== "@timestamp",
-    );
+    const base = fields.filter(isDimensionField);
     if (metricNamespace === null) return base;
     const scoped = base.filter(
       (f) => f.name === metricNamespace || f.name.startsWith(`${metricNamespace}.`),

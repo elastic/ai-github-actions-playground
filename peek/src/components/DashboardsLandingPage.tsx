@@ -37,6 +37,7 @@ import {
 import PageHeader from "./PageHeader";
 import DashboardCard from "./DashboardCard";
 import DashboardCardMenu from "./DashboardCardMenu";
+import DashboardDetailsDialog from "./DashboardDetailsDialog";
 import DashboardNameDialog from "./DashboardNameDialog";
 
 export default function DashboardsLandingPage() {
@@ -47,6 +48,7 @@ export default function DashboardsLandingPage() {
     activeDashboardId,
     createDashboard,
     renameDashboard,
+    updateDashboardMetadata,
     duplicateDashboard,
     archiveDashboard,
     toggleFavoriteDashboard,
@@ -61,6 +63,7 @@ export default function DashboardsLandingPage() {
       activeDashboardId: s.activeDashboardId,
       createDashboard: s.createDashboard,
       renameDashboard: s.renameDashboard,
+      updateDashboardMetadata: s.updateDashboardMetadata,
       duplicateDashboard: s.duplicateDashboard,
       archiveDashboard: s.archiveDashboard,
       toggleFavoriteDashboard: s.toggleFavoriteDashboard,
@@ -98,6 +101,7 @@ export default function DashboardsLandingPage() {
   const [nameDialogMode, setNameDialogMode] = useState<"create" | "rename">("create");
   const [nameDialogValue, setNameDialogValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const deleteToastIdRef = useRef<string | number | undefined>(undefined);
 
   const handleCreate = useCallback(() => {
@@ -127,6 +131,27 @@ export default function DashboardsLandingPage() {
     setNameDialogValue(menuDashboard.title);
     setNameDialogOpen(true);
   }, [menuDashboard]);
+
+  const handleEditDetails = useCallback(() => {
+    if (!menuDashboard) return;
+    setDetailsDialogOpen(true);
+  }, [menuDashboard]);
+
+  const handleDetailsConfirm = useCallback(
+    (details: { description: string; tags: string[] }) => {
+      if (menuDashboard) {
+        updateDashboardMetadata(menuDashboard.id, details);
+      }
+      setDetailsDialogOpen(false);
+      handleCloseMenu();
+    },
+    [menuDashboard, updateDashboardMetadata, handleCloseMenu],
+  );
+
+  const handleDetailsCancel = useCallback(() => {
+    setDetailsDialogOpen(false);
+    handleCloseMenu();
+  }, [handleCloseMenu]);
 
   const handleDuplicate = useCallback(() => {
     if (!menuDashboard) return;
@@ -466,6 +491,7 @@ export default function DashboardsLandingPage() {
         disableDelete={dashboards.length <= 1}
         onClose={handleCloseMenu}
         onRename={handleRename}
+        onEditDetails={handleEditDetails}
         onDuplicate={handleDuplicate}
         onArchiveToggle={handleArchiveToggle}
         onExport={handleExportDashboard}
@@ -480,6 +506,14 @@ export default function DashboardsLandingPage() {
         onChange={setNameDialogValue}
         onConfirm={handleNameDialogConfirm}
         onCancel={handleNameDialogCancel}
+      />
+
+      <DashboardDetailsDialog
+        open={detailsDialogOpen}
+        description={menuDashboard?.description ?? ""}
+        tags={menuDashboard?.tags ?? []}
+        onConfirm={handleDetailsConfirm}
+        onCancel={handleDetailsCancel}
       />
     </Box>
   );

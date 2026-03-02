@@ -226,7 +226,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -238,9 +240,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
       mockRunQuery.mock.calls
         .map(([query]) => String(query ?? ""))
         .find((query) =>
-          query.includes("COALESCE(attributes.span.duration.us, duration / 1000.0)"),
+          query.includes("COALESCE(attributes.span.duration.us, duration / 1000)"),
         ) ?? "";
-    expect(traceQuery).toContain("COALESCE(attributes.span.duration.us, duration / 1000.0)");
+    expect(traceQuery).toContain("COALESCE(attributes.span.duration.us, duration / 1000)");
     expect(traceQuery).toContain(">= 2000");
   });
 
@@ -337,7 +339,9 @@ describe("TracesPage duration parsing", () => {
   it("falls back to nanosecond duration when microsecond field is missing", () => {
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

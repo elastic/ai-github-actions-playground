@@ -30,7 +30,9 @@ Table panels include an **Export CSV** button in the panel toolbar. It downloads
 
 Peek supports a workspace library with `dashboards[]` and one active dashboard.
 
-Use the Dashboards index page as the organizing surface: create dashboards, open one as active, and run row-level actions (rename, duplicate, archive, delete).
+Use the Dashboards index page as the organizing surface: create dashboards, open one as active, and run row-level actions (rename, edit details, duplicate, archive, delete).
+
+Use Edit details from the card menu to update a dashboard's description and tags. Changes appear immediately on the card and in tag-based filters.
 
 Keep `/` as the live canvas for the active dashboard so existing build/edit habits stay intact while switching context remains one click.
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import DashboardViewPage from "../../src/components/DashboardViewPage";
@@ -42,10 +42,40 @@ describe("DashboardViewPage", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(`/dashboards/${id}`);
   });
 
-  it("redirects to /dashboards when id does not match any dashboard", () => {
+  it("shows not-found empty state when id does not match any dashboard", () => {
     renderViewPage("nonexistent-id");
 
     expect(screen.queryByTestId("dashboard-grid")).not.toBeInTheDocument();
+    expect(screen.getByTestId("no-data-icon")).toBeInTheDocument();
+    expect(screen.getByText("Dashboard not found")).toBeInTheDocument();
+    expect(
+      screen.getByText("The dashboard you requested does not exist or may have been deleted."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /back to dashboards/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create dashboard/i })).toBeInTheDocument();
+    // Stays on the same route instead of redirecting
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/nonexistent-id");
+  });
+
+  it("navigates to /dashboards when Back to dashboards is clicked", () => {
+    renderViewPage("nonexistent-id");
+
+    fireEvent.click(screen.getByRole("button", { name: /back to dashboards/i }));
+
     expect(screen.getByTestId("location")).toHaveTextContent("/dashboards");
+  });
+
+  it("creates a dashboard and navigates to its route", () => {
+    const previousActiveId = useDashboardStore.getState().activeDashboardId;
+    renderViewPage("nonexistent-id");
+
+    fireEvent.click(screen.getByRole("button", { name: /create dashboard/i }));
+
+    const newActiveId = useDashboardStore.getState().activeDashboardId;
+    expect(newActiveId).toBeTruthy();
+    expect(newActiveId).not.toBe(previousActiveId);
+    expect(screen.getByTestId("dashboard-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent(`/dashboards/${newActiveId}`);
+    expect(screen.getByTestId("location")).not.toHaveTextContent("/dashboards/nonexistent-id");
   });
 });

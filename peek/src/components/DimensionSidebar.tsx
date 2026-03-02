@@ -23,7 +23,7 @@ import type {
   ExplorerFilter,
   ElasticsearchClient,
 } from "../services/es";
-import { getFieldValues } from "../services/es";
+import { getFieldValues, isDimensionField } from "../services/es";
 
 import EmptyState from "./EmptyState";
 
@@ -57,13 +57,7 @@ export default function DimensionSidebar({
   const abortRef = useRef<AbortController | null>(null);
 
   // Filter to only non-metric, non-timestamp dimension fields
-  const baseDimensionFields = fields.filter(
-    (f) =>
-      f.metricType === "unknown" &&
-      f.type !== "date" &&
-      f.type !== "date_nanos" &&
-      f.name !== "@timestamp",
-  );
+  const baseDimensionFields = fields.filter(isDimensionField);
   const scopedDimensionFields =
     metricNamespace === null
       ? baseDimensionFields

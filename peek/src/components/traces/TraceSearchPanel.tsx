@@ -39,7 +39,7 @@ interface TraceSearchPanelProps {
   searchResultCount: number | null;
 }
 
-const TOOLBAR_CONTROL_MIN_HEIGHT = 32;
+const TOOLBAR_CONTROL_HEIGHT = COMPONENT_HEIGHTS.input;
 
 export default function TraceSearchPanel({
   filters,
@@ -174,10 +174,10 @@ export default function TraceSearchPanel({
           mb: 1,
           "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root": {
             height: "auto",
-            minHeight: COMPONENT_HEIGHTS.buttonSmall,
+            minHeight: TOOLBAR_CONTROL_HEIGHT,
           },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
-          "& .MuiOutlinedInput-root": { height: COMPONENT_HEIGHTS.buttonSmall },
+          "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
           "& .MuiSelect-select.MuiInputBase-inputSizeSmall": { paddingBlock: "4.5px" },
         }}
       >
@@ -211,7 +211,7 @@ export default function TraceSearchPanel({
           )}
           sx={{
             minWidth: 160,
-            "& .MuiInputBase-root": { height: "auto", minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
+            "& .MuiInputBase-root": { height: "auto", minHeight: TOOLBAR_CONTROL_HEIGHT },
           }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -222,7 +222,7 @@ export default function TraceSearchPanel({
             onChange={(e) => setMinDurationInput(e.target.value)}
             sx={{
               width: 100,
-              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
             }}
           />
           <Typography variant="body1" sx={{ px: 0.5 }}>
@@ -235,14 +235,14 @@ export default function TraceSearchPanel({
             onChange={(e) => setMaxDurationInput(e.target.value)}
             sx={{
               width: 100,
-              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
             }}
           />
           <Button
             size="small"
             variant="outlined"
             onClick={handleApplyDuration}
-            sx={{ minHeight: TOOLBAR_CONTROL_MIN_HEIGHT }}
+            sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
           >
             Apply
           </Button>
@@ -261,7 +261,7 @@ export default function TraceSearchPanel({
           }}
           sx={{
             minWidth: 150,
-            "&.MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+            "&.MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
           }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
@@ -283,7 +283,7 @@ export default function TraceSearchPanel({
               size="medium"
               variant={filters.statusCodes.includes(value) ? "filled" : "outlined"}
               color={value === "Error" ? "error" : "default"}
-              sx={{ height: COMPONENT_HEIGHTS.buttonSmall }}
+              sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               onClick={() => {
                 if (filters.statusCodes.includes(value)) {
                   applyFiltersAndRun({
@@ -325,7 +325,7 @@ export default function TraceSearchPanel({
         <Button
           variant="contained"
           size="small"
-          sx={{ minHeight: TOOLBAR_CONTROL_MIN_HEIGHT }}
+          sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
           startIcon={
             searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
           }
