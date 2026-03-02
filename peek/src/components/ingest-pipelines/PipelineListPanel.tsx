@@ -64,6 +64,7 @@ export default function PipelineListPanel({
                     noWrap: true,
                     sx: { fontFamily: "monospace", fontSize: "0.85rem" },
                   }}
+                  secondaryTypographyProps={{ component: "span" }}
                   secondary={
                     <Chip
                       component="span"
