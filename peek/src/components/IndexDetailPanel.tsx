@@ -392,13 +392,7 @@ export default function IndexDetailPanel({
       {selectedIndex ? (
         <>
           <Box sx={{ pt: 1.5, pb: 0, px: 2 }}>
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              noWrap
-              title={selectedIndex}
-              sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
-            >
+            <Typography variant="subtitle1" component="h2" noWrap title={selectedIndex}>
               {selectedIndex}
             </Typography>
           </Box>
