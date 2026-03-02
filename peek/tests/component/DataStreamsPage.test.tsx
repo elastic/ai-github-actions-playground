@@ -143,7 +143,8 @@ describe("DataStreamsPage", () => {
 
     await screen.findAllByText("logs-a");
     const logsRow = screen.getByRole("button", { name: /logs-a/i });
-    expect(within(logsRow).getByText("YELLOW - 1 Index")).toBeInTheDocument();
+    expect(within(logsRow).getByText("YELLOW")).toBeInTheDocument();
+    expect(within(logsRow).getByText("1 Index")).toBeInTheDocument();
     expect(screen.getByTestId("data-stream-meta-backing-indices")).toHaveTextContent("1");
     expect(screen.getByTestId("data-stream-meta-write-index")).toHaveTextContent(
       ".ds-logs-a-000001",

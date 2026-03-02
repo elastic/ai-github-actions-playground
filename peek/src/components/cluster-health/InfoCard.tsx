@@ -24,18 +24,19 @@ export default function InfoCard({ title, value, detail, severity }: InfoCardPro
         p: 2,
         borderLeftWidth: severity ? 4 : 1,
         borderLeftColor: borderColor,
+        bgcolor: "background.elevated",
       }}
       role="group"
       aria-label={title}
     >
-      <Typography variant="caption" color="text.secondary" gutterBottom component="div">
+      <Typography variant="body2" color="text.secondary" gutterBottom component="div">
         {title}
       </Typography>
-      <Typography variant="h5" component="div" sx={{ fontVariantNumeric: "tabular-nums" }}>
+      <Typography variant="h3" component="div">
         {value}
       </Typography>
       {detail ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {detail}
         </Typography>
       ) : null}

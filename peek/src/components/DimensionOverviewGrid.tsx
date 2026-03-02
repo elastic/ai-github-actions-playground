@@ -371,6 +371,7 @@ export default function DimensionOverviewGrid({
               size="small"
               onClick={() => setFailedExpanded((prev) => !prev)}
               aria-expanded={failedExpanded}
+              aria-controls="failed-dimensions-list"
               aria-label={
                 failedExpanded ? "Collapse failed dimensions" : "Expand failed dimensions"
               }
@@ -397,7 +398,7 @@ export default function DimensionOverviewGrid({
               </Button>
             </Tooltip>
           </Box>
-          <Collapse in={failedExpanded}>
+          <Collapse in={failedExpanded} id="failed-dimensions-list">
             <Box
               component="ul"
               sx={{ m: 0, mt: 0.5, p: 0, listStyle: "none" }}

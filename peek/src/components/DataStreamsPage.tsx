@@ -38,6 +38,14 @@ function toFieldRows(fieldCaps: FieldCapsResponse) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "default"> = {
+  GREEN: "success",
+  YELLOW: "warning",
+  RED: "error",
+};
+
+const COMPACT_CHIP_SX = { height: 20, fontSize: "0.7rem" } as const;
+
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
@@ -260,11 +268,34 @@ export default function DataStreamsPage() {
                 >
                   <ListItemText
                     primary={stream.name}
-                    secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
-                      stream.indices.length === 1 ? "Index" : "Indices"
-                    }`}
-                    primaryTypographyProps={{ noWrap: true, title: stream.name }}
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      title: stream.name,
+                      sx: { fontFamily: "monospace", fontSize: "0.85rem" },
+                    }}
+                    secondaryTypographyProps={{ component: "span" }}
                     sx={{ minWidth: 0 }}
+                    secondary={
+                      <Box
+                        component="span"
+                        sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 0.5 }}
+                      >
+                        <Chip
+                          component="span"
+                          label={stream.status.toUpperCase()}
+                          color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
+                          size="small"
+                          sx={COMPACT_CHIP_SX}
+                        />
+                        <Chip
+                          component="span"
+                          label={`${stream.indices.length} ${stream.indices.length === 1 ? "Index" : "Indices"}`}
+                          size="small"
+                          variant="outlined"
+                          sx={COMPACT_CHIP_SX}
+                        />
+                      </Box>
+                    }
                   />
                 </ListItemButton>
               </ListItem>

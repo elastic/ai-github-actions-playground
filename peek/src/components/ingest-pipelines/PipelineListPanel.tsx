@@ -1,3 +1,4 @@
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -59,7 +60,20 @@ export default function PipelineListPanel({
               >
                 <ListItemText
                   primary={entry.name}
-                  secondary={`${processorCount} processor${processorCount === 1 ? "" : "s"}`}
+                  primaryTypographyProps={{
+                    noWrap: true,
+                    sx: { fontFamily: "monospace", fontSize: "0.85rem" },
+                  }}
+                  secondaryTypographyProps={{ component: "span" }}
+                  secondary={
+                    <Chip
+                      component="span"
+                      label={`${processorCount} processor${processorCount === 1 ? "" : "s"}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 20, mt: 0.5, fontSize: "0.7rem" }}
+                    />
+                  }
                 />
               </ListItemButton>
             </ListItem>

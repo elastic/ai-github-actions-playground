@@ -87,6 +87,7 @@ export const createConnectionProfileSlice: StateCreator<
 
   deleteConnectionProfile: (id) =>
     set((s) => {
+      latestRequestIdByProfileId.delete(id);
       if (isElectronAvailable()) {
         // Fire-and-forget: credential deletion is async but UI update is sync.
         // Errors are logged but do not block the profile removal.
@@ -171,7 +172,7 @@ export const createConnectionProfileSlice: StateCreator<
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
-      if (latestSwitchRequestId !== requestId) {
+      if (get().activeProfileId !== id || latestRequestIdByProfileId.get(id) !== requestId) {
         return { ok: false, profileName: profile.name, message };
       }
       set((s) => {
