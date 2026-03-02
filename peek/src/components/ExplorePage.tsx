@@ -37,6 +37,7 @@ import {
   listFields,
   buildExplorerQuery,
   getAggregationOptions,
+  EXPLORER_AGGREGATIONS,
 } from "../services/es";
 import type { AggregationType, FieldInfo, ExplorerFilter } from "../services/es";
 import { buildTimeParams } from "../services/datemath";
@@ -50,17 +51,12 @@ import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import TimeSeriesChart from "./visualizations/TimeSeriesChart";
 
-const VALID_AGGREGATIONS: AggregationType[] = [
-  "avg",
-  "sum",
-  "min",
-  "max",
-  "count",
-  "p50",
-  "p95",
-  "p99",
-];
-const parseAggregation = parseAsStringEnum<AggregationType>(VALID_AGGREGATIONS);
+const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(["==", "!=", "LIKE"]);
+const parseAggregation = parseAsStringEnum<AggregationType>([...EXPLORER_AGGREGATIONS]);
+
+function isExplorerFilterOp(value: string): value is ExplorerFilter["op"] {
+  return VALID_FILTER_OPS.has(value as ExplorerFilter["op"]);
+}
 
 function parseFilters(search: string): ExplorerFilter[] {
   const params = new URLSearchParams(search);
@@ -72,7 +68,7 @@ function parseFilters(search: string): ExplorerFilter[] {
     const colonIdx = value.indexOf(":");
     if (colonIdx <= 0) continue;
     const op = value.slice(0, colonIdx);
-    if (op !== "==" && op !== "!=" && op !== "LIKE") continue;
+    if (!isExplorerFilterOp(op)) continue;
     parsedFilters.push({ field, op, value: value.slice(colonIdx + 1) });
   }
   return parsedFilters;
@@ -112,7 +108,9 @@ function applyFilters(
     next.delete(key);
   }
   for (const filter of nextFilters) {
-    next.append(`filter.${filter.field}`, `${filter.op}:${filter.value}`);
+    const field = filter.field.trim();
+    if (!field || !VALID_FILTER_OPS.has(filter.op)) continue;
+    next.append(`filter.${field}`, `${filter.op}:${filter.value}`);
   }
   return next;
 }
