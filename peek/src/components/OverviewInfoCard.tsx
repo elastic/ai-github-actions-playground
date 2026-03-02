@@ -16,9 +16,9 @@ export function OverviewInfoCard({ title, children, onClick }: OverviewInfoCardP
       sx={{
         height: "100%",
         p: 2,
-        textAlign: "left",
-        bgcolor: "background.subtle",
         borderColor: "border.subtle",
+        bgcolor: "background.subtle",
+        textAlign: "left",
         ...(onClick && {
           cursor: "pointer",
           transition: "border-color 0.15s",
