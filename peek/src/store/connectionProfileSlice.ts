@@ -189,7 +189,7 @@ export const createConnectionProfileSlice: StateCreator<
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
       if (get().activeProfileId !== id || latestRequestIdByProfileId.get(id) !== requestId) {
-        return { ok: false, profileName: profile.name, message };
+        return { ok: true, profileName: profile.name };
       }
       set((s) => {
         const prevStillExists =
