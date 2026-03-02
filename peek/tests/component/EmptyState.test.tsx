@@ -15,7 +15,7 @@ describe("EmptyState", () => {
     const link = screen.getByRole("link", { name: /add data/i });
     expect(link).toBeInTheDocument();
     // HashRouter renders hash-based app routes, not server paths
-    expect(link.getAttribute("href")).toContain("#/add-data");
+    expect(link).toHaveAttribute("href", "#/add-data");
   });
 
   it("does not render Add data link when addDataHref is not provided", () => {
