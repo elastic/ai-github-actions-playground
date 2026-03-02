@@ -125,7 +125,7 @@ export default function TraceResultsView({
             description="Use the filters above to find traces by service name, duration, or status."
           />
         )}
-        {searchLoading && !searchResult && (
+        {searchLoading && !searchResult && viewMode !== "driftRadar" && (
           <Box sx={{ p: 2 }}>
             <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
           </Box>
