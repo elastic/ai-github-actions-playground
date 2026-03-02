@@ -134,6 +134,7 @@ export interface ElasticsearchConnection {
   username?: string;
   password?: string;
   proxyUrl?: string;
+  ingestUrl?: string;
   otlpEnabled?: boolean;
   otlpEndpoint?: string;
   otlpUseElasticAuth?: boolean;

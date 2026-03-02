@@ -32,6 +32,8 @@ describe("useTracesStore", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -62,10 +64,12 @@ describe("useTracesStore", () => {
       expect(state.rawQuery).toBeNull();
     });
 
-    it("resetFilters clears filters, query, and selection", () => {
+    it("resetFilters clears filters, query, selection, and cached results", () => {
       useTracesStore.getState().updateFilters({ services: ["svc"] });
       useTracesStore.getState().setSelectedTraceId("trace-1");
       useTracesStore.getState().setSelectedTraceSpans([makeSpan()]);
+      useTracesStore.getState().setSearchResult({ columns: [], values: [[1]] });
+      useTracesStore.getState().setTimeseriesResult({ columns: [], values: [[2]] });
 
       useTracesStore.getState().resetFilters();
 
@@ -75,6 +79,8 @@ describe("useTracesStore", () => {
       expect(state.selectedTraceId).toBeNull();
       expect(state.selectedTraceSpans).toEqual([]);
       expect(state.selectedSpanId).toBeNull();
+      expect(state.searchResult).toBeNull();
+      expect(state.timeseriesResult).toBeNull();
     });
   });
 
@@ -214,6 +220,42 @@ describe("useTracesStore", () => {
 
       useTracesStore.getState().setViewMode("serviceMap");
       expect(useTracesStore.getState().viewMode).toBe("serviceMap");
+    });
+  });
+
+  describe("cached search results", () => {
+    it("starts with null searchResult and timeseriesResult", () => {
+      const state = useTracesStore.getState();
+      expect(state.searchResult).toBeNull();
+      expect(state.timeseriesResult).toBeNull();
+    });
+
+    it("setSearchResult stores the result", () => {
+      const mockResult = { columns: [{ name: "trace_id", type: "keyword" }], values: [["abc"]] };
+      useTracesStore.getState().setSearchResult(mockResult);
+      expect(useTracesStore.getState().searchResult).toBe(mockResult);
+    });
+
+    it("setTimeseriesResult stores the result", () => {
+      const mockResult = { columns: [{ name: "ts", type: "date" }], values: [["2026-01-01"]] };
+      useTracesStore.getState().setTimeseriesResult(mockResult);
+      expect(useTracesStore.getState().timeseriesResult).toBe(mockResult);
+    });
+
+    it("searchResult persists in the global store across access (simulates navigation)", () => {
+      const mockResult = { columns: [], values: [["row1"], ["row2"]] };
+      useTracesStore.getState().setSearchResult(mockResult);
+
+      // Simulate re-accessing the store (as a new component mount would)
+      const freshState = useTracesStore.getState();
+      expect(freshState.searchResult).toBe(mockResult);
+      expect(freshState.searchResult!.values).toHaveLength(2);
+    });
+
+    it("setSearchResult(null) clears the cached result", () => {
+      useTracesStore.getState().setSearchResult({ columns: [], values: [[1]] });
+      useTracesStore.getState().setSearchResult(null);
+      expect(useTracesStore.getState().searchResult).toBeNull();
     });
   });
 });

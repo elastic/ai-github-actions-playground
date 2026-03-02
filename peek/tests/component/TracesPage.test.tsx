@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import TracesPage from "../../src/components/traces/TracesPage";
 import { useTracesStore } from "../../src/store/useTracesStore";
@@ -55,6 +56,8 @@ describe("TracesPage duration filter", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -62,7 +65,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -76,7 +81,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -90,7 +97,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -103,7 +112,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -138,6 +149,8 @@ describe("TracesPage empty states", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -145,7 +158,9 @@ describe("TracesPage empty states", () => {
     useTracesStore.setState({ viewMode: "driftRadar" });
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -158,7 +173,9 @@ describe("TracesPage empty states", () => {
   it("shows no-results guidance in list view when a search returns zero traces", () => {
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -183,6 +200,8 @@ describe("TracesPage auto-run on quick filter changes", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -190,7 +209,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -227,7 +248,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -242,7 +265,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -261,7 +286,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -278,7 +305,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

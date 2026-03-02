@@ -210,7 +210,7 @@ export default function TraceSearchPanel({
           )}
           sx={{
             minWidth: 160,
-            "& .MuiInputBase-root": { minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
+            "& .MuiInputBase-root": { height: "auto", minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
           }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>

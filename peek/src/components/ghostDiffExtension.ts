@@ -1,6 +1,9 @@
 import { Prec, StateEffect, StateField, type Extension, type Transaction } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType, keymap } from "@codemirror/view";
 
+import { darkTheme, lightTheme } from "../theme";
+import { STATUS_COLORS } from "../types/tokens";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -165,11 +168,11 @@ const themeLight = EditorView.theme({
   ".cm-ghost-strikethrough": {
     textDecoration: "line-through",
     opacity: "0.5",
-    color: "#DE350B",
+    color: STATUS_COLORS.error,
     fontStyle: "italic",
   },
   ".cm-ghost-replacement": {
-    color: "#36B37E",
+    color: STATUS_COLORS.success,
     opacity: "0.65",
     fontStyle: "italic",
     whiteSpace: "pre-wrap",
@@ -184,9 +187,9 @@ const themeLight = EditorView.theme({
     fontSize: "10px",
     fontFamily: "system-ui, sans-serif",
     fontStyle: "normal",
-    color: "#64748b",
-    background: "#f1f5f9",
-    border: "1px solid #cbd5e1",
+    color: lightTheme.palette.text.secondary,
+    background: lightTheme.palette.background.subtle,
+    border: `1px solid ${lightTheme.palette.border.default}`,
     borderRadius: "3px",
     verticalAlign: "middle",
     lineHeight: "1.4",
@@ -199,11 +202,11 @@ const themeDark = EditorView.theme(
     ".cm-ghost-strikethrough": {
       textDecoration: "line-through",
       opacity: "0.45",
-      color: "#DE350B",
+      color: STATUS_COLORS.error,
       fontStyle: "italic",
     },
     ".cm-ghost-replacement": {
-      color: "#36B37E",
+      color: STATUS_COLORS.success,
       opacity: "0.70",
       fontStyle: "italic",
       whiteSpace: "pre-wrap",
@@ -218,9 +221,9 @@ const themeDark = EditorView.theme(
       fontSize: "10px",
       fontFamily: "system-ui, sans-serif",
       fontStyle: "normal",
-      color: "#94a3b8",
-      background: "#1e293b",
-      border: "1px solid #334155",
+      color: darkTheme.palette.text.secondary,
+      background: darkTheme.palette.background.subtle,
+      border: `1px solid ${darkTheme.palette.border.default}`,
       borderRadius: "3px",
       verticalAlign: "middle",
       lineHeight: "1.4",
