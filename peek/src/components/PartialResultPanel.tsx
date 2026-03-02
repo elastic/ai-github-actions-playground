@@ -254,7 +254,7 @@ export default function PartialResultPanel({
           />
         </IconButton>
         <WarningAmberIcon fontSize="small" sx={{ mr: 0.5, color: "warning.main" }} />
-        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Typography variant="body2" sx={{ flex: 1 }}>
           Partial Results
         </Typography>
         {failedClusters > 0 && (

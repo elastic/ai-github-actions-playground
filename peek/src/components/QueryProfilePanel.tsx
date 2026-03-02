@@ -211,7 +211,7 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
             }}
           />
         </IconButton>
-        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Typography variant="body2" sx={{ flex: 1 }}>
           Query Profile
         </Typography>
         <Tooltip title={copied ? "Copied!" : "Copy profile diagnostics"}>

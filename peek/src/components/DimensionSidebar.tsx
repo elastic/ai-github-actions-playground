@@ -161,7 +161,7 @@ export default function DimensionSidebar({
         }}
       >
         <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="subtitle2">Dimensions</Typography>
+          <Typography variant="body2">Dimensions</Typography>
         </Box>
         <EmptyState size="small" heading="No dimensions" description="No filterable fields found" />
       </Paper>
@@ -180,7 +180,7 @@ export default function DimensionSidebar({
       }}
     >
       <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="subtitle2">Dimensions</Typography>
+        <Typography variant="body2">Dimensions</Typography>
         {metricNamespace && (
           <Typography variant="caption" color="text.secondary" display="block">
             Scoped to {metricNamespace}

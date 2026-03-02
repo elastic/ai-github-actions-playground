@@ -229,7 +229,7 @@ export default function DimensionOverviewGrid({
         <Button size="small" startIcon={<ArrowBackIcon />} onClick={onBackToOverview}>
           Back to overview
         </Button>
-        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Typography variant="body2" sx={{ flex: 1 }}>
           {shortMetric} — dimensions
         </Typography>
         {isLoading && <CircularProgress size={16} />}

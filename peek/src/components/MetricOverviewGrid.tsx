@@ -186,7 +186,7 @@ export default function MetricOverviewGrid({
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
-        <Typography variant="subtitle2" component="div">
+        <Typography variant="body2" component="div">
           {namespace} namespace
         </Typography>
         {isLoading && <CircularProgress size={16} />}

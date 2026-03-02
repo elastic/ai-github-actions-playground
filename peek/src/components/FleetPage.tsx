@@ -382,7 +382,7 @@ function OverviewTab({
           {/* Charts */}
           <Box sx={{ display: "flex", gap: 1.5, minHeight: 250 }}>
             <Paper variant="outlined" sx={{ flex: 1, p: 1.5 }}>
-              <Typography variant="subtitle2" gutterBottom>
+              <Typography variant="body2" gutterBottom>
                 Agent Status
               </Typography>
               <Box sx={{ height: 200 }}>
@@ -390,7 +390,7 @@ function OverviewTab({
               </Box>
             </Paper>
             <Paper variant="outlined" sx={{ flex: 1, p: 1.5 }}>
-              <Typography variant="subtitle2" gutterBottom>
+              <Typography variant="body2" gutterBottom>
                 Version Distribution
               </Typography>
               <Box sx={{ height: 200 }}>
@@ -439,7 +439,7 @@ function OverviewTab({
           </Stack>
           {agentVersions.length > 0 && (
             <Paper variant="outlined" sx={{ height: 200, p: 1.5 }}>
-              <Typography variant="subtitle2" gutterBottom>
+              <Typography variant="body2" gutterBottom>
                 Version Distribution
               </Typography>
               <Box sx={{ height: 160 }}>

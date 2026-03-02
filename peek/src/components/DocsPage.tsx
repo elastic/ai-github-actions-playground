@@ -104,7 +104,7 @@ export default function DocsPage() {
                 sx={{ width: 120, height: 120, mb: 1.5, objectFit: "contain" }}
               />
             )}
-            <Typography variant="h6" sx={{ mb: 1 }}>
+            <Typography variant="h5" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
             {section.body.map((paragraph, index) => {
@@ -113,7 +113,7 @@ export default function DocsPage() {
                 return (
                   <Typography
                     key={index}
-                    variant="subtitle2"
+                    variant="body2"
                     fontWeight={600}
                     sx={{ mt: 1.5, mb: 0.5 }}
                   >

@@ -35,7 +35,7 @@ export default function FleetOutputsList({ outputs }: Props) {
       {outputs.map((o) => (
         <Paper key={o.output} variant="outlined" sx={{ p: 1.5 }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-            <Typography variant="subtitle2" sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ flex: 1 }}>
               {o.output}
             </Typography>
             <Chip

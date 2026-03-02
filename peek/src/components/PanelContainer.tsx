@@ -195,7 +195,7 @@ export default function PanelContainer({ panel }: Props) {
             "&:hover": { opacity: 1 },
           }}
         />
-        <Typography variant="subtitle2" noWrap sx={{ flex: 1, fontWeight: 500 }}>
+        <Typography variant="body2" noWrap sx={{ flex: 1, fontWeight: 500 }}>
           {panel.title}
         </Typography>
         {loading && <CircularProgress size={14} sx={{ mr: 0.5 }} />}
