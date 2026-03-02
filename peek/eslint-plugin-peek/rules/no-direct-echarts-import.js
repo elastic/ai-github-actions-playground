@@ -17,6 +17,10 @@ export default {
       ImportDeclaration(node) {
         const source = node.source.value;
         if (typeof source === "string" && source.startsWith("echarts")) {
+          // Allow type-only imports (no runtime effect)
+          if (node.importKind === "type") {
+            return;
+          }
           // Allow in EChartWrapper itself and in tests
           const filename = context.getFilename ? context.getFilename() : context.filename;
           const normalizedFilename = filename.replace(/\\/g, "/");

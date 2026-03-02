@@ -30,6 +30,10 @@ export default defineConfig({
       "echarts/charts": "echarts",
       "echarts/components": "echarts",
       "echarts/renderers": "echarts",
+      // Force the ESM build of @perses-dev/components so that CSS font
+      // imports use ESM `import` statements (handled by vitest css:false)
+      // instead of CJS `require()` which crashes in the Node test environment.
+      "@perses-dev/components": "@perses-dev/components/dist/index.js",
     },
   },
 });
