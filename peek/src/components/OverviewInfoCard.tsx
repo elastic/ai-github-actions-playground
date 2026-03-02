@@ -41,6 +41,7 @@ export function OverviewInfoCard({ title, children, onClick }: OverviewInfoCardP
 
   return (
     <ButtonBase
+      component="div"
       onClick={onClick}
       aria-label={`View ${title}`}
       sx={{ display: "block", width: "100%", textAlign: "left" }}
