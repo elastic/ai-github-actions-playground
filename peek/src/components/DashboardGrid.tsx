@@ -25,7 +25,11 @@ import {
   toReactGridLayouts,
 } from "./perses/layoutAdapter";
 
-export default function DashboardGrid() {
+interface DashboardGridProps {
+  staticMode?: boolean;
+}
+
+export default function DashboardGrid({ staticMode = true }: DashboardGridProps) {
   const { width, containerRef, mounted } = useContainerWidth();
   const { panels, updatePanelLayouts, addPanel, loadDefaultDashboard } = useDashboardEditorStore(
     useShallow((s) => ({
@@ -43,10 +47,8 @@ export default function DashboardGrid() {
   );
 
   const handleLayoutChange = useCallback(
-    (_currentLayout: Layout, allLayouts: Layouts) => {
-      const lgLayout = allLayouts.lg;
-      if (!lgLayout) return;
-      const updates = fromReactGridLayoutItems(lgLayout);
+    (layout: Layout) => {
+      const updates = fromReactGridLayoutItems(layout);
       updatePanelLayouts(updates);
     },
     [updatePanelLayouts],
@@ -92,8 +94,10 @@ export default function DashboardGrid() {
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
           rowHeight={80}
-          onLayoutChange={handleLayoutChange}
-          dragConfig={{ handle: ".panel-drag-handle" }}
+          dragConfig={{ enabled: !staticMode, handle: ".panel-drag-handle" }}
+          resizeConfig={{ enabled: !staticMode }}
+          onDragStop={staticMode ? undefined : handleLayoutChange}
+          onResizeStop={staticMode ? undefined : handleLayoutChange}
           containerPadding={[0, 0]}
           margin={[12, 12]}
         >
