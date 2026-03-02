@@ -116,7 +116,10 @@ export default function RequestCard({
           value={entry.path}
           onChange={(e) => onUpdate(entry.id, { path: e.target.value, response: null })}
           onKeyDown={(e) => {
-            if (e.key === "Enter") onSend(entry.id);
+            if (e.key === "Enter" && entry.path.trim()) {
+              e.preventDefault();
+              onSend(entry.id);
+            }
           }}
           label="Path"
           placeholder="/_cat/indices?v"

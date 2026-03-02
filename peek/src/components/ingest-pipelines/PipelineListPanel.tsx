@@ -7,12 +7,8 @@ import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 
+import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import EmptyState from "../EmptyState";
-
-interface PipelineEntry {
-  name: string;
-  pipeline: { processors?: unknown[] };
-}
 
 interface PipelineListPanelProps {
   loading: boolean;
@@ -43,6 +39,7 @@ export default function PipelineListPanel({
           placeholder="Search pipelines"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
+          inputProps={{ "aria-label": "Search pipelines" }}
         />
       </Box>
       <Divider />
@@ -63,10 +60,12 @@ export default function PipelineListPanel({
           </ListItem>
         ))}
         {!loading && filteredPipelines.length === 0 && (
-          <EmptyState
-            heading="No pipelines found"
-            description="Try adjusting your search or check that ingest pipelines exist in the cluster"
-          />
+          <ListItem>
+            <EmptyState
+              heading="No pipelines found"
+              description="Try adjusting your search or check that ingest pipelines exist in the cluster"
+            />
+          </ListItem>
         )}
       </List>
     </Paper>

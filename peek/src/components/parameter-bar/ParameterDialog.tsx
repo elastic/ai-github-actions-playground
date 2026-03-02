@@ -130,12 +130,13 @@ export default function ParameterDialog({
         .map((v) => v.trim())
         .filter(Boolean)
         .map((v) => parseParameterValue(param.type, v));
-      if (typedOptions.some((entry) => entry.error)) return;
+      if (typedOptions.length === 0 || typedOptions.some((entry) => entry.error)) return;
       param.source = {
         mode: "options",
         values: typedOptions.map((entry) => String(entry.value)),
       };
     }
+    if (param.source.mode === "esql" && !param.source.query.trim()) return;
 
     onSave(param, editing?.name ?? null);
     onClose();
@@ -144,18 +145,26 @@ export default function ParameterDialog({
   const draftValueValidation = parseParameterValue(draft.type, draftValueInput);
   const optionsValidationError =
     draft.source.mode === "options"
-      ? optionsInput
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean)
-          .map((v) => parseParameterValue(draft.type, v))
-          .find((entry) => entry.error)?.error
+      ? (() => {
+          const typedOptions = optionsInput
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+            .map((v) => parseParameterValue(draft.type, v));
+          if (typedOptions.length === 0) return "Add at least one option.";
+          return typedOptions.find((entry) => entry.error)?.error;
+        })()
+      : undefined;
+  const esqlValidationError =
+    draft.source.mode === "esql" && !draft.source.query.trim()
+      ? "Enter an ES|QL query."
       : undefined;
   const canSave =
     Boolean(draft.name.trim()) &&
     !draftValueValidation.error &&
     draftValueValidation.value !== undefined &&
-    !optionsValidationError;
+    !optionsValidationError &&
+    !esqlValidationError;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -255,11 +264,12 @@ export default function ParameterDialog({
             <TextField
               label="ES|QL query"
               size="small"
-              value={draft.source.mode === "esql" ? draft.source.query : ""}
+              value={draft.source.query}
               onChange={(e) =>
                 setDraft((d) => ({ ...d, source: { mode: "esql", query: e.target.value } }))
               }
-              helperText="First column of results will be used as options"
+              helperText={esqlValidationError ?? "First column of results will be used as options"}
+              error={Boolean(esqlValidationError)}
               fullWidth
               multiline
               rows={2}

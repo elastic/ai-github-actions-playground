@@ -51,20 +51,20 @@ export default function ParameterControl({
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
-    const datasource = createPersesEsqlDatasource(connection);
-    const request = buildPersesEsqlRequest(param.source.query, { parameters });
-    datasource
-      .execute(request, ctrl.signal)
-      .then((result) => {
+    void (async () => {
+      try {
+        const datasource = createPersesEsqlDatasource(connection);
+        const request = buildPersesEsqlRequest(param.source.query, { parameters });
+        const result = await datasource.execute(request, ctrl.signal);
         if (!ctrl.signal.aborted && result.values) {
           setEsqlOptions(result.values.map((row) => String(row[0] ?? "")).filter(Boolean));
         }
-      })
-      .catch(() => {
+      } catch {
         if (!ctrl.signal.aborted) {
           setEsqlOptions([]);
         }
-      });
+      }
+    })();
 
     return () => ctrl.abort();
   }, [param.source, connection, hasQueryableEsqlSource, parameters]);

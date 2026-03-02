@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -14,21 +14,11 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
 import type { SimulateIngestPipelineResponse, ElasticsearchConnection } from "../../services/es";
 import { runConnectionRequest } from "../../hooks/useConnectionRequest";
+import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import EmptyState from "../EmptyState";
 
 import { parseSimulateInput } from "./ingestPipelineUtils";
 import SimulateResults from "./SimulateResults";
-
-interface IngestPipeline {
-  description?: string;
-  version?: number;
-  processors?: unknown[];
-}
-
-interface PipelineEntry {
-  name: string;
-  pipeline: IngestPipeline;
-}
 
 interface PipelineDetailPanelProps {
   selectedPipeline: PipelineEntry | null;
@@ -44,14 +34,18 @@ export default function PipelineDetailPanel({
   const [simulating, setSimulating] = useState(false);
   const [simulateError, setSimulateError] = useState<string | null>(null);
   const [simulateResult, setSimulateResult] = useState<SimulateIngestPipelineResponse | null>(null);
+  const requestSeqRef = useRef(0);
 
   useEffect(() => {
+    requestSeqRef.current += 1;
+    setSimulating(false);
     setSimulateResult(null);
     setSimulateError(null);
   }, [selectedPipeline?.name]);
 
   const handleSimulate = useCallback(async () => {
     if (!connection || !selectedPipeline) return;
+    const requestId = ++requestSeqRef.current;
     setSimulating(true);
     setSimulateError(null);
     setSimulateResult(null);
@@ -68,6 +62,7 @@ export default function PipelineDetailPanel({
           connection,
           run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs, { verbose }),
         });
+        if (requestId !== requestSeqRef.current) return;
         if (error !== null) {
           setSimulateError(error);
         } else if (data !== null) {
@@ -79,13 +74,16 @@ export default function PipelineDetailPanel({
         connection,
         run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs),
       });
+      if (requestId !== requestSeqRef.current) return;
       if (error !== null) {
         setSimulateError(error);
       } else if (data !== null) {
         setSimulateResult(data);
       }
     } finally {
-      setSimulating(false);
+      if (requestId === requestSeqRef.current) {
+        setSimulating(false);
+      }
     }
   }, [connection, selectedPipeline, simulateInput, verbose]);
 

@@ -8,6 +8,7 @@ import type { SortDirection } from "./dataTableUtils";
 
 interface DataTableColumnMenuProps {
   data: EsqlResponse;
+  orderedColumnIndices: number[];
   menuAnchor: HTMLElement | null;
   menuColumnIndex: number | null;
   pinnedColumns: Set<number>;
@@ -22,6 +23,7 @@ interface DataTableColumnMenuProps {
 
 export default function DataTableColumnMenu({
   data,
+  orderedColumnIndices,
   menuAnchor,
   menuColumnIndex,
   pinnedColumns,
@@ -36,6 +38,10 @@ export default function DataTableColumnMenu({
   const closeMenu = useCallback(() => {
     onClose();
   }, [onClose]);
+  const menuPosition =
+    menuColumnIndex === null ? -1 : orderedColumnIndices.indexOf(menuColumnIndex);
+  const isFirstColumn = menuPosition === 0;
+  const isLastColumn = menuPosition === orderedColumnIndices.length - 1;
 
   return (
     <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
@@ -66,6 +72,7 @@ export default function DataTableColumnMenu({
         Sort Z→A
       </MenuItem>
       <MenuItem
+        disabled={menuColumnIndex === null || isFirstColumn}
         onClick={() => {
           if (menuColumnIndex !== null) onMoveColumn(menuColumnIndex, "left");
           closeMenu();
@@ -74,6 +81,7 @@ export default function DataTableColumnMenu({
         Move column left
       </MenuItem>
       <MenuItem
+        disabled={menuColumnIndex === null || isLastColumn}
         onClick={() => {
           if (menuColumnIndex !== null) onMoveColumn(menuColumnIndex, "right");
           closeMenu();

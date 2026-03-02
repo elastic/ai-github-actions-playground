@@ -33,7 +33,7 @@ interface ExploreControlsPanelProps {
   showEsql: boolean;
   showDimensionOverview: boolean;
   esql: string | null;
-  queryStatus: string;
+  queryStatus: "idle" | "loading" | "success" | "error";
   executionTimeMs?: number;
   onIndexPatternChange: (value: string) => void;
   onNamespaceChange: (namespace: string | null) => void;

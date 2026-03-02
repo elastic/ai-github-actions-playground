@@ -243,6 +243,7 @@ export default memo(function DataTable({
       />
       <DataTableColumnMenu
         data={data}
+        orderedColumnIndices={resolvedColumnOrder}
         menuAnchor={menuAnchor}
         menuColumnIndex={menuColumnIndex}
         pinnedColumns={pinnedColumns}
