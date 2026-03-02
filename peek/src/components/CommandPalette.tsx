@@ -362,7 +362,7 @@ export default function CommandPalette() {
         noOptionsText="No matching commands"
         slots={{ popper: CommandPalettePopper, paper: CommandPalettePaper }}
         slotProps={{
-          listbox: { id: `${listboxId}-command-palette-list`, "aria-label": "Commands" },
+          listbox: { id: listboxId, "aria-label": "Commands" },
         }}
         renderInput={(params) => (
           <Box
