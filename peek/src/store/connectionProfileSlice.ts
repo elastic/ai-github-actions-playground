@@ -25,6 +25,8 @@ import {
   ENCRYPTED_STORE_SUFFIX,
 } from "./connectionStorageAdapters";
 
+let latestSwitchRequestId = 0;
+
 const credentialsSchema = z
   .object({
     apiKey: z.string().optional().catch(""),
@@ -143,10 +145,11 @@ export const createConnectionProfileSlice: StateCreator<
       return { ok: false, profileName: null, message: "Connection profile not found" };
     }
     const prevActiveProfileId = get().activeProfileId;
+    const requestId = ++latestSwitchRequestId;
     set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
-      if (get().activeProfileId !== id) {
+      if (get().activeProfileId !== id || latestSwitchRequestId !== requestId) {
         return { ok: true, profileName: profile.name };
       }
       set((s) => ({
@@ -166,6 +169,9 @@ export const createConnectionProfileSlice: StateCreator<
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
+      if (latestSwitchRequestId !== requestId) {
+        return { ok: false, profileName: profile.name, message };
+      }
       set((s) => ({
         activeProfileId: s.activeProfileId === id ? prevActiveProfileId : s.activeProfileId,
         profileHealthMap: {
