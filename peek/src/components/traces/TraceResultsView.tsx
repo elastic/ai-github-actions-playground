@@ -132,7 +132,7 @@ export default function TraceResultsView({
         )}
         {searchResult && viewMode === "list" && traceRows.length === 0 && (
           <EmptyState
-            heading="No traces matched current filters."
+            heading="No traces matched the current filters."
             description="Adjust filters or widen the time range."
           />
         )}
