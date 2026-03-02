@@ -21,6 +21,8 @@ Enable the **Enable Elastic Docs search in chat** toggle to give the Chat assist
 
 This toggle is off by default. Enabling it adds a documentation search tool to the chat runtime that communicates with the Elastic Docs service. Disable it to restrict the assistant to cluster-local tools only.
 
+The built-in tools (query execution, screen context, page navigation, query drafting, and time range control) are always available when a cluster is connected and do not require this toggle. See Chat for the full list of built-in tools.
+
 LLM credentials are stored in session storage only and are cleared when the browser session ends.
 
 Use Reset LLM Settings when rotating credentials or switching environments to avoid stale configuration.
