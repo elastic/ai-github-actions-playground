@@ -407,15 +407,15 @@ export default function AddDataPage() {
                   <Box
                     component="pre"
                     sx={{
-                      bgcolor: "background.default",
-                      borderRadius: 1,
-                      fontFamily: "monospace",
-                      fontSize: "0.8rem",
-                      m: 0,
                       overflow: "auto",
+                      m: 0,
                       p: 1.5,
-                      whiteSpace: "pre-wrap",
+                      borderRadius: 1,
+                      bgcolor: "background.default",
                       wordBreak: "break-all",
+                      whiteSpace: "pre-wrap",
+                      fontSize: "0.8rem",
+                      fontFamily: "monospace",
                     }}
                   >
                     {step.command}

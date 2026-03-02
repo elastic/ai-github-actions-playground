@@ -104,15 +104,18 @@ export default function AppSidebar({
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
 
-  const hiddenCount = useMemo(
+  const hiddenItems = useMemo(
     () =>
-      NAV_SECTIONS.reduce(
-        (count, section) =>
-          count + section.items.filter((item) => isHiddenByCapability(item, capabilities)).length,
-        0,
+      NAV_SECTIONS.flatMap((section) =>
+        section.items.filter((item) => isHiddenByCapability(item, capabilities)),
       ),
     [capabilities],
   );
+  const hiddenCount = hiddenItems.length;
+  const hiddenLabel =
+    hiddenCount > 0
+      ? `${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`
+      : "";
 
   return (
     <Box
@@ -263,13 +266,10 @@ export default function AppSidebar({
             px: isCollapsed ? 0 : 2,
           }}
         >
-          <Tooltip
-            title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
-            placement={isCollapsed ? "right" : "top"}
-          >
+          <Tooltip title={hiddenLabel} placement={isCollapsed ? "right" : "top"}>
             <WarningAmberIcon
               fontSize="small"
-              titleAccess={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
+              titleAccess={hiddenLabel}
               sx={{ color: "text.secondary" }}
             />
           </Tooltip>

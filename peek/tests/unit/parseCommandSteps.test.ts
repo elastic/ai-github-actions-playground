@@ -45,12 +45,9 @@ describe("parseCommandSteps", () => {
   });
 
   it("prepends preamble lines to the first step", () => {
-    const command = [
-      "# Note: This is a preamble",
-      "",
-      "# 1. Install",
-      "helm install foo",
-    ].join("\n");
+    const command = ["# Note: This is a preamble", "", "# 1. Install", "helm install foo"].join(
+      "\n",
+    );
 
     const steps = parseCommandSteps(command);
     expect(steps).toHaveLength(1);

@@ -91,6 +91,7 @@ export default function MetricSearch({
       </FormControl>
       <Autocomplete
         size="small"
+        openText="Browse metrics"
         options={scopedMetricFields}
         value={selectedField}
         onChange={(_, value) => onSelect(value)}

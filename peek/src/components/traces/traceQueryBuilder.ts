@@ -66,7 +66,7 @@ export const EMPTY_FILTERS: TraceFilters = {
 };
 
 function buildDurationUsExpression(fields: TraceFieldMapping): string {
-  return `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000.0)`;
+  return `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000)`;
 }
 
 /** Structured query parts returned by buildTraceSearchQueryParts */
