@@ -36,6 +36,8 @@ interface TraceSearchPanelProps {
   searchResultCount: number | null;
 }
 
+const TOOLBAR_CONTROL_MIN_HEIGHT = 32;
+
 export default function TraceSearchPanel({
   filters,
   resetFilters,
@@ -153,7 +155,7 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiInputBase-root": { minHeight: 32 },
+          "& .MuiInputBase-root": { minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
         }}
       >
         <Autocomplete
@@ -184,7 +186,10 @@ export default function TraceSearchPanel({
           renderInput={(params) => (
             <TextField {...params} size="small" placeholder="Service name" />
           )}
-          sx={{ minWidth: 160, "& .MuiInputBase-root": { minHeight: 32 } }}
+          sx={{
+            minWidth: 160,
+            "& .MuiInputBase-root": { minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
+          }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <TextField
@@ -208,7 +213,7 @@ export default function TraceSearchPanel({
             size="small"
             variant="outlined"
             onClick={handleApplyDuration}
-            sx={{ minHeight: 32 }}
+            sx={{ minHeight: TOOLBAR_CONTROL_MIN_HEIGHT }}
           >
             Apply
           </Button>
@@ -241,7 +246,7 @@ export default function TraceSearchPanel({
               size="medium"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
-              sx={{ height: 32 }}
+              sx={{ height: TOOLBAR_CONTROL_MIN_HEIGHT }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({
@@ -276,7 +281,7 @@ export default function TraceSearchPanel({
         <Button
           variant="contained"
           size="small"
-          sx={{ minHeight: 32 }}
+          sx={{ minHeight: TOOLBAR_CONTROL_MIN_HEIGHT }}
           startIcon={
             searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
           }
