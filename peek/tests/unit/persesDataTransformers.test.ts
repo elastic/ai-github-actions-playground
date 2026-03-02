@@ -350,4 +350,38 @@ describe("perses data transformers", () => {
       },
     ]);
   });
+
+  it("handles __proto__ labels and control characters without key collisions", () => {
+    const timestamp = "2026-01-01T00:00:00.000Z";
+    const data: EsqlResponse = {
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "__proto__", type: "keyword" },
+        { name: "service", type: "keyword" },
+        { name: "cpu", type: "double" },
+      ],
+      values: [
+        [timestamp, "x", `a\0b\x1fc`, 0.5],
+        [timestamp, "x\0", `b\x1fc`, 0.7],
+      ],
+    };
+
+    const transformed = toTimeSeriesData(data).series;
+    expect(transformed).toHaveLength(2);
+
+    const firstSeries = transformed.find(
+      (series) => series.name === `cpu (__proto__=x, service=a\0b\x1fc)`,
+    );
+    const secondSeries = transformed.find(
+      (series) => series.name === `cpu (__proto__=x\0, service=b\x1fc)`,
+    );
+
+    expect(firstSeries?.labels?.["__proto__"]).toBe("x");
+    expect(firstSeries?.labels?.service).toBe(`a\0b\x1fc`);
+    expect(firstSeries?.values).toEqual([[Date.parse(timestamp), 0.5]]);
+
+    expect(secondSeries?.labels?.["__proto__"]).toBe("x\0");
+    expect(secondSeries?.labels?.service).toBe(`b\x1fc`);
+    expect(secondSeries?.values).toEqual([[Date.parse(timestamp), 0.7]]);
+  });
 });

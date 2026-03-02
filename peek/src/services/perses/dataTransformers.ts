@@ -128,7 +128,7 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
     let labelKey = "";
 
     if (hasLabels) {
-      labels = {};
+      labels = Object.create(null) as Record<string, string>;
       const labelNamesInOrder: string[] = [];
       for (let d = 0; d < dimensionColumns.length; d++) {
         const colIdx = dimensionColumns[d];
@@ -145,11 +145,11 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
       for (const name of labelNamesInOrder) {
         const value = labels[name] ?? "";
         labelParts.push(`${name}=${value}`);
-        // Use \0 within pairs and \x1f between pairs to avoid collision with label content
-        keyParts.push(`${name}\0${value}`);
+        // Length-prefix names/values to avoid collisions from delimiter-like content.
+        keyParts.push(`${name.length}:${name}${value.length}:${value}`);
       }
       labelText = ` (${labelParts.join(", ")})`;
-      labelKey = keyParts.join("\x1f");
+      labelKey = keyParts.join("");
     }
 
     for (const numericColumnIndex of numericColumns) {
