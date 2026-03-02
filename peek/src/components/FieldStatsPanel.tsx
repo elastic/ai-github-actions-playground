@@ -132,10 +132,10 @@ export default function FieldStatsPanel({
       {/* Header */}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, py: 1, px: 1.5 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap title={fieldName}>
+          <Typography variant="body2" noWrap title={fieldName}>
             {fieldName}
           </Typography>
-          <Chip size="small" label={fieldType} sx={{ mt: 0.25 }} />
+          <Chip size="small" label={fieldType} sx={{ mt: 0.5 }} />
         </Box>
         <IconButton size="small" onClick={onClose} aria-label="Close field stats">
           <CloseIcon fontSize="small" />

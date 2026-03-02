@@ -229,7 +229,7 @@ export default function UsersPage() {
             {selectedUser ? (
               <>
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                  <Typography variant="h6">{selectedUser.username}</Typography>
+                  <Typography variant="subtitle1">{selectedUser.username}</Typography>
                   <Chip
                     size="small"
                     color={selectedUser.enabled === false ? "warning" : "success"}

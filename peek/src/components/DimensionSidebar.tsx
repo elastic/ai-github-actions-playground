@@ -161,7 +161,7 @@ export default function DimensionSidebar({
         }}
       >
         <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="subtitle2">Dimensions</Typography>
+          <Typography variant="body2">Dimensions</Typography>
         </Box>
         <EmptyState size="small" heading="No dimensions" description="No filterable fields found" />
       </Paper>
@@ -180,7 +180,7 @@ export default function DimensionSidebar({
       }}
     >
       <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="subtitle2">Dimensions</Typography>
+        <Typography variant="body2">Dimensions</Typography>
         {metricNamespace && (
           <Typography variant="caption" color="text.secondary" display="block">
             Scoped to {metricNamespace}
@@ -219,7 +219,7 @@ export default function DimensionSidebar({
                             onSetGroupBy(isGroupBy ? null : field.name);
                           }}
                           color={isGroupBy ? "primary" : "default"}
-                          sx={{ p: 0.25 }}
+                          sx={{ p: 0.5 }}
                         >
                           <GroupWorkIcon sx={{ fontSize: 14 }} />
                         </IconButton>

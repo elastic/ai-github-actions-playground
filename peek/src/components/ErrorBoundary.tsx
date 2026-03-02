@@ -41,7 +41,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             p: 4,
           }}
         >
-          <Typography variant="h6" component="p">
+          <Typography variant="subtitle1" component="p">
             Something went wrong
           </Typography>
           <Typography variant="body2" color="text.secondary">

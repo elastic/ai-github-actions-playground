@@ -30,6 +30,10 @@ describe("peek/enforce-spacing-tokens", () => {
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
         {
+          code: `<Box sx={{ py: 8 }} />`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
+        {
           code: `<Box sx={{ "&:hover": { p: 2 } }} />`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },

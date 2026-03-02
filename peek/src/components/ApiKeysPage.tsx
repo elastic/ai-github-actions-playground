@@ -193,7 +193,7 @@ export default function ApiKeysPage() {
           {selectedKey ? (
             <>
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Typography variant="h6">{selectedKey.name}</Typography>
+                <Typography variant="subtitle1">{selectedKey.name}</Typography>
                 {selectedKeyRisk !== null && selectedKeyRisk.label !== "" && (
                   <Chip size="small" label={selectedKeyRisk.label} color={selectedKeyRisk.level} />
                 )}

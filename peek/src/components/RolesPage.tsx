@@ -186,7 +186,7 @@ export default function RolesPage() {
         >
           {selectedRole ? (
             <>
-              <Typography variant="h6">{selectedRole.name}</Typography>
+              <Typography variant="subtitle1">{selectedRole.name}</Typography>
               <Typography variant="caption" color="text.secondary">
                 Cluster privileges
               </Typography>

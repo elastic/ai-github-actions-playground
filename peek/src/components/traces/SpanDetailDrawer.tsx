@@ -71,7 +71,7 @@ function KeyValueRow({
       >
         {value}
       </Typography>
-      <Box sx={{ display: "flex", flexShrink: 0, gap: 0.25 }}>
+      <Box sx={{ display: "flex", flexShrink: 0, gap: 0.5 }}>
         {onFilterBy && (
           <Tooltip title="Filter by this value">
             <IconButton size="small" onClick={onFilterBy}>
@@ -168,7 +168,7 @@ export default function SpanDetailDrawer({
             }}
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" noWrap>
+            <Typography variant="body2" noWrap>
               {span.name}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>

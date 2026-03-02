@@ -80,7 +80,7 @@ function DriverRow({ driver, index }: DriverRowProps) {
           display: "flex",
           alignItems: "center",
           width: "100%",
-          py: 0.75,
+          py: 1,
           px: 1.5,
           border: 0,
           bgcolor: "transparent",
@@ -197,7 +197,7 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
   return (
     <Paper variant="outlined">
       {/* Header */}
-      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", py: 0.75, px: 1.5 }}>
+      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", py: 1, px: 1.5 }}>
         <IconButton
           size="small"
           onClick={() => setExpanded((prev) => !prev)}
@@ -211,7 +211,7 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
             }}
           />
         </IconButton>
-        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Typography variant="body2" sx={{ flex: 1 }}>
           Query Profile
         </Typography>
         <Tooltip title={copied ? "Copied!" : "Copy profile diagnostics"}>

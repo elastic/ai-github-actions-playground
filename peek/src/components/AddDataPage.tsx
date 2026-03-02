@@ -171,7 +171,7 @@ export default function AddDataPage() {
 
       <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-          <Typography variant="subtitle2">Endpoint type</Typography>
+          <Typography variant="body2">Endpoint type</Typography>
           <ToggleButtonGroup
             value={endpointType}
             exclusive
@@ -222,7 +222,7 @@ export default function AddDataPage() {
 
         <Box role="tabpanel">
           <Stack direction="row" spacing={1} alignItems="center">
-            <Typography variant="subtitle2" sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ flex: 1 }}>
               {activeGuide.label} quickstart
             </Typography>
             <Button
@@ -276,7 +276,7 @@ export default function AddDataPage() {
       </Paper>
 
       <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5 }}>
-        <Typography variant="subtitle2">Collector credentials</Typography>
+        <Typography variant="body2">Collector credentials</Typography>
         {apiKeyError && <Alert severity="error">{apiKeyError}</Alert>}
         {capabilities?.canCreateApiKeys ? (
           <>
@@ -330,7 +330,7 @@ export default function AddDataPage() {
       </Paper>
 
       <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5 }}>
-        <Typography variant="subtitle2">Verify ingestion</Typography>
+        <Typography variant="body2">Verify ingestion</Typography>
         <Typography variant="body2" color="text.secondary">
           After starting the collector, check whether telemetry data streams have appeared.
         </Typography>
