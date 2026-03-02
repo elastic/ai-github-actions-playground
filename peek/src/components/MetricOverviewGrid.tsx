@@ -281,7 +281,7 @@ export default function MetricOverviewGrid({
                 </Box>
 
                 {/* Sparkline chart */}
-                <Box sx={{ flex: 1, minHeight: 80 }}>
+                <Box sx={{ flex: 1, minHeight: 120 }}>
                   {result?.data ? (
                     <EChart
                       option={buildSparklineOption(result.data, echartsTheme)}

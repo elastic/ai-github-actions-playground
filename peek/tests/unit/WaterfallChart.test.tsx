@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
+import { useEffect } from "react";
 
 import WaterfallChart from "../../src/components/visualizations/WaterfallChart";
 import type { Span } from "../../src/components/traces/traceUtils";
@@ -32,7 +33,13 @@ vi.mock("@perses-dev/components", () => ({
     const inst = mockInit(null, props.theme);
     inst.setOption(props.option, true);
     const ref = props._instance as React.MutableRefObject<unknown> | undefined;
-    if (ref) ref.current = inst;
+    useEffect(() => {
+      if (!ref) return;
+      ref.current = inst;
+      return () => {
+        ref.current = undefined;
+      };
+    }, [ref, inst]);
     return null;
   },
 }));

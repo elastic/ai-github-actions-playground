@@ -34,12 +34,12 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
 
   useEffect(() => {
     const instance = instanceRef.current;
-    if (!instance) return;
+    if (!instance || !onNodeClick) return;
     instance.on("click", handleClick);
     return () => {
       instance.off("click", handleClick);
     };
-  }, [handleClick]);
+  }, [onNodeClick, handleClick]);
 
   if (mapData.edges.length === 0) {
     return (
