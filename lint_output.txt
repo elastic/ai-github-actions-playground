@@ -1,0 +1,43 @@
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/ApiConsolePage.tsx
+  1:1  warning  Component file has 555 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/ConnectionDialog.tsx
+  1:1  warning  Component file has 729 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/DashboardsLandingPage.tsx
+  1:1  warning  Component file has 808 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/DiscoverPage.tsx
+  1:1  warning  Component file has 786 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/ExplorePage.tsx
+  1:1  warning  Component file has 656 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/IndicesPage.tsx
+  1:1  warning  Component file has 743 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/IngestPipelinesPage.tsx
+  1:1  warning  Component file has 556 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/ParameterBar.tsx
+  1:1  warning  Component file has 617 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/traces/TracesPage.tsx
+  1:1  warning  Component file has 837 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/visualizations/DataTable.tsx
+  1:1  warning  Component file has 513 lines, exceeding the 500-line limit. Decompose into smaller components  peek/max-component-lines
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/hooks/useFleetAgentDetail.ts
+  87:21  warning  The ref value 'requestSeqRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'requestSeqRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/hooks/useIndices.ts
+   52:21  warning  The ref value 'requestSeqRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'requestSeqRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  131:21  warning  The ref value 'requestSeqRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'requestSeqRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/Users/bill.easton/repos/ai-github-actions-playground/peek/src/hooks/useIngestPipelines.ts
+  56:21  warning  The ref value 'requestSeqRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'requestSeqRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+✖ 14 problems (0 errors, 14 warnings)
+

@@ -1,0 +1,1524 @@
+
+> elastic-peek@0.1.0 test:unit
+> vitest run --config vitest.config.ts --passWithNoTests
+
+ DEPRECATED  "environmentMatchGlobs" is deprecated. Use `test.projects` to define different configurations instead.
+
+ RUN  v3.2.4 /Users/bill.easton/repos/ai-github-actions-playground/peek
+
+(node:62437) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/unit/persesEsqlDatasource.test.ts (4 tests | 4 failed) 16ms
+   × createPersesEsqlDatasource > delegates query execution to ElasticsearchClient.query 14ms
+     → localStorage.clear is not a function
+   × createPersesEsqlDatasource > maps dashboard parameters to perses variable definitions 1ms
+     → localStorage.clear is not a function
+   × createPersesEsqlDatasource > escapes single quotes in interpolated variable values for ES|QL literals 1ms
+     → localStorage.clear is not a function
+   × createPersesEsqlDatasource > builds a perses esql request with interpolation and query params 1ms
+     → localStorage.clear is not a function
+ ❯ tests/component/TracesPage.test.tsx (10 tests | 1 failed) 2157ms
+   ✓ TracesPage duration filter > applies a minimum duration of 0ms  694ms
+   ✓ TracesPage duration filter > applies a non-zero minimum duration  390ms
+   ✓ TracesPage duration filter > clears minDurationMs when input is empty 241ms
+   ✓ TracesPage empty states > shows only the Drift Radar message (not the generic one) when viewMode is driftRadar and no result exists 15ms
+   × TracesPage empty states > shows no-results guidance in list view when a search returns zero traces 25ms
+     → Unable to find an element with the text: No traces matched current filters. Adjust filters or widen the time range.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiBox-root css-141hd72"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1frr0gk-MuiPaper-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-n64gf7"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-58g1sg"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiBox-root css-1fjtzvx"[39m
+            [36m>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"MuiTypography-root MuiTypography-h6 css-1miy0lu-MuiTypography-root"[39m
+              [36m>[39m
+                [0mTrace Search[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiBox-root css-g7uanr"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary css-1ccsd5i-MuiButtonBase-root-MuiButton-root"[39m
+                [33mtabindex[39m=[32m"0"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mReset Filters[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-107ld1r"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-mm33gf"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiFormControl-root MuiTextField-root css-5jxkfz-MuiFormControl-root-MuiTextField-root"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl MuiInputBase-sizeSmall css-quhxjy-MuiInputBase-root-MuiOutlinedInput-root"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-invalid[39m=[32m"false"[39m
+                [33mclass[39m=[32m"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input"[39m
+                [33mid[39m=[32m":r11:"[39m
+                [33mplaceholder[39m=[32m"Service name"[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+              [36m<fieldset[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"MuiOutlinedInput-notchedOutline css-18p5xg2-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"[39m
+              [36m>[39m
+                [36m<legend[39m
+                  [33mclass[39m=[32m"css-1nf2c5d-MuiNotchedOutlined-root"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"notranslate"[39m
+                  [36m>[39m
+                    [0m​[0m
+                  [36m</span>[39m
+                [36m</legend>[39m
+              [36m</fieldset>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary css-wyro15-MuiButtonBase-root-MuiButton-root"[39m
+            [33mtabindex[39m=[32m"0"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAdd Service[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-wpwytb"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiFormControl-root MuiTextField-root css-14k80k5-MuiFormControl-root-MuiTextField-root"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl MuiInputBase-sizeSmall css-quhxjy-MuiInputBase-root-MuiOutlinedInput-root"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-invalid[39m=[32m"false"[39m
+                  [33mclass[39m=[32m"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input"[39m
+                  [33mid[39m=[32m":r13:"[39m
+                  [33mplaceholder[39m=[32m"Min (ms)"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<fieldset[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"MuiOutlinedInput-notchedOutline css-18p5xg2-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"[39m
+                [36m>[39m
+                  [36m<legend[39m
+                    [33mclass[39m=[32m"css-1nf2c5d-MuiNotchedOutlined-root"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"notranslate"[39m
+                    [36m>[39m
+                      [0m​[0m
+                    [36m</span>[39m
+                  [36m</legend>[39m
+                [36m</fieldset>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 css-1u8bh74-MuiTypography-root"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiFormControl-root MuiTextField-root css-14k80k5-MuiFormControl-root-MuiTextField-root"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl MuiInputBase-sizeSmall css-quhxjy-MuiInputBase-root-MuiOutlinedInput-root"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-invalid[39m=[32m"false"[39m
+                  [33mclass[39m=[32m"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input"[39m
+                  [33mid[39m=[32m":r14:"[39m
+                  [33mplaceholder[39m=[32m...
+   ✓ TracesPage auto-run on quick filter changes > auto-runs query when duration Apply is clicked  302ms
+   ✓ TracesPage auto-run on quick filter changes > auto-runs query when a status chip is toggled 73ms
+   ✓ TracesPage auto-run on quick filter changes > auto-runs query when a service is added 141ms
+   ✓ TracesPage auto-run on quick filter changes > auto-runs query when a status chip pill is deleted 127ms
+   ✓ TracesPage auto-run on quick filter changes > refreshes Drift Radar spans when quick filters change in Drift Radar mode 149ms
+ ❯ tests/component/ClusterOverviewPage.test.tsx (4 tests | 1 failed) 751ms
+   ✓ ClusterOverviewPage > renders cluster info with nodes and fleet status after loading 256ms
+   ✓ ClusterOverviewPage > shows error alert on total failure 103ms
+   ✓ ClusterOverviewPage > refreshes data when Refresh button is clicked  352ms
+   × ClusterOverviewPage > shows unavailable metrics and warning on partial failures 40ms
+     → expected 5 to be greater than or equal to 6
+ ❯ tests/component/FieldStatsPanel.test.tsx (13 tests | 1 failed) 1849ms
+   ✓ FieldStatsPanel > shows a loading spinner while fetching stats 243ms
+   ✓ FieldStatsPanel > displays counts and top values for a keyword field 104ms
+   ✓ FieldStatsPanel > displays min/max for a numeric field without top values 35ms
+   ✓ FieldStatsPanel > displays min/max with em-dash when values are null 9ms
+   ✓ FieldStatsPanel > shows an error alert when the stats request fails 109ms
+   ✓ FieldStatsPanel > calls onClose when the close button is clicked 200ms
+   ✓ FieldStatsPanel > passes the top-values ES|QL query to onOpenInQueryLab for keyword fields 66ms
+   ✓ FieldStatsPanel > passes the min/max ES|QL query to onOpenInQueryLab for numeric fields 40ms
+   × FieldStatsPanel > shows empty-state message when keyword field has no top values 1011ms
+     → Unable to find an element with the text: No values found.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1aum8dx-MuiPaper-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiStack-root css-c3ynpd-MuiStack-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1fjtzvx"[39m
+        [36m>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle2 MuiTypography-noWrap css-13k9d3g-MuiTypography-root"[39m
+            [33mtitle[39m=[32m"host.name"[39m
+          [36m>[39m
+            [0mhost.name[0m
+          [36m</h6>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1p5a0lu-MuiChip-root"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+            [36m>[39m
+              [0mkeyword[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close field stats"[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-120dh41-MuiSvgIcon-root"[39m
+            [33mdata-testid[39m=[32m"CloseIcon"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-17clwpw"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"All documents in this stream were analyzed — stats are exact."[39m
+          [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-filledSuccess css-1rkdj9u-MuiChip-root"[39m
+          [33mdata-mui-internal-clone-element[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"field-stats-confidence-badge"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+          [36m>[39m
+            [0mHigh confidence[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-hdb2qc"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mTotal docs[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-total"[39m
+          [36m>[39m
+            [0m1,000[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNon-null[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-non-null"[39m
+          [36m>[39m
+            [0m900[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNull %[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-null-pct"[39m
+          [36m>[39m
+            [0m10.0%[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mCardinality[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-cardinality"[39m
+          [36m>[39m
+            [0m5[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<hr[39m
+          [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+        [36m>[39m
+          [0mTop values[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1dpi6ee"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-jywmbp"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1p832ek-MuiSvgIcon-root"[39m
+              [33mdata-testid[39m=[32m"SearchIcon"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle1 css-d9jat1-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo values found[0m
+          [36m</h6>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-1wle3ir-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo distinct values detected in the current range[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-3mqauj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth css-1l5usm5-MuiButtonBase-root-MuiButton-root"[39m
+          [33mdata-testid[39m=[32m"field-stats-open-in-query-lab"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen stats query in Query Lab[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1aum8dx-MuiPaper-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiStack-root css-c3ynpd-MuiStack-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1fjtzvx"[39m
+        [36m>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle2 MuiTypography-noWrap css-13k9d3g-MuiTypography-root"[39m
+            [33mtitle[39m=[32m"host.name"[39m
+          [36m>[39m
+            [0mhost.name[0m
+          [36m</h6>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1p5a0lu-MuiChip-root"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+            [36m>[39m
+              [0mkeyword[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close field stats"[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-120dh41-MuiSvgIcon-root"[39m
+            [33mdata-testid[39m=[32m"CloseIcon"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-17clwpw"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"All documents in this stream were analyzed — stats are exact."[39m
+          [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-filledSuccess css-1rkdj9u-MuiChip-root"[39m
+          [33mdata-mui-internal-clone-element[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"field-stats-confidence-badge"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+          [36m>[39m
+            [0mHigh confidence[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-hdb2qc"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mTotal docs[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-total"[39m
+          [36m>[39m
+            [0m1,000[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNon-null[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-non-null"[39m
+          [36m>[39m
+            [0m900[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNull %[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-null-pct"[39m
+          [36m>[39m
+            [0m10.0%[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mCardinality[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-cardinality"[39m
+          [36m>[39m
+            [0m5[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<hr[39m
+          [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+        [36m>[39m
+          [0mTop values[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1dpi6ee"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-jywmbp"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1p832ek-MuiSvgIcon-root"[39m
+              [33mdata-testid[39m=[32m"SearchIcon"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle1 css-d9jat1-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo values found[0m
+          [36m</h6>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-1wle3ir-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo distinct values detected in the current range[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-3mqauj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth css-1l5usm5-MuiButtonBase-root-MuiButton-root"[39m
+          [33mdata-testid[39m=[32m"field-stats-open-in-query-lab"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen stats query in Query Lab[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   ✓ FieldStatsPanel > shows field name and type chip in the header 4ms
+   ✓ FieldStatsPanel > renders a "High confidence" badge for a small stream 6ms
+   ✓ FieldStatsPanel > renders a "Medium confidence" badge when the stream approaches the sample limit 9ms
+   ✓ FieldStatsPanel > renders a "Low confidence" badge when the sample limit is reached 12ms
+ ✓ tests/component/ConnectionDialog.test.tsx (10 tests) 5036ms
+   ✓ ConnectionDialog > renders URL and API key fields  687ms
+   ✓ ConnectionDialog > keeps Connect/Test/Save Profile disabled when only proxy URL is provided  943ms
+   ✓ ConnectionDialog > enables Connect button after entering a URL  407ms
+   ✓ ConnectionDialog > connects successfully and closes the dialog  506ms
+   ✓ ConnectionDialog > shows an error when test connection fails  465ms
+   ✓ ConnectionDialog > shows Save Profile button after entering a URL  338ms
+   ✓ ConnectionDialog > saves a connection profile from the dialog using form values  1139ms
+   ✓ ConnectionDialog > deletes a profile after confirmation  310ms
+ ✓ tests/component/DataTable.test.tsx (24 tests) 6239ms
+   ✓ DataTable > closes the row inspector flyout when the close button is clicked  661ms
+   ✓ DataTable > copies selected row JSON from the inspector  404ms
+   ✓ DataTable > hides null inspector fields by default and allows showing them  478ms
+   ✓ DataTable > collapses an expanded cell value when the 'less' button is clicked  314ms
+   ✓ DataTable > moves columns via header menu actions  311ms
+   ✓ DataTable > pins a column and moves it to the first position  387ms
+   ✓ DataTable > shows Unpin menu item for a pinned column and hides Pin left  658ms
+   ✓ DataTable > unpins a pinned column and removes sticky positioning  698ms
+ ✓ tests/component/AppSidebar.test.tsx (26 tests) 6768ms
+   ✓ AppSidebar > renders Docs nav item regardless of connection state  561ms
+   ✓ AppSidebar > toggles AI panel open state when AI button is clicked  661ms
+   ✓ AppSidebar > updates aria-current when active page changes  432ms
+   ✓ AppSidebar > opens settings menu and navigates to LLM settings  414ms
+   ✓ AppSidebar > toggles theme from sidebar settings menu  393ms
+stderr | tests/component/DiscoverPage.test.tsx > DiscoverPage > adds successful queries to history
+Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>.
+    at button
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at ButtonBase (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/material/node/ButtonBase/ButtonBase.js:91:59)
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at IconButton (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/material/node/IconButton/IconButton.js:186:59)
+    at button
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at Box (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/system/createBox/createBox.js:27:41)
+    at div
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at Box (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/system/createBox/createBox.js:27:41)
+    at div
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at Box (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/system/createBox/createBox.js:27:41)
+    at div
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at Paper (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/material/node/Paper/Paper.js:75:59)
+    at div
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at Box (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/system/createBox/createBox.js:27:41)
+    at div
+    at /Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@emotion/react/dist/emotion-element-e8f4cc37.development.cjs.js:60:23
+    at Box (/Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/@mui/system/createBox/createBox.js:27:41)
+    at DiscoverPage (/Users/bill.easton/repos/ai-github-actions-playground/peek/src/components/DiscoverPage.tsx:99:67)
+    at Router (file:///Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs:6653:13)
+    at MemoryRouter (file:///Users/bill.easton/repos/ai-github-actions-playground/peek/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs:6569:3)
+
+ ❯ tests/component/AddDataPage.test.tsx (33 tests | 14 failed) 8088ms
+   ✓ AddDataPage > renders the endpoint type toggle  735ms
+   ✓ AddDataPage > auto-selects Managed OTLP when ingest endpoint probe succeeds  555ms
+   ✓ AddDataPage > keeps manual Elasticsearch selection when a successful probe resolves in flight  732ms
+   ✓ AddDataPage > shows verified alert when probe succeeds and OTLP is selected 179ms
+   ✓ AddDataPage > stays on Elasticsearch when ingest endpoint probe fails 216ms
+   ✓ AddDataPage > shows warning alert when probe fails and user manually selects OTLP  310ms
+   ✓ AddDataPage > shows placeholder guidance when OTLP endpoint cannot be derived  429ms
+   ✓ AddDataPage > uses OTEL_EXPORTER_OTLP_ENDPOINT env var for Linux when OTLP is selected  500ms
+   ✓ AddDataPage > uses OTEL_EXPORTER_OTLP_ENDPOINT env var for Docker when OTLP is selected  600ms
+   ✓ AddDataPage > uses OTEL env vars for Windows when OTLP is selected  595ms
+   ✓ AddDataPage > reverts to ES env vars when switching back to Elasticsearch  704ms
+   ✓ AddDataPage > keeps Kubernetes command in Elasticsearch mode when OTLP is selected 179ms
+   ✓ AddDataPage > does not probe when connection URL is not Elastic Cloud 132ms
+   ✓ AddDataPage > renders the Verify ingestion button 247ms
+   ✓ AddDataPage > disables Verify ingestion when there is no connection 160ms
+   ✓ AddDataPage > shows success with navigation buttons when telemetry data streams are found  470ms
+   ✓ AddDataPage > shows not-found message when no telemetry data streams exist  429ms
+   ✓ AddDataPage > shows error when verification fails  442ms
+   ✓ AddDataPage > resets verification results when the connection changes  467ms
+   × probeOtlpEndpoint > returns true when fetch resolves 4ms
+     → probeOtlpEndpoint is not a function
+   × probeOtlpEndpoint > returns false when fetch rejects 0ms
+     → probeOtlpEndpoint is not a function
+   × probeOtlpEndpoint > returns false when fetch times out 0ms
+     → probeOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > derives OTLP endpoint from Elastic Cloud ES URL 0ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > handles Elastic Cloud URL without port 0ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > preserves non-default port 0ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > handles URL with trailing slash 0ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > returns null for non-Elastic Cloud URL 0ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > returns null for self-managed URL with .es. in hostname but not elastic.cloud 0ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > returns null for invalid URL 1ms
+     → deriveOtlpEndpoint is not a function
+   × deriveOtlpEndpoint > returns null for empty string 0ms
+     → deriveOtlpEndpoint is not a function
+   × detectTelemetrySignals > returns matching signal types from data streams 0ms
+     → detectTelemetrySignals is not a function
+   × detectTelemetrySignals > returns empty set when no telemetry streams exist 0ms
+     → detectTelemetrySignals is not a function
+   × detectTelemetrySignals > ignores non-telemetry data streams 0ms
+     → detectTelemetrySignals is not a function
+ ✓ tests/component/IngestPipelinesPage.test.tsx (14 tests) 8196ms
+   ✓ IngestPipelinesPage > renders the pipeline list sorted alphabetically and selects the first entry  824ms
+   ✓ IngestPipelinesPage > shows pipeline metadata in the detail panel  369ms
+   ✓ IngestPipelinesPage > filters the pipeline list by search term  416ms
+   ✓ IngestPipelinesPage > shows empty state when no pipelines match the search  877ms
+   ✓ IngestPipelinesPage > runs simulate and displays the structured result with status chips  771ms
+   ✓ IngestPipelinesPage > shows Error chip and reason for a failed document  513ms
+   ✓ IngestPipelinesPage > simulates a JSON array of multiple documents  660ms
+   ✓ IngestPipelinesPage > simulates NDJSON input (one JSON object per line)  628ms
+   ✓ IngestPipelinesPage > passes verbose flag to the API when verbose trace is enabled  862ms
+   ✓ IngestPipelinesPage > shows a simulate error when the API call fails  503ms
+   ✓ IngestPipelinesPage > shows a validation error when the simulate input is invalid JSON  565ms
+   ✓ IngestPipelinesPage > refreshes pipelines when Refresh button is clicked  551ms
+   ✓ IngestPipelinesPage > clears simulate results when switching to a different pipeline  635ms
+ ✓ tests/component/DashboardsLandingPage.test.tsx (33 tests) 8262ms
+   ✓ DashboardsLandingPage > navigates to /dashboards/:id when a card is clicked  348ms
+   ✓ DashboardsLandingPage > creates a dashboard via the in-app dialog and navigates to it  760ms
+   ✓ DashboardsLandingPage > cancels dashboard creation without creating a dashboard  615ms
+   ✓ DashboardsLandingPage > renames a dashboard via the in-app dialog  686ms
+   ✓ DashboardsLandingPage > shows inline confirm/cancel when Delete is clicked from the menu  474ms
+   ✓ DashboardsLandingPage > deletes a dashboard after confirming in the menu  497ms
+   ✓ DashboardsLandingPage > search and filter > shows tag chips in the filter bar when dashboards have tags  301ms
+   ✓ DashboardsLandingPage > search and filter > filters dashboards by clicking a tag chip in the filter bar  409ms
+   ✓ DashboardsLandingPage > favorites > shows Favorites filter chip when at least one dashboard is favorited  411ms
+ ✓ tests/component/DiscoverPage.test.tsx (9 tests) 3648ms
+   ✓ DiscoverPage > adds successful queries to history  403ms
+   ✓ DiscoverPage > can select a recent query and run it  463ms
+   ✓ DiscoverPage > expands a keyword field to show top values  379ms
+   ✓ DiscoverPage > allows toggling field insights with keyboard  534ms
+   ✓ DiscoverPage > collapses an expanded field insight  760ms
+   ✓ DiscoverPage > caches insight data and does not re-query on re-expand  599ms
+ ✓ tests/component/DataStreamsPage.test.tsx (11 tests) 3195ms
+   ✓ DataStreamsPage > re-selects a valid stream after refresh removes the previous selection  709ms
+   ✓ DataStreamsPage > re-selects first visible stream when hiding system streams after selecting one  423ms
+   ✓ DataStreamsPage > opens the Field Stats panel when a field row is clicked  342ms
+   ✓ DataStreamsPage > closes the Field Stats panel when the close button is clicked  471ms
+   ✓ DataStreamsPage > clears the Field Stats panel when a different stream is selected  554ms
+ ✓ tests/component/PanelEditor.test.tsx (10 tests) 3136ms
+   ✓ PanelEditor > Save button calls updatePanel with current panel state  407ms
+   ✓ PanelEditor > Delete Panel button removes the panel  412ms
+   ✓ PanelEditor > Run Query sends _tstart/_tend and dashboard variable params when referenced  404ms
+   ✓ PanelEditor > can select a recent query and run it  802ms
+   ✓ PanelEditor > stores the executed step query in history  426ms
+ ✓ tests/component/SettingsPage.test.tsx (20 tests) 2846ms
+   ✓ SettingsPage > typing in custom Model ID input updates the store  330ms
+   ✓ SettingsPage > changing provider resets custom model toggle to off  328ms
+ ✓ tests/component/ApiConsolePage.test.tsx (11 tests) 3369ms
+   ✓ ApiConsolePage > copies a cURL command to the clipboard when Copy as cURL is clicked  338ms
+   ✓ ApiConsolePage > switches method to POST, shows body editor, and sends body  448ms
+   ✓ ApiConsolePage > sends all requests when Run All is clicked  315ms
+   ✓ ApiConsolePage > clears all entries and resets to a single blank entry when Clear Session is confirmed  995ms
+   ✓ ApiConsolePage > shows a Cancel button while a request is loading and cancels on click  438ms
+ ✓ tests/component/ApiKeysPage.test.tsx (11 tests) 2625ms
+   ✓ ApiKeysPage > shows detail panel for a selected API key  342ms
+   ✓ ApiKeysPage > shows stale, orphaned, and high-privilege risk chips  799ms
+   ✓ ApiKeysPage > navigates to /users?username=<owner> when owner chip is clicked  337ms
+ ✓ tests/component/SpanDetailDrawer.test.tsx (14 tests) 1763ms
+   ✓ SpanDetailDrawer – Links tab > shows empty state when span has no links  363ms
+stderr | tests/component/IndicesPage.test.tsx > IndicesPage > has no accessibility violations on initial render
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ ✓ tests/component/ParameterBar.test.tsx (7 tests) 3088ms
+   ✓ ParameterBar > adds a text variable through the dialog  651ms
+   ✓ ParameterBar > renaming a variable to an existing name does not create duplicates  401ms
+   ✓ ParameterBar > adds a number variable and stores numeric value  755ms
+   ✓ ParameterBar > blocks invalid date values with inline validation  688ms
+ ✓ tests/component/IndicesPage.test.tsx (12 tests) 2433ms
+   ✓ IndicesPage > renders the page heading  377ms
+   ✓ IndicesPage > has no accessibility violations on initial render  549ms
+   ✓ IndicesPage > shows Disk Usage tab with analyze button and renders field breakdown  332ms
+ ✓ tests/component/ChatPage.test.tsx (15 tests) 3683ms
+   ✓ ChatPage > sends a message and renders assistant reply  553ms
+   ✓ ChatPage > calls buildChatRuntime with connection, config, and pathname  418ms
+   ✓ ChatPage > passes runtime tools and systemPrompt to generateText  394ms
+   ✓ ChatPage > passes stopWhen from runtime to generateText  405ms
+   ✓ ChatPage > shows error alert and does not persist error text in chat bubble  525ms
+   ✓ ChatPage > uses chat-completions adapter for OpenRouter  402ms
+   ✓ ChatPage > uses timeout from getChatRequestTimeoutMs  388ms
+ ✓ tests/component/FleetPage.test.tsx (14 tests) 2151ms
+ ✓ tests/component/UsersPage.test.tsx (14 tests) 2207ms
+   ✓ UsersPage > renders users list sorted alphabetically and selects the first user  315ms
+   ✓ UsersPage > preserves manual selection when refreshing without ?username=  342ms
+   ✓ UsersPage > navigates to /roles?role=<name> when a role chip is clicked  357ms
+ ✓ tests/component/CommandPalette.test.tsx (28 tests) 1879ms
+stderr | tests/unit/PartialResultPanel.test.tsx > PartialResultPanel > has no accessibility violations
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ ✓ tests/unit/useBatchedOverviewQueries.test.ts (14 tests) 728ms
+stderr | tests/unit/QueryProfilePanel.test.tsx > QueryProfilePanel > has no accessibility violations
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ ✓ tests/unit/PartialResultPanel.test.tsx (16 tests) 582ms
+   ✓ PartialResultPanel > has no accessibility violations  317ms
+ ✓ tests/unit/QueryProfilePanel.test.tsx (10 tests) 746ms
+   ✓ QueryProfilePanel > has no accessibility violations  484ms
+ ✓ tests/component/RolesPage.test.tsx (13 tests) 1556ms
+ ✓ tests/unit/RowInspectorFlyout.test.tsx (7 tests) 473ms
+ ✓ tests/component/AppHeader.test.tsx (10 tests) 887ms
+ ✓ tests/component/FleetStatCard.test.tsx (6 tests) 294ms
+ ✓ tests/component/ClusterHealthPage.test.tsx (7 tests) 739ms
+   ✓ ClusterHealthPage > renders overview with cluster status and key metrics  350ms
+ ✓ tests/component/QueryPipelineSteps.test.tsx (5 tests) 540ms
+ ✓ tests/component/WelcomeScreen.test.tsx (6 tests) 456ms
+ ✓ tests/component/App.test.tsx (13 tests) 1314ms
+   ✓ App shell visibility > shows navigation and keeps footer reset when connected  496ms
+ ✓ tests/component/ErrorBoundary.test.tsx (3 tests) 192ms
+ ✓ tests/component/PanelContainer.test.tsx (2 tests) 366ms
+ ✓ tests/component/AiAssistantDrawer.test.tsx (5 tests) 508ms
+ ✓ tests/component/ExplorePage.test.tsx (2 tests) 375ms
+   ✓ ExplorePage > restores explorer state from URL parameters on first render  317ms
+ ✓ tests/unit/TraceScatterChart.test.tsx (11 tests) 33ms
+ ✓ tests/unit/useSessionResume.test.ts (7 tests) 175ms
+ ✓ tests/unit/TimeSeriesChart.test.tsx (7 tests) 56ms
+ ✓ tests/unit/BarChart.test.tsx (4 tests) 46ms
+ ✓ tests/unit/ScatterChart.test.tsx (5 tests) 40ms
+ ✓ tests/unit/HistogramChart.test.tsx (10 tests) 53ms
+ ✓ tests/unit/WaterfallChart.test.tsx (10 tests) 38ms
+ ✓ tests/unit/HeatmapChart.test.tsx (6 tests) 25ms
+ ✓ tests/unit/createElectronStorage.test.ts (7 tests) 3ms
+ ✓ tests/unit/elasticsearchClient.jsdom.test.ts (5 tests) 6ms
+ ✓ tests/unit/EChartWrapper.test.tsx (2 tests) 21ms
+stderr | tests/unit/useDashboardStore.test.ts > useDashboardStore importDashboard > rejects a dashboard with an invalid timezone
+Import failed: timeZone: timeZone must be a valid IANA timezone identifier
+
+ ✓ tests/unit/useDashboardStore.test.ts (58 tests) 27ms
+ ✓ tests/unit/useQueryStore.test.ts (2 tests) 3ms
+ ✓ tests/unit/useUIStore.test.ts (6 tests) 2ms
+ ✓ tests/component/DashboardViewPage.test.tsx (2 tests) 20ms
+ ✓ tests/unit/useDashboardFromUrl.test.tsx (4 tests) 20ms
+ ✓ tests/unit/dashboardParameters.test.ts (11 tests) 15ms
+ ✓ tests/unit/storeResetters.test.ts (11 tests) 4ms
+ ✓ tests/unit/eslint-rules/max-component-lines.test.ts (1 test) 114ms
+ ✓ tests/unit/rawRequest.test.ts (30 tests) 1485ms
+   ✓ executeRawRequest > maps fetch failures to RawRequestError shape  1466ms
+ ✓ tests/unit/discoverUtils.test.ts (53 tests) 86ms
+ ✓ tests/unit/crypto.test.ts (6 tests) 1009ms
+ ✓ tests/unit/eslint-rules/enforce-empty-state.test.ts (1 test) 58ms
+ ✓ tests/unit/fleetPresentation.test.ts (9 tests) 16ms
+ ✓ tests/unit/eslint-rules/no-hardcoded-colors.test.ts (1 test) 37ms
+ ✓ tests/unit/eslint-rules/no-direct-echarts-import.test.ts (1 test) 25ms
+ ✓ tests/unit/eslint-rules/consistent-typography-variants.test.ts (1 test) 30ms
+ ✓ tests/unit/eslint-rules/no-div-onclick.test.ts (1 test) 29ms
+ ✓ tests/unit/elasticsearchClient.test.ts (50 tests) 23ms
+ ✓ tests/unit/profilingStoreReset.repro.test.ts (1 test) 2ms
+ ✓ tests/unit/chartUtils.test.ts (35 tests) 21ms
+ ✓ tests/unit/persesDataTransformers.test.ts (13 tests) 14ms
+ ✓ tests/unit/traces-global-reset-repro.test.ts (1 test) 3ms
+ ✓ tests/unit/profilingUtils.test.ts (44 tests) 7ms
+ ✓ tests/unit/traceUtils.test.ts (40 tests) 13ms
+ ✓ tests/unit/responseSchemas.test.ts (35 tests) 7ms
+ ✓ tests/unit/useConnectionStore.test.ts (18 tests) 8ms
+ ✓ tests/unit/fieldStats.test.ts (25 tests) 10ms
+ ✓ tests/unit/elasticDocsMcp.test.ts (7 tests) 11ms
+ ✓ tests/unit/metadata.test.ts (18 tests) 19ms
+ ✓ tests/unit/demo.test.ts (7 tests) 5ms
+ ✓ tests/unit/buildQueryParams.test.ts (9 tests) 7ms
+ ✓ tests/unit/queryBuilder.test.ts (43 tests) 6ms
+ ✓ tests/unit/datemath.test.ts (13 tests) 5ms
+ ✓ tests/unit/traceQueryBuilder.test.ts (47 tests) 7ms
+ ✓ tests/unit/buildEsqlRequest.test.ts (6 tests) 5ms
+ ✓ tests/unit/ghostDiffExtension.test.ts (11 tests) 5ms
+ ✓ tests/unit/llmCompletionExtension.test.ts (18 tests) 7ms
+ ✓ tests/unit/fleet.test.ts (22 tests) 5ms
+ ✓ tests/unit/manifest.test.ts (8 tests) 4ms
+ ✓ tests/unit/nlDetector.test.ts (13 tests) 3ms
+ ✓ tests/unit/useFleetStore.test.ts (15 tests) 6ms
+ ✓ tests/unit/browserTracing.test.ts (7 tests) 2ms
+ ✓ tests/unit/markdownInterpolation.test.ts (29 tests) 6ms
+ ✓ tests/unit/clusterHealthUtils.test.ts (27 tests) 5ms
+ ✓ tests/unit/useTracesStore.test.ts (18 tests) 4ms
+ ✓ tests/unit/useLLMStore.test.ts (17 tests) 4ms
+ ✓ tests/unit/esqlUtils.test.ts (9 tests) 3ms
+ ✓ tests/unit/panelBadgeUtils.test.ts (8 tests) 4ms
+ ✓ tests/unit/profilingQueryBuilder.test.ts (8 tests) 3ms
+ ✓ tests/unit/connectionProfileLockDeleteRace.test.ts (1 test) 3ms
+ ✓ tests/unit/createSplitSecretStorage.test.ts (9 tests) 2ms
+ ✓ tests/unit/formatBytes.test.ts (11 tests) 4ms
+ ✓ tests/unit/thresholdUtils.test.ts (9 tests) 2ms
+ ✓ tests/unit/viteProxyRewrite.test.ts (3 tests) 3ms
+ ✓ tests/unit/persesLayoutAdapter.test.ts (1 test) 5ms
+ ✓ tests/unit/sections.test.ts (8 tests) 3ms
+ ✓ tests/unit/buildCurlCommand.test.ts (14 tests) 4ms
+ ✓ tests/unit/serviceGraphOptions.test.ts (7 tests) 3ms
+ ✓ tests/unit/createDefaultPanel.test.ts (2 tests) 2ms
+ ✓ tests/unit/fieldTypeColor.test.ts (5 tests) 2ms
+ ✓ tests/unit/vizRegistry.test.ts (31 tests) 5ms
+ ✓ tests/unit/useExplorerStore.test.ts (3 tests) 2ms
+ ✓ tests/unit/queryParts.test.ts (8 tests) 2ms
+ ✓ tests/unit/hasOverviewData.test.ts (8 tests) 2ms
+ ✓ tests/unit/timePresets.test.ts (3 tests) 5ms
+ ✓ tests/unit/DimensionOverviewGrid.test.ts (2 tests) 2ms
+ ✓ tests/unit/persesPanelRegistry.test.ts (2 tests) 3ms
+ ✓ tests/unit/persesPluginRegistry.test.ts (4 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > probeOtlpEndpoint > returns true when fetch resolves
+TypeError: probeOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:348:18
+    346|   it("returns true when fetch resolves", async () => {
+    347|     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null,…
+    348|     expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cl…
+       |                  ^
+    349|   });
+    350| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > probeOtlpEndpoint > returns false when fetch rejects
+TypeError: probeOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:353:18
+    351|   it("returns false when fetch rejects", async () => {
+    352|     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fet…
+    353|     expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cl…
+       |                  ^
+    354|   });
+    355| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > probeOtlpEndpoint > returns false when fetch times out
+TypeError: probeOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:365:18
+    363|         }),
+    364|     );
+    365|     expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cl…
+       |                  ^
+    366|   });
+    367| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > derives OTLP endpoint from Elastic Cloud ES URL
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:372:12
+    370|   it("derives OTLP endpoint from Elastic Cloud ES URL", () => {
+    371|     // Port 443 is the default HTTPS port and is normalized away by URL
+    372|     expect(deriveOtlpEndpoint("https://my-project.es.us-east-1.aws.ela…
+       |            ^
+    373|       "https://my-project.ingest.us-east-1.aws.elastic.cloud",
+    374|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > handles Elastic Cloud URL without port
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:378:12
+    376| 
+    377|   it("handles Elastic Cloud URL without port", () => {
+    378|     expect(deriveOtlpEndpoint("https://abc123.es.eu-west-1.aws.elastic…
+       |            ^
+    379|       "https://abc123.ingest.eu-west-1.aws.elastic.cloud",
+    380|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > preserves non-default port
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:384:12
+    382| 
+    383|   it("preserves non-default port", () => {
+    384|     expect(deriveOtlpEndpoint("https://abc123.es.eu-west-1.aws.elastic…
+       |            ^
+    385|       "https://abc123.ingest.eu-west-1.aws.elastic.cloud:9243",
+    386|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > handles URL with trailing slash
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:390:12
+    388| 
+    389|   it("handles URL with trailing slash", () => {
+    390|     expect(deriveOtlpEndpoint("https://abc123.es.eu-west-1.aws.elastic…
+       |            ^
+    391|       "https://abc123.ingest.eu-west-1.aws.elastic.cloud",
+    392|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > returns null for non-Elastic Cloud URL
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:396:12
+    394| 
+    395|   it("returns null for non-Elastic Cloud URL", () => {
+    396|     expect(deriveOtlpEndpoint("http://localhost:9200")).toBeNull();
+       |            ^
+    397|   });
+    398| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > returns null for self-managed URL with .es. in hostname but not elastic.cloud
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:400:12
+    398| 
+    399|   it("returns null for self-managed URL with .es. in hostname but not …
+    400|     expect(deriveOtlpEndpoint("https://my.es.example.com")).toBeNull();
+       |            ^
+    401|   });
+    402| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > returns null for invalid URL
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:404:12
+    402| 
+    403|   it("returns null for invalid URL", () => {
+    404|     expect(deriveOtlpEndpoint("not-a-url")).toBeNull();
+       |            ^
+    405|   });
+    406| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > deriveOtlpEndpoint > returns null for empty string
+TypeError: deriveOtlpEndpoint is not a function
+ ❯ tests/component/AddDataPage.test.tsx:408:12
+    406| 
+    407|   it("returns null for empty string", () => {
+    408|     expect(deriveOtlpEndpoint("")).toBeNull();
+       |            ^
+    409|   });
+    410| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > detectTelemetrySignals > returns matching signal types from data streams
+TypeError: detectTelemetrySignals is not a function
+ ❯ tests/component/AddDataPage.test.tsx:423:27
+    421|       }),
+    422|     } as unknown as ElasticsearchClient;
+    423|     const signals = await detectTelemetrySignals(client);
+       |                           ^
+    424|     expect(signals).toEqual(new Set(["logs", "metrics", "traces"]));
+    425|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > detectTelemetrySignals > returns empty set when no telemetry streams exist
+TypeError: detectTelemetrySignals is not a function
+ ❯ tests/component/AddDataPage.test.tsx:431:27
+    429|       getDataStreams: vi.fn().mockResolvedValue({ data_streams: [] }),
+    430|     } as unknown as ElasticsearchClient;
+    431|     const signals = await detectTelemetrySignals(client);
+       |                           ^
+    432|     expect(signals.size).toBe(0);
+    433|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+
+ FAIL  tests/component/AddDataPage.test.tsx > detectTelemetrySignals > ignores non-telemetry data streams
+TypeError: detectTelemetrySignals is not a function
+ ❯ tests/component/AddDataPage.test.tsx:444:27
+    442|       }),
+    443|     } as unknown as ElasticsearchClient;
+    444|     const signals = await detectTelemetrySignals(client);
+       |                           ^
+    445|     expect(signals.size).toBe(0);
+    446|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+
+ FAIL  tests/component/ClusterOverviewPage.test.tsx > ClusterOverviewPage > shows unavailable metrics and warning on partial failures
+AssertionError: expected 5 to be greater than or equal to 6
+ ❯ tests/component/ClusterOverviewPage.test.tsx:256:55
+    254|     expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument…
+    255|     expect(screen.getByText(/cluster stats, nodes, node stats/i)).toBe…
+    256|     expect(screen.getAllByText("Unavailable").length).toBeGreaterThanO…
+       |                                                       ^
+    257|   });
+    258| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯
+
+ FAIL  tests/component/FieldStatsPanel.test.tsx > FieldStatsPanel > shows empty-state message when keyword field has no top values
+TestingLibraryElementError: Unable to find an element with the text: No values found.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1aum8dx-MuiPaper-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiStack-root css-c3ynpd-MuiStack-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1fjtzvx"[39m
+        [36m>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle2 MuiTypography-noWrap css-13k9d3g-MuiTypography-root"[39m
+            [33mtitle[39m=[32m"host.name"[39m
+          [36m>[39m
+            [0mhost.name[0m
+          [36m</h6>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1p5a0lu-MuiChip-root"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+            [36m>[39m
+              [0mkeyword[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close field stats"[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-120dh41-MuiSvgIcon-root"[39m
+            [33mdata-testid[39m=[32m"CloseIcon"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-17clwpw"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"All documents in this stream were analyzed — stats are exact."[39m
+          [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-filledSuccess css-1rkdj9u-MuiChip-root"[39m
+          [33mdata-mui-internal-clone-element[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"field-stats-confidence-badge"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+          [36m>[39m
+            [0mHigh confidence[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-hdb2qc"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mTotal docs[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-total"[39m
+          [36m>[39m
+            [0m1,000[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNon-null[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-non-null"[39m
+          [36m>[39m
+            [0m900[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNull %[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-null-pct"[39m
+          [36m>[39m
+            [0m10.0%[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mCardinality[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-cardinality"[39m
+          [36m>[39m
+            [0m5[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<hr[39m
+          [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+        [36m>[39m
+          [0mTop values[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1dpi6ee"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-jywmbp"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1p832ek-MuiSvgIcon-root"[39m
+              [33mdata-testid[39m=[32m"SearchIcon"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle1 css-d9jat1-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo values found[0m
+          [36m</h6>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-1wle3ir-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo distinct values detected in the current range[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-3mqauj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth css-1l5usm5-MuiButtonBase-root-MuiButton-root"[39m
+          [33mdata-testid[39m=[32m"field-stats-open-in-query-lab"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen stats query in Query Lab[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1aum8dx-MuiPaper-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiStack-root css-c3ynpd-MuiStack-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1fjtzvx"[39m
+        [36m>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle2 MuiTypography-noWrap css-13k9d3g-MuiTypography-root"[39m
+            [33mtitle[39m=[32m"host.name"[39m
+          [36m>[39m
+            [0mhost.name[0m
+          [36m</h6>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1p5a0lu-MuiChip-root"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+            [36m>[39m
+              [0mkeyword[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close field stats"[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-120dh41-MuiSvgIcon-root"[39m
+            [33mdata-testid[39m=[32m"CloseIcon"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-17clwpw"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"All documents in this stream were analyzed — stats are exact."[39m
+          [33mclass[39m=[32m"MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-filledSuccess css-1rkdj9u-MuiChip-root"[39m
+          [33mdata-mui-internal-clone-element[39m=[32m"true"[39m
+          [33mdata-testid[39m=[32m"field-stats-confidence-badge"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"[39m
+          [36m>[39m
+            [0mHigh confidence[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-hdb2qc"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mTotal docs[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-total"[39m
+          [36m>[39m
+            [0m1,000[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNon-null[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-non-null"[39m
+          [36m>[39m
+            [0m900[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNull %[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-null-pct"[39m
+          [36m>[39m
+            [0m10.0%[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+          [36m>[39m
+            [0mCardinality[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-7ctihp-MuiTypography-root"[39m
+            [33mdata-testid[39m=[32m"field-stats-cardinality"[39m
+          [36m>[39m
+            [0m5[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<hr[39m
+          [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption css-1374baf-MuiTypography-root"[39m
+        [36m>[39m
+          [0mTop values[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1dpi6ee"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-jywmbp"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1p832ek-MuiSvgIcon-root"[39m
+              [33mdata-testid[39m=[32m"SearchIcon"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h6[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-subtitle1 css-d9jat1-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo values found[0m
+          [36m</h6>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body2 css-1wle3ir-MuiTypography-root"[39m
+          [36m>[39m
+            [0mNo distinct values detected in the current range[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<hr[39m
+        [33mclass[39m=[32m"MuiDivider-root MuiDivider-fullWidth css-1jpc804-MuiDivider-root"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-3mqauj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-fullWidth css-1l5usm5-MuiButtonBase-root-MuiButton-root"[39m
+          [33mdata-testid[39m=[32m"field-stats-open-in-query-lab"[39m
+          [33mtabindex[39m=[32m"0"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen stats query in Query Lab[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/component/FieldStatsPanel.test.tsx:292:18
+    290|     );
+    291| 
+    292|     await screen.findByText("No values found.");
+       |                  ^
+    293|   });
+    294| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯
+
+ FAIL  tests/component/TracesPage.test.tsx > TracesPage empty states > shows no-results guidance in list view when a search returns zero traces
+TestingLibraryElementError: Unable to find an element with the text: No traces matched current filters. Adjust filters or widen the time range.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiBox-root css-141hd72"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1frr0gk-MuiPaper-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-n64gf7"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-58g1sg"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiBox-root css-1fjtzvx"[39m
+            [36m>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"MuiTypography-root MuiTypography-h6 css-1miy0lu-MuiTypography-root"[39m
+              [36m>[39m
+                [0mTrace Search[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiBox-root css-g7uanr"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary css-1ccsd5i-MuiButtonBase-root-MuiButton-root"[39m
+                [33mtabindex[39m=[32m"0"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mReset Filters[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-107ld1r"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-mm33gf"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiFormControl-root MuiTextField-root css-5jxkfz-MuiFormControl-root-MuiTextField-root"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl MuiInputBase-sizeSmall css-quhxjy-MuiInputBase-root-MuiOutlinedInput-root"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-invalid[39m=[32m"false"[39m
+                [33mclass[39m=[32m"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input"[39m
+                [33mid[39m=[32m":r11:"[39m
+                [33mplaceholder[39m=[32m"Service name"[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+              [36m<fieldset[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"MuiOutlinedInput-notchedOutline css-18p5xg2-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"[39m
+              [36m>[39m
+                [36m<legend[39m
+                  [33mclass[39m=[32m"css-1nf2c5d-MuiNotchedOutlined-root"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"notranslate"[39m
+                  [36m>[39m
+                    [0m​[0m
+                  [36m</span>[39m
+                [36m</legend>[39m
+              [36m</fieldset>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary css-wyro15-MuiButtonBase-root-MuiButton-root"[39m
+            [33mtabindex[39m=[32m"0"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAdd Service[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-wpwytb"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiFormControl-root MuiTextField-root css-14k80k5-MuiFormControl-root-MuiTextField-root"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl MuiInputBase-sizeSmall css-quhxjy-MuiInputBase-root-MuiOutlinedInput-root"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-invalid[39m=[32m"false"[39m
+                  [33mclass[39m=[32m"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input"[39m
+                  [33mid[39m=[32m":r13:"[39m
+                  [33mplaceholder[39m=[32m"Min (ms)"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+                [36m<fieldset[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"MuiOutlinedInput-notchedOutline css-18p5xg2-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"[39m
+                [36m>[39m
+                  [36m<legend[39m
+                    [33mclass[39m=[32m"css-1nf2c5d-MuiNotchedOutlined-root"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"notranslate"[39m
+                    [36m>[39m
+                      [0m​[0m
+                    [36m</span>[39m
+                  [36m</legend>[39m
+                [36m</fieldset>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 css-1u8bh74-MuiTypography-root"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiFormControl-root MuiTextField-root css-14k80k5-MuiFormControl-root-MuiTextField-root"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl MuiInputBase-sizeSmall css-quhxjy-MuiInputBase-root-MuiOutlinedInput-root"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-invalid[39m=[32m"false"[39m
+                  [33mclass[39m=[32m"MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input"[39m
+                  [33mid[39m=[32m":r14:"[39m
+                  [33mplaceholder[39m=[32m...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/component/TracesPage.test.tsx:144:14
+    142| 
+    143|     expect(
+    144|       screen.getByText(
+       |              ^
+    145|         "No traces matched current filters. Adjust filters or widen th…
+    146|       ),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯
+
+ FAIL  tests/unit/persesEsqlDatasource.test.ts > createPersesEsqlDatasource > delegates query execution to ElasticsearchClient.query
+ FAIL  tests/unit/persesEsqlDatasource.test.ts > createPersesEsqlDatasource > maps dashboard parameters to perses variable definitions
+ FAIL  tests/unit/persesEsqlDatasource.test.ts > createPersesEsqlDatasource > escapes single quotes in interpolated variable values for ES|QL literals
+ FAIL  tests/unit/persesEsqlDatasource.test.ts > createPersesEsqlDatasource > builds a perses esql request with interpolation and query params
+TypeError: localStorage.clear is not a function
+ ❯ vitest.setup.ts:33:16
+     31| afterEach(() => {
+     32|   cleanup();
+     33|   localStorage.clear();
+       |                ^
+     34|   sessionStorage.clear();
+     35| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯
+
+
+ Test Files  5 failed | 112 passed (117)
+      Tests  21 failed | 1470 passed (1491)
+   Start at  15:59:08
+   Duration  40.26s (transform 3.96s, setup 21.06s, collect 135.59s, tests 96.91s, environment 44.27s, prepare 8.20s)
+
