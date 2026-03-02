@@ -20,21 +20,44 @@ export type AddDataEnvironment =
 export type AddDataExpectedSignal = "logs" | "metrics" | "traces";
 
 export interface AddDataRecommendedNextStep {
-  id: string;
-  label: string;
-  path: string;
+  readonly id: string;
+  readonly label: string;
+  readonly path: string;
 }
 
 export interface AddDataTechnologyCatalogEntry {
-  id: string;
-  technology: string;
-  category: AddDataTechnologyCategory;
+  readonly id: string;
+  readonly technology: string;
+  readonly category: AddDataTechnologyCategory;
   supportedEnvironments: readonly AddDataEnvironment[];
   expectedSignals: readonly AddDataExpectedSignal[];
   recommendedNextSteps: readonly AddDataRecommendedNextStep[];
 }
 
 export const ADD_DATA_TECHNOLOGY_CATALOG = [
+  {
+    id: "aws",
+    technology: "AWS",
+    category: "cloud",
+    supportedEnvironments: ["aws"],
+    expectedSignals: ["logs", "metrics", "traces"],
+    recommendedNextSteps: [
+      { id: "inspect-aws-health", label: "Explore metrics", path: "/explore" },
+      { id: "inspect-aws-logs", label: "Open Query Lab", path: "/discover" },
+      { id: "inspect-aws-traces", label: "Open traces", path: "/traces" },
+    ],
+  },
+  {
+    id: "vpc-flow-logs",
+    technology: "VPC Flow Logs",
+    category: "network",
+    supportedEnvironments: ["aws", "gcp", "azure", "on_prem"],
+    expectedSignals: ["logs", "metrics"],
+    recommendedNextSteps: [
+      { id: "inspect-network-traffic", label: "Open Query Lab", path: "/discover" },
+      { id: "inspect-network-metrics", label: "Explore metrics", path: "/explore" },
+    ],
+  },
   {
     id: "kubernetes",
     technology: "Kubernetes",
@@ -105,12 +128,11 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   },
 ] as const satisfies readonly AddDataTechnologyCatalogEntry[];
 
-export const ADD_DATA_TECHNOLOGY_BY_ID = new Map(
-  ADD_DATA_TECHNOLOGY_CATALOG.map((entry) => [entry.id, entry] as const),
-);
+export const ADD_DATA_TECHNOLOGY_BY_ID: ReadonlyMap<string, AddDataTechnologyCatalogEntry> =
+  new Map(ADD_DATA_TECHNOLOGY_CATALOG.map((entry) => [entry.id, entry] as const));
 
 export function getAddDataTechnologiesByCategory(
   category: AddDataTechnologyCategory,
-): AddDataTechnologyCatalogEntry[] {
+): readonly AddDataTechnologyCatalogEntry[] {
   return ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) => entry.category === category);
 }
