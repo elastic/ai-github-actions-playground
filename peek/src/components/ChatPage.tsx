@@ -188,7 +188,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
     <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
       {!hideHeader && (
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-          <Typography variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
+          <Typography variant="subtitle1" component="h1" sx={{ flex: 1, fontWeight: 600 }}>
             Chat
           </Typography>
           <Button
