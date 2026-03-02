@@ -1,9 +1,10 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
-import { COMPONENT_HEIGHTS } from "./types/tokens";
+import { COMPONENT_HEIGHTS, type SpaceToken } from "./types/tokens";
 
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
 const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
+const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 3;
 const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 
@@ -38,7 +39,7 @@ const baseOptions: ThemeOptions = {
     MuiButton: {
       defaultProps: { size: "small", disableElevation: true },
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           textTransform: "none",
           fontWeight: 500,
           height: COMPONENT_HEIGHTS.button,
@@ -46,10 +47,10 @@ const baseOptions: ThemeOptions = {
           [MOBILE_OR_COARSE_QUERY]: {
             height: "auto",
             minHeight: COMPONENT_HEIGHTS.touchTarget,
-            paddingTop: 12,
-            paddingBottom: 12,
+            paddingTop: theme.spacing(MOBILE_BUTTON_VERTICAL_PADDING_SPACE),
+            paddingBottom: theme.spacing(MOBILE_BUTTON_VERTICAL_PADDING_SPACE),
           },
-        },
+        }),
         sizeSmall: {
           height: COMPONENT_HEIGHTS.buttonSmall,
         },
