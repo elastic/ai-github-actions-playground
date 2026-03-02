@@ -141,6 +141,23 @@ describe("useTracesStore", () => {
       expect(useTracesStore.getState().selectedTraceId).toBeNull();
     });
 
+    it("setSelectedTraceId(null) clears span selection and drawer (unmount cleanup)", () => {
+      // Simulate full selection state as if a trace + span were selected
+      useTracesStore.getState().setSelectedTraceId("trace-1");
+      useTracesStore.getState().setSelectedTraceSpans([makeSpan()]);
+      useTracesStore.getState().setSelectedSpanId("span-1");
+      expect(useTracesStore.getState().drawerOpen).toBe(true);
+
+      // Clearing selectedTraceId (as the page unmount cleanup does) should
+      // also clear span selection and close the drawer
+      useTracesStore.getState().setSelectedTraceId(null);
+
+      const state = useTracesStore.getState();
+      expect(state.selectedTraceId).toBeNull();
+      expect(state.selectedSpanId).toBeNull();
+      expect(state.drawerOpen).toBe(false);
+    });
+
     it("setSelectedTraceSpans stores spans", () => {
       const spans = [makeSpan({ spanId: "a" }), makeSpan({ spanId: "b" })];
       useTracesStore.getState().setSelectedTraceSpans(spans);

@@ -85,6 +85,14 @@ export default function TracesPage() {
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
 
+  // Clear stale trace selection when leaving the page so we don't
+  // show a detail panel next to an empty results list on return.
+  useEffect(() => {
+    return () => {
+      setSelectedTraceId(null);
+    };
+  }, [setSelectedTraceId]);
+
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
 
