@@ -134,9 +134,10 @@ function LocationDisplay() {
 }
 
 function renderPage(initialEntries: string[] = ["/"]) {
+  const searchParams = new URL(initialEntries[0] ?? "/", "https://example.test").search;
   return render(
     <MemoryRouter initialEntries={initialEntries}>
-      <NuqsTestingAdapter hasMemory>
+      <NuqsTestingAdapter searchParams={searchParams} hasMemory>
         <IndicesPage />
         <LocationDisplay />
       </NuqsTestingAdapter>
@@ -208,6 +209,13 @@ describe("IndicesPage", () => {
     expect(
       within(listEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
     ).toBeInTheDocument();
+  });
+
+  it("restores search, selected index, and tab from URL on mount", async () => {
+    renderPage(["/?search=logs&index=logs-app&tab=mappings"]);
+
+    expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("logs");
+    expect(await screen.findByText("@timestamp")).toBeInTheDocument();
   });
 
   it("clears the detail panel when search excludes the selected index", async () => {
