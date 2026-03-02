@@ -36,12 +36,35 @@ const GAUGE_TYPES = new Set([
   "aggregate_metric_double",
 ]);
 
+/**
+ * ES|QL field types that cannot be used in a GROUP BY clause.  Fields with
+ * these types must be excluded from dimension field lists (both the sidebar
+ * and the dimension overview grid) to avoid 400 Bad Request errors from
+ * Elasticsearch.
+ */
+const NON_GROUPABLE_TYPES = new Set(["histogram", "unsupported"]);
+
 const MAX_FIELD_VALUES_LIMIT = 1000;
 
 export function classifyMetricType(esqlType: string): MetricTypeClassification {
   if (COUNTER_TYPES.has(esqlType)) return "counter";
   if (GAUGE_TYPES.has(esqlType)) return "gauge";
   return "unknown";
+}
+
+/**
+ * Return `true` when a field can be used as a dimension (i.e. in a GROUP BY
+ * clause).  This excludes metric fields (gauge / counter), date fields, and
+ * field types that Elasticsearch cannot group by (e.g. `histogram`).
+ */
+export function isDimensionField(field: FieldInfo): boolean {
+  return (
+    field.metricType === "unknown" &&
+    field.type !== "date" &&
+    field.type !== "date_nanos" &&
+    field.name !== "@timestamp" &&
+    !NON_GROUPABLE_TYPES.has(field.type)
+  );
 }
 
 function validateFieldValuesLimit(limit: number): number {

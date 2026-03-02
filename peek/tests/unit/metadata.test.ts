@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 
 import {
   classifyMetricType,
+  isDimensionField,
   listFields,
   getFieldValues,
   getFieldCardinality,
@@ -34,6 +35,66 @@ describe("classifyMetricType", () => {
     expect(classifyMetricType("date")).toBe("unknown");
     expect(classifyMetricType("boolean")).toBe("unknown");
     expect(classifyMetricType("ip")).toBe("unknown");
+  });
+});
+
+describe("isDimensionField", () => {
+  it("accepts keyword fields", () => {
+    expect(isDimensionField({ name: "host.name", type: "keyword", metricType: "unknown" })).toBe(
+      true,
+    );
+  });
+
+  it("accepts ip fields", () => {
+    expect(isDimensionField({ name: "source.ip", type: "ip", metricType: "unknown" })).toBe(true);
+  });
+
+  it("rejects gauge metric fields", () => {
+    expect(isDimensionField({ name: "cpu.pct", type: "double", metricType: "gauge" })).toBe(false);
+  });
+
+  it("rejects counter metric fields", () => {
+    expect(
+      isDimensionField({ name: "bytes.total", type: "counter_long", metricType: "counter" }),
+    ).toBe(false);
+  });
+
+  it("rejects date fields", () => {
+    expect(isDimensionField({ name: "event.created", type: "date", metricType: "unknown" })).toBe(
+      false,
+    );
+  });
+
+  it("rejects date_nanos fields", () => {
+    expect(
+      isDimensionField({ name: "event.created", type: "date_nanos", metricType: "unknown" }),
+    ).toBe(false);
+  });
+
+  it("rejects @timestamp", () => {
+    expect(isDimensionField({ name: "@timestamp", type: "date", metricType: "unknown" })).toBe(
+      false,
+    );
+  });
+
+  it("rejects histogram fields", () => {
+    expect(
+      isDimensionField({
+        name: "transaction.duration.histogram",
+        type: "histogram",
+        metricType: "unknown",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects unsupported fields", () => {
+    expect(
+      isDimensionField({
+        name: "event.success_count",
+        type: "unsupported",
+        metricType: "unknown",
+      }),
+    ).toBe(false);
   });
 });
 
