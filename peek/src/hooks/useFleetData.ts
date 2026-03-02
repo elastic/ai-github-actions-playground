@@ -60,9 +60,10 @@ interface FleetQueryResult {
 export function useFleetData(): UseFleetDataResult {
   const { connection, createQueryFn } = useEsQuery();
   const autoRefreshEnabled = useFleetStore((s) => s.autoRefreshEnabled);
+  const queryKey = ["fleet-data", connection?.url];
 
   const query = useQuery({
-    queryKey: ["fleet-data", connection?.url],
+    queryKey,
     queryFn: createQueryFn(async (client): Promise<FleetQueryResult> => {
       const [
         serverStatusResult,
@@ -93,6 +94,17 @@ export function useFleetData(): UseFleetDataResult {
       };
 
       const inventoryResult = value(inventoryResultSettled, "Agent inventory");
+
+      const hasSuccessfulSource =
+        serverStatusResult.status === "fulfilled" ||
+        agentVersionsResult.status === "fulfilled" ||
+        outputHealthResult.status === "fulfilled" ||
+        inventoryResultSettled.status === "fulfilled" ||
+        actionsResult.status === "fulfilled" ||
+        actionResultsResult.status === "fulfilled";
+      if (!hasSuccessfulSource) {
+        throw new Error(errors.join("; "));
+      }
 
       return {
         data: {

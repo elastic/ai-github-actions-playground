@@ -125,7 +125,7 @@ export default function FleetOverviewTab({
           heading="No Fleet Server status available"
           description={
             agentInventoryTotal > 0
-              ? `However, ${agentInventoryTotal} agent${agentInventoryTotal !== 1 ? "s" : ""} found via Elastic Agent logs. Switch to the Agents tab to view them.`
+              ? `${agentInventoryTotal} agent${agentInventoryTotal !== 1 ? "s" : ""} found via Elastic Agent logs; switch to the Agents tab to view them.`
               : "No Fleet Server status metrics found in metrics-fleet_server.agent_status-*."
           }
         />
