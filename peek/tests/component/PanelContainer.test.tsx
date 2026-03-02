@@ -155,11 +155,9 @@ describe("PanelContainer", () => {
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
     expect(queryMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        params: expect.objectContaining({
-          _tstart: "2025-06-15T11:00:00.000Z",
-          _tend: "2025-06-15T12:00:00.000Z",
-          service: "web",
-        }),
+        query:
+          "FROM logs-* | WHERE service.name == ? | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?, ?)",
+        params: ["web", "2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"],
       }),
       expect.any(AbortSignal),
     );

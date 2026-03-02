@@ -250,6 +250,7 @@ export default function TraceSearchPanel({
               size="small"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
+              sx={{ height: 32 }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({

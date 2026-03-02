@@ -351,15 +351,13 @@ export class ElasticsearchClient {
     signal?: AbortSignal,
   ): Promise<EsqlQueryResponse & { executionTimeMs: number }> {
     const start = Date.now();
-    // The ES|QL _query API expects named params as an array of single-key
-    // objects (e.g. [{"_tstart":"…"}, {"_tend":"…"}]).  Internally we build
-    // params as a plain object for ergonomics, so convert here at the
-    // serialisation boundary.
+    // The ES|QL _query API expects params as a flat FieldValue[] array paired
+    // with positional `?` placeholders in the query.  Callers should use
+    // `resolveToPositionalParams` to build this format.  As a safety net,
+    // convert any legacy named-param object to a flat values array.
     const body: Record<string, unknown> = { ...params };
     if (body.params && !Array.isArray(body.params)) {
-      body.params = Object.entries(body.params as Record<string, unknown>).map(([k, v]) => ({
-        [k]: v,
-      }));
+      body.params = Object.values(body.params as Record<string, unknown>);
     }
     const data = await this._fetchValidated<EsqlQueryResponse>(
       "/_query?format=json",

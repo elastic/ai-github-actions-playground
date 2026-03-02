@@ -352,11 +352,8 @@ describe("DiscoverPage", () => {
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
     expect(queryMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | LIMIT 10",
-        params: expect.objectContaining({
-          _tstart: "2025-06-15T11:00:00.000Z",
-          _tend: "2025-06-15T12:00:00.000Z",
-        }),
+        query: "FROM logs-* | WHERE @timestamp >= ? AND @timestamp <= ? | LIMIT 10",
+        params: ["2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"],
       }),
       expect.any(AbortSignal),
     );

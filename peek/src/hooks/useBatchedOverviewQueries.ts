@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import type { ElasticsearchClient } from "../services/es";
-import { buildTimeParams } from "../services/datemath";
+import { resolveToPositionalParams } from "../services/datemath";
 import type { EsqlResponse, TimeRange } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ interface Options<T extends { name: string }> {
    * Identity changes are ignored — the latest version is always used.
    */
   buildQuery: (item: T) => { esql: string };
-  /** Time range forwarded to `buildTimeParams` for `?_tstart`/`?_tend` resolution. */
+  /** Time range forwarded to `resolveToPositionalParams` for `?_tstart`/`?_tend` resolution. */
   timeRange: TimeRange;
   /** How many items to query in parallel per batch. Defaults to 6. */
   batchSize?: number;
@@ -129,11 +129,12 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
           const promises = batch.map(async (item) => {
             try {
               const queryDef = buildQueryRef.current(item);
-              const params = buildTimeParams(queryDef.esql, range);
+              const { query: resolvedQuery, params } = resolveToPositionalParams(
+                queryDef.esql,
+                range,
+              );
               const result = await esClient.query(
-                Object.keys(params).length > 0
-                  ? { query: queryDef.esql, params }
-                  : { query: queryDef.esql },
+                params.length > 0 ? { query: resolvedQuery, params } : { query: resolvedQuery },
                 signal,
               );
               return { name: item.name, status: "success" as const, data: result as EsqlResponse };

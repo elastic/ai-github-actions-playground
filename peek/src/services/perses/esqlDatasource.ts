@@ -1,5 +1,5 @@
 import type { ElasticsearchConnection, EsqlQueryParams, EsqlQueryResponse } from "../es";
-import { buildQueryParams } from "../datemath";
+import { resolveToPositionalParams } from "../datemath";
 import type { DashboardParameter, TimeRange } from "../../types";
 
 import { getPersesDatasourcePlugin } from "./pluginRegistry";
@@ -93,8 +93,13 @@ export function buildPersesEsqlRequest(
       },
     },
   };
-  const params = buildQueryParams(query, options.timeRange, options.parameters);
-  if (Object.keys(params).length > 0) {
+  const { query: resolvedQuery, params } = resolveToPositionalParams(
+    query,
+    options.timeRange,
+    options.parameters,
+  );
+  request.query = resolvedQuery;
+  if (params.length > 0) {
     request.params = params;
   }
   return request;

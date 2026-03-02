@@ -110,7 +110,7 @@ describe("request construction", () => {
     });
   });
 
-  it("query() converts object params to array of single-key objects", async () => {
+  it("query() converts object params to flat values array", async () => {
     const fetchSpy = mockFetchOnce({ columns: [], values: [] });
     vi.stubGlobal("fetch", fetchSpy);
 
@@ -122,10 +122,7 @@ describe("request construction", () => {
 
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string);
-    expect(body.params).toEqual([
-      { _tstart: "2025-01-01T00:00:00Z" },
-      { _tend: "2025-01-02T00:00:00Z" },
-    ]);
+    expect(body.params).toEqual(["2025-01-01T00:00:00Z", "2025-01-02T00:00:00Z"]);
   });
 
   it("query() leaves array params untouched", async () => {
