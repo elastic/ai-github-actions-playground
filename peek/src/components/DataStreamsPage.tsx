@@ -278,12 +278,14 @@ export default function DataStreamsPage() {
                         sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 0.5 }}
                       >
                         <Chip
+                          component="span"
                           label={stream.status.toUpperCase()}
                           color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
                           size="small"
                           sx={COMPACT_CHIP_SX}
                         />
                         <Chip
+                          component="span"
                           label={`${stream.indices.length} ${stream.indices.length === 1 ? "Index" : "Indices"}`}
                           size="small"
                           variant="outlined"
