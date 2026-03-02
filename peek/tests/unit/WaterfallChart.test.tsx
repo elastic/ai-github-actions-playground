@@ -1,9 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import * as echarts from "echarts/core";
 
 import WaterfallChart from "../../src/components/visualizations/WaterfallChart";
 import type { Span } from "../../src/components/traces/traceUtils";
+
+const { mockSetOption, mockInit } = vi.hoisted(() => {
+  const mockSetOption = vi.fn();
+  const mockInit = vi.fn(() => ({
+    setOption: mockSetOption,
+    resize: vi.fn(),
+    dispose: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    getDataURL: vi.fn(() => "data:image/png;base64,mock"),
+  }));
+  return { mockSetOption, mockInit };
+});
 
 vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
   useEChartTheme: () => ({
@@ -15,12 +27,18 @@ vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
   }),
 }));
 
+vi.mock("@perses-dev/components", () => ({
+  EChart: function MockEChart(props: Record<string, unknown>) {
+    const inst = mockInit(null, props.theme);
+    inst.setOption(props.option, true);
+    const ref = props._instance as React.MutableRefObject<unknown> | undefined;
+    if (ref) ref.current = inst;
+    return null;
+  },
+}));
+
 function getLastSetOptionCall(): Record<string, unknown> {
-  const mockInit = echarts.init as ReturnType<typeof vi.fn>;
-  const results = mockInit.mock.results;
-  const mockInstance = results[results.length - 1]?.value;
-  const setOption = mockInstance?.setOption as ReturnType<typeof vi.fn>;
-  const calls = setOption.mock.calls;
+  const calls = mockSetOption.mock.calls;
   return calls[calls.length - 1]?.[0] as Record<string, unknown>;
 }
 
@@ -45,7 +63,8 @@ function makeSpan(overrides: Partial<Span> = {}): Span {
 
 describe("WaterfallChart", () => {
   beforeEach(() => {
-    (echarts.init as ReturnType<typeof vi.fn>).mockClear();
+    mockInit.mockClear();
+    mockSetOption.mockClear();
   });
 
   it("shows empty title when no spans are provided", () => {
@@ -165,8 +184,7 @@ describe("WaterfallChart", () => {
     const onSpanClick = vi.fn();
     render(<WaterfallChart spans={[makeSpan({ spanId: "clicked" })]} onSpanClick={onSpanClick} />);
 
-    // Get the click handler registered on EChartWrapper
-    const mockInit = echarts.init as ReturnType<typeof vi.fn>;
+    // Get the click handler registered on the EChart instance
     const mockInstance = mockInit.mock.results[0]?.value;
     const onFn = mockInstance?.on as ReturnType<typeof vi.fn>;
     // Find the "click" handler

@@ -1,9 +1,9 @@
 import { useMemo } from "react";
+import { EChart } from "@perses-dev/components";
 
 import type { FleetServerStatusMetrics } from "../../services/fleet";
 import { STATUS_COLORS } from "../../types/tokens";
 import { useEChartTheme } from "../visualizations/useEChartTheme";
-import EChartWrapper from "../visualizations/EChartWrapper";
 
 interface Props {
   status: FleetServerStatusMetrics;
@@ -30,7 +30,6 @@ export default function FleetStatusChart({ status }: Props) {
     ].filter((d) => d.value > 0);
 
     return {
-      ...theme,
       tooltip: { ...theme.tooltip, trigger: "item", formatter: "{b}: {c} ({d}%)" },
       legend: { ...theme.legend, orient: "vertical", right: 10, top: "center" },
       series: [
@@ -50,5 +49,7 @@ export default function FleetStatusChart({ status }: Props) {
     };
   }, [status, theme]);
 
-  return <EChartWrapper option={option} sx={{ width: "100%", height: "100%" }} />;
+  return (
+    <EChart option={option} theme={theme} sx={{ width: "100%", height: "100%", minHeight: 120 }} />
+  );
 }

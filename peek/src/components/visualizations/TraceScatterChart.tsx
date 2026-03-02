@@ -1,10 +1,11 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
 
 import { useEChartTheme } from "./useEChartTheme";
-import EChartWrapper from "./EChartWrapper";
 import { escapeHtml } from "./htmlUtils";
 
 interface ScatterDataPoint {
@@ -21,6 +22,7 @@ interface TraceScatterChartProps {
 
 export default function TraceScatterChart({ data, onPointClick }: TraceScatterChartProps) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
 
   const option = useMemo(() => {
     if (data.length === 0) {
@@ -64,7 +66,6 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
     }
 
     return {
-      ...theme,
       grid: { left: 60, right: 16, top: 32, bottom: 60 },
       tooltip: {
         ...theme.tooltip,
@@ -113,5 +114,21 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
     [onPointClick],
   );
 
-  return <EChartWrapper option={option} onClick={onPointClick ? handleClick : undefined} />;
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance || !onPointClick) return;
+    instance.on("click", handleClick);
+    return () => {
+      instance.off("click", handleClick);
+    };
+  }, [onPointClick, handleClick]);
+
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }
