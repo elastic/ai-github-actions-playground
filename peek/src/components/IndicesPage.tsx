@@ -237,7 +237,8 @@ export default function IndicesPage() {
                   <ListItemText
                     primary={idx.index}
                     secondary={`${idx.status} · ${idx.pri}P / ${idx.rep}R`}
-                    primaryTypographyProps={{ sx: { wordBreak: "break-all" } }}
+                    primaryTypographyProps={{ noWrap: true, title: idx.index }}
+                    sx={{ minWidth: 0 }}
                   />
                 </ListItemButton>
               </ListItem>

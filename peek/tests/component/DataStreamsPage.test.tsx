@@ -155,6 +155,33 @@ describe("DataStreamsPage", () => {
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
   });
 
+  it("truncates long data stream names with a title tooltip", async () => {
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        {
+          name: "logs-a",
+          status: "YELLOW",
+          generation: 1,
+          template: "logs",
+          indices: [{ index_name: ".ds-logs-a-000001" }],
+        },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
+
+    const nameEls = await screen.findAllByText("logs-a");
+    // The list item primary text should have a title attribute for tooltip on hover
+    const listLabel = nameEls.find((el) => el.hasAttribute("title"));
+    expect(listLabel).toBeDefined();
+    expect(listLabel).toHaveAttribute("title", "logs-a");
+  });
+
   it("shows system streams when the toggle is enabled", async () => {
     const user = userEvent.setup();
 

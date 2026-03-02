@@ -171,6 +171,17 @@ describe("IndicesPage", () => {
     expect(within(listEl).queryByText(".system-index")).not.toBeInTheDocument();
   });
 
+  it("truncates long index names with a title tooltip", async () => {
+    renderPage();
+    const listEl = await screen.findByRole("list", { name: /index list/i });
+
+    // Each index name should have a title attribute for tooltip on hover
+    const logsLabel = within(listEl).getByText("logs-app");
+    expect(logsLabel).toHaveAttribute("title", "logs-app");
+    const metricsLabel = within(listEl).getByText("metrics-host");
+    expect(metricsLabel).toHaveAttribute("title", "metrics-host");
+  });
+
   it("shows system indices when the toggle is enabled", async () => {
     const user = userEvent.setup();
     renderPage();

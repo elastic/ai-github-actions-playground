@@ -263,6 +263,8 @@ export default function DataStreamsPage() {
                     secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
                       stream.indices.length === 1 ? "Index" : "Indices"
                     }`}
+                    primaryTypographyProps={{ noWrap: true, title: stream.name }}
+                    sx={{ minWidth: 0 }}
                   />
                 </ListItemButton>
               </ListItem>
