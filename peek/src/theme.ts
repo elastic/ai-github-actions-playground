@@ -4,7 +4,7 @@ import { COMPONENT_HEIGHTS, type SpaceToken } from "./types/tokens";
 
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
 const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
-const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 3;
+const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
 const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 
