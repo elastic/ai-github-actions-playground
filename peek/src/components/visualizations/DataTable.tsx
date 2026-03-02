@@ -1,29 +1,21 @@
 import { useMemo, useState, useCallback, memo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DownloadIcon from "@mui/icons-material/Download";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
 import EmptyState from "../EmptyState";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 
-import { isNumericType } from "./chartUtils";
-import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
-import TruncatedCell from "./TruncatedCell";
+import DataTableHeader from "./DataTableHeader";
+import DataTableBody from "./DataTableBody";
 import DataTableColumnMenu from "./DataTableColumnMenu";
 import type { SortState } from "./dataTableUtils";
 import { PINNED_COLUMN_MIN_WIDTH, reconcileColumnOrder } from "./dataTableUtils";
@@ -188,175 +180,29 @@ export default memo(function DataTable({
       )}
       <TableContainer sx={{ flex: 1, minHeight: 0 }}>
         <Table size="small" stickyHeader>
-          <TableHead>
-            <TableRow>
-              {orderedVisibleColumnIndices.map((colIdx) => {
-                const col = data.columns[colIdx];
-                if (!col) return null;
-                const isSorted = currentSort?.columnName === col.name;
-                const isPinned = pinnedColumns.has(colIdx);
-                const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
-                return (
-                  <TableCell
-                    key={col.name}
-                    sx={{
-                      whiteSpace: "nowrap",
-                      fontWeight: 600,
-                      fontSize: "0.75rem",
-                      ...(isPinned
-                        ? {
-                            position: "sticky",
-                            zIndex: 4,
-                            left: stickyLeft,
-                            width: PINNED_COLUMN_MIN_WIDTH,
-                            minWidth: PINNED_COLUMN_MIN_WIDTH,
-                            maxWidth: PINNED_COLUMN_MIN_WIDTH,
-                            overflow: "hidden",
-                            borderRight: "1px solid",
-                            borderRightColor: "divider",
-                            backgroundColor: "background.paper",
-                          }
-                        : {}),
-                    }}
-                  >
-                    <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                      <Box
-                        sx={
-                          isPinned
-                            ? {
-                                display: "flex",
-                                flex: 1,
-                                gap: 0.25,
-                                alignItems: "center",
-                                minWidth: 0,
-                                overflow: "hidden",
-                              }
-                            : { display: "contents" }
-                        }
-                      >
-                        <TableSortLabel
-                          active={isSorted}
-                          direction={isSorted ? currentSort!.direction : "asc"}
-                          onClick={() => handleSortToggle(col.name)}
-                          sx={
-                            isPinned
-                              ? {
-                                  overflow: "hidden",
-                                }
-                              : {}
-                          }
-                        >
-                          {col.name}
-                        </TableSortLabel>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{ flexShrink: 0, opacity: 0.5 }}
-                        >
-                          {col.type}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        aria-label={`column actions for ${col.name}`}
-                        onClick={(event) => {
-                          setMenuAnchor(event.currentTarget);
-                          setMenuColumnIndex(colIdx);
-                        }}
-                      >
-                        <MoreVertIcon fontSize="inherit" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {visibleRows.map((row, rowIdx) => (
-              <Tooltip
-                key={page * rowsPerPage + rowIdx}
-                title="Click to inspect row"
-                placement="left"
-                enterDelay={600}
-              >
-                <TableRow
-                  hover
-                  tabIndex={0}
-                  onClick={() => handleRowClick(row)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      handleRowClick(row);
-                    }
-                  }}
-                  sx={{ cursor: "pointer" }}
-                >
-                  {orderedVisibleColumnIndices.map((colIdx) => {
-                    const col = data.columns[colIdx];
-                    const cell = row[colIdx];
-                    const numeric = col ? isNumericType(col.type) : false;
-                    const thresholds = options?.thresholds;
-                    const thresholdColumns = options?.thresholdColumns;
-                    const applyThreshold =
-                      numeric &&
-                      thresholds &&
-                      thresholds.steps.length > 0 &&
-                      cell != null &&
-                      (!thresholdColumns ||
-                        thresholdColumns.length === 0 ||
-                        (col && thresholdColumns.includes(col.name)));
-                    const thresholdColor =
-                      applyThreshold && col
-                        ? resolveThresholdColor(Number(cell), thresholds!)
-                        : undefined;
-                    const bgColor = thresholdColor
-                      ? `${THRESHOLD_PALETTE[thresholdColor]}26`
-                      : undefined;
-                    const isPinned = pinnedColumns.has(colIdx);
-                    const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
-                    return (
-                      <TableCell
-                        key={colIdx}
-                        sx={{
-                          maxWidth: isPinned ? undefined : 400,
-                          textAlign: numeric ? "right" : "left",
-                          wordBreak: isPinned ? "normal" : "break-word",
-                          whiteSpace: isPinned ? "nowrap" : "normal",
-                          fontSize: "0.75rem",
-                          fontFamily: numeric ? "monospace" : "inherit",
-                          ...(bgColor ? { backgroundColor: bgColor } : {}),
-                          ...(isPinned
-                            ? {
-                                position: "sticky",
-                                zIndex: 1,
-                                left: stickyLeft,
-                                width: PINNED_COLUMN_MIN_WIDTH,
-                                minWidth: PINNED_COLUMN_MIN_WIDTH,
-                                maxWidth: PINNED_COLUMN_MIN_WIDTH,
-                                overflow: "hidden",
-                                borderRight: "1px solid",
-                                borderRightColor: "divider",
-                                backgroundColor: bgColor ?? "background.paper",
-                                textOverflow: "ellipsis",
-                              }
-                            : {}),
-                        }}
-                      >
-                        {cell === null ? (
-                          <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
-                            null
-                          </Typography>
-                        ) : (
-                          <TruncatedCell value={String(cell)} />
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              </Tooltip>
-            ))}
-          </TableBody>
+          <DataTableHeader
+            data={data}
+            orderedVisibleColumnIndices={orderedVisibleColumnIndices}
+            currentSort={currentSort}
+            pinnedColumns={pinnedColumns}
+            pinnedLeftOffsets={pinnedLeftOffsets}
+            onSortToggle={handleSortToggle}
+            onOpenMenu={(event, colIdx) => {
+              setMenuAnchor(event.currentTarget);
+              setMenuColumnIndex(colIdx);
+            }}
+          />
+          <DataTableBody
+            data={data}
+            options={options}
+            visibleRows={visibleRows}
+            orderedVisibleColumnIndices={orderedVisibleColumnIndices}
+            pinnedColumns={pinnedColumns}
+            pinnedLeftOffsets={pinnedLeftOffsets}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onRowClick={handleRowClick}
+          />
         </Table>
       </TableContainer>
       <Box

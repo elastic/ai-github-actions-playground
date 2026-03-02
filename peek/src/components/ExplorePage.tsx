@@ -26,12 +26,10 @@ import type { EsqlResponse } from "../types";
 
 import ExploreControlsPanel from "./explore/ExploreControlsPanel";
 import ExploreContentArea from "./explore/ExploreContentArea";
+import { useExplorerUrlSync } from "./explore/useExplorerUrlSync";
 import {
   explorerSearchParsers,
   exploreSearchUrlKeys,
-  parseLegacyFilters,
-  parseEncodedFilters,
-  encodeFilters,
   metricNamespaceOf,
 } from "./explore/exploreUtils";
 
@@ -111,9 +109,29 @@ export default function ExplorePage() {
     })),
   );
 
+  useExplorerUrlSync({
+    initialSearch: initialSearchRef.current,
+    initialUrlFilters: initialUrlFiltersRef.current,
+    initialUrlState: initialUrlStateRef.current,
+    indexPattern,
+    selectedMetric,
+    aggregation,
+    filters,
+    groupBy,
+    timeRange: dashboard.timeRange,
+    setIndexPattern,
+    setSelectedMetric,
+    setSelectedNamespace,
+    setAggregation,
+    addFilter,
+    clearFilters,
+    setGroupBy,
+    setTimeRange,
+    setUrlState,
+    setUrlFilters,
+  });
+
   const abortRef = useRef<AbortController | null>(null);
-  const hasHydratedFromUrlRef = useRef(false);
-  const skipInitialUrlSyncRef = useRef(true);
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -136,81 +154,6 @@ export default function ExplorePage() {
   // Show dimension overview when a metric is selected but no groupBy is set yet.
   const showDimensionOverview = selectedMetric !== null && !groupBy && !skipDimensionOverview;
 
-  // Restore explorer state from URL on first mount.
-  useEffect(() => {
-    const initialUrlState = initialUrlStateRef.current;
-    if (initialUrlState.indexPattern) {
-      setIndexPattern(initialUrlState.indexPattern);
-    }
-    if (initialUrlState.selectedMetric) {
-      setSelectedMetric(initialUrlState.selectedMetric);
-      setSelectedNamespace(metricNamespaceOf(initialUrlState.selectedMetric));
-    }
-    if (initialUrlState.aggregation) {
-      setAggregation(initialUrlState.aggregation);
-    }
-    if (initialUrlState.groupBy) {
-      setGroupBy(initialUrlState.groupBy);
-    }
-    const hasEncodedFiltersParam = initialUrlFiltersRef.current !== null;
-    const initialEncodedFilters = parseEncodedFilters(initialUrlFiltersRef.current);
-    const hydratedFilters = hasEncodedFiltersParam
-      ? initialEncodedFilters
-      : parseLegacyFilters(initialSearchRef.current);
-    clearFilters();
-    for (const filter of hydratedFilters) {
-      addFilter(filter);
-    }
-    if (initialUrlState.from && initialUrlState.to) {
-      setTimeRange({ from: initialUrlState.from, to: initialUrlState.to });
-    }
-    hasHydratedFromUrlRef.current = true;
-  }, [
-    addFilter,
-    clearFilters,
-    setAggregation,
-    setGroupBy,
-    setIndexPattern,
-    setSelectedMetric,
-    setTimeRange,
-  ]);
-
-  // Sync URL state
-  useEffect(() => {
-    if (!hasHydratedFromUrlRef.current) return;
-    if (skipInitialUrlSyncRef.current) {
-      skipInitialUrlSyncRef.current = false;
-      return;
-    }
-    let cancelled = false;
-    const syncUrlState = async () => {
-      await Promise.all([
-        setUrlState({
-          indexPattern: indexPattern || null,
-          selectedMetric: selectedMetric || null,
-          aggregation,
-          groupBy: groupBy || null,
-          from: dashboard.timeRange.from,
-          to: dashboard.timeRange.to,
-        }),
-        setUrlFilters(encodeFilters(filters)),
-      ]);
-      if (cancelled) return;
-    };
-    void syncUrlState();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    indexPattern,
-    selectedMetric,
-    aggregation,
-    filters,
-    groupBy,
-    dashboard.timeRange,
-    setUrlState,
-    setUrlFilters,
-  ]);
 
   // Load fields when index pattern changes
   useEffect(() => {
