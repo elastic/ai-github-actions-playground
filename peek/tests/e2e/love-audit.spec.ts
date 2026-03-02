@@ -364,7 +364,15 @@ async function connectToMockedCluster(page: Page) {
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
+
+  // On mobile the sidebar is behind a drawer; verify connection via the menu toggle
+  const viewport = page.viewportSize();
+  const isMobile = viewport != null && viewport.width < 768;
+  if (isMobile) {
+    await expect(page.getByRole("button", { name: "Open navigation menu" })).toBeVisible();
+  } else {
+    await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
+  }
 }
 
 // ---------------------------------------------------------------------------

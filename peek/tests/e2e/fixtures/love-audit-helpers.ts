@@ -22,6 +22,8 @@ export interface ConsoleDiagnostic {
  * Describes one page (or sub-view) to audit.
  *
  * - `navButton` — the sidebar button label (clicked with `exact: true`).
+ * - `expectedHeading` — the h1 text expected after navigation, or `null` to
+ *    explicitly skip heading verification for pages without a stable heading.
  * - `afterNav` — optional extra steps between navigation and the screenshot
  *    (e.g. click tabs, set filters, press Run). Receives the `Page` and
  *    the file-prefix so it can take additional screenshots.
@@ -29,6 +31,7 @@ export interface ConsoleDiagnostic {
 export interface PageAuditConfig {
   name: string;
   navButton: string;
+  expectedHeading: string | null;
   afterNav?: (page: Page, prefix: string) => Promise<void>;
 }
 
@@ -48,7 +51,13 @@ export function collectConsoleLogs(page: Page): ConsoleDiagnostic[] {
 }
 
 export async function runAccessibilityCheck(page: Page, pageName: string) {
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await new AxeBuilder({ page })
+    .options({
+      rules: {
+        "color-contrast": { enabled: true },
+      },
+    })
+    .analyze();
 
   if (results.violations.length > 0) {
     console.log(`\n=== A11Y VIOLATIONS: ${pageName} (${results.violations.length}) ===`);
@@ -146,10 +155,11 @@ async function captureTabScreenshots(
 
 /** Pages audited by both the mocked and demo variants. */
 export const COMMON_PAGES: PageAuditConfig[] = [
-  { name: "Cluster Overview", navButton: "Cluster Overview" },
+  { name: "Cluster Overview", navButton: "Cluster Overview", expectedHeading: "Cluster Overview" },
   {
     name: "Cluster Health",
     navButton: "Cluster Health",
+    expectedHeading: "Cluster Health",
     afterNav: async (page, prefix) => {
       await page.screenshot({
         path: `test-results/${prefix}-cluster-health-overview.png`,
@@ -165,10 +175,11 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       ]);
     },
   },
-  { name: "Data Streams", navButton: "Data Streams" },
+  { name: "Data Streams", navButton: "Data Streams", expectedHeading: "Data Streams" },
   {
     name: "Indices",
     navButton: "Indices",
+    expectedHeading: "Indices",
     afterNav: async (page, prefix) => {
       // Screenshot overview tab first
       await page.screenshot({
@@ -188,11 +199,12 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       }
     },
   },
-  { name: "Ingest Pipelines", navButton: "Ingest Pipelines" },
-  { name: "Traces", navButton: "Traces" },
+  { name: "Ingest Pipelines", navButton: "Ingest Pipelines", expectedHeading: "Ingest Pipelines" },
+  { name: "Traces", navButton: "Traces", expectedHeading: "Trace Search" },
   {
     name: "Add Data",
     navButton: "Add Data",
+    expectedHeading: "Add Data",
     afterNav: async (page, prefix) => {
       await page.screenshot({
         path: `test-results/${prefix}-add-data-default.png`,
@@ -208,10 +220,11 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       );
     },
   },
-  { name: "Query Lab", navButton: "Query Lab" },
+  { name: "Query Lab", navButton: "Query Lab", expectedHeading: "ES|QL Query" },
   {
     name: "Metrics",
     navButton: "Metrics",
+    expectedHeading: "Metrics",
     afterNav: async (page, prefix) => {
       await page.screenshot({
         path: `test-results/${prefix}-metrics-pre-search.png`,
@@ -228,13 +241,13 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       await captureAriaSnapshot(page, "metrics-search", prefix);
     },
   },
-  { name: "Console", navButton: "Console" },
-  { name: "Chat", navButton: "Chat" },
-  { name: "Users", navButton: "Users" },
-  { name: "Roles", navButton: "Roles" },
-  { name: "Dashboards", navButton: "Dashboards" },
-  { name: "Fleet", navButton: "Fleet" },
-  { name: "Docs", navButton: "Docs" },
+  { name: "Console", navButton: "Console", expectedHeading: "API Console" },
+  { name: "Chat", navButton: "Chat", expectedHeading: "Chat" },
+  { name: "Users", navButton: "Users", expectedHeading: "Users" },
+  { name: "Roles", navButton: "Roles", expectedHeading: "Roles" },
+  { name: "Dashboards", navButton: "Dashboards", expectedHeading: "Dashboards" },
+  { name: "Fleet", navButton: "Fleet", expectedHeading: "Fleet" },
+  { name: "Docs", navButton: "Docs", expectedHeading: "Docs" },
 ];
 
 /**
@@ -256,6 +269,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Top Functions",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       // Top Functions is the default view, just set time range and run
       await page.getByLabel("Time range").click();
@@ -274,6 +288,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Stacktraces",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page, prefix) => {
       await (
         await profilingAfterNav("Stacktraces")
@@ -302,6 +317,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Flamegraph",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       await (
         await profilingAfterNav("Flamegraph")
@@ -311,6 +327,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Timeline",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       await (
         await profilingAfterNav("Timeline")
@@ -320,6 +337,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Flamescope",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       await (
         await profilingAfterNav("Flamescope")
@@ -338,9 +356,11 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
  * Each page gets its own parallel Playwright test that:
  * 1. Collects console logs
  * 2. Connects to the cluster via `connect`
- * 3. Navigates to the page
- * 4. Runs optional `afterNav` steps
- * 5. Takes a screenshot, dumps DOM, runs a11y, and logs diagnostics
+ * 3. Opens the mobile navigation drawer if needed
+ * 4. Navigates to the page
+ * 5. Waits for the expected page heading to verify correct page rendered
+ * 6. Runs optional `afterNav` steps
+ * 7. Takes a screenshot, dumps DOM, runs a11y, and logs diagnostics
  */
 export function registerLoveAuditTests(
   describeName: string,
@@ -356,9 +376,31 @@ export function registerLoveAuditTests(
         const consoleLogs = collectConsoleLogs(page);
         await connect(page);
 
+        // On mobile viewports the sidebar is behind a drawer toggle
+        const viewport = page.viewportSize();
+        const isMobile = viewport != null && viewport.width < 768;
+        if (isMobile) {
+          const menuButton = page.getByRole("button", { name: "Open navigation menu" });
+          await menuButton.click();
+          await page
+            .getByRole("button", { name: pageConfig.navButton, exact: true })
+            .waitFor({ state: "visible" });
+        }
+
         // Navigate
         await page.getByRole("button", { name: pageConfig.navButton, exact: true }).click();
         await page.waitForLoadState("networkidle");
+
+        // Wait for the expected page heading to confirm navigation completed
+        if (pageConfig.expectedHeading !== null) {
+          await page
+            .getByRole("heading", {
+              name: pageConfig.expectedHeading,
+              level: 1,
+              exact: true,
+            })
+            .waitFor({ state: "visible", timeout: 10_000 });
+        }
 
         // Optional extra steps (tab navigation, filters, Run button, etc.)
         if (pageConfig.afterNav) {
