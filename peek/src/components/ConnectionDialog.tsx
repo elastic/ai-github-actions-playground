@@ -11,23 +11,13 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
-import Switch from "@mui/material/Switch";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import List from "@mui/material/List";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 import Collapse from "@mui/material/Collapse";
-import Divider from "@mui/material/Divider";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import ExpandLess from "@mui/icons-material/ExpandLess";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import LockIcon from "@mui/icons-material/Lock";
 import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -35,6 +25,9 @@ import { useUIStore } from "../store/useUIStore";
 import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
 import { deriveDefaultOtlpEndpoint } from "../services/telemetry/browserTracing";
 import type { ElasticsearchConnection } from "../types";
+
+import ConnectionProfilesList from "./ConnectionProfilesList";
+import OtlpConfigPanel from "./OtlpConfigPanel";
 
 type AuthType = "apiKey" | "userpass";
 
@@ -104,18 +97,10 @@ export default function ConnectionDialog() {
   const [otlpApiKey, setOtlpApiKey] = useState(savedConn?.otlpApiKey ?? "");
   const [showTelemetry, setShowTelemetry] = useState(shouldShowTelemetryPanel(savedConn));
   const [showSecret, setShowSecret] = useState(false);
-  const [showOtlpSecret, setShowOtlpSecret] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [profileName, setProfileName] = useState("");
   const [savePin, setSavePin] = useState("");
-  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
-  const [editingProfileName, setEditingProfileName] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
-  const [unlockPin, setUnlockPin] = useState("");
-  const [unlockError, setUnlockError] = useState<string | null>(null);
-  const [unlockedProfileIds, setUnlockedProfileIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
@@ -253,31 +238,11 @@ export default function ConnectionDialog() {
     [getConnectionProfile, setActiveProfileId],
   );
 
-  const handleUnlockProfile = useCallback(
-    async (profileId: string) => {
-      const ok = await unlockProfile(profileId, unlockPin);
-      if (ok) {
-        setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
-        setUnlockingProfileId(null);
-        setUnlockPin("");
-        setUnlockError(null);
-        handleLoadProfile(profileId);
-      } else {
-        setUnlockError("Incorrect PIN");
-      }
-    },
-    [unlockProfile, unlockPin, handleLoadProfile],
-  );
-
   const handleRenameProfile = useCallback(
-    (id: string) => {
-      const trimmed = editingProfileName.trim();
-      if (!trimmed) return;
-      renameConnectionProfile(id, trimmed);
-      setEditingProfileId(null);
-      setEditingProfileName("");
+    (id: string, newName: string) => {
+      renameConnectionProfile(id, newName);
     },
-    [editingProfileName, renameConnectionProfile],
+    [renameConnectionProfile],
   );
 
   return (
@@ -295,172 +260,14 @@ export default function ConnectionDialog() {
             required for direct browser connections.
           </Alert>
 
-          {connectionProfiles.length > 0 && (
-            <>
-              <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                Saved Profiles
-              </Typography>
-              <List dense disablePadding sx={{ borderRadius: 1, bgcolor: "action.hover" }}>
-                {connectionProfiles.map((profile) => (
-                  <ListItemButton
-                    key={profile.id}
-                    selected={profile.id === activeProfileId}
-                    onClick={() => {
-                      if (
-                        profile.encrypted &&
-                        !unlockedProfileIds.has(profile.id) &&
-                        unlockingProfileId !== profile.id
-                      ) {
-                        setUnlockingProfileId(profile.id);
-                        setUnlockPin("");
-                        setUnlockError(null);
-                      } else {
-                        handleLoadProfile(profile.id);
-                      }
-                    }}
-                    data-testid={`profile-${profile.id}`}
-                  >
-                    {editingProfileId === profile.id ? (
-                      <TextField
-                        size="small"
-                        value={editingProfileName}
-                        onChange={(e) => setEditingProfileName(e.target.value)}
-                        onBlur={() => handleRenameProfile(profile.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleRenameProfile(profile.id);
-                          if (e.key === "Escape") setEditingProfileId(null);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline rename
-                        autoFocus
-                        sx={{ mr: 1 }}
-                      />
-                    ) : unlockingProfileId === profile.id ? (
-                      <Box
-                        sx={{ display: "flex", flex: 1, gap: 1, alignItems: "flex-start", py: 0.5 }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <TextField
-                          size="small"
-                          type="password"
-                          label="Enter PIN"
-                          value={unlockPin}
-                          onChange={(e) => {
-                            setUnlockPin(e.target.value);
-                            setUnlockError(null);
-                          }}
-                          error={!!unlockError}
-                          helperText={unlockError ?? undefined}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              void handleUnlockProfile(profile.id);
-                            }
-                            if (e.key === "Escape") {
-                              setUnlockingProfileId(null);
-                              setUnlockError(null);
-                            }
-                          }}
-                          // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline PIN entry
-                          autoFocus
-                          sx={{ flex: 1 }}
-                        />
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={() => void handleUnlockProfile(profile.id)}
-                          sx={{ mt: 0.5 }}
-                        >
-                          Unlock
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            setUnlockingProfileId(null);
-                            setUnlockError(null);
-                          }}
-                          sx={{ mt: 0.5 }}
-                        >
-                          Cancel
-                        </Button>
-                      </Box>
-                    ) : (
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                            {profile.encrypted && (
-                              <LockIcon fontSize="small" color="action" aria-label="Encrypted" />
-                            )}
-                            {profile.name}
-                          </Box>
-                        }
-                        secondary={profile.connection.url}
-                        onDoubleClick={() => {
-                          setEditingProfileId(profile.id);
-                          setEditingProfileName(profile.name);
-                        }}
-                      />
-                    )}
-                    {unlockingProfileId !== profile.id && (
-                      <ListItemSecondaryAction>
-                        {confirmDeleteId === profile.id ? (
-                          <Box sx={{ display: "flex", gap: 1 }}>
-                            <Button
-                              size="small"
-                              color="error"
-                              variant="contained"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteConnectionProfile(profile.id);
-                                setConfirmDeleteId(null);
-                              }}
-                            >
-                              Confirm Delete
-                            </Button>
-                            <Button
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDeleteId(null);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </Box>
-                        ) : (
-                          <>
-                            <IconButton
-                              edge="end"
-                              size="small"
-                              aria-label={`Rename profile ${profile.name}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingProfileId(profile.id);
-                                setEditingProfileName(profile.name);
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              edge="end"
-                              size="small"
-                              aria-label={`Delete profile ${profile.name}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDeleteId(profile.id);
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </>
-                        )}
-                      </ListItemSecondaryAction>
-                    )}
-                  </ListItemButton>
-                ))}
-              </List>
-              <Divider />
-            </>
-          )}
+          <ConnectionProfilesList
+            connectionProfiles={connectionProfiles}
+            activeProfileId={activeProfileId}
+            onLoadProfile={handleLoadProfile}
+            onDeleteProfile={deleteConnectionProfile}
+            onRenameProfile={handleRenameProfile}
+            unlockProfile={unlockProfile}
+          />
 
           <TextField
             label="Elasticsearch URL"
@@ -512,76 +319,30 @@ export default function ConnectionDialog() {
             Browser Tracing (Experimental)
           </Button>
           <Collapse in={showTelemetry}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={otlpEnabled}
-                    onChange={(e) => {
-                      setOtlpEnabled(e.target.checked);
-                      setActiveProfileId(null);
-                    }}
-                  />
-                }
-                label="Enable browser tracing"
-              />
-              <TextField
-                label="OTLP traces endpoint"
-                placeholder={deriveDefaultOtlpEndpoint(url)}
-                fullWidth
-                value={otlpEndpoint}
-                onChange={(e) => {
-                  setOtlpEndpoint(e.target.value);
-                  setActiveProfileId(null);
-                }}
-                helperText="Defaults to /v1/traces on the connected cluster host."
-                disabled={!otlpEnabled}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={otlpUseElasticAuth}
-                    onChange={(e) => {
-                      setOtlpUseElasticAuth(e.target.checked);
-                      setActiveProfileId(null);
-                    }}
-                  />
-                }
-                label="Use Elasticsearch API key for OTLP auth"
-                disabled={!otlpEnabled || authType !== "apiKey"}
-              />
-              <TextField
-                label="OTLP API key override (optional)"
-                fullWidth
-                type={showOtlpSecret ? "text" : "password"}
-                value={otlpApiKey}
-                onChange={(e) => {
-                  setOtlpApiKey(e.target.value);
-                  setActiveProfileId(null);
-                }}
-                helperText="If provided, this key is used instead of the Elasticsearch API key."
-                disabled={!otlpEnabled}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          aria-label={showOtlpSecret ? "Hide credentials" : "Show credentials"}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowOtlpSecret(!showOtlpSecret);
-                          }}
-                          disabled={!otlpEnabled}
-                        >
-                          {showOtlpSecret ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Box>
+            <OtlpConfigPanel
+              otlpEnabled={otlpEnabled}
+              onOtlpEnabledChange={(enabled) => {
+                setOtlpEnabled(enabled);
+                setActiveProfileId(null);
+              }}
+              otlpEndpoint={otlpEndpoint}
+              onOtlpEndpointChange={(endpoint) => {
+                setOtlpEndpoint(endpoint);
+                setActiveProfileId(null);
+              }}
+              otlpUseElasticAuth={otlpUseElasticAuth}
+              onOtlpUseElasticAuthChange={(useElasticAuth) => {
+                setOtlpUseElasticAuth(useElasticAuth);
+                setActiveProfileId(null);
+              }}
+              otlpApiKey={otlpApiKey}
+              onOtlpApiKeyChange={(key) => {
+                setOtlpApiKey(key);
+                setActiveProfileId(null);
+              }}
+              authType={authType}
+              url={url}
+            />
           </Collapse>
           <Tabs
             value={authType}
