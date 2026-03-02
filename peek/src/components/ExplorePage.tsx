@@ -63,8 +63,8 @@ function parseFilters(search: string): ExplorerFilter[] {
   const parsedFilters: ExplorerFilter[] = [];
   for (const [key, value] of params.entries()) {
     if (!key.startsWith("filter.")) continue;
-    const field = key.slice("filter.".length);
-    if (!field.trim()) continue;
+    const field = key.slice("filter.".length).trim();
+    if (!field) continue;
     const colonIdx = value.indexOf(":");
     if (colonIdx <= 0) continue;
     const op = value.slice(0, colonIdx);
