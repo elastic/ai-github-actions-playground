@@ -126,6 +126,11 @@ const baseOptions: ThemeOptions = {
         }),
       },
     },
+    MuiChip: {
+      styleOverrides: {
+        labelSmall: { paddingLeft: 4, paddingRight: 4 },
+      },
+    },
     MuiTab: {
       styleOverrides: {
         root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.tab },

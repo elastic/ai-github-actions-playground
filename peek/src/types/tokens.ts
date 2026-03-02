@@ -74,3 +74,9 @@ export const COMPONENT_HEIGHTS = {
   /** Minimum touch-target size for mobile / coarse pointer (44 px). */
   touchTarget: 44,
 } as const;
+
+/**
+ * Shared sx for compact (small) Chip instances.
+ * Use when a Chip needs a reduced height and smaller font.
+ */
+export const COMPACT_CHIP_SX = { height: 20, fontSize: "0.7rem" } as const;
