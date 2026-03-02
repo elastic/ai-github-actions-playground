@@ -254,7 +254,7 @@ def _tag(ctx: Ctx) -> str:
 
 def phase_mark_drafts(prs: list[PRInfo], ctx: Ctx) -> int:
     print(f"{BOLD}Phase 1: Marking draft PRs as ready{RESET}\n")
-    drafts = [p for p in prs if p.is_draft and not p.is_wip]
+    drafts = [p for p in prs if p.is_bot and p.is_draft and not p.is_wip]
     if not drafts:
         print("  No draft PRs to mark.\n")
         return 0
