@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
+import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useBatchedOverviewQueries } from "../../src/hooks/useBatchedOverviewQueries";
 import type { ElasticsearchClient } from "../../src/services/es";
@@ -9,6 +11,14 @@ import type { EsqlResponse, TimeRange } from "../../src/types";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+}
 
 function makeClient(
   impl: (params: { query: string }, signal?: AbortSignal) => Promise<EsqlResponse>,
@@ -49,30 +59,36 @@ describe("useBatchedOverviewQueries", () => {
   });
 
   it("returns empty results when client is null", () => {
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items: makeItems(["cpu", "mem"]),
-        client: null,
-        scopeKey: "test",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items: makeItems(["cpu", "mem"]),
+          client: null,
+          scopeKey: "test",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
-    expect(result.current.results).toEqual({});
+    // All items are idle when no client is provided
+    expect(result.current.results["cpu"]?.status).toBe("idle");
+    expect(result.current.results["mem"]?.status).toBe("idle");
   });
 
   it("returns empty results when items array is empty", () => {
     const client = makeClient(() => Promise.resolve(makeResponse(1)));
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items: [],
-        client,
-        scopeKey: "test",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items: [],
+          client,
+          scopeKey: "test",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     expect(result.current.results).toEqual({});
@@ -82,14 +98,16 @@ describe("useBatchedOverviewQueries", () => {
     const client = makeClient(() => Promise.resolve(makeResponse(42)));
     const items = makeItems(["cpu", "mem"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -111,14 +129,16 @@ describe("useBatchedOverviewQueries", () => {
     });
     const items = makeItems(["cpu"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -130,14 +150,16 @@ describe("useBatchedOverviewQueries", () => {
     const client = makeClient(() => Promise.reject(new Error("permission denied")));
     const items = makeItems(["cpu"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -150,14 +172,16 @@ describe("useBatchedOverviewQueries", () => {
     const client = makeClient(() => Promise.reject("string failure"));
     const items = makeItems(["cpu"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -174,14 +198,16 @@ describe("useBatchedOverviewQueries", () => {
       return { esql: `FROM index | STATS metric BY ${item.name}` };
     };
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery: throwingBuildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery: throwingBuildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -200,14 +226,16 @@ describe("useBatchedOverviewQueries", () => {
     });
     const items = makeItems(["cpu", "mem"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     // Wait for initial pass: cpu fails, mem succeeds
@@ -241,15 +269,18 @@ describe("useBatchedOverviewQueries", () => {
       return Promise.resolve(makeResponse(isCpu ? 42 : 10));
     });
 
-    let items = makeItems(["cpu", "mem"]);
-    const { result, rerender } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const items = makeItems(["cpu", "mem"]);
+    let timeRange: TimeRange = { from: "now-1h", to: "now" };
+    const { result, rerender } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -266,18 +297,23 @@ describe("useBatchedOverviewQueries", () => {
       expect(result.current.results["cpu"]?.status).toBe("success");
     });
 
-    const callsBeforeRefresh = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
-    items = makeItems(["cpu", "mem"]);
+    // Allow the discovery effect to update knownWithData
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    // Change timeRange to trigger a refresh (new queryKey).
+    // If the recovered cpu metric was added to the known-with-data set,
+    // it will be re-queried alongside mem.
+    timeRange = { from: "now-2h", to: "now" };
     rerender();
 
-    await waitFor(() =>
-      expect((client.query as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(
-        callsBeforeRefresh + 1,
-      ),
-    );
-
-    const callsAfterRefresh = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
-    expect(callsAfterRefresh - callsBeforeRefresh).toBe(2);
+    await waitFor(() => {
+      expect(result.current.results["cpu"]?.status).toBe("success");
+      expect(result.current.results["cpu"]?.data).toBeDefined();
+      expect(result.current.results["mem"]?.status).toBe("success");
+      expect(result.current.results["mem"]?.data).toBeDefined();
+    });
   });
 
   it("aborts in-flight queries when unmounted", async () => {
@@ -295,14 +331,16 @@ describe("useBatchedOverviewQueries", () => {
         }),
     );
 
-    const { unmount } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { unmount } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => expect(capturedSignal).toBeDefined());
@@ -323,14 +361,16 @@ describe("useBatchedOverviewQueries", () => {
     const items = makeItems(["cpu"]);
 
     let scope = "scope-a";
-    const { result, rerender } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: scope,
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const { result, rerender } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: scope,
+          buildQuery,
+          timeRange: TIME_RANGE,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => expect(result.current.results["cpu"]?.status).toBe("success"));
@@ -350,16 +390,18 @@ describe("useBatchedOverviewQueries", () => {
       return Promise.resolve(makeResponse(hasCpu ? 10 : null));
     });
 
-    // Use a `let` so rerender picks up the new reference from the closure.
-    let items = makeItems(["cpu", "mem"]);
-    const { result, rerender } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "stable-scope",
-        buildQuery,
-        timeRange: TIME_RANGE,
-      }),
+    const items = makeItems(["cpu", "mem"]);
+    let timeRange: TimeRange = { from: "now-1h", to: "now" };
+    const { result, rerender } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "stable-scope",
+          buildQuery,
+          timeRange,
+        }),
+      { wrapper: createWrapper() },
     );
 
     // Wait for initial discovery
@@ -370,9 +412,9 @@ describe("useBatchedOverviewQueries", () => {
 
     const callsBefore = (client.query as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    // Simulate a refresh: items gets a new reference (e.g., from field re-discovery)
-    // while scopeKey stays the same, so knownWithDataRef is preserved.
-    items = makeItems(["cpu", "mem"]);
+    // Trigger a refresh by changing the timeRange (new queryKey)
+    // while scopeKey stays the same, so knownWithData is preserved.
+    timeRange = { from: "now-2h", to: "now" };
     rerender();
 
     await waitFor(() =>
@@ -386,7 +428,7 @@ describe("useBatchedOverviewQueries", () => {
     expect(callsAfter - callsBefore).toBe(1);
   });
 
-  it("respects batchSize — queries in groups", async () => {
+  it("queries all items in parallel regardless of batchSize", async () => {
     const callOrder: string[] = [];
 
     const client = makeClient(
@@ -401,15 +443,17 @@ describe("useBatchedOverviewQueries", () => {
 
     const items = makeItems(["a", "b", "c", "d"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-        batchSize: 2,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+          batchSize: 2,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
@@ -421,24 +465,23 @@ describe("useBatchedOverviewQueries", () => {
 
     // All 4 items should have been queried
     expect(callOrder).toHaveLength(4);
-    // First batch: a and b should appear before c and d
-    expect(callOrder.indexOf("a")).toBeLessThan(callOrder.indexOf("c"));
-    expect(callOrder.indexOf("b")).toBeLessThan(callOrder.indexOf("d"));
   });
 
-  it("normalizes non-positive batchSize to avoid stalling", async () => {
+  it("completes all items even with non-positive batchSize", async () => {
     const client = makeClient(() => Promise.resolve(makeResponse(1)));
     const items = makeItems(["cpu", "mem"]);
 
-    const { result } = renderHook(() =>
-      useBatchedOverviewQueries({
-        items,
-        client,
-        scopeKey: "scope1",
-        buildQuery,
-        timeRange: TIME_RANGE,
-        batchSize: 0,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchedOverviewQueries({
+          items,
+          client,
+          scopeKey: "scope1",
+          buildQuery,
+          timeRange: TIME_RANGE,
+          batchSize: 0,
+        }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {

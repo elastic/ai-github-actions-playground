@@ -43,12 +43,15 @@ export default function HeatmapChart({ data }: Props) {
         : data.values.map((_, i) => String(i));
     const yLabels = yIdx >= 0 ? [...new Set(getColumnValues(data, yIdx).map(String))] : ["value"];
 
-    const heatmapData = data.values.flatMap((row, i) => {
+    const xLabelToIndex = new Map(xLabels.map((label, index) => [label, index]));
+    const yLabelToIndex = new Map(yLabels.map((label, index) => [label, index]));
+    const heatmapData: Array<[number, number, number]> = [];
+    data.values.forEach((row, i) => {
       const value = rawValues[i];
-      if (value == null) return [];
+      if (value == null) return;
       const xVal = xIdx >= 0 ? String(row[xIdx]) : String(i);
       const yVal = yIdx >= 0 ? String(row[yIdx]) : "value";
-      return [[xLabels.indexOf(xVal), yLabels.indexOf(yVal), value]];
+      heatmapData.push([xLabelToIndex.get(xVal) ?? -1, yLabelToIndex.get(yVal) ?? -1, value]);
     });
 
     return {

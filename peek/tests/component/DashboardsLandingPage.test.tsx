@@ -89,7 +89,7 @@ describe("DashboardsLandingPage", () => {
   it("shows import and export buttons in toolbar", () => {
     renderLanding();
 
-    expect(screen.getByRole("button", { name: /^import$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^import dashboard$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /export all/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /import workspace/i })).toBeInTheDocument();
   });

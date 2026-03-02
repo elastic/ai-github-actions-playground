@@ -17,29 +17,20 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { parseAsString, useQueryState } from "nuqs";
 
-import { ElasticsearchClient, type SecurityRole, type SecurityUser } from "../services/es";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
-import { useConnectionStore } from "../store/useConnectionStore";
+import { useSecurityRoles } from "../hooks/useSecurityRoles";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageHeader from "./PageHeader";
-import { loadSecurityResource } from "./securityResourceLoader";
-
-type RoleEntry = { name: string; role: SecurityRole };
 
 export default function RolesPage() {
-  const connection = useConnectionStore((s) => s.connection);
+  const { roles, users, loading, error, accessNotice, usersError, refresh } = useSecurityRoles();
   const navigate = useNavigate();
   const [urlRole, setUrlRole] = useQueryState("role", parseAsString);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useQueryState(
     "search",
     parseAsString.withDefault("").withOptions({ history: "replace" }),
   );
-  const [roles, setRoles] = useState<RoleEntry[]>([]);
-  const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
@@ -53,56 +44,6 @@ export default function RolesPage() {
     () => roles.find((entry) => entry.name === selectedRoleName) ?? null,
     [roles, selectedRoleName],
   );
-
-  const loadRoles = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    setAccessNotice(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const [rolesResult, usersResult] = await Promise.allSettled([
-        loadSecurityResource({
-          client,
-          fetchResource: (c) => c.getSecurityRoles(),
-          canRead: (caps) => caps.canReadSecurityRoles,
-          authDeniedNotice: "Your credentials cannot read all role data.",
-        }),
-        client.getSecurityUsers(),
-      ]);
-      if (rolesResult.status === "fulfilled") {
-        const result = rolesResult.value;
-        setAccessNotice(result.notice);
-        if (result.error !== null) {
-          setError(result.error);
-        } else if (result.data !== null) {
-          const nextRoles = Object.entries(result.data)
-            .map(([name, role]) => ({ name, role }))
-            .sort((a, b) => a.name.localeCompare(b.name));
-          setRoles(nextRoles);
-        } else {
-          setRoles([]);
-        }
-      }
-      if (usersResult.status === "fulfilled") {
-        setUsers(
-          Object.entries(usersResult.value).map(([username, user]) => ({
-            username: user.username ?? username,
-            enabled: user.enabled,
-            roles: user.roles ?? [],
-          })),
-        );
-      } else {
-        setUsers([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadRoles();
-  }, [loadRoles]);
 
   // Sync URL when the resolved selection differs from the URL param
   useEffect(() => {
@@ -145,7 +86,7 @@ export default function RolesPage() {
           title="Roles"
           actions={
             <>
-              <Button size="small" variant="outlined" onClick={loadRoles} disabled={loading}>
+              <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
                 {loading ? <CircularProgress size={16} /> : "Refresh"}
               </Button>
               <Button size="small" variant="contained" onClick={() => void copyQuery()}>
@@ -158,6 +99,11 @@ export default function RolesPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
       {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
+      {usersError && (
+        <Alert severity="warning">
+          Unable to load users for role assignment display: {usersError}
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         <Paper

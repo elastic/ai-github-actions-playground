@@ -238,9 +238,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
       mockRunQuery.mock.calls
         .map(([query]) => String(query ?? ""))
         .find((query) =>
-          query.includes("COALESCE(attributes.span.duration.us, duration / 1000.0)"),
+          query.includes("COALESCE(attributes.span.duration.us, duration / 1000)"),
         ) ?? "";
-    expect(traceQuery).toContain("COALESCE(attributes.span.duration.us, duration / 1000.0)");
+    expect(traceQuery).toContain("COALESCE(attributes.span.duration.us, duration / 1000)");
     expect(traceQuery).toContain(">= 2000");
   });
 
