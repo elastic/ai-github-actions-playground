@@ -277,8 +277,9 @@ export default function DashboardsLandingPage() {
                 variant="outlined"
                 startIcon={<FileUploadIcon />}
                 onClick={() => handleImport("dashboard")}
+                aria-description="Import a single dashboard from a JSON file"
               >
-                Import
+                Import Dashboard
               </Button>
               <Button
                 size="small"
@@ -293,6 +294,7 @@ export default function DashboardsLandingPage() {
                 variant="outlined"
                 startIcon={<FileUploadIcon />}
                 onClick={() => handleImport("workspace")}
+                aria-description="Import a full workspace package containing all dashboards"
               >
                 Import Workspace
               </Button>

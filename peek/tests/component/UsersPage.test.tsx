@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
@@ -62,9 +63,12 @@ const USERS_RESPONSE = {
 };
 
 describe("UsersPage", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
@@ -75,11 +79,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // First user alphabetically is "alice"
@@ -94,11 +100,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "alice" });
@@ -115,11 +123,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // Wait for the list to populate
@@ -141,11 +151,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("list");
@@ -159,11 +171,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Your credentials may have partial access to security APIs.");
@@ -174,11 +188,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockRejectedValue({ status: 403, message: "security_exception" });
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Your credentials cannot read all user data.");
@@ -190,11 +206,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockRejectedValue({ status: 500, message: "internal_error" });
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("internal_error");
@@ -210,11 +228,13 @@ describe("UsersPage", () => {
 
     try {
       render(
-        <MemoryRouter>
-          <NuqsTestingAdapter hasMemory>
-            <UsersPage />
-          </NuqsTestingAdapter>
-        </MemoryRouter>,
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <NuqsTestingAdapter hasMemory>
+              <UsersPage />
+            </NuqsTestingAdapter>
+          </MemoryRouter>
+        </QueryClientProvider>,
       );
 
       await screen.findByRole("heading", { level: 6, name: "alice" });
@@ -237,11 +257,13 @@ describe("UsersPage", () => {
     });
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const list = await screen.findByRole("list");
@@ -261,11 +283,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "alice" });
@@ -290,12 +314,14 @@ describe("UsersPage", () => {
     }
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <UsersPage />
-          <LocationDisplay />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+            <LocationDisplay />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // Select the elastic user (has superuser role)
@@ -317,11 +343,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter initialEntries={["/users?username=elastic"]}>
-        <NuqsTestingAdapter searchParams="?username=elastic" hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/users?username=elastic"]}>
+          <NuqsTestingAdapter searchParams="?username=elastic" hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // elastic should be pre-selected rather than alice (first alphabetically)
@@ -336,11 +364,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter initialEntries={["/users?username=elastic"]}>
-        <NuqsTestingAdapter searchParams="?username=elastic" hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/users?username=elastic"]}>
+          <NuqsTestingAdapter searchParams="?username=elastic" hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "elastic" });
@@ -355,11 +385,13 @@ describe("UsersPage", () => {
     getSecurityUsersMock.mockResolvedValue(USERS_RESPONSE);
 
     render(
-      <MemoryRouter initialEntries={["/users?username=does-not-exist"]}>
-        <NuqsTestingAdapter searchParams="?username=does-not-exist" hasMemory>
-          <UsersPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/users?username=does-not-exist"]}>
+          <NuqsTestingAdapter searchParams="?username=does-not-exist" hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "alice" });

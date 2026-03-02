@@ -108,7 +108,7 @@ export default function TraceSearchPanel({
         {filters.statusCodes.map((status) => (
           <Chip
             key={status}
-            label={`status: ${status}`}
+            label={`status: ${status === "OK" ? "Success" : status}`}
             size="small"
             color={status === "Error" ? "error" : "default"}
             deleteIcon={
@@ -270,22 +270,27 @@ export default function TraceSearchPanel({
           ))}
         </Select>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", ml: "auto" }}>
-          {(["Error", "OK"] as const).map((status) => (
+          {(
+            [
+              { value: "Error", label: "Error" },
+              { value: "OK", label: "Success" },
+            ] as const
+          ).map(({ value, label }) => (
             <Chip
-              key={status}
-              label={status}
+              key={value}
+              label={label}
               size="medium"
-              variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
-              color={status === "Error" ? "error" : "default"}
+              variant={filters.statusCodes.includes(value) ? "filled" : "outlined"}
+              color={value === "Error" ? "error" : "default"}
               sx={{ height: COMPONENT_HEIGHTS.buttonSmall }}
               onClick={() => {
-                if (filters.statusCodes.includes(status)) {
+                if (filters.statusCodes.includes(value)) {
                   applyFiltersAndRun({
-                    statusCodes: filters.statusCodes.filter((s) => s !== status),
+                    statusCodes: filters.statusCodes.filter((s) => s !== value),
                   });
                 } else {
                   applyFiltersAndRun({
-                    statusCodes: [...filters.statusCodes, status],
+                    statusCodes: [...filters.statusCodes, value],
                   });
                 }
               }}
