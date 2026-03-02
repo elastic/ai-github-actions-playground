@@ -32,6 +32,10 @@ import OtlpConfigPanel from "./OtlpConfigPanel";
 
 type AuthType = "apiKey" | "userpass";
 
+function deriveIngestUrlOrEmpty(url: string | undefined): string {
+  return deriveOtlpEndpoint(url ?? "") ?? "";
+}
+
 function shouldShowTelemetryPanel(conn?: ElasticsearchConnection | null): boolean {
   if (!conn) return false;
   if (conn.otlpEnabled || Boolean(conn.otlpApiKey?.trim())) return true;
@@ -88,7 +92,7 @@ export default function ConnectionDialog() {
   const [password, setPassword] = useState(savedConn?.password ?? "");
   const [proxyUrl, setProxyUrl] = useState(savedConn?.proxyUrl ?? "");
   const [ingestUrl, setIngestUrl] = useState(
-    savedConn?.ingestUrl ?? deriveOtlpEndpoint(savedConn?.url ?? "") ?? "",
+    savedConn?.ingestUrl ?? deriveIngestUrlOrEmpty(savedConn?.url),
   );
   const [showProxy, setShowProxy] = useState(Boolean(savedConn?.proxyUrl));
   const [showAdvanced, setShowAdvanced] = useState(Boolean(savedConn?.ingestUrl));
@@ -114,7 +118,7 @@ export default function ConnectionDialog() {
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
     setProxyUrl(savedConn?.proxyUrl ?? "");
-    setIngestUrl(savedConn?.ingestUrl ?? deriveOtlpEndpoint(savedConn?.url ?? "") ?? "");
+    setIngestUrl(savedConn?.ingestUrl ?? deriveIngestUrlOrEmpty(savedConn?.url));
     setShowProxy(Boolean(savedConn?.proxyUrl));
     setShowAdvanced(Boolean(savedConn?.ingestUrl));
     setOtlpEnabled(savedConn?.otlpEnabled ?? false);
@@ -133,7 +137,7 @@ export default function ConnectionDialog() {
   const buildConnection = useCallback((): ElasticsearchConnection => {
     const nextOtlpUseElasticAuth = authType === "apiKey" && otlpUseElasticAuth;
     const trimmedIngestUrl = ingestUrl.trim();
-    const derived = deriveOtlpEndpoint(url.trim());
+    const derived = deriveIngestUrlOrEmpty(url.trim());
     // Only persist ingestUrl when it differs from what we would auto-derive
     const effectiveIngestUrl =
       trimmedIngestUrl && trimmedIngestUrl !== derived ? trimmedIngestUrl : undefined;
@@ -241,7 +245,7 @@ export default function ConnectionDialog() {
       setUsername(conn.username ?? "");
       setPassword(conn.password ?? "");
       setProxyUrl(conn.proxyUrl ?? "");
-      setIngestUrl(conn.ingestUrl ?? deriveOtlpEndpoint(conn.url) ?? "");
+      setIngestUrl(conn.ingestUrl ?? deriveIngestUrlOrEmpty(conn.url));
       setShowProxy(Boolean(conn.proxyUrl));
       setShowAdvanced(Boolean(conn.ingestUrl));
       setOtlpEnabled(conn.otlpEnabled ?? false);
@@ -294,7 +298,7 @@ export default function ConnectionDialog() {
             onChange={(e) => {
               const nextUrl = e.target.value;
               const previousDerived = deriveDefaultOtlpEndpoint(url);
-              const previousIngestDerived = deriveOtlpEndpoint(url);
+              const previousIngestDerived = deriveIngestUrlOrEmpty(url);
               setUrl(nextUrl);
               setActiveProfileId(null);
               setOtlpEndpoint((prev) => {
@@ -304,10 +308,11 @@ export default function ConnectionDialog() {
                 }
                 return prev;
               });
+              // Keep ingest URL in sync unless the user has manually overridden it
               setIngestUrl((prev) => {
                 const trimmed = prev.trim();
                 if (!trimmed || trimmed === previousIngestDerived) {
-                  return deriveOtlpEndpoint(nextUrl) ?? "";
+                  return deriveIngestUrlOrEmpty(nextUrl);
                 }
                 return prev;
               });
@@ -347,7 +352,8 @@ export default function ConnectionDialog() {
             <TextField
               label="Ingest URL"
               placeholder={
-                deriveOtlpEndpoint(url) ?? "https://<id>.ingest.<region>.<provider>.elastic.cloud"
+                deriveIngestUrlOrEmpty(url) ||
+                "https://<id>.ingest.<region>.<provider>.elastic.cloud"
               }
               fullWidth
               value={ingestUrl}
