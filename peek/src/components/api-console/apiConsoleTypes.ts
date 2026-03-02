@@ -36,7 +36,13 @@ export function httpStatusColor(status: number): "success" | "warning" | "error"
   return "default";
 }
 
-export function makeEntry({ id = crypto.randomUUID(), method = "GET" as HttpMethod, path = "/", body = "", response = null }: Partial<RequestEntry> = {}): RequestEntry {
+export function makeEntry({
+  id = crypto.randomUUID(),
+  method = "GET" as HttpMethod,
+  path = "/",
+  body = "",
+  response = null,
+}: Partial<RequestEntry> = {}): RequestEntry {
   return { id, method, path, body, response };
 }
 

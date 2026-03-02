@@ -3,7 +3,12 @@ import type { SetValues } from "nuqs";
 
 import type { AggregationType, ExplorerFilter } from "../../services/es";
 
-import { parseLegacyFilters, parseEncodedFilters, encodeFilters, metricNamespaceOf } from "./exploreUtils";
+import {
+  parseLegacyFilters,
+  parseEncodedFilters,
+  encodeFilters,
+  metricNamespaceOf,
+} from "./exploreUtils";
 import type { explorerSearchParsers } from "./exploreUtils";
 
 type UrlState = {

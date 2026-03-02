@@ -154,7 +154,6 @@ export default function ExplorePage() {
   // Show dimension overview when a metric is selected but no groupBy is set yet.
   const showDimensionOverview = selectedMetric !== null && !groupBy && !skipDimensionOverview;
 
-
   // Load fields when index pattern changes
   useEffect(() => {
     if (!client || !indexPattern) return;
