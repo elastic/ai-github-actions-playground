@@ -102,14 +102,19 @@ export default memo(function DataTable({
     (event: React.KeyboardEvent) => {
       if (inspectedRow === null || selectedRowIndex === null) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest("tr[data-row-index]")) return;
+      if (visibleRows.length === 0) return;
+      const maxIndex = visibleRows.length - 1;
+      const currentIndex = Math.min(Math.max(selectedRowIndex, 0), maxIndex);
       event.preventDefault();
 
       const nextIndex =
         event.key === "ArrowDown"
-          ? Math.min(selectedRowIndex + 1, visibleRows.length - 1)
-          : Math.max(selectedRowIndex - 1, 0);
+          ? Math.min(currentIndex + 1, maxIndex)
+          : Math.max(currentIndex - 1, 0);
 
-      if (nextIndex === selectedRowIndex) return;
+      if (nextIndex === currentIndex) return;
 
       const nextRow = visibleRows[nextIndex];
       if (nextRow) {

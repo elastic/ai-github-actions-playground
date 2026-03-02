@@ -476,4 +476,51 @@ describe("DataTable", () => {
 
     expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument();
   });
+
+  it("does not navigate rows when arrow keys are pressed on pagination controls", async () => {
+    const user = userEvent.setup();
+    const paginatedData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: Array.from({ length: 30 }, (_, i) => [`row-${i}`]),
+    };
+    render(<DataTable data={paginatedData} />);
+    const nextPageButton = screen.getByRole("button", { name: /next page/i });
+
+    await user.click(screen.getByText("row-0"));
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-0");
+
+    nextPageButton.focus();
+    fireEvent.keyDown(nextPageButton, { key: "ArrowDown" });
+    fireEvent.keyDown(nextPageButton, { key: "ArrowUp" });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-0");
+    });
+  });
+
+  it("keeps arrow navigation functional and bounded after pagination changes", async () => {
+    const user = userEvent.setup();
+    const paginatedData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: Array.from({ length: 30 }, (_, i) => [`row-${i}`]),
+    };
+    render(<DataTable data={paginatedData} />);
+
+    await user.click(screen.getByRole("button", { name: /next page/i }));
+    await user.click(screen.getByText("row-25"));
+    let dataRows = screen.getAllByRole("row", { hidden: true }).slice(1);
+    expect(dataRows[0]).toHaveAttribute("data-row-index", "0");
+
+    fireEvent.keyDown(dataRows[0]!, { key: "ArrowDown" });
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-26");
+    });
+    dataRows = screen.getAllByRole("row", { hidden: true }).slice(1);
+    expect(dataRows[1]).toHaveAttribute("data-row-index", "1");
+
+    fireEvent.keyDown(dataRows[1]!, { key: "ArrowUp" });
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-25");
+    });
+  });
 });
