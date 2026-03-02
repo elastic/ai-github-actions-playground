@@ -145,6 +145,36 @@ describe("AddDataPage", () => {
     expect(alerts.some((a) => a.textContent?.includes("Could not reach OTLP endpoint"))).toBe(true);
   });
 
+  it("uses first reachable ingest candidate for cloud.es.io commands", async () => {
+    resetAllStores();
+    useConnectionStore.getState().setConnection({
+      url: "https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io",
+      apiKey: "testkey",
+    });
+    useConnectionStore.setState({ capabilities: defaultCapabilities });
+    fetchSpy.mockImplementation((input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes(".cloud.es.io")) {
+        return Promise.reject(new TypeError("fetch failed"));
+      }
+      return Promise.resolve(new Response(null, { status: 200 }));
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
+    await user.click(screen.getByRole("tab", { name: "Linux" }));
+    expect(getCommandValue()).toContain(
+      "elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
+    );
+  });
+
   it("shows placeholder guidance when OTLP endpoint cannot be derived", async () => {
     resetAllStores();
     useConnectionStore.getState().setConnection({

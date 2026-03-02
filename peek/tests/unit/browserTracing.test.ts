@@ -96,6 +96,29 @@ describe("browser tracing helpers", () => {
     expect(shouldReconfigureTracing(previous, next)).toBe(true);
   });
 
+  it("reconfigures tracing when ingest URL override changes", () => {
+    const previous = getTracingConnectionSnapshot(
+      {
+        url: "https://es.example.com:9200",
+        ingestUrl: "https://one.ingest.us-east-1.aws.elastic.cloud",
+        apiKey: "es-key",
+        otlpEnabled: true,
+      },
+      true,
+    );
+    const next = getTracingConnectionSnapshot(
+      {
+        url: "https://es.example.com:9200",
+        ingestUrl: "https://two.ingest.us-east-1.aws.elastic.cloud",
+        apiKey: "es-key",
+        otlpEnabled: true,
+      },
+      true,
+    );
+
+    expect(shouldReconfigureTracing(previous, next)).toBe(true);
+  });
+
   it("derives ingest URL for Elastic Cloud ES URLs", () => {
     const esUrl = "https://my-deploy.es.us-east-1.aws.elastic.cloud";
     const ingestBase = deriveOtlpEndpoint(esUrl);

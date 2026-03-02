@@ -24,6 +24,7 @@ interface TracingConnectionSnapshot {
   connected: boolean;
   url: string;
   proxyUrl: string;
+  ingestUrl: string;
   otlpEnabled: boolean;
   otlpEndpoint: string;
   otlpUseElasticAuth: boolean;
@@ -57,6 +58,7 @@ export function getTracingConnectionSnapshot(
     connected,
     url: (connection?.url ?? "").trim(),
     proxyUrl: (connection?.proxyUrl ?? "").trim(),
+    ingestUrl: (connection?.ingestUrl ?? "").trim(),
     otlpEnabled: connection?.otlpEnabled ?? false,
     otlpEndpoint: (connection?.otlpEndpoint ?? "").trim(),
     otlpUseElasticAuth: connection?.otlpUseElasticAuth ?? true,
@@ -73,6 +75,7 @@ export function shouldReconfigureTracing(
     previous.connected !== next.connected ||
     previous.url !== next.url ||
     previous.proxyUrl !== next.proxyUrl ||
+    previous.ingestUrl !== next.ingestUrl ||
     previous.otlpEnabled !== next.otlpEnabled ||
     previous.otlpEndpoint !== next.otlpEndpoint ||
     previous.otlpUseElasticAuth !== next.otlpUseElasticAuth ||

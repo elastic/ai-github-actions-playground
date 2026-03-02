@@ -23,7 +23,7 @@ import { copyToClipboard } from "../utils/copyToClipboard";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import {
-  deriveOtlpEndpoint,
+  deriveIngestCandidates,
   detectTelemetrySignals,
   probeOtlpEndpoint,
   PLATFORM_GUIDES,
@@ -77,30 +77,47 @@ export default function AddDataPage() {
   }, [connection]);
 
   const esUrl = connection?.url ?? "<YOUR_ELASTICSEARCH_ENDPOINT>";
-  const derivedOtlpUrl = useMemo(
-    () => connection?.ingestUrl || deriveOtlpEndpoint(esUrl),
+  const ingestCandidates = useMemo(
+    () =>
+      connection?.ingestUrl?.trim() ? [connection.ingestUrl.trim()] : deriveIngestCandidates(esUrl),
     [connection?.ingestUrl, esUrl],
   );
+  const [derivedOtlpUrl, setDerivedOtlpUrl] = useState<string | null>(null);
+  const probeTargetOtlpUrl = derivedOtlpUrl ?? ingestCandidates[0] ?? null;
   const otlpUrl = derivedOtlpUrl ?? "<YOUR_OTLP_ENDPOINT>";
 
   // Probe the derived OTLP ingest endpoint; auto-select OTLP when reachable
   useEffect(() => {
-    if (!derivedOtlpUrl) {
+    if (ingestCandidates.length === 0) {
+      setDerivedOtlpUrl(null);
       setIngestAvailable(null);
       return;
     }
     let cancelled = false;
     endpointTypeManuallySetRef.current = false;
+    setDerivedOtlpUrl(null);
     setIngestAvailable(null);
-    probeOtlpEndpoint(derivedOtlpUrl).then((available) => {
+    (async () => {
+      let firstReachable: string | null = null;
+      for (const candidate of ingestCandidates) {
+        // Probe each candidate in order and use the first reachable endpoint.
+        const available = await probeOtlpEndpoint(candidate);
+        if (cancelled) return;
+        if (available) {
+          firstReachable = candidate;
+          break;
+        }
+      }
       if (cancelled) return;
+      setDerivedOtlpUrl(firstReachable ?? ingestCandidates[0] ?? null);
+      const available = Boolean(firstReachable);
       setIngestAvailable(available);
       if (available && !endpointTypeManuallySetRef.current) setEndpointType("managed_otlp");
-    });
+    })();
     return () => {
       cancelled = true;
     };
-  }, [derivedOtlpUrl]);
+  }, [ingestCandidates]);
   const version = clusterVersion ?? "<VERSION>";
   const apiKey = apiKeyValue ?? "<YOUR_API_KEY>";
   const hasEndpoint =
@@ -194,15 +211,15 @@ export default function AddDataPage() {
             <ToggleButton value="managed_otlp">Managed OTLP</ToggleButton>
           </ToggleButtonGroup>
         </Stack>
-        {endpointType === "managed_otlp" && derivedOtlpUrl && (
+        {endpointType === "managed_otlp" && probeTargetOtlpUrl && (
           <Alert
             severity={ingestAvailable ? "success" : ingestAvailable === false ? "warning" : "info"}
           >
             {ingestAvailable === null
-              ? `Checking OTLP endpoint availability at ${derivedOtlpUrl}…`
+              ? `Checking OTLP endpoint availability at ${probeTargetOtlpUrl}…`
               : ingestAvailable
-                ? `OTLP endpoint verified at ${derivedOtlpUrl}`
-                : `Could not reach OTLP endpoint at ${derivedOtlpUrl} — verify the URL is correct`}
+                ? `OTLP endpoint verified at ${probeTargetOtlpUrl}`
+                : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
           </Alert>
         )}
         {endpointType === "managed_otlp" && !derivedOtlpUrl && (
