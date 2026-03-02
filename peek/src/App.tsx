@@ -30,7 +30,7 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
-import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
+import { PAGE_MANIFEST } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
 
@@ -145,7 +145,8 @@ export default function App() {
                 <Routes>
                   {Object.entries(PAGE_MANIFEST).map(([, config]) => {
                     const PageComponent = config.component;
-                    const skeletonVariant = (config as PageConfig).skeletonVariant;
+                    const skeletonVariant =
+                      "skeletonVariant" in config ? config.skeletonVariant : undefined;
                     const fallback = skeletonVariant ? (
                       <ContentSkeleton variant={skeletonVariant} />
                     ) : (
