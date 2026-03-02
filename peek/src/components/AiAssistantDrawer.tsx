@@ -91,7 +91,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
           top: "auto",
           bottom: 0,
           boxSizing: "border-box",
-          width: isMobile ? "min(100vw, 440px)" : AI_DRAWER_WIDTH,
+          width: isMobile ? `min(100vw, ${AI_DRAWER_WIDTH}px)` : AI_DRAWER_WIDTH,
           maxWidth: "100vw",
         },
       }}
