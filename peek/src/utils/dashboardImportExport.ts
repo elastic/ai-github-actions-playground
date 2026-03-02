@@ -7,9 +7,10 @@ export function exportDashboardJson(dashboard: DashboardDefinition): void {
     dashboard.title
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/[^a-z0-9_-]+/g, "-")
       .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "") || "dashboard";
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 200) || "dashboard";
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

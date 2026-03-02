@@ -19,6 +19,14 @@ import { TraceTable } from "./TraceTable";
 import type { Span } from "./traceUtils";
 import type { TraceFilters } from "./traceQueryBuilder";
 
+const VIEW_MODE_LABELS: Record<TracesViewMode, string> = {
+  list: "List",
+  timeseries: "Time Series",
+  scatter: "Scatter",
+  serviceMap: "Service Map",
+  driftRadar: "Drift Radar",
+};
+
 interface TraceRow {
   traceId: string;
   spanId: string;
@@ -84,17 +92,7 @@ export default function TraceResultsView({
           (mode) => (
             <Chip
               key={mode}
-              label={
-                mode === "list"
-                  ? "List"
-                  : mode === "timeseries"
-                    ? "Time Series"
-                    : mode === "scatter"
-                      ? "Scatter"
-                      : mode === "serviceMap"
-                        ? "Service Map"
-                        : "Drift Radar"
-              }
+              label={VIEW_MODE_LABELS[mode]}
               size="small"
               variant={viewMode === mode ? "filled" : "outlined"}
               color={viewMode === mode ? "primary" : "default"}
@@ -221,8 +219,8 @@ export default function TraceResultsView({
             </Box>
           ) : searchResult !== null ? (
             <EmptyState
-              heading="Run search to load the window service map."
-              description="Run search to load current-window traces for the Drift Radar map."
+              heading="No service dependencies found"
+              description="The current search returned no cross-service traces for the Drift Radar map."
             />
           ) : (
             <EmptyState
