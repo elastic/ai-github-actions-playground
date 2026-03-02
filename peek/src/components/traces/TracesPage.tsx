@@ -367,6 +367,7 @@ export default function TracesPage() {
       {/* Content area */}
       <Box
         sx={{
+          position: "relative",
           display: "flex",
           flex: 1,
           gap: 1,
