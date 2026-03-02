@@ -72,9 +72,10 @@ export function buildQueryParams(
   timeRange: TimeRange,
   userParams?: DashboardParameter[],
 ): Record<string, string | number | boolean> {
-  const params: Record<string, string | number | boolean> = {
-    ...buildTimeParams(query, timeRange),
-  };
+  const params: Record<string, string | number | boolean> = Object.assign(
+    Object.create(null) as Record<string, string | number | boolean>,
+    buildTimeParams(query, timeRange),
+  );
 
   if (userParams) {
     for (const { name, value, type } of userParams) {
