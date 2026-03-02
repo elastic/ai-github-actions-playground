@@ -21,6 +21,13 @@ vi.mock("react-grid-layout", () => ({
 }));
 
 describe("DashboardGrid", () => {
+  const renderDashboardGrid = () =>
+    render(
+      <MemoryRouter>
+        <DashboardGrid />
+      </MemoryRouter>,
+    );
+
   beforeEach(() => {
     resetAllStores();
   });
@@ -32,11 +39,7 @@ describe("DashboardGrid", () => {
       useDashboardStore.getState().removePanel(p.id);
     }
 
-    render(
-      <MemoryRouter>
-        <DashboardGrid />
-      </MemoryRouter>,
-    );
+    renderDashboardGrid();
 
     expect(screen.getByText("No panels yet")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /load default dashboard/i })).toBeInTheDocument();
@@ -52,11 +55,7 @@ describe("DashboardGrid", () => {
       layout: { x: 0, y: 0, w: 6, h: 4 },
     });
 
-    render(
-      <MemoryRouter>
-        <DashboardGrid />
-      </MemoryRouter>,
-    );
+    renderDashboardGrid();
 
     expect(screen.getByText("Panel One")).toBeInTheDocument();
   });
@@ -69,11 +68,7 @@ describe("DashboardGrid", () => {
       useDashboardStore.getState().removePanel(p.id);
     }
 
-    render(
-      <MemoryRouter>
-        <DashboardGrid />
-      </MemoryRouter>,
-    );
+    renderDashboardGrid();
 
     await user.click(screen.getByRole("button", { name: /add panel/i }));
 
@@ -91,11 +86,7 @@ describe("DashboardGrid", () => {
       useDashboardStore.getState().removePanel(p.id);
     }
 
-    render(
-      <MemoryRouter>
-        <DashboardGrid />
-      </MemoryRouter>,
-    );
+    renderDashboardGrid();
 
     await user.click(screen.getByRole("button", { name: /load default dashboard/i }));
 
