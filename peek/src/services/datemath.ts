@@ -16,6 +16,7 @@ const UNIT_MS: Record<string, number> = {
 };
 
 const DATE_MATH_RE = /^now(?:([+-])(\d+)([smhdw]))?$/;
+const RESERVED_TIME_PARAM_NAMES = new Set(["_tstart", "_tend"]);
 function hasNamedPlaceholder(query: string, name: string): boolean {
   const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(`\\?${escapedName}(?![A-Za-z0-9_])`);
@@ -80,6 +81,7 @@ export function buildQueryParams(
   if (userParams) {
     for (const { name, value, type } of userParams) {
       if (name && hasNamedPlaceholder(query, name)) {
+        if (RESERVED_TIME_PARAM_NAMES.has(name)) continue;
         params[name] = serializeDashboardParam(type, value);
       }
     }

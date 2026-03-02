@@ -141,6 +141,31 @@ describe("buildQueryParams", () => {
     expect(params).toHaveProperty("_tstart");
   });
 
+  it("does not allow user params to override reserved time params", () => {
+    vi.useFakeTimers({ now: NOW });
+    const query = "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp < ?_tend";
+    const params = buildQueryParams(query, { from: "now-1h", to: "now" }, [
+      {
+        name: "_tstart",
+        label: "Start",
+        type: "keyword",
+        source: { mode: "text" },
+        value: "overridden",
+      },
+      {
+        name: "_tend",
+        label: "End",
+        type: "keyword",
+        source: { mode: "text" },
+        value: "overridden",
+      },
+    ]);
+    expect(params).toEqual({
+      _tstart: "2025-06-15T11:00:00.000Z",
+      _tend: "2025-06-15T12:00:00.000Z",
+    });
+  });
+
   it("serializes number, boolean, and date parameters", () => {
     const query =
       "FROM logs-* | WHERE latency > ?latency AND is_error == ?is_error AND @timestamp >= ?from_date";
