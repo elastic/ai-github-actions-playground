@@ -78,7 +78,11 @@ function buildFilterClause(filters: ExplorerFilter[]): string {
   return conditions.join(" AND ");
 }
 
-function buildAggExpression(aggregation: AggregationType, field: string): string {
+function buildAggExpression(
+  aggregation: AggregationType,
+  field: string,
+  metricType?: MetricType,
+): string {
   const escapedField = escapeEsqlIdentifier(field);
   switch (aggregation) {
     case "avg":
@@ -90,7 +94,9 @@ function buildAggExpression(aggregation: AggregationType, field: string): string
     case "max":
       return `MAX(${escapedField})`;
     case "count":
-      return `COUNT(${escapedField})`;
+      // Counter fields don't support COUNT(field) in ES|QL; use COUNT(*) instead.
+      // Callers must add a `field IS NOT NULL` WHERE clause to preserve semantics.
+      return metricType === "counter" ? "COUNT(*)" : `COUNT(${escapedField})`;
     case "p50":
       return `PERCENTILE(${escapedField}, 50)`;
     case "p95":
@@ -134,10 +140,14 @@ export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
   const indexPattern = validateEsqlIndexPattern(q.indexPattern);
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
   const agg = getDefaultAggregation(q.metricType);
-  const aggExpr = buildAggExpression(agg, q.metricField);
+  const aggExpr = buildAggExpression(agg, q.metricField, q.metricType);
+  const whereClauses: string[] = [TIMESTAMP_RANGE_CLAUSE];
+  if (q.metricType === "counter") {
+    whereClauses.push(`${escapeEsqlIdentifier(q.metricField)} IS NOT NULL`);
+  }
   const parts: string[] = [
     `FROM ${indexPattern}`,
-    `WHERE ${TIMESTAMP_RANGE_CLAUSE}`,
+    buildWherePipe(whereClauses),
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`,
     `SORT timestamp`,
   ];
@@ -170,7 +180,7 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
   const maxSeries = Math.max(0, q.maxSeries ?? DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES);
   const maxRows = buckets * maxSeries;
   const agg = getDefaultAggregation(q.metricType);
-  const aggExpr = buildAggExpression(agg, q.metricField);
+  const aggExpr = buildAggExpression(agg, q.metricField, q.metricType);
   const escapedMetric = escapeEsqlIdentifier(q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);
   const whereClause = buildWherePipe([
@@ -206,6 +216,9 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   // WHERE (filters + time range)
   const whereClauses: string[] = [];
   whereClauses.push(TIMESTAMP_RANGE_CLAUSE);
+  if (q.metricType === "counter") {
+    whereClauses.push(`${escapeEsqlIdentifier(q.metricField)} IS NOT NULL`);
+  }
   const filterClause = buildFilterClause(q.filters);
   if (filterClause) {
     whereClauses.push(filterClause);
@@ -213,7 +226,7 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   parts.push(buildWherePipe(whereClauses));
 
   // STATS ... BY BUCKET(...)
-  const aggExpr = buildAggExpression(q.aggregation, q.metricField);
+  const aggExpr = buildAggExpression(q.aggregation, q.metricField, q.metricType);
   const aggAlias = `metric`;
   const bucketExpr = `BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`;
 
