@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
@@ -23,7 +24,7 @@ interface DashboardCardProps {
   onToggleTag: (tag: string) => void;
 }
 
-export default function DashboardCard({
+export default memo(function DashboardCard({
   entry,
   isActive,
   selectedTags,
@@ -127,4 +128,4 @@ export default function DashboardCard({
       </Tooltip>
     </Card>
   );
-}
+});

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 import type {
   FleetServerStatusMetrics,
@@ -74,37 +75,43 @@ const DEFAULT_FILTER: AgentFilter = {
   staleness: null,
 };
 
-export const useFleetStore = create<FleetState>()((set) => ({
-  serverStatus: null,
-  agentVersions: [],
-  outputHealth: [],
-  agentInventory: [],
-  agentInventoryTotal: 0,
-  actions: [],
-  actionResults: [],
-  autoRefreshEnabled: true,
-  lastUpdatedAt: null,
+export const useFleetStore = create<FleetState>()(
+  devtools(
+    (set) => ({
+      serverStatus: null,
+      agentVersions: [],
+      outputHealth: [],
+      agentInventory: [],
+      agentInventoryTotal: 0,
+      actions: [],
+      actionResults: [],
+      autoRefreshEnabled: true,
+      lastUpdatedAt: null,
 
-  activeTab: "overview",
-  agentFilter: { ...DEFAULT_FILTER },
+      activeTab: "overview",
+      agentFilter: { ...DEFAULT_FILTER },
 
-  loading: false,
-  error: null,
-  partialErrors: [],
+      loading: false,
+      error: null,
+      partialErrors: [],
 
-  setServerStatus: (status) => set({ serverStatus: status }),
-  setAgentVersions: (versions) => set({ agentVersions: versions }),
-  setOutputHealth: (health) => set({ outputHealth: health }),
-  setAgentInventory: (agents) => set({ agentInventory: agents }),
-  setAgentInventoryTotal: (total) => set({ agentInventoryTotal: total }),
-  setActions: (actions) => set({ actions }),
-  setActionResults: (results) => set({ actionResults: results }),
-  setAutoRefreshEnabled: (enabled) => set({ autoRefreshEnabled: enabled }),
-  setLastUpdatedAt: (timestamp) => set({ lastUpdatedAt: timestamp }),
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  updateAgentFilter: (updates) => set((s) => ({ agentFilter: { ...s.agentFilter, ...updates } })),
-  setLoading: (loading) => set({ loading }),
-  setError: (error) => set({ error }),
-  setPartialErrors: (errors) => set({ partialErrors: errors }),
-  resetFilters: () => set({ agentFilter: { ...DEFAULT_FILTER } }),
-}));
+      setServerStatus: (status) => set({ serverStatus: status }),
+      setAgentVersions: (versions) => set({ agentVersions: versions }),
+      setOutputHealth: (health) => set({ outputHealth: health }),
+      setAgentInventory: (agents) => set({ agentInventory: agents }),
+      setAgentInventoryTotal: (total) => set({ agentInventoryTotal: total }),
+      setActions: (actions) => set({ actions }),
+      setActionResults: (results) => set({ actionResults: results }),
+      setAutoRefreshEnabled: (enabled) => set({ autoRefreshEnabled: enabled }),
+      setLastUpdatedAt: (timestamp) => set({ lastUpdatedAt: timestamp }),
+      setActiveTab: (tab) => set({ activeTab: tab }),
+      updateAgentFilter: (updates) =>
+        set((s) => ({ agentFilter: { ...s.agentFilter, ...updates } })),
+      setLoading: (loading) => set({ loading }),
+      setError: (error) => set({ error }),
+      setPartialErrors: (errors) => set({ partialErrors: errors }),
+      resetFilters: () => set({ agentFilter: { ...DEFAULT_FILTER } }),
+    }),
+    { name: "FleetStore", enabled: import.meta.env.DEV },
+  ),
+);

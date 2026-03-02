@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import Chip from "@mui/material/Chip";
@@ -54,6 +54,7 @@ export default function MetricSearch({
 }: Props) {
   // Only show numeric (gauge/counter) fields for metric search
   const metricFields = useMemo(() => fields.filter((f) => f.metricType !== "unknown"), [fields]);
+  const namespaceLabelId = useId();
   const namespaces = useMemo(
     () => Array.from(new Set(metricFields.map((f) => namespaceOf(f.name)))).sort(),
     [metricFields],
@@ -71,9 +72,9 @@ export default function MetricSearch({
   return (
     <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
       <FormControl size="small" sx={{ minWidth: 180 }}>
-        <InputLabel id="metric-namespace-label">Namespace</InputLabel>
+        <InputLabel id={namespaceLabelId}>Namespace</InputLabel>
         <Select
-          labelId="metric-namespace-label"
+          labelId={namespaceLabelId}
           value={
             selectedNamespace && namespaces.includes(selectedNamespace) ? selectedNamespace : ""
           }

@@ -27,6 +27,7 @@ export default {
     const allowed = (context.options[0] && context.options[0].allowed) || [
       "h3",
       "h5",
+      "h6",
       "subtitle1",
       "body1",
       "body2",

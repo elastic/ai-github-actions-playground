@@ -27,9 +27,10 @@ import PanelEditor from "./components/PanelEditor";
 import CommandPalette from "./components/CommandPalette";
 import DashboardViewPage from "./components/DashboardViewPage";
 import WelcomeScreen from "./components/WelcomeScreen";
+import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
-import { PAGE_MANIFEST } from "./routes/manifest";
+import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
 
@@ -54,7 +55,15 @@ export default function App() {
   const location = useLocation();
   useEffect(() => {
     const match = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, location.pathname));
-    document.title = match ? `${match.nav.label} — Elastic Peek` : "Elastic Peek";
+    if (match) {
+      document.title = `${match.nav.label} — Elastic Peek`;
+      return;
+    }
+    if (matchPath("/dashboards/:id", location.pathname)) {
+      document.title = "Dashboards — Elastic Peek";
+      return;
+    }
+    document.title = "Elastic Peek";
   }, [location.pathname]);
 
   useEffect(() => {
@@ -141,42 +150,49 @@ export default function App() {
                   p: { sm: 2, xs: 1.5 },
                 }}
               >
-                <Suspense fallback={<LinearProgress />}>
-                  <Routes>
-                    {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                      const PageComponent = config.component;
-                      return (
-                        <Route
-                          key={config.path}
-                          path={config.path}
-                          element={
-                            !connected && config.requiresConnection ? (
-                              <WelcomeScreen />
-                            ) : (
-                              <ErrorBoundary>
+                <Routes>
+                  {Object.entries(PAGE_MANIFEST).map(([, config]) => {
+                    const pageConfig: PageConfig = config;
+                    const PageComponent = pageConfig.component;
+                    const skeletonVariant = pageConfig.skeletonVariant;
+                    const fallback = skeletonVariant ? (
+                      <ContentSkeleton variant={skeletonVariant} />
+                    ) : (
+                      <LinearProgress />
+                    );
+                    return (
+                      <Route
+                        key={pageConfig.path}
+                        path={pageConfig.path}
+                        element={
+                          !connected && pageConfig.requiresConnection ? (
+                            <WelcomeScreen />
+                          ) : (
+                            <ErrorBoundary>
+                              <Suspense fallback={fallback}>
                                 <PageComponent />
-                              </ErrorBoundary>
-                            )
-                          }
-                        />
-                      );
-                    })}
-                    <Route
-                      path="/dashboards/:id"
-                      element={
-                        !connected ? (
-                          <WelcomeScreen />
-                        ) : (
-                          <ErrorBoundary>
-                            <DashboardViewPage />
-                          </ErrorBoundary>
-                        )
-                      }
-                    />
-                    <Route path="/" element={<Navigate to="/dashboards" replace />} />
-                    <Route path="*" element={<Navigate to="/dashboards" replace />} />
-                  </Routes>
-                </Suspense>
+                              </Suspense>
+                            </ErrorBoundary>
+                          )
+                        }
+                      />
+                    );
+                  })}
+                  <Route
+                    path="/dashboards/:id"
+                    element={
+                      !connected ? (
+                        <WelcomeScreen />
+                      ) : (
+                        <ErrorBoundary>
+                          <DashboardViewPage />
+                        </ErrorBoundary>
+                      )
+                    }
+                  />
+                  <Route path="/" element={<Navigate to="/dashboards" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboards" replace />} />
+                </Routes>
               </Box>
               <Box
                 component="footer"
@@ -228,7 +244,11 @@ export default function App() {
                 </Typography>
               </Box>
             </Box>
-            {connected && <AiAssistantDrawer isMobile={isMobile} />}
+            {connected && (
+              <ErrorBoundary>
+                <AiAssistantDrawer isMobile={isMobile} />
+              </ErrorBoundary>
+            )}
           </Box>
         </Box>
         <ConnectionDialog />
@@ -240,7 +260,9 @@ export default function App() {
           }}
           onCancel={() => setResetDialogOpen(false)}
         />
-        <PanelEditor />
+        <ErrorBoundary>
+          <PanelEditor />
+        </ErrorBoundary>
         <CommandPalette />
         <Toaster theme={themeMode} position="bottom-left" />
       </PersesProviders>

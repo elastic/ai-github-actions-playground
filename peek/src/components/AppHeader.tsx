@@ -142,14 +142,9 @@ export default function AppHeader({
           variant="subtitle1"
           sx={{
             mr: 1,
-            background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
-            backgroundClip: "text",
-            color: "transparent",
+            color: "primary.main",
             lineHeight: 1,
             fontWeight: 700,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
           }}
         >
           Peek

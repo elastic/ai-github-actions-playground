@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -7,6 +8,7 @@ import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -47,7 +49,6 @@ export default function TraceSearchPanel({
   onSearch,
   searchResultCount,
 }: TraceSearchPanelProps) {
-  const [serviceFilter, setServiceFilter] = useState("");
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
 
@@ -63,25 +64,6 @@ export default function TraceSearchPanel({
     });
   }, [minDurationInput, maxDurationInput, applyFiltersAndRun]);
 
-  const handleAddService = useCallback(() => {
-    const trimmed = serviceFilter.trim();
-    if (trimmed && !filters.services.includes(trimmed)) {
-      applyFiltersAndRun({
-        services: [...filters.services, trimmed],
-      });
-      setServiceFilter("");
-    }
-  }, [serviceFilter, filters.services, applyFiltersAndRun]);
-
-  const handleRemoveService = useCallback(
-    (service: string) => {
-      applyFiltersAndRun({
-        services: filters.services.filter((s) => s !== service),
-      });
-    },
-    [filters.services, applyFiltersAndRun],
-  );
-
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
@@ -93,7 +75,6 @@ export default function TraceSearchPanel({
               variant="text"
               onClick={() => {
                 resetFilters();
-                setServiceFilter("");
                 setMinDurationInput("");
                 setMaxDurationInput("");
               }}
@@ -105,18 +86,7 @@ export default function TraceSearchPanel({
       </Box>
 
       {/* Filter pills */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
-        {filters.services.map((svc) => (
-          <Chip
-            key={svc}
-            label={`service: ${svc}`}
-            size="small"
-            onDelete={() => handleRemoveService(svc)}
-            sx={{
-              borderLeft: `3px solid ${getServiceColor(svc)}`,
-            }}
-          />
-        ))}
+      <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: "wrap", mb: 1 }}>
         {filters.statusCodes.map((status) => (
           <Chip
             key={status}
@@ -173,7 +143,7 @@ export default function TraceSearchPanel({
             onDelete={() => applyFiltersAndRun({ timeFrom: null, timeTo: null })}
           />
         )}
-      </Box>
+      </Stack>
 
       {/* Quick filters row */}
       <Box
@@ -187,20 +157,37 @@ export default function TraceSearchPanel({
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Service name"
-          value={serviceFilter}
-          onChange={(e) => setServiceFilter(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleAddService();
+        <Autocomplete
+          multiple
+          freeSolo
+          options={[] as string[]}
+          value={filters.services}
+          onChange={(_event, newValue) => {
+            const unique = [
+              ...new Set((newValue as string[]).map((v) => v.trim()).filter(Boolean)),
+            ];
+            applyFiltersAndRun({ services: unique });
           }}
-          sx={{ width: 160 }}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => {
+              const { key, ...rest } = getTagProps({ index });
+              return (
+                <Chip
+                  key={key}
+                  {...rest}
+                  label={`service: ${option}`}
+                  size="small"
+                  sx={{ borderLeft: `3px solid ${getServiceColor(option)}` }}
+                />
+              );
+            })
+          }
+          renderInput={(params) => (
+            <TextField {...params} size="small" placeholder="Service name" />
+          )}
+          sx={{ minWidth: 160 }}
         />
-        <Button size="small" variant="outlined" onClick={handleAddService}>
-          Add Service
-        </Button>
-        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <TextField
             size="small"
             placeholder="Min (ms)"
@@ -221,7 +208,7 @@ export default function TraceSearchPanel({
           <Button size="small" variant="outlined" onClick={handleApplyDuration}>
             Apply
           </Button>
-        </Box>
+        </Stack>
         <Select
           size="small"
           displayEmpty
@@ -242,7 +229,7 @@ export default function TraceSearchPanel({
             </MenuItem>
           ))}
         </Select>
-        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", ml: "auto" }}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", ml: "auto" }}>
           {(["Error", "OK"] as const).map((status) => (
             <Chip
               key={status}
@@ -264,7 +251,7 @@ export default function TraceSearchPanel({
               }}
             />
           ))}
-        </Box>
+        </Stack>
       </Box>
 
       {/* ES|QL editor */}
@@ -281,7 +268,7 @@ export default function TraceSearchPanel({
         />
       </Box>
 
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Button
           variant="contained"
           size="small"
@@ -298,7 +285,7 @@ export default function TraceSearchPanel({
             {searchResultCount} traces found
           </Typography>
         )}
-      </Box>
+      </Stack>
     </Paper>
   );
 }

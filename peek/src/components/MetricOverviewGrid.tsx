@@ -20,6 +20,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 import type { FieldInfo, ElasticsearchClient } from "../services/es";
 import { buildOverviewQuery } from "../services/es";
+import { CHART_COLORS } from "../theme";
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 import { useQueryStore } from "../store/useQueryStore";
@@ -85,7 +86,7 @@ function buildSparklineOption(
         lineStyle: { width: 1.5 },
         areaStyle: { opacity: 0.15 },
         itemStyle: {
-          color: themeOpts.color.length ? themeOpts.color[0] : "#0077CC",
+          color: themeOpts.color.length ? themeOpts.color[0] : CHART_COLORS[0],
         },
       },
     ],
