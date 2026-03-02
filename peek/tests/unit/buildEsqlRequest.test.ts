@@ -26,7 +26,7 @@ describe("buildEsqlRequest", () => {
       { timeRange: { from: "now-1h", to: "now" } },
     );
     expect(result.filter).toBeUndefined();
-    expect(result.params).toHaveLength(2);
+    expect(Object.keys(result.params!)).toHaveLength(2);
   });
 
   it("includes @timestamp range filter when includeTimeRangeFilter=true", () => {
@@ -57,8 +57,8 @@ describe("buildEsqlRequest", () => {
         },
       ],
     });
-    const params = result.params as Array<Record<string, string>>;
-    expect(params.some((p) => p["service"] === "web")).toBe(true);
+    const params = result.params as Record<string, string>;
+    expect(params["service"]).toBe("web");
   });
 
   it("omits params when none are resolved", () => {

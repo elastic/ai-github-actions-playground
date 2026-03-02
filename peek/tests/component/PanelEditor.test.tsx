@@ -178,11 +178,11 @@ describe("PanelEditor", () => {
             },
           },
         },
-        params: expect.arrayContaining([
-          { _tstart: "2025-06-15T11:00:00.000Z" },
-          { _tend: "2025-06-15T12:00:00.000Z" },
-          { service: "web" },
-        ]),
+        params: expect.objectContaining({
+          _tstart: "2025-06-15T11:00:00.000Z",
+          _tend: "2025-06-15T12:00:00.000Z",
+          service: "web",
+        }),
       }),
       expect.any(AbortSignal),
     );

@@ -27,6 +27,6 @@ export function buildEsqlRequest(
     };
   }
   const queryParams = buildQueryParams(queryText, timeRange, parameters);
-  if (queryParams.length > 0) body.params = queryParams;
+  if (Object.keys(queryParams).length > 0) body.params = queryParams;
   return body;
 }
