@@ -283,7 +283,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         />
         <IconButton
           color="primary"
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={!input.trim() || loading}
           aria-label="Send message"
         >
