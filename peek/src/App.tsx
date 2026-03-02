@@ -30,7 +30,7 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
-import { PAGE_MANIFEST } from "./routes/manifest";
+import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
 
@@ -152,9 +152,9 @@ export default function App() {
               >
                 <Routes>
                   {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                    const PageComponent = config.component;
-                    const skeletonVariant =
-                      "skeletonVariant" in config ? config.skeletonVariant : undefined;
+                    const pageConfig: PageConfig = config;
+                    const PageComponent = pageConfig.component;
+                    const skeletonVariant = pageConfig.skeletonVariant;
                     const fallback = skeletonVariant ? (
                       <ContentSkeleton variant={skeletonVariant} />
                     ) : (
@@ -162,10 +162,10 @@ export default function App() {
                     );
                     return (
                       <Route
-                        key={config.path}
-                        path={config.path}
+                        key={pageConfig.path}
+                        path={pageConfig.path}
                         element={
-                          !connected && config.requiresConnection ? (
+                          !connected && pageConfig.requiresConnection ? (
                             <WelcomeScreen />
                           ) : (
                             <ErrorBoundary>
@@ -185,9 +185,7 @@ export default function App() {
                         <WelcomeScreen />
                       ) : (
                         <ErrorBoundary>
-                          <Suspense fallback={<ContentSkeleton variant="cards" />}>
-                            <DashboardViewPage />
-                          </Suspense>
+                          <DashboardViewPage />
                         </ErrorBoundary>
                       )
                     }
