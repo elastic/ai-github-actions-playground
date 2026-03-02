@@ -267,3 +267,57 @@ describe("TracesPage auto-run on quick filter changes", () => {
     expect(queries.some(isDriftRadarQuery)).toBe(true);
   });
 });
+
+describe("TracesPage duration parsing", () => {
+  beforeEach(() => {
+    capturedCallbacks = [];
+    mockRunQuery.mockClear();
+    useTracesStore.setState({
+      filters: { ...EMPTY_FILTERS },
+      rawQuery: null,
+      selectedTraceId: null,
+      selectedTraceSpans: [],
+      selectedSpanId: null,
+      viewMode: "list",
+      drawerOpen: false,
+    });
+  });
+
+  it("falls back to nanosecond duration when microsecond field is missing", () => {
+    render(
+      <MemoryRouter>
+        <TracesPage />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      capturedCallbacks[0]?.(
+        {
+          columns: [
+            { name: "trace.id", type: "keyword" },
+            { name: "span.id", type: "keyword" },
+            { name: "service.name", type: "keyword" },
+            { name: "name", type: "keyword" },
+            { name: "duration", type: "long" },
+            { name: "status.code", type: "keyword" },
+            { name: "@timestamp", type: "date" },
+          ],
+          values: [
+            [
+              "trace-1",
+              "span-1",
+              "checkout",
+              "GET /checkout",
+              2_000_000,
+              "STATUS_CODE_OK",
+              "2026-02-23T10:00:00.000Z",
+            ],
+          ],
+        },
+        "FROM traces-*",
+      );
+    });
+
+    expect(screen.getByText("2.0ms")).toBeInTheDocument();
+  });
+});

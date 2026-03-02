@@ -153,8 +153,7 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
-          "& .MuiOutlinedInput-notchedOutline": { top: 0 },
+          "& .MuiInputBase-root": { minHeight: 32 },
         }}
       >
         <Autocomplete
@@ -185,7 +184,7 @@ export default function TraceSearchPanel({
           renderInput={(params) => (
             <TextField {...params} size="small" placeholder="Service name" />
           )}
-          sx={{ minWidth: 160 }}
+          sx={{ minWidth: 160, "& .MuiInputBase-root": { minHeight: 32 } }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <TextField
@@ -205,7 +204,12 @@ export default function TraceSearchPanel({
             onChange={(e) => setMaxDurationInput(e.target.value)}
             sx={{ width: 100 }}
           />
-          <Button size="small" variant="outlined" onClick={handleApplyDuration}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleApplyDuration}
+            sx={{ minHeight: 32 }}
+          >
             Apply
           </Button>
         </Stack>
@@ -272,6 +276,7 @@ export default function TraceSearchPanel({
         <Button
           variant="contained"
           size="small"
+          sx={{ minHeight: 32 }}
           startIcon={
             searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
           }
