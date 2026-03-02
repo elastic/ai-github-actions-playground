@@ -32,7 +32,7 @@ export default function BarChart({ data, options, onExportReady }: Props) {
     const transformed = toBarChartData(data);
     const seriesData = transformed.series;
     const categories = transformed.categories;
-    const textColor = theme.textStyle?.color ?? CHART_COLORS[0];
+    const textColor = theme.textStyle?.color ?? "currentColor";
 
     if (seriesData.length === 0) {
       return {

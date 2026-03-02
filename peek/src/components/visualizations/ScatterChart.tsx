@@ -16,6 +16,7 @@ interface Props {
 
 export default function ScatterChart({ data, options }: Props) {
   const theme = useEChartTheme();
+  // TODO: wire up onExportReady for PNG export (phase 3)
   const instanceRef = useRef<ECharts | undefined>(undefined);
   const format = options?.format;
 

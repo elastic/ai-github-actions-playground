@@ -1,6 +1,5 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { EChart } from "@perses-dev/components";
-import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse } from "../../types";
 import { CHART_COLORS } from "../../theme";
@@ -14,7 +13,6 @@ interface Props {
 
 export default function HeatmapChart({ data }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -77,6 +75,7 @@ export default function HeatmapChart({ data }: Props) {
         left: "center",
         bottom: 0,
         inRange: {
+          // Non-sequential palette indices chosen for perceptual contrast in heatmaps.
           color: [
             CHART_COLORS[6],
             CHART_COLORS[4],
@@ -94,7 +93,7 @@ export default function HeatmapChart({ data }: Props) {
           type: "heatmap" as const,
           data: heatmapData,
           emphasis: {
-            itemStyle: { shadowBlur: 10, shadowColor: theme.textStyle?.color },
+            itemStyle: { shadowBlur: 10, shadowColor: theme.textStyle?.color ?? "rgba(0,0,0,0.5)" },
           },
         },
       ],
@@ -102,11 +101,6 @@ export default function HeatmapChart({ data }: Props) {
   }, [data, theme]);
 
   return (
-    <EChart
-      option={option}
-      theme={theme}
-      _instance={instanceRef}
-      sx={{ width: "100%", height: "100%", minHeight: 120 }}
-    />
+    <EChart option={option} theme={theme} sx={{ width: "100%", height: "100%", minHeight: 120 }} />
   );
 }

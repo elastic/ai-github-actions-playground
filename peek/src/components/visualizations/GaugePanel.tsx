@@ -73,7 +73,14 @@ export default function GaugePanel({ data, options, onExportReady }: Props) {
     const axisLineColor: [number, string][] =
       thresholds && thresholds.steps.length > 0
         ? buildGaugeSegments(thresholds.steps, minVal, maxVal, thresholds.baseColor ?? "success")
-        : [[1, theme.color[0] ?? theme.textStyle.color ?? "currentColor"]];
+        : [
+            [
+              1,
+              theme.color.length
+                ? (theme.color[0] as string)
+                : (theme.textStyle?.color ?? "currentColor"),
+            ],
+          ];
 
     return {
       series: [

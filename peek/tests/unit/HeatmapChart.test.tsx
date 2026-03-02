@@ -40,7 +40,9 @@ vi.mock("@perses-dev/components", () => ({
 /** Returns the option object from the most recent EChart setOption() call. */
 function getLastSetOptionCall(): Record<string, unknown> {
   const calls = mockSetOption.mock.calls;
-  return calls[calls.length - 1]?.[0] as Record<string, unknown>;
+  const last = calls[calls.length - 1]?.[0] as Record<string, unknown> | undefined;
+  if (!last) throw new Error("No setOption call was captured");
+  return last;
 }
 
 describe("HeatmapChart", () => {
