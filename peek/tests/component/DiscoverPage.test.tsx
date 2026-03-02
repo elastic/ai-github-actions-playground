@@ -422,7 +422,7 @@ describe("DiscoverPage", () => {
     expect(screen.queryByRole("button", { name: /export csv/i })).not.toBeInTheDocument();
   });
 
-  it("clears stale results when a subsequent query fails", async () => {
+  it("preserves previous results when a subsequent query fails", async () => {
     const user = userEvent.setup();
     // First call succeeds
     queryMock.mockResolvedValueOnce({
@@ -453,9 +453,9 @@ describe("DiscoverPage", () => {
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(2));
 
-    // Old results should be cleared and error shown
+    // Previous results should be preserved and error shown
     await waitFor(() => {
-      expect(screen.queryByTestId("datatable-mock")).not.toBeInTheDocument();
+      expect(screen.getByTestId("datatable-mock")).toBeInTheDocument();
       expect(screen.getByRole("alert")).toHaveTextContent("Unknown command [LIIMT]");
     });
   });
