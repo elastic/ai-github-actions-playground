@@ -234,8 +234,17 @@ export default function ServiceInventoryPage() {
                 <TableRow
                   key={row.serviceName}
                   hover
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View traces for ${row.serviceName}`}
                   sx={{ cursor: "pointer" }}
                   onClick={() => handleViewTraces(row.serviceName)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleViewTraces(row.serviceName);
+                    }
+                  }}
                 >
                   <TableCell>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -260,6 +269,7 @@ export default function ServiceInventoryPage() {
                     <Button
                       size="small"
                       variant="text"
+                      aria-label={`View traces for ${row.serviceName}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleViewTraces(row.serviceName);

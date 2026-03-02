@@ -119,7 +119,7 @@ describe("ServiceInventoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() => {
-      const viewButtons = screen.getAllByRole("button", { name: "View Traces" });
+      const viewButtons = screen.getAllByText("View Traces");
       expect(viewButtons).toHaveLength(3);
     });
   });
