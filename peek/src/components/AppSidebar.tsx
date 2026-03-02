@@ -157,7 +157,7 @@ export default function AppSidebar({
         const visibleItems = section.items.filter(
           (item) => !isHiddenByCapability(item, capabilities),
         );
-        if (visibleItems.length === 0) return;
+        if (visibleItems.length === 0) return null;
         return (
           <Box key={section.label} sx={{ pt: 1 }}>
             {!isCollapsed && (
