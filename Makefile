@@ -237,7 +237,7 @@ test-e2e:
 
 test-e2e-preview: build
 	@echo "Running e2e tests against production build (vite preview)..."
-	@cd $(PEEK_DIR) && npx playwright test --config playwright.preview.config.ts
+	@cd $(PEEK_DIR) && PLAYWRIGHT_PREVIEW=1 npx playwright test
 
 test-e2e-live:
 	@echo "Running live ES end-to-end tests..."
