@@ -17,10 +17,10 @@ import RowInspectorFlyout from "./RowInspectorFlyout";
 import DataTableHeader from "./DataTableHeader";
 import DataTableBody from "./DataTableBody";
 import DataTableColumnMenu from "./DataTableColumnMenu";
-import type { SortState } from "./dataTableUtils";
+import type { SortState, SortDirection } from "./dataTableUtils";
 import { PINNED_COLUMN_MIN_WIDTH, reconcileColumnOrder } from "./dataTableUtils";
 
-export type { SortState } from "./dataTableUtils";
+export type { SortState, SortDirection } from "./dataTableUtils";
 
 interface Props {
   data: EsqlResponse;
@@ -28,7 +28,7 @@ interface Props {
   onExportCsv?: () => void;
   onRemoveColumn?: (name: string) => void;
   currentSort?: SortState | null;
-  onSortChange?: (columnName: string, direction: "asc" | "desc" | null) => void;
+  onSortChange?: (columnName: string, direction: SortDirection | null) => void;
 }
 
 export default memo(function DataTable({
@@ -243,9 +243,9 @@ export default memo(function DataTable({
       />
       <DataTableColumnMenu
         data={data}
-        orderedColumnIndices={resolvedColumnOrder}
         menuAnchor={menuAnchor}
         menuColumnIndex={menuColumnIndex}
+        orderedColumnIndices={orderedVisibleColumnIndices}
         pinnedColumns={pinnedColumns}
         onSortChange={onSortChange}
         onRemoveColumn={onRemoveColumn}

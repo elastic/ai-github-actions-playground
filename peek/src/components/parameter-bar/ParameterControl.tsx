@@ -60,9 +60,10 @@ export default function ParameterControl({
         if (!ctrl.signal.aborted && result.values) {
           setEsqlOptions(result.values.map((row) => String(row[0] ?? "")).filter(Boolean));
         }
-      } catch {
+      } catch (err) {
         if (!ctrl.signal.aborted) {
           setEsqlOptions([]);
+          console.error("ES|QL options fetch failed:", err);
         }
       }
     })();
@@ -83,7 +84,13 @@ export default function ParameterControl({
     .filter((entry) => entry.parsed.value !== undefined)
     .map((entry) => ({ label: entry.label, value: entry.parsed.value as ParameterValue }));
   const currentValueInput = formatValueForInput(param.type, param.value);
-  const [draftInput, setDraftInput] = useState(() => currentValueInput);
+  const [draftInput, setDraftInput] = useState(currentValueInput);
+  const [prevParamValue, setPrevParamValue] = useState(param.value);
+  if (param.value !== prevParamValue) {
+    setPrevParamValue(param.value);
+    setDraftInput(currentValueInput);
+    setValidationError(null);
+  }
 
   const commitDraftValue = useCallback(() => {
     const parsed = parseParameterValue(param.type, draftInput);

@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 
@@ -8,9 +7,9 @@ import type { SortDirection } from "./dataTableUtils";
 
 interface DataTableColumnMenuProps {
   data: EsqlResponse;
-  orderedColumnIndices: number[];
   menuAnchor: HTMLElement | null;
   menuColumnIndex: number | null;
+  orderedColumnIndices: number[];
   pinnedColumns: Set<number>;
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
   onRemoveColumn?: (name: string) => void;
@@ -23,9 +22,9 @@ interface DataTableColumnMenuProps {
 
 export default function DataTableColumnMenu({
   data,
-  orderedColumnIndices,
   menuAnchor,
   menuColumnIndex,
+  orderedColumnIndices,
   pinnedColumns,
   onSortChange,
   onRemoveColumn,
@@ -35,16 +34,11 @@ export default function DataTableColumnMenu({
   onClose,
   onResetPage,
 }: DataTableColumnMenuProps) {
-  const closeMenu = useCallback(() => {
-    onClose();
-  }, [onClose]);
   const menuPosition =
-    menuColumnIndex === null ? -1 : orderedColumnIndices.indexOf(menuColumnIndex);
-  const isFirstColumn = menuPosition === 0;
-  const isLastColumn = menuPosition === orderedColumnIndices.length - 1;
+    menuColumnIndex !== null ? orderedColumnIndices.indexOf(menuColumnIndex) : -1;
 
   return (
-    <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
+    <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={onClose}>
       <MenuItem
         disabled={!onSortChange}
         onClick={() => {
@@ -53,7 +47,7 @@ export default function DataTableColumnMenu({
             if (col) onSortChange(col.name, "asc");
             onResetPage();
           }
-          closeMenu();
+          onClose();
         }}
       >
         Sort A→Z
@@ -66,25 +60,25 @@ export default function DataTableColumnMenu({
             if (col) onSortChange(col.name, "desc");
             onResetPage();
           }
-          closeMenu();
+          onClose();
         }}
       >
         Sort Z→A
       </MenuItem>
       <MenuItem
-        disabled={menuColumnIndex === null || isFirstColumn}
+        disabled={menuPosition <= 0}
         onClick={() => {
           if (menuColumnIndex !== null) onMoveColumn(menuColumnIndex, "left");
-          closeMenu();
+          onClose();
         }}
       >
         Move column left
       </MenuItem>
       <MenuItem
-        disabled={menuColumnIndex === null || isLastColumn}
+        disabled={menuPosition < 0 || menuPosition >= orderedColumnIndices.length - 1}
         onClick={() => {
           if (menuColumnIndex !== null) onMoveColumn(menuColumnIndex, "right");
-          closeMenu();
+          onClose();
         }}
       >
         Move column right
@@ -96,7 +90,7 @@ export default function DataTableColumnMenu({
             const column = data.columns[menuColumnIndex];
             if (column && onRemoveColumn) onRemoveColumn(column.name);
           }
-          closeMenu();
+          onClose();
         }}
       >
         Remove column
@@ -105,7 +99,7 @@ export default function DataTableColumnMenu({
         <MenuItem
           onClick={() => {
             onPinColumn(menuColumnIndex);
-            closeMenu();
+            onClose();
           }}
         >
           Pin left
@@ -115,7 +109,7 @@ export default function DataTableColumnMenu({
         <MenuItem
           onClick={() => {
             onUnpinColumn(menuColumnIndex);
-            closeMenu();
+            onClose();
           }}
         >
           Unpin

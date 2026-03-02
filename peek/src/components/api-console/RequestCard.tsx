@@ -25,6 +25,18 @@ import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import type { HttpMethod, RequestCardProps } from "./apiConsoleTypes";
 import { METHOD_COLORS, METHODS_WITH_BODY, httpStatusColor } from "./apiConsoleTypes";
 
+function serializeResponse(body: unknown): string {
+  try {
+    return JSON.stringify(
+      body,
+      (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+      2,
+    );
+  } catch {
+    return String(body);
+  }
+}
+
 export default function RequestCard({
   entry,
   themeMode,
@@ -48,26 +60,14 @@ export default function RequestCard({
     ],
     [],
   );
-  const serializedResponse = useCallback((body: unknown): string => {
-    try {
-      return JSON.stringify(
-        body,
-        (_key, value) => (typeof value === "bigint" ? value.toString() : value),
-        2,
-      );
-    } catch {
-      return String(body);
-    }
-  }, []);
-
   const handleCopy = useCallback(async () => {
     if (!entry.response || entry.response.status !== "success") return;
-    const text = serializedResponse(entry.response.body);
+    const text = serializeResponse(entry.response.body);
     const ok = await copyToClipboard(text);
     if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [entry.response, serializedResponse]);
+  }, [entry.response]);
 
   const handleCopyCurl = useCallback(async () => {
     if (!connection) return;
@@ -254,7 +254,7 @@ export default function RequestCard({
                   }}
                 >
                   <CodeMirror
-                    value={serializedResponse(entry.response.body)}
+                    value={serializeResponse(entry.response.body)}
                     extensions={[json()]}
                     theme={themeMode}
                     editable={false}

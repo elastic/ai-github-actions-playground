@@ -57,22 +57,9 @@ export default function PipelineDetailPanel({
         );
         return;
       }
-      if (docs.length > 1 || verbose) {
-        const { data, error } = await runConnectionRequest({
-          connection,
-          run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs, { verbose }),
-        });
-        if (requestId !== requestSeqRef.current) return;
-        if (error !== null) {
-          setSimulateError(error);
-        } else if (data !== null) {
-          setSimulateResult(data);
-        }
-        return;
-      }
       const { data, error } = await runConnectionRequest({
         connection,
-        run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs),
+        run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs, { verbose }),
       });
       if (requestId !== requestSeqRef.current) return;
       if (error !== null) {
@@ -81,9 +68,7 @@ export default function PipelineDetailPanel({
         setSimulateResult(data);
       }
     } finally {
-      if (requestId === requestSeqRef.current) {
-        setSimulating(false);
-      }
+      if (requestId === requestSeqRef.current) setSimulating(false);
     }
   }, [connection, selectedPipeline, simulateInput, verbose]);
 
