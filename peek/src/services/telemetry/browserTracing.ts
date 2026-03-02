@@ -8,6 +8,7 @@ import { UserInteractionInstrumentation } from "@opentelemetry/instrumentation-u
 
 import appPackage from "../../../package.json";
 import type { ElasticsearchConnection } from "../es";
+import { deriveOtlpEndpoint } from "../../utils/addDataUtils";
 
 export interface BrowserTracingStartConfig {
   enabled: boolean;
@@ -190,7 +191,9 @@ export async function syncBrowserTracingForConnection(
     return;
   }
 
-  const endpoint = connection.otlpEndpoint?.trim() || deriveDefaultOtlpEndpoint(connection.url);
+  const endpoint =
+    connection.otlpEndpoint?.trim() ||
+    deriveDefaultOtlpEndpoint(deriveOtlpEndpoint(connection.url) ?? connection.url);
   if (!endpoint) {
     await stopBrowserTracing();
     return;
