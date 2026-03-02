@@ -27,3 +27,26 @@ export type TypographyVariant =
 
 /** Metric-only typography variants (stat values, KPI cards). */
 export type MetricTypographyVariant = "h3";
+
+/**
+ * Component height constants from DESIGN_LANGUAGE.md § Component Heights.
+ * All values are in pixels. Use these instead of hardcoded numbers.
+ */
+export const COMPONENT_HEIGHTS = {
+  /** Default button height (36 px). */
+  button: 36,
+  /** Small button height (28 px). */
+  buttonSmall: 28,
+  /** Text input and select control height (36 px). */
+  input: 36,
+  /** Table row height (36 px). */
+  tableRow: 36,
+  /** Sidebar navigation item height (32 px). */
+  sidebarNavItem: 32,
+  /** Toolbar row height including vertical padding (44 px). */
+  toolbarRow: 44,
+  /** Tab control height (36 px). */
+  tab: 36,
+  /** Minimum touch-target size for mobile / coarse pointer (44 px). */
+  touchTarget: 44,
+} as const;
