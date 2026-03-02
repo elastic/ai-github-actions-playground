@@ -168,7 +168,7 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
+          "& .MuiInputBase-root": { height: 36 },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
         }}
       >
@@ -200,7 +200,10 @@ export default function TraceSearchPanel({
           renderInput={(params) => (
             <TextField {...params} size="small" placeholder="Service name" />
           )}
-          sx={{ minWidth: 160 }}
+          sx={{
+            minWidth: 160,
+            "& .MuiInputBase-root": { height: "auto", minHeight: 36 },
+          }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <TextField
@@ -220,7 +223,7 @@ export default function TraceSearchPanel({
             onChange={(e) => setMaxDurationInput(e.target.value)}
             sx={{ width: 100 }}
           />
-          <Button size="small" variant="outlined" onClick={handleApplyDuration}>
+          <Button size="small" variant="outlined" onClick={handleApplyDuration} sx={{ height: 36 }}>
             Apply
           </Button>
         </Stack>
@@ -236,7 +239,7 @@ export default function TraceSearchPanel({
               applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
             }
           }}
-          sx={{ minWidth: 150 }}
+          sx={{ minWidth: 150, height: 36 }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
             <MenuItem key={opt.label} value={opt.from ?? ""}>
@@ -252,7 +255,7 @@ export default function TraceSearchPanel({
               size="medium"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
-              sx={{ height: 32 }}
+              sx={{ height: 36 }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({
