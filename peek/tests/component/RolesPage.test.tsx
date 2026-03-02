@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import RolesPage from "../../src/components/RolesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -85,7 +86,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -101,7 +104,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -119,7 +124,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -142,7 +149,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -158,7 +167,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -171,7 +182,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -185,7 +198,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -201,7 +216,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -222,7 +239,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -237,7 +256,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter initialEntries={["/roles?role=superuser"]}>
-        <RolesPage />
+        <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -253,7 +274,9 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter>
-        <RolesPage />
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -273,22 +296,15 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter initialEntries={["/roles?role=superuser"]}>
-        <Routes>
-          <Route
-            path="/roles"
-            element={
-              <>
-                <Link to="/roles?role=viewer">Switch to viewer</Link>
-                <RolesPage />
-              </>
-            }
-          />
-        </Routes>
+        <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "superuser" });
-    await user.click(screen.getByRole("link", { name: "Switch to viewer" }));
+    // Clicking a different role in the sidebar updates the URL via nuqs
+    await user.click(screen.getByRole("button", { name: /viewer/i }));
 
     expect(await screen.findByRole("heading", { level: 6, name: "viewer" })).toBeInTheDocument();
   });
@@ -305,11 +321,13 @@ describe("RolesPage", () => {
 
     render(
       <MemoryRouter initialEntries={["/roles?role=superuser"]}>
-        <Routes>
-          <Route path="/roles" element={<RolesPage />} />
-          <Route path="/users" element={null} />
-        </Routes>
-        <LocationDisplay />
+        <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
+          <Routes>
+            <Route path="/roles" element={<RolesPage />} />
+            <Route path="/users" element={null} />
+          </Routes>
+          <LocationDisplay />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

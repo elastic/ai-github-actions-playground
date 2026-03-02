@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import UsersPage from "../../src/components/UsersPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -75,7 +76,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -92,7 +95,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -111,7 +116,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -135,7 +142,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -151,7 +160,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -164,7 +175,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -178,7 +191,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -196,7 +211,9 @@ describe("UsersPage", () => {
     try {
       render(
         <MemoryRouter>
-          <UsersPage />
+          <NuqsTestingAdapter hasMemory>
+            <UsersPage />
+          </NuqsTestingAdapter>
         </MemoryRouter>,
       );
 
@@ -221,7 +238,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -243,7 +262,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -270,8 +291,10 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter>
-        <UsersPage />
-        <LocationDisplay />
+        <NuqsTestingAdapter hasMemory>
+          <UsersPage />
+          <LocationDisplay />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -295,7 +318,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter initialEntries={["/users?username=elastic"]}>
-        <UsersPage />
+        <NuqsTestingAdapter searchParams="?username=elastic" hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -312,22 +337,15 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter initialEntries={["/users?username=elastic"]}>
-        <Routes>
-          <Route
-            path="/users"
-            element={
-              <>
-                <Link to="/users?username=alice">Switch to alice</Link>
-                <UsersPage />
-              </>
-            }
-          />
-        </Routes>
+        <NuqsTestingAdapter searchParams="?username=elastic" hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "elastic" });
-    await user.click(screen.getByRole("link", { name: "Switch to alice" }));
+    // Clicking a different user in the sidebar updates the URL via nuqs
+    await user.click(screen.getByRole("button", { name: /alice/i }));
 
     expect(await screen.findByRole("heading", { level: 6, name: "alice" })).toBeInTheDocument();
   });
@@ -338,7 +356,9 @@ describe("UsersPage", () => {
 
     render(
       <MemoryRouter initialEntries={["/users?username=does-not-exist"]}>
-        <UsersPage />
+        <NuqsTestingAdapter searchParams="?username=does-not-exist" hasMemory>
+          <UsersPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

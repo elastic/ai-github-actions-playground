@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -22,7 +22,7 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useShallow } from "zustand/react/shallow";
-import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
+import { parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from "nuqs";
 
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
@@ -71,7 +71,7 @@ function isExplorerFilterOp(value: string): value is ExplorerFilter["op"] {
   return VALID_FILTER_OPS.has(value as ExplorerFilter["op"]);
 }
 
-function parseFilters(search: string): ExplorerFilter[] {
+function parseLegacyFilters(search: string): ExplorerFilter[] {
   const params = new URLSearchParams(search);
   const parsedFilters: ExplorerFilter[] = [];
   for (const [key, value] of params.entries()) {
@@ -87,21 +87,41 @@ function parseFilters(search: string): ExplorerFilter[] {
   return parsedFilters;
 }
 
-function applyFilters(
-  searchParams: URLSearchParams,
-  nextFilters: ExplorerFilter[],
-): URLSearchParams {
-  const next = new URLSearchParams(searchParams);
-  const filterKeys = Array.from(next.keys()).filter((key) => key.startsWith("filter."));
-  for (const key of filterKeys) {
-    next.delete(key);
+function parseEncodedFilters(encodedFilters: string | null): ExplorerFilter[] {
+  if (!encodedFilters) return [];
+  try {
+    const parsed = JSON.parse(encodedFilters);
+    if (!Array.isArray(parsed)) return [];
+    const validFilters: ExplorerFilter[] = [];
+    for (const filter of parsed) {
+      if (
+        typeof filter !== "object" ||
+        filter === null ||
+        typeof filter.field !== "string" ||
+        typeof filter.op !== "string" ||
+        typeof filter.value !== "string" ||
+        !isExplorerFilterOp(filter.op)
+      ) {
+        continue;
+      }
+      const field = filter.field.trim();
+      if (!field) continue;
+      validFilters.push({ field, op: filter.op, value: filter.value });
+    }
+    return validFilters;
+  } catch {
+    return [];
   }
-  for (const filter of nextFilters) {
+}
+
+function encodeFilters(filters: ExplorerFilter[]): string {
+  const validFilters: ExplorerFilter[] = [];
+  for (const filter of filters) {
     const field = filter.field.trim();
     if (!field || !VALID_FILTER_OPS.has(filter.op)) continue;
-    next.append(`filter.${field}`, `${filter.op}:${filter.value}`);
+    validFilters.push({ field, op: filter.op, value: filter.value });
   }
-  return next;
+  return JSON.stringify(validFilters);
 }
 
 function metricNamespaceOf(metricName: string): string {
@@ -125,14 +145,19 @@ export default function ExplorePage() {
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
 
+  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
     urlKeys: exploreSearchUrlKeys,
     history: "replace",
   });
-  const initialSearchRef = useRef(searchParams.toString());
+  const [urlFilters, setUrlFilters] = useQueryState(
+    "filters",
+    parseAsString.withOptions({ history: "replace" }),
+  );
+  const initialSearchRef = useRef(location.search);
   const initialUrlStateRef = useRef(urlState);
+  const initialUrlFiltersRef = useRef(urlFilters);
 
   const {
     indexPattern,
@@ -224,8 +249,13 @@ export default function ExplorePage() {
     if (initialUrlState.groupBy) {
       setGroupBy(initialUrlState.groupBy);
     }
+    const hasEncodedFiltersParam = initialUrlFiltersRef.current !== null;
+    const initialEncodedFilters = parseEncodedFilters(initialUrlFiltersRef.current);
+    const hydratedFilters = hasEncodedFiltersParam
+      ? initialEncodedFilters
+      : parseLegacyFilters(initialSearchRef.current);
     clearFilters();
-    for (const filter of parseFilters(initialSearchRef.current)) {
+    for (const filter of hydratedFilters) {
       addFilter(filter);
     }
     if (initialUrlState.from && initialUrlState.to) {
@@ -251,16 +281,18 @@ export default function ExplorePage() {
     }
     let cancelled = false;
     const syncUrlState = async () => {
-      await setUrlState({
-        indexPattern: indexPattern || null,
-        selectedMetric: selectedMetric || null,
-        aggregation,
-        groupBy: groupBy || null,
-        from: dashboard.timeRange.from,
-        to: dashboard.timeRange.to,
-      });
+      await Promise.all([
+        setUrlState({
+          indexPattern: indexPattern || null,
+          selectedMetric: selectedMetric || null,
+          aggregation,
+          groupBy: groupBy || null,
+          from: dashboard.timeRange.from,
+          to: dashboard.timeRange.to,
+        }),
+        setUrlFilters(encodeFilters(filters)),
+      ]);
       if (cancelled) return;
-      setSearchParams((prev) => applyFilters(prev, filters), { replace: true });
     };
     void syncUrlState();
     return () => {
@@ -274,7 +306,7 @@ export default function ExplorePage() {
     groupBy,
     dashboard.timeRange,
     setUrlState,
-    setSearchParams,
+    setUrlFilters,
   ]);
 
   // Load fields when index pattern changes
