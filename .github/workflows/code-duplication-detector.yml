@@ -13,6 +13,7 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-code-duplication-detector.lock.yml@main
     with:
+      title-prefix: "[code-duplication]"
       languages: "typescript"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
