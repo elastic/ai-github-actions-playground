@@ -1,5 +1,10 @@
 # Drive PRs Forward
 
+> **See also:** [`pr-state-machine.md`](./pr-state-machine.md) — the canonical
+> state machine spec defining all PR states, dimensions, and transitions. The
+> bash script `ready-prs-and-enable-workflows.sh` implements the automated
+> subset of that state machine.
+
 A runbook for an AI agent (Copilot CLI, Gemini CLI, etc.) to assess every open
 PR in the repository and advance it to its next logical state.
 
