@@ -34,5 +34,5 @@ export default function FleetVersionChart({ versions }: Props) {
   }, [versions, theme]);
 
   if (versions.length === 0) return null;
-  return <EChartWrapper option={option} style={{ width: "100%", height: "100%" }} />;
+  return <EChartWrapper option={option} sx={{ width: "100%", height: "100%" }} />;
 }

@@ -120,7 +120,7 @@ export default function CapacityPressureView({ data }: CapacityPressureViewProps
 
       {gcSummary.length > 0 ? (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
             GC Summary
           </Typography>
           <TableContainer>
@@ -152,7 +152,7 @@ export default function CapacityPressureView({ data }: CapacityPressureViewProps
 
       {fdNodes.length > 0 ? (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
             File Descriptors
           </Typography>
           <TableContainer>

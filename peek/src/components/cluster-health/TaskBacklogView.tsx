@@ -53,7 +53,7 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
 
       {tasks.length > 0 ? (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
             Tasks by Priority
           </Typography>
           {[
