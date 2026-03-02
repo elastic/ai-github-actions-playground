@@ -179,11 +179,16 @@ jobs:
                 }
                 smokeSection += "\n</details>";
               }
-            } catch {
+            } catch (err) {
+              const smokeParseError =
+                err instanceof Error ? err.message : String(err);
+              core.warning(
+                `Failed to parse smoke test results: ${smokeParseError}`,
+              );
               smokeSection = [
                 "### 🎭 Smoke Test Results",
                 "",
-                `⚠️ Could not parse smoke test results. Check the [workflow run](${runUrl}) for details.`,
+                `⚠️ Could not parse smoke test results (${smokeParseError}). Check the [workflow run](${runUrl}) for details.`,
               ].join("\n");
             }
 
@@ -245,11 +250,16 @@ jobs:
                 "",
                 details,
               ].join("\n");
-            } catch {
+            } catch (err) {
+              const preflightParseError =
+                err instanceof Error ? err.message : String(err);
+              core.warning(
+                `Failed to parse preflight diagnostics: ${preflightParseError}`,
+              );
               preflightSection = [
                 "### 📸 Screenshot Preflight",
                 "",
-                `⚠️ Could not parse preflight diagnostics. Check the [workflow run](${runUrl}) for details.`,
+                `⚠️ Could not parse preflight diagnostics (${preflightParseError}). Check the [workflow run](${runUrl}) for details.`,
               ].join("\n");
             }
 
