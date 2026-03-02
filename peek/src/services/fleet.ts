@@ -470,6 +470,7 @@ export async function loadFleetOutputHealth(
 export interface ElasticAgentInventoryResult {
   agents: ElasticAgentInfo[];
   total: number;
+  errorAgentTotal: number;
 }
 
 export async function loadElasticAgentInventory(
@@ -481,6 +482,14 @@ export async function loadElasticAgentInventory(
     aggs: {
       agent_count: {
         cardinality: { field: "agent.id", precision_threshold: 40000 },
+      },
+      error_agents: {
+        filter: { term: { "log.level": "error" } },
+        aggs: {
+          count: {
+            cardinality: { field: "agent.id", precision_threshold: 40000 },
+          },
+        },
       },
       agents: {
         terms: { field: "agent.id", size: 500 },
@@ -508,8 +517,11 @@ export async function loadElasticAgentInventory(
       },
     },
   });
-  if (!data?.aggregations) return { agents: [], total: 0 };
+  if (!data?.aggregations) return { agents: [], total: 0, errorAgentTotal: 0 };
   const agentCount = data.aggregations.agent_count as { value?: number } | undefined;
+  const errorAgentCount = data.aggregations.error_agents as
+    | { count?: { value?: number } }
+    | undefined;
   const agg = data.aggregations.agents as {
     buckets?: Array<{
       key: string;
@@ -518,7 +530,13 @@ export async function loadElasticAgentInventory(
       errors: { doc_count: number };
     }>;
   };
-  if (!agg?.buckets) return { agents: [], total: agentCount?.value ?? 0 };
+  if (!agg?.buckets) {
+    return {
+      agents: [],
+      total: agentCount?.value ?? 0,
+      errorAgentTotal: errorAgentCount?.count?.value ?? 0,
+    };
+  }
   const agents = agg.buckets.map((bucket) => {
     const source = bucket.latest.hits.hits[0]?._source ?? {};
     const osName = readNestedString(source, ["host", "os", "name"], "");
@@ -535,7 +553,11 @@ export async function loadElasticAgentInventory(
       errorCount: bucket.errors.doc_count,
     };
   });
-  return { agents, total: agentCount?.value ?? agents.length };
+  return {
+    agents,
+    total: agentCount?.value ?? agents.length,
+    errorAgentTotal: errorAgentCount?.count?.value ?? 0,
+  };
 }
 
 // ---------------------------------------------------------------------------

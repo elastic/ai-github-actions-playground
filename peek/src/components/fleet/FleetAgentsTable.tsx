@@ -70,6 +70,7 @@ export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
         <TextField
           size="small"
+          label="Search agents"
           placeholder="Search hostname or ID..."
           value={agentFilter.search}
           onChange={(e) => updateAgentFilter({ search: e.target.value })}
