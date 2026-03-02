@@ -535,10 +535,10 @@ export default function ConnectionDialog() {
         )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={handleTest} disabled={testing || !url}>
+        <Button onClick={handleTest} disabled={testing || !url.trim()}>
           {testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
-        <Button variant="contained" onClick={handleConnect} disabled={testing || !url}>
+        <Button variant="contained" onClick={handleConnect} disabled={testing || !url.trim()}>
           {testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
       </DialogActions>
