@@ -65,29 +65,39 @@ export function useMarkdownEsql({
       if (!uniqueBlocks.has(b.raw)) uniqueBlocks.set(b.raw, b.query);
     }
 
-    let cancelled = false;
-
     void (async () => {
-      const next = new Map<string, EsqlResponse>();
-
-      for (const [raw, query] of uniqueBlocks) {
-        if (cancelled) return;
-        if (!connection) continue;
-        try {
-          const datasource = createPersesEsqlDatasource(connection);
-          const request = buildPersesEsqlRequest(query, { timeRange, parameters });
-          const data = await datasource.execute(request, ctrl.signal);
-          if (!ctrl.signal.aborted) next.set(raw, data);
-        } catch {
-          // Query failed — leave the raw token in place.
-        }
+      if (!connection) {
+        setResults({ key: blocksKey, values: new Map() });
+        return;
       }
 
-      if (!cancelled) setResults({ key: blocksKey, values: next });
+      const datasource = createPersesEsqlDatasource(connection);
+      const tasks = [...uniqueBlocks].map(
+        ([raw, query]) =>
+          async (): Promise<readonly [string, EsqlResponse]> => {
+            const request = buildPersesEsqlRequest(query, { timeRange, parameters });
+            const data = await datasource.execute(request, ctrl.signal);
+            return [raw, data] as const;
+          },
+      );
+      const MAX_CONCURRENCY = 6;
+      const entries: Array<PromiseSettledResult<readonly [string, EsqlResponse]>> = [];
+      for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
+        if (ctrl.signal.aborted) return;
+        const batch = tasks.slice(i, i + MAX_CONCURRENCY);
+        entries.push(...(await Promise.allSettled(batch.map((task) => task()))));
+      }
+
+      if (ctrl.signal.aborted) return;
+
+      const next = new Map<string, EsqlResponse>();
+      for (const entry of entries) {
+        if (entry.status === "fulfilled") next.set(...entry.value);
+      }
+      setResults({ key: blocksKey, values: next });
     })();
 
     return () => {
-      cancelled = true;
       ctrl.abort();
     };
   }, [blocks, blocksKey, connection, timeRange, parameters]);
