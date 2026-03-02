@@ -32,7 +32,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 |---|---|
 | **File** | `pr-review.yml` |
 | **Calls** | `gh-aw-pr-review.lock.yml` |
-| **Triggers** | PR opened, synchronized, reopened, ready_for_review, labeled, unlabeled |
+| **Triggers** | PR opened, synchronize, reopened, ready_for_review, labeled, unlabeled |
 | **Schedule** | Event-driven |
 
 **What it does:** Automated code review pipeline. Reviews every non-draft PR file-by-file, reading full source (not just the patch) for context. Posts inline review comments with severity levels (critical > high > medium > low > nitpick). Actionable feedback is automatically addressed by the **PR Review Feedback Addresser** agent.
@@ -74,7 +74,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 |---|---|
 | **File** | `update-pr-body.yml` |
 | **Calls** | `gh-aw-update-pr-body.lock.yml` |
-| **Triggers** | PR opened, synchronized, reopened, ready_for_review |
+| **Triggers** | PR opened, synchronize, reopened, ready_for_review |
 
 **What it does:** Automatically cleans up and formats PR descriptions. Strips raw issue prompt text and restructures the body to follow the PR template. Uses `gpt-5.1-codex-mini` for speed. Skip with the `skip-pr-body-update` label.
 
