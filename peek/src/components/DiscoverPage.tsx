@@ -444,7 +444,16 @@ export default function DiscoverPage() {
       {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
 
       {/* Content area: field picker + table */}
-      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          flexDirection: { md: "row", xs: "column" },
+          gap: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         <FieldPickerSidebar
           columns={columns}
           selectedFields={selectedFields}

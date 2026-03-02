@@ -177,7 +177,8 @@ export default function FieldPickerSidebar({
         display: "flex",
         flexShrink: 0,
         flexDirection: "column",
-        width: 220,
+        width: { md: 220, xs: "100%" },
+        maxHeight: { md: "none", xs: 200 },
         overflow: "hidden",
       }}
     >
