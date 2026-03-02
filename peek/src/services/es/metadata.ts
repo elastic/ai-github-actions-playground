@@ -42,7 +42,7 @@ const GAUGE_TYPES = new Set([
  * and the dimension overview grid) to avoid 400 Bad Request errors from
  * Elasticsearch.
  */
-const NON_GROUPABLE_TYPES = new Set(["histogram", "unsupported"]);
+const NON_GROUPABLE_TYPES = new Set(["histogram", "summary", "unsupported"]);
 
 const MAX_FIELD_VALUES_LIMIT = 1000;
 

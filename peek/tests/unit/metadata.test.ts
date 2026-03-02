@@ -87,6 +87,16 @@ describe("isDimensionField", () => {
     ).toBe(false);
   });
 
+  it("rejects summary fields", () => {
+    expect(
+      isDimensionField({
+        name: "transaction.duration.summary",
+        type: "summary",
+        metricType: "unknown",
+      }),
+    ).toBe(false);
+  });
+
   it("rejects unsupported fields", () => {
     expect(
       isDimensionField({
