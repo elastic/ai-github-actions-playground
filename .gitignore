@@ -4,5 +4,7 @@ screenshot*.png
 coverage
 .env
 
+__pycache__/
+
 # Claude agent temporary files
 .claude/
