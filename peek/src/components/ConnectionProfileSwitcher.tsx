@@ -5,13 +5,12 @@ import MenuItem from "@mui/material/MenuItem";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import Tooltip from "@mui/material/Tooltip";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -69,10 +68,6 @@ export default function ConnectionProfileSwitcher() {
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [switchingProfile, setSwitchingProfile] = useState(false);
   const [retestingProfileId, setRetestingProfileId] = useState<string | null>(null);
-  const [profileFeedback, setProfileFeedback] = useState<{
-    message: string;
-    severity: "success" | "error";
-  } | null>(null);
 
   const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
 
@@ -106,12 +101,9 @@ export default function ConnectionProfileSwitcher() {
       try {
         const result = await retestConnectionProfile(profileId);
         if (result.ok) {
-          setProfileFeedback({ message: `"${profile.name}" is healthy`, severity: "success" });
+          toast.success(`"${profile.name}" is healthy`);
         } else {
-          setProfileFeedback({
-            message: `"${profile.name}" failed: ${result.message}`,
-            severity: "error",
-          });
+          toast.error(`"${profile.name}" failed: ${result.message}`);
         }
       } finally {
         setRetestingProfileId(null);
@@ -193,20 +185,6 @@ export default function ConnectionProfileSwitcher() {
           <SettingsIcon fontSize="small" sx={{ ml: 1, color: "text.secondary" }} />
         </MenuItem>
       </Menu>
-      <Snackbar
-        open={Boolean(profileFeedback)}
-        autoHideDuration={4000}
-        onClose={() => setProfileFeedback(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      >
-        <Alert
-          severity={profileFeedback?.severity ?? "success"}
-          onClose={() => setProfileFeedback(null)}
-          sx={{ width: "100%" }}
-        >
-          {profileFeedback?.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 }

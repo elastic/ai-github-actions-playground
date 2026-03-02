@@ -10,10 +10,12 @@
 # Usage:
 #   ./scripts/run-smoke-detectors.sh
 #   ./scripts/run-smoke-detectors.sh --repo elastic/ai-github-actions-playground
+#   ./scripts/run-smoke-detectors.sh --delay 5
 
 set -euo pipefail
 
 REPO="${REPO:-}"
+DELAY=0
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -21,15 +23,24 @@ while [[ $# -gt 0 ]]; do
     --repo)
       if [[ $# -lt 2 || -z "${2:-}" ]]; then
         echo "Error: --repo requires a value (e.g. owner/repo)" >&2
-        echo "Usage: $0 [--repo <owner/repo>]" >&2
+        echo "Usage: $0 [--repo <owner/repo>] [--delay <seconds>]" >&2
         exit 1
       fi
       REPO="$2"
       shift 2
       ;;
+    --delay)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "Error: --delay requires a value in seconds (e.g. 5)" >&2
+        echo "Usage: $0 [--repo <owner/repo>] [--delay <seconds>]" >&2
+        exit 1
+      fi
+      DELAY="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown argument: $1" >&2
-      echo "Usage: $0 [--repo <owner/repo>]" >&2
+      echo "Usage: $0 [--repo <owner/repo>] [--delay <seconds>]" >&2
       exit 1
       ;;
   esac
@@ -59,6 +70,9 @@ if ! command -v gh &>/dev/null; then
 fi
 
 echo "Triggering Explore agent workflows..."
+if [[ "$DELAY" -gt 0 ]]; then
+  echo "(${DELAY}s delay between each trigger)"
+fi
 echo ""
 
 FAILED=()
@@ -70,6 +84,9 @@ for workflow in "${WORKFLOWS[@]}"; do
     echo "✗ failed"
     echo "    $output" >&2
     FAILED+=("$workflow")
+  fi
+  if [[ "$DELAY" -gt 0 && "$workflow" != "${WORKFLOWS[-1]}" ]]; then
+    sleep "$DELAY"
   fi
 done
 

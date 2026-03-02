@@ -5,12 +5,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
-import Button from "@mui/material/Button";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
 import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { Toaster, toast } from "sonner";
 
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
@@ -81,6 +79,19 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undoDashboardChange, redoDashboardChange]);
+
+  useEffect(() => {
+    if (!resumeError) return;
+    toast.warning(`Could not resume session: ${resumeError}`, {
+      action: {
+        label: "Reconnect",
+        onClick: () => {
+          setConnectionDialogOpen(true);
+        },
+      },
+    });
+    clearResumeError();
+  }, [resumeError, clearResumeError, setConnectionDialogOpen]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -231,31 +242,7 @@ export default function App() {
         />
         <PanelEditor />
         <CommandPalette />
-        <Snackbar
-          open={Boolean(resumeError)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          onClose={clearResumeError}
-        >
-          <Alert
-            severity="warning"
-            onClose={clearResumeError}
-            action={
-              <Button
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  clearResumeError();
-                  setConnectionDialogOpen(true);
-                }}
-              >
-                Reconnect
-              </Button>
-            }
-            sx={{ width: "100%" }}
-          >
-            Could not resume session: {resumeError}
-          </Alert>
-        </Snackbar>
+        <Toaster theme={themeMode} position="bottom-left" />
       </PersesProviders>
     </ThemeProvider>
   );
