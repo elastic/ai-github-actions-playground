@@ -41,6 +41,9 @@ function getClosestAriaLabel(el: HTMLElement): string | null {
 }
 
 function getVisibleText(el: HTMLElement): string {
-  const text = el.textContent?.trim() ?? "";
-  return text.length > 200 ? `${text.slice(0, 200)}…` : text;
+  const raw = el.textContent?.trim() ?? "";
+  // Strip control characters (U+0000–U+001F except tab/LF/CR, plus U+007F)
+  // eslint-disable-next-line no-control-regex
+  const sanitized = raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  return sanitized.length > 200 ? `${sanitized.slice(0, 200)}…` : sanitized;
 }
