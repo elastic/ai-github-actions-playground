@@ -149,7 +149,7 @@ export const createConnectionProfileSlice: StateCreator<
     set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
-      if (get().activeProfileId !== id || latestSwitchRequestId !== requestId) {
+      if (get().activeProfileId !== id) {
         return { ok: true, profileName: profile.name };
       }
       set((s) => ({
@@ -176,6 +176,7 @@ export const createConnectionProfileSlice: StateCreator<
         const prevStillExists =
           prevActiveProfileId !== null &&
           s.connectionProfiles.some((p) => p.id === prevActiveProfileId);
+        const targetStillExists = s.connectionProfiles.some((p) => p.id === id);
         return {
           activeProfileId:
             s.activeProfileId === id
@@ -183,14 +184,16 @@ export const createConnectionProfileSlice: StateCreator<
                 ? prevActiveProfileId
                 : null
               : s.activeProfileId,
-          profileHealthMap: {
-            ...s.profileHealthMap,
-            [id]: {
-              status: "needs_attention",
-              checkedAt: new Date().toISOString(),
-              errorSummary: message,
-            },
-          },
+          profileHealthMap: targetStillExists
+            ? {
+                ...s.profileHealthMap,
+                [id]: {
+                  status: "needs_attention",
+                  checkedAt: new Date().toISOString(),
+                  errorSummary: message,
+                },
+              }
+            : s.profileHealthMap,
         };
       });
       return { ok: false, profileName: profile.name, message };

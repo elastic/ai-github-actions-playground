@@ -108,4 +108,56 @@ describe("repro: switchConnectionProfile race", () => {
 
     expect(useConnectionStore.getState().activeProfileId).toBeNull();
   });
+
+  it("applies pending previous success after latest switch fails and rolls back", async () => {
+    const profileAId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("A", { url: "(a.example.com/redacted)", apiKey: "a-key" });
+    const profileBId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("B", { url: "(b.example.com/redacted)", apiKey: "b-key" });
+
+    type Capabilities = Awaited<ReturnType<typeof esServices.fetchCapabilitiesForConnection>>;
+    const capsA: Capabilities = {
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+      canReadApiKeys: true,
+    };
+
+    let resolveA: ((value: Capabilities) => void) | undefined;
+    let rejectB: ((reason?: unknown) => void) | undefined;
+    vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockImplementation(
+      async (connection) => {
+        if (connection.url.includes("a.example.com")) {
+          return await new Promise<Capabilities>((resolve) => {
+            resolveA = resolve;
+          });
+        }
+        return await new Promise<Capabilities>((_resolve, reject) => {
+          rejectB = reject;
+        });
+      },
+    );
+
+    const switchATask = useConnectionStore.getState().switchConnectionProfile(profileAId!);
+    const switchBTask = useConnectionStore.getState().switchConnectionProfile(profileBId!);
+    rejectB!(new Error("B failed"));
+    await switchBTask;
+
+    expect(useConnectionStore.getState().activeProfileId).toBe(profileAId);
+
+    resolveA!(capsA);
+    await switchATask;
+
+    const state = useConnectionStore.getState();
+    expect(state.activeProfileId).toBe(profileAId);
+    expect(state.connection.url).toContain("a.example.com");
+    expect(state.capabilities).toEqual(capsA);
+    expect(state.profileHealthMap[profileAId!]).toMatchObject({
+      status: "healthy",
+      errorSummary: null,
+    });
+  });
 });
