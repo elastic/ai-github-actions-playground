@@ -27,7 +27,7 @@ let mockErrorsByHook: Array<string | null> = [];
 let esqlHookCallCount = 0;
 vi.mock("../../src/hooks/useEsqlQuery", () => ({
   useEsqlQuery: (opts: { onSuccess?: (data: EsqlResponse, query: string) => void }) => {
-    const hookIndex = esqlHookCallCount % Math.max(mockErrorsByHook.length, 1);
+    const hookIndex = esqlHookCallCount;
     esqlHookCallCount += 1;
     capturedCallbacks.push(opts.onSuccess);
     return { runQuery: mockRunQuery, loading: false, error: mockErrorsByHook[hookIndex] ?? null };
@@ -404,13 +404,9 @@ describe("TracesPage error alerts", () => {
   });
 
   it("shows a user-friendly warning with collapsible details when a search error occurs", async () => {
-    mockErrorsByHook = [
-      "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]",
-      null,
-      null,
-      null,
-      null,
-    ];
+    const typeMismatchError =
+      "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]";
+    mockErrorsByHook = Array.from({ length: 20 }, () => typeMismatchError);
 
     const user = userEvent.setup();
     render(
@@ -436,13 +432,11 @@ describe("TracesPage error alerts", () => {
   });
 
   it("summarizes all unique query error types", () => {
-    mockErrorsByHook = [
-      "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]",
-      "parsing_exception: mismatched input",
-      null,
-      null,
-      null,
-    ];
+    mockErrorsByHook = Array.from({ length: 20 }, (_, index) =>
+      index % 2 === 0
+        ? "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]"
+        : "parsing_exception: mismatched input",
+    );
 
     render(
       <MemoryRouter>
