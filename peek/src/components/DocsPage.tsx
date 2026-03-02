@@ -56,7 +56,7 @@ export default function DocsPage() {
         variant="outlined"
         sx={{ display: "flex", flexShrink: 0, flexDirection: "column", gap: 1, width: 320, p: 1.5 }}
       >
-        <Typography variant="subtitle1" fontWeight={600}>
+        <Typography variant="subtitle1" component="h1" fontWeight={600}>
           Docs
         </Typography>
         <TextField
