@@ -139,7 +139,7 @@ export default function DiscoverPage() {
       timingsCleared.current = false;
     },
     onFailure: () => {
-      // Preserve previous results — the error banner is shown above the table
+      setResult(null);
     },
   });
   const insightQueryToColumnRef = useRef(new Map<string, string>());

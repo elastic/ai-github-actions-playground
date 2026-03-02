@@ -149,7 +149,11 @@ export default function PipelineDetailPanel({
                       borderRadius: 1,
                     }}
                   >
-                    <Typography component="legend" variant="caption" sx={{ px: 0.5 }}>
+                    <Typography
+                      component="legend"
+                      variant="caption"
+                      sx={{ px: 0.5, bgcolor: "background.paper" }}
+                    >
                       {type}
                     </Typography>
                     <Typography
