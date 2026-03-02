@@ -18,6 +18,8 @@ const EXPLAIN_SYSTEM_PROMPT =
   ESQL_SYNTAX_GUIDE;
 
 const MAX_CACHE_SIZE = 50;
+const OVERLAY_BG_ALPHA = 0.82;
+const OVERLAY_BG_HOVER_ALPHA = 0.65;
 
 /** LRU-bounded cache of `provider::model::query` → explanation. */
 const explanationCache = new Map<string, string>();
@@ -153,10 +155,10 @@ export default function QueryAnnotationOverlay({
           height: `${height}px`,
           px: 2,
           borderRadius: 1,
-          bgcolor: (theme) => alpha(theme.palette.background.default, 0.82),
+          bgcolor: (theme) => alpha(theme.palette.background.default, OVERLAY_BG_ALPHA),
           transition: "background-color 0.2s",
           "&:hover": {
-            bgcolor: (theme) => alpha(theme.palette.background.default, 0.65),
+            bgcolor: (theme) => alpha(theme.palette.background.default, OVERLAY_BG_HOVER_ALPHA),
           },
           backdropFilter: "blur(2px)",
           inset: 0,
