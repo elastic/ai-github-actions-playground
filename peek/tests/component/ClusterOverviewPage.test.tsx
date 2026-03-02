@@ -264,15 +264,17 @@ describe("ClusterOverviewPage", () => {
       return <div data-testid="location">{location.pathname}</div>;
     }
 
-    render(
-      <MemoryRouter initialEntries={["/cluster-overview"]}>
-        <Routes>
-          <Route path="/cluster-overview" element={<ClusterOverviewPage />} />
-          <Route path="*" element={<LocationDisplay />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    const renderOverviewPage = () =>
+      render(
+        <MemoryRouter initialEntries={["/cluster-overview"]}>
+          <Routes>
+            <Route path="/cluster-overview" element={<ClusterOverviewPage />} />
+            <Route path="*" element={<LocationDisplay />} />
+          </Routes>
+        </MemoryRouter>,
+      );
 
+    const { unmount } = renderOverviewPage();
     await waitFor(() => {
       expect(screen.getByText("test-cluster")).toBeInTheDocument();
     });
@@ -285,5 +287,21 @@ describe("ClusterOverviewPage", () => {
     // Click Data Streams card and verify navigation
     await user.click(screen.getByRole("button", { name: "View Data Streams" }));
     expect(screen.getByTestId("location")).toHaveTextContent("/data-streams");
+    unmount();
+
+    const { unmount: unmountHealth } = renderOverviewPage();
+    await waitFor(() => {
+      expect(screen.getByText("test-cluster")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: "View Health" }));
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
+    unmountHealth();
+
+    renderOverviewPage();
+    await waitFor(() => {
+      expect(screen.getByText("test-cluster")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: "View Indices" }));
+    expect(screen.getByTestId("location")).toHaveTextContent("/indices");
   });
 });
