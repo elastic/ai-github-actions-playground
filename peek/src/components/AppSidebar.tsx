@@ -104,15 +104,14 @@ export default function AppSidebar({
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
 
-  const hiddenCount = useMemo(
+  const hiddenItems = useMemo(
     () =>
-      NAV_SECTIONS.reduce(
-        (count, section) =>
-          count + section.items.filter((item) => isHiddenByCapability(item, capabilities)).length,
-        0,
+      NAV_SECTIONS.flatMap((section) =>
+        section.items.filter((item) => isHiddenByCapability(item, capabilities)),
       ),
     [capabilities],
   );
+  const hiddenCount = hiddenItems.length;
 
   return (
     <Box
@@ -264,13 +263,13 @@ export default function AppSidebar({
           }}
         >
           <Tooltip
-            title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
+            title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`}
             placement={isCollapsed ? "right" : "top"}
           >
             <WarningAmberIcon
               fontSize="small"
-              titleAccess={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
-              sx={{ color: "text.secondary" }}
+              titleAccess={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`}
+              sx={{ color: "text.secondary", cursor: "pointer" }}
             />
           </Tooltip>
         </Box>
