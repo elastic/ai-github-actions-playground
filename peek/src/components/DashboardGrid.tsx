@@ -66,6 +66,7 @@ export default function DashboardGrid({ staticMode = true }: DashboardGridProps)
         icon={<DashboardIcon sx={{ fontSize: 40 }} />}
         heading="No panels yet"
         description="Load the default dashboard to get started, or add a panel to build your own."
+        addDataHref="/add-data"
         action={
           <Box sx={{ display: "flex", gap: 2 }}>
             <Button

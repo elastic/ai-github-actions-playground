@@ -1,4 +1,5 @@
 export const PAGE_NAV_BUTTONS = {
+  "add-data": "Add Data",
   "cluster-overview": "Cluster Overview",
   "data-streams": "Data Streams",
   indices: "Indices",

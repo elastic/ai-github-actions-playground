@@ -119,6 +119,64 @@ export const SIGNAL_NAV: Record<TelemetrySignal, { label: string; path: string }
 };
 
 // ---------------------------------------------------------------------------
+// Command step parsing
+// ---------------------------------------------------------------------------
+
+export interface CommandStep {
+  /** Step number (1-based). */
+  number: number;
+  /** The comment title text (without the leading `# N. `). */
+  title: string;
+  /** The command text that follows the comment line. */
+  command: string;
+}
+
+/**
+ * Split a multi-step command string into discrete steps.
+ *
+ * Each step is identified by a comment line matching the pattern `# N. <title>`
+ * where `N` is a positive integer.  All lines between two step markers (or
+ * between the last marker and end-of-string) are joined to form the step's
+ * command text.  Leading non-step preamble lines (e.g. notes about managed OTLP)
+ * are prepended to the first step's command.
+ *
+ * Returns an empty array when the command contains no step markers.
+ */
+export function parseCommandSteps(command: string): CommandStep[] {
+  const lines = command.split("\n");
+  const stepPattern = /^#\s*(\d+)\.\s*(.*)$/;
+  const steps: CommandStep[] = [];
+  const preambleLines: string[] = [];
+
+  for (const line of lines) {
+    const match = stepPattern.exec(line);
+    if (match) {
+      steps.push({ number: parseInt(match[1]!, 10), title: match[2]!.trim(), command: "" });
+    } else if (steps.length === 0) {
+      preambleLines.push(line);
+    } else {
+      const last = steps[steps.length - 1]!;
+      last.command += (last.command ? "\n" : "") + line;
+    }
+  }
+
+  // Prepend any preamble lines to the first step
+  if (preambleLines.length > 0 && steps.length > 0) {
+    const preamble = preambleLines.join("\n").trim();
+    if (preamble) {
+      steps[0]!.command = steps[0]!.command ? preamble + "\n" + steps[0]!.command : preamble;
+    }
+  }
+
+  // Trim trailing whitespace from each command
+  for (const step of steps) {
+    step.command = step.command.trim();
+  }
+
+  return steps;
+}
+
+// ---------------------------------------------------------------------------
 // Platform definitions
 // ---------------------------------------------------------------------------
 
