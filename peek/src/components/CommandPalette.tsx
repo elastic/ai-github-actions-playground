@@ -42,6 +42,10 @@ interface Command {
   keywords?: string;
 }
 
+function getRecentQueryCommandId(query: string): string {
+  return `query:${encodeURIComponent(query)}`;
+}
+
 function useCommands(): Command[] {
   const navigate = useNavigate();
   const location = useLocation();
@@ -241,9 +245,9 @@ function useCommands(): Command[] {
     }
 
     // Recent queries
-    for (const [index, query] of queryHistory.entries()) {
+    for (const query of queryHistory) {
       commands.push({
-        id: `query:${index}`,
+        id: getRecentQueryCommandId(query),
         label: query,
         group: "Recent Queries",
         icon: <HistoryIcon fontSize="small" />,

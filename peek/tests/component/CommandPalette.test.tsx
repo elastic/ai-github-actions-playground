@@ -506,6 +506,30 @@ describe("CommandPalette — Recent Commands group", () => {
     expect(useUIStore.getState().recentCommandIds).toContain("action:connection");
   });
 
+  it("keeps recent query command mapping stable when query history is reindexed", async () => {
+    const user = userEvent.setup();
+    const firstQuery = "FROM logs-* | LIMIT 10";
+    const secondQuery = "FROM metrics-* | LIMIT 5";
+    const thirdQuery = "FROM traces-* | LIMIT 20";
+    useQueryStore.getState().appendQueryToHistory(firstQuery);
+    useQueryStore.getState().appendQueryToHistory(secondQuery);
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    await user.click(screen.getByText(firstQuery));
+    expect(useUIStore.getState().recentCommandIds[0]).toBe(
+      `query:${encodeURIComponent(firstQuery)}`,
+    );
+
+    useQueryStore.getState().appendQueryToHistory(thirdQuery);
+    useUIStore.getState().setCommandPaletteOpen(true);
+
+    await waitFor(() => {
+      expect(screen.getByText("Recent Commands")).toBeInTheDocument();
+    });
+    expect(screen.getAllByRole("option")[0]).toHaveTextContent(firstQuery);
+  });
+
   it("deduplicates repeated commands and moves them to the front", () => {
     useUIStore.getState().addRecentCommandId("action:connection");
     useUIStore.getState().addRecentCommandId("action:theme");
