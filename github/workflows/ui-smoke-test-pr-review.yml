@@ -83,6 +83,7 @@ jobs:
 
       - name: Post PR review comment
         if: always()
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
@@ -125,14 +126,21 @@ jobs:
                 const specs = [];
                 for (const suite of suites) {
                   for (const spec of suite.specs || []) {
-                    const result = spec.tests?.[0]?.results?.[0];
-                    const errors = result?.errors || [];
+                    const allResults = (spec.tests || []).flatMap(
+                      (test) => test.results || [],
+                    );
+                    const allErrors = allResults.flatMap(
+                      (result) => result.errors || [],
+                    );
                     specs.push({
                       title: spec.title,
                       ok: spec.ok,
-                      duration: result?.duration ?? 0,
+                      duration: allResults.reduce(
+                        (sum, result) => sum + (result.duration ?? 0),
+                        0,
+                      ),
                       error:
-                        errors.map((e) => e.message).join("\n") || null,
+                        allErrors.map((e) => e.message).join("\n") || null,
                     });
                   }
                   if (suite.suites) {
