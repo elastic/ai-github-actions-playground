@@ -34,6 +34,23 @@ interface ServiceRow {
   avgLatencyMs: number;
   errorCount: number;
   errorRate: number;
+  uniqueRoutes: number;
+  uniqueSpanNames: number;
+  topRoute: string;
+  topSpanName: string;
+  topError: string;
+  language: string;
+  environment: string;
+}
+
+function parseTopValue(value: unknown, fallback = "—"): string {
+  if (Array.isArray(value)) {
+    const top = value.find((item) => item != null && String(item).trim() !== "");
+    return top != null ? String(top) : fallback;
+  }
+  if (value == null) return fallback;
+  const parsed = String(value).trim();
+  return parsed.length > 0 ? parsed : fallback;
 }
 
 function parseServiceRows(result: EsqlResponse): ServiceRow[] {
@@ -52,6 +69,13 @@ function parseServiceRows(result: EsqlResponse): ServiceRow[] {
     avgLatencyMs: Number(get(row, "avg_latency_ms") ?? 0),
     errorCount: Number(get(row, "error_count") ?? 0),
     errorRate: Number(get(row, "error_rate") ?? 0),
+    uniqueRoutes: Number(get(row, "unique_routes") ?? 0),
+    uniqueSpanNames: Number(get(row, "unique_span_names") ?? 0),
+    topRoute: parseTopValue(get(row, "top_route")),
+    topSpanName: parseTopValue(get(row, "top_span_name")),
+    topError: parseTopValue(get(row, "top_error")),
+    language: parseTopValue(get(row, "language"), "unknown"),
+    environment: parseTopValue(get(row, "environment"), "unknown"),
   }));
 }
 
@@ -137,6 +161,30 @@ export default function ServiceInventoryPage() {
     });
   }, [searchResult, sortField, sortDirection]);
 
+  const summary = useMemo(() => {
+    if (serviceRows.length === 0) return null;
+    const totals = serviceRows.reduce(
+      (acc, row) => {
+        acc.requests += row.requestCount;
+        acc.errors += row.errorCount;
+        return acc;
+      },
+      { requests: 0, errors: 0 },
+    );
+    const avgLatencyMs =
+      serviceRows.reduce((acc, row) => acc + row.avgLatencyMs, 0) / serviceRows.length;
+    return {
+      totalRequests: totals.requests,
+      totalErrors: totals.errors,
+      overallErrorRate: totals.requests > 0 ? totals.errors / totals.requests : 0,
+      avgLatencyMs,
+      busiestServices: [...serviceRows]
+        .sort((a, b) => b.requestCount - a.requestCount)
+        .slice(0, 3)
+        .map((row) => `${row.serviceName} (${row.requestCount.toLocaleString()})`),
+    };
+  }, [serviceRows]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       <PageHeader
@@ -168,6 +216,49 @@ export default function ServiceInventoryPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
+
+      {summary && (
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              Total Requests:{" "}
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                {summary.totalRequests.toLocaleString()}
+              </Typography>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Avg Service Latency:{" "}
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                {formatLatency(summary.avgLatencyMs)}
+              </Typography>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Overall Error Rate:{" "}
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                {formatErrorRate(summary.overallErrorRate)}
+              </Typography>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Busiest Services:
+            </Typography>
+            {summary.busiestServices.map((service) => (
+              <Chip key={service} size="small" label={service} variant="outlined" />
+            ))}
+          </Box>
+        </Paper>
+      )}
 
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
         {!loading && !searchResult && (
@@ -226,6 +317,13 @@ export default function ServiceInventoryPage() {
                     Error Rate
                   </TableSortLabel>
                 </TableCell>
+                <TableCell>Language</TableCell>
+                <TableCell>Environment</TableCell>
+                <TableCell align="right">Routes</TableCell>
+                <TableCell align="right">Span Names</TableCell>
+                <TableCell>Top Route</TableCell>
+                <TableCell>Top Span</TableCell>
+                <TableCell>Top Error</TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
@@ -264,6 +362,27 @@ export default function ServiceInventoryPage() {
                       color={row.errorRate > 0.05 ? "error" : "default"}
                       variant={row.errorRate > 0.05 ? "filled" : "outlined"}
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.language}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.environment}</Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2">{row.uniqueRoutes.toLocaleString()}</Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2">{row.uniqueSpanNames.toLocaleString()}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.topRoute}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.topSpanName}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.topError}</Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Button

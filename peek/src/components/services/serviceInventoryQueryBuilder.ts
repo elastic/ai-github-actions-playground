@@ -20,7 +20,7 @@ export const DEFAULT_SERVICE_INVENTORY_FILTERS: ServiceInventoryFilters = {
 
 /**
  * Builds an ES|QL query that aggregates per-service metrics from root spans.
- * Returns: service name, request count, avg latency (ms), error count, error rate.
+ * Returns: service name, throughput/latency/error metrics plus investigative context.
  */
 export function buildServiceInventoryQuery(
   filters: ServiceInventoryFilters,
@@ -37,8 +37,15 @@ export function buildServiceInventoryQuery(
   return [
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
-    `EVAL duration_ms = ${durationExpr} / 1000.0, is_error = CASE(${fields.statusCode} == "ERROR", 1, 0)`,
-    `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY ${fields.serviceName}`,
+    "EVAL duration_ms = " +
+      `${durationExpr} / 1000.0, ` +
+      `is_error = CASE(${fields.statusCode} == "ERROR", 1, 0), ` +
+      "route_key = COALESCE(attributes.url.path, attributes.http.route, url.path, '/'), " +
+      `span_name_key = COALESCE(${fields.spanName}, "unknown"), ` +
+      "error_message_key = CASE(is_error == 1, COALESCE(status.message, attributes.error.message, span_name_key), NULL), " +
+      "language_key = COALESCE(service.language.name, attributes.service.language, 'unknown'), " +
+      "environment_key = COALESCE(service.environment, deployment.environment, 'unknown')",
+    `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error), unique_routes = COUNT_DISTINCT(route_key), unique_span_names = COUNT_DISTINCT(span_name_key), top_route = TOP(route_key, 1, "desc"), top_span_name = TOP(span_name_key, 1, "desc"), top_error = TOP(error_message_key, 1, "desc"), language = TOP(language_key, 1, "desc"), environment = TOP(environment_key, 1, "desc") BY ${fields.serviceName}`,
     `EVAL error_rate = error_count / request_count`,
     `SORT request_count DESC`,
     `LIMIT 200`,

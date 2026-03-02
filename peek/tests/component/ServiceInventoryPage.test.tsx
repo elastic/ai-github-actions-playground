@@ -20,11 +20,57 @@ vi.mock("../../src/hooks/useEsqlQuery", () => ({
           { name: "avg_latency_ms", type: "double" },
           { name: "error_count", type: "long" },
           { name: "error_rate", type: "double" },
+          { name: "unique_routes", type: "long" },
+          { name: "unique_span_names", type: "long" },
+          { name: "top_route", type: "keyword" },
+          { name: "top_span_name", type: "keyword" },
+          { name: "top_error", type: "keyword" },
+          { name: "language", type: "keyword" },
+          { name: "environment", type: "keyword" },
         ],
         values: [
-          ["frontend", 1500, 45.2, 30, 0.02],
-          ["backend-api", 3200, 120.5, 320, 0.1],
-          ["payment-service", 800, 250.0, 8, 0.01],
+          [
+            "frontend",
+            1500,
+            45.2,
+            30,
+            0.02,
+            24,
+            68,
+            ["/products/:id"],
+            ["GET /products/:id"],
+            ["TimeoutError: upstream inventory"],
+            ["nodejs"],
+            ["prod"],
+          ],
+          [
+            "backend-api",
+            3200,
+            120.5,
+            320,
+            0.1,
+            40,
+            102,
+            ["/checkout"],
+            ["POST /checkout"],
+            ["Database timeout"],
+            ["java"],
+            ["prod"],
+          ],
+          [
+            "payment-service",
+            800,
+            250.0,
+            8,
+            0.01,
+            16,
+            37,
+            ["/payments/:id"],
+            ["GET /payments/:id"],
+            ["Card declined"],
+            ["go"],
+            ["staging"],
+          ],
         ],
       });
     },
@@ -122,5 +168,21 @@ describe("ServiceInventoryPage", () => {
       const viewButtons = screen.getAllByText("View Traces");
       expect(viewButtons).toHaveLength(3);
     });
+  });
+
+  it("shows investigative metadata columns", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Busiest Services:")).toBeInTheDocument();
+    });
+    expect(screen.getByText("/checkout")).toBeInTheDocument();
+    expect(screen.getByText("POST /checkout")).toBeInTheDocument();
+    expect(screen.getByText("Database timeout")).toBeInTheDocument();
+    expect(screen.getByText("java")).toBeInTheDocument();
+    expect(screen.getAllByText("prod").length).toBeGreaterThan(0);
   });
 });

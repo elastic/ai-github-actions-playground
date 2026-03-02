@@ -15,6 +15,10 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain("STATS request_count = COUNT(*)");
       expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
       expect(query).toContain("error_count = SUM(is_error)");
+      expect(query).toContain("unique_routes = COUNT_DISTINCT(route_key)");
+      expect(query).toContain('top_route = TOP(route_key, 1, "desc")');
+      expect(query).toContain('top_span_name = TOP(span_name_key, 1, "desc")');
+      expect(query).toContain('language = TOP(language_key, 1, "desc")');
       expect(query).toContain("BY service.name");
       expect(query).toContain("SORT request_count DESC");
       expect(query).toContain("LIMIT 200");
