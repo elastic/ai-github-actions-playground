@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import {
   buildFlamegraphTree,
@@ -9,7 +11,7 @@ import {
   type SymbolizedStacktrace,
 } from "../profiling/profilingUtils";
 
-import EChartWrapper from "./EChartWrapper";
+import { useEChartTheme } from "./useEChartTheme";
 import ProfilingFlamegraph from "./ProfilingFlamegraph";
 
 interface Props {
@@ -19,6 +21,8 @@ interface Props {
 }
 
 export default function ProfilingFlamescope({ stacktraces, onWindowChange, onFrameClick }: Props) {
+  const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const model = useMemo(() => buildFlamescopeHeatmap(stacktraces), [stacktraces]);
   const [selectedBucket, setSelectedBucket] = useState(0);
   const activeBucket =
@@ -79,6 +83,21 @@ export default function ProfilingFlamescope({ stacktraces, onWindowChange, onFra
     };
   }, [model.points, model.xLabels, model.yLabels]);
 
+  const handleHeatmapClick = useCallback((params: { data: unknown }) => {
+    const data = params.data as [number, number, number] | undefined;
+    if (!data) return;
+    setSelectedBucket(data[0] ?? 0);
+  }, []);
+
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance || !option) return;
+    instance.on("click", handleHeatmapClick);
+    return () => {
+      instance.off("click", handleHeatmapClick);
+    };
+  }, [handleHeatmapClick, option]);
+
   if (!option) {
     return (
       <Box sx={{ p: 3 }}>
@@ -92,13 +111,11 @@ export default function ProfilingFlamescope({ stacktraces, onWindowChange, onFra
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 560 }}>
       <Box sx={{ height: "42%", minHeight: 220 }}>
-        <EChartWrapper
+        <EChart
           option={option}
-          onClick={(params) => {
-            const data = params.data as [number, number, number] | undefined;
-            if (!data) return;
-            setSelectedBucket(data[0] ?? 0);
-          }}
+          theme={theme}
+          _instance={instanceRef}
+          sx={{ width: "100%", height: "100%", minHeight: 120 }}
         />
       </Box>
       <Box sx={{ flex: 1, minHeight: 280, borderTop: 1, borderColor: "divider" }}>

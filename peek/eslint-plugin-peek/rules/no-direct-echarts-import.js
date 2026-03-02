@@ -4,12 +4,12 @@ export default {
     type: "problem",
     docs: {
       description:
-        "Disallow direct ECharts imports in chart components. Use EChartWrapper or Perses's EChart component instead.",
+        "Disallow direct ECharts imports in chart components. Use Perses's EChart component instead.",
     },
     schema: [],
     messages: {
       noDirectECharts:
-        "Direct ECharts import found. Use EChartWrapper or Perses's EChart component to ensure consistent theming and behavior.",
+        "Direct ECharts import found. Use Perses's EChart component to ensure consistent theming and behavior.",
     },
   },
   create(context) {
@@ -25,11 +25,10 @@ export default {
           if (declarationTypeOnly || specifiersTypeOnly) {
             return;
           }
-          // Allow in EChartWrapper itself and in tests
+          // Allow in Perses EChart wrappers and in tests
           const filename = context.getFilename ? context.getFilename() : context.filename;
           const normalizedFilename = filename.replace(/\\/g, "/");
           if (
-            normalizedFilename.endsWith("EChartWrapper.tsx") ||
             normalizedFilename.endsWith("PersesEChartWrapper.tsx") ||
             normalizedFilename.includes("/tests/") ||
             normalizedFilename.endsWith(".test.ts") ||
