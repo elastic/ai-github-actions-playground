@@ -87,6 +87,49 @@ describe("repro: switchConnectionProfile race", () => {
     });
   });
 
+  it("ignores stale earlier same-profile success completion", async () => {
+    const profileAId = useConnectionStore
+      .getState()
+      .saveConnectionProfile("A", { url: "(a.example.com/redacted)", apiKey: "a-key" });
+
+    type Capabilities = Awaited<ReturnType<typeof esServices.fetchCapabilitiesForConnection>>;
+    const staleCaps: Capabilities = {
+      canManageDataStreams: false,
+      canCreateApiKeys: false,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+      canReadApiKeys: false,
+    };
+    const latestCaps: Capabilities = {
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+      canReadApiKeys: true,
+    };
+
+    let aAttempt = 0;
+    vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockImplementation(async () => {
+      aAttempt += 1;
+      const attempt = aAttempt;
+      const delayMs = attempt === 1 ? 50 : 10;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      return attempt === 1 ? staleCaps : latestCaps;
+    });
+
+    const switchA1Task = useConnectionStore.getState().switchConnectionProfile(profileAId!);
+    const switchA2Task = useConnectionStore.getState().switchConnectionProfile(profileAId!);
+    await Promise.all([switchA1Task, switchA2Task]);
+
+    const state = useConnectionStore.getState();
+    expect(state.activeProfileId).toBe(profileAId);
+    expect(state.capabilities).toEqual(latestCaps);
+    expect(state.profileHealthMap[profileAId!]).toMatchObject({
+      status: "healthy",
+      errorSummary: null,
+    });
+  });
+
   it("does not restore a deleted previous profile on rollback", async () => {
     const profileAId = useConnectionStore
       .getState()

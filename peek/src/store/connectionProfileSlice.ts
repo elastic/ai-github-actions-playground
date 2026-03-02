@@ -26,6 +26,7 @@ import {
 } from "./connectionStorageAdapters";
 
 let latestSwitchRequestId = 0;
+const latestRequestIdByProfileId = new Map<string, number>();
 
 const credentialsSchema = z
   .object({
@@ -146,10 +147,11 @@ export const createConnectionProfileSlice: StateCreator<
     }
     const prevActiveProfileId = get().activeProfileId;
     const requestId = ++latestSwitchRequestId;
+    latestRequestIdByProfileId.set(id, requestId);
     set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
-      if (get().activeProfileId !== id) {
+      if (get().activeProfileId !== id || latestRequestIdByProfileId.get(id) !== requestId) {
         return { ok: true, profileName: profile.name };
       }
       set((s) => ({
