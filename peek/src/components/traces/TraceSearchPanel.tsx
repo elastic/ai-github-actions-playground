@@ -19,6 +19,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import PageHeader from "../PageHeader";
 import QueryAnnotationOverlay from "../QueryAnnotationOverlay";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import { getServiceColor } from "./traceColors";
 import type { TraceFilters } from "./traceQueryBuilder";
@@ -168,8 +169,12 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
+          "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root": {
+            height: "auto",
+            minHeight: COMPONENT_HEIGHTS.buttonSmall,
+          },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
+          "& .MuiOutlinedInput-root": { height: COMPONENT_HEIGHTS.buttonSmall },
         }}
       >
         <Autocomplete
@@ -252,7 +257,7 @@ export default function TraceSearchPanel({
               size="medium"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
-              sx={{ height: 32 }}
+              sx={{ height: COMPONENT_HEIGHTS.buttonSmall }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({
