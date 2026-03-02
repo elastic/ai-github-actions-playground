@@ -2,7 +2,7 @@
 
 A formal specification of every state a bot-authored PR can be in and what
 action to take. Serves as both a human-readable runbook and a machine-parseable
-spec for `ready-prs-and-enable-workflows.sh`.
+spec for `ready-prs.py`.
 
 > **Scope:** Bot-authored PRs only — `copilot[bot]`, `copilot-swe-agent[bot]`,
 > `github-actions[bot]`. Human PRs are out of scope.
