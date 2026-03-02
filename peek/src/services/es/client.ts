@@ -334,8 +334,7 @@ export class ElasticsearchClient {
    */
   private async _fetchValidated<T>(
     path: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    schema: z.ZodType<any>,
+    schema: z.ZodTypeAny,
     label: string,
     options?: RequestInit & { signal?: AbortSignal },
   ): Promise<T> {

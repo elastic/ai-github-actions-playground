@@ -5,10 +5,8 @@
 export interface IngestPipeline {
   description?: string;
   version?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  processors?: Array<Record<string, any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  on_failure?: Array<Record<string, any>>;
+  processors?: Array<Record<string, unknown>>;
+  on_failure?: Array<Record<string, unknown>>;
 }
 
 export type GetIngestPipelinesResponse = Record<string, IngestPipeline>;

@@ -47,16 +47,11 @@ export function useMarkdownEsql({
   const blocks = useMemo(() => extractEsqlBlocks(interpolated), [interpolated]);
 
   // Stable serialisation so the effect only re-runs when blocks actually change.
-  const blocksKey = blocks.map((b) => b.raw).join("\0");
-
   const [results, setResults] = useState<ReadonlyMap<string, EsqlResponse>>(new Map());
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (blocks.length === 0) {
-      setResults(new Map());
-      return;
-    }
+    if (blocks.length === 0) return;
 
     abortRef.current?.abort();
     const ctrl = new AbortController();
@@ -92,9 +87,7 @@ export function useMarkdownEsql({
       cancelled = true;
       ctrl.abort();
     };
-    // blocksKey is a stable string that only changes when the extracted queries change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blocksKey, connection, timeRange, parameters]);
+  }, [blocks, connection, timeRange, parameters]);
 
   // Step 4 — replace resolved blocks
   if (blocks.length === 0) return interpolated;
