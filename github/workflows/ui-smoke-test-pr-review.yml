@@ -56,8 +56,7 @@ jobs:
         run: |
           npm run dev -- --port 3000 &
           DEV_PID=$!
-          PREFLIGHT_EXIT=0
-          trap 'PREFLIGHT_EXIT=${PREFLIGHT_EXIT:-$?}; kill "$DEV_PID" 2>/dev/null || true; exit "$PREFLIGHT_EXIT"' EXIT
+          trap 'PREFLIGHT_EXIT=${PREFLIGHT_EXIT-$?}; kill "$DEV_PID" 2>/dev/null || true; exit "$PREFLIGHT_EXIT"' EXIT
           SERVER_READY=false
           for i in $(seq 1 30); do
             if curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null 2>&1; then SERVER_READY=true; break; fi
