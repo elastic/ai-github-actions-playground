@@ -724,6 +724,20 @@ describe("useDashboardStore importDashboard", () => {
       expect(useDashboardStore.getState().dashboard.panels[0].visualization).toBe(vizType);
     },
   );
+  it("assigns a new ID when imported dashboard ID collides with a non-active dashboard", () => {
+    const secondId = useDashboardStore.getState().createDashboard("Second");
+    const stateAfterCreate = useDashboardStore.getState();
+    const firstId = stateAfterCreate.dashboards.find((d) => d.id !== secondId)!.id;
+    useDashboardStore.getState().setActiveDashboard(firstId);
+
+    const secondDashboard = useDashboardStore.getState().dashboards.find((d) => d.id === secondId)!;
+
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(secondDashboard));
+    expect(result).toEqual({ success: true });
+
+    const ids = useDashboardStore.getState().dashboards.map((d) => d.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });
 
 describe("useDashboardStore importWorkspace", () => {
