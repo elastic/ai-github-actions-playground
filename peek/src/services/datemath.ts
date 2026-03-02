@@ -90,50 +90,6 @@ export function buildQueryParams(
   return params;
 }
 
-/**
- * Replace named parameter placeholders (`?_tstart`, `?_tend`, `?name`) with
- * positional `?` markers and return a flat array of resolved values in the
- * order they appear in the query.
- *
- * The ES|QL `_query` API expects `params` as a `FieldValue[]` (flat array of
- * primitives) paired with positional `?` placeholders.  This function
- * transparently converts the developer-friendly named-placeholder convention
- * used by the query builder layer into the wire format Elasticsearch requires.
- */
-export function resolveToPositionalParams(
-  query: string,
-  timeRange: TimeRange,
-  userParams?: DashboardParameter[],
-): { query: string; params: (string | number | boolean)[] } {
-  const now = new Date();
-  const tstart = resolveDateTime(timeRange.from, now)?.toISOString() ?? timeRange.from;
-  const tend = resolveDateTime(timeRange.to, now)?.toISOString() ?? timeRange.to;
-
-  const valueMap = new Map<string, string | number | boolean>();
-  valueMap.set("_tstart", tstart);
-  valueMap.set("_tend", tend);
-
-  if (userParams) {
-    for (const { name, value, type } of userParams) {
-      if (name && !RESERVED_TIME_PARAM_NAMES.has(name)) {
-        valueMap.set(name, serializeDashboardParam(type, value));
-      }
-    }
-  }
-
-  const params: (string | number | boolean)[] = [];
-  const resolvedQuery = query.replace(/\?([A-Za-z_][A-Za-z0-9_]*)\b/g, (match, name: string) => {
-    const val = valueMap.get(name);
-    if (val !== undefined) {
-      params.push(val);
-      return "?";
-    }
-    return match;
-  });
-
-  return { query: resolvedQuery, params };
-}
-
 function serializeDashboardParam(
   type: DashboardParameter["type"],
   value: DashboardParameter["value"],

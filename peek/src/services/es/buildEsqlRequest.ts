@@ -1,4 +1,4 @@
-import { resolveToPositionalParams } from "../datemath";
+import { buildQueryParams } from "../datemath";
 import type { DashboardParameter, TimeRange } from "../../types";
 
 import type { EsqlQueryParams } from "./client";
@@ -26,12 +26,7 @@ export function buildEsqlRequest(
       },
     };
   }
-  const { query: resolvedQuery, params } = resolveToPositionalParams(
-    queryText,
-    timeRange,
-    parameters,
-  );
-  body.query = resolvedQuery;
-  if (params.length > 0) body.params = params;
+  const queryParams = buildQueryParams(queryText, timeRange, parameters);
+  if (Object.keys(queryParams).length > 0) body.params = queryParams;
   return body;
 }

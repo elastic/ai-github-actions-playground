@@ -169,7 +169,7 @@ describe("PanelEditor", () => {
     expect(queryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         query:
-          "FROM logs-* | WHERE service.name == ? | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?, ?)",
+          "FROM logs-* | WHERE service.name == ?service | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)",
         filter: {
           range: {
             "@timestamp": {
@@ -178,7 +178,11 @@ describe("PanelEditor", () => {
             },
           },
         },
-        params: ["web", "2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"],
+        params: expect.objectContaining({
+          _tstart: "2025-06-15T11:00:00.000Z",
+          _tend: "2025-06-15T12:00:00.000Z",
+          service: "web",
+        }),
       }),
       expect.any(AbortSignal),
     );

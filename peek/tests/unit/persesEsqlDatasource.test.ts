@@ -95,11 +95,12 @@ describe("createPersesEsqlDatasource", () => {
       },
     );
     expect(request.query).toContain("env == 'prod'");
-    // Named params are replaced with positional ? and values are a flat array
-    expect(request.query).not.toContain("?service");
-    expect(request.query).not.toContain("?_tstart");
-    expect(request.query).toContain("service.name == ?");
-    // The ?service param appears before ?_tstart/?_tend in the query
-    expect(request.params).toEqual(["web", "2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"]);
+    expect(request.params).toEqual(
+      expect.objectContaining({
+        service: "web",
+        _tstart: "2025-06-15T11:00:00.000Z",
+        _tend: "2025-06-15T12:00:00.000Z",
+      }),
+    );
   });
 });

@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-import {
-  resolveDateTime,
-  buildTimeParams,
-  resolveToPositionalParams,
-} from "../../src/services/datemath";
+import { resolveDateTime, buildTimeParams } from "../../src/services/datemath";
 
 // Fixed reference time for deterministic tests
 const NOW = new Date("2025-06-15T12:00:00.000Z");
@@ -111,101 +107,5 @@ describe("buildTimeParams", () => {
       _tstart: "2025-01-01T00:00:00.000Z",
       _tend: "2025-01-02T00:00:00.000Z",
     });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// resolveToPositionalParams
-// ---------------------------------------------------------------------------
-
-describe("resolveToPositionalParams", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("replaces ?_tstart and ?_tend with positional ? and returns flat params array", () => {
-    vi.useFakeTimers({ now: NOW });
-    const query =
-      "FROM metrics-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS metric = AVG(`field`) BY timestamp = BUCKET(@timestamp, 50, ?_tstart, ?_tend) | SORT timestamp";
-    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" });
-
-    expect(result.query).toBe(
-      "FROM metrics-* | WHERE @timestamp >= ? AND @timestamp <= ? | STATS metric = AVG(`field`) BY timestamp = BUCKET(@timestamp, 50, ?, ?) | SORT timestamp",
-    );
-    expect(result.params).toEqual([
-      "2025-06-15T11:00:00.000Z",
-      "2025-06-15T12:00:00.000Z",
-      "2025-06-15T11:00:00.000Z",
-      "2025-06-15T12:00:00.000Z",
-    ]);
-  });
-
-  it("returns empty params array when query has no placeholders", () => {
-    const query = "FROM logs-* | STATS COUNT(*)";
-    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" });
-    expect(result.query).toBe(query);
-    expect(result.params).toEqual([]);
-  });
-
-  it("includes user parameters in positional order", () => {
-    vi.useFakeTimers({ now: NOW });
-    const query =
-      "FROM logs-* | WHERE service.name == ?service | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)";
-    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" }, [
-      {
-        name: "service",
-        type: "keyword",
-        source: { mode: "text" },
-        label: "Service",
-        value: "web",
-      },
-    ]);
-
-    expect(result.query).toContain("service.name == ?");
-    expect(result.query).not.toContain("?service");
-    expect(result.query).not.toContain("?_tstart");
-    expect(result.params).toEqual(["web", "2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"]);
-  });
-
-  it("falls back to raw time values when date-math cannot be resolved", () => {
-    const query = "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend";
-    const result = resolveToPositionalParams(query, {
-      from: "2025-01-01T00:00:00.000Z",
-      to: "2025-01-02T00:00:00.000Z",
-    });
-    expect(result.params).toEqual(["2025-01-01T00:00:00.000Z", "2025-01-02T00:00:00.000Z"]);
-  });
-
-  it("does not replace unknown named params", () => {
-    const query = "FROM logs-* | WHERE x == ?unknown";
-    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" });
-    expect(result.query).toBe("FROM logs-* | WHERE x == ?unknown");
-    expect(result.params).toEqual([]);
-  });
-
-  it("replaces known params while preserving unknown ones in the same query", () => {
-    vi.useFakeTimers({ now: NOW });
-    const query =
-      "FROM logs-* | WHERE @timestamp >= ?_tstart AND x == ?unknown AND @timestamp <= ?_tend";
-    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" });
-    expect(result.query).toBe(
-      "FROM logs-* | WHERE @timestamp >= ? AND x == ?unknown AND @timestamp <= ?",
-    );
-    expect(result.params).toEqual(["2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"]);
-  });
-
-  it("does not allow user params to override reserved time params", () => {
-    vi.useFakeTimers({ now: NOW });
-    const query = "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp < ?_tend";
-    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" }, [
-      {
-        name: "_tstart",
-        label: "Start",
-        type: "keyword",
-        source: { mode: "text" },
-        value: "overridden",
-      },
-    ]);
-    expect(result.params).toEqual(["2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"]);
   });
 });

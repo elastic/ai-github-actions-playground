@@ -21,7 +21,7 @@ import {
   buildExplorerQuery,
 } from "../services/es";
 import type { FieldInfo, ExplorerFilter } from "../services/es";
-import { resolveToPositionalParams } from "../services/datemath";
+import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse } from "../types";
 
 import ExploreControlsPanel from "./explore/ExploreControlsPanel";
@@ -207,12 +207,11 @@ export default function ExplorePage() {
       setQueryResult({ status: "loading", esql: queryDef.esql });
 
       try {
-        const { query: resolvedQuery, params } = resolveToPositionalParams(
-          queryDef.esql,
-          dashboard.timeRange,
-        );
+        const params = buildTimeParams(queryDef.esql, dashboard.timeRange);
         const result = await client.query(
-          params.length > 0 ? { query: resolvedQuery, params } : { query: resolvedQuery },
+          Object.keys(params).length > 0
+            ? { query: queryDef.esql, params }
+            : { query: queryDef.esql },
           signal,
         );
         setQueryResult({
