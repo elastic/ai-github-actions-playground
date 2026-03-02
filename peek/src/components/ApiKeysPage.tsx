@@ -31,6 +31,8 @@ export default function ApiKeysPage() {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Resolve the selected key: keep the user's pick if it still exists in the
+  // loaded keys, otherwise fall back to the first key.
   const effectiveKeyId = useMemo(() => {
     if (selectedKeyId && keys.some((k) => k.id === selectedKeyId)) return selectedKeyId;
     return keys[0]?.id ?? null;
