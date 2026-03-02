@@ -6,6 +6,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import EditIcon from "@mui/icons-material/Edit";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import UnarchiveIcon from "@mui/icons-material/Unarchive";
@@ -21,6 +22,7 @@ interface DashboardCardMenuProps {
   disableDelete: boolean;
   onClose: () => void;
   onRename: () => void;
+  onEditDetails: () => void;
   onDuplicate: () => void;
   onArchiveToggle: () => void;
   onExport: () => void;
@@ -35,6 +37,7 @@ export default function DashboardCardMenu({
   disableDelete,
   onClose,
   onRename,
+  onEditDetails,
   onDuplicate,
   onArchiveToggle,
   onExport,
@@ -48,6 +51,12 @@ export default function DashboardCardMenu({
           <EditIcon fontSize="small" />
         </ListItemIcon>
         <ListItemText>Rename</ListItemText>
+      </MenuItem>
+      <MenuItem onClick={onEditDetails}>
+        <ListItemIcon>
+          <InfoOutlinedIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText>Edit details</ListItemText>
       </MenuItem>
       <MenuItem onClick={onDuplicate}>
         <ListItemIcon>

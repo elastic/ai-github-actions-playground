@@ -9,6 +9,7 @@ type DashboardCatalogStoreState = Pick<
   | "setActiveDashboard"
   | "createDashboard"
   | "renameDashboard"
+  | "updateDashboardMetadata"
   | "duplicateDashboard"
   | "archiveDashboard"
   | "toggleFavoriteDashboard"

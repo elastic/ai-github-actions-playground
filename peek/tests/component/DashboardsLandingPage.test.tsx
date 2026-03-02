@@ -74,6 +74,7 @@ describe("DashboardsLandingPage", () => {
     await user.click(screen.getByLabelText(`Actions for ${title}`));
 
     expect(screen.getByText("Rename")).toBeInTheDocument();
+    expect(screen.getByText("Edit details")).toBeInTheDocument();
     expect(screen.getByText("Duplicate")).toBeInTheDocument();
     expect(screen.getByText("Archive")).toBeInTheDocument();
     expect(screen.getByText("Export")).toBeInTheDocument();
@@ -200,6 +201,63 @@ describe("DashboardsLandingPage", () => {
     expect(
       useDashboardStore.getState().dashboards.some((d) => d.title === "Renamed Dashboard"),
     ).toBe(true);
+  });
+
+  it("opens edit details dialog from the menu", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    const title = useDashboardStore.getState().dashboard.title;
+    await user.click(screen.getByLabelText(`Actions for ${title}`));
+    await user.click(screen.getByText("Edit details"));
+
+    expect(screen.getByRole("dialog", { name: /edit dashboard details/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/add tag/i)).toBeInTheDocument();
+  });
+
+  it("saves description and tags via the edit details dialog", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    const id = useDashboardStore.getState().activeDashboardId;
+    const title = useDashboardStore.getState().dashboard.title;
+    await user.click(screen.getByLabelText(`Actions for ${title}`));
+    await user.click(screen.getByText("Edit details"));
+
+    const dialog = screen.getByRole("dialog", { name: /edit dashboard details/i });
+    const descInput = within(dialog).getByLabelText(/description/i);
+    await user.clear(descInput);
+    await user.type(descInput, "My dashboard description");
+
+    const tagInput = within(dialog).getByLabelText(/add tag/i);
+    await user.type(tagInput, "prod{Enter}");
+
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const updated = useDashboardStore.getState().dashboards.find((d) => d.id === id);
+    expect(updated?.description).toBe("My dashboard description");
+    expect(updated?.tags).toEqual(["prod"]);
+  });
+
+  it("cancels edit details without saving changes", async () => {
+    const user = userEvent.setup();
+    renderLanding();
+
+    const id = useDashboardStore.getState().activeDashboardId;
+    const title = useDashboardStore.getState().dashboard.title;
+    await user.click(screen.getByLabelText(`Actions for ${title}`));
+    await user.click(screen.getByText("Edit details"));
+
+    const dialog = screen.getByRole("dialog", { name: /edit dashboard details/i });
+    const descInput = within(dialog).getByLabelText(/description/i);
+    await user.type(descInput, "Should not be saved");
+    await user.click(within(dialog).getByRole("button", { name: /^cancel$/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const dashboard = useDashboardStore.getState().dashboards.find((d) => d.id === id);
+    expect(dashboard?.description).not.toBe("Should not be saved");
   });
 
   it("shows inline confirm/cancel when Delete is clicked from the menu", async () => {
