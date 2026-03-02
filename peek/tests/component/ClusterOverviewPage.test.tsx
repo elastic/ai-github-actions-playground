@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import ClusterOverviewPage from "../../src/components/ClusterOverviewPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -254,5 +254,36 @@ describe("ClusterOverviewPage", () => {
     expect(screen.getByText(/partial data loaded/i)).toBeInTheDocument();
     expect(screen.getByText(/cluster stats, nodes, node stats/i)).toBeInTheDocument();
     expect(screen.getAllByText("Unavailable").length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("navigates to detail pages when clickable cards are clicked", async () => {
+    const user = userEvent.setup();
+
+    function LocationDisplay() {
+      const location = useLocation();
+      return <div data-testid="location">{location.pathname}</div>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={["/cluster-overview"]}>
+        <Routes>
+          <Route path="/cluster-overview" element={<ClusterOverviewPage />} />
+          <Route path="*" element={<LocationDisplay />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("test-cluster")).toBeInTheDocument();
+    });
+
+    // Verify drill-down buttons exist with correct aria labels
+    expect(screen.getByRole("button", { name: "View Health" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "View Data Streams" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "View Indices" })).toBeInTheDocument();
+
+    // Click Data Streams card and verify navigation
+    await user.click(screen.getByRole("button", { name: "View Data Streams" }));
+    expect(screen.getByTestId("location")).toHaveTextContent("/data-streams");
   });
 });
