@@ -39,4 +39,16 @@ describe("DateRangePicker", () => {
     expect(screen.getAllByText("From must be earlier than To.")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
   });
+
+  it("shows inline validation when from equals to", async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker value={defaultRange} onChange={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: /time range:/i }));
+
+    await user.clear(screen.getByLabelText("From"));
+    await user.type(screen.getByLabelText("From"), "2026-02-28T11:00");
+
+    expect(screen.getAllByText("From must be earlier than To.")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+  });
 });
