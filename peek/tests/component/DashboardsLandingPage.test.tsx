@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import DashboardsLandingPage from "../../src/components/DashboardsLandingPage";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
@@ -15,8 +16,10 @@ function LocationDisplay() {
 function renderLanding() {
   return render(
     <MemoryRouter initialEntries={["/dashboards"]}>
-      <DashboardsLandingPage />
-      <LocationDisplay />
+      <NuqsTestingAdapter hasMemory>
+        <DashboardsLandingPage />
+        <LocationDisplay />
+      </NuqsTestingAdapter>
     </MemoryRouter>,
   );
 }
@@ -226,10 +229,13 @@ describe("DashboardsLandingPage", () => {
 
   describe("search and filter", () => {
     function renderLandingWithUrl(url = "/dashboards") {
+      const searchParams = url.includes("?") ? url.slice(url.indexOf("?")) : "";
       return render(
         <MemoryRouter initialEntries={[url]}>
-          <DashboardsLandingPage />
-          <LocationDisplay />
+          <NuqsTestingAdapter searchParams={searchParams} hasMemory>
+            <DashboardsLandingPage />
+            <LocationDisplay />
+          </NuqsTestingAdapter>
         </MemoryRouter>,
       );
     }
@@ -442,8 +448,10 @@ describe("DashboardsLandingPage", () => {
 
       render(
         <MemoryRouter initialEntries={["/dashboards?favorites=true"]}>
-          <DashboardsLandingPage />
-          <LocationDisplay />
+          <NuqsTestingAdapter searchParams="?favorites=true" hasMemory>
+            <DashboardsLandingPage />
+            <LocationDisplay />
+          </NuqsTestingAdapter>
         </MemoryRouter>,
       );
 

@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { parseAsString, useQueryState } from "nuqs";
 
 import sections from "../docs/sections";
 
@@ -17,11 +17,10 @@ function normalizeText(text: string): string {
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  // Read the target section from the ?section= query param (set by command palette shortcuts)
-  const sectionFromUrl = searchParams.get("section");
+  const [sectionFromUrl, setSectionFromUrl] = useQueryState(
+    "section",
+    parseAsString.withOptions({ history: "replace" }),
+  );
 
   // Active section is always URL-driven so sidebar and URL stay in sync
   const activeSection = sectionFromUrl ?? sections[0]?.id ?? "";
@@ -36,11 +35,11 @@ export default function DocsPage() {
 
   const jumpToSection = useCallback(
     (sectionId: string) => {
-      navigate(`?section=${sectionId}`, { replace: true });
+      void setSectionFromUrl(sectionId);
       const target = document.getElementById(sectionId);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
-    [navigate],
+    [setSectionFromUrl],
   );
 
   // Scroll to the section specified by the URL param (DOM-only side-effect, no setState)
