@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "vitest-axe";
 
 import FleetStatCard from "../../src/components/fleet/FleetStatCard";
 
@@ -45,5 +46,11 @@ describe("FleetStatCard", () => {
   it("renders em dash when value is null", () => {
     render(<FleetStatCard title="Updating" value={null} />);
     expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  it("has no obvious accessibility violations", async () => {
+    const { container } = render(<FleetStatCard title="Healthy" value={8} onClick={vi.fn()} />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
   });
 });
