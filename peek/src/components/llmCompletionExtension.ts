@@ -2,6 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { StateEffect, StateField, type Extension } from "@codemirror/state";
 import { type EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { setDiagnostics, type Diagnostic } from "@codemirror/lint";
 
 import { useLLMStore } from "../store/useLLMStore";
 
@@ -54,9 +55,65 @@ export const recentEditsField = StateField.define<RecentEdit[]>({
 
 const queryErrorMap = new WeakMap<EditorView, string | null>();
 
-/** Set the last query error for a specific editor view. */
+/**
+ * Parse an ES|QL error message for a "line X:Y:" position marker.
+ * Returns the document offset range and the message text after the marker.
+ * @internal exported for testing
+ */
+export function parseEsqlErrorPosition(
+  error: string,
+  doc: {
+    lines: number;
+    line(n: number): { from: number; to: number; text: string; length: number };
+  },
+): { from: number; to: number; message: string } | null {
+  const match = error.match(/line (\d+):(\d+):\s*([\s\S]*)/);
+  if (!match) return null;
+  const line = parseInt(match[1]!, 10);
+  const col = parseInt(match[2]!, 10);
+  const message = match[3]?.trim() || error;
+  if (line < 1 || line > doc.lines) return null;
+  const lineInfo = doc.line(line);
+  const from = lineInfo.from + Math.min(col, lineInfo.length);
+  let to = from;
+  while (to < lineInfo.to && /\S/.test(lineInfo.text[to - lineInfo.from] ?? "")) {
+    to++;
+  }
+  if (to === from) to = Math.min(from + 1, lineInfo.to);
+  return { from, to, message };
+}
+
+/** Set the last query error for a specific editor view and update inline diagnostics. */
 export function setLastQueryError(error: string | null, view: EditorView) {
   queryErrorMap.set(view, error);
+
+  // Dispatch inline lint diagnostics so the editor shows squiggly underlines.
+  // Silently skip if the view doesn't have a valid state (e.g. destroyed or in tests).
+  try {
+    const diagnostics: Diagnostic[] = [];
+    if (error) {
+      const parsed = parseEsqlErrorPosition(error, view.state.doc);
+      if (parsed) {
+        diagnostics.push({
+          from: parsed.from,
+          to: parsed.to,
+          severity: "error",
+          message: parsed.message,
+        });
+      } else {
+        const firstLine = view.state.doc.line(1);
+        diagnostics.push({
+          from: firstLine.from,
+          to: firstLine.to,
+          severity: "error",
+          message: error,
+        });
+      }
+    }
+    view.dispatch(setDiagnostics(view.state, diagnostics));
+  } catch {
+    // lint extension not installed or view not fully initialized
+  }
 }
 
 /** Read the last query error for a specific editor view. */

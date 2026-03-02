@@ -272,7 +272,7 @@ export default function RequestCard({
                     extensions={[json()]}
                     theme={themeMode}
                     editable={false}
-                    basicSetup={{ lineNumbers: true, foldGutter: false }}
+                    basicSetup={{ lineNumbers: true, foldGutter: true }}
                     aria-label="Response body"
                   />
                 </Box>
