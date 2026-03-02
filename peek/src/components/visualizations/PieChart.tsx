@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse } from "../../types";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
-import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
@@ -13,6 +14,13 @@ interface Props {
 
 export default function PieChart({ data, onExportReady }: Props) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -36,7 +44,6 @@ export default function PieChart({ data, onExportReady }: Props) {
     }));
 
     return {
-      ...theme,
       tooltip: {
         ...theme.tooltip,
         trigger: "item",
@@ -59,7 +66,7 @@ export default function PieChart({ data, onExportReady }: Props) {
             itemStyle: {
               shadowBlur: 10,
               shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.3)",
+              shadowColor: theme.textStyle?.color,
             },
           },
           label: { show: false },
@@ -68,5 +75,12 @@ export default function PieChart({ data, onExportReady }: Props) {
     };
   }, [data, theme]);
 
-  return <EChartWrapper option={option} onExportReady={onExportReady} />;
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }

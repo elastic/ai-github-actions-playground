@@ -437,6 +437,7 @@ export default function IndexDetailPanel({
             id={tabPanelId(activeTab)}
             aria-labelledby={tabId(activeTab)}
             sx={{ flex: 1, overflow: "auto", p: 2 }}
+            tabIndex={0}
           >
             {loadingDetail ? (
               <ContentSkeleton variant="table" />
