@@ -245,7 +245,35 @@ export default function ApiConsolePage() {
 
       {entries.length === 1 && entries[0] && !entries[0].response && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: "center" }}>
-          Try <code>GET _cluster/health</code> or <code>GET _cat/indices?v</code> to get started.
+          Try{" "}
+          <Box
+            component="code"
+            sx={{
+              py: 0.5,
+              px: 1,
+              borderRadius: 1,
+              bgcolor: "background.elevated",
+              fontSize: "0.8rem",
+              fontFamily: "monospace",
+            }}
+          >
+            GET _cluster/health
+          </Box>{" "}
+          or{" "}
+          <Box
+            component="code"
+            sx={{
+              py: 0.5,
+              px: 1,
+              borderRadius: 1,
+              bgcolor: "background.elevated",
+              fontSize: "0.8rem",
+              fontFamily: "monospace",
+            }}
+          >
+            GET _cat/indices?v
+          </Box>{" "}
+          to get started.
         </Typography>
       )}
     </Box>

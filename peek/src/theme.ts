@@ -5,7 +5,7 @@ const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
 const baseOptions: ThemeOptions = {
   typography: {
     fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
-    h3: { fontWeight: 600, fontVariantNumeric: "tabular-nums", lineHeight: 1.3 },
+    h3: { fontSize: "2rem", fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.1 },
     h4: { fontWeight: 600, fontVariantNumeric: "tabular-nums", lineHeight: 1.35 },
     h5: { fontWeight: 600, fontVariantNumeric: "tabular-nums", lineHeight: 1.4 },
     h6: { fontWeight: 600, lineHeight: 1.4 },
@@ -17,7 +17,7 @@ const baseOptions: ThemeOptions = {
       lineHeight: 1.6,
     },
   },
-  shape: { borderRadius: 6 },
+  shape: { borderRadius: 8 },
   components: {
     MuiCssBaseline: {
       styleOverrides: `
@@ -36,8 +36,8 @@ const baseOptions: ThemeOptions = {
         root: {
           textTransform: "none",
           fontWeight: 500,
-          height: 32,
-          borderRadius: 6,
+          height: 36,
+          borderRadius: 8,
           [MOBILE_OR_COARSE_QUERY]: {
             height: "auto",
             minHeight: 44,
@@ -88,7 +88,7 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
-            height: 32,
+            height: 36,
             [MOBILE_OR_COARSE_QUERY]: {
               height: "auto",
               minHeight: 44,

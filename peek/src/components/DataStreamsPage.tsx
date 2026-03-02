@@ -260,9 +260,37 @@ export default function DataStreamsPage() {
                 >
                   <ListItemText
                     primary={stream.name}
-                    secondary={`${stream.status.toUpperCase()} - ${stream.indices.length} ${
-                      stream.indices.length === 1 ? "Index" : "Indices"
-                    }`}
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      sx: { fontFamily: "monospace", fontSize: "0.85rem" },
+                    }}
+                    secondary={
+                      <Box
+                        component="span"
+                        sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 0.5 }}
+                      >
+                        <Chip
+                          label={stream.status.toUpperCase()}
+                          color={
+                            stream.status.toUpperCase() === "GREEN"
+                              ? "success"
+                              : stream.status.toUpperCase() === "YELLOW"
+                                ? "warning"
+                                : stream.status.toUpperCase() === "RED"
+                                  ? "error"
+                                  : "default"
+                          }
+                          size="small"
+                          sx={{ height: 20, fontSize: "0.7rem" }}
+                        />
+                        <Chip
+                          label={`${stream.indices.length} ${stream.indices.length === 1 ? "Index" : "Indices"}`}
+                          size="small"
+                          variant="outlined"
+                          sx={{ height: 20, fontSize: "0.7rem" }}
+                        />
+                      </Box>
+                    }
                   />
                 </ListItemButton>
               </ListItem>

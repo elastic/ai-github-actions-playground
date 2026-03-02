@@ -102,7 +102,7 @@ export default function RequestCard({
           onChange={(e) =>
             onUpdate(entry.id, { method: e.target.value as HttpMethod, response: null })
           }
-          sx={{ minWidth: 100 }}
+          sx={{ minWidth: 100, height: 36 }}
           inputProps={{ "aria-label": "HTTP method" }}
           renderValue={(v) => (
             <Chip
