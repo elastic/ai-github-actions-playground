@@ -134,7 +134,8 @@ function LocationDisplay() {
 }
 
 function renderPage(initialEntries: string[] = ["/"]) {
-  const searchParams = new URL(initialEntries[0] ?? "/", "https://example.test").search;
+  const activeEntry = initialEntries[initialEntries.length - 1] ?? "/";
+  const searchParams = new URL(activeEntry, "https://example.test").search;
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <NuqsTestingAdapter searchParams={searchParams} hasMemory>

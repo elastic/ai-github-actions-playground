@@ -85,13 +85,6 @@ export default function TracesPage() {
   // Sync selectedTraceId with URL query parameter
   const [urlTraceId, setUrlTraceId] = useQueryState("traceId", parseAsString);
 
-  // URL → store: keep store in sync when URL changes (initial load + browser navigation)
-  useEffect(() => {
-    if (urlTraceId !== selectedTraceId) {
-      setSelectedTraceId(urlTraceId);
-    }
-  }, [urlTraceId, selectedTraceId, setSelectedTraceId]);
-
   // Store → URL: keep URL in sync when store changes
   useEffect(() => {
     if (selectedTraceId !== urlTraceId) {
@@ -144,6 +137,18 @@ export default function TracesPage() {
       setSelectedTraceSpans(spans);
     },
   });
+
+  // URL → store: keep store in sync when URL changes (initial load + browser navigation)
+  useEffect(() => {
+    if (urlTraceId !== selectedTraceId) {
+      setSelectedTraceId(urlTraceId);
+      if (urlTraceId) {
+        runDetailQuery(buildTraceDetailQuery(urlTraceId));
+      } else {
+        setSelectedTraceSpans([]);
+      }
+    }
+  }, [urlTraceId, selectedTraceId, setSelectedTraceId, runDetailQuery, setSelectedTraceSpans]);
 
   const {
     runQuery: runTimeseriesQuery,
