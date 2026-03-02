@@ -184,6 +184,7 @@ export default function ExplorePage() {
 
   const abortRef = useRef<AbortController | null>(null);
   const hasHydratedFromUrlRef = useRef(false);
+  const skipInitialUrlSyncRef = useRef(true);
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -244,6 +245,11 @@ export default function ExplorePage() {
   // Sync URL state
   useEffect(() => {
     if (!hasHydratedFromUrlRef.current) return;
+    if (skipInitialUrlSyncRef.current) {
+      skipInitialUrlSyncRef.current = false;
+      return;
+    }
+    let cancelled = false;
     const syncUrlState = async () => {
       await setUrlState({
         indexPattern: indexPattern || null,
@@ -253,9 +259,13 @@ export default function ExplorePage() {
         from: dashboard.timeRange.from,
         to: dashboard.timeRange.to,
       });
+      if (cancelled) return;
       setSearchParams((prev) => applyFilters(prev, filters), { replace: true });
     };
     void syncUrlState();
+    return () => {
+      cancelled = true;
+    };
   }, [
     indexPattern,
     selectedMetric,
