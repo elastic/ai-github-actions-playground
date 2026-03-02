@@ -1,13 +1,15 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { Span, ServiceMapEdge } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
 import { STATUS_COLORS } from "../../types/tokens";
 import EmptyState from "../EmptyState";
 
-import EChartWrapper from "./EChartWrapper";
+import { useEChartTheme } from "./useEChartTheme";
 import { buildServiceGraphOption } from "./serviceGraphOptions";
 import type { EdgeExtras } from "./serviceGraphOptions";
 
@@ -47,6 +49,8 @@ function classifyEdge(current: ServiceMapEdge, baseline?: ServiceMapEdge): EdgeS
 }
 
 export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick }: Props) {
+  const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const mapData = useMemo(() => buildServiceMapData(currentSpans), [currentSpans]);
   const baselineMapData = useMemo(
     () => (baselineSpans ? buildServiceMapData(baselineSpans) : null),
@@ -119,6 +123,15 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
     [onNodeClick],
   );
 
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance || !onNodeClick || mapData.edges.length === 0) return;
+    instance.on("click", handleClick);
+    return () => {
+      instance.off("click", handleClick);
+    };
+  }, [onNodeClick, handleClick, mapData.edges.length, theme]);
+
   if (mapData.edges.length === 0) {
     return (
       <EmptyState
@@ -147,7 +160,12 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
         </Box>
       )}
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        <EChartWrapper option={option} onClick={handleClick} />
+        <EChart
+          option={option}
+          theme={theme}
+          _instance={instanceRef}
+          sx={{ width: "100%", height: "100%", minHeight: 120 }}
+        />
       </Box>
     </Box>
   );

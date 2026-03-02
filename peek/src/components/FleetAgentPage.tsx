@@ -10,6 +10,7 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import { EChart } from "@perses-dev/components";
 
 import {
   computeCheckinStaleness,
@@ -26,7 +27,6 @@ import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
-import EChartWrapper from "./visualizations/EChartWrapper";
 
 type AgentTab = "overview" | "logs" | "metrics";
 
@@ -361,7 +361,6 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
     const hasCpu = sorted.some((m) => m.cpuPct !== null);
     if (!hasCpu) return null;
     return {
-      ...theme,
       tooltip: { ...theme.tooltip, trigger: "axis" },
       grid: { left: 50, right: 20, top: 30, bottom: 30 },
       xAxis: {
@@ -387,7 +386,6 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
     const hasMemory = sorted.some((m) => m.memoryPct !== null);
     if (!hasMemory) return null;
     return {
-      ...theme,
       tooltip: { ...theme.tooltip, trigger: "axis" },
       grid: { left: 60, right: 20, top: 30, bottom: 30 },
       xAxis: {
@@ -418,7 +416,6 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
     const hasEvents = sorted.some((m) => m.eventsRate !== null);
     if (!hasEvents) return null;
     return {
-      ...theme,
       tooltip: { ...theme.tooltip, trigger: "axis" },
       grid: { left: 60, right: 20, top: 30, bottom: 30 },
       xAxis: {
@@ -468,7 +465,11 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             CPU Usage
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={cpuOption} sx={{ width: "100%", height: "100%" }} />
+            <EChart
+              option={cpuOption}
+              theme={theme}
+              sx={{ width: "100%", height: "100%", minHeight: 120 }}
+            />
           </Box>
         </Paper>
       )}
@@ -478,7 +479,11 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             Memory Usage
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={memoryOption} sx={{ width: "100%", height: "100%" }} />
+            <EChart
+              option={memoryOption}
+              theme={theme}
+              sx={{ width: "100%", height: "100%", minHeight: 120 }}
+            />
           </Box>
         </Paper>
       )}
@@ -488,7 +493,11 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             Events
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={eventsOption} sx={{ width: "100%", height: "100%" }} />
+            <EChart
+              option={eventsOption}
+              theme={theme}
+              sx={{ width: "100%", height: "100%", minHeight: 120 }}
+            />
           </Box>
         </Paper>
       )}

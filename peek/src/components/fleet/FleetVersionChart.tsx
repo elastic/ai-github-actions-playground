@@ -1,8 +1,8 @@
 import { useMemo } from "react";
+import { EChart } from "@perses-dev/components";
 
 import type { FleetAgentVersionCount } from "../../services/fleet";
 import { useEChartTheme } from "../visualizations/useEChartTheme";
-import EChartWrapper from "../visualizations/EChartWrapper";
 
 interface Props {
   versions: FleetAgentVersionCount[];
@@ -17,7 +17,6 @@ export default function FleetVersionChart({ versions }: Props) {
     const values = sorted.map((v) => v.count);
 
     return {
-      ...theme,
       tooltip: { ...theme.tooltip, trigger: "axis", axisPointer: { type: "shadow" } },
       grid: { left: 80, right: 20, top: 10, bottom: 30 },
       xAxis: { ...theme.xAxis, type: "value" },
@@ -34,5 +33,7 @@ export default function FleetVersionChart({ versions }: Props) {
   }, [versions, theme]);
 
   if (versions.length === 0) return null;
-  return <EChartWrapper option={option} sx={{ width: "100%", height: "100%" }} />;
+  return (
+    <EChart option={option} theme={theme} sx={{ width: "100%", height: "100%", minHeight: 120 }} />
+  );
 }

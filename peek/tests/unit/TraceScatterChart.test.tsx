@@ -1,7 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import * as echarts from "echarts/core";
+import { useEffect, useMemo } from "react";
+
 import TraceScatterChart from "../../src/components/visualizations/TraceScatterChart";
+
+const { mockSetOption, mockInit } = vi.hoisted(() => {
+  const mockSetOption = vi.fn();
+  const mockInit = vi.fn(() => ({
+    setOption: mockSetOption,
+    resize: vi.fn(),
+    dispose: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    getDataURL: vi.fn(() => "data:image/png;base64,mock"),
+  }));
+  return { mockSetOption, mockInit };
+});
 
 vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
   useEChartTheme: () => ({
@@ -13,12 +27,24 @@ vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
   }),
 }));
 
+vi.mock("@perses-dev/components", () => ({
+  EChart: function MockEChart(props: Record<string, unknown>) {
+    const inst = useMemo(() => mockInit(null, props.theme), [props.theme]);
+    inst.setOption(props.option, true);
+    const ref = props._instance as React.MutableRefObject<unknown> | undefined;
+    useEffect(() => {
+      if (!ref) return;
+      ref.current = inst;
+      return () => {
+        ref.current = undefined;
+      };
+    }, [ref, inst]);
+    return null;
+  },
+}));
+
 function getLastSetOptionCall(): Record<string, unknown> {
-  const mockInit = echarts.init as ReturnType<typeof vi.fn>;
-  const results = mockInit.mock.results;
-  const mockInstance = results[results.length - 1]?.value;
-  const setOption = mockInstance?.setOption as ReturnType<typeof vi.fn>;
-  const calls = setOption.mock.calls;
+  const calls = mockSetOption.mock.calls;
   return calls[calls.length - 1]?.[0] as Record<string, unknown>;
 }
 
@@ -41,7 +67,8 @@ function makePoint(overrides: Partial<DataPoint> = {}): DataPoint {
 
 describe("TraceScatterChart", () => {
   beforeEach(() => {
-    (echarts.init as ReturnType<typeof vi.fn>).mockClear();
+    mockInit.mockClear();
+    mockSetOption.mockClear();
   });
 
   it("shows empty title when no data is provided", () => {
@@ -148,7 +175,6 @@ describe("TraceScatterChart", () => {
       />,
     );
 
-    const mockInit = echarts.init as ReturnType<typeof vi.fn>;
     const mockInstance = mockInit.mock.results[0]?.value;
     const onFn = mockInstance?.on as ReturnType<typeof vi.fn>;
     const clickCall = onFn.mock.calls.find((c: unknown[]) => c[0] === "click");
@@ -160,7 +186,6 @@ describe("TraceScatterChart", () => {
 
   it("does not register click handler when onPointClick is not provided", () => {
     render(<TraceScatterChart data={[makePoint()]} />);
-    const mockInit = echarts.init as ReturnType<typeof vi.fn>;
     const mockInstance = mockInit.mock.results[0]?.value;
     const onFn = mockInstance?.on as ReturnType<typeof vi.fn>;
     const clickCall = onFn.mock.calls.find((c: unknown[]) => c[0] === "click");

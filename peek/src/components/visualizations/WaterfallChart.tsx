@@ -1,11 +1,12 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { Span, SpanTreeNode } from "../traces/traceUtils";
 import { buildSpanTree, flattenSpanTree, formatSpanDuration } from "../traces/traceUtils";
 import { getServiceColor } from "../traces/traceColors";
 
 import { useEChartTheme } from "./useEChartTheme";
-import EChartWrapper from "./EChartWrapper";
 import { escapeHtml } from "./htmlUtils";
 
 interface WaterfallChartProps {
@@ -20,6 +21,7 @@ export default function WaterfallChart({
   selectedSpanId,
 }: WaterfallChartProps) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
 
   // Single memoized computation of the span tree — shared by option and click handler
   const flatNodes: SpanTreeNode[] = useMemo(() => {
@@ -80,7 +82,6 @@ export default function WaterfallChart({
     );
 
     return {
-      ...theme,
       legend: { show: false },
       grid: {
         left: Math.min(280, 60 + Math.max(...categories.map((c) => c.length)) * 5.5),
@@ -162,5 +163,21 @@ export default function WaterfallChart({
     [chartNodes, onSpanClick],
   );
 
-  return <EChartWrapper option={option} onClick={onSpanClick ? handleClick : undefined} />;
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance || !onSpanClick) return;
+    instance.on("click", handleClick);
+    return () => {
+      instance.off("click", handleClick);
+    };
+  }, [onSpanClick, handleClick]);
+
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }
