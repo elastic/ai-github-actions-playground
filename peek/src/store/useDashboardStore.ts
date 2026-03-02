@@ -502,14 +502,17 @@ export const useDashboardStore = create<DashboardState>()(
         addParameter: (param) =>
           set((s) => {
             const active = getActiveDashboard(s);
-            return replaceActiveDashboard(s, {
-              ...active,
-              parameters: [
-                ...(active.parameters ?? []).filter((existing) => existing.name !== param.name),
-                param,
-              ],
-              updatedAt: nowIso(),
-            });
+            return {
+              ...pushToHistory(s, `Added parameter "${param.name}"`),
+              ...replaceActiveDashboard(s, {
+                ...active,
+                parameters: [
+                  ...(active.parameters ?? []).filter((existing) => existing.name !== param.name),
+                  param,
+                ],
+                updatedAt: nowIso(),
+              }),
+            };
           }),
 
         updateParameter: (name, updates) =>
@@ -522,26 +525,34 @@ export const useDashboardStore = create<DashboardState>()(
             }
             const nextName = updates.name ?? name;
             const next = { ...target, ...updates, name: nextName };
-            return replaceActiveDashboard(s, {
-              ...active,
-              parameters: [
-                ...parameters.filter(
-                  (parameter) => parameter.name !== name && parameter.name !== nextName,
-                ),
-                next,
-              ],
-              updatedAt: nowIso(),
-            });
+            return {
+              ...pushToHistory(s, `Updated parameter "${nextName}"`),
+              ...replaceActiveDashboard(s, {
+                ...active,
+                parameters: [
+                  ...parameters.filter(
+                    (parameter) => parameter.name !== name && parameter.name !== nextName,
+                  ),
+                  next,
+                ],
+                updatedAt: nowIso(),
+              }),
+            };
           }),
 
         removeParameter: (name) =>
           set((s) => {
             const active = getActiveDashboard(s);
-            return replaceActiveDashboard(s, {
-              ...active,
-              parameters: (active.parameters ?? []).filter((parameter) => parameter.name !== name),
-              updatedAt: nowIso(),
-            });
+            return {
+              ...pushToHistory(s, `Removed parameter "${name}"`),
+              ...replaceActiveDashboard(s, {
+                ...active,
+                parameters: (active.parameters ?? []).filter(
+                  (parameter) => parameter.name !== name,
+                ),
+                updatedAt: nowIso(),
+              }),
+            };
           }),
 
         setParameterValue: (name, value) =>
@@ -599,10 +610,8 @@ export const useDashboardStore = create<DashboardState>()(
               importedDashboard = result.data;
             }
             set((s) => {
-              const collidesWithNonActive = s.dashboards.some(
-                (d) => d.id === importedDashboard.id && d.id !== s.activeDashboardId,
-              );
-              const dashboard = collidesWithNonActive
+              const collidesWithExisting = s.dashboards.some((d) => d.id === importedDashboard.id);
+              const dashboard = collidesWithExisting
                 ? { ...importedDashboard, id: crypto.randomUUID() }
                 : importedDashboard;
               return {
@@ -707,7 +716,8 @@ export const useDashboardStore = create<DashboardState>()(
       {
         name: STORE_NAME,
         version: 3,
-        migrate: (persistedState) => {
+        migrate: (persistedState, _version) => {
+          void _version;
           const hydrated = hydrateWorkspaceFromPersistedState(persistedState);
           if (hydrated) {
             return {

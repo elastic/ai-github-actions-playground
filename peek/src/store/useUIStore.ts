@@ -19,17 +19,20 @@ interface UIState {
 }
 
 const STORE_NAME = "elastic-peek-ui";
+const DEFAULT_UI_STATE = {
+  themeMode: "dark" as const,
+  editingPanelId: null as string | null,
+  connectionDialogOpen: false,
+  commandPaletteOpen: false,
+  aiPanelOpen: false,
+  explainModeActive: false,
+};
 
 export const useUIStore = create<UIState>()(
   devtools(
     persist(
       (set) => ({
-        themeMode: "dark",
-        editingPanelId: null,
-        connectionDialogOpen: false,
-        commandPaletteOpen: false,
-        aiPanelOpen: false,
-        explainModeActive: false,
+        ...DEFAULT_UI_STATE,
 
         setThemeMode: (mode) => set({ themeMode: mode }),
         setEditingPanelId: (id) => set({ editingPanelId: id }),
@@ -39,14 +42,7 @@ export const useUIStore = create<UIState>()(
         setExplainModeActive: (active) => set({ explainModeActive: active }),
         resetUIState: () => {
           useUIStore.persist.clearStorage();
-          set({
-            themeMode: "dark",
-            editingPanelId: null,
-            connectionDialogOpen: false,
-            commandPaletteOpen: false,
-            aiPanelOpen: false,
-            explainModeActive: false,
-          });
+          set(DEFAULT_UI_STATE);
         },
       }),
       {

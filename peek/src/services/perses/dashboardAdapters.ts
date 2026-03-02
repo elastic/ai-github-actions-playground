@@ -11,6 +11,10 @@ import {
 export type PersesDashboardDefinition = z.infer<typeof persesDashboardSchema>;
 export type PersesWorkspaceSnapshot = z.infer<typeof persesWorkspaceSnapshotSchema>;
 
+function toSerializableY(y: number): number {
+  return Number.isFinite(y) ? y : Number.MAX_SAFE_INTEGER;
+}
+
 function toPanelQueries(panel: Pick<PanelDefinition, "query" | "queries">): string[] {
   const canonicalQueries =
     panel.queries?.map((query) => query.trim()).filter((query) => query.length > 0) ?? [];
@@ -70,7 +74,7 @@ export function toPersesDashboard(dashboard: DashboardDefinition): PersesDashboa
             kind: "Panel",
             spec: {
               display: { name: panel.title },
-              layout: panel.layout,
+              layout: { ...panel.layout, y: toSerializableY(panel.layout.y) },
               plugin: {
                 kind: getPersesPanelPluginKind(panel.visualization),
                 spec: panel.options as Record<string, unknown> | undefined,

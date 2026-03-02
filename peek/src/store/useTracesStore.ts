@@ -36,16 +36,20 @@ interface TracesState {
   resetFilters: () => void;
 }
 
+const getInitialTracesState = () => ({
+  filters: { ...EMPTY_FILTERS },
+  rawQuery: null as string | null,
+  selectedTraceId: null as string | null,
+  selectedTraceSpans: [] as Span[],
+  selectedSpanId: null as string | null,
+  viewMode: "list" as TracesViewMode,
+  drawerOpen: false,
+});
+
 export const useTracesStore = create<TracesState>()(
   devtools(
     (set) => ({
-      filters: { ...EMPTY_FILTERS },
-      rawQuery: null,
-      selectedTraceId: null,
-      selectedTraceSpans: [],
-      selectedSpanId: null,
-      viewMode: "list",
-      drawerOpen: false,
+      ...getInitialTracesState(),
 
       setFilters: (filters) => set({ filters, rawQuery: null }),
       updateFilters: (updates) =>
@@ -68,16 +72,7 @@ export const useTracesStore = create<TracesState>()(
           filters: { ...s.filters, tags: s.filters.tags.filter((_, i) => i !== index) },
           rawQuery: null,
         })),
-      resetFilters: () =>
-        set({
-          filters: { ...EMPTY_FILTERS },
-          rawQuery: null,
-          selectedTraceId: null,
-          selectedTraceSpans: [],
-          selectedSpanId: null,
-          viewMode: "list",
-          drawerOpen: false,
-        }),
+      resetFilters: () => set(getInitialTracesState()),
     }),
     { name: "TracesStore", enabled: import.meta.env.DEV },
   ),

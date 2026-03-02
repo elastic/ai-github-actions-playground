@@ -743,6 +743,19 @@ describe("useDashboardStore importDashboard", () => {
     expect(ids.filter((id) => id === secondId)).toHaveLength(1);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it("assigns a new ID when imported dashboard ID collides with the active dashboard", () => {
+    const active = useDashboardStore.getState().dashboard;
+    const imported = makeValidDashboard({ id: active.id, title: "Imported Active Collision" });
+
+    const result = useDashboardStore.getState().importDashboard(JSON.stringify(imported));
+    expect(result).toEqual({ success: true });
+
+    const stateAfterImport = useDashboardStore.getState();
+    expect(stateAfterImport.dashboard.title).toBe("Imported Active Collision");
+    expect(stateAfterImport.dashboard.id).not.toBe(active.id);
+    expect(stateAfterImport.dashboards.some((d) => d.id === active.id)).toBe(false);
+  });
 });
 
 describe("useDashboardStore importWorkspace", () => {
