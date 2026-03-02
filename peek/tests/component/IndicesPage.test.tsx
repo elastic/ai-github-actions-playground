@@ -130,12 +130,12 @@ const SAMPLE_STATS = {
 
 function LocationDisplay() {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 }
 
-function renderPage() {
+function renderPage(initialEntries: string[] = ["/"]) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <NuqsTestingAdapter hasMemory>
         <IndicesPage />
         <LocationDisplay />
