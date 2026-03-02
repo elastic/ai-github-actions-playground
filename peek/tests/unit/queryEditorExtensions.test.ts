@@ -68,9 +68,18 @@ describe("esqlCompletionSource", () => {
     expect(result).toBeNull();
   });
 
-  it("returns completions on explicit trigger at empty position", () => {
+  it("returns null at empty position even with explicit trigger", () => {
+    // matchBefore requires at least one letter; empty doc has nothing to match
     const result = esqlCompletionSource(makeContext("", 0, true));
-    expect(result).toBeNull(); // no word prefix at empty position
+    expect(result).toBeNull();
+  });
+
+  it("returns completions on explicit trigger with cursor after a word prefix", () => {
+    const result = esqlCompletionSource(makeContext("S", 1, true));
+    expect(result).not.toBeNull();
+    const labels = (result as CompletionResult).options.map((o) => o.label);
+    expect(labels).toContain("STATS");
+    expect(labels).toContain("SORT");
   });
 
   it("includes function completions with open paren in apply", () => {

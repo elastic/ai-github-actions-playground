@@ -76,7 +76,9 @@ export function parseEsqlErrorPosition(
   const lineInfo = doc.line(line);
   const from = lineInfo.from + Math.min(col, lineInfo.length);
   let to = from;
-  while (to < lineInfo.to && /\S/.test(lineInfo.text[to - lineInfo.from] ?? "")) {
+  while (to < lineInfo.to) {
+    const charIndex = to - lineInfo.from;
+    if (!/\S/.test(lineInfo.text[charIndex] ?? "")) break;
     to++;
   }
   if (to === from) to = Math.min(from + 1, lineInfo.to);
