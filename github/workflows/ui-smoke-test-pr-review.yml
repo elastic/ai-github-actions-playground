@@ -140,7 +140,10 @@ jobs:
                         0,
                       ),
                       error:
-                        allErrors.map((e) => e.message).join("\n") || null,
+                        allErrors
+                          .map((e) => e.message)
+                          .filter(Boolean)
+                          .join("\n") || null,
                     });
                   }
                   if (suite.suites) {
