@@ -361,4 +361,73 @@ describe("DiscoverPage", () => {
       expect.any(AbortSignal),
     );
   });
+
+  it("creates a panel from the current query using Convert to Visualization", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    const convertButton = screen.getByRole("button", { name: /convert to visualization/i });
+    await user.click(convertButton);
+
+    const panels = useDashboardStore.getState().dashboard.panels;
+    expect(panels.length).toBeGreaterThanOrEqual(1);
+    const newPanel = panels[panels.length - 1]!;
+    expect(newPanel.visualization).toBe("table");
+    expect(newPanel.query).toBe("FROM logs-* | SORT @timestamp | LIMIT 50");
+  });
+
+  it("uses the draft query when creating a panel via Convert to Visualization", async () => {
+    const user = userEvent.setup();
+    useQueryStore.getState().setDiscoverQueryDraft("FROM metrics-* | LIMIT 100");
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /convert to visualization/i }));
+
+    const panels = useDashboardStore.getState().dashboard.panels;
+    const newPanel = panels[panels.length - 1]!;
+    expect(newPanel.query).toBe("FROM metrics-* | LIMIT 100");
+  });
+
+  it("shows the empty state before a query is run", () => {
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("No results yet")).toBeInTheDocument();
+  });
+
+  it("disables Export CSV button when there is no result data", () => {
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    // The DataTable mock is rendered only when there are results,
+    // so the export CSV button within DataTable should not be present
+    expect(screen.queryByRole("button", { name: /export csv/i })).not.toBeInTheDocument();
+  });
+
+  it("disables the Run Query button when query is empty", () => {
+    useQueryStore.getState().setDiscoverSessionQuery("   ");
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: /run query/i })).toBeDisabled();
+  });
 });
