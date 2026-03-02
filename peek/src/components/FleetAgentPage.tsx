@@ -467,7 +467,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             CPU Usage
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={cpuOption} style={{ width: "100%", height: "100%" }} />
+            <EChartWrapper option={cpuOption} sx={{ width: "100%", height: "100%" }} />
           </Box>
         </Paper>
       )}
@@ -477,7 +477,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             Memory Usage
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={memoryOption} style={{ width: "100%", height: "100%" }} />
+            <EChartWrapper option={memoryOption} sx={{ width: "100%", height: "100%" }} />
           </Box>
         </Paper>
       )}
@@ -487,7 +487,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
             Events
           </Typography>
           <Box sx={{ height: 200 }}>
-            <EChartWrapper option={eventsOption} style={{ width: "100%", height: "100%" }} />
+            <EChartWrapper option={eventsOption} sx={{ width: "100%", height: "100%" }} />
           </Box>
         </Paper>
       )}
