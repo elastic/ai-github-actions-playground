@@ -49,9 +49,9 @@ test.describe("Mobile Exploration @mobile", () => {
     const welcomeResults = await new AxeBuilder({ page }).analyze();
     const welcomeViolations = welcomeResults.violations.filter((v) => v.id === "color-contrast");
     expect(
-      welcomeViolations.length,
-      "Mobile welcome page should have no new color-contrast violations beyond desktop baseline",
-    ).toBeLessThanOrEqual(1);
+      welcomeViolations,
+      `Mobile welcome page has color-contrast violations: ${JSON.stringify(welcomeViolations, null, 2)}`,
+    ).toHaveLength(0);
   });
 
   test("sidebar and header should be visible on mobile after connection", async ({ page }) => {
@@ -69,8 +69,8 @@ test.describe("Mobile Exploration @mobile", () => {
       (v) => v.id === "color-contrast",
     );
     expect(
-      postConnectViolations.length,
-      "Mobile post-connect page should have no new color-contrast violations beyond desktop baseline",
-    ).toBeLessThanOrEqual(2);
+      postConnectViolations,
+      `Mobile post-connect page has color-contrast violations: ${JSON.stringify(postConnectViolations, null, 2)}`,
+    ).toHaveLength(0);
   });
 });
