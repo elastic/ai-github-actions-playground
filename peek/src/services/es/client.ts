@@ -420,7 +420,7 @@ export class ElasticsearchClient {
 
   async getNodeStats(signal?: AbortSignal): Promise<NodesStatsResponse> {
     return this._fetchValidated<NodesStatsResponse>(
-      "/_nodes/stats/os,jvm,process,thread_pool,breakers,indices,fs,ingest",
+      "/_nodes/stats/os,jvm,process,thread_pool,breaker,indices,fs,ingest",
       nodesStatsResponseSchema,
       "nodes stats",
       { signal },
