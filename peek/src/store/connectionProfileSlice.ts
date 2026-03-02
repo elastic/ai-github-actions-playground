@@ -142,8 +142,13 @@ export const createConnectionProfileSlice: StateCreator<
     if (!profile) {
       return { ok: false, profileName: null, message: "Connection profile not found" };
     }
+    const prevActiveProfileId = get().activeProfileId;
+    set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
+      if (get().activeProfileId !== id) {
+        return { ok: true, profileName: profile.name };
+      }
       set((s) => ({
         connection: profile.connection,
         connected: true,
@@ -162,6 +167,7 @@ export const createConnectionProfileSlice: StateCreator<
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
       set((s) => ({
+        activeProfileId: s.activeProfileId === id ? prevActiveProfileId : s.activeProfileId,
         profileHealthMap: {
           ...s.profileHealthMap,
           [id]: {
