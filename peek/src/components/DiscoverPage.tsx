@@ -138,6 +138,9 @@ export default function DiscoverPage() {
       setTableVersion((prev) => prev + 1);
       timingsCleared.current = false;
     },
+    onFailure: () => {
+      setResult(null);
+    },
   });
   const insightQueryToColumnRef = useRef(new Map<string, string>());
   const { runQuery: runInsightQuery } = useEsqlQuery({
