@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 
 import type { ElasticsearchClient } from "../services/es";
 import { buildTimeParams } from "../services/datemath";
@@ -64,11 +65,9 @@ export interface BatchedOverviewResult {
  * Shared batching orchestration hook used by both `MetricOverviewGrid` and
  * `DimensionOverviewGrid`.
  *
- * - Marks items as loading while preserving prior data for display continuity.
- * - Queries in batches of `batchSize` using an `AbortSignal`.
- * - Folds results into state after each batch.
- * - On the initial discovery pass, records which items have data so subsequent
- *   refreshes only re-query those items.
+ * Uses TanStack Query (`useQueries`) to manage per-item query state.
+ * On the initial discovery pass, records which items have data so subsequent
+ * refreshes only re-query those items.
  */
 export function useBatchedOverviewQueries<T extends { name: string }>({
   items,
@@ -76,142 +75,123 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
   scopeKey,
   buildQuery,
   timeRange,
-  batchSize = 6,
 }: Options<T>): BatchedOverviewResult {
-  const [results, setResults] = useState<Record<string, OverviewQueryResult>>({});
-  const abortRef = useRef<AbortController | null>(null);
-  const knownWithDataRef = useRef<Set<string> | null>(null);
-  const prevScopeRef = useRef<string | null>(null);
-  const clientRef = useRef(client);
-  const itemsRef = useRef(items);
-  const timeRangeRef = useRef(timeRange);
-  const resultsRef = useRef(results);
-
-  // Keep a stable ref so the effect can always call the latest buildQuery
+  // Keep a stable ref so the queryFn can always call the latest buildQuery
   // without it being a reactive dependency (avoids requiring useCallback at
   // every call site).
   const buildQueryRef = useRef(buildQuery);
   useLayoutEffect(() => {
     buildQueryRef.current = buildQuery;
-    clientRef.current = client;
-    itemsRef.current = items;
-    timeRangeRef.current = timeRange;
-    resultsRef.current = results;
   });
 
-  /** Run a batch pass for the given subset of items. */
-  const runBatchesFor = useCallback(
-    (
-      itemsToQuery: T[],
-      esClient: ElasticsearchClient,
-      range: TimeRange,
-      size: number,
-      recordDiscovery: boolean,
-    ) => {
-      abortRef.current?.abort();
-      abortRef.current = new AbortController();
-      const signal = abortRef.current.signal;
+  // Discovery state: tracks which items returned data after the first pass.
+  const [knownWithData, setKnownWithData] = useState<Set<string> | null>(null);
+  const prevScopeRef = useRef<string | null>(null);
 
-      const run = async () => {
-        const safeBatchSize = Number.isInteger(size) && size > 0 ? size : 1;
-
-        setResults((prev) => {
-          const next = { ...prev };
-          for (const item of itemsToQuery) {
-            next[item.name] = { status: "loading", data: prev[item.name]?.data };
-          }
-          return next;
-        });
-
-        for (let i = 0; i < itemsToQuery.length; i += safeBatchSize) {
-          if (signal.aborted) return;
-          const batch = itemsToQuery.slice(i, i + safeBatchSize);
-          const promises = batch.map(async (item) => {
-            try {
-              const queryDef = buildQueryRef.current(item);
-              const params = buildTimeParams(queryDef.esql, range);
-              const result = await esClient.query(
-                Object.keys(params).length > 0
-                  ? { query: queryDef.esql, params }
-                  : { query: queryDef.esql },
-                signal,
-              );
-              return { name: item.name, status: "success" as const, data: result as EsqlResponse };
-            } catch (err: unknown) {
-              if (signal.aborted) return null;
-              const errorReason = err instanceof Error ? err.message : "Unknown error";
-              return { name: item.name, status: "error" as const, errorReason };
-            }
-          });
-
-          const batchResults = await Promise.all(promises);
-          if (signal.aborted) return;
-
-          setResults((prev) => {
-            const next = { ...prev };
-            for (const r of batchResults) {
-              if (r) {
-                next[r.name] = { status: r.status, data: r.data, errorReason: r.errorReason };
-              }
-            }
-            return next;
-          });
-        }
-
-        if (recordDiscovery) {
-          setResults((current) => {
-            const withData = new Set<string>();
-            for (const [name, r] of Object.entries(current)) {
-              if (r.status === "success" && r.data && r.data.values.length > 0) {
-                const metricIdx = r.data.columns.findIndex((c) => c.name === "metric");
-                if (metricIdx >= 0 && r.data.values.some((row) => row[metricIdx] != null)) {
-                  withData.add(name);
-                }
-              }
-            }
-            knownWithDataRef.current = withData;
-            return current;
-          });
-        }
-      };
-
-      void run();
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!client || items.length === 0) return;
-
-    // When the data scope changes, clear the cache so we do full discovery.
-    if (scopeKey !== prevScopeRef.current) {
-      prevScopeRef.current = scopeKey;
-      knownWithDataRef.current = null;
+  // Reset the known-with-data cache when the data scope changes.
+  if (scopeKey !== prevScopeRef.current) {
+    prevScopeRef.current = scopeKey;
+    if (knownWithData !== null) {
+      setKnownWithData(null);
     }
+  }
 
-    // On first load (or after scope change) query everything; on subsequent
-    // refreshes only re-query items that previously had data.
-    const isRefresh = (knownWithDataRef.current?.size ?? 0) > 0;
-    const itemsToQuery = isRefresh
-      ? items.filter((item) => knownWithDataRef.current!.has(item.name))
-      : items;
+  const isRefresh = (knownWithData?.size ?? 0) > 0;
 
-    runBatchesFor(itemsToQuery, client, timeRange, batchSize, !isRefresh);
+  const queries = useQueries({
+    queries: items.map((item) => ({
+      queryKey: ["overview", scopeKey, item.name, timeRange] as const,
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const queryDef = buildQueryRef.current(item);
+        const params = buildTimeParams(queryDef.esql, timeRange);
+        const result = await client!.query(
+          Object.keys(params).length > 0
+            ? { query: queryDef.esql, params }
+            : { query: queryDef.esql },
+          signal,
+        );
+        return result as EsqlResponse;
+      },
+      enabled: Boolean(client) && (!isRefresh || knownWithData!.has(item.name)),
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    })),
+  });
 
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, [client, items, scopeKey, timeRange, batchSize, runBatchesFor]);
+  // Build the results record from query states.
+  const results: Record<string, OverviewQueryResult> = {};
+  for (let i = 0; i < items.length; i++) {
+    const q = queries[i]!;
+    const item = items[i]!;
+    if (q.isFetching) {
+      results[item.name] = { status: "loading", data: q.data };
+    } else if (q.isError) {
+      results[item.name] = {
+        status: "error",
+        errorReason: q.error instanceof Error ? q.error.message : "Unknown error",
+      };
+    } else if (q.isSuccess) {
+      results[item.name] = { status: "success", data: q.data };
+    } else {
+      results[item.name] = { status: "idle" };
+    }
+  }
+
+  // Once all queries have settled, (re-)compute the known-with-data set.
+  // This runs both after the initial discovery pass and after retryFailed
+  // recoveries so that recovered items are included in future refreshes.
+  const allSettled = queries.length > 0 && queries.every((q) => !q.isFetching);
+  useEffect(() => {
+    if (!allSettled) return;
+    const withData = new Set<string>();
+    for (let i = 0; i < items.length; i++) {
+      const q = queries[i]!;
+      const item = items[i]!;
+      if (q.isSuccess && q.data) {
+        const data = q.data as EsqlResponse;
+        if (data.values.length === 0) continue;
+        const metricIdx = data.columns.findIndex((c) => c.name === "metric");
+        if (metricIdx >= 0 && data.values.some((row) => row[metricIdx] != null)) {
+          withData.add(item.name);
+        }
+      }
+    }
+    setKnownWithData((prev) => {
+      if (prev !== null && prev.size === withData.size && [...withData].every((n) => prev.has(n))) {
+        return prev;
+      }
+      return withData;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allSettled]);
 
   const retryFailed = useCallback(() => {
-    const esClient = clientRef.current;
-    if (!esClient) return;
-    const failedItems = itemsRef.current.filter(
-      (item) => resultsRef.current[item.name]?.status === "error",
-    );
-    if (failedItems.length === 0) return;
-    runBatchesFor(failedItems, esClient, timeRangeRef.current, batchSize, true);
-  }, [batchSize, runBatchesFor]);
+    const failedNames: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (queries[i]?.isError) {
+        failedNames.push(items[i]!.name);
+      }
+    }
+    if (failedNames.length === 0) return;
+
+    // When in refresh mode, add failed items to the known set so they
+    // become enabled. TanStack Query auto-fetches enabled queries in
+    // error state. When not in refresh mode, all items are already
+    // enabled; trigger a manual refetch.
+    setKnownWithData((prev) => {
+      if (prev === null) return prev;
+      const next = new Set(prev);
+      for (const name of failedNames) next.add(name);
+      return next;
+    });
+
+    for (let i = 0; i < items.length; i++) {
+      if (queries[i]?.isError) {
+        void queries[i]!.refetch();
+      }
+    }
+  }, [items, queries]);
 
   return { results, retryFailed };
 }
