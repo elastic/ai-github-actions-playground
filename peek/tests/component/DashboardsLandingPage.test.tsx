@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -227,8 +227,7 @@ describe("DashboardsLandingPage", () => {
 
     const dialog = screen.getByRole("dialog", { name: /edit dashboard details/i });
     const descInput = within(dialog).getByLabelText(/description/i);
-    await user.clear(descInput);
-    await user.type(descInput, "My dashboard description");
+    fireEvent.change(descInput, { target: { value: "My dashboard description" } });
 
     const tagInput = within(dialog).getByLabelText(/add tag/i);
     await user.type(tagInput, "prod{Enter}");
