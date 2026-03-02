@@ -43,7 +43,7 @@ jobs:
         working-directory: peek
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: smoke-results.json
-        run: npx playwright test tests/e2e/smoke.spec.ts --reporter=json
+        run: npx playwright test tests/e2e/smoke.spec.ts --project=chromium --reporter=json
 
       - name: Run screenshot preflight
         id: preflight
