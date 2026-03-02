@@ -2,6 +2,8 @@
 
 Press Ctrl/Cmd+K to open the command palette. Quickly jump between pages, open settings, toggle themes, and load recent queries — all without leaving the keyboard.
 
+Press Ctrl/Cmd+Shift+A to toggle the AI Assistant drawer open or closed from any page.
+
 Press Ctrl/Cmd+Enter in Query Lab or Panel Editor to run the current ES|QL query without leaving the keyboard.
 
 Click the dashboard title in the header to rename it inline.
