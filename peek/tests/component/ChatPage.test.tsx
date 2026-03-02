@@ -305,6 +305,10 @@ describe("ChatPage", () => {
   it("shows tool call activity during streaming", async () => {
     const user = userEvent.setup();
     useLLMStore.getState().setApiKey("sk-test-key");
+    let continueStream!: () => void;
+    const continueAfterToolCall = new Promise<void>((resolve) => {
+      continueStream = resolve;
+    });
 
     // Create a stream that yields a tool-call, tool-result, then text
     vi.mocked(streamText).mockReturnValue({
@@ -315,6 +319,7 @@ describe("ChatPage", () => {
           toolName: "run_esql_query",
           args: { query: "FROM metrics" },
         };
+        await continueAfterToolCall;
         yield {
           type: "tool-result" as const,
           toolCallId: "tc-1",
@@ -329,6 +334,12 @@ describe("ChatPage", () => {
 
     await user.type(screen.getByPlaceholderText("Type a message…"), "Run query");
     await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Running query/)).toBeInTheDocument();
+    });
+
+    continueStream();
 
     await waitFor(() => {
       expect(screen.getByText("Found some results")).toBeInTheDocument();
