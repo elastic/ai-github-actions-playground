@@ -51,7 +51,13 @@ export function collectConsoleLogs(page: Page): ConsoleDiagnostic[] {
 }
 
 export async function runAccessibilityCheck(page: Page, pageName: string) {
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await new AxeBuilder({ page })
+    .options({
+      rules: {
+        "color-contrast": { enabled: true },
+      },
+    })
+    .analyze();
 
   if (results.violations.length > 0) {
     console.log(`\n=== A11Y VIOLATIONS: ${pageName} (${results.violations.length}) ===`);
@@ -383,7 +389,11 @@ export function registerLoveAuditTests(
         // Wait for the expected page heading to confirm navigation completed
         if (pageConfig.expectedHeading) {
           await page
-            .getByRole("heading", { name: pageConfig.expectedHeading, level: 1 })
+            .getByRole("heading", {
+              name: pageConfig.expectedHeading,
+              level: 1,
+              exact: true,
+            })
             .waitFor({ state: "visible", timeout: 10_000 });
         }
 
