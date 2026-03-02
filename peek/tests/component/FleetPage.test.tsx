@@ -372,7 +372,7 @@ describe("Fleet pages", () => {
     await waitFor(() => {
       expect(screen.queryByText(/not found in recent Elastic Agent logs/i)).not.toBeInTheDocument();
     });
-    expect(screen.getByRole("tab", { name: /Logs \(1\)/ })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /Logs \(1\)/ })).toBeInTheDocument();
   });
 
   it("shows partial error warning when some sources fail", async () => {
