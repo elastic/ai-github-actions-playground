@@ -209,6 +209,48 @@ describe("CommandPalette", () => {
     expect(screen.getByLabelText("Command palette")).toBeInTheDocument();
   });
 
+  it("shows Toggle AI Assistant action command", () => {
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(screen.getByText("Toggle AI Assistant")).toBeInTheDocument();
+  });
+
+  it("opens AI panel when Toggle AI Assistant is clicked", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(false);
+    await user.click(screen.getByText("Toggle AI Assistant"));
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(true);
+    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+  });
+
+  it("toggles AI panel open with Ctrl+Shift+A keyboard shortcut", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(false);
+
+    await user.keyboard("{Control>}{Shift>}a{/Shift}{/Control}");
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(true);
+  });
+
+  it("toggles AI panel closed with Ctrl+Shift+A when already open", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setAiPanelOpen(true);
+    renderPalette();
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(true);
+
+    await user.keyboard("{Control>}{Shift>}a{/Shift}{/Control}");
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(false);
+  });
+
   it("excludes the current page from navigation commands", () => {
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
