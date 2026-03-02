@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useCallback } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { formatValue } from "@perses-dev/core";
 import { EChart } from "@perses-dev/components";
 import type { ECharts } from "echarts/core";
@@ -25,22 +25,14 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
   const stacked = options?.stacked === true;
   const format = options?.format;
 
-  // Register the PNG-export capability when the chart instance is available.
+  // Register the PNG-export capability once the chart instance is available.
+  // The `_instance` ref is populated by the Perses EChart component during its
+  // useLayoutEffect, which fires before this useEffect.
   useEffect(() => {
     if (!onExportReady) return;
     onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
     return () => onExportReady(null);
   }, [onExportReady]);
-
-  const handleChartInitialized = useCallback(
-    (instance: ECharts) => {
-      instanceRef.current = instance;
-      if (onExportReady) {
-        onExportReady(() => instance.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
-      }
-    },
-    [onExportReady],
-  );
 
   const option = useMemo(() => {
     const dateIdx = findDateColumnIndex(data);
@@ -120,14 +112,13 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
       dataZoom: dateIdx >= 0 ? [{ type: "inside", start: 0, end: 100 }] : undefined,
       series,
     };
-  }, [data, theme.color, smooth, showArea, stacked, format, timeZone]);
+  }, [data, theme, smooth, showArea, stacked, format, timeZone]);
 
   return (
     <EChart
       option={option}
       theme={theme}
       _instance={instanceRef}
-      onChartInitialized={handleChartInitialized}
       sx={{ width: "100%", height: "100%", minHeight: 120 }}
     />
   );
