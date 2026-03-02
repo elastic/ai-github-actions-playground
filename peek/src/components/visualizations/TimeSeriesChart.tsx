@@ -51,7 +51,9 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
         showArea && (transformed.series.length === 1 || stacked) ? { opacity: 0.1 } : undefined,
       stack: stacked ? "total" : undefined,
       itemStyle: {
-        color: theme.color.length ? theme.color[i % theme.color.length] : CHART_COLORS[0],
+        color: theme.color.length
+          ? theme.color[i % theme.color.length]
+          : CHART_COLORS[i % CHART_COLORS.length],
       },
     }));
 

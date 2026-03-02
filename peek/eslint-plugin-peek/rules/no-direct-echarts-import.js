@@ -18,7 +18,11 @@ export default {
         const source = node.source.value;
         if (typeof source === "string" && source.startsWith("echarts")) {
           // Allow type-only imports (no runtime effect)
-          if (node.importKind === "type") {
+          const declarationTypeOnly = node.importKind === "type";
+          const specifiersTypeOnly =
+            node.specifiers.length > 0 &&
+            node.specifiers.every((s) => s.type === "ImportSpecifier" && s.importKind === "type");
+          if (declarationTypeOnly || specifiersTypeOnly) {
             return;
           }
           // Allow in EChartWrapper itself and in tests
