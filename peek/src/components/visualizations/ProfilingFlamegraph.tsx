@@ -14,6 +14,8 @@ import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 
 import type { FlamegraphNode, FrameType } from "../profiling/profilingUtils";
 import { findSubtreeByPath } from "../profiling/profilingUtils";
+import { CHART_COLORS } from "../../theme";
+import { STATUS_COLORS } from "../../types/tokens";
 
 import EChartWrapper from "./EChartWrapper";
 import { escapeHtml } from "./htmlUtils";
@@ -70,11 +72,36 @@ function flattenTreeInto(
 }
 
 const FRAME_TYPE_COLORS: Record<FrameType, string[]> = {
-  kernel: ["#e25822", "#d64f1f", "#c14618", "#b03d12"],
-  runtime: ["#f7b344", "#fcc94c", "#f0a030", "#e8972a"],
-  native: ["#e8702a", "#ed8733", "#f29d3b", "#e06020"],
-  interpreted: ["#5b9bd5", "#4a8bc4", "#6aabdf", "#3a7bb4"],
-  app: ["#6cc644", "#5cb534", "#7cd654", "#4ca624"],
+  kernel: [
+    STATUS_COLORS.error,
+    CHART_COLORS[9] ?? STATUS_COLORS.warning,
+    CHART_COLORS[2] ?? STATUS_COLORS.error,
+    CHART_COLORS[3] ?? STATUS_COLORS.warning,
+  ],
+  runtime: [
+    STATUS_COLORS.warning,
+    CHART_COLORS[8] ?? STATUS_COLORS.warning,
+    CHART_COLORS[3] ?? STATUS_COLORS.warning,
+    CHART_COLORS[1] ?? STATUS_COLORS.inProgress,
+  ],
+  native: [
+    CHART_COLORS[10] ?? STATUS_COLORS.info,
+    CHART_COLORS[0] ?? STATUS_COLORS.info,
+    CHART_COLORS[4] ?? STATUS_COLORS.info,
+    CHART_COLORS[11] ?? STATUS_COLORS.info,
+  ],
+  interpreted: [
+    CHART_COLORS[4] ?? STATUS_COLORS.info,
+    CHART_COLORS[6] ?? STATUS_COLORS.info,
+    CHART_COLORS[10] ?? STATUS_COLORS.info,
+    CHART_COLORS[0] ?? STATUS_COLORS.info,
+  ],
+  app: [
+    STATUS_COLORS.success,
+    CHART_COLORS[7] ?? STATUS_COLORS.success,
+    CHART_COLORS[1] ?? STATUS_COLORS.success,
+    CHART_COLORS[11] ?? STATUS_COLORS.success,
+  ],
 };
 
 const DIMMED_OPACITY = 0.25;
