@@ -294,6 +294,7 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("menuitem", { name: /reset all state/i }));
 
     expect(onRequestReset).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menuitem", { name: /reset all state/i })).not.toBeInTheDocument();
   });
 
   it("hides Users nav item when canReadSecurityUsers is false", () => {

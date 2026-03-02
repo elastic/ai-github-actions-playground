@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ResetConfirmationDialog from "../../src/components/ResetConfirmationDialog";
+import { RESET_SCOPE } from "../../src/store/storeResetters";
 
 describe("ResetConfirmationDialog", () => {
   const onConfirm = vi.fn();
@@ -17,7 +18,10 @@ describe("ResetConfirmationDialog", () => {
     render(<ResetConfirmationDialog open onConfirm={onConfirm} onCancel={onCancel} />);
 
     expect(screen.getByText("Reset all application state?")).toBeInTheDocument();
-    expect(screen.getByText("Connection settings and credentials")).toBeInTheDocument();
+    for (const item of RESET_SCOPE) {
+      expect(screen.getByText(item.label)).toBeInTheDocument();
+    }
+    expect(screen.getAllByRole("listitem")).toHaveLength(RESET_SCOPE.length);
     expect(screen.getByText("This action cannot be undone.")).toBeInTheDocument();
   });
 

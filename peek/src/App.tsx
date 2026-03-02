@@ -41,6 +41,7 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const handleRequestReset = () => setResetDialogOpen(true);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
@@ -99,14 +100,14 @@ export default function App() {
                 <AppSidebar
                   mobile
                   onNavigate={() => setMobileNavOpen(false)}
-                  onRequestReset={() => setResetDialogOpen(true)}
+                  onRequestReset={handleRequestReset}
                 />
               </Drawer>
             ) : (
               <AppSidebar
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-                onRequestReset={() => setResetDialogOpen(true)}
+                onRequestReset={handleRequestReset}
               />
             ))}
           <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>

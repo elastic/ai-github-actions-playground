@@ -6,20 +6,13 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 
+import { RESET_SCOPE } from "../store/storeResetters";
+
 interface ResetConfirmationDialogProps {
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
-
-const AFFECTED_STATE = [
-  "Connection settings and credentials",
-  "Dashboard layouts and state",
-  "Query Lab filters and queries",
-  "Traces, metrics, and fleet filters",
-  "LLM and AI assistant configuration",
-  "UI preferences (theme, panel state)",
-];
 
 export default function ResetConfirmationDialog({
   open,
@@ -34,9 +27,9 @@ export default function ResetConfirmationDialog({
           This will clear all locally stored data, including:
         </Typography>
         <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
-          {AFFECTED_STATE.map((item) => (
-            <li key={item}>
-              <Typography variant="body2">{item}</Typography>
+          {RESET_SCOPE.map((item) => (
+            <li key={item.label}>
+              <Typography variant="body2">{item.label}</Typography>
             </li>
           ))}
         </Box>
