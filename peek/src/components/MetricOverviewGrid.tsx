@@ -275,7 +275,6 @@ export default function MetricOverviewGrid({
                     sx={{
                       height: 16,
                       fontSize: "0.6rem",
-                      "& .MuiChip-label": { px: 0.5 },
                     }}
                   />
                 </Box>

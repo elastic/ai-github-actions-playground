@@ -268,7 +268,6 @@ export default function FieldPickerSidebar({
                         sx={{
                           height: 14,
                           fontSize: "0.6rem",
-                          "& .MuiChip-label": { px: 0.5 },
                         }}
                       />
                     </Box>

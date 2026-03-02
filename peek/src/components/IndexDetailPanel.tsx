@@ -18,6 +18,7 @@ import {
   type IndexStatsResponse,
 } from "../services/es";
 import { formatBytes } from "../utils/formatBytes";
+import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
@@ -108,7 +109,7 @@ function OverviewContent({ selectedRecord }: { selectedRecord: CatIndexRecord | 
                 size="small"
                 label={selectedRecord.health.toUpperCase()}
                 color={healthColor(selectedRecord.health)}
-                sx={{ height: 20, fontSize: "0.7rem" }}
+                sx={COMPACT_CHIP_SX}
               />
             </Stack>
           </MetaValue>

@@ -24,6 +24,7 @@ import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
@@ -43,8 +44,6 @@ const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "defa
   YELLOW: "warning",
   RED: "error",
 };
-
-const COMPACT_CHIP_SX = { height: 20, fontSize: "0.7rem" } as const;
 
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);

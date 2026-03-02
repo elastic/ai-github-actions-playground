@@ -321,8 +321,10 @@ export default function ProfilingPage() {
           onChange={(event) => {
             if (viewMode !== "topFunctions") setRawQuery(event.target.value);
           }}
-          InputProps={{ readOnly: viewMode === "topFunctions" }}
-          InputLabelProps={{ sx: { color: "text.primary" } }}
+          slotProps={{
+            input: { readOnly: viewMode === "topFunctions" },
+            inputLabel: { sx: { color: "text.primary" } },
+          }}
         />
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
           <Button variant="contained" size="small" onClick={handleRun} disabled={loading}>
