@@ -183,6 +183,17 @@ describe("resolveToPositionalParams", () => {
     expect(result.params).toEqual([]);
   });
 
+  it("replaces known params while preserving unknown ones in the same query", () => {
+    vi.useFakeTimers({ now: NOW });
+    const query =
+      "FROM logs-* | WHERE @timestamp >= ?_tstart AND x == ?unknown AND @timestamp <= ?_tend";
+    const result = resolveToPositionalParams(query, { from: "now-1h", to: "now" });
+    expect(result.query).toBe(
+      "FROM logs-* | WHERE @timestamp >= ? AND x == ?unknown AND @timestamp <= ?",
+    );
+    expect(result.params).toEqual(["2025-06-15T11:00:00.000Z", "2025-06-15T12:00:00.000Z"]);
+  });
+
   it("does not allow user params to override reserved time params", () => {
     vi.useFakeTimers({ now: NOW });
     const query = "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp < ?_tend";
