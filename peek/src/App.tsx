@@ -55,7 +55,15 @@ export default function App() {
   const location = useLocation();
   useEffect(() => {
     const match = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, location.pathname));
-    document.title = match ? `${match.nav.label} — Elastic Peek` : "Elastic Peek";
+    if (match) {
+      document.title = `${match.nav.label} — Elastic Peek`;
+      return;
+    }
+    if (matchPath("/dashboards/:id", location.pathname)) {
+      document.title = "Dashboards — Elastic Peek";
+      return;
+    }
+    document.title = "Elastic Peek";
   }, [location.pathname]);
 
   useEffect(() => {
