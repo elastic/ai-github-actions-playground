@@ -71,8 +71,8 @@ describe("isDimensionField", () => {
     ).toBe(false);
   });
 
-  it("rejects @timestamp", () => {
-    expect(isDimensionField({ name: "@timestamp", type: "date", metricType: "unknown" })).toBe(
+  it("rejects @timestamp even when type is dimension-eligible", () => {
+    expect(isDimensionField({ name: "@timestamp", type: "keyword", metricType: "unknown" })).toBe(
       false,
     );
   });
