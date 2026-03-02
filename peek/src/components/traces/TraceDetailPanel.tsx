@@ -35,9 +35,8 @@ export default function TraceDetailPanel({
         display: "flex",
         flex: 1,
         flexDirection: "column",
-        minHeight: 360,
+        minHeight: 0,
         overflow: "hidden",
-        mt: 1,
       }}
     >
       <Box
