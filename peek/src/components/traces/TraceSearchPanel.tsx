@@ -240,7 +240,7 @@ export default function TraceSearchPanel({
           }}
           sx={{
             minWidth: 150,
-            "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
+            "&.MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
           }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
