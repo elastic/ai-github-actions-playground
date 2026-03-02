@@ -170,7 +170,7 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
+          "& .MuiInputBase-root": { height: TOOLBAR_CONTROL_MIN_HEIGHT },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
           "& .MuiSelect-select.MuiInputBase-inputSizeSmall": { paddingBlock: "4.5px" },
         }}
@@ -205,7 +205,7 @@ export default function TraceSearchPanel({
           )}
           sx={{
             minWidth: 160,
-            "& .MuiInputBase-root": { minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
+            "& .MuiInputBase-root": { height: "auto", minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
           }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
