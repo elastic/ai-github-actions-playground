@@ -1,21 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
-import CircularProgress from "@mui/material/CircularProgress";
-import Paper from "@mui/material/Paper";
-import Chip from "@mui/material/Chip";
-import TextField from "@mui/material/TextField";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import Switch from "@mui/material/Switch";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Tooltip from "@mui/material/Tooltip";
-import CancelIcon from "@mui/icons-material/Cancel";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
@@ -27,21 +13,9 @@ import { useConnectionStore } from "../../store/useConnectionStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
-import type { TracesViewMode } from "../../store/useTracesStore";
 import type { EsqlResponse } from "../../types";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
-import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
-import WaterfallChart from "../visualizations/WaterfallChart";
-import TraceScatterChart from "../visualizations/TraceScatterChart";
-import TraceServiceMap from "../visualizations/TraceServiceMap";
-import TimeSeriesChart from "../visualizations/TimeSeriesChart";
-import DriftRadarMap from "../visualizations/DriftRadarMap";
-import ContentSkeleton from "../ContentSkeleton";
-import EmptyState from "../EmptyState";
-import PageHeader from "../PageHeader";
 
-import { TraceTable } from "./TraceTable";
-import { getServiceColor } from "./traceColors";
 import { parseSpansFromEsql } from "./traceUtils";
 import type { Span } from "./traceUtils";
 import {
@@ -55,6 +29,9 @@ import {
 } from "./traceQueryBuilder";
 import type { TraceFilters } from "./traceQueryBuilder";
 import SpanDetailDrawer from "./SpanDetailDrawer";
+import TraceSearchPanel from "./TraceSearchPanel";
+import TraceDetailPanel from "./TraceDetailPanel";
+import TraceResultsView from "./TraceResultsView";
 
 export default function TracesPage() {
   const navigate = useNavigate();
@@ -100,9 +77,6 @@ export default function TracesPage() {
   const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
   const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
-  const [serviceFilter, setServiceFilter] = useState("");
-  const [minDurationInput, setMinDurationInput] = useState("");
-  const [maxDurationInput, setMaxDurationInput] = useState("");
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
 
@@ -259,34 +233,6 @@ export default function TracesPage() {
     setSelectedTraceTimestamp(null);
   }, [setSelectedTraceId]);
 
-  const handleApplyDuration = useCallback(() => {
-    const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
-    const maxMs = maxDurationInput !== "" ? Number(maxDurationInput) : null;
-    applyFiltersAndRun({
-      minDurationMs: minMs !== null && !isNaN(minMs) ? minMs : null,
-      maxDurationMs: maxMs !== null && !isNaN(maxMs) ? maxMs : null,
-    });
-  }, [minDurationInput, maxDurationInput, applyFiltersAndRun]);
-
-  const handleAddService = useCallback(() => {
-    const trimmed = serviceFilter.trim();
-    if (trimmed && !filters.services.includes(trimmed)) {
-      applyFiltersAndRun({
-        services: [...filters.services, trimmed],
-      });
-      setServiceFilter("");
-    }
-  }, [serviceFilter, filters.services, applyFiltersAndRun]);
-
-  const handleRemoveService = useCallback(
-    (service: string) => {
-      applyFiltersAndRun({
-        services: filters.services.filter((s) => s !== service),
-      });
-    },
-    [filters.services, applyFiltersAndRun],
-  );
-
   const handleServiceMapNodeClick = useCallback(
     (serviceName: string) => {
       const state = useTracesStore.getState();
@@ -358,214 +304,19 @@ export default function TracesPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
-      {/* Query bar */}
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box
-          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
-        >
-          <PageHeader
-            title="Trace Search"
-            actions={
-              <Button size="small" variant="text" onClick={resetFilters}>
-                Reset Filters
-              </Button>
-            }
-          />
-        </Box>
-
-        {/* Filter pills */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
-          {filters.services.map((svc) => (
-            <Chip
-              key={svc}
-              label={`service: ${svc}`}
-              size="small"
-              onDelete={() => handleRemoveService(svc)}
-              sx={{
-                borderLeft: `3px solid ${getServiceColor(svc)}`,
-              }}
-            />
-          ))}
-          {filters.statusCodes.map((status) => (
-            <Chip
-              key={status}
-              label={`status: ${status}`}
-              size="small"
-              color={status === "Error" ? "error" : "default"}
-              deleteIcon={
-                <CancelIcon data-testid={`trace-status-chip-delete-${status.toLowerCase()}`} />
-              }
-              onDelete={() =>
-                applyFiltersAndRun({
-                  statusCodes: filters.statusCodes.filter((s) => s !== status),
-                })
-              }
-            />
-          ))}
-          {filters.minDurationMs !== null && (
-            <Chip
-              label={`min: ${filters.minDurationMs}ms`}
-              size="small"
-              onDelete={() => {
-                applyFiltersAndRun({ minDurationMs: null });
-                setMinDurationInput("");
-              }}
-            />
-          )}
-          {filters.maxDurationMs !== null && (
-            <Chip
-              label={`max: ${filters.maxDurationMs}ms`}
-              size="small"
-              onDelete={() => {
-                applyFiltersAndRun({ maxDurationMs: null });
-                setMaxDurationInput("");
-              }}
-            />
-          )}
-          {filters.tags.map((tag, i) => (
-            <Chip
-              key={`${tag.key}-${tag.value}-${i}`}
-              label={`${tag.exclude ? "NOT " : ""}${tag.key}: ${tag.value}`}
-              size="small"
-              color={tag.exclude ? "warning" : "default"}
-              onDelete={() =>
-                applyFiltersAndRun({
-                  tags: filters.tags.filter((_, idx) => idx !== i),
-                })
-              }
-            />
-          ))}
-          {filters.timeFrom !== null && (
-            <Chip
-              label={`time: ${TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
-              size="small"
-              onDelete={() => applyFiltersAndRun({ timeFrom: null, timeTo: null })}
-            />
-          )}
-        </Box>
-
-        {/* Quick filters row */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 1,
-            alignItems: "center",
-            mb: 1,
-          }}
-        >
-          <TextField
-            size="small"
-            placeholder="Service name"
-            value={serviceFilter}
-            onChange={(e) => setServiceFilter(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAddService();
-            }}
-            sx={{ width: 160 }}
-          />
-          <Button size="small" variant="outlined" onClick={handleAddService}>
-            Add Service
-          </Button>
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-            <TextField
-              size="small"
-              placeholder="Min (ms)"
-              value={minDurationInput}
-              onChange={(e) => setMinDurationInput(e.target.value)}
-              sx={{ width: 100 }}
-            />
-            <Typography variant="body1" sx={{ px: 0.5 }}>
-              —
-            </Typography>
-            <TextField
-              size="small"
-              placeholder="Max (ms)"
-              value={maxDurationInput}
-              onChange={(e) => setMaxDurationInput(e.target.value)}
-              sx={{ width: 100 }}
-            />
-            <Button size="small" variant="outlined" onClick={handleApplyDuration}>
-              Apply
-            </Button>
-          </Box>
-          <Select
-            size="small"
-            displayEmpty
-            aria-label="Time range"
-            value={filters.timeFrom ?? ""}
-            onChange={(e) => {
-              const selectedFrom = e.target.value === "" ? null : e.target.value;
-              const opt = TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
-              if (opt) {
-                applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
-              }
-            }}
-            sx={{ minWidth: 150 }}
-          >
-            {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
-              <MenuItem key={opt.label} value={opt.from ?? ""}>
-                {opt.label}
-              </MenuItem>
-            ))}
-          </Select>
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", ml: "auto" }}>
-            {(["Error", "OK"] as const).map((status) => (
-              <Chip
-                key={status}
-                label={status}
-                size="small"
-                variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
-                color={status === "Error" ? "error" : "default"}
-                onClick={() => {
-                  if (filters.statusCodes.includes(status)) {
-                    applyFiltersAndRun({
-                      statusCodes: filters.statusCodes.filter((s) => s !== status),
-                    });
-                  } else {
-                    applyFiltersAndRun({
-                      statusCodes: [...filters.statusCodes, status],
-                    });
-                  }
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        {/* ES|QL editor */}
-        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-          <CodeMirror
-            value={effectiveQuery}
-            onChange={(val) => setRawQuery(val)}
-            onCreateEditor={(view) => setQueryContextView(view)}
-            extensions={queryEditorExtensions}
-            theme={themeMode}
-            height="120px"
-            basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-            aria-label="Trace search query editor"
-          />
-        </Box>
-
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={
-              searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
-            }
-            onClick={handleSearch}
-            disabled={searchLoading || !effectiveQuery.trim()}
-          >
-            Search Traces
-          </Button>
-          {searchResult && (
-            <Typography variant="caption" color="text.secondary">
-              {searchResult.values.length} traces found
-            </Typography>
-          )}
-        </Box>
-      </Paper>
+      <TraceSearchPanel
+        filters={filters}
+        resetFilters={resetFilters}
+        applyFiltersAndRun={applyFiltersAndRun}
+        effectiveQuery={effectiveQuery}
+        onRawQueryChange={(val) => setRawQuery(val)}
+        onCreateEditor={(view) => setQueryContextView(view)}
+        queryEditorExtensions={queryEditorExtensions}
+        themeMode={themeMode}
+        searchLoading={searchLoading}
+        onSearch={handleSearch}
+        searchResultCount={searchResult ? searchResult.values.length : null}
+      />
 
       {searchError && <Alert severity="error">{searchError}</Alert>}
       {detailError && <Alert severity="error">{detailError}</Alert>}
@@ -591,228 +342,43 @@ export default function TracesPage() {
             minHeight: 0,
           }}
         >
-          {/* View switcher */}
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center", mb: 1 }}>
-            {(
-              ["list", "timeseries", "scatter", "serviceMap", "driftRadar"] as TracesViewMode[]
-            ).map((mode) => (
-              <Chip
-                key={mode}
-                label={
-                  mode === "list"
-                    ? "List"
-                    : mode === "timeseries"
-                      ? "Time Series"
-                      : mode === "scatter"
-                        ? "Scatter"
-                        : mode === "serviceMap"
-                          ? "Service Map"
-                          : "Drift Radar"
-                }
-                size="small"
-                variant={viewMode === mode ? "filled" : "outlined"}
-                color={viewMode === mode ? "primary" : "default"}
-                onClick={() => setViewMode(mode)}
-              />
-            ))}
-            {viewMode === "driftRadar" && filters.timeFrom && rawQuery == null && (
-              <Tooltip title="Compare with the previous time window of equal length to highlight new, regressed, or improved edges.">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={driftRadarBaselineEnabled}
-                      onChange={(e) => setDriftRadarBaselineEnabled(e.target.checked)}
-                    />
-                  }
-                  label={<Typography variant="caption">Compare with previous window</Typography>}
-                  sx={{ ml: 0.5 }}
-                />
-              </Tooltip>
-            )}
-          </Box>
-
-          {/* Results view */}
-          <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-            {!searchResult && !searchLoading && viewMode !== "driftRadar" && (
-              <EmptyState
-                heading="Search for traces"
-                description="Use the filters above to find traces by service name, duration, or status."
-              />
-            )}
-            {searchLoading && !searchResult && (
-              <Box sx={{ p: 2 }}>
-                <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
-              </Box>
-            )}
-            {searchResult && viewMode === "list" && traceRows.length === 0 && (
-              <EmptyState
-                heading="No traces matched current filters."
-                description="Adjust filters or widen the time range."
-              />
-            )}
-            {searchResult && viewMode === "list" && traceRows.length > 0 && (
-              <TraceTable
-                traceRows={traceRows}
-                selectedTraceId={selectedTraceId}
-                onSelectTrace={handleSelectTrace}
-                maxDuration={maxDuration}
-              />
-            )}
-            {searchResult && viewMode === "scatter" && (
-              <TraceScatterChart
-                data={traceRows.map((r) => ({
-                  timestamp: r.timestamp,
-                  durationUs: r.durationUs,
-                  serviceName: r.serviceName,
-                  traceId: r.traceId,
-                }))}
-                onPointClick={(traceId) => handleSelectTrace(traceId)}
-              />
-            )}
-            {searchResult &&
-              viewMode === "timeseries" &&
-              (rawQuery ? (
-                <EmptyState
-                  heading="Time series view is not available for custom queries. Use filter chips to see trends."
-                  description="Use filter chips instead of raw ES|QL to view trace volume and latency trends."
-                />
-              ) : timeseriesLoading ? (
-                <Box sx={{ p: 2 }}>
-                  <ContentSkeleton variant="chart" />
-                </Box>
-              ) : timeseriesResult ? (
-                <Box sx={{ height: "100%" }}>
-                  <TimeSeriesChart
-                    data={timeseriesResult}
-                    options={{ smooth: true, showArea: false, stacked: false }}
-                  />
-                </Box>
-              ) : (
-                <EmptyState
-                  heading="Run search to load trace volume and latency trends."
-                  description="Apply filters and run search to populate time series metrics."
-                />
-              ))}
-            {searchResult && viewMode === "serviceMap" && (
-              <Box sx={{ height: "100%" }}>
-                {!selectedTraceId ? (
-                  <EmptyState
-                    heading="Select a trace in List or Scatter view to see its service map"
-                    description="Choose a trace from List or Scatter view to render service relationships."
-                  />
-                ) : detailLoading ? (
-                  <Box sx={{ p: 2 }}>
-                    <ContentSkeleton variant="chart" />
-                  </Box>
-                ) : (
-                  <TraceServiceMap
-                    spans={selectedTraceSpans}
-                    onNodeClick={handleServiceMapNodeClick}
-                  />
-                )}
-              </Box>
-            )}
-            {viewMode === "driftRadar" &&
-              (rawQuery ? (
-                <EmptyState
-                  heading="Drift Radar is not available for custom queries. Use filter chips to scope the window."
-                  description="Use filter chips to define the current window before opening Drift Radar."
-                />
-              ) : driftRadarLoading || driftRadarBaselineLoading ? (
-                <Box sx={{ p: 2 }}>
-                  <ContentSkeleton variant="chart" />
-                </Box>
-              ) : driftRadarSpans.length > 0 ? (
-                <Box sx={{ height: "100%" }}>
-                  <DriftRadarMap
-                    currentSpans={driftRadarSpans}
-                    baselineSpans={
-                      driftRadarBaselineEnabled ? (driftRadarBaselineSpans ?? undefined) : undefined
-                    }
-                    onNodeClick={handleServiceMapNodeClick}
-                  />
-                </Box>
-              ) : searchResult !== null ? (
-                <EmptyState
-                  heading="Run search to load the window service map."
-                  description="Run search to load current-window traces for the Drift Radar map."
-                />
-              ) : (
-                <EmptyState
-                  heading="Search for traces to load the Drift Radar service map."
-                  description="Run a trace search to compare current and baseline service topology."
-                />
-              ))}
-          </Paper>
+          <TraceResultsView
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            searchResult={searchResult}
+            searchLoading={searchLoading}
+            traceRows={traceRows}
+            selectedTraceId={selectedTraceId}
+            onSelectTrace={handleSelectTrace}
+            maxDuration={maxDuration}
+            rawQuery={rawQuery}
+            timeseriesLoading={timeseriesLoading}
+            timeseriesResult={timeseriesResult}
+            detailLoading={detailLoading}
+            selectedTraceSpans={selectedTraceSpans}
+            onServiceMapNodeClick={handleServiceMapNodeClick}
+            driftRadarLoading={driftRadarLoading}
+            driftRadarBaselineLoading={driftRadarBaselineLoading}
+            driftRadarSpans={driftRadarSpans}
+            driftRadarBaselineSpans={driftRadarBaselineSpans}
+            driftRadarBaselineEnabled={driftRadarBaselineEnabled}
+            onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
+            filters={filters}
+          />
 
           {/* Trace Detail */}
           {selectedTraceId && (
-            <Paper
-              variant="outlined"
-              sx={{
-                display: "flex",
-                flex: 1,
-                flexDirection: "column",
-                minHeight: 360,
-                overflow: "hidden",
-                mt: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  alignItems: "center",
-                  py: 0.5,
-                  px: 1.5,
-                  borderBottom: 1,
-                  borderColor: "divider",
-                }}
-              >
-                <Typography variant="subtitle2">Trace: {selectedTraceId.slice(0, 16)}…</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {selectedTraceSpans.length} spans
-                </Typography>
-                <Box sx={{ flex: 1 }} />
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() =>
-                    handleOpenInDiscover(
-                      selectedTraceId,
-                      selectedRootSpanId,
-                      selectedTraceTimestamp,
-                    )
-                  }
-                >
-                  Open in Query Lab
-                </Button>
-                <Button size="small" onClick={clearTraceSelection}>
-                  Close
-                </Button>
-              </Box>
-              {detailLoading ? (
-                <Box sx={{ flex: 1, p: 2 }}>
-                  <ContentSkeleton variant="table" />
-                </Box>
-              ) : selectedTraceSpans.length > 0 ? (
-                <Box sx={{ flex: 1, overflow: "hidden" }}>
-                  <WaterfallChart
-                    spans={selectedTraceSpans}
-                    onSpanClick={(spanId) => setSelectedSpanId(spanId)}
-                    selectedSpanId={selectedSpanId}
-                  />
-                </Box>
-              ) : (
-                <Box sx={{ flex: 1 }}>
-                  <EmptyState
-                    heading="No spans found for this trace"
-                    description="This trace may be incomplete or missing ingested span data."
-                  />
-                </Box>
-              )}
-            </Paper>
+            <TraceDetailPanel
+              selectedTraceId={selectedTraceId}
+              selectedTraceSpans={selectedTraceSpans}
+              detailLoading={detailLoading}
+              selectedSpanId={selectedSpanId}
+              onSpanClick={(spanId) => setSelectedSpanId(spanId)}
+              onOpenInQueryLab={() =>
+                handleOpenInDiscover(selectedTraceId, selectedRootSpanId, selectedTraceTimestamp)
+              }
+              onClose={clearTraceSelection}
+            />
           )}
         </Box>
       </Box>
