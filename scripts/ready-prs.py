@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -342,6 +343,7 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             except RuntimeError:
                 pass  # Fall through to empty commit
         # No CI run exists for the current head — push an empty commit to trigger one.
+        os.makedirs("/tmp/gh-aw/agent", exist_ok=True)
         tmpdir = tempfile.mkdtemp(prefix=f"kick_ci_{pr.number}_", dir="/tmp/gh-aw/agent")
         try:
             subprocess.run(
