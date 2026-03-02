@@ -46,6 +46,7 @@ describe("DashboardViewPage", () => {
     renderViewPage("nonexistent-id");
 
     expect(screen.queryByTestId("dashboard-grid")).not.toBeInTheDocument();
+    expect(screen.getByTestId("no-data-icon")).toBeInTheDocument();
     expect(screen.getByText("Dashboard not found")).toBeInTheDocument();
     expect(
       screen.getByText("The dashboard you requested does not exist or may have been deleted."),
@@ -65,12 +66,16 @@ describe("DashboardViewPage", () => {
   });
 
   it("creates a dashboard and navigates to its route", () => {
+    const previousActiveId = useDashboardStore.getState().activeDashboardId;
     renderViewPage("nonexistent-id");
 
     fireEvent.click(screen.getByRole("button", { name: /create dashboard/i }));
 
+    const newActiveId = useDashboardStore.getState().activeDashboardId;
+    expect(newActiveId).toBeTruthy();
+    expect(newActiveId).not.toBe(previousActiveId);
     expect(screen.getByTestId("dashboard-grid")).toBeInTheDocument();
-    expect(screen.getByTestId("location").textContent).toMatch(/^\/dashboards\/.+/);
+    expect(screen.getByTestId("location")).toHaveTextContent(`/dashboards/${newActiveId}`);
     expect(screen.getByTestId("location")).not.toHaveTextContent("/dashboards/nonexistent-id");
   });
 });

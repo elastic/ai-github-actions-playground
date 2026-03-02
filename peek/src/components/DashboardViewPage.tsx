@@ -26,7 +26,7 @@ export default function DashboardViewPage() {
   if (!found)
     return (
       <EmptyState
-        icon={<DashboardIcon sx={{ fontSize: 32 }} />}
+        icon={<DashboardIcon data-testid="no-data-icon" sx={{ fontSize: 32 }} />}
         heading="Dashboard not found"
         description="The dashboard you requested does not exist or may have been deleted."
         action={
