@@ -74,7 +74,7 @@ sleep 5  # wait for server to be ready
 # Replace "metrics" with the page you want to capture.
 # Supported pages: cluster-overview | data-streams | indices | ingest-pipelines |
 #                  query-lab | metrics | traces | console | users | roles |
-#                  dashboards | fleet
+#                  dashboards | fleet | add-data | api-keys
 node scripts/screenshot-feature.mjs \
   --url http://127.0.0.1:3000/ai-github-actions-playground/ \
   --page metrics \
