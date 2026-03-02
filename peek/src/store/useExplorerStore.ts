@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 import type { AggregationType, ExplorerFilter, FieldInfo, MetricType } from "../services/es";
 
@@ -74,33 +75,38 @@ const initialState: Omit<
   showEsql: false,
 };
 
-export const useExplorerStore = create<ExplorerState>()((set) => ({
-  ...initialState,
+export const useExplorerStore = create<ExplorerState>()(
+  devtools(
+    (set) => ({
+      ...initialState,
 
-  setIndexPattern: (pattern) =>
-    set({
-      indexPattern: pattern,
-      fields: [],
-      selectedMetric: null,
-      filters: [],
-      groupBy: null,
-      queryResult: { status: "idle" },
+      setIndexPattern: (pattern) =>
+        set({
+          indexPattern: pattern,
+          fields: [],
+          selectedMetric: null,
+          filters: [],
+          groupBy: null,
+          queryResult: { status: "idle" },
+        }),
+      setFields: (fields) => set({ fields }),
+      setFieldsLoading: (loading) => set({ fieldsLoading: loading }),
+      setSelectedMetric: (metric, metricType) =>
+        set((s) => ({
+          selectedMetric: metric,
+          metricType: metricType ?? s.metricType,
+          aggregation:
+            metricType === "counter" ? "count" : metricType === "gauge" ? "avg" : s.aggregation,
+        })),
+      setAggregation: (agg) => set({ aggregation: agg }),
+      addFilter: (filter) => set((s) => ({ filters: [...s.filters, filter] })),
+      removeFilter: (index) => set((s) => ({ filters: s.filters.filter((_, i) => i !== index) })),
+      clearFilters: () => set({ filters: [] }),
+      setGroupBy: (field) => set({ groupBy: field }),
+      setQueryResult: (result) => set({ queryResult: result }),
+      setShowEsql: (show) => set({ showEsql: show }),
+      reset: () => set(initialState),
     }),
-  setFields: (fields) => set({ fields }),
-  setFieldsLoading: (loading) => set({ fieldsLoading: loading }),
-  setSelectedMetric: (metric, metricType) =>
-    set((s) => ({
-      selectedMetric: metric,
-      metricType: metricType ?? s.metricType,
-      aggregation:
-        metricType === "counter" ? "count" : metricType === "gauge" ? "avg" : s.aggregation,
-    })),
-  setAggregation: (agg) => set({ aggregation: agg }),
-  addFilter: (filter) => set((s) => ({ filters: [...s.filters, filter] })),
-  removeFilter: (index) => set((s) => ({ filters: s.filters.filter((_, i) => i !== index) })),
-  clearFilters: () => set({ filters: [] }),
-  setGroupBy: (field) => set({ groupBy: field }),
-  setQueryResult: (result) => set({ queryResult: result }),
-  setShowEsql: (show) => set({ showEsql: show }),
-  reset: () => set(initialState),
-}));
+    { name: "ExplorerStore", enabled: import.meta.env.DEV },
+  ),
+);

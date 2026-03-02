@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 
 interface UIState {
   themeMode: "light" | "dark";
@@ -19,40 +19,39 @@ interface UIState {
 }
 
 const STORE_NAME = "elastic-peek-ui";
+const DEFAULT_UI_STATE = {
+  themeMode: "dark" as const,
+  editingPanelId: null as string | null,
+  connectionDialogOpen: false,
+  commandPaletteOpen: false,
+  aiPanelOpen: false,
+  explainModeActive: false,
+};
 
 export const useUIStore = create<UIState>()(
-  persist(
-    (set) => ({
-      themeMode: "dark",
-      editingPanelId: null,
-      connectionDialogOpen: false,
-      commandPaletteOpen: false,
-      aiPanelOpen: false,
-      explainModeActive: false,
+  devtools(
+    persist(
+      (set) => ({
+        ...DEFAULT_UI_STATE,
 
-      setThemeMode: (mode) => set({ themeMode: mode }),
-      setEditingPanelId: (id) => set({ editingPanelId: id }),
-      setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
-      setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
-      setAiPanelOpen: (open) => set({ aiPanelOpen: open }),
-      setExplainModeActive: (active) => set({ explainModeActive: active }),
-      resetUIState: () => {
-        useUIStore.persist.clearStorage();
-        set({
-          themeMode: "dark",
-          editingPanelId: null,
-          connectionDialogOpen: false,
-          commandPaletteOpen: false,
-          aiPanelOpen: false,
-          explainModeActive: false,
-        });
-      },
-    }),
-    {
-      name: STORE_NAME,
-      partialize: (state) => ({
-        themeMode: state.themeMode,
+        setThemeMode: (mode) => set({ themeMode: mode }),
+        setEditingPanelId: (id) => set({ editingPanelId: id }),
+        setConnectionDialogOpen: (open) => set({ connectionDialogOpen: open }),
+        setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+        setAiPanelOpen: (open) => set({ aiPanelOpen: open }),
+        setExplainModeActive: (active) => set({ explainModeActive: active }),
+        resetUIState: () => {
+          useUIStore.persist.clearStorage();
+          set(DEFAULT_UI_STATE);
+        },
       }),
-    },
+      {
+        name: STORE_NAME,
+        partialize: (state) => ({
+          themeMode: state.themeMode,
+        }),
+      },
+    ),
+    { name: "UIStore", enabled: import.meta.env.DEV },
   ),
 );

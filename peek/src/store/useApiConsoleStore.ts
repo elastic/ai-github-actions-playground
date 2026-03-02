@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 
 export interface PersistedEntry {
   id: string;
@@ -24,22 +24,25 @@ interface ApiConsoleState {
 const STORE_NAME = "elastic-peek-api-console";
 
 export const useApiConsoleStore = create<ApiConsoleState>()(
-  persist(
-    (set) => ({
-      entries: [],
-      consoleDraft: null,
-      setEntries: (entries) => set({ entries }),
-      setConsoleDraft: (draft) => set({ consoleDraft: draft }),
-      resetApiConsoleState: () => {
-        useApiConsoleStore.persist.clearStorage();
-        set({ entries: [], consoleDraft: null });
-      },
-    }),
-    {
-      name: STORE_NAME,
-      partialize: (state) => ({
-        entries: state.entries,
+  devtools(
+    persist(
+      (set) => ({
+        entries: [],
+        consoleDraft: null,
+        setEntries: (entries) => set({ entries }),
+        setConsoleDraft: (draft) => set({ consoleDraft: draft }),
+        resetApiConsoleState: () => {
+          useApiConsoleStore.persist.clearStorage();
+          set({ entries: [], consoleDraft: null });
+        },
       }),
-    },
+      {
+        name: STORE_NAME,
+        partialize: (state) => ({
+          entries: state.entries,
+        }),
+      },
+    ),
+    { name: "ApiConsoleStore", enabled: import.meta.env.DEV },
   ),
 );
