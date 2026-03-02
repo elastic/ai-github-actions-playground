@@ -1,4 +1,5 @@
 import { test, expect, devices, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
@@ -43,6 +44,14 @@ test.describe("Mobile Exploration @mobile", () => {
     if (dialogBox && viewport) {
       expect(dialogBox.width).toBeLessThanOrEqual(viewport.width);
     }
+
+    // Axe accessibility scan on mobile welcome page
+    const welcomeResults = await new AxeBuilder({ page }).analyze();
+    const welcomeViolations = welcomeResults.violations.filter((v) => v.id === "color-contrast");
+    expect(
+      welcomeViolations.length,
+      "Mobile welcome page should have no new color-contrast violations beyond desktop baseline",
+    ).toBeLessThanOrEqual(1);
   });
 
   test("sidebar and header should be visible on mobile after connection", async ({ page }) => {
@@ -53,5 +62,15 @@ test.describe("Mobile Exploration @mobile", () => {
 
     const header = page.getByRole("banner");
     await expect(header).toBeVisible();
+
+    // Axe accessibility scan on mobile post-connect page
+    const postConnectResults = await new AxeBuilder({ page }).analyze();
+    const postConnectViolations = postConnectResults.violations.filter(
+      (v) => v.id === "color-contrast",
+    );
+    expect(
+      postConnectViolations.length,
+      "Mobile post-connect page should have no new color-contrast violations beyond desktop baseline",
+    ).toBeLessThanOrEqual(2);
   });
 });
