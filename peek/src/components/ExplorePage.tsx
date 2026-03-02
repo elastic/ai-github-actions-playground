@@ -250,9 +250,9 @@ export default function ExplorePage() {
         return new URLSearchParams(
           serializeExplorerSearch(next, {
             indexPattern: indexPattern || null,
-            selectedMetric,
+            selectedMetric: selectedMetric || null,
             aggregation,
-            groupBy,
+            groupBy: groupBy || null,
             from: dashboard.timeRange.from,
             to: dashboard.timeRange.to,
           }),
