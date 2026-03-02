@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import DashboardViewPage from "../../src/components/DashboardViewPage";
@@ -54,5 +54,23 @@ describe("DashboardViewPage", () => {
     expect(screen.getByRole("button", { name: /create dashboard/i })).toBeInTheDocument();
     // Stays on the same route instead of redirecting
     expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/nonexistent-id");
+  });
+
+  it("navigates to /dashboards when Back to dashboards is clicked", () => {
+    renderViewPage("nonexistent-id");
+
+    fireEvent.click(screen.getByRole("button", { name: /back to dashboards/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards");
+  });
+
+  it("creates a dashboard and navigates to its route", () => {
+    renderViewPage("nonexistent-id");
+
+    fireEvent.click(screen.getByRole("button", { name: /create dashboard/i }));
+
+    expect(screen.getByTestId("dashboard-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("location").textContent).toMatch(/^\/dashboards\/.+/);
+    expect(screen.getByTestId("location")).not.toHaveTextContent("/dashboards/nonexistent-id");
   });
 });
