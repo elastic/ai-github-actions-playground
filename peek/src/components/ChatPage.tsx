@@ -13,7 +13,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useShallow } from "zustand/react/shallow";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
+import { streamText } from "ai";
 
 import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
@@ -21,12 +21,16 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
 import { useChatScreenContextSummary } from "../hooks/useChatScreenContextSummary";
 
+import ChatMessageContent from "./ChatMessageContent";
+import { formatToolResult, type ToolActivity } from "./chatUtils";
+
 export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const {
     config,
     messages,
     addMessage,
     updateMessage,
+    updateMessageToolCalls,
     removeMessage,
     clearMessages,
     isConfigured,
@@ -38,6 +42,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       messages: s.messages,
       addMessage: s.addMessage,
       updateMessage: s.updateMessage,
+      updateMessageToolCalls: s.updateMessageToolCalls,
       removeMessage: s.removeMessage,
       clearMessages: s.clearMessages,
       isConfigured: s.isConfigured,
@@ -87,7 +92,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       if (!promptOverride) setInput("");
 
       const assistantId = crypto.randomUUID();
-      addMessage({ id: assistantId, role: "assistant", content: "" });
+      addMessage({ id: assistantId, role: "assistant", content: "", toolCalls: [] });
       setLoading(true);
 
       const controller = new AbortController();
@@ -110,7 +115,8 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         });
         const model =
           config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
-        const result = await generateText({
+
+        const result = streamText({
           model,
           system: systemPrompt,
           messages: [
@@ -122,7 +128,27 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
           abortSignal: controller.signal,
         });
 
-        updateMessage(assistantId, result.text);
+        let text = "";
+        let assistantToolCalls: ToolActivity[] = [];
+        for await (const part of result.fullStream) {
+          if (part.type === "text-delta") {
+            text += part.text;
+            updateMessage(assistantId, text);
+          } else if (part.type === "tool-call") {
+            assistantToolCalls = [
+              ...assistantToolCalls,
+              { toolCallId: part.toolCallId, name: part.toolName },
+            ];
+            updateMessageToolCalls(assistantId, assistantToolCalls);
+          } else if (part.type === "tool-result") {
+            assistantToolCalls = assistantToolCalls.map((tc) =>
+              tc.toolCallId === part.toolCallId
+                ? { ...tc, result: formatToolResult(part.toolName, part.output) }
+                : tc,
+            );
+            updateMessageToolCalls(assistantId, assistantToolCalls);
+          }
+        }
       } catch (e) {
         const errorMessage =
           e instanceof DOMException && e.name === "AbortError"
@@ -145,6 +171,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       messages,
       addMessage,
       updateMessage,
+      updateMessageToolCalls,
       removeMessage,
       connection,
       location.pathname,
@@ -236,31 +263,38 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
             </Typography>
           </Box>
         )}
-        {messages.map((msg) => (
-          <Box
-            key={msg.id}
-            sx={{
-              display: "flex",
-              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-            }}
-          >
-            <Paper
-              elevation={0}
+        {messages.map((msg, index) => {
+          const isActiveAssistant =
+            loading && msg.role === "assistant" && index === messages.length - 1;
+          return (
+            <Box
+              key={msg.id}
               sx={{
-                maxWidth: "75%",
-                py: 1,
-                px: 2,
-                borderRadius: 2,
-                bgcolor: msg.role === "user" ? "primary.main" : "action.hover",
-                color: msg.role === "user" ? "primary.contrastText" : "text.primary",
+                display: "flex",
+                justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
               }}
             >
-              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                {msg.content || (loading && msg.role === "assistant" ? "Thinking…" : "")}
-              </Typography>
-            </Paper>
-          </Box>
-        ))}
+              <Paper
+                elevation={0}
+                sx={{
+                  maxWidth: "75%",
+                  py: 1,
+                  px: 2,
+                  borderRadius: 2,
+                  bgcolor: msg.role === "user" ? "primary.main" : "action.hover",
+                  color: msg.role === "user" ? "primary.contrastText" : "text.primary",
+                }}
+              >
+                <ChatMessageContent
+                  content={msg.content}
+                  role={msg.role}
+                  isActiveAssistant={isActiveAssistant}
+                  toolCalls={msg.toolCalls ?? []}
+                />
+              </Paper>
+            </Box>
+          );
+        })}
         <div ref={messagesEndRef} />
       </Paper>
 
