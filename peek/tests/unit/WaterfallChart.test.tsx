@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 import * as echarts from "echarts/core";
+
 import WaterfallChart from "../../src/components/visualizations/WaterfallChart";
 import type { Span } from "../../src/components/traces/traceUtils";
 
@@ -118,7 +119,7 @@ describe("WaterfallChart", () => {
     // First span (OK) should have transparent border
     expect(durationSeries.data[0]!.itemStyle.borderColor).toBe("transparent");
     // Second span (Error) should have red border
-    expect(durationSeries.data[1]!.itemStyle.borderColor).toBe("#BD271E");
+    expect(durationSeries.data[1]!.itemStyle.borderColor).toBe("#DE350B");
   });
 
   it("highlights selected span with gold border", () => {

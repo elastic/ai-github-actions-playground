@@ -60,7 +60,7 @@ describe("buildServiceGraphOption", () => {
     });
     const option = buildServiceGraphOption({ mapData: data });
     const node = option.series[0].data[0];
-    expect(node.itemStyle.borderColor).toBe("#BD271E");
+    expect(node.itemStyle.borderColor).toBe("#DE350B");
   });
 
   it("uses custom error color when provided", () => {

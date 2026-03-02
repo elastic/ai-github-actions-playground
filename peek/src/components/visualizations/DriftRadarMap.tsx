@@ -4,6 +4,7 @@ import Chip from "@mui/material/Chip";
 
 import type { Span, ServiceMapEdge } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
+import { STATUS_COLORS } from "../../types/tokens";
 import EmptyState from "../EmptyState";
 
 import EChartWrapper from "./EChartWrapper";
@@ -23,9 +24,9 @@ const EDGE_STATUS_ORDER: EdgeStatus[] = ["new", "regressed", "improved", "stable
 
 const EDGE_STATUS_COLOR: Record<EdgeStatus, string> = {
   new: "#0077CC",
-  regressed: "#BD271E",
+  regressed: STATUS_COLORS.error,
   improved: "#00BFB3",
-  stable: "#888888",
+  stable: STATUS_COLORS.unknown,
 };
 
 function classifyEdge(current: ServiceMapEdge, baseline?: ServiceMapEdge): EdgeStatus {
