@@ -1,60 +1,83 @@
 import { test, expect } from "@playwright/test";
-import type { Page } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
 /**
- * Baseline of known pre-existing axe violations per page (tracked in #954).
+ * Baseline of known pre-existing axe violations per browser project and page
+ * (tracked in #954).
  *
  * IMPORTANT: This is a temporary measure to prevent accessibility regressions
  * while we work toward full WCAG 2.2 Level AA compliance. Each entry here
  * represents a technical debt item that should be resolved rather than expanded.
  *
- * Maps page label → rule ID → maximum number of violating DOM nodes.
+ * Structure: browser project name → page label → rule ID → max violating nodes.
+ * A missing project key falls back to the "_default" entry.
  * The gate fails when a new rule fires or its node count exceeds the baseline.
  */
-const A11Y_BASELINE: Record<string, Record<string, number>> = {
-  welcome: {
-    "color-contrast": 1,
-    "page-has-heading-one": 1,
+const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
+  _default: {
+    welcome: {
+      "color-contrast": 1,
+      "page-has-heading-one": 1,
+    },
+    "post-connect": {
+      "color-contrast": 2,
+    },
+    Metrics: {
+      "color-contrast": 2,
+    },
+    Traces: {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+    },
+    "Query Lab": {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+    },
+    Console: {
+      "aria-input-field-name": 1,
+      "color-contrast": 6,
+    },
+    Indices: {
+      "color-contrast": 2,
+    },
   },
-  "post-connect": {
-    "color-contrast": 2,
-  },
-  Metrics: {
-    "color-contrast": 2,
-  },
-  Traces: {
-    "aria-input-field-name": 2,
-    "aria-prohibited-attr": 1,
-    "color-contrast": 12,
-  },
-  "Query Lab": {
-    "aria-input-field-name": 2,
-    "aria-prohibited-attr": 1,
-    "color-contrast": 12,
-    "scrollable-region-focusable": 2,
-  },
-  Console: {
-    "aria-input-field-name": 1,
-    "color-contrast": 6,
-    "scrollable-region-focusable": 2,
-  },
-  Indices: {
-    "color-contrast": 2,
-    "scrollable-region-focusable": 1,
+  "mobile-safari": {
+    "Query Lab": {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+      "scrollable-region-focusable": 2,
+    },
+    Console: {
+      "aria-input-field-name": 1,
+      "color-contrast": 6,
+      "scrollable-region-focusable": 2,
+    },
+    Indices: {
+      "color-contrast": 2,
+      "scrollable-region-focusable": 1,
+    },
   },
 };
 
 /**
  * Run an axe accessibility scan and fail on any *new* violations.
  * A violation is "new" if its rule ID is absent from the baseline or if the
- * number of violating nodes exceeds the baselined count for that rule+page.
+ * number of violating nodes exceeds the baselined count for that rule+page+browser.
  */
-async function checkA11y(page: Page, pageName: string) {
+async function checkA11y(page: Page, pageName: string, testInfo: TestInfo) {
   const results = await new AxeBuilder({ page }).analyze();
-  const baseline = A11Y_BASELINE[pageName] ?? {};
+  const projectName = testInfo.project.name;
+  const projectBaseline = A11Y_BASELINE[projectName] ?? {};
+  const baseline = {
+    ...(A11Y_BASELINE["_default"]?.[pageName] ?? {}),
+    ...(projectBaseline[pageName] ?? {}),
+  };
 
   const newViolations = results.violations.filter((v) => {
     const allowed = baseline[v.id];
@@ -66,9 +89,9 @@ async function checkA11y(page: Page, pageName: string) {
     newViolations.map(
       (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
     ),
-    `axe found new accessibility violations on "${pageName}".\n` +
-    `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
-    `See DEVELOPING.md for accessibility standards.`,
+    `axe found new accessibility violations on "${pageName}" [${projectName}].\n` +
+      `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
+      `See DEVELOPING.md for accessibility standards.`,
   ).toEqual([]);
 }
 
@@ -334,12 +357,12 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByText("Run a query to see results")).toBeHidden();
   });
 
-  test("pages have no axe accessibility violations", async ({ page }) => {
+  test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
     await page.goto("");
-    await checkA11y(page, "welcome");
+    await checkA11y(page, "welcome", testInfo);
 
     await connectToMockCluster(page);
-    await checkA11y(page, "post-connect");
+    await checkA11y(page, "post-connect", testInfo);
 
     // Wait for page-specific content to fully render before running axe,
     // so results are deterministic across fast (local) and slow (CI) machines.
@@ -355,7 +378,7 @@ test.describe("smoke – site navigation", () => {
       await navigateViaSidebar(page, nav);
       await page.waitForLoadState("networkidle");
       await pageReadyLocators[nav]!();
-      await checkA11y(page, nav);
+      await checkA11y(page, nav, testInfo);
     }
   });
 });
