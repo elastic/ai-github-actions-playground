@@ -735,7 +735,12 @@ describe("useDashboardStore importDashboard", () => {
     const result = useDashboardStore.getState().importDashboard(JSON.stringify(secondDashboard));
     expect(result).toEqual({ success: true });
 
-    const ids = useDashboardStore.getState().dashboards.map((d) => d.id);
+    const stateAfterImport = useDashboardStore.getState();
+    expect(stateAfterImport.dashboard.title).toBe(secondDashboard.title);
+    expect(stateAfterImport.dashboard.id).not.toBe(secondId);
+
+    const ids = stateAfterImport.dashboards.map((d) => d.id);
+    expect(ids.filter((id) => id === secondId)).toHaveLength(1);
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
