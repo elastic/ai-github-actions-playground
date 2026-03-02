@@ -122,18 +122,28 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
         : undefined;
     const timestamp = parsedTimestamp ?? rowIndex;
 
-    const labels = Object.fromEntries(
-      dimensionColumns.map((columnIndex) => [
-        data.columns[columnIndex]?.name ?? `label_${columnIndex}`,
-        String(row[columnIndex] ?? ""),
-      ]),
-    );
-    const hasLabels = Object.keys(labels).length > 0;
-    const labelPairs = hasLabels
-      ? Object.entries(labels).map(([name, value]) => `${name}=${value}`)
-      : [];
-    const labelText = hasLabels ? ` (${labelPairs.join(", ")})` : "";
-    const labelKey = JSON.stringify(labelPairs);
+    const hasLabels = dimensionColumns.length > 0;
+    let labels: Record<string, string> | undefined;
+    let labelText = "";
+    let labelKey = "";
+
+    if (hasLabels) {
+      labels = {};
+      const labelParts: string[] = [];
+      const keyParts: string[] = [];
+      for (let d = 0; d < dimensionColumns.length; d++) {
+        const colIdx = dimensionColumns[d];
+        if (colIdx === undefined) continue;
+        const name = data.columns[colIdx]?.name ?? `label_${colIdx}`;
+        const value = String(row[colIdx] ?? "");
+        labels[name] = value;
+        labelParts.push(`${name}=${value}`);
+        // Use \0 within pairs and \x1f between pairs to avoid collision with label content
+        keyParts.push(`${name}\0${value}`);
+      }
+      labelText = ` (${labelParts.join(", ")})`;
+      labelKey = keyParts.join("\x1f");
+    }
 
     for (const numericColumnIndex of numericColumns) {
       const metricName = data.columns[numericColumnIndex]?.name ?? `value_${numericColumnIndex}`;
@@ -145,7 +155,7 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
       }
       seriesMap.set(key, {
         name: `${metricName}${labelText}`,
-        labels: hasLabels ? labels : undefined,
+        labels,
         values: [[timestamp, normalizeNumericValue(row[numericColumnIndex])]],
       });
     }
