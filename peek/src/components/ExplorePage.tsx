@@ -114,14 +114,14 @@ function parseEncodedFilters(encodedFilters: string | null): ExplorerFilter[] {
   }
 }
 
-function encodeFilters(filters: ExplorerFilter[]): string | null {
+function encodeFilters(filters: ExplorerFilter[]): string {
   const validFilters: ExplorerFilter[] = [];
   for (const filter of filters) {
     const field = filter.field.trim();
     if (!field || !VALID_FILTER_OPS.has(filter.op)) continue;
     validFilters.push({ field, op: filter.op, value: filter.value });
   }
-  return validFilters.length > 0 ? JSON.stringify(validFilters) : null;
+  return JSON.stringify(validFilters);
 }
 
 function metricNamespaceOf(metricName: string): string {
@@ -249,11 +249,11 @@ export default function ExplorePage() {
     if (initialUrlState.groupBy) {
       setGroupBy(initialUrlState.groupBy);
     }
+    const hasEncodedFiltersParam = initialUrlFiltersRef.current !== null;
     const initialEncodedFilters = parseEncodedFilters(initialUrlFiltersRef.current);
-    const hydratedFilters =
-      initialEncodedFilters.length > 0
-        ? initialEncodedFilters
-        : parseLegacyFilters(initialSearchRef.current);
+    const hydratedFilters = hasEncodedFiltersParam
+      ? initialEncodedFilters
+      : parseLegacyFilters(initialSearchRef.current);
     clearFilters();
     for (const filter of hydratedFilters) {
       addFilter(filter);
