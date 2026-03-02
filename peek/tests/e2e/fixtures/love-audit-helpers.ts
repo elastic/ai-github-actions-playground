@@ -31,7 +31,7 @@ export interface ConsoleDiagnostic {
 export interface PageAuditConfig {
   name: string;
   navButton: string;
-  expectedHeading?: string;
+  expectedHeading: string | null;
   afterNav?: (page: Page, prefix: string) => Promise<void>;
 }
 
@@ -269,6 +269,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Top Functions",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       // Top Functions is the default view, just set time range and run
       await page.getByLabel("Time range").click();
@@ -287,6 +288,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Stacktraces",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page, prefix) => {
       await (
         await profilingAfterNav("Stacktraces")
@@ -315,6 +317,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Flamegraph",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       await (
         await profilingAfterNav("Flamegraph")
@@ -324,6 +327,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Timeline",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       await (
         await profilingAfterNav("Timeline")
@@ -333,6 +337,7 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
   {
     name: "Profiling Flamescope",
     navButton: "Profiling",
+    expectedHeading: null,
     afterNav: async (page) => {
       await (
         await profilingAfterNav("Flamescope")
@@ -387,7 +392,7 @@ export function registerLoveAuditTests(
         await page.waitForLoadState("networkidle");
 
         // Wait for the expected page heading to confirm navigation completed
-        if (pageConfig.expectedHeading) {
+        if (pageConfig.expectedHeading !== null) {
           await page
             .getByRole("heading", {
               name: pageConfig.expectedHeading,
