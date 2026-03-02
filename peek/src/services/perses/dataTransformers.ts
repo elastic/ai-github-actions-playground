@@ -122,18 +122,35 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
         : undefined;
     const timestamp = parsedTimestamp ?? rowIndex;
 
-    const labels = Object.fromEntries(
-      dimensionColumns.map((columnIndex) => [
-        data.columns[columnIndex]?.name ?? `label_${columnIndex}`,
-        String(row[columnIndex] ?? ""),
-      ]),
-    );
-    const hasLabels = Object.keys(labels).length > 0;
-    const labelPairs = hasLabels
-      ? Object.entries(labels).map(([name, value]) => `${name}=${value}`)
-      : [];
-    const labelText = hasLabels ? ` (${labelPairs.join(", ")})` : "";
-    const labelKey = JSON.stringify(labelPairs);
+    const hasLabels = dimensionColumns.length > 0;
+    let labels: Record<string, string> | undefined;
+    let labelText = "";
+    let labelKey = "";
+
+    if (hasLabels) {
+      labels = Object.create(null) as Record<string, string>;
+      const labelNamesInOrder: string[] = [];
+      for (let d = 0; d < dimensionColumns.length; d++) {
+        const colIdx = dimensionColumns[d];
+        if (colIdx === undefined) continue;
+        const name = data.columns[colIdx]?.name ?? `label_${colIdx}`;
+        const value = String(row[colIdx] ?? "");
+        if (!Object.hasOwn(labels, name)) {
+          labelNamesInOrder.push(name);
+        }
+        labels[name] = value;
+      }
+      const labelParts: string[] = [];
+      const keyParts: string[] = [];
+      for (const name of labelNamesInOrder) {
+        const value = labels[name] ?? "";
+        labelParts.push(`${name}=${value}`);
+        // Length-prefix names/values to avoid collisions from delimiter-like content.
+        keyParts.push(`${name.length}:${name}${value.length}:${value}`);
+      }
+      labelText = ` (${labelParts.join(", ")})`;
+      labelKey = keyParts.join("");
+    }
 
     for (const numericColumnIndex of numericColumns) {
       const metricName = data.columns[numericColumnIndex]?.name ?? `value_${numericColumnIndex}`;
@@ -145,7 +162,7 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
       }
       seriesMap.set(key, {
         name: `${metricName}${labelText}`,
-        labels: hasLabels ? labels : undefined,
+        labels,
         values: [[timestamp, normalizeNumericValue(row[numericColumnIndex])]],
       });
     }
