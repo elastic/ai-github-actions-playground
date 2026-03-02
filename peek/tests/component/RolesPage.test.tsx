@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
@@ -71,9 +72,12 @@ const USERS_RESPONSE = {
 };
 
 describe("RolesPage", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
@@ -85,11 +89,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // First role alphabetically is "empty_role"
@@ -103,11 +109,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "empty_role" });
@@ -123,11 +131,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const list = await screen.findByRole("list");
@@ -148,11 +158,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("list");
@@ -167,11 +179,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // Wait for detail panel to show the first role
@@ -197,11 +211,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Your credentials may have partial access to security APIs.");
@@ -212,11 +228,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockRejectedValue({ status: 403, message: "security_exception" });
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Your credentials cannot read all role data.");
@@ -228,11 +246,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockRejectedValue({ status: 500, message: "internal_error" });
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("internal_error");
@@ -246,11 +266,13 @@ describe("RolesPage", () => {
     });
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const list = await screen.findByRole("list");
@@ -269,11 +291,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // empty_role is selected first alphabetically — no assigned users
@@ -286,11 +310,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter initialEntries={["/roles?role=superuser"]}>
-        <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/roles?role=superuser"]}>
+          <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // superuser should be pre-selected rather than empty_role
@@ -304,11 +330,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "empty_role" });
@@ -326,11 +354,13 @@ describe("RolesPage", () => {
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
 
     render(
-      <MemoryRouter initialEntries={["/roles?role=superuser"]}>
-        <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
-          <RolesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/roles?role=superuser"]}>
+          <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
+            <RolesPage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "superuser" });
@@ -351,15 +381,17 @@ describe("RolesPage", () => {
     }
 
     render(
-      <MemoryRouter initialEntries={["/roles?role=superuser"]}>
-        <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
-          <Routes>
-            <Route path="/roles" element={<RolesPage />} />
-            <Route path="/users" element={null} />
-          </Routes>
-          <LocationDisplay />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/roles?role=superuser"]}>
+          <NuqsTestingAdapter searchParams="?role=superuser" hasMemory>
+            <Routes>
+              <Route path="/roles" element={<RolesPage />} />
+              <Route path="/users" element={null} />
+            </Routes>
+            <LocationDisplay />
+          </NuqsTestingAdapter>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "superuser" });

@@ -16,31 +16,29 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { ElasticsearchClient, type ApiKeyInfo } from "../services/es";
-import { useConnectionStore } from "../store/useConnectionStore";
+import { useApiKeys } from "../hooks/useApiKeys";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { formatTimestamp } from "../utils/formatDate";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
-import { loadSecurityResource } from "./securityResourceLoader";
 import PageHeader from "./PageHeader";
 
 export default function ApiKeysPage() {
-  const connection = useConnectionStore((s) => s.connection);
+  const { keys, loading, error, accessNotice, refresh } = useApiKeys();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadRequestRef = useRef(0);
+
+  const effectiveKeyId = useMemo(() => {
+    if (selectedKeyId && keys.some((k) => k.id === selectedKeyId)) return selectedKeyId;
+    return keys[0]?.id ?? null;
+  }, [keys, selectedKeyId]);
 
   const selectedKey = useMemo(
-    () => keys.find((k) => k.id === selectedKeyId) ?? null,
-    [keys, selectedKeyId],
+    () => keys.find((k) => k.id === effectiveKeyId) ?? null,
+    [keys, effectiveKeyId],
   );
   const selectedKeyRisk = useMemo(
     () =>
@@ -52,55 +50,6 @@ export default function ApiKeysPage() {
           },
     [selectedKey],
   );
-
-  const loadKeys = useCallback(async () => {
-    if (!connection) {
-      loadRequestRef.current += 1;
-      setLoading(false);
-      setError(null);
-      setAccessNotice(null);
-      setKeys([]);
-      setSelectedKeyId(null);
-      return;
-    }
-    const requestId = ++loadRequestRef.current;
-    setLoading(true);
-    setError(null);
-    setAccessNotice(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const result = await loadSecurityResource({
-        client,
-        fetchResource: (c) => c.getApiKeys(),
-        canRead: (caps) => caps.canReadApiKeys,
-        authDeniedNotice: "Your credentials cannot list API keys.",
-      });
-      if (requestId !== loadRequestRef.current) return;
-      setAccessNotice(result.notice);
-      if (result.error !== null) {
-        setError(result.error);
-      } else if (result.data !== null) {
-        const nextKeys = (result.data.api_keys ?? [])
-          .slice()
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setKeys(nextKeys);
-        setSelectedKeyId((current) =>
-          current && nextKeys.some((k) => k.id === current) ? current : (nextKeys[0]?.id ?? null),
-        );
-      } else {
-        setKeys([]);
-        setSelectedKeyId(null);
-      }
-    } finally {
-      if (requestId === loadRequestRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadKeys();
-  }, [loadKeys]);
 
   useEffect(() => {
     return () => {
@@ -121,7 +70,7 @@ export default function ApiKeysPage() {
   // When filtered results don't include the selected key (e.g. search
   // excludes it), hide the detail panel while keeping the selection so it
   // restores when the search is cleared.
-  const displayedKey = filteredKeys.some((k) => k.id === selectedKeyId) ? selectedKey : null;
+  const displayedKey = filteredKeys.some((k) => k.id === effectiveKeyId) ? selectedKey : null;
   const displayedKeyRisk = displayedKey !== null ? selectedKeyRisk : null;
 
   const copyQuery = useCallback(async () => {
@@ -141,7 +90,7 @@ export default function ApiKeysPage() {
           title="API Keys"
           actions={
             <>
-              <Button size="small" variant="outlined" onClick={loadKeys} disabled={loading}>
+              <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
                 {loading ? <CircularProgress size={16} /> : "Refresh"}
               </Button>
               <Button size="small" variant="contained" onClick={() => void copyQuery()}>
@@ -174,7 +123,7 @@ export default function ApiKeysPage() {
             {filteredKeys.map((key) => (
               <ListItem key={key.id} disablePadding>
                 <ListItemButton
-                  selected={key.id === selectedKeyId}
+                  selected={key.id === effectiveKeyId}
                   onClick={() => setSelectedKeyId(key.id)}
                 >
                   <ListItemText

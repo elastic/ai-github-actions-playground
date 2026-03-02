@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
 import ApiKeysPage from "../../src/components/ApiKeysPage";
@@ -104,9 +105,12 @@ const API_KEYS_RESPONSE = {
 };
 
 describe("ApiKeysPage", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
@@ -123,9 +127,11 @@ describe("ApiKeysPage", () => {
     });
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // First key alphabetically should be "ingest-key"
@@ -138,9 +144,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "ingest-key" });
@@ -156,9 +164,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "ingest-key" });
@@ -174,9 +184,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "ingest-key" });
@@ -201,9 +213,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const list = await screen.findByRole("list");
@@ -224,9 +238,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("list");
@@ -241,9 +257,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // Wait for detail panel to show the first key
@@ -269,9 +287,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Your credentials may have partial access to security APIs.");
@@ -283,9 +303,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockRejectedValue({ status: 403, message: "security_exception" });
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Your credentials cannot list API keys.");
@@ -297,9 +319,11 @@ describe("ApiKeysPage", () => {
     getApiKeysMock.mockRejectedValue({ status: 500, message: "internal_error" });
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("internal_error");
@@ -316,10 +340,12 @@ describe("ApiKeysPage", () => {
     }
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-        <LocationDisplay />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+          <LocationDisplay />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByRole("heading", { level: 6, name: "ingest-key" });
@@ -340,9 +366,11 @@ describe("ApiKeysPage", () => {
       .mockResolvedValueOnce({ api_keys: [API_KEYS_RESPONSE.api_keys[0]] });
 
     render(
-      <MemoryRouter>
-        <ApiKeysPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ApiKeysPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const list = await screen.findByRole("list");
