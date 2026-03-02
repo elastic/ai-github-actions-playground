@@ -15,10 +15,14 @@ If your credentials have API key privileges, you can generate a collector key di
 
 ## Verify ingestion
 
-After starting the collector, click **Verify ingestion** to check whether telemetry data streams have appeared in Elasticsearch:
+After starting the collector, click **Check now** to verify whether telemetry data streams have appeared in Elasticsearch. Verification also starts automatically once an API key is generated or a starter command is copied.
+
+Once initiated, verification continues polling automatically in the background — you do not need to click again. A pulsing "Listening for data…" indicator confirms that auto-polling is active.
+
+Possible outcomes:
 
 - **found** — telemetry data was detected. The alert lists the signal types found (e.g. logs, metrics, traces) and provides navigation buttons to jump directly to the corresponding page for each signal.
-- **not_found** — no telemetry data streams were found yet. Make sure the collector is running and try again in a few moments. A link to the OpenTelemetry troubleshooting docs is provided.
+- **not_found** — no telemetry data streams found yet. Make sure the collector is running — the page will keep checking automatically. A link to the OpenTelemetry troubleshooting docs is provided.
 - **error** — the verification request failed. Check your connection and permissions, then retry.
 
 Official references:

@@ -14,7 +14,9 @@ If import fails, validate the file is valid JSON produced by Peek and includes r
 
 The dashboard index (`/dashboards`) is the primary management page for dashboards in a workspace.
 
-Each dashboard row supports open, rename, duplicate, archive, and delete actions. Deletes are guarded by confirmation and an undo-style recovery window.
+Each dashboard row supports open, rename, edit details, duplicate, archive, and delete actions. Deletes are guarded by confirmation and an undo-style recovery window.
+
+Use Edit details from the dashboard card menu to update a dashboard's description and tags directly in the library without export/import workarounds.
 
 Import and export support two scopes: active dashboard JSON for sharing one view, and workspace JSON for backup/restore of all dashboards.
 

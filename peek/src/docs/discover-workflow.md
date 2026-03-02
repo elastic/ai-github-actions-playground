@@ -12,7 +12,7 @@ Filter columns by name using the search box above the field list.
 
 When you find a useful query, click Create Panel to promote it directly into a dashboard panel.
 
-Click Export CSV to download the currently visible columns as a CSV file (discover-results.csv). Results are sanitized to prevent formula injection when opened in spreadsheet software.
+Click Export CSV to download the currently visible columns as a CSV file (query-lab-results.csv). Results are sanitized to prevent formula injection when opened in spreadsheet software.
 
 Use pipeline step chips to execute and inspect intermediate query stages when debugging complex ES|QL pipelines.
 

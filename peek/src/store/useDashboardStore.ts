@@ -37,6 +37,10 @@ interface DashboardState {
   setActiveDashboard: (id: string) => void;
   createDashboard: (title?: string) => string;
   renameDashboard: (id: string, title: string) => void;
+  updateDashboardMetadata: (
+    id: string,
+    metadata: { description?: string; tags?: string[] },
+  ) => void;
   duplicateDashboard: (id: string) => string | null;
   archiveDashboard: (id: string, archived: boolean) => void;
   toggleFavoriteDashboard: (id: string) => void;
@@ -234,6 +238,14 @@ export const useDashboardStore = create<DashboardState>()(
               dashboard.id === id
                 ? { ...dashboard, title: nextTitle, updatedAt: nowIso() }
                 : dashboard,
+            );
+            return syncActiveState(dashboards, s.activeDashboardId);
+          }),
+
+        updateDashboardMetadata: (id, metadata) =>
+          set((s) => {
+            const dashboards = s.dashboards.map((dashboard) =>
+              dashboard.id === id ? { ...dashboard, ...metadata, updatedAt: nowIso() } : dashboard,
             );
             return syncActiveState(dashboards, s.activeDashboardId);
           }),

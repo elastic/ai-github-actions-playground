@@ -139,7 +139,7 @@ export default function DiscoverPage() {
       timingsCleared.current = false;
     },
     onFailure: () => {
-      setResult(null);
+      // Preserve previous results — the error banner is shown above the table
     },
   });
   const insightQueryToColumnRef = useRef(new Map<string, string>());
@@ -288,7 +288,7 @@ export default function DiscoverPage() {
   const handleCreatePanel = useCallback(() => {
     const newPanel = {
       id: crypto.randomUUID(),
-      title: "Discover Panel",
+      title: "Query Lab Panel",
       query: effectiveQuery.trim(),
       visualization: "table" as const,
       layout: { x: 0, y: Infinity, w: 12, h: 5 },
@@ -308,7 +308,7 @@ export default function DiscoverPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "discover-results.csv";
+    a.download = "query-lab-results.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [filteredResult]);
@@ -373,7 +373,19 @@ export default function DiscoverPage() {
             </>
           }
         />
-        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
+        <Box
+          sx={{
+            overflow: "hidden",
+            mb: 1,
+            boxShadow: editorFocused
+              ? (theme) => `0 0 0 1px ${theme.palette.primary.main}`
+              : "none",
+            border: 1,
+            borderColor: editorFocused ? "primary.main" : "divider",
+            borderRadius: 1,
+            transition: "border-color 0.15s, box-shadow 0.15s",
+          }}
+        >
           <ResizableEditorContainer
             height={discoverEditorHeight}
             onHeightChange={setDiscoverEditorHeight}

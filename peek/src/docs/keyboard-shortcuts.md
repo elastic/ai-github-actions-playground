@@ -6,6 +6,8 @@ Press Ctrl/Cmd+Shift+A to toggle the AI Assistant drawer open or closed from any
 
 Press Ctrl/Cmd+Enter in Query Lab or Panel Editor to run the current ES|QL query without leaving the keyboard.
 
+Use Arrow Up/Down in Query Lab to navigate between rows while the row inspector is open. The inspector updates to show the newly selected row and the table scrolls to keep it visible.
+
 Click the dashboard title in the header to rename it inline.
 
 Use Dark/Light Mode in the settings menu to switch between light and dark mode.

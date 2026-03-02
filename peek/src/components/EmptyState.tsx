@@ -3,6 +3,7 @@ import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import { Link as RouterLink } from "react-router-dom";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -65,7 +66,8 @@ export default function EmptyState({
       {action && <Box sx={{ mt: 1 }}>{action}</Box>}
       {addDataHref && (
         <Link
-          href={addDataHref}
+          component={RouterLink}
+          to={addDataHref}
           underline="hover"
           variant="body2"
           color="text.secondary"
