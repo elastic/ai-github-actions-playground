@@ -247,12 +247,12 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
   useEffect(() => {
     const instance = instanceRef.current;
-    if (!instance) return;
+    if (!instance || !option) return;
     instance.on("click", handleClick);
     return () => {
       instance.off("click", handleClick);
     };
-  }, [handleClick]);
+  }, [handleClick, option]);
 
   if (tree.value === 0 || !option) {
     return (

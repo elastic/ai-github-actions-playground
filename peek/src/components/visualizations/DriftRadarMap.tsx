@@ -125,12 +125,12 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
 
   useEffect(() => {
     const instance = instanceRef.current;
-    if (!instance) return;
+    if (!instance || !onNodeClick || mapData.edges.length === 0) return;
     instance.on("click", handleClick);
     return () => {
       instance.off("click", handleClick);
     };
-  }, [handleClick]);
+  }, [onNodeClick, handleClick, mapData.edges.length]);
 
   if (mapData.edges.length === 0) {
     return (

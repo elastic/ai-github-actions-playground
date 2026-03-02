@@ -91,12 +91,12 @@ export default function ProfilingFlamescope({ stacktraces, onWindowChange, onFra
 
   useEffect(() => {
     const instance = instanceRef.current;
-    if (!instance) return;
+    if (!instance || !option) return;
     instance.on("click", handleHeatmapClick);
     return () => {
       instance.off("click", handleHeatmapClick);
     };
-  }, [handleHeatmapClick]);
+  }, [handleHeatmapClick, option]);
 
   if (!option) {
     return (
