@@ -10,6 +10,10 @@ import appPackage from "../../../package.json";
 import type { ElasticsearchConnection } from "../es";
 import { deriveOtlpEndpoint } from "../../utils/addDataUtils";
 
+export const EDOT_DISTRO_NAME = "elastic";
+export const EDOT_DISTRO_VERSION =
+  typeof appPackage.version === "string" ? appPackage.version : "0.0.0";
+
 export interface BrowserTracingStartConfig {
   enabled: boolean;
   endpoint?: string;
@@ -152,6 +156,8 @@ export async function startBrowserTracing(config: BrowserTracingStartConfig): Pr
       "service.name": config.serviceName ?? "elastic-peek",
       "service.version": config.serviceVersion ?? "0.0.0",
       "deployment.environment": config.environment ?? "browser",
+      "telemetry.distro.name": EDOT_DISTRO_NAME,
+      "telemetry.distro.version": EDOT_DISTRO_VERSION,
     }),
     spanProcessors: [
       new BatchSpanProcessor(

@@ -5,10 +5,18 @@ import {
   getOtlpAuthHeaders,
   getTracingConnectionSnapshot,
   shouldReconfigureTracing,
+  EDOT_DISTRO_NAME,
+  EDOT_DISTRO_VERSION,
 } from "../../src/services/telemetry/browserTracing";
 import { deriveOtlpEndpoint } from "../../src/utils/addDataUtils";
 
 describe("browser tracing helpers", () => {
+  it("exports EDOT distro resource attributes", () => {
+    expect(EDOT_DISTRO_NAME).toBe("elastic");
+    expect(typeof EDOT_DISTRO_VERSION).toBe("string");
+    expect(EDOT_DISTRO_VERSION.length).toBeGreaterThan(0);
+  });
+
   it("derives /v1/traces endpoint from cluster URL", () => {
     expect(deriveDefaultOtlpEndpoint("https://es.example.com:9200")).toBe(
       "https://es.example.com:9200/v1/traces",
