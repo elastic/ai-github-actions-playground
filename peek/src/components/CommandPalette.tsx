@@ -303,8 +303,12 @@ function CommandPalettePaper({ children }: { children?: React.ReactNode }) {
 export default function CommandPalette() {
   const open = useUIStore((s) => s.commandPaletteOpen);
   const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const addRecentCommandId = useUIStore((s) => s.addRecentCommandId);
-  const recentCommandIds = useUIStore((s) => s.recentCommandIds);
+  const { addRecentCommandId, recentCommandIds } = useUIStore(
+    useShallow((s) => ({
+      addRecentCommandId: s.addRecentCommandId,
+      recentCommandIds: s.recentCommandIds,
+    })),
+  );
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const commands = useCommands();
