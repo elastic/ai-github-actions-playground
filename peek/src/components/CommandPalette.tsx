@@ -313,9 +313,10 @@ export default function CommandPalette() {
   // Inject "Recent Commands" group at the top when search is empty
   const commandsWithRecent = useMemo(() => {
     if (search.trim()) return commands;
+    const commandMap = new Map(commands.map((c) => [c.id, c]));
     const recentCommands: Command[] = [];
     for (const id of recentCommandIds) {
-      const cmd = commands.find((c) => c.id === id);
+      const cmd = commandMap.get(id);
       if (cmd) {
         recentCommands.push({ ...cmd, group: "Recent Commands" });
       }
