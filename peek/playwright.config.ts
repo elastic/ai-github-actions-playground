@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const preview = Boolean(process.env.PLAYWRIGHT_PREVIEW);
+const preview = !["", "0", "false"].includes(process.env.PLAYWRIGHT_PREVIEW ?? "");
 const port = preview ? 4173 : 3000;
 const baseURL = `http://localhost:${port}/ai-github-actions-playground/`;
 
