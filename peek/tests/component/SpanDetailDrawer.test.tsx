@@ -280,6 +280,21 @@ describe("SpanDetailDrawer – status label consistency", () => {
     expect(screen.getByText("Success")).toBeInTheDocument();
   });
 
+  it('displays "Success" for a span with status "STATUS_CODE_OK"', () => {
+    const span = makeSpan({ status: "STATUS_CODE_OK" });
+    render(
+      <SpanDetailDrawer
+        span={span}
+        open
+        onClose={vi.fn()}
+        onFilterBy={vi.fn()}
+        onExclude={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Success")).toBeInTheDocument();
+  });
+
   it('displays "Error" for a span with status "Error"', () => {
     const span = makeSpan({ status: "Error" });
     render(
