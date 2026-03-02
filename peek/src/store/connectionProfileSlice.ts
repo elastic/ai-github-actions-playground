@@ -27,6 +27,7 @@ import {
 
 let latestSwitchRequestId = 0;
 const latestRequestIdByProfileId = new Map<string, number>();
+const latestRetestIdByProfileId = new Map<string, number>();
 
 const credentialsSchema = z
   .object({
@@ -88,6 +89,7 @@ export const createConnectionProfileSlice: StateCreator<
   deleteConnectionProfile: (id) =>
     set((s) => {
       latestRequestIdByProfileId.delete(id);
+      latestRetestIdByProfileId.delete(id);
       if (isElectronAvailable()) {
         // Fire-and-forget: credential deletion is async but UI update is sync.
         // Errors are logged but do not block the profile removal.
@@ -208,8 +210,13 @@ export const createConnectionProfileSlice: StateCreator<
     if (!profile) {
       return { ok: false, profileName: null, message: "Connection profile not found" };
     }
+    const retestId = (latestRetestIdByProfileId.get(id) ?? 0) + 1;
+    latestRetestIdByProfileId.set(id, retestId);
     try {
       await fetchCapabilitiesForConnection(profile.connection);
+      if (latestRetestIdByProfileId.get(id) !== retestId) {
+        return { ok: true, profileName: profile.name };
+      }
       set((s) => ({
         profileHealthMap: {
           ...s.profileHealthMap,
@@ -223,6 +230,9 @@ export const createConnectionProfileSlice: StateCreator<
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
+      if (latestRetestIdByProfileId.get(id) !== retestId) {
+        return { ok: false, profileName: profile.name, message };
+      }
       set((s) => ({
         profileHealthMap: {
           ...s.profileHealthMap,
