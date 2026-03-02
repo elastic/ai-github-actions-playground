@@ -3,6 +3,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { formatTime } from "../utils/formatDate";
+
 import RefreshIntervalPicker, { type RefreshIntervalOption } from "./RefreshIntervalPicker";
 
 interface RefreshToolbarProps {
@@ -25,14 +27,7 @@ export default function RefreshToolbar({
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       <Typography variant="caption" color="text.secondary">
-        Last updated:{" "}
-        {lastUpdatedAt
-          ? new Date(lastUpdatedAt).toLocaleTimeString(undefined, {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            })
-          : "—"}
+        Last updated: {lastUpdatedAt ? formatTime(lastUpdatedAt, { short: true }) : "—"}
       </Typography>
       <RefreshIntervalPicker
         value={refreshIntervalSeconds}
