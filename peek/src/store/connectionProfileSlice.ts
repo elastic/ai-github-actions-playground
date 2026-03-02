@@ -173,14 +173,17 @@ export const createConnectionProfileSlice: StateCreator<
         connected: true,
         capabilities: caps,
         activeProfileId: id,
-        profileHealthMap: {
-          ...s.profileHealthMap,
-          [id]: {
-            status: "healthy",
-            checkedAt: new Date().toISOString(),
-            errorSummary: null,
-          },
-        },
+        profileHealthMap:
+          latestProfileHealthSeqById.get(id) === healthSeq
+            ? {
+                ...s.profileHealthMap,
+                [id]: {
+                  status: "healthy",
+                  checkedAt: new Date().toISOString(),
+                  errorSummary: null,
+                },
+              }
+            : s.profileHealthMap,
       }));
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
