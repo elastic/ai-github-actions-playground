@@ -139,6 +139,22 @@ const baseOptions: ThemeOptions = {
   },
 };
 
+/** Build CssBaseline overrides with a theme-aware CodeMirror focus ring. */
+function cssBaselineOverrides(primaryColor: string): string {
+  return `
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    .cm-editor.cm-focused {
+      outline: 2px solid ${primaryColor};
+    }
+  `;
+}
+
 export const lightTheme = createTheme({
   ...baseOptions,
   palette: {
@@ -148,6 +164,10 @@ export const lightTheme = createTheme({
     background: { default: "#F5F7FA", paper: "#FFFFFF", subtle: "#F0F2F5", elevated: "#FFFFFF" },
     text: { primary: "#1A1C21", secondary: "#676F7B" },
     border: { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" },
+  },
+  components: {
+    ...baseOptions.components,
+    MuiCssBaseline: { styleOverrides: cssBaselineOverrides("#0077CC") },
   },
 });
 
@@ -160,6 +180,10 @@ export const darkTheme = createTheme({
     background: { default: "#111217", paper: "#25262E", subtle: "#1A1B22", elevated: "#2D2E36" },
     text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
     border: { subtle: "#3D3F48", default: "#5A5D68", strong: "#7A7E8A" },
+  },
+  components: {
+    ...baseOptions.components,
+    MuiCssBaseline: { styleOverrides: cssBaselineOverrides("#36A2EF") },
   },
 });
 
