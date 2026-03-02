@@ -282,25 +282,32 @@ export default function AddDataPage() {
       </Paper>
 
       {/* Context-aware banner: existing data detected */}
-      {existingSignals && existingSignals.size > 0 && (
-        <Alert severity="info">
-          You already have {Array.from(existingSignals).sort().join(", ")} data.{" "}
-          {Array.from(existingSignals)
-            .sort()
-            .map((s) => (
-              <Link
-                key={s}
-                component="button"
-                variant="body2"
-                onClick={() => navigate(SIGNAL_NAV[s].path)}
-                sx={{ mx: 0.5 }}
-              >
-                {SIGNAL_NAV[s].label}
-              </Link>
-            ))}
-          — Add more sources below.
-        </Alert>
-      )}
+      {existingSignals &&
+        existingSignals.size > 0 &&
+        (() => {
+          const sorted = Array.from(existingSignals).sort();
+          const label =
+            sorted.length > 2
+              ? sorted.slice(0, -1).join(", ") + ", and " + sorted[sorted.length - 1]
+              : sorted.join(" and ");
+          return (
+            <Alert severity="info">
+              You already have {label} data.{" "}
+              {sorted.map((s) => (
+                <Link
+                  key={s}
+                  component="button"
+                  variant="body2"
+                  onClick={() => navigate(SIGNAL_NAV[s].path)}
+                  sx={{ mx: 0.5 }}
+                >
+                  {SIGNAL_NAV[s].label}
+                </Link>
+              ))}
+              — Add more sources below.
+            </Alert>
+          );
+        })()}
 
       <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
@@ -555,8 +562,8 @@ export default function AddDataPage() {
         {(verifyStatus === "not_found" ||
           (verifyStatus === "polling" && foundSignals.size === 0)) && (
           <Alert severity="info">
-            No telemetry data streams found yet. Make sure the collector is running — we&apos;ll
-            keep checking automatically.{" "}
+            No telemetry data streams found yet. Make sure the collector is running — we'll keep
+            checking automatically.{" "}
             <Link
               href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
               target="_blank"
