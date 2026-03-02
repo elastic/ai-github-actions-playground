@@ -85,6 +85,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         pathname: location.pathname,
         screenContextSummary,
         signal: controller.signal,
+        navigate,
       });
 
       const openai = createOpenAI({
@@ -131,6 +132,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
     connection,
     location.pathname,
     screenContextSummary,
+    navigate,
   ]);
 
   if (!configured) {
