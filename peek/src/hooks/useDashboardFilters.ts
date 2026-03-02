@@ -1,127 +1,79 @@
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import type { DashboardDefinition } from "../types";
 
-export function useDashboardFilters(dashboards: DashboardDefinition[]) {
-  const [searchParams, setSearchParams] = useSearchParams();
+const dashboardFilterParsers = {
+  q: parseAsString,
+  tags: parseAsString,
+  sort: parseAsStringEnum(["updated", "title"]).withDefault("updated"),
+  archived: parseAsBoolean,
+  favorites: parseAsBoolean,
+};
 
-  const searchQuery = searchParams.get("q") ?? "";
+export function useDashboardFilters(dashboards: DashboardDefinition[]) {
+  const [urlState, setUrlState] = useQueryStates(dashboardFilterParsers, {
+    history: "replace",
+  });
+
+  const searchQuery = urlState.q ?? "";
   const selectedTags = useMemo(() => {
-    const raw = searchParams.get("tags");
+    const raw = urlState.tags;
     return raw ? raw.split(",").filter(Boolean) : [];
-  }, [searchParams]);
-  const sortField = (searchParams.get("sort") ?? "updated") as "updated" | "title";
-  const showArchived = searchParams.get("archived") === "true";
-  const showFavoritesOnly = searchParams.get("favorites") === "true";
+  }, [urlState.tags]);
+  const sortField = urlState.sort;
+  const showArchived = urlState.archived === true;
+  const showFavoritesOnly = urlState.favorites === true;
 
   const setShowArchived = useCallback(
     (value: boolean) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (value) {
-            next.set("archived", "true");
-          } else {
-            next.delete("archived");
-          }
-          return next;
-        },
-        { replace: true },
-      );
+      void setUrlState({ archived: value ? true : null });
     },
-    [setSearchParams],
+    [setUrlState],
   );
 
   const setShowFavoritesOnly = useCallback(
     (value: boolean) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (value) {
-            next.set("favorites", "true");
-          } else {
-            next.delete("favorites");
-          }
-          return next;
-        },
-        { replace: true },
-      );
+      void setUrlState({ favorites: value ? true : null });
     },
-    [setSearchParams],
+    [setUrlState],
   );
 
   const setSearchQuery = useCallback(
     (value: string) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (value) {
-            next.set("q", value);
-          } else {
-            next.delete("q");
-          }
-          return next;
-        },
-        { replace: true },
-      );
+      void setUrlState({ q: value || null });
     },
-    [setSearchParams],
+    [setUrlState],
   );
 
   const toggleTag = useCallback(
     (tag: string) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          const current = (prev.get("tags") ?? "").split(",").filter(Boolean);
-          const updated = current.includes(tag)
-            ? current.filter((t) => t !== tag)
-            : [...current, tag];
-          if (updated.length > 0) {
-            next.set("tags", updated.join(","));
-          } else {
-            next.delete("tags");
-          }
-          return next;
-        },
-        { replace: true },
-      );
+      const updated = selectedTags.includes(tag)
+        ? selectedTags.filter((t) => t !== tag)
+        : [...selectedTags, tag];
+      void setUrlState({ tags: updated.length > 0 ? updated.join(",") : null });
     },
-    [setSearchParams],
+    [selectedTags, setUrlState],
   );
 
   const setSortField = useCallback(
     (value: "updated" | "title") => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (value === "updated") {
-            next.delete("sort");
-          } else {
-            next.set("sort", value);
-          }
-          return next;
-        },
-        { replace: true },
-      );
+      void setUrlState({ sort: value === "updated" ? null : value });
     },
-    [setSearchParams],
+    [setUrlState],
   );
 
   const hasActiveFilters = searchQuery !== "" || selectedTags.length > 0 || showFavoritesOnly;
 
   const resetFilters = useCallback(() => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams();
-        // Preserve the archived param since it has its own dedicated toggle
-        if (prev.get("archived") === "true") next.set("archived", "true");
-        return next;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
+    void setUrlState({
+      q: null,
+      tags: null,
+      sort: null,
+      favorites: null,
+      archived: showArchived ? true : null,
+    });
+  }, [setUrlState, showArchived]);
 
   const hasFavorites = useMemo(() => dashboards.some((d) => d.favoritedAt), [dashboards]);
 

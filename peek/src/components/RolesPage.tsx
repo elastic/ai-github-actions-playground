@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { parseAsString, useQueryStates } from "nuqs";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -28,14 +29,15 @@ type RoleEntry = { name: string; role: SecurityRole };
 export default function RolesPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [urlState, setUrlState] = useQueryStates({ role: parseAsString }, { history: "replace" });
+  const requestedRole = urlState.role;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roles, setRoles] = useState<RoleEntry[]>([]);
   const [users, setUsers] = useState<SecurityUser[]>([]);
-  const [selectedRoleName, setSelectedRoleName] = useState<string | null>(searchParams.get("role"));
+  const [selectedRoleName, setSelectedRoleName] = useState<string | null>(requestedRole);
   const [copied, setCopied] = useState(false);
 
   const selectedRole = useMemo(
@@ -100,8 +102,24 @@ export default function RolesPage() {
   }, [loadRoles]);
 
   useEffect(() => {
-    setSelectedRoleName(searchParams.get("role"));
-  }, [searchParams]);
+    const resolvedRole =
+      roles.length === 0
+        ? (requestedRole ?? selectedRoleName)
+        : requestedRole && roles.some((entry) => entry.name === requestedRole)
+          ? requestedRole
+          : !requestedRole &&
+              selectedRoleName &&
+              roles.some((entry) => entry.name === selectedRoleName)
+            ? selectedRoleName
+            : (roles[0]?.name ?? null);
+    if (resolvedRole !== selectedRoleName) {
+      setSelectedRoleName(resolvedRole);
+    }
+    if (roles.length === 0 || resolvedRole === requestedRole) {
+      return;
+    }
+    void setUrlState({ role: resolvedRole ?? null });
+  }, [requestedRole, roles, selectedRoleName, setUrlState]);
 
   const filteredRoles = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -163,7 +181,10 @@ export default function RolesPage() {
               <ListItem key={entry.name} disablePadding>
                 <ListItemButton
                   selected={entry.name === selectedRoleName}
-                  onClick={() => setSelectedRoleName(entry.name)}
+                  onClick={() => {
+                    setSelectedRoleName(entry.name);
+                    void setUrlState({ role: entry.name });
+                  }}
                 >
                   <ListItemText
                     primary={entry.name}

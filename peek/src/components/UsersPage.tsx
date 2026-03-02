@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { parseAsString, useQueryStates } from "nuqs";
+import { useLocation, useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -28,16 +29,17 @@ export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedUsername = searchParams.get("username");
+  const [urlState, setUrlState] = useQueryStates(
+    { username: parseAsString },
+    { history: "replace" },
+  );
+  const requestedUsername = urlState.username;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<SecurityUser[]>([]);
-  const [selectedUsername, setSelectedUsername] = useState<string | null>(
-    searchParams.get("username"),
-  );
+  const [selectedUsername, setSelectedUsername] = useState<string | null>(requestedUsername);
   const [copied, setCopied] = useState(false);
 
   const selectedUser = useMemo(
@@ -112,19 +114,8 @@ export default function UsersPage() {
     ) {
       return;
     }
-    setSearchParams(
-      (currentParams) => {
-        const nextParams = new URLSearchParams(currentParams);
-        if (resolvedUsername) {
-          nextParams.set("username", resolvedUsername);
-        } else {
-          nextParams.delete("username");
-        }
-        return nextParams;
-      },
-      { replace: true },
-    );
-  }, [location.pathname, requestedUsername, selectedUsername, setSearchParams, users]);
+    void setUrlState({ username: resolvedUsername ?? null });
+  }, [location.pathname, requestedUsername, selectedUsername, setUrlState, users]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -142,11 +133,9 @@ export default function UsersPage() {
   const handleSelectUser = useCallback(
     (username: string) => {
       setSelectedUsername(username);
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.set("username", username);
-      setSearchParams(nextParams);
+      void setUrlState({ username });
     },
-    [searchParams, setSearchParams],
+    [setUrlState],
   );
 
   return (

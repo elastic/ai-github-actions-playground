@@ -7,6 +7,47 @@ import RolesPage from "../../src/components/RolesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
+vi.mock("nuqs", async () => {
+  const React = await import("react");
+  const router = await import("react-router-dom");
+  const actual = await vi.importActual("nuqs");
+  function useQueryStates(
+    parsers: Record<string, { parse?: (value: string) => unknown; defaultValue?: unknown }>,
+  ) {
+    const [searchParams, setSearchParams] = router.useSearchParams();
+    const state = React.useMemo(() => {
+      const next: Record<string, unknown> = {};
+      for (const [key, parser] of Object.entries(parsers)) {
+        const raw = searchParams.get(key);
+        const parsed = raw === null ? null : (parser.parse?.(raw) ?? raw);
+        next[key] = parsed ?? ("defaultValue" in parser ? parser.defaultValue : null);
+      }
+      return next;
+    }, [parsers, searchParams]);
+    const setState = React.useCallback(
+      async (values: Record<string, unknown>) => {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            for (const [key, value] of Object.entries(values)) {
+              if (value === null || typeof value === "undefined") {
+                next.delete(key);
+              } else {
+                next.set(key, String(value));
+              }
+            }
+            return next;
+          },
+          { replace: true },
+        );
+      },
+      [setSearchParams],
+    );
+    return [state, setState] as const;
+  }
+  return { ...actual, useQueryStates };
+});
+
 const getCapabilitiesMock = vi.fn();
 const getSecurityRolesMock = vi.fn();
 const getSecurityUsersMock = vi.fn();
@@ -110,6 +151,33 @@ describe("RolesPage", () => {
 
     await screen.findByRole("heading", { level: 6, name: "superuser" });
     expect(screen.getByText("all")).toBeInTheDocument();
+  });
+
+  it("updates ?role when selecting a role", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    function LocationDisplay() {
+      const location = useLocation();
+      return <div data-testid="location-display">{location.pathname + location.search}</div>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={["/roles"]}>
+        <Routes>
+          <Route path="/roles" element={<RolesPage />} />
+        </Routes>
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "empty_role" });
+    await user.click(screen.getByRole("button", { name: /viewer/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-display").textContent).toBe("/roles?role=viewer");
+    });
   });
 
   it("filters the list panel by search term", async () => {
