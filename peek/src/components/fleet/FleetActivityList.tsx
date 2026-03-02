@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
@@ -22,7 +22,7 @@ const TYPE_COLOR: Record<string, "primary" | "secondary" | "warning" | "info" | 
   INPUT_ACTION: "secondary",
 };
 
-export default function FleetActivityList({ actions, actionResults }: Props) {
+export default memo(function FleetActivityList({ actions, actionResults }: Props) {
   const resultsByAction = useMemo(() => {
     const map = new Map<string, FleetActionResult[]>();
     for (const r of actionResults) {
@@ -102,4 +102,4 @@ export default function FleetActivityList({ actions, actionResults }: Props) {
       })}
     </Box>
   );
-}
+});

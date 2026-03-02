@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
@@ -19,7 +20,7 @@ const STATE_COLOR: Record<string, "success" | "warning" | "error" | "default"> =
   UNHEALTHY: "error",
 };
 
-export default function FleetOutputsList({ outputs }: Props) {
+export default memo(function FleetOutputsList({ outputs }: Props) {
   if (outputs.length === 0) {
     return (
       <EmptyState
@@ -58,4 +59,4 @@ export default function FleetOutputsList({ outputs }: Props) {
       ))}
     </Box>
   );
-}
+});
