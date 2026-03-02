@@ -65,8 +65,8 @@ async function checkA11y(page: Page, pageName: string) {
       (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
     ),
     `axe found new accessibility violations on "${pageName}".\n` +
-      `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
-      `See DEVELOPING.md for accessibility standards.`,
+    `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
+    `See DEVELOPING.md for accessibility standards.`,
   ).toEqual([]);
 }
 
@@ -284,18 +284,10 @@ test.describe("smoke – site navigation", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
 
     await connectToMockCluster(page);
-
-    // On mobile, the sidebar drawer must be closed to interact with the footer reset button.
-    const isMobile = page.viewportSize()!.width <= 768;
-    if (
-      isMobile &&
-      (await page.getByRole("button", { name: "Metrics", exact: true }).isVisible())
-    ) {
-      await page.keyboard.press("Escape");
-      await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeHidden();
-    }
-
-    await page.getByRole("button", { name: /Reset/i }).click();
+    await page.getByRole("button", { name: /Settings/i }).click();
+    await page.getByRole("menuitem", { name: /Reset All State/i }).click();
+    await expect(page.getByRole("dialog", { name: /Reset all application state/i })).toBeVisible();
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Elastic Peek" })).toBeVisible();
   });
 
