@@ -437,4 +437,45 @@ describe("IngestPipelinesPage", () => {
       expect(screen.queryByTestId("simulate-result")).not.toBeInTheDocument();
     });
   });
+
+  it("shows actionable empty state with Add data link when the cluster has no pipelines", async () => {
+    getIngestPipelinesMock.mockResolvedValue({});
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    // Wait for the empty state to appear in the detail panel
+    await screen.findByText("No ingest pipelines");
+
+    // Add data links should appear
+    await waitFor(() => {
+      const addDataLinks = screen.getAllByRole("link", { name: /add data/i });
+      expect(addDataLinks.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Should NOT show "Select a pipeline" since there are no pipelines
+    expect(screen.queryByText("Select a pipeline")).not.toBeInTheDocument();
+  });
+
+  it("shows search-specific empty state when pipelines exist but search excludes all", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("my-pipeline");
+    await user.type(screen.getByPlaceholderText("Search pipelines"), "does-not-exist");
+
+    await screen.findByText("No pipelines found");
+    // Should NOT show the "No ingest pipelines" heading or Add data link
+    expect(screen.queryByText("No ingest pipelines")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /add data/i })).not.toBeInTheDocument();
+  });
 });
