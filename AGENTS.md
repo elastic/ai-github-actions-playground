@@ -26,10 +26,12 @@ Always run this first. Do not use `npm install` — use `npm ci` which is faster
 ## Common Commands
 
 ```bash
-make lint    # Prettier + ESLint + TypeScript type checking
+make lint    # Prettier + ESLint on changed files + full TypeScript type check (override: make lint BASE=HEAD~3)
+make lint-full # Prettier + ESLint + TypeScript type check on all files
 make build   # production build (runs tsc + vite build)
 make serve   # start dev server
-make format  # auto-format code with Prettier
+make format  # auto-format changed files with Prettier (override: make format BASE=HEAD~3)
+make format-full # auto-format all files with Prettier
 make check   # lint + unit tests + build (equivalent to CI)
 ```
 
