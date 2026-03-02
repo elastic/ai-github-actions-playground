@@ -149,10 +149,15 @@ export default function ExplorePage() {
 
   const [skipDimensionOverview, setSkipDimensionOverview] = useState(false);
 
+  // True when a metric is set (e.g. via URL) but does not exist in the loaded field list.
+  const metricNotFound =
+    selectedMetric !== null && !fieldsLoading && fields.length > 0 && selectedMetricField === null;
+
   // Show namespace overview when a namespace is picked but no single metric is selected.
   const showOverview = selectedNamespace !== null && !selectedMetric;
   // Show dimension overview when a metric is selected but no groupBy is set yet.
-  const showDimensionOverview = selectedMetric !== null && !groupBy && !skipDimensionOverview;
+  const showDimensionOverview =
+    selectedMetric !== null && !groupBy && !skipDimensionOverview && !metricNotFound;
 
   // Load fields when index pattern changes
   useEffect(() => {
@@ -187,7 +192,8 @@ export default function ExplorePage() {
 
   // Run query when metric/aggregation/filters/groupBy/timeRange change
   useEffect(() => {
-    if (!client || !selectedMetric || !indexPattern || showDimensionOverview) return;
+    if (!client || !selectedMetric || !indexPattern || showDimensionOverview || metricNotFound)
+      return;
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -239,6 +245,7 @@ export default function ExplorePage() {
     indexPattern,
     selectedMetric,
     showDimensionOverview,
+    metricNotFound,
     metricType,
     aggregation,
     filters,
@@ -383,6 +390,7 @@ export default function ExplorePage() {
         groupBy={groupBy}
         showOverview={showOverview}
         showDimensionOverview={showDimensionOverview}
+        metricNotFound={metricNotFound}
         chartData={chartData}
         queryStatus={queryResult.status}
         timeRange={dashboard.timeRange}
