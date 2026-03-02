@@ -6,7 +6,7 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import ChatIcon from "@mui/icons-material/Chat";
 import InfoIcon from "@mui/icons-material/Info";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import DatasetIcon from "@mui/icons-material/Dataset";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -259,10 +259,10 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "list",
     nav: {
       label: "Add Data",
-      group: "System",
-      order: 17,
+      group: "Workspace",
+      order: 5,
       showInSidebar: true,
-      icon: createElement(AddCircleOutlineIcon, { fontSize: "small" }),
+      icon: createElement(RocketLaunchIcon, { fontSize: "small" }),
     },
   },
   dataStreams: {

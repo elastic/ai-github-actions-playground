@@ -7,16 +7,26 @@ import type { ElasticsearchClient } from "../services/es";
 export type EndpointType = "elasticsearch" | "managed_otlp";
 
 /**
- * Attempt to derive the managed OTLP ingest endpoint from an Elasticsearch URL.
- * Elastic Cloud URLs follow the pattern `<id>.es.<region>.<provider>.elastic.cloud`;
- * replacing the `.es.` segment with `.ingest.` yields the OTLP endpoint.
- * Returns `null` when the URL does not match the Elastic Cloud pattern.
+ * Attempt to derive the managed OTLP ingest endpoint from an Elasticsearch (or Kibana) URL.
+ *
+ * Supported patterns:
+ * - `<id>.es.<region>.<provider>.elastic.cloud`  → `<id>.ingest.<region>.<provider>.elastic.cloud`
+ * - `<id>.es.<region>.<provider>.cloud.es.io`    → `<id>.ingest.<region>.<provider>.cloud.es.io`
+ * - `<id>.kb.<region>.<provider>.cloud.es.io`    → `<id>.ingest.<region>.<provider>.cloud.es.io`
+ *
+ * Returns `null` when the URL does not match any known Elastic Cloud pattern.
  */
 export function deriveOtlpEndpoint(esUrl: string): string | null {
   try {
     const url = new URL(esUrl);
     const parts = url.hostname.split(".");
-    if (url.hostname.endsWith(".elastic.cloud") && parts.length >= 3 && parts[1] === "es") {
+    const isElasticCloud =
+      url.hostname.endsWith(".elastic.cloud") && parts.length >= 3 && parts[1] === "es";
+    const isCloudEsIo =
+      url.hostname.endsWith(".cloud.es.io") &&
+      parts.length >= 3 &&
+      (parts[1] === "es" || parts[1] === "kb");
+    if (isElasticCloud || isCloudEsIo) {
       parts[1] = "ingest";
       url.hostname = parts.join(".");
       return url.toString().replace(/\/+$/, "");
@@ -25,6 +35,29 @@ export function deriveOtlpEndpoint(esUrl: string): string | null {
     /* invalid URL — fall through */
   }
   return null;
+}
+
+/**
+ * Return candidate ingest URLs for the given connection URL.
+ * For `.cloud.es.io` URLs an additional `.elastic-cloud.com` variant is
+ * included so the caller can probe both and use whichever responds.
+ */
+export function deriveIngestCandidates(esUrl: string): string[] {
+  const primary = deriveOtlpEndpoint(esUrl);
+  if (!primary) return [];
+  const candidates = [primary];
+  try {
+    const url = new URL(primary);
+    if (url.hostname.endsWith(".cloud.es.io")) {
+      const alt = new URL(primary);
+      // Replace trailing .cloud.es.io with .elastic-cloud.com
+      alt.hostname = alt.hostname.replace(/\.cloud\.es\.io$/, ".elastic-cloud.com");
+      candidates.push(alt.toString().replace(/\/+$/, ""));
+    }
+  } catch {
+    /* ignore */
+  }
+  return candidates;
 }
 
 /**
@@ -84,6 +117,64 @@ export const SIGNAL_NAV: Record<TelemetrySignal, { label: string; path: string }
   traces: { label: "Traces", path: "/traces" },
   logs: { label: "Query Lab", path: "/discover" },
 };
+
+// ---------------------------------------------------------------------------
+// Command step parsing
+// ---------------------------------------------------------------------------
+
+export interface CommandStep {
+  /** Step number (1-based). */
+  number: number;
+  /** The comment title text (without the leading `# N. `). */
+  title: string;
+  /** The command text that follows the comment line. */
+  command: string;
+}
+
+/**
+ * Split a multi-step command string into discrete steps.
+ *
+ * Each step is identified by a comment line matching the pattern `# N. <title>`
+ * where `N` is a positive integer.  All lines between two step markers (or
+ * between the last marker and end-of-string) are joined to form the step's
+ * command text.  Leading non-step preamble lines (e.g. notes about managed OTLP)
+ * are prepended to the first step's command.
+ *
+ * Returns an empty array when the command contains no step markers.
+ */
+export function parseCommandSteps(command: string): CommandStep[] {
+  const lines = command.split("\n");
+  const stepPattern = /^#\s*(\d+)\.\s*(.*)$/;
+  const steps: CommandStep[] = [];
+  const preambleLines: string[] = [];
+
+  for (const line of lines) {
+    const match = stepPattern.exec(line);
+    if (match) {
+      steps.push({ number: parseInt(match[1]!, 10), title: match[2]!.trim(), command: "" });
+    } else if (steps.length === 0) {
+      preambleLines.push(line);
+    } else {
+      const last = steps[steps.length - 1]!;
+      last.command += (last.command ? "\n" : "") + line;
+    }
+  }
+
+  // Prepend any preamble lines to the first step
+  if (preambleLines.length > 0 && steps.length > 0) {
+    const preamble = preambleLines.join("\n").trim();
+    if (preamble) {
+      steps[0]!.command = steps[0]!.command ? preamble + "\n" + steps[0]!.command : preamble;
+    }
+  }
+
+  // Trim trailing whitespace from each command
+  for (const step of steps) {
+    step.command = step.command.trim();
+  }
+
+  return steps;
+}
 
 // ---------------------------------------------------------------------------
 // Platform definitions

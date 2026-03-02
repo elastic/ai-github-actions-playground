@@ -116,6 +116,10 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
       anchor="right"
       open={open}
       onClose={handleClose}
+      ModalProps={{
+        disableAutoFocus: true,
+        disableEnforceFocus: true,
+      }}
       slotProps={{
         paper: {
           sx: { width: { xs: "100%", sm: 480 }, display: "flex", flexDirection: "column" },

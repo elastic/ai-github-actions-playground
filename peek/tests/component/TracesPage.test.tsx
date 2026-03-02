@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import TracesPage from "../../src/components/traces/TracesPage";
 import { useTracesStore } from "../../src/store/useTracesStore";
@@ -55,6 +56,8 @@ describe("TracesPage duration filter", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -62,7 +65,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -76,7 +81,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -90,7 +97,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -103,7 +112,9 @@ describe("TracesPage duration filter", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -138,6 +149,8 @@ describe("TracesPage empty states", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -145,7 +158,9 @@ describe("TracesPage empty states", () => {
     useTracesStore.setState({ viewMode: "driftRadar" });
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -158,7 +173,9 @@ describe("TracesPage empty states", () => {
   it("shows no-results guidance in list view when a search returns zero traces", () => {
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -183,6 +200,8 @@ describe("TracesPage auto-run on quick filter changes", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -190,7 +209,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -201,11 +222,35 @@ describe("TracesPage auto-run on quick filter changes", () => {
     expect(mockRunQuery).toHaveBeenCalled();
   });
 
-  it("auto-runs query when a status chip is toggled", async () => {
+  it("uses duration-us fallback expression when applying duration filters", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
         <TracesPage />
+      </MemoryRouter>,
+    );
+
+    mockRunQuery.mockClear();
+    await user.type(screen.getByPlaceholderText("Min (ms)"), "2");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    const traceQuery =
+      mockRunQuery.mock.calls
+        .map(([query]) => String(query ?? ""))
+        .find((query) =>
+          query.includes("COALESCE(attributes.span.duration.us, duration / 1000.0)"),
+        ) ?? "";
+    expect(traceQuery).toContain("COALESCE(attributes.span.duration.us, duration / 1000.0)");
+    expect(traceQuery).toContain(">= 2000");
+  });
+
+  it("auto-runs query when a status chip is toggled", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -220,7 +265,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -239,7 +286,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -256,7 +305,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -265,5 +316,59 @@ describe("TracesPage auto-run on quick filter changes", () => {
 
     const queries = mockRunQuery.mock.calls.map(([query]) => String(query));
     expect(queries.some(isDriftRadarQuery)).toBe(true);
+  });
+});
+
+describe("TracesPage duration parsing", () => {
+  beforeEach(() => {
+    capturedCallbacks = [];
+    mockRunQuery.mockClear();
+    useTracesStore.setState({
+      filters: { ...EMPTY_FILTERS },
+      rawQuery: null,
+      selectedTraceId: null,
+      selectedTraceSpans: [],
+      selectedSpanId: null,
+      viewMode: "list",
+      drawerOpen: false,
+    });
+  });
+
+  it("falls back to nanosecond duration when microsecond field is missing", () => {
+    render(
+      <MemoryRouter>
+        <TracesPage />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      capturedCallbacks[0]?.(
+        {
+          columns: [
+            { name: "trace.id", type: "keyword" },
+            { name: "span.id", type: "keyword" },
+            { name: "service.name", type: "keyword" },
+            { name: "name", type: "keyword" },
+            { name: "duration", type: "long" },
+            { name: "status.code", type: "keyword" },
+            { name: "@timestamp", type: "date" },
+          ],
+          values: [
+            [
+              "trace-1",
+              "span-1",
+              "checkout",
+              "GET /checkout",
+              2_000_000,
+              "STATUS_CODE_OK",
+              "2026-02-23T10:00:00.000Z",
+            ],
+          ],
+        },
+        "FROM traces-*",
+      );
+    });
+
+    expect(screen.getByText("2.0ms")).toBeInTheDocument();
   });
 });

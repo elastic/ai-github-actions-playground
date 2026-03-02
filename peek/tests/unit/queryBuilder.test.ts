@@ -43,6 +43,26 @@ describe("buildExplorerQuery", () => {
     expect(result.yAxisLabel).toBe("Sum pct");
   });
 
+  it("uses COUNT(*) for counter metrics with count aggregation", () => {
+    const result = buildExplorerQuery(makeQuery({ metricType: "counter", aggregation: "count" }));
+
+    expect(result.esql).toContain("COUNT(*)");
+    expect(result.esql).not.toContain("COUNT(`system.cpu.total.pct`)");
+  });
+
+  it("includes IS NOT NULL filter for counter metrics", () => {
+    const result = buildExplorerQuery(makeQuery({ metricType: "counter", aggregation: "count" }));
+
+    expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
+  });
+
+  it("does not include IS NOT NULL filter for gauge metrics", () => {
+    const result = buildExplorerQuery(makeQuery({ metricType: "gauge", aggregation: "count" }));
+
+    expect(result.esql).not.toContain("IS NOT NULL");
+    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+  });
+
   it("includes WHERE clause with filters", () => {
     const result = buildExplorerQuery(
       makeQuery({
@@ -231,9 +251,20 @@ describe("buildOverviewQuery", () => {
     expect(result.esql).toContain("SORT timestamp");
   });
 
-  it("uses count aggregation for counter metrics", () => {
+  it("uses COUNT(*) for counter metrics to avoid counter type restrictions", () => {
     const result = buildOverviewQuery(makeOverviewQuery({ metricType: "counter" }));
-    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("COUNT(*)");
+    expect(result.esql).not.toContain("COUNT(`system.cpu.total.pct`)");
+  });
+
+  it("includes IS NOT NULL filter for counter metrics", () => {
+    const result = buildOverviewQuery(makeOverviewQuery({ metricType: "counter" }));
+    expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
+  });
+
+  it("does not include IS NOT NULL filter for gauge metrics", () => {
+    const result = buildOverviewQuery(makeOverviewQuery({ metricType: "gauge" }));
+    expect(result.esql).not.toContain("IS NOT NULL");
   });
 
   it("includes time range in WHERE clause", () => {
@@ -294,9 +325,10 @@ describe("buildDimensionOverviewQuery", () => {
     expect(result.esql).toContain("SORT timestamp");
   });
 
-  it("uses count aggregation for counter metrics", () => {
+  it("uses COUNT(*) for counter metrics to avoid counter type restrictions", () => {
     const result = buildDimensionOverviewQuery(makeDimensionQuery({ metricType: "counter" }));
-    expect(result.esql).toContain("COUNT(`system.cpu.total.pct`)");
+    expect(result.esql).toContain("COUNT(*)");
+    expect(result.esql).not.toContain("COUNT(`system.cpu.total.pct`)");
   });
 
   it("escapes dimension field with backticks", () => {

@@ -1,6 +1,8 @@
 import Box from "@mui/material/Box";
+import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -8,6 +10,8 @@ interface EmptyStateProps {
   description?: string;
   action?: React.ReactNode;
   size?: "small" | "medium";
+  /** When set, renders a subtle "Add data" link pointing to the given href. */
+  addDataHref?: string;
 }
 
 export default function EmptyState({
@@ -16,6 +20,7 @@ export default function EmptyState({
   description,
   action,
   size = "medium",
+  addDataHref,
 }: EmptyStateProps) {
   const iconSize = size === "small" ? 28 : 40;
 
@@ -58,6 +63,18 @@ export default function EmptyState({
         </Typography>
       )}
       {action && <Box sx={{ mt: 1 }}>{action}</Box>}
+      {addDataHref && (
+        <Link
+          href={addDataHref}
+          underline="hover"
+          variant="body2"
+          color="text.secondary"
+          sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 1 }}
+        >
+          <RocketLaunchIcon sx={{ fontSize: 16 }} />
+          Add data
+        </Link>
+      )}
     </Box>
   );
 }

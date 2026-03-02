@@ -6,6 +6,7 @@ import { EditorView } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 import { useShallow } from "zustand/react/shallow";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -13,7 +14,6 @@ import { useConnectionStore } from "../../store/useConnectionStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
-import type { EsqlResponse } from "../../types";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import ResizableSplitPane from "../ResizableSplitPane";
 
@@ -55,6 +55,10 @@ export default function TracesPage() {
     viewMode,
     setViewMode,
     resetFilters,
+    searchResult,
+    setSearchResult,
+    timeseriesResult,
+    setTimeseriesResult,
   } = useTracesStore(
     useShallow((s) => ({
       filters: s.filters,
@@ -72,27 +76,31 @@ export default function TracesPage() {
       viewMode: s.viewMode,
       setViewMode: s.setViewMode,
       resetFilters: s.resetFilters,
+      searchResult: s.searchResult,
+      setSearchResult: s.setSearchResult,
+      timeseriesResult: s.timeseriesResult,
+      setTimeseriesResult: s.setTimeseriesResult,
     })),
   );
 
-  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
-  const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
+
+  // Sync selectedTraceId with URL query parameter
+  const [urlTraceId, setUrlTraceId] = useQueryState("traceId", parseAsString);
+
+  // Store → URL: keep URL in sync when store changes
+  useEffect(() => {
+    if (selectedTraceId !== urlTraceId) {
+      void setUrlTraceId(selectedTraceId);
+    }
+  }, [selectedTraceId, urlTraceId, setUrlTraceId]);
 
   // Drift Radar state
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
-
-  // Clear stale trace selection when leaving the page so we don't
-  // show a detail panel next to an empty results list on return.
-  useEffect(() => {
-    return () => {
-      setSelectedTraceId(null);
-    };
-  }, [setSelectedTraceId]);
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
@@ -126,6 +134,18 @@ export default function TracesPage() {
       setSelectedTraceSpans(spans);
     },
   });
+
+  // URL → store: keep store in sync when URL changes (initial load + browser navigation)
+  useEffect(() => {
+    if (urlTraceId !== selectedTraceId) {
+      setSelectedTraceId(urlTraceId);
+      if (urlTraceId) {
+        runDetailQuery(buildTraceDetailQuery(urlTraceId));
+      } else {
+        setSelectedTraceSpans([]);
+      }
+    }
+  }, [urlTraceId, selectedTraceId, setSelectedTraceId, runDetailQuery, setSelectedTraceSpans]);
 
   const {
     runQuery: runTimeseriesQuery,
@@ -167,13 +187,14 @@ export default function TracesPage() {
 
   const runTraceQueries = useCallback(
     (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
+      setSearchResult(null);
       setTimeseriesResult(null);
       runSearchQuery(query);
       if (includeTimeseries) {
         runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
       }
     },
-    [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
+    [filters, rawQuery, runSearchQuery, runTimeseriesQuery, setSearchResult, setTimeseriesResult],
   );
 
   const runDriftRadarQueries = useCallback(
@@ -267,15 +288,25 @@ export default function TracesPage() {
       return idx !== undefined ? row[idx] : null;
     };
 
-    return searchResult.values.map((row) => ({
-      traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
-      spanId: String(get(row, DEFAULT_FIELD_MAPPING.spanId) ?? ""),
-      serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
-      name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
-      durationUs: Number(get(row, DEFAULT_FIELD_MAPPING.durationUs) ?? 0),
-      status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
-      timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
-    }));
+    return searchResult.values.map((row) => {
+      const parsedDurationUs = Number(get(row, DEFAULT_FIELD_MAPPING.durationUs) ?? NaN);
+      const parsedDurationNs = Number(get(row, DEFAULT_FIELD_MAPPING.durationNs) ?? NaN);
+      const durationUs =
+        Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
+          ? parsedDurationUs
+          : Number.isFinite(parsedDurationNs) && parsedDurationNs > 0
+            ? parsedDurationNs / 1000
+            : 0;
+      return {
+        traceId: String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""),
+        spanId: String(get(row, DEFAULT_FIELD_MAPPING.spanId) ?? ""),
+        serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
+        name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
+        durationUs,
+        status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
+        timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
+      };
+    });
   }, [searchResult]);
 
   const maxDuration = useMemo(
@@ -380,6 +411,7 @@ export default function TracesPage() {
                   driftRadarBaselineEnabled={driftRadarBaselineEnabled}
                   onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
                   filters={filters}
+                  onSearch={handleSearch}
                 />
               }
               bottom={
@@ -423,6 +455,7 @@ export default function TracesPage() {
               driftRadarBaselineEnabled={driftRadarBaselineEnabled}
               onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
               filters={filters}
+              onSearch={handleSearch}
             />
           )}
         </Box>

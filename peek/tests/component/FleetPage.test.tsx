@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import FleetAgentPage from "../../src/components/FleetAgentPage";
 import FleetPage from "../../src/components/FleetPage";
@@ -273,11 +274,13 @@ describe("Fleet pages", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/fleet"]}>
-        <Routes>
-          <Route path="/fleet" element={<FleetPage />} />
-          <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
-        </Routes>
-        <LocationDisplay />
+        <NuqsTestingAdapter hasMemory>
+          <Routes>
+            <Route path="/fleet" element={<FleetPage />} />
+            <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
+          </Routes>
+          <LocationDisplay />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -302,11 +305,13 @@ describe("Fleet pages", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/fleet"]}>
-        <Routes>
-          <Route path="/fleet" element={<FleetPage />} />
-          <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
-        </Routes>
-        <LocationDisplay />
+        <NuqsTestingAdapter hasMemory>
+          <Routes>
+            <Route path="/fleet" element={<FleetPage />} />
+            <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
+          </Routes>
+          <LocationDisplay />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -363,16 +368,18 @@ describe("Fleet pages", () => {
 
     render(
       <MemoryRouter initialEntries={["/fleet/agents/agent-750"]}>
-        <Routes>
-          <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
-        </Routes>
+        <NuqsTestingAdapter hasMemory>
+          <Routes>
+            <Route path="/fleet/agents/:agentId" element={<FleetAgentPage />} />
+          </Routes>
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
     await waitFor(() => {
       expect(screen.queryByText(/not found in recent Elastic Agent logs/i)).not.toBeInTheDocument();
     });
-    expect(screen.getByRole("tab", { name: /Logs \(1\)/ })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /Logs \(1\)/ })).toBeInTheDocument();
   });
 
   it("shows partial error warning when some sources fail", async () => {

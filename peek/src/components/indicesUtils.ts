@@ -2,6 +2,7 @@
 // Types
 // ---------------------------------------------------------------------------
 
+export const INDEX_TABS: IndexTab[] = ["overview", "mappings", "settings", "stats", "disk_usage"];
 export type IndexTab = "overview" | "mappings" | "settings" | "stats" | "disk_usage";
 
 export interface MappingField {

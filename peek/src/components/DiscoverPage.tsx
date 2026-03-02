@@ -138,6 +138,9 @@ export default function DiscoverPage() {
       setTableVersion((prev) => prev + 1);
       timingsCleared.current = false;
     },
+    onFailure: () => {
+      setResult(null);
+    },
   });
   const insightQueryToColumnRef = useRef(new Map<string, string>());
   const { runQuery: runInsightQuery } = useEsqlQuery({
@@ -243,17 +246,19 @@ export default function DiscoverPage() {
   useEffect(() => {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
+  const stableRunQuery = useCallback(() => {
+    handleRunQueryRef.current();
+  }, []);
   const queryEditorExtensions = useMemo(
     () => [
       EditorView.lineWrapping,
-      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
-      ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+      ...createEsqlQueryEditorExtensions(stableRunQuery),
       EditorView.focusChangeEffect.of((_state, focusing) => {
         setEditorFocused(focusing);
         return null;
       }),
     ],
-    // setEditorFocused is a stable useState setter — safe to omit from deps
+    // stableRunQuery is stable (useCallback([], [])); setEditorFocused is a stable useState setter
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
@@ -498,6 +503,18 @@ export default function DiscoverPage() {
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
               description="Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
+              addDataHref="/add-data"
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<PlayArrowIcon />}
+                  onClick={handleRunQuery}
+                  disabled={!effectiveQuery.trim()}
+                >
+                  Run starter query
+                </Button>
+              }
             />
           )}
           {loading && !result && (
