@@ -288,7 +288,7 @@ export default function DiscoverPage() {
   const handleCreatePanel = useCallback(() => {
     const newPanel = {
       id: crypto.randomUUID(),
-      title: "Discover Panel",
+      title: "Query Lab Panel",
       query: effectiveQuery.trim(),
       visualization: "table" as const,
       layout: { x: 0, y: Infinity, w: 12, h: 5 },
@@ -308,7 +308,7 @@ export default function DiscoverPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "discover-results.csv";
+    a.download = "query-lab-results.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [filteredResult]);
