@@ -98,6 +98,32 @@ describe("TracesPage duration filter", () => {
 
     expect(useTracesStore.getState().filters.minDurationMs).toBeNull();
   });
+
+  it("clears duration input fields on Reset Filters", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <TracesPage />
+      </MemoryRouter>,
+    );
+
+    const minInput = screen.getByPlaceholderText("Min (ms)");
+    const maxInput = screen.getByPlaceholderText("Max (ms)");
+
+    await user.type(minInput, "123");
+    await user.type(maxInput, "456");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(useTracesStore.getState().filters.minDurationMs).toBe(123);
+    expect(useTracesStore.getState().filters.maxDurationMs).toBe(456);
+
+    await user.click(screen.getByRole("button", { name: "Reset Filters" }));
+
+    expect(useTracesStore.getState().filters.minDurationMs).toBeNull();
+    expect(useTracesStore.getState().filters.maxDurationMs).toBeNull();
+    expect(minInput).toHaveValue("");
+    expect(maxInput).toHaveValue("");
+  });
 });
 
 describe("TracesPage empty states", () => {
