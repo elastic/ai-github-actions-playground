@@ -110,6 +110,39 @@ describe("request construction", () => {
     });
   });
 
+  it("query() converts object params to array of single-key objects", async () => {
+    const fetchSpy = mockFetchOnce({ columns: [], values: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.query({
+      query: "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend",
+      params: { _tstart: "2025-01-01T00:00:00Z", _tend: "2025-01-02T00:00:00Z" },
+    });
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body.params).toEqual([
+      { _tstart: "2025-01-01T00:00:00Z" },
+      { _tend: "2025-01-02T00:00:00Z" },
+    ]);
+  });
+
+  it("query() leaves array params untouched", async () => {
+    const fetchSpy = mockFetchOnce({ columns: [], values: [] });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    await client.query({
+      query: "FROM logs-* | LIMIT ?",
+      params: [10],
+    } as never);
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body.params).toEqual([10]);
+  });
+
   it("getClusterInfo() GETs /", async () => {
     const fetchSpy = mockFetchOnce({ cluster_name: "test" });
     vi.stubGlobal("fetch", fetchSpy);

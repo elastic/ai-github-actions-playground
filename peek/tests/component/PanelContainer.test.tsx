@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 
 import PanelContainer from "../../src/components/PanelContainer";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
 import type { PanelDefinition } from "../../src/types";
 
@@ -126,5 +127,102 @@ describe("PanelContainer", () => {
     expect(anchor.download).toMatch(/^my-table-.*\.csv$/);
 
     createElementSpy.mockRestore();
+  });
+
+  it("sends merged _tstart, _tend, and dashboard variable params on query execution", async () => {
+    useDashboardStore
+      .getState()
+      .setTimeRange({ from: "2025-06-15T11:00:00.000Z", to: "2025-06-15T12:00:00.000Z" });
+    useDashboardStore.getState().addParameter({
+      name: "service",
+      label: "Service",
+      type: "keyword",
+      source: { mode: "text" },
+      value: "web",
+    });
+
+    const panel: PanelDefinition = {
+      id: "panel-params",
+      title: "Params Panel",
+      query:
+        "FROM logs-* | WHERE service.name == ?service | STATS COUNT(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)",
+      visualization: "timeseries",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    };
+
+    render(<PanelContainer panel={panel} />);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({
+          _tstart: "2025-06-15T11:00:00.000Z",
+          _tend: "2025-06-15T12:00:00.000Z",
+          service: "web",
+        }),
+      }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("shows a loading spinner while the query is in flight", async () => {
+    let resolveQuery!: (value: unknown) => void;
+    queryMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveQuery = resolve;
+      }),
+    );
+
+    const panel: PanelDefinition = {
+      id: "panel-loading",
+      title: "Loading Panel",
+      query: "FROM logs-* | LIMIT 1",
+      visualization: "timeseries",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    };
+
+    render(<PanelContainer panel={panel} />);
+
+    expect(await screen.findByRole("progressbar")).toBeInTheDocument();
+
+    resolveQuery({ columns: [{ name: "v", type: "long" }], values: [[1]], executionTimeMs: 2 });
+
+    await waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument());
+  });
+
+  it("displays an error message when the query fails", async () => {
+    queryMock.mockRejectedValue(new Error("something went wrong"));
+
+    const panel: PanelDefinition = {
+      id: "panel-error",
+      title: "Error Panel",
+      query: "FROM bad-* | LIMIT 1",
+      visualization: "timeseries",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    };
+
+    render(<PanelContainer panel={panel} />);
+
+    expect(await screen.findByText("Error: something went wrong")).toBeInTheDocument();
+  });
+
+  it("re-fetches data when the Refresh button is clicked", async () => {
+    const user = userEvent.setup();
+    const panel: PanelDefinition = {
+      id: "panel-refresh",
+      title: "Refresh Panel",
+      query: "FROM logs-* | LIMIT 1",
+      visualization: "timeseries",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+    };
+
+    render(<PanelContainer panel={panel} />);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const refreshButton = screen.getByRole("button", { name: /refresh/i });
+    await user.click(refreshButton);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(2));
   });
 });

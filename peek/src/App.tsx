@@ -169,7 +169,7 @@ export default function App() {
                 gap: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                py: 0.75,
+                py: 1,
                 px: 2,
                 borderTop: 1,
                 borderColor: "divider",
@@ -182,7 +182,7 @@ export default function App() {
                 rel="noopener noreferrer"
                 underline="none"
                 sx={{
-                  py: 0.25,
+                  py: 0.5,
                   px: 1,
                   borderRadius: 1,
                   bgcolor: "warning.main",

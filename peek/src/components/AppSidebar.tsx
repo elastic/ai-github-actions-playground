@@ -164,7 +164,7 @@ export default function AppSidebar({
           <Box key={section.label} sx={{ pt: 1 }}>
             {!isCollapsed && (
               <Typography
-                variant="overline"
+                variant="caption"
                 sx={{
                   display: "block",
                   py: 0.5,

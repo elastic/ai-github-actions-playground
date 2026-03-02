@@ -246,7 +246,7 @@ export default memo(function DataTable({
                         : {}),
                     }}
                   >
-                    <Box sx={{ display: "flex", gap: 0.25, alignItems: "center" }}>
+                    <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
                       <Box
                         sx={
                           isPinned
