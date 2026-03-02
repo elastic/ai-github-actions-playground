@@ -85,6 +85,11 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
+if ! command -v jq &>/dev/null; then
+  echo "Error: jq is not installed. Install jq to run this script." >&2
+  exit 1
+fi
+
 if ! gh auth status >/dev/null 2>&1; then
   echo "Error: gh CLI is not authenticated. Run: gh auth login" >&2
   exit 1
@@ -192,6 +197,21 @@ check_bot_commit() {
   fi
 }
 
+# Check whether a PR has at least one non-bot approval.
+# Returns: true | false
+has_human_approval() {
+  local number="$1"
+  local approvals
+  approvals=$(gh pr view "$number" ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --json reviews \
+    --jq '[.reviews[] | select(.state == "APPROVED") | .author.login | select(test("\\[bot\\]$") | not)] | length' 2>/dev/null || echo "0")
+
+  if [[ "$approvals" -gt 0 ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
 # Classify a single PR into a state.
 # Arguments: number title isDraft mergeable reviewDecision headRefOid headRefName author
 classify_pr() {
@@ -237,9 +257,18 @@ classify_pr() {
     return
   fi
 
-  if [[ "$ci" == "PASSING" && ("$review" == "APPROVED" || "$review" == "null") ]]; then
+  if [[ "$ci" == "PASSING" && "$review" == "null" ]]; then
     echo "MERGE_READY"
     return
+  fi
+
+  if [[ "$ci" == "PASSING" && "$review" == "APPROVED" ]]; then
+    local human_approved
+    human_approved=$(has_human_approval "$number")
+    if [[ "$human_approved" == "true" ]]; then
+      echo "MERGE_READY"
+      return
+    fi
   fi
 
   # Tier 2: CI
@@ -292,8 +321,11 @@ phase_mark_drafts_ready() {
   echo ""
 
   local draft_prs
-  draft_prs=$(gh pr list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --draft --limit 200 --json number,title \
-    --jq '.[] | select((.title | ascii_downcase | contains("[wip]")) | not) | "\(.number)\t\(.title)"')
+  draft_prs=$(gh pr list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --draft --limit 200 --json number,title,author \
+    --jq '.[] | select(
+      ((.title | ascii_downcase | contains("[wip]")) | not) and
+      (.author.login | test("'"$BOT_AUTHOR_PATTERN"'"))
+    ) | "\(.number)\t\(.title)"')
 
   if [[ -z "$draft_prs" ]]; then
     echo "  No open draft PRs found."
@@ -326,8 +358,11 @@ phase_approve_runs() {
   echo ""
 
   local open_prs
-  open_prs=$(gh pr list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --state open --limit 200 --json number,title,headRefOid \
-    --jq '.[] | select((.title | ascii_downcase | contains("[wip]")) | not) | "\(.number)\t\(.title)\t\(.headRefOid)"')
+  open_prs=$(gh pr list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --state open --limit 200 --json number,title,headRefOid,author \
+    --jq '.[] | select(
+      ((.title | ascii_downcase | contains("[wip]")) | not) and
+      (.author.login | test("'"$BOT_AUTHOR_PATTERN"'"))
+    ) | "\(.number)\t\(.title)\t\(.headRefOid)"')
 
   if [[ -z "$open_prs" ]]; then
     echo "  No open PRs found."

@@ -93,7 +93,7 @@ Six axes define the composite state of every PR.
 |-------|-----------|
 | `NULL` | `reviewDecision` is null — no review policy |
 | `REVIEW_REQUIRED` | `reviewDecision == "REVIEW_REQUIRED"` |
-| `APPROVED` | `reviewDecision == "APPROVED"` |
+| `APPROVED` | `reviewDecision == "APPROVED"` and at least one approver is non-bot |
 | `CHANGES_REQUESTED` | `reviewDecision == "CHANGES_REQUESTED"` |
 
 > Bot approvals (`*[bot]`) do **not** count for merge readiness.
@@ -257,7 +257,7 @@ git worktree remove --force "$TMPDIR"
 |-------|-----------|--------|------------|
 | `DRAFT_READY` | `draft_status == DRAFT` | `CMD_MARK_READY` | `READY_*` |
 | `RUNS_BLOCKED` | `ci_status == ACTION_REQUIRED` | `CMD_APPROVE_RUNS` | `CI_PENDING` |
-| `MERGE_READY` | `merge_status == MERGEABLE` AND `ci_status == PASSING` AND `review_status` in (`APPROVED`, `NULL`) | `CMD_MERGE` | `MERGED` |
+| `MERGE_READY` | `merge_status == MERGEABLE` AND `ci_status == PASSING` AND (`review_status == NULL` OR `review_status == APPROVED` with non-bot approver) | `CMD_MERGE` | `MERGED` |
 
 ### Tier 2 — CI attention
 
@@ -312,12 +312,13 @@ classify_pr(pr):
   review   = pr.reviewDecision
   addr_wf  = check_address_workflow(pr.headRefName)
   bot      = check_last_author(pr.headRefOid)
+  human_approved = has_human_approval(pr.reviews)
 
   # Tier 1: Quick wins
   IF ci == ACTION_REQUIRED:
     -> RUNS_BLOCKED
 
-  IF ci == PASSING AND review IN (APPROVED, NULL):
+  IF ci == PASSING AND (review == NULL OR (review == APPROVED AND human_approved)):
     -> MERGE_READY
 
   # Tier 2: CI
