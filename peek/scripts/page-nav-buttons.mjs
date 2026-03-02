@@ -8,6 +8,7 @@ export const PAGE_NAV_BUTTONS = {
   "query-lab": "Query Lab",
   metrics: "Metrics",
   traces: "Traces",
+  services: "Services",
   console: "Console",
   users: "Users",
   "api-keys": "API Keys",

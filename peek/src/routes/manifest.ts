@@ -23,6 +23,7 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ShieldIcon from "@mui/icons-material/Shield";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import PolicyIcon from "@mui/icons-material/Policy";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -46,6 +47,7 @@ const FleetPage = lazy(() => import("../components/FleetPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const RolesPage = lazy(() => import("../components/RolesPage"));
+const ServiceInventoryPage = lazy(() => import("../components/services/ServiceInventoryPage"));
 const SettingsPage = lazy(() => import("../components/SettingsPage"));
 const TracesPage = lazy(() => import("../components/traces/TracesPage"));
 const ProfilingPage = lazy(() => import("../components/profiling/ProfilingPage"));
@@ -141,6 +143,20 @@ export const PAGE_MANIFEST = {
       order: 45,
       showInSidebar: true,
       icon: createElement(SpeedIcon, { fontSize: "small" }),
+    },
+  },
+  services: {
+    path: "/services",
+    component: ServiceInventoryPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Services",
+      group: "Workspace",
+      order: 35,
+      showInSidebar: true,
+      icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
     },
   },
   console: {

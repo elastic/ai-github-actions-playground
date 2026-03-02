@@ -15,6 +15,7 @@ import { useFleetStore } from "./useFleetStore";
 import { useLLMStore } from "./useLLMStore";
 import { useProfilingStore } from "./useProfilingStore";
 import { useQueryStore } from "./useQueryStore";
+import { useServicesStore } from "./useServicesStore";
 import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
@@ -26,6 +27,7 @@ const resetFleet = () => useFleetStore.getState().resetFilters();
 const resetLlm = () => useLLMStore.getState().resetLLMState();
 const resetProfiling = () => useProfilingStore.getState().resetFilters();
 const resetQuery = () => useQueryStore.getState().resetQueryState();
+const resetServices = () => useServicesStore.getState().resetFilters();
 const resetTraces = () => useTracesStore.getState().resetFilters();
 const resetUi = () => useUIStore.getState().resetUIState();
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
@@ -38,6 +40,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetLlm,
   resetProfiling,
   resetQuery,
+  resetServices,
   resetTraces,
   resetUi,
   resetApiConsole,
@@ -63,6 +66,7 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
       resetExplorer();
       resetFleet();
       resetProfiling();
+      resetServices();
     },
   },
   {
