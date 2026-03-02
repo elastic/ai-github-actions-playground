@@ -21,7 +21,7 @@ export type EsqlQueryRequest =
 export type EsqlQueryParams = Omit<EsqlQueryRequest, "filter" | "params"> & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filter?: Record<string, any>;
-  params?: Array<Record<string, string | number | boolean>> | EsqlQueryRequest["params"];
+  params?: Record<string, string | number | boolean> | EsqlQueryRequest["params"];
 };
 
 /** Response from POST /_query */

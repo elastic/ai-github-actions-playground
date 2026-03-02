@@ -9,6 +9,8 @@ import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
+import Drawer from "@mui/material/Drawer";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
@@ -36,7 +38,9 @@ export default function App() {
   const connected = useConnectionStore((s) => s.connected);
   const resetState = useResetAllStores();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
+  const isMobile = useMediaQuery("(max-width:767.95px)");
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
   const { resumeError, clearResumeError } = useSessionResume();
 
@@ -75,15 +79,29 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-        <AppHeader />
-        <Box sx={{ display: "flex", flex: 1, minHeight: 0 }}>
-          {connected && (
-            <AppSidebar
-              collapsed={sidebarCollapsed}
-              onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-            />
-          )}
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflowX: "hidden" }}>
+        <AppHeader
+          showMobileNavToggle={connected && isMobile}
+          onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)}
+        />
+        <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflowX: "hidden" }}>
+          {connected &&
+            (isMobile ? (
+              <Drawer
+                anchor="left"
+                open={mobileNavOpen}
+                onClose={() => setMobileNavOpen(false)}
+                variant="temporary"
+                ModalProps={{ keepMounted: true }}
+              >
+                <AppSidebar mobile onNavigate={() => setMobileNavOpen(false)} />
+              </Drawer>
+            ) : (
+              <AppSidebar
+                collapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+              />
+            ))}
           <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>
             {connected && isDashboardView && <ParameterBar />}
             <Box
@@ -93,8 +111,9 @@ export default function App() {
                 flex: 1,
                 flexDirection: "column",
                 minHeight: 0,
-                overflow: "auto",
-                p: 2,
+                overflowX: "hidden",
+                overflowY: "auto",
+                p: { sm: 2, xs: 1.5 },
               }}
             >
               <Suspense fallback={<LinearProgress />}>
@@ -194,7 +213,7 @@ export default function App() {
               </Button>
             </Box>
           </Box>
-          {connected && <AiAssistantDrawer />}
+          {connected && <AiAssistantDrawer isMobile={isMobile} />}
         </Box>
       </Box>
       <ConnectionDialog />

@@ -9,10 +9,12 @@ import Chip from "@mui/material/Chip";
 import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
+import MenuIcon from "@mui/icons-material/Menu";
 import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
@@ -39,7 +41,15 @@ const REFRESH_INTERVAL_PRESETS = [
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
-export default function AppHeader() {
+interface AppHeaderProps {
+  showMobileNavToggle?: boolean;
+  onToggleMobileNav?: () => void;
+}
+
+export default function AppHeader({
+  showMobileNavToggle = false,
+  onToggleMobileNav,
+}: AppHeaderProps) {
   const { dashboard, setTimeRange, setRefreshInterval, setTimeZone, addPanel } =
     useDashboardEditorStore(
       useShallow((s) => ({
@@ -76,6 +86,7 @@ export default function AppHeader() {
   const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
   const isDashboardView =
     location.pathname.startsWith("/dashboards/") && location.pathname !== "/dashboards";
+  const isNarrow = useMediaQuery("(max-width:767.95px)");
   const showTimeControls = connected && (Boolean(activePage?.showTimeControls) || isDashboardView);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
@@ -101,7 +112,16 @@ export default function AppHeader() {
 
   return (
     <AppBar position="static" color="default" sx={{ zIndex: 1201, borderColor: "border.subtle" }}>
-      <Toolbar disableGutters variant="dense" sx={{ gap: 1, px: 0 }}>
+      <Toolbar
+        disableGutters
+        variant={isNarrow ? "regular" : "dense"}
+        sx={{ flexWrap: isNarrow ? "wrap" : "nowrap", gap: 1, px: 0.5 }}
+      >
+        {showMobileNavToggle && (
+          <IconButton aria-label="Open navigation menu" onClick={onToggleMobileNav}>
+            <MenuIcon />
+          </IconButton>
+        )}
         <Box
           sx={{
             display: "flex",
@@ -134,7 +154,7 @@ export default function AppHeader() {
         >
           Peek
         </Typography>
-        {isDashboardView ? (
+        {!isNarrow && isDashboardView ? (
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mr: 1 }}>
             <Chip
               label="Dashboards"
@@ -156,7 +176,7 @@ export default function AppHeader() {
               }}
             />
           </Box>
-        ) : activePage ? (
+        ) : !isNarrow && activePage ? (
           <Chip
             label={activePage.nav.label}
             size="small"
@@ -171,7 +191,7 @@ export default function AppHeader() {
 
         <ConnectionProfileSwitcher />
 
-        {connected ? (
+        {connected && !isNarrow ? (
           <Box sx={{ display: "flex", flex: 1, justifyContent: "center", px: 2 }}>
             <ButtonBase
               onClick={() => setCommandPaletteOpen(true)}

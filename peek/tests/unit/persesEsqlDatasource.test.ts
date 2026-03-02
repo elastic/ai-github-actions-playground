@@ -96,11 +96,11 @@ describe("createPersesEsqlDatasource", () => {
     );
     expect(request.query).toContain("env == 'prod'");
     expect(request.params).toEqual(
-      expect.arrayContaining([
-        { service: "web" },
-        { _tstart: "2025-06-15T11:00:00.000Z" },
-        { _tend: "2025-06-15T12:00:00.000Z" },
-      ]),
+      expect.objectContaining({
+        service: "web",
+        _tstart: "2025-06-15T11:00:00.000Z",
+        _tend: "2025-06-15T12:00:00.000Z",
+      }),
     );
   });
 });

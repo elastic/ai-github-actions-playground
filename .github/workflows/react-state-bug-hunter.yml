@@ -14,6 +14,7 @@ jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
     with:
+      title-prefix: "[react-state-bug-hunter]"
       additional-instructions: |
         Focus your investigation on React/Zustand state management bugs in this repository.
 

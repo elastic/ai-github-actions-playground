@@ -332,7 +332,9 @@ export default function ExplorePage() {
       try {
         const params = buildTimeParams(queryDef.esql, dashboard.timeRange);
         const result = await client.query(
-          params.length > 0 ? { query: queryDef.esql, params } : { query: queryDef.esql },
+          Object.keys(params).length > 0
+            ? { query: queryDef.esql, params }
+            : { query: queryDef.esql },
           signal,
         );
         setQueryResult({
@@ -706,7 +708,18 @@ export default function ExplorePage() {
               />
             )}
 
-            {queryResult.status === "loading" && <LinearProgress />}
+            {queryResult.status === "loading" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <LinearProgress />
+              </Box>
+            )}
 
             {chartData && (
               <Box sx={{ flex: 1, minHeight: 300 }}>

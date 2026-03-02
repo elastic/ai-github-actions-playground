@@ -131,7 +131,9 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
               const queryDef = buildQueryRef.current(item);
               const params = buildTimeParams(queryDef.esql, range);
               const result = await esClient.query(
-                params.length > 0 ? { query: queryDef.esql, params } : { query: queryDef.esql },
+                Object.keys(params).length > 0
+                  ? { query: queryDef.esql, params }
+                  : { query: queryDef.esql },
                 signal,
               );
               return { name: item.name, status: "success" as const, data: result as EsqlResponse };

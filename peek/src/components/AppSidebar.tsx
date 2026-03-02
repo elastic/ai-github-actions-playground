@@ -40,6 +40,8 @@ interface NavSection {
 interface AppSidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  mobile?: boolean;
+  onNavigate?: () => void;
 }
 
 function buildNavSections(): NavSection[] {
@@ -75,7 +77,13 @@ function isHiddenByCapability(item: NavItem, capabilities: UserCapabilities | nu
   return !capabilities[item.requiredCapability];
 }
 
-export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {
+export default function AppSidebar({
+  collapsed = false,
+  onToggleCollapse,
+  mobile = false,
+  onNavigate,
+}: AppSidebarProps) {
+  const isCollapsed = mobile ? false : collapsed;
   const { connected, capabilities } = useConnectionStore(
     useShallow((s) => ({ connected: s.connected, capabilities: s.capabilities })),
   );
@@ -112,40 +120,47 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         display: "flex",
         flexShrink: 0,
         flexDirection: "column",
-        width: collapsed ? 68 : 200,
+        width: mobile ? 260 : isCollapsed ? 68 : 200,
         overflow: "auto",
-        borderRight: 1,
+        borderRight: mobile ? 0 : 1,
         borderColor: "border.subtle",
         bgcolor: "background.paper",
         transition: (theme) =>
           theme.transitions.create("width", { duration: theme.transitions.duration.shorter }),
       }}
     >
-      <Box
-        sx={{ display: "flex", justifyContent: collapsed ? "center" : "flex-end", pt: 1, px: 1 }}
-      >
-        <Tooltip title={collapsed ? "Expand navigation" : "Collapse navigation"}>
-          <IconButton
-            size="small"
-            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
-            onClick={onToggleCollapse}
-          >
-            {collapsed ? (
-              <ChevronRightIcon fontSize="small" />
-            ) : (
-              <ChevronLeftIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Box>
+      {!mobile && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: isCollapsed ? "center" : "flex-end",
+            pt: 1,
+            px: 1,
+          }}
+        >
+          <Tooltip title={isCollapsed ? "Expand navigation" : "Collapse navigation"}>
+            <IconButton
+              size="small"
+              aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
+              onClick={onToggleCollapse}
+            >
+              {isCollapsed ? (
+                <ChevronRightIcon fontSize="small" />
+              ) : (
+                <ChevronLeftIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
       {NAV_SECTIONS.map((section) => {
         const visibleItems = section.items.filter(
           (item) => !isHiddenByCapability(item, capabilities),
         );
-        if (visibleItems.length === 0) return;
+        if (visibleItems.length === 0) return null;
         return (
           <Box key={section.label} sx={{ pt: 1 }}>
-            {!collapsed && (
+            {!isCollapsed && (
               <Typography
                 variant="overline"
                 sx={{
@@ -158,7 +173,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                 {section.label}
               </Typography>
             )}
-            <List dense disablePadding>
+            <List dense={!mobile} disablePadding>
               {visibleItems.map((item) => {
                 const itemPath = PAGE_MANIFEST[item.page].path;
                 const isActive =
@@ -168,15 +183,18 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                   <ListItemButton
                     selected={isActive}
                     disabled={isDisabled}
-                    onClick={() => navigate(PAGE_MANIFEST[item.page].path)}
+                    onClick={() => {
+                      navigate(PAGE_MANIFEST[item.page].path);
+                      onNavigate?.();
+                    }}
                     aria-current={isActive ? "page" : undefined}
                     aria-label={item.label}
                     sx={{
                       position: "relative",
-                      justifyContent: collapsed ? "center" : "flex-start",
+                      justifyContent: isCollapsed ? "center" : "flex-start",
                       mx: 0.5,
-                      py: 0.75,
-                      px: collapsed ? 1 : 2,
+                      py: mobile ? 1.125 : 0.75,
+                      px: isCollapsed ? 1 : 2,
                       borderRadius: 1,
                       "&.Mui-selected": {
                         bgcolor: "action.selected",
@@ -186,13 +204,13 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                   >
                     <ListItemIcon
                       sx={{
-                        minWidth: collapsed ? 0 : 32,
+                        minWidth: isCollapsed ? 0 : 32,
                         color: isActive ? "primary.main" : "inherit",
                       }}
                     >
                       {item.icon}
                     </ListItemIcon>
-                    {!collapsed && (
+                    {!isCollapsed && (
                       <ListItemText
                         primary={item.label}
                         primaryTypographyProps={{
@@ -206,7 +224,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                 );
                 return (
                   <ListItem key={item.page} disablePadding>
-                    {collapsed ? (
+                    {isCollapsed ? (
                       <Tooltip title={item.label} placement="right">
                         {button}
                       </Tooltip>
@@ -224,14 +242,14 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         <Box
           sx={{
             display: "flex",
-            justifyContent: collapsed ? "center" : "flex-start",
+            justifyContent: isCollapsed ? "center" : "flex-start",
             py: 1,
-            px: collapsed ? 0 : 2,
+            px: isCollapsed ? 0 : 2,
           }}
         >
           <Tooltip
             title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
-            placement={collapsed ? "right" : "top"}
+            placement={isCollapsed ? "right" : "top"}
           >
             <WarningAmberIcon
               fontSize="small"
@@ -246,14 +264,14 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         sx={{
           display: "flex",
           gap: 0.5,
-          justifyContent: collapsed ? "center" : "flex-start",
+          justifyContent: isCollapsed ? "center" : "flex-start",
           mt: "auto",
           p: 1,
         }}
       >
-        <Tooltip title="AI Assistant" placement={collapsed ? "right" : "top"}>
+        <Tooltip title="AI Assistant" placement={isCollapsed ? "right" : "top"}>
           <IconButton
-            size="small"
+            size={mobile ? "medium" : "small"}
             color={aiPanelOpen ? "primary" : "default"}
             aria-label="Toggle AI assistant panel"
             onClick={() => setAiPanelOpen(!aiPanelOpen)}
@@ -261,9 +279,9 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
             <ChatIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
+        <Tooltip title="Settings" placement={isCollapsed ? "right" : "top"}>
           <IconButton
-            size="small"
+            size={mobile ? "medium" : "small"}
             color={isSettingsPath ? "primary" : "default"}
             aria-label="Settings"
             onClick={(e) => setSettingsAnchor(e.currentTarget)}
@@ -297,6 +315,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
           selected={location.pathname === PAGE_MANIFEST.settings.path}
           onClick={() => {
             navigate(PAGE_MANIFEST.settings.path);
+            onNavigate?.();
             setSettingsAnchor(null);
           }}
         >
