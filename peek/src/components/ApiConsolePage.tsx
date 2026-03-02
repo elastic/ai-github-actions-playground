@@ -25,6 +25,15 @@ import RequestCard from "./api-console/RequestCard";
 import type { HttpMethod, RequestEntry } from "./api-console/apiConsoleTypes";
 import { METHODS_WITH_BODY, makeEntry } from "./api-console/apiConsoleTypes";
 
+const CODE_SNIPPET_SX = {
+  px: 1,
+  py: 0.5,
+  bgcolor: "background.elevated",
+  borderRadius: 1,
+  fontFamily: "monospace",
+  fontSize: "0.8rem",
+} as const;
+
 export default function ApiConsolePage() {
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
@@ -246,31 +255,11 @@ export default function ApiConsolePage() {
       {entries.length === 1 && entries[0] && !entries[0].response && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: "center" }}>
           Try{" "}
-          <Box
-            component="code"
-            sx={{
-              py: 0.5,
-              px: 1,
-              borderRadius: 1,
-              bgcolor: "background.elevated",
-              fontSize: "0.8rem",
-              fontFamily: "monospace",
-            }}
-          >
+          <Box component="code" sx={CODE_SNIPPET_SX}>
             GET _cluster/health
           </Box>{" "}
           or{" "}
-          <Box
-            component="code"
-            sx={{
-              py: 0.5,
-              px: 1,
-              borderRadius: 1,
-              bgcolor: "background.elevated",
-              fontSize: "0.8rem",
-              fontFamily: "monospace",
-            }}
-          >
+          <Box component="code" sx={CODE_SNIPPET_SX}>
             GET _cat/indices?v
           </Box>{" "}
           to get started.

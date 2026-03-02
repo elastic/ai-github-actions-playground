@@ -24,7 +24,6 @@ export default function InfoCard({ title, value, detail, severity }: InfoCardPro
         p: 2,
         borderLeftWidth: severity ? 4 : 1,
         borderLeftColor: borderColor,
-        borderRadius: 2,
         bgcolor: "background.elevated",
       }}
       role="group"

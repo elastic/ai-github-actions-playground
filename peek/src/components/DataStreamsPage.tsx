@@ -38,6 +38,14 @@ function toFieldRows(fieldCaps: FieldCapsResponse) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "default"> = {
+  GREEN: "success",
+  YELLOW: "warning",
+  RED: "error",
+};
+
+const COMPACT_CHIP_SX = { height: 20, fontSize: "0.7rem" } as const;
+
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
@@ -271,23 +279,15 @@ export default function DataStreamsPage() {
                       >
                         <Chip
                           label={stream.status.toUpperCase()}
-                          color={
-                            stream.status.toUpperCase() === "GREEN"
-                              ? "success"
-                              : stream.status.toUpperCase() === "YELLOW"
-                                ? "warning"
-                                : stream.status.toUpperCase() === "RED"
-                                  ? "error"
-                                  : "default"
-                          }
+                          color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
                           size="small"
-                          sx={{ height: 20, fontSize: "0.7rem" }}
+                          sx={COMPACT_CHIP_SX}
                         />
                         <Chip
                           label={`${stream.indices.length} ${stream.indices.length === 1 ? "Index" : "Indices"}`}
                           size="small"
                           variant="outlined"
-                          sx={{ height: 20, fontSize: "0.7rem" }}
+                          sx={COMPACT_CHIP_SX}
                         />
                       </Box>
                     }
