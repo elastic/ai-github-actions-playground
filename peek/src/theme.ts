@@ -207,6 +207,19 @@ function cssBaselineOverrides(primaryColor: string, scrollbar: ScrollbarColors):
         scrollbar-width: auto;
         scrollbar-color: auto;
       }
+      *::-webkit-scrollbar {
+        width: auto;
+        height: auto;
+      }
+      *::-webkit-scrollbar-track,
+      *::-webkit-scrollbar-thumb,
+      *::-webkit-scrollbar-thumb:hover,
+      *::-webkit-scrollbar-corner {
+        background: initial;
+      }
+      *::-webkit-scrollbar-thumb {
+        border-radius: 0;
+      }
     }
   `;
 }
