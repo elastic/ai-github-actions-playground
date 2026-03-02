@@ -63,20 +63,20 @@ export function useFleetData() {
             if (reason instanceof Error) return reason.message;
             return String(reason);
           };
-          const value = <T>(r: PromiseSettledResult<T>, label: string): T | null => {
+          const extractSettledValue = <T>(r: PromiseSettledResult<T>, label: string): T | null => {
             if (r.status === "fulfilled") return r.value;
             errors.push(`${label}: ${formatReason(r.reason)}`);
             return null;
           };
 
-          setServerStatus(value(results[0]!, "Server status") ?? null);
-          setAgentVersions(value(results[1]!, "Agent versions") ?? []);
-          setOutputHealth(value(results[2]!, "Output health") ?? []);
-          const inventoryResult = value(results[3]!, "Agent inventory");
+          setServerStatus(extractSettledValue(results[0]!, "Server status") ?? null);
+          setAgentVersions(extractSettledValue(results[1]!, "Agent versions") ?? []);
+          setOutputHealth(extractSettledValue(results[2]!, "Output health") ?? []);
+          const inventoryResult = extractSettledValue(results[3]!, "Agent inventory");
           setAgentInventory(inventoryResult?.agents ?? []);
           setAgentInventoryTotal(inventoryResult?.total ?? 0);
-          setActions(value(results[4]!, "Actions") ?? []);
-          setActionResults(value(results[5]!, "Action results") ?? []);
+          setActions(extractSettledValue(results[4]!, "Actions") ?? []);
+          setActionResults(extractSettledValue(results[5]!, "Action results") ?? []);
           setPartialErrors(errors);
           if (results.some((result) => result.status === "fulfilled")) {
             setLastUpdatedAt(Date.now());

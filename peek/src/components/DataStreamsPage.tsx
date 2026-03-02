@@ -89,7 +89,7 @@ export default function DataStreamsPage() {
   useEffect(() => {
     if (!streamsData) return;
     const nextStreams = streamsData;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing derived selection from fetched data
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- conditional update: only fires when current selection is invalid or missing after a data fetch
     setSelectedName((current) => {
       if (
         current &&
@@ -110,13 +110,13 @@ export default function DataStreamsPage() {
     if (showSystemStreams) return;
     if (!selectedName?.startsWith(".")) return;
     const firstVisible = dataStreams.find((s) => !s.name.startsWith("."));
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing selection visibility constraint
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- guarded: only updates when a system stream is selected while system streams are hidden
     setSelectedName(firstVisible?.name ?? null);
   }, [showSystemStreams, selectedName, dataStreams]);
 
   // Clear selected field when the active stream changes.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting dependent state on key change
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing field selection when stream changes to prevent stale field data
     setSelectedField(null);
   }, [selectedName]);
 
