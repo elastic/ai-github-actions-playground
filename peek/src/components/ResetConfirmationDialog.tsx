@@ -1,8 +1,9 @@
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 
 interface ResetConfirmationDialogProps {
@@ -32,13 +33,13 @@ export default function ResetConfirmationDialog({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
           This will clear all locally stored data, including:
         </Typography>
-        <ul style={{ margin: 0, paddingLeft: 20 }}>
+        <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
           {AFFECTED_STATE.map((item) => (
             <li key={item}>
               <Typography variant="body2">{item}</Typography>
             </li>
           ))}
-        </ul>
+        </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
           This action cannot be undone.
         </Typography>
