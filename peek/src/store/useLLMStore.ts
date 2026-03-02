@@ -17,11 +17,13 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  toolCalls?: Array<{
-    toolCallId: string;
-    name: string;
-    result?: string;
-  }>;
+  toolCalls?: ChatToolCall[];
+}
+
+export interface ChatToolCall {
+  toolCallId: string;
+  name: string;
+  result?: string;
 }
 
 interface LLMState {
