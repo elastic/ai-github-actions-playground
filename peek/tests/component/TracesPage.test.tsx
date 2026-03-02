@@ -201,6 +201,23 @@ describe("TracesPage auto-run on quick filter changes", () => {
     expect(mockRunQuery).toHaveBeenCalled();
   });
 
+  it("uses duration-us fallback expression when applying duration filters", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <TracesPage />
+      </MemoryRouter>,
+    );
+
+    mockRunQuery.mockClear();
+    await user.type(screen.getByPlaceholderText("Min (ms)"), "2");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    const traceQuery = String(mockRunQuery.mock.calls[0]?.[0] ?? "");
+    expect(traceQuery).toContain("COALESCE(attributes.span.duration.us, duration / 1000.0)");
+    expect(traceQuery).toContain(">= 2000");
+  });
+
   it("auto-runs query when a status chip is toggled", async () => {
     const user = userEvent.setup();
     render(
