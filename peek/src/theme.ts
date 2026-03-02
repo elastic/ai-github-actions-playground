@@ -147,12 +147,43 @@ const baseOptions: ThemeOptions = {
   },
 };
 
-/** Build CssBaseline overrides with a theme-aware CodeMirror focus ring. */
-function cssBaselineOverrides(primaryColor: string): string {
+interface ScrollbarColors {
+  thumb: string;
+  thumbHover: string;
+  track: string;
+}
+
+/** Build CssBaseline overrides with theme-aware scrollbars and CodeMirror focus ring. */
+function cssBaselineOverrides(primaryColor: string, scrollbar: ScrollbarColors): string {
   return `
     ${REDUCED_MOTION_CSS}
     .cm-editor.cm-focused {
       outline: 2px solid ${primaryColor};
+    }
+
+    /* Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: ${scrollbar.thumb} ${scrollbar.track};
+    }
+
+    /* Webkit (Chrome, Edge, Safari) */
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-track {
+      background: ${scrollbar.track};
+    }
+    *::-webkit-scrollbar-thumb {
+      background: ${scrollbar.thumb};
+      border-radius: 3px;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: ${scrollbar.thumbHover};
+    }
+    *::-webkit-scrollbar-corner {
+      background: ${scrollbar.track};
     }
   `;
 }
@@ -170,7 +201,13 @@ export const lightTheme = createTheme({
   },
   components: {
     ...baseOptions.components,
-    MuiCssBaseline: { styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY) },
+    MuiCssBaseline: {
+      styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, {
+        thumb: "#C5CBD3",
+        thumbHover: "#98A2B3",
+        track: "transparent",
+      }),
+    },
   },
 });
 
@@ -187,7 +224,13 @@ export const darkTheme = createTheme({
   },
   components: {
     ...baseOptions.components,
-    MuiCssBaseline: { styleOverrides: cssBaselineOverrides(DARK_PRIMARY) },
+    MuiCssBaseline: {
+      styleOverrides: cssBaselineOverrides(DARK_PRIMARY, {
+        thumb: "#3D4255",
+        thumbHover: "#5A6070",
+        track: "transparent",
+      }),
+    },
   },
 });
 
