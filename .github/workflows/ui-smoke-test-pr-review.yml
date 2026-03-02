@@ -35,10 +35,8 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
       - name: Install Playwright Browsers & Deps
-        run: |
-          cd peek
-          npx playwright install chromium webkit
-          npx playwright install-deps chromium webkit
+        run: npx playwright install --with-deps chromium webkit
+        working-directory: peek
 
       - name: Run E2E smoke tests
         id: smoke
