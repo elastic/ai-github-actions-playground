@@ -35,6 +35,22 @@ export interface EdgeExtras {
   data?: Record<string, unknown>;
 }
 
+/** Tooltip data for a graph node. */
+interface NodeTooltipData {
+  name?: string;
+  value?: number;
+  errorCount?: number;
+}
+
+/** Tooltip data for a graph edge. */
+interface EdgeTooltipData {
+  source?: string;
+  target?: string;
+  callCount?: number;
+  avgLatencyMs?: number;
+  _tooltipSuffix?: string;
+}
+
 export interface BuildServiceGraphOptions {
   mapData: ServiceMapData;
   /**
@@ -53,19 +69,14 @@ export interface BuildServiceGraphOptions {
 // Factory
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildServiceGraphOption(opts: BuildServiceGraphOptions): Record<string, any> {
+export function buildServiceGraphOption(opts: BuildServiceGraphOptions): Record<string, unknown> {
   const { mapData, errorColor = DEFAULT_ERROR_COLOR, edgeExtras } = opts;
   const maxSpanCount = Math.max(1, ...mapData.nodes.map((node: ServiceMapNode) => node.spanCount));
 
   return {
     tooltip: {
       trigger: "item",
-      formatter: (params: {
-        dataType: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: Record<string, any>;
-      }) => {
+      formatter: (params: { dataType: string; data: NodeTooltipData & EdgeTooltipData }) => {
         if (params.dataType === "node") {
           const { name, value = 0, errorCount = 0 } = params.data;
           const errorRate = value > 0 ? ((errorCount / value) * 100).toFixed(1) : "0.0";
