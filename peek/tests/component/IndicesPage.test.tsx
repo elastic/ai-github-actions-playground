@@ -178,7 +178,7 @@ describe("IndicesPage", () => {
     const listEl = await screen.findByRole("list", { name: /index list/i });
     const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
 
-    const metricsLabel = within(listEl).getByText(longName);
+    const metricsLabel = await within(listEl).findByText(longName);
     expect(metricsLabel).toHaveAttribute("title", longName);
   });
 

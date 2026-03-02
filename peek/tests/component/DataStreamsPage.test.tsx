@@ -177,7 +177,7 @@ describe("DataStreamsPage", () => {
     );
 
     const list = await screen.findByRole("list");
-    const listLabel = within(list).getByText(longName);
+    const listLabel = await within(list).findByText(longName);
     expect(listLabel).toHaveAttribute("title", longName);
   });
 
