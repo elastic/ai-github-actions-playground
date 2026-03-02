@@ -42,7 +42,11 @@ function renderPage() {
 }
 
 function getCommandValue(): string {
-  return (screen.getByLabelText("Starter command") as HTMLTextAreaElement).value;
+  // Legacy single-field UI uses a labelled textarea; new progressive-steps UI
+  // renders commands inside the tabpanel (step titles + <pre> blocks).
+  const label = screen.queryByLabelText("Starter command") as HTMLTextAreaElement | null;
+  if (label) return label.value;
+  return screen.getByRole("tabpanel").textContent ?? "";
 }
 
 const defaultCapabilities: UserCapabilities = {
@@ -287,7 +291,7 @@ describe("AddDataPage", () => {
     useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
     await waitFor(() => {
-      expect(screen.getByLabelText("Starter command")).toBeInTheDocument();
+      expect(screen.getByRole("tabpanel")).toBeInTheDocument();
     });
     // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
     expect(fetchSpy).not.toHaveBeenCalledWith(
@@ -296,28 +300,30 @@ describe("AddDataPage", () => {
     );
   });
 
-  it("renders the Verify ingestion button", () => {
+  it("renders the Check now button", () => {
     renderPage();
-    expect(screen.getByRole("button", { name: /Verify ingestion/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
   });
 
-  it("disables Verify ingestion when there is no connection", () => {
+  it("disables Check now when there is no connection", () => {
     resetAllStores();
     useConnectionStore.setState({ capabilities: defaultCapabilities });
     renderPage();
-    expect(screen.getByRole("button", { name: /Verify ingestion/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Check now/i })).toBeDisabled();
   });
 
   it("shows success with navigation buttons when telemetry data streams are found", async () => {
-    mockGetDataStreams.mockResolvedValueOnce({
-      data_streams: [
-        { name: "metrics-host.otel-default" },
-        { name: "traces-generic.otel-default" },
-      ],
-    });
+    mockGetDataStreams
+      .mockResolvedValueOnce({ data_streams: [] }) // mount-time existing-data check
+      .mockResolvedValueOnce({
+        data_streams: [
+          { name: "metrics-host.otel-default" },
+          { name: "traces-generic.otel-default" },
+        ],
+      });
     const user = userEvent.setup();
     renderPage();
-    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
     await waitFor(() => {
       expect(screen.getByText(/Telemetry data detected/)).toBeInTheDocument();
     });
@@ -330,7 +336,7 @@ describe("AddDataPage", () => {
     mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] });
     const user = userEvent.setup();
     renderPage();
-    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
     await waitFor(() => {
       expect(screen.getByText(/No telemetry data streams found yet/)).toBeInTheDocument();
     });
@@ -338,23 +344,27 @@ describe("AddDataPage", () => {
   });
 
   it("shows error when verification fails", async () => {
-    mockGetDataStreams.mockRejectedValueOnce(new Error("Connection refused"));
+    mockGetDataStreams
+      .mockResolvedValueOnce({ data_streams: [] }) // mount-time existing-data check
+      .mockRejectedValueOnce(new Error("Connection refused"));
     const user = userEvent.setup();
     renderPage();
-    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
     await waitFor(() => {
       expect(screen.getByText(/Connection refused/)).toBeInTheDocument();
     });
   });
 
   it("resets verification results when the connection changes", async () => {
-    mockGetDataStreams.mockResolvedValueOnce({
-      data_streams: [{ name: "metrics-host.otel-default" }],
-    });
+    mockGetDataStreams
+      .mockResolvedValueOnce({ data_streams: [] }) // mount-time existing-data check
+      .mockResolvedValueOnce({
+        data_streams: [{ name: "metrics-host.otel-default" }],
+      });
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /Verify ingestion/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
     await waitFor(() => {
       expect(screen.getByText(/Telemetry data detected/)).toBeInTheDocument();
     });
