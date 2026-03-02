@@ -297,7 +297,7 @@ export default function IngestPipelinesPage() {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5 }}>
               {/* Metadata */}
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="subtitle1" gutterBottom>
                   {selectedPipeline.name}
                 </Typography>
                 <Box

@@ -9,7 +9,18 @@ import { buildTimeRangeClause, buildWherePipe } from "./queryParts";
 
 export type MetricType = "gauge" | "counter";
 
-export type AggregationType = "avg" | "sum" | "min" | "max" | "count" | "p50" | "p95" | "p99";
+export const EXPLORER_AGGREGATIONS = [
+  "avg",
+  "sum",
+  "min",
+  "max",
+  "count",
+  "p50",
+  "p95",
+  "p99",
+] as const;
+
+export type AggregationType = (typeof EXPLORER_AGGREGATIONS)[number];
 
 export interface ExplorerFilter {
   field: string;
@@ -39,16 +50,7 @@ export interface ExplorerQueryResult {
 
 const DEFAULT_BUCKET_COUNT = 50;
 
-const GAUGE_AGGREGATIONS: AggregationType[] = [
-  "avg",
-  "sum",
-  "min",
-  "max",
-  "count",
-  "p50",
-  "p95",
-  "p99",
-];
+const GAUGE_AGGREGATIONS: AggregationType[] = [...EXPLORER_AGGREGATIONS];
 const COUNTER_AGGREGATIONS: AggregationType[] = ["count"];
 
 export function getDefaultAggregation(metricType: MetricType): AggregationType {

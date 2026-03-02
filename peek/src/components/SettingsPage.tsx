@@ -88,7 +88,7 @@ export default function SettingsPage() {
       </Typography>
 
       <Paper variant="outlined" sx={{ mb: 3, p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
+        <Typography variant="h5" sx={{ mb: 2 }}>
           LLM Provider
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

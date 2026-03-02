@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import type * as EsService from "../../src/services/es";
 import ExplorePage from "../../src/components/ExplorePage";
@@ -8,6 +9,13 @@ import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
 import { resetAllStores } from "../fixtures/test-utils";
+
+const RESTORE_URL =
+  "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01";
+const RESTORE_QS = RESTORE_URL.slice(RESTORE_URL.indexOf("?"));
+const COUNTER_URL =
+  "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now";
+const COUNTER_QS = COUNTER_URL.slice(COUNTER_URL.indexOf("?"));
 
 const { queryMock, listFieldsMock } = vi.hoisted(() => ({
   queryMock: vi.fn().mockResolvedValue({
@@ -49,12 +57,10 @@ describe("ExplorePage", () => {
 
   it("restores explorer state from URL parameters on first render", async () => {
     render(
-      <MemoryRouter
-        initialEntries={[
-          "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01",
-        ]}
-      >
-        <ExplorePage />
+      <MemoryRouter initialEntries={[RESTORE_URL]}>
+        <NuqsTestingAdapter searchParams={RESTORE_QS} hasMemory>
+          <ExplorePage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -75,12 +81,10 @@ describe("ExplorePage", () => {
       { name: "system.network.in.bytes", type: "long", metricType: "counter" },
     ]);
     render(
-      <MemoryRouter
-        initialEntries={[
-          "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now",
-        ]}
-      >
-        <ExplorePage />
+      <MemoryRouter initialEntries={[COUNTER_URL]}>
+        <NuqsTestingAdapter searchParams={COUNTER_QS} hasMemory>
+          <ExplorePage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

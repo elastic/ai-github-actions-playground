@@ -176,7 +176,7 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
           filteredFields.map(({ col, value }) => (
             <Box key={col.name} data-testid={`row-inspector-field-${col.name}`}>
               <Box sx={{ py: 1, px: 2 }}>
-                <Box sx={{ display: "flex", gap: 0.75, alignItems: "baseline", mb: 0.25 }}>
+                <Box sx={{ display: "flex", gap: 1, alignItems: "baseline", mb: 0.5 }}>
                   <Typography variant="caption" fontWeight={600} noWrap sx={{ flexShrink: 0 }}>
                     {col.name}
                   </Typography>

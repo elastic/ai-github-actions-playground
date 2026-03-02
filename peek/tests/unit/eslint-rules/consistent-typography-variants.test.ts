@@ -70,6 +70,24 @@ describe("peek/consistent-typography-variants", () => {
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidVariant" }],
         },
+        // h6 removed from allowed set
+        {
+          code: `<Typography variant="h6">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidVariant" }],
+        },
+        // subtitle2 removed from allowed set
+        {
+          code: `<Typography variant="subtitle2">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidVariant" }],
+        },
+        // overline removed from allowed set
+        {
+          code: `<Typography variant="overline">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "invalidVariant" }],
+        },
       ],
     });
   });
