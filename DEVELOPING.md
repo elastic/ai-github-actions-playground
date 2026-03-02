@@ -49,7 +49,7 @@ make otel-down         # stop and remove local OTel stack
 make otel-cloud-up     # send OTel data to a remote cluster (set ES_URL, ES_API_KEY)
 ```
 
-`make setup` must run first. `make serve` and `make serve-proxy` auto-install dependencies. A husky pre-commit hook runs Prettier + ESLint on staged files.
+`make setup` is recommended first. `make serve` and `make serve-proxy` auto-install dependencies. A husky pre-commit hook runs Prettier + ESLint on staged files.
 
 ## Running with a Proxy
 
