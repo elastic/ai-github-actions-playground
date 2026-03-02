@@ -87,7 +87,6 @@ export default function ExploreControlsPanel({
           display: "flex",
           gap: 1,
           alignItems: "flex-start",
-          "& .MuiInputBase-root": { height: 40 },
         }}
       >
         {/* Index pattern */}
