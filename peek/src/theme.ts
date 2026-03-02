@@ -1,6 +1,12 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
+import { COMPONENT_HEIGHTS, type SpaceToken } from "./types/tokens";
+
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
+const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
+const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
+const MOBILE_ICON_BUTTON_PADDING =
+  (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 
 const baseOptions: ThemeOptions = {
   typography: {
@@ -31,19 +37,22 @@ const baseOptions: ThemeOptions = {
       `,
     },
     MuiButton: {
-      defaultProps: { size: "small", disableElevation: true },
+      defaultProps: { disableElevation: true },
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           textTransform: "none",
           fontWeight: 500,
-          height: 32,
+          height: COMPONENT_HEIGHTS.button,
           borderRadius: 6,
           [MOBILE_OR_COARSE_QUERY]: {
             height: "auto",
-            minHeight: 44,
-            paddingTop: 10,
-            paddingBottom: 10,
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
+            paddingTop: theme.spacing(MOBILE_BUTTON_VERTICAL_PADDING_SPACE),
+            paddingBottom: theme.spacing(MOBILE_BUTTON_VERTICAL_PADDING_SPACE),
           },
+        }),
+        sizeSmall: {
+          height: COMPONENT_HEIGHTS.buttonSmall,
         },
       },
     },
@@ -51,9 +60,9 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           [MOBILE_OR_COARSE_QUERY]: {
-            width: 44,
-            height: 44,
-            padding: 10,
+            width: COMPONENT_HEIGHTS.touchTarget,
+            height: COMPONENT_HEIGHTS.touchTarget,
+            padding: MOBILE_ICON_BUTTON_PADDING,
           },
         },
       },
@@ -62,7 +71,7 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           [MOBILE_OR_COARSE_QUERY]: {
-            minHeight: 44,
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
           },
         },
       },
@@ -88,10 +97,10 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
-            height: 32,
+            height: COMPONENT_HEIGHTS.input,
             [MOBILE_OR_COARSE_QUERY]: {
               height: "auto",
-              minHeight: 44,
+              minHeight: COMPONENT_HEIGHTS.touchTarget,
             },
           },
         },
@@ -116,7 +125,7 @@ const baseOptions: ThemeOptions = {
     },
     MuiTab: {
       styleOverrides: {
-        root: { textTransform: "none", minHeight: 36 },
+        root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.tab },
       },
     },
     MuiTypography: {
