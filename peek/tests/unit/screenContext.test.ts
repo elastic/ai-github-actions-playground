@@ -57,9 +57,23 @@ describe("buildDetailedScreenContext", () => {
     expect(ctx.traces!.filters.services).toEqual(["my-service"]);
   });
 
-  it("omits traces context when no trace selected and no service filters", () => {
+  it("omits traces context when no trace selected and no filters set", () => {
     const ctx = buildDetailedScreenContext("/traces");
     expect(ctx.traces).toBeUndefined();
+  });
+
+  it("includes traces context when operations filter is set", () => {
+    useTracesStore.getState().updateFilters({ operations: ["GET /api"] });
+    const ctx = buildDetailedScreenContext("/traces");
+    expect(ctx.traces).toBeDefined();
+    expect(ctx.traces!.filters.operations).toEqual(["GET /api"]);
+  });
+
+  it("includes traces context when duration filter is set", () => {
+    useTracesStore.getState().updateFilters({ minDurationMs: 500 });
+    const ctx = buildDetailedScreenContext("/traces");
+    expect(ctx.traces).toBeDefined();
+    expect(ctx.traces!.filters.minDurationMs).toBe(500);
   });
 
   it("includes metrics context when a metric is selected", () => {
@@ -108,6 +122,15 @@ describe("buildDetailedScreenContext", () => {
         expect(panel.query).toBeUndefined();
       }
     }
+  });
+
+  it("returns minimal context when all stores are in default state", () => {
+    const ctx = buildDetailedScreenContext("/discover");
+    // Default state should have page info and queryLab (default session query exists)
+    // but no traces, no metrics
+    expect(ctx.page).toBeDefined();
+    expect(ctx.traces).toBeUndefined();
+    expect(ctx.metrics).toBeUndefined();
   });
 
   it("includes result summary when include_data is true and result exists", () => {

@@ -86,7 +86,15 @@ export function buildDetailedScreenContext(
 
   // Traces context
   const tracesState = useTracesStore.getState();
-  if (tracesState.selectedTraceId || tracesState.filters.services.length > 0) {
+  if (
+    tracesState.selectedTraceId ||
+    tracesState.filters.services.length > 0 ||
+    tracesState.filters.operations.length > 0 ||
+    tracesState.filters.statusCodes.length > 0 ||
+    tracesState.filters.minDurationMs !== null ||
+    tracesState.filters.maxDurationMs !== null ||
+    tracesState.filters.tags.length > 0
+  ) {
     snapshot.traces = {
       selectedTraceId: tracesState.selectedTraceId,
       viewMode: tracesState.viewMode,

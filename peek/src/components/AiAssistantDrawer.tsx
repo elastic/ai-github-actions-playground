@@ -35,8 +35,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       const target = e.target as HTMLElement;
 
       // Ignore clicks inside the drawer itself
-      const drawer = target.closest('[role="complementary"]');
-      if (drawer) return;
+      if (target.closest("[data-ai-drawer]")) return;
 
       e.preventDefault();
       e.stopPropagation();
@@ -78,6 +77,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       PaperProps={{
         role: "complementary",
         "aria-labelledby": "ai-drawer-title",
+        "data-ai-drawer": true,
       }}
       sx={{
         "& .MuiDrawer-paper": {
