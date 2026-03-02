@@ -243,18 +243,18 @@ export default function DiscoverPage() {
   useEffect(() => {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
-  const setEditorFocusedRef = useRef(setEditorFocused);
   const queryEditorExtensions = useMemo(
     () => [
       EditorView.lineWrapping,
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
       ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
-      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
       EditorView.focusChangeEffect.of((_state, focusing) => {
-        setEditorFocusedRef.current(focusing);
+        setEditorFocused(focusing);
         return null;
       }),
     ],
+    // setEditorFocused is a stable useState setter — safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
   const basicSetup = useMemo(
