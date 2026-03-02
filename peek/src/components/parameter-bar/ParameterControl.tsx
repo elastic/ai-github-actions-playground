@@ -57,8 +57,8 @@ export default function ParameterControl({
         const datasource = createPersesEsqlDatasource(connection);
         const request = buildPersesEsqlRequest(esqlQuery, { parameters });
         const result = await datasource.execute(request, ctrl.signal);
-        if (!ctrl.signal.aborted && result.values) {
-          setEsqlOptions(result.values.map((row) => String(row[0] ?? "")).filter(Boolean));
+        if (!ctrl.signal.aborted) {
+          setEsqlOptions(result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? []);
         }
       } catch (err) {
         if (!ctrl.signal.aborted) {

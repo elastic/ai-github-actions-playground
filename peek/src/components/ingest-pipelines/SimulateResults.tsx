@@ -15,6 +15,11 @@ interface SimulateResultsProps {
 
 export default function SimulateResults({ simulateResult }: SimulateResultsProps) {
   const [expandedDocs, setExpandedDocs] = useState<Set<number>>(new Set());
+  const [prevResult, setPrevResult] = useState(simulateResult);
+  if (simulateResult !== prevResult) {
+    setPrevResult(simulateResult);
+    setExpandedDocs(new Set());
+  }
 
   return (
     <Box>

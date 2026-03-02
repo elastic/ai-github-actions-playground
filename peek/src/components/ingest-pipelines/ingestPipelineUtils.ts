@@ -3,7 +3,7 @@
  * string. Returns `null` when the error doesn't match a known pattern.
  */
 export function humanizeEsError(raw: string): string | null {
-  if (/unauthorized.*read_pipeline|manage_ingest_pipelines|manage_pipeline/i.test(raw)) {
+  if (/unauthorized.*(read_pipeline|manage_ingest_pipelines|manage_pipeline)/i.test(raw)) {
     return "Permission denied — your user role does not include the read_pipeline privilege required to view ingest pipelines.";
   }
   if (/unauthorized/i.test(raw)) {

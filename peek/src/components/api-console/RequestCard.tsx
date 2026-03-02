@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -37,6 +37,8 @@ function serializeResponse(body: unknown): string {
   }
 }
 
+const HTTP_METHODS: HttpMethod[] = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"];
+
 export default function RequestCard({
   entry,
   themeMode,
@@ -60,13 +62,24 @@ export default function RequestCard({
     ],
     [],
   );
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyCurlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      if (copyCurlTimerRef.current) clearTimeout(copyCurlTimerRef.current);
+    };
+  }, []);
+
   const handleCopy = useCallback(async () => {
     if (!entry.response || entry.response.status !== "success") return;
     const text = serializeResponse(entry.response.body);
     const ok = await copyToClipboard(text);
     if (!ok) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
   }, [entry.response]);
 
   const handleCopyCurl = useCallback(async () => {
@@ -75,7 +88,8 @@ export default function RequestCard({
     const ok = await copyToClipboard(cmd);
     if (!ok) return;
     setCopiedCurl(true);
-    setTimeout(() => setCopiedCurl(false), 2000);
+    if (copyCurlTimerRef.current) clearTimeout(copyCurlTimerRef.current);
+    copyCurlTimerRef.current = setTimeout(() => setCopiedCurl(false), 2000);
   }, [connection, entry.method, entry.path, entry.body]);
 
   return (
@@ -99,7 +113,7 @@ export default function RequestCard({
             />
           )}
         >
-          {(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"] as HttpMethod[]).map((m) => (
+          {HTTP_METHODS.map((m) => (
             <MenuItem key={m} value={m}>
               <Chip
                 label={m}

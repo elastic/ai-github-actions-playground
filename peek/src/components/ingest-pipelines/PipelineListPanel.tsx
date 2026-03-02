@@ -44,21 +44,27 @@ export default function PipelineListPanel({
       </Box>
       <Divider />
       <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-        {filteredPipelines.map((entry) => (
-          <ListItem key={entry.name} disablePadding>
-            <ListItemButton
-              selected={entry.name === selectedName}
-              onClick={() => onSelect(entry.name)}
-            >
-              <ListItemText
-                primary={entry.name}
-                secondary={`${entry.pipeline.processors?.length ?? 0} processor${
-                  (entry.pipeline.processors?.length ?? 0) === 1 ? "" : "s"
-                }`}
-              />
-            </ListItemButton>
+        {loading && filteredPipelines.length === 0 && (
+          <ListItem>
+            <ListItemText primary="Loading pipelines…" sx={{ opacity: 0.6 }} />
           </ListItem>
-        ))}
+        )}
+        {filteredPipelines.map((entry) => {
+          const processorCount = entry.pipeline.processors?.length ?? 0;
+          return (
+            <ListItem key={entry.name} disablePadding>
+              <ListItemButton
+                selected={entry.name === selectedName}
+                onClick={() => onSelect(entry.name)}
+              >
+                <ListItemText
+                  primary={entry.name}
+                  secondary={`${processorCount} processor${processorCount === 1 ? "" : "s"}`}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
         {!loading && filteredPipelines.length === 0 && (
           <ListItem>
             <EmptyState

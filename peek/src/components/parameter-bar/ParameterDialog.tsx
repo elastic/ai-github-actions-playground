@@ -101,9 +101,8 @@ export default function ParameterDialog({
       const datasource = createPersesEsqlDatasource(connection);
       const request = buildPersesEsqlRequest(draft.source.query, { parameters });
       const result = await datasource.execute(request, ctrl.signal);
-      if (!ctrl.signal.aborted && result.values) {
-        const opts = result.values.map((row) => String(row[0] ?? "")).filter(Boolean);
-        setEsqlOptions(opts);
+      if (!ctrl.signal.aborted) {
+        setEsqlOptions(result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? []);
       }
     } catch (err) {
       if (!ctrl.signal.aborted) {

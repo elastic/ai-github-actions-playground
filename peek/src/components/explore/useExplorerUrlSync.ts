@@ -106,18 +106,22 @@ export function useExplorerUrlSync({
     }
     let cancelled = false;
     const syncUrlState = async () => {
-      await Promise.all([
-        setUrlState({
-          indexPattern: indexPattern || null,
-          selectedMetric: selectedMetric || null,
-          aggregation,
-          groupBy: groupBy || null,
-          from: timeRange.from,
-          to: timeRange.to,
-        }),
-        setUrlFilters(encodeFilters(filters)),
-      ]);
       if (cancelled) return;
+      try {
+        await Promise.all([
+          setUrlState({
+            indexPattern: indexPattern || null,
+            selectedMetric: selectedMetric || null,
+            aggregation,
+            groupBy: groupBy || null,
+            from: timeRange.from,
+            to: timeRange.to,
+          }),
+          setUrlFilters(encodeFilters(filters)),
+        ]);
+      } catch (err) {
+        if (!cancelled) console.error("URL sync failed:", err);
+      }
     };
     void syncUrlState();
     return () => {

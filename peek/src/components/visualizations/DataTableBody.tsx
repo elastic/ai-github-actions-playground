@@ -57,8 +57,9 @@ export default function DataTableBody({
           >
             {orderedVisibleColumnIndices.map((colIdx) => {
               const col = data.columns[colIdx];
+              if (!col) return null;
               const cell = row[colIdx];
-              const numeric = col ? isNumericType(col.type) : false;
+              const numeric = isNumericType(col.type);
               const thresholds = options?.thresholds;
               const thresholdColumns = options?.thresholdColumns;
               const applyThreshold =
@@ -68,11 +69,10 @@ export default function DataTableBody({
                 cell != null &&
                 (!thresholdColumns ||
                   thresholdColumns.length === 0 ||
-                  (col && thresholdColumns.includes(col.name)));
-              const thresholdColor =
-                applyThreshold && col
-                  ? resolveThresholdColor(Number(cell), thresholds!)
-                  : undefined;
+                  thresholdColumns.includes(col.name));
+              const thresholdColor = applyThreshold
+                ? resolveThresholdColor(Number(cell), thresholds!)
+                : undefined;
               const bgColor = thresholdColor ? `${THRESHOLD_PALETTE[thresholdColor]}26` : undefined;
               const isPinned = pinnedColumns.has(colIdx);
               const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
@@ -104,7 +104,7 @@ export default function DataTableBody({
                       : {}),
                   }}
                 >
-                  {cell === null ? (
+                  {cell == null ? (
                     <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
                       null
                     </Typography>
