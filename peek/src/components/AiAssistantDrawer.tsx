@@ -1,13 +1,17 @@
+import { useEffect, useCallback } from "react";
 import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 
 import { useUIStore } from "../store/useUIStore";
 import { useLLMStore } from "../store/useLLMStore";
+import { serializeClickedElement } from "../services/clickToExplain";
 
 import ChatPage from "./ChatPage";
 
@@ -20,8 +24,45 @@ interface AiAssistantDrawerProps {
 export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawerProps) {
   const open = useUIStore((s) => s.aiPanelOpen);
   const setOpen = useUIStore((s) => s.setAiPanelOpen);
+  const explainModeActive = useUIStore((s) => s.explainModeActive);
+  const setExplainModeActive = useUIStore((s) => s.setExplainModeActive);
   const clearMessages = useLLMStore((s) => s.clearMessages);
   const hasMessages = useLLMStore((s) => s.messages.length > 0);
+  const setPendingPrompt = useLLMStore((s) => s.setPendingPrompt);
+
+  const handleExplainClick = useCallback(
+    (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Ignore clicks inside the drawer itself
+      if (target.closest("[data-ai-drawer]")) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const context = serializeClickedElement(target);
+      setPendingPrompt(`Explain this element: ${context}`);
+
+      // Single-shot: deactivate after one click
+      setExplainModeActive(false);
+    },
+    [setPendingPrompt, setExplainModeActive],
+  );
+
+  useEffect(() => {
+    if (!explainModeActive) return;
+    document.addEventListener("click", handleExplainClick, { capture: true });
+    return () => {
+      document.removeEventListener("click", handleExplainClick, { capture: true });
+    };
+  }, [explainModeActive, handleExplainClick]);
+
+  // Deactivate explain mode when drawer closes
+  useEffect(() => {
+    if (!open && explainModeActive) {
+      setExplainModeActive(false);
+    }
+  }, [open, explainModeActive, setExplainModeActive]);
 
   return (
     <Drawer
@@ -32,6 +73,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       PaperProps={{
         role: "complementary",
         "aria-labelledby": "ai-drawer-title",
+        "data-ai-drawer": true,
       }}
       sx={{
         "& .MuiDrawer-paper": {
@@ -55,6 +97,18 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
           <Typography id="ai-drawer-title" variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             AI Assistant
           </Typography>
+          <Tooltip
+            title={explainModeActive ? "Cancel explain mode" : "Click an element to explain"}
+          >
+            <IconButton
+              size="small"
+              onClick={() => setExplainModeActive(!explainModeActive)}
+              aria-label="Toggle explain mode"
+              color={explainModeActive ? "primary" : "default"}
+            >
+              <GpsFixedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
           <Button
             size="small"
             variant="text"
