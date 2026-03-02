@@ -207,6 +207,20 @@ describe("IndicesPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("clears the detail panel when search excludes the selected index", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    // Wait for detail panel to load with first index
+    await screen.findByTestId("index-meta-health");
+
+    // Type a search that matches nothing
+    await user.type(screen.getByRole("textbox", { name: /search indices/i }), "non-existent");
+
+    // Detail panel should show the empty state
+    expect(screen.queryByTestId("index-meta-health")).not.toBeInTheDocument();
+    expect(screen.getByText(/no index selected/i)).toBeInTheDocument();
+  });
+
   it("shows overview metadata for the selected index", async () => {
     renderPage();
     // Wait for detail panel to load
@@ -216,6 +230,19 @@ describe("IndicesPage", () => {
     expect(screen.getByTestId("index-meta-rep")).toHaveTextContent("0");
     expect(screen.getByTestId("index-meta-docs-count")).toHaveTextContent("5,000");
     expect(screen.getByTestId("index-meta-store-size")).toHaveTextContent("1.0 MB");
+  });
+
+  it("truncates the detail panel heading with a title tooltip for long names", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const listEl = await screen.findByRole("list", { name: /index list/i });
+    await within(listEl).findByText("logs-app");
+
+    const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
+    await user.click(within(listEl).getByText(longName));
+
+    const heading = await screen.findByRole("heading", { level: 2, name: longName });
+    expect(heading).toHaveAttribute("title", longName);
   });
 
   it("switches to the Mappings tab and shows field list", async () => {

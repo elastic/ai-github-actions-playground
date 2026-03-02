@@ -81,7 +81,13 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             echarts: ["echarts/core", "echarts/charts", "echarts/components", "echarts/renderers"],
             mui: ["@mui/material", "@mui/icons-material"],
-            codemirror: ["@uiw/react-codemirror", "@codemirror/lang-sql"],
+            codemirror: [
+              "@uiw/react-codemirror",
+              "@codemirror/lang-sql",
+              "@lezer/lr",
+              "@lezer/common",
+              "@lezer/highlight",
+            ],
             perses: ["@perses-dev/components", "@perses-dev/core"],
             "ai-sdk": ["ai", "@ai-sdk/openai"],
           },

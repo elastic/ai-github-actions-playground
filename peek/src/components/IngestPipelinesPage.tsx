@@ -52,6 +52,12 @@ export default function IngestPipelinesPage() {
     return pipelines.filter((p) => p.name.toLowerCase().includes(term));
   }, [pipelines, search]);
 
+  // When filtered results don't include the selected pipeline (e.g. search
+  // excludes it), hide the detail panel while keeping the selection.
+  const displayedPipeline = filteredPipelines.some((p) => p.name === effectiveSelectedName)
+    ? selectedPipeline
+    : null;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -108,7 +114,7 @@ export default function IngestPipelinesPage() {
         />
         <PipelineDetailPanel
           key={effectiveSelectedName ?? "none"}
-          selectedPipeline={selectedPipeline}
+          selectedPipeline={displayedPipeline}
           connection={connection}
         />
       </Box>

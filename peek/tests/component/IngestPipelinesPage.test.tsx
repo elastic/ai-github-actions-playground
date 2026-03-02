@@ -83,6 +83,30 @@ describe("IngestPipelinesPage", () => {
     expect(screen.getByTestId("pipeline-meta-processors")).toHaveTextContent("1");
   });
 
+  it("renders processors in structured fieldset/legend UI", async () => {
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    // Select "my-pipeline" which has a "set" processor
+    await screen.findByText("my-pipeline");
+    await userEvent.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
+
+    // Verify the processor list exists and contains fieldset/legend structure
+    const processorsList = screen.getByTestId("pipeline-processors-list");
+    expect(processorsList).toBeInTheDocument();
+
+    // The "set" processor type should appear as a legend
+    expect(processorsList).toHaveTextContent("set");
+    // The processor config should be visible
+    expect(processorsList).toHaveTextContent("production");
+  });
+
   it("filters the pipeline list by search term", async () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
@@ -116,6 +140,30 @@ describe("IngestPipelinesPage", () => {
     await user.type(screen.getByPlaceholderText("Search pipelines"), "does-not-exist");
 
     await screen.findByText("No pipelines found");
+  });
+
+  it("clears the detail panel when search excludes the selected pipeline", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    // Wait for detail panel to show the first pipeline
+    await screen.findByRole("heading", { level: 6, name: "another-pipeline" });
+
+    // Type a search that matches nothing
+    await user.type(screen.getByPlaceholderText("Search pipelines"), "does-not-exist");
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { level: 6, name: "another-pipeline" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Select a pipeline")).toBeInTheDocument();
+    });
   });
 
   it("shows error alert when loading fails", async () => {
