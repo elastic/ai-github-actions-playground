@@ -4,6 +4,7 @@ import type { ECharts } from "echarts/core";
 
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
+import { formatTimestamp } from "../../utils/formatDate";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
@@ -75,7 +76,7 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
           value: [number, number];
           data: { traceId: string };
         }) => {
-          const ts = new Date(params.value[0]).toLocaleString();
+          const ts = formatTimestamp(params.value[0]);
           const duration = formatSpanDuration(params.value[1] * 1000);
           return `<strong>${escapeHtml(params.seriesName)}</strong><br/>Time: ${escapeHtml(ts)}<br/>Duration: ${escapeHtml(duration)}<br/>Trace: ${escapeHtml(params.data.traceId.slice(0, 16))}…`;
         },

@@ -31,8 +31,8 @@ describe("formatFleetTime", () => {
     expect(typeof result).toBe("string");
   });
 
-  it("returns 'Invalid Date' for invalid input", () => {
-    expect(formatFleetTime("not-a-date")).toBe("Invalid Date");
+  it("returns the original string for invalid input", () => {
+    expect(formatFleetTime("not-a-date")).toBe("not-a-date");
   });
 });
 
@@ -47,7 +47,7 @@ describe("formatFleetTimestamp", () => {
     expect(typeof result).toBe("string");
   });
 
-  it("returns 'Invalid Date' for invalid input", () => {
-    expect(formatFleetTimestamp("not-a-date")).toBe("Invalid Date");
+  it("returns the original string for invalid input", () => {
+    expect(formatFleetTimestamp("not-a-date")).toBe("not-a-date");
   });
 });

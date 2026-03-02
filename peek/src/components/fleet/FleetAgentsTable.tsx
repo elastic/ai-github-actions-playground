@@ -1,4 +1,4 @@
-import { useMemo, type KeyboardEvent } from "react";
+import { memo, useMemo, type KeyboardEvent } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
@@ -23,7 +23,7 @@ interface Props {
   onAgentClick: (agentId: string) => void;
 }
 
-export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
+export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
   const agentFilter = useFleetStore((s) => s.agentFilter);
   const updateAgentFilter = useFleetStore((s) => s.updateAgentFilter);
   const resetFilters = useFleetStore((s) => s.resetFilters);
@@ -177,4 +177,4 @@ export default function FleetAgentsTable({ agents, onAgentClick }: Props) {
       </TableContainer>
     </Box>
   );
-}
+});

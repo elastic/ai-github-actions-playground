@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
@@ -13,7 +14,7 @@ interface FleetStatCardProps {
   selected?: boolean;
 }
 
-export default function FleetStatCard({
+export default memo(function FleetStatCard({
   title,
   value,
   color,
@@ -85,4 +86,4 @@ export default function FleetStatCard({
       {content}
     </Paper>
   );
-}
+});
