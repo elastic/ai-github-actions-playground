@@ -46,6 +46,16 @@ export default function AddDataPage() {
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const endpointTypeManuallySetRef = useRef(false);
   /** `null` = not yet probed, `true` = reachable, `false` = unreachable */

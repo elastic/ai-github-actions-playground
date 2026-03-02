@@ -70,6 +70,8 @@ export default function WelcomeScreen() {
         sx={{
           maxWidth: 520,
           p: 6,
+          border: "1px solid",
+          borderColor: "divider",
           borderRadius: 2,
           textAlign: "center",
         }}

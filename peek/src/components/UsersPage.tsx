@@ -37,6 +37,15 @@ export default function UsersPage() {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const selectedUsername = useMemo(() => {
     if (users.length === 0) return urlUsername;
     if (urlUsername && users.some((user) => user.username === urlUsername)) return urlUsername;

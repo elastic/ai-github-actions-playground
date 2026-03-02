@@ -39,6 +39,15 @@ export default function RolesPage() {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const selectedRoleName = useMemo(() => {
     if (roles.length === 0) return urlRole;
     if (urlRole && roles.some((entry) => entry.name === urlRole)) return urlRole;
