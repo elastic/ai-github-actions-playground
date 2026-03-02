@@ -279,7 +279,7 @@ def phase_approve_runs(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
     print(f"{BOLD}Phase 2: Approving blocked workflow runs{RESET}\n")
     approved = failed = 0
     for pr in prs:
-        if pr.is_wip:
+        if not pr.is_bot or pr.is_wip:
             continue
         blocked = [r for r in runs
                    if r.get("event") == "pull_request"
