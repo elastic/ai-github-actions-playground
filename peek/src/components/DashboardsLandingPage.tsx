@@ -480,7 +480,7 @@ export default function DashboardsLandingPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           inputProps={{ "aria-label": "Search dashboards" }}
-          sx={{ minWidth: 220 }}
+          sx={{ width: { sm: "auto", xs: "100%" }, minWidth: { sm: 220, xs: 0 } }}
           slotProps={{
             input: {
               startAdornment: (
@@ -565,7 +565,7 @@ export default function DashboardsLandingPage() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))",
           gap: 2,
         }}
       >
