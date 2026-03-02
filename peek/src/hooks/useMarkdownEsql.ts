@@ -92,6 +92,7 @@ export function useMarkdownEsql({
       };
       const entries: Array<PromiseSettledResult<readonly [string, EsqlResponse]>> = [];
       for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
+        if (ctrl.signal.aborted) return;
         const batch = tasks.slice(i, i + MAX_CONCURRENCY);
         entries.push(...(await Promise.all(batch.map(runTask))));
       }
