@@ -157,6 +157,18 @@ interface ScrollbarColors {
   track: string;
 }
 
+const LIGHT_SCROLLBAR: ScrollbarColors = {
+  thumb: LIGHT_TEXT.secondary,
+  thumbHover: LIGHT_TEXT.primary,
+  track: "transparent",
+};
+
+const DARK_SCROLLBAR: ScrollbarColors = {
+  thumb: DARK_TEXT.secondary,
+  thumbHover: DARK_TEXT.primary,
+  track: "transparent",
+};
+
 /** Build CssBaseline overrides with theme-aware scrollbars and CodeMirror focus ring. */
 function cssBaselineOverrides(primaryColor: string, scrollbar: ScrollbarColors): string {
   return `
@@ -213,11 +225,7 @@ export const lightTheme = createTheme({
   components: {
     ...baseOptions.components,
     MuiCssBaseline: {
-      styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, {
-        thumb: LIGHT_TEXT.secondary,
-        thumbHover: LIGHT_TEXT.primary,
-        track: "transparent",
-      }),
+      styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, LIGHT_SCROLLBAR),
     },
   },
 });
@@ -236,11 +244,7 @@ export const darkTheme = createTheme({
   components: {
     ...baseOptions.components,
     MuiCssBaseline: {
-      styleOverrides: cssBaselineOverrides(DARK_PRIMARY, {
-        thumb: DARK_TEXT.secondary,
-        thumbHover: DARK_TEXT.primary,
-        track: "transparent",
-      }),
+      styleOverrides: cssBaselineOverrides(DARK_PRIMARY, DARK_SCROLLBAR),
     },
   },
 });
