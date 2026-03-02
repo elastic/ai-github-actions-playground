@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -27,18 +27,19 @@ export default function IngestPipelinesPage() {
   const [search, setSearch] = useState("");
   const [showRawError, setShowRawError] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [prevPipelinesData, setPrevPipelinesData] = useState(pipelinesData);
 
-  // Derive effective selection: keep current if it still exists, otherwise select first.
-  const effectiveSelectedName = useMemo(() => {
-    if (!pipelinesData) return null;
-    if (selectedName && pipelinesData.some((p) => p.name === selectedName)) return selectedName;
-    return pipelinesData[0]?.name ?? null;
-  }, [pipelinesData, selectedName]);
+  // When pipeline list changes, reset selection if the selected pipeline no longer exists.
+  // Using the "adjust state during render" pattern to avoid calling setState in an effect.
+  if (pipelinesData !== prevPipelinesData) {
+    setPrevPipelinesData(pipelinesData);
+    const stillValid = selectedName != null && pipelinesData?.some((p) => p.name === selectedName);
+    if (!stillValid) {
+      setSelectedName(pipelinesData?.[0]?.name ?? null);
+    }
+  }
 
-  useEffect(() => {
-    if (!effectiveSelectedName || effectiveSelectedName === selectedName) return;
-    setSelectedName(effectiveSelectedName);
-  }, [effectiveSelectedName, selectedName]);
+  const effectiveSelectedName = selectedName ?? pipelinesData?.[0]?.name ?? null;
 
   const selectedPipeline = useMemo(
     () => pipelines.find((p) => p.name === effectiveSelectedName) ?? null,
