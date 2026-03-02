@@ -60,7 +60,7 @@ export interface PageConfig {
   /** Key of `UserCapabilities` that must be `true` for the page to appear in the sidebar. */
   requiredCapability?: keyof UserCapabilities;
   /** ContentSkeleton variant shown while the lazy page chunk loads. */
-  skeletonVariant?: "table" | "cards" | "chart";
+  skeletonVariant?: "table" | "cards" | "chart" | "list" | "detail-panel";
   nav: {
     label: string;
     group: NavGroup;
@@ -132,6 +132,7 @@ export const PAGE_MANIFEST = {
     component: ProfilingPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "chart",
     nav: {
       label: "Profiling",
       group: "Workspace",
@@ -185,6 +186,7 @@ export const PAGE_MANIFEST = {
     component: ClusterHealthPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "cards",
     nav: {
       label: "Cluster Health",
       group: "System",
@@ -198,6 +200,7 @@ export const PAGE_MANIFEST = {
     component: ClusterTasksPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Cluster Tasks",
       group: "System",
@@ -211,6 +214,7 @@ export const PAGE_MANIFEST = {
     component: ClusterCapacityPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "cards",
     nav: {
       label: "Cluster Capacity",
       group: "System",
@@ -224,6 +228,7 @@ export const PAGE_MANIFEST = {
     component: ClusterShardsPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Cluster Shards",
       group: "System",
@@ -237,6 +242,7 @@ export const PAGE_MANIFEST = {
     component: ClusterResiliencePage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Cluster Resilience",
       group: "System",
@@ -250,6 +256,7 @@ export const PAGE_MANIFEST = {
     component: AddDataPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "list",
     nav: {
       label: "Add Data",
       group: "System",
@@ -319,6 +326,7 @@ export const PAGE_MANIFEST = {
     component: FleetAgentPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "detail-panel",
     nav: {
       label: "Fleet Agent Detail",
       group: "System",
@@ -347,6 +355,7 @@ export const PAGE_MANIFEST = {
     component: ApiKeysPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     requiredCapability: "canReadApiKeys",
     nav: {
       label: "API Keys",
