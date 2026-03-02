@@ -83,6 +83,7 @@ export default function AppSidebar({
   mobile = false,
   onNavigate,
 }: AppSidebarProps) {
+  const isCollapsed = mobile ? false : collapsed;
   const { connected, capabilities } = useConnectionStore(
     useShallow((s) => ({ connected: s.connected, capabilities: s.capabilities })),
   );
@@ -119,7 +120,7 @@ export default function AppSidebar({
         display: "flex",
         flexShrink: 0,
         flexDirection: "column",
-        width: mobile ? 260 : collapsed ? 68 : 200,
+        width: mobile ? 260 : isCollapsed ? 68 : 200,
         overflow: "auto",
         borderRight: mobile ? 0 : 1,
         borderColor: "border.subtle",
@@ -130,15 +131,20 @@ export default function AppSidebar({
     >
       {!mobile && (
         <Box
-          sx={{ display: "flex", justifyContent: collapsed ? "center" : "flex-end", pt: 1, px: 1 }}
+          sx={{
+            display: "flex",
+            justifyContent: isCollapsed ? "center" : "flex-end",
+            pt: 1,
+            px: 1,
+          }}
         >
-          <Tooltip title={collapsed ? "Expand navigation" : "Collapse navigation"}>
+          <Tooltip title={isCollapsed ? "Expand navigation" : "Collapse navigation"}>
             <IconButton
               size="small"
-              aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+              aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
               onClick={onToggleCollapse}
             >
-              {collapsed ? (
+              {isCollapsed ? (
                 <ChevronRightIcon fontSize="small" />
               ) : (
                 <ChevronLeftIcon fontSize="small" />
@@ -154,7 +160,7 @@ export default function AppSidebar({
         if (visibleItems.length === 0) return;
         return (
           <Box key={section.label} sx={{ pt: 1 }}>
-            {!collapsed && (
+            {!isCollapsed && (
               <Typography
                 variant="overline"
                 sx={{
@@ -185,10 +191,10 @@ export default function AppSidebar({
                     aria-label={item.label}
                     sx={{
                       position: "relative",
-                      justifyContent: collapsed ? "center" : "flex-start",
+                      justifyContent: isCollapsed ? "center" : "flex-start",
                       mx: 0.5,
                       py: mobile ? 1.125 : 0.75,
-                      px: collapsed ? 1 : 2,
+                      px: isCollapsed ? 1 : 2,
                       borderRadius: 1,
                       "&.Mui-selected": {
                         bgcolor: "action.selected",
@@ -198,13 +204,13 @@ export default function AppSidebar({
                   >
                     <ListItemIcon
                       sx={{
-                        minWidth: collapsed ? 0 : 32,
+                        minWidth: isCollapsed ? 0 : 32,
                         color: isActive ? "primary.main" : "inherit",
                       }}
                     >
                       {item.icon}
                     </ListItemIcon>
-                    {!collapsed && (
+                    {!isCollapsed && (
                       <ListItemText
                         primary={item.label}
                         primaryTypographyProps={{
@@ -218,7 +224,7 @@ export default function AppSidebar({
                 );
                 return (
                   <ListItem key={item.page} disablePadding>
-                    {collapsed ? (
+                    {isCollapsed ? (
                       <Tooltip title={item.label} placement="right">
                         {button}
                       </Tooltip>
@@ -236,14 +242,14 @@ export default function AppSidebar({
         <Box
           sx={{
             display: "flex",
-            justifyContent: collapsed ? "center" : "flex-start",
+            justifyContent: isCollapsed ? "center" : "flex-start",
             py: 1,
-            px: collapsed ? 0 : 2,
+            px: isCollapsed ? 0 : 2,
           }}
         >
           <Tooltip
             title={`${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions`}
-            placement={collapsed ? "right" : "top"}
+            placement={isCollapsed ? "right" : "top"}
           >
             <WarningAmberIcon
               fontSize="small"
@@ -258,12 +264,12 @@ export default function AppSidebar({
         sx={{
           display: "flex",
           gap: 0.5,
-          justifyContent: collapsed ? "center" : "flex-start",
+          justifyContent: isCollapsed ? "center" : "flex-start",
           mt: "auto",
           p: 1,
         }}
       >
-        <Tooltip title="AI Assistant" placement={collapsed ? "right" : "top"}>
+        <Tooltip title="AI Assistant" placement={isCollapsed ? "right" : "top"}>
           <IconButton
             size={mobile ? "medium" : "small"}
             color={aiPanelOpen ? "primary" : "default"}
@@ -273,7 +279,7 @@ export default function AppSidebar({
             <ChatIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
+        <Tooltip title="Settings" placement={isCollapsed ? "right" : "top"}>
           <IconButton
             size={mobile ? "medium" : "small"}
             color={isSettingsPath ? "primary" : "default"}
