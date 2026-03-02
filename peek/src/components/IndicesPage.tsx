@@ -256,7 +256,7 @@ export default function IndicesPage() {
                 <EmptyState
                   size="small"
                   icon={<StorageIcon sx={{ fontSize: 28 }} />}
-                  heading="No user indices found"
+                  heading="No indices found"
                   description={
                     showSystemIndices
                       ? "No indices match the current search filter."
