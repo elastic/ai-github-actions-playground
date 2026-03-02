@@ -22,8 +22,8 @@ export interface ConsoleDiagnostic {
  * Describes one page (or sub-view) to audit.
  *
  * - `navButton` — the sidebar button label (clicked with `exact: true`).
- * - `expectedHeading` — the h1 text expected after navigation. Used to
- *    verify that the correct page rendered before capturing artifacts.
+ * - `expectedHeading` — the h1 text expected after navigation, or `null` to
+ *    explicitly skip heading verification for pages without a stable heading.
  * - `afterNav` — optional extra steps between navigation and the screenshot
  *    (e.g. click tabs, set filters, press Run). Receives the `Page` and
  *    the file-prefix so it can take additional screenshots.
