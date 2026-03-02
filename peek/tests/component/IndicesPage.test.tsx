@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import IndicesPage from "../../src/components/IndicesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -129,14 +130,18 @@ const SAMPLE_STATS = {
 
 function LocationDisplay() {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 }
 
-function renderPage() {
+function renderPage(initialEntries: string[] = ["/"]) {
+  const activeEntry = initialEntries[initialEntries.length - 1] ?? "/";
+  const searchParams = new URL(activeEntry, "https://example.test").search;
   return render(
-    <MemoryRouter>
-      <IndicesPage />
-      <LocationDisplay />
+    <MemoryRouter initialEntries={initialEntries}>
+      <NuqsTestingAdapter searchParams={searchParams} hasMemory>
+        <IndicesPage />
+        <LocationDisplay />
+      </NuqsTestingAdapter>
     </MemoryRouter>,
   );
 }
@@ -206,6 +211,15 @@ describe("IndicesPage", () => {
     expect(
       within(listEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
     ).toBeInTheDocument();
+  });
+
+  it("restores search, selected index, and tab from URL on mount", async () => {
+    const indexName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
+    renderPage([`/?search=metrics&index=${encodeURIComponent(indexName)}&tab=settings`]);
+
+    expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("metrics");
+    expect(await screen.findByRole("heading", { level: 2, name: indexName })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /settings/i })).toHaveAttribute("aria-selected", "true");
   });
 
   it("clears the detail panel when search excludes the selected index", async () => {

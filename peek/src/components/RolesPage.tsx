@@ -34,7 +34,10 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useQueryState(
+    "search",
+    parseAsString.withDefault("").withOptions({ history: "replace" }),
+  );
   const [roles, setRoles] = useState<RoleEntry[]>([]);
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
@@ -167,7 +170,7 @@ export default function RolesPage() {
               fullWidth
               placeholder="Search roles"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => void setSearch(event.target.value)}
             />
           </Box>
           <Divider />
