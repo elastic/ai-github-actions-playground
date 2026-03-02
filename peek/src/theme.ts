@@ -37,7 +37,7 @@ const baseOptions: ThemeOptions = {
       `,
     },
     MuiButton: {
-      defaultProps: { size: "small", disableElevation: true },
+      defaultProps: { disableElevation: true },
       styleOverrides: {
         root: ({ theme }) => ({
           textTransform: "none",
