@@ -165,6 +165,12 @@ export default function DataStreamsPage() {
     });
   }, [dataStreams, deferredSearch, showSystemStreams]);
 
+  // When filtered results don't include the selected stream (e.g. search
+  // excludes it), hide the detail panel while keeping the selection so it
+  // restores when the search is cleared.
+  const displayedName = filteredStreams.some((s) => s.name === selectedName) ? selectedName : null;
+  const displayedDataStream = displayedName ? selectedDataStream : null;
+
   const fieldRows = useMemo(() => {
     const rows = fieldCaps ? toFieldRows(fieldCaps) : [];
     const term = deferredFieldSearch.trim().toLowerCase();
@@ -210,7 +216,7 @@ export default function DataStreamsPage() {
               <Button
                 size="small"
                 variant="contained"
-                disabled={!selectedName}
+                disabled={!displayedName}
                 onClick={handleOpenInDiscover}
               >
                 Open in Query Lab
@@ -218,7 +224,7 @@ export default function DataStreamsPage() {
               <Button
                 size="small"
                 variant="outlined"
-                disabled={!selectedName}
+                disabled={!displayedName}
                 onClick={handleInspectInConsole}
               >
                 Inspect in Console
@@ -318,9 +324,9 @@ export default function DataStreamsPage() {
           sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}
         >
           <Box sx={{ p: 1.5 }}>
-            {selectedDataStream ? (
+            {displayedDataStream ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Typography variant="subtitle1">{selectedDataStream.name}</Typography>
+                <Typography variant="subtitle1">{displayedDataStream.name}</Typography>
                 <Box
                   sx={{
                     display: "grid",
@@ -333,28 +339,28 @@ export default function DataStreamsPage() {
                     Status
                   </Typography>
                   <Typography variant="body2" data-testid="data-stream-meta-status">
-                    {selectedDataStream.status}
+                    {displayedDataStream.status}
                   </Typography>
 
                   <Typography variant="caption" color="text.secondary">
                     Generation
                   </Typography>
                   <Typography variant="body2" data-testid="data-stream-meta-generation">
-                    {selectedDataStream.generation}
+                    {displayedDataStream.generation}
                   </Typography>
 
                   <Typography variant="caption" color="text.secondary">
                     Backing indices
                   </Typography>
                   <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
-                    {selectedDataStream.indices.length}
+                    {displayedDataStream.indices.length}
                   </Typography>
 
                   <Typography variant="caption" color="text.secondary">
                     Write index
                   </Typography>
                   <Typography variant="body2" data-testid="data-stream-meta-write-index">
-                    {selectedDataStream.indices[selectedDataStream.indices.length - 1]
+                    {displayedDataStream.indices[displayedDataStream.indices.length - 1]
                       ?.index_name ?? "n/a"}
                   </Typography>
 
@@ -362,16 +368,16 @@ export default function DataStreamsPage() {
                     Managed by
                   </Typography>
                   <Typography variant="body2" data-testid="data-stream-meta-managed-by">
-                    {selectedDataStream.next_generation_managed_by}
+                    {displayedDataStream.next_generation_managed_by}
                   </Typography>
 
-                  {selectedDataStream.ilm_policy && (
+                  {displayedDataStream.ilm_policy && (
                     <>
                       <Typography variant="caption" color="text.secondary">
                         ILM policy
                       </Typography>
                       <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
-                        {selectedDataStream.ilm_policy}
+                        {displayedDataStream.ilm_policy}
                       </Typography>
                     </>
                   )}
@@ -387,7 +393,7 @@ export default function DataStreamsPage() {
           </Box>
           <Divider />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}>
-            {selectedDataStream && (
+            {displayedDataStream && (
               <TextField
                 size="small"
                 placeholder="Search fields"
@@ -433,7 +439,7 @@ export default function DataStreamsPage() {
                     <Chip size="small" label={field.type} />
                   </Stack>
                 ))}
-                {!loadingFields && fieldRows.length === 0 && selectedDataStream && (
+                {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
                   <Typography variant="body2" color="text.secondary">
                     No fields found for this data stream.
                   </Typography>
@@ -443,10 +449,10 @@ export default function DataStreamsPage() {
           </Box>
         </Paper>
 
-        {selectedField && connection && selectedName && (
+        {selectedField && connection && displayedName && (
           <FieldStatsPanel
             connection={connection}
-            streamName={selectedName}
+            streamName={displayedName}
             fieldName={selectedField.name}
             fieldType={selectedField.type}
             onClose={() => setSelectedField(null)}

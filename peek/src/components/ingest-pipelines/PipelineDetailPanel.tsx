@@ -137,27 +137,54 @@ export default function PipelineDetailPanel({
 
         <Divider />
 
-        {/* Processors JSON */}
+        {/* Processors */}
         <Box>
           <Typography variant="caption" color="text.secondary" gutterBottom display="block">
             Processors
           </Typography>
-          <Typography
-            component="pre"
-            variant="body2"
-            data-testid="pipeline-processors-json"
-            sx={{
-              maxHeight: 240,
-              overflow: "auto",
-              m: 0,
-              p: 1,
-              borderRadius: 1,
-              bgcolor: "action.hover",
-              fontSize: "0.75rem",
-            }}
-          >
-            {JSON.stringify(selectedPipeline.pipeline.processors ?? [], null, 2)}
-          </Typography>
+          {(selectedPipeline.pipeline.processors ?? []).length === 0 ? (
+            <EmptyState
+              size="small"
+              heading="No processors"
+              description="This pipeline has no processors defined."
+            />
+          ) : (
+            <Stack spacing={1} data-testid="pipeline-processors-list">
+              {(selectedPipeline.pipeline.processors ?? []).map((processor, index) => {
+                const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+                return (
+                  <Box
+                    key={index}
+                    component="fieldset"
+                    sx={{
+                      m: 0,
+                      p: 1,
+                      border: 1,
+                      borderColor: "border.subtle",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography component="legend" variant="caption" sx={{ px: 0.5 }}>
+                      {type}
+                    </Typography>
+                    <Typography
+                      component="pre"
+                      variant="body2"
+                      sx={{
+                        m: 0,
+                        p: 0.5,
+                        wordBreak: "break-word",
+                        whiteSpace: "pre-wrap",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      {JSON.stringify(config, null, 2)}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Stack>
+          )}
         </Box>
 
         <Divider />

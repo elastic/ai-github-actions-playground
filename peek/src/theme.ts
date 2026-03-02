@@ -176,7 +176,7 @@ export const darkTheme = createTheme({
     primary: { main: DARK_PRIMARY },
     secondary: { main: "#5EECD5" },
     background: { default: "#0F1118", paper: "#1A1D27", subtle: "#141720", elevated: "#242838" },
-    text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
+    text: { primary: "#DFE5EF", secondary: "#98A2B3" },
     border: { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" },
     status: { ...STATUS_COLORS },
   },

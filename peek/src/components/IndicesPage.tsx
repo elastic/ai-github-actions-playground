@@ -56,11 +56,6 @@ export default function IndicesPage() {
   const error = indicesResult.status === "error" ? indicesResult.error : null;
   const indicesData = indicesResult.status === "success" ? indicesResult.data : null;
   const indices = useMemo(() => indicesData ?? [], [indicesData]);
-  // Treat "idle" as loading when an index is selected but the detail effect
-  // hasn't fired yet. This prevents a brief flash of overview content before
-  // the detail loading spinner appears (React effects run after render).
-  const loadingDetail =
-    detailResult.status === "loading" || (selectedIndex !== null && detailResult.status === "idle");
   const mappings = detailResult.status === "success" ? detailResult.data.mappings : null;
   const settings = detailResult.status === "success" ? detailResult.data.settings : null;
   const indexStats = detailResult.status === "success" ? detailResult.data.indexStats : null;
@@ -100,7 +95,21 @@ export default function IndicesPage() {
     });
   }, [indices, showSystemIndices, deferredSearch]);
 
-  const selectedRecord = indices.find((i) => i.index === selectedIndex) ?? null;
+  // When filtered results don't include the selected index (e.g. search excludes
+  // it), hide the detail panel. The persisted selectedIndex is kept so the
+  // selection is restored when the search term is cleared.
+  const displayedIndex = filteredIndices.some((i) => i.index === selectedIndex)
+    ? selectedIndex
+    : null;
+
+  // Treat "idle" as loading when an index is selected but the detail effect
+  // hasn't fired yet. This prevents a brief flash of overview content before
+  // the detail loading spinner appears (React effects run after render).
+  const loadingDetail =
+    detailResult.status === "loading" ||
+    (displayedIndex !== null && detailResult.status === "idle");
+
+  const selectedRecord = indices.find((i) => i.index === displayedIndex) ?? null;
 
   const handleOpenInQueryLab = useCallback(() => {
     if (!selectedIndex) return;
@@ -157,12 +166,12 @@ export default function IndicesPage() {
               >
                 {loadingIndices ? "Refreshing..." : "Refresh"}
               </Button>
-              <Tooltip title={!selectedIndex ? "Select an index first" : ""}>
+              <Tooltip title={!displayedIndex ? "Select an index first" : ""}>
                 <span>
                   <Button
                     size="small"
                     variant="contained"
-                    disabled={!selectedIndex}
+                    disabled={!displayedIndex}
                     onClick={handleOpenInQueryLab}
                   >
                     Open in Query Lab
@@ -172,7 +181,7 @@ export default function IndicesPage() {
               <Button
                 size="small"
                 variant="outlined"
-                disabled={!selectedIndex}
+                disabled={!displayedIndex}
                 onClick={handleInspectInConsole}
               >
                 Inspect in Console
@@ -270,7 +279,7 @@ export default function IndicesPage() {
 
         {/* Right panel: index details */}
         <IndexDetailPanel
-          selectedIndex={selectedIndex}
+          selectedIndex={displayedIndex}
           selectedRecord={selectedRecord}
           loadingDetail={loadingDetail}
           activeTab={activeTab}
