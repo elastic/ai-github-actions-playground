@@ -13,7 +13,11 @@ import ChatPage from "./ChatPage";
 
 const AI_DRAWER_WIDTH = 440;
 
-export default function AiAssistantDrawer() {
+interface AiAssistantDrawerProps {
+  isMobile?: boolean;
+}
+
+export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawerProps) {
   const open = useUIStore((s) => s.aiPanelOpen);
   const setOpen = useUIStore((s) => s.setAiPanelOpen);
   const clearMessages = useLLMStore((s) => s.clearMessages);
@@ -24,7 +28,7 @@ export default function AiAssistantDrawer() {
       anchor="right"
       open={open}
       onClose={() => setOpen(false)}
-      variant="persistent"
+      variant={isMobile ? "temporary" : "persistent"}
       PaperProps={{
         role: "complementary",
         "aria-labelledby": "ai-drawer-title",
@@ -33,7 +37,8 @@ export default function AiAssistantDrawer() {
         "& .MuiDrawer-paper": {
           top: "auto",
           boxSizing: "border-box",
-          width: AI_DRAWER_WIDTH,
+          width: isMobile ? "min(100vw, 440px)" : AI_DRAWER_WIDTH,
+          maxWidth: "100vw",
           height: "100%",
         },
       }}

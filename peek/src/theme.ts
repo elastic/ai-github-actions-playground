@@ -36,6 +36,32 @@ const baseOptions: ThemeOptions = {
           fontWeight: 500,
           height: 32,
           borderRadius: 6,
+          "@media (max-width:767.95px), (pointer: coarse)": {
+            height: "auto",
+            minHeight: 44,
+            paddingTop: 10,
+            paddingBottom: 10,
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          "@media (max-width:767.95px), (pointer: coarse)": {
+            width: 44,
+            height: 44,
+            padding: 10,
+          },
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          "@media (max-width:767.95px), (pointer: coarse)": {
+            minHeight: 44,
+          },
         },
       },
     },
@@ -61,6 +87,10 @@ const baseOptions: ThemeOptions = {
         root: {
           "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
             height: 32,
+            "@media (max-width:767.95px), (pointer: coarse)": {
+              height: "auto",
+              minHeight: 44,
+            },
           },
         },
       },

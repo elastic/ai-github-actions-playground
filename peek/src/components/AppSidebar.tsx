@@ -40,6 +40,8 @@ interface NavSection {
 interface AppSidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  mobile?: boolean;
+  onNavigate?: () => void;
 }
 
 function buildNavSections(): NavSection[] {
@@ -75,7 +77,12 @@ function isHiddenByCapability(item: NavItem, capabilities: UserCapabilities | nu
   return !capabilities[item.requiredCapability];
 }
 
-export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppSidebarProps) {
+export default function AppSidebar({
+  collapsed = false,
+  onToggleCollapse,
+  mobile = false,
+  onNavigate,
+}: AppSidebarProps) {
   const { connected, capabilities } = useConnectionStore(
     useShallow((s) => ({ connected: s.connected, capabilities: s.capabilities })),
   );
@@ -112,32 +119,34 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         display: "flex",
         flexShrink: 0,
         flexDirection: "column",
-        width: collapsed ? 68 : 200,
+        width: mobile ? 260 : collapsed ? 68 : 200,
         overflow: "auto",
-        borderRight: 1,
+        borderRight: mobile ? 0 : 1,
         borderColor: "border.subtle",
         bgcolor: "background.paper",
         transition: (theme) =>
           theme.transitions.create("width", { duration: theme.transitions.duration.shorter }),
       }}
     >
-      <Box
-        sx={{ display: "flex", justifyContent: collapsed ? "center" : "flex-end", pt: 1, px: 1 }}
-      >
-        <Tooltip title={collapsed ? "Expand navigation" : "Collapse navigation"}>
-          <IconButton
-            size="small"
-            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
-            onClick={onToggleCollapse}
-          >
-            {collapsed ? (
-              <ChevronRightIcon fontSize="small" />
-            ) : (
-              <ChevronLeftIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Box>
+      {!mobile && (
+        <Box
+          sx={{ display: "flex", justifyContent: collapsed ? "center" : "flex-end", pt: 1, px: 1 }}
+        >
+          <Tooltip title={collapsed ? "Expand navigation" : "Collapse navigation"}>
+            <IconButton
+              size="small"
+              aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+              onClick={onToggleCollapse}
+            >
+              {collapsed ? (
+                <ChevronRightIcon fontSize="small" />
+              ) : (
+                <ChevronLeftIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
       {NAV_SECTIONS.map((section) => {
         const visibleItems = section.items.filter(
           (item) => !isHiddenByCapability(item, capabilities),
@@ -158,7 +167,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                 {section.label}
               </Typography>
             )}
-            <List dense disablePadding>
+            <List dense={!mobile} disablePadding>
               {visibleItems.map((item) => {
                 const itemPath = PAGE_MANIFEST[item.page].path;
                 const isActive =
@@ -168,14 +177,17 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
                   <ListItemButton
                     selected={isActive}
                     disabled={isDisabled}
-                    onClick={() => navigate(PAGE_MANIFEST[item.page].path)}
+                    onClick={() => {
+                      navigate(PAGE_MANIFEST[item.page].path);
+                      onNavigate?.();
+                    }}
                     aria-current={isActive ? "page" : undefined}
                     aria-label={item.label}
                     sx={{
                       position: "relative",
                       justifyContent: collapsed ? "center" : "flex-start",
                       mx: 0.5,
-                      py: 0.75,
+                      py: mobile ? 1.125 : 0.75,
                       px: collapsed ? 1 : 2,
                       borderRadius: 1,
                       "&.Mui-selected": {
@@ -253,7 +265,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
       >
         <Tooltip title="AI Assistant" placement={collapsed ? "right" : "top"}>
           <IconButton
-            size="small"
+            size={mobile ? "medium" : "small"}
             color={aiPanelOpen ? "primary" : "default"}
             aria-label="Toggle AI assistant panel"
             onClick={() => setAiPanelOpen(!aiPanelOpen)}
@@ -263,7 +275,7 @@ export default function AppSidebar({ collapsed = false, onToggleCollapse }: AppS
         </Tooltip>
         <Tooltip title="Settings" placement={collapsed ? "right" : "top"}>
           <IconButton
-            size="small"
+            size={mobile ? "medium" : "small"}
             color={isSettingsPath ? "primary" : "default"}
             aria-label="Settings"
             onClick={(e) => setSettingsAnchor(e.currentTarget)}
