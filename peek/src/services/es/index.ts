@@ -42,7 +42,13 @@ export type {
   DimensionOverviewQuery,
 } from "./queryBuilder";
 
-export { classifyMetricType, listFields, getFieldValues, getFieldCardinality } from "./metadata";
+export {
+  classifyMetricType,
+  isDimensionField,
+  listFields,
+  getFieldValues,
+  getFieldCardinality,
+} from "./metadata";
 export type { MetricTypeClassification, FieldInfo, FieldValueEntry } from "./metadata";
 export {
   isKeywordLikeType,
