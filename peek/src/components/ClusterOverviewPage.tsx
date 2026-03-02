@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -9,12 +9,9 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { isElasticsearchError } from "../services/es";
-import { loadFleetServerStatus, loadElasticAgentInventory } from "../services/fleet";
-import { useConnectionStore } from "../store/useConnectionStore";
+import { useClusterOverview } from "../hooks/useClusterOverview";
 import { formatBytes } from "../utils/formatBytes";
-import { runConnectionRequest } from "../hooks/useConnectionRequest";
-import { formatCompactNumber, toNodeRows, type OverviewData } from "../utils/clusterOverviewUtils";
+import { formatCompactNumber, toNodeRows } from "../utils/clusterOverviewUtils";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
@@ -37,124 +34,19 @@ function renderCount(value: number | null) {
 }
 
 export default function ClusterOverviewPage() {
-  const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const loadInFlightRef = useRef(false);
-  const [error, setError] = useState<string | null>(null);
-  const [partialErrors, setPartialErrors] = useState<string[]>([]);
+  const { result, partialErrors, refresh } = useClusterOverview();
   const [partialDismissed, setPartialDismissed] = useState(false);
-  const [data, setData] = useState<OverviewData>({
+
+  const loading = result.status === "loading";
+  const error = result.status === "error" ? result.error : null;
+  const data = result.status === "success" ? result.data : null;
+
+  const { clusterInfo, clusterHealth, clusterStats } = data ?? {
     clusterInfo: null,
     clusterHealth: null,
     clusterStats: null,
-    nodesInfo: null,
-    nodesStats: null,
-    dataStreamCount: null,
-    indexCount: null,
-    aliasCount: null,
-    fleetStatus: null,
-    agentInventoryCount: null,
-  });
-
-  const loadOverview = useCallback(async () => {
-    if (!connection || loadInFlightRef.current) return;
-    loadInFlightRef.current = true;
-    setLoading(true);
-    setError(null);
-    setPartialErrors([]);
-    setPartialDismissed(false);
-    try {
-      const { data: results, error } = await runConnectionRequest({
-        connection,
-        run: (client) =>
-          Promise.allSettled([
-            client.getClusterInfo(),
-            client.getClusterHealth(),
-            client.getClusterStats(),
-            client.getNodes(),
-            client.getNodeStats(),
-            client.getDataStreams(),
-            client.resolveIndex("*"),
-            loadFleetServerStatus(client),
-            loadElasticAgentInventory(client),
-          ]),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (results !== null) {
-        const [
-          clusterInfoResult,
-          clusterHealthResult,
-          clusterStatsResult,
-          nodesResult,
-          nodeStatsResult,
-          dataStreamsResult,
-          resolveIndexResult,
-          fleetStatusResult,
-          agentInventoryResult,
-        ] = results;
-
-        const nextData: OverviewData = {
-          clusterInfo: clusterInfoResult.status === "fulfilled" ? clusterInfoResult.value : null,
-          clusterHealth:
-            clusterHealthResult.status === "fulfilled" ? clusterHealthResult.value : null,
-          clusterStats: clusterStatsResult.status === "fulfilled" ? clusterStatsResult.value : null,
-          nodesInfo: nodesResult.status === "fulfilled" ? nodesResult.value : null,
-          nodesStats: nodeStatsResult.status === "fulfilled" ? nodeStatsResult.value : null,
-          dataStreamCount:
-            dataStreamsResult.status === "fulfilled"
-              ? (dataStreamsResult.value.data_streams?.length ?? 0)
-              : null,
-          indexCount:
-            resolveIndexResult.status === "fulfilled"
-              ? (resolveIndexResult.value.indices?.length ?? 0)
-              : null,
-          aliasCount:
-            resolveIndexResult.status === "fulfilled"
-              ? (resolveIndexResult.value.aliases?.length ?? 0)
-              : null,
-          fleetStatus: fleetStatusResult.status === "fulfilled" ? fleetStatusResult.value : null,
-          agentInventoryCount:
-            agentInventoryResult.status === "fulfilled" ? agentInventoryResult.value.total : null,
-        };
-        setData(nextData);
-
-        const failedParts: string[] = [];
-        if (clusterInfoResult.status === "rejected") failedParts.push("cluster info");
-        if (clusterHealthResult.status === "rejected") failedParts.push("cluster health");
-        if (clusterStatsResult.status === "rejected") failedParts.push("cluster stats");
-        if (nodesResult.status === "rejected") failedParts.push("nodes");
-        if (nodeStatsResult.status === "rejected") failedParts.push("node stats");
-        if (dataStreamsResult.status === "rejected") failedParts.push("data streams");
-        if (resolveIndexResult.status === "rejected") failedParts.push("indices/aliases");
-        if (fleetStatusResult.status === "rejected") failedParts.push("fleet status");
-        if (agentInventoryResult.status === "rejected") failedParts.push("agent inventory");
-        if (failedParts.length > 0) {
-          setPartialErrors(failedParts);
-        }
-
-        if (failedParts.length === 9) {
-          const firstError =
-            clusterInfoResult.status === "rejected" ? clusterInfoResult.reason : null;
-          setError(
-            isElasticsearchError(firstError)
-              ? firstError.message
-              : "Failed to load cluster overview data.",
-          );
-        }
-      }
-    } finally {
-      setLoading(false);
-      loadInFlightRef.current = false;
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadOverview();
-  }, [loadOverview]);
-
-  const { clusterInfo, clusterHealth, clusterStats } = data;
+  };
   const clusterStatus = clusterHealth?.status?.toUpperCase() ?? "UNKNOWN";
   const clusterStatusColor =
     clusterHealth?.status === "green"
@@ -166,8 +58,8 @@ export default function ClusterOverviewPage() {
           : "default";
 
   const nodeRows = useMemo(
-    () => toNodeRows(data.nodesInfo, data.nodesStats),
-    [data.nodesInfo, data.nodesStats],
+    () => toNodeRows(data?.nodesInfo ?? null, data?.nodesStats ?? null),
+    [data?.nodesInfo, data?.nodesStats],
   );
 
   const roleCounts = useMemo(() => {
@@ -185,7 +77,7 @@ export default function ClusterOverviewPage() {
   const clusterShardCount = clusterStats?.indices?.shards?.total ?? null;
   const clusterIndexCount = clusterStats?.indices?.count ?? null;
 
-  const fleetTotal = data.fleetStatus?.total ?? data.agentInventoryCount;
+  const fleetTotal = data?.fleetStatus?.total ?? data?.agentInventoryCount ?? null;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -196,7 +88,7 @@ export default function ClusterOverviewPage() {
             <Button
               size="small"
               variant="outlined"
-              onClick={loadOverview}
+              onClick={refresh}
               startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
               aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
             >
@@ -316,18 +208,20 @@ export default function ClusterOverviewPage() {
 
             <Box sx={{ flex: 1 }}>
               <OverviewInfoCard title="Data Streams" onClick={() => navigate("/data-streams")}>
-                {renderCount(data.dataStreamCount)}
+                {renderCount(data?.dataStreamCount ?? null)}
               </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
               <OverviewInfoCard title="Indices" onClick={() => navigate("/indices")}>
-                {renderCount(data.indexCount)}
+                {renderCount(data?.indexCount ?? null)}
               </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Aliases">{renderCount(data.aliasCount)}</OverviewInfoCard>
+              <OverviewInfoCard title="Aliases">
+                {renderCount(data?.aliasCount ?? null)}
+              </OverviewInfoCard>
             </Box>
           </Stack>
 
@@ -382,7 +276,7 @@ export default function ClusterOverviewPage() {
 
           {/* Fleet summary */}
           <OverviewInfoCard title="Fleet">
-            {data.fleetStatus ? (
+            {data?.fleetStatus ? (
               <Stack spacing={1}>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   <Chip size="small" label={`Total: ${data.fleetStatus.total}`} color="primary" />
