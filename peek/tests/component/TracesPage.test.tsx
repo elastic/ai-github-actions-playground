@@ -403,7 +403,7 @@ describe("TracesPage error alerts", () => {
     });
   });
 
-  it("shows a user-friendly warning with collapsible details when a search error occurs", async () => {
+  it("shows a user-friendly error with collapsible details when a search error occurs", async () => {
     const typeMismatchError =
       "Found 1 problem line 1:62: second argument of [COALESCE(attributes.span.duration.us, duration / 1000.0)] must be [long]";
     mockErrorsByHook = Array.from({ length: 20 }, () => typeMismatchError);
@@ -417,8 +417,8 @@ describe("TracesPage error alerts", () => {
       </MemoryRouter>,
     );
 
-    // Should show summarised warning, not the raw error
-    expect(screen.getByText("Query warning")).toBeInTheDocument();
+    // Should show summarised error, not the raw error
+    expect(screen.getByText("Query error")).toBeInTheDocument();
     expect(
       screen.getByText("A query type mismatch occurred. Results may still be usable."),
     ).toBeInTheDocument();
