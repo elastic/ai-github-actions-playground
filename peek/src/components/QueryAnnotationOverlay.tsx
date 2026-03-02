@@ -5,6 +5,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { useShallow } from "zustand/react/shallow";
 
 import { useLLMStore } from "../store/useLLMStore";
 
@@ -13,8 +14,19 @@ const EXPLAIN_SYSTEM_PROMPT =
   "explanation of what the query does. Be concise — one to three sentences. " +
   "Do not include any code. Do not wrap the response in quotes or markdown.";
 
-/** Cache of query → explanation so we don't re-call the LLM for identical queries. */
+const MAX_CACHE_SIZE = 50;
+
+/** LRU-bounded cache of query → explanation. */
 const explanationCache = new Map<string, string>();
+
+function cacheSet(key: string, value: string) {
+  explanationCache.delete(key);
+  explanationCache.set(key, value);
+  if (explanationCache.size > MAX_CACHE_SIZE) {
+    const oldest = explanationCache.keys().next().value;
+    if (oldest !== undefined) explanationCache.delete(oldest);
+  }
+}
 
 interface QueryAnnotationOverlayProps {
   query: string;
@@ -32,6 +44,17 @@ export default function QueryAnnotationOverlay({
   editorFocused,
   height,
 }: QueryAnnotationOverlayProps) {
+  const {
+    apiKey,
+    provider,
+    model: llmModel,
+  } = useLLMStore(
+    useShallow((s) => ({
+      apiKey: s.config.apiKey,
+      provider: s.config.provider,
+      model: s.config.model,
+    })),
+  );
   const [explanation, setExplanation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -48,7 +71,7 @@ export default function QueryAnnotationOverlay({
 
   // Fetch explanation when unfocused, not dismissed, and query is non-trivial
   useEffect(() => {
-    if (editorFocused || dismissed || !query.trim()) {
+    if (editorFocused || dismissed || !query.trim() || !apiKey.trim()) {
       return;
     }
 
@@ -58,22 +81,16 @@ export default function QueryAnnotationOverlay({
       return;
     }
 
-    const { config } = useLLMStore.getState();
-    if (!config.apiKey.trim()) {
-      return;
-    }
-
     const controller = new AbortController();
     setLoading(true);
 
     void (async () => {
       try {
         const openai = createOpenAI({
-          apiKey: config.apiKey,
-          ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+          apiKey,
+          ...(provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
         });
-        const model =
-          config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
+        const model = provider === "openrouter" ? openai.chat(llmModel) : openai(llmModel);
 
         const result = await generateText({
           model,
@@ -84,7 +101,7 @@ export default function QueryAnnotationOverlay({
 
         const text = result.text.trim();
         if (text) {
-          explanationCache.set(query, text);
+          cacheSet(query, text);
           setExplanation(text);
         }
       } catch (err) {
@@ -99,7 +116,7 @@ export default function QueryAnnotationOverlay({
     return () => {
       controller.abort();
     };
-  }, [editorFocused, dismissed, query]);
+  }, [editorFocused, dismissed, query, apiKey, provider, llmModel]);
 
   const handleClick = useCallback(() => {
     setDismissed(true);
@@ -125,7 +142,6 @@ export default function QueryAnnotationOverlay({
         borderRadius: 1,
         bgcolor: "background.default",
         opacity: 0.94,
-        cursor: "pointer",
         transition: "opacity 0.2s",
         "&:hover": { opacity: 0.85 },
         backdropFilter: "blur(2px)",

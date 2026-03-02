@@ -4,6 +4,7 @@ import DragHandleIcon from "@mui/icons-material/DragHandle";
 
 const MIN_HEIGHT = 60;
 const MAX_HEIGHT = 600;
+const KEYBOARD_STEP = 20;
 
 interface ResizableEditorContainerProps {
   height: number;
@@ -52,11 +53,24 @@ export default function ResizableEditorContainer({
     [height, onHeightChange],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      let delta = 0;
+      if (e.key === "ArrowDown") delta = KEYBOARD_STEP;
+      else if (e.key === "ArrowUp") delta = -KEYBOARD_STEP;
+      if (delta === 0) return;
+      e.preventDefault();
+      onHeightChange(Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height + delta)));
+    },
+    [height, onHeightChange],
+  );
+
   return (
     <Box ref={containerRef} sx={{ position: "relative" }}>
       <Box sx={{ height: `${height}px`, overflow: "hidden" }}>{children}</Box>
       <Box
         onPointerDown={handlePointerDown}
+        onKeyDown={handleKeyDown}
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize editor"
