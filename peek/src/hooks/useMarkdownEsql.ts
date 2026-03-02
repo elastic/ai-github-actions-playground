@@ -71,30 +71,21 @@ export function useMarkdownEsql({
         return;
       }
 
+      const datasource = createPersesEsqlDatasource(connection);
       const tasks = [...uniqueBlocks].map(
         ([raw, query]) =>
           async (): Promise<readonly [string, EsqlResponse]> => {
-            const datasource = createPersesEsqlDatasource(connection);
             const request = buildPersesEsqlRequest(query, { timeRange, parameters });
             const data = await datasource.execute(request, ctrl.signal);
             return [raw, data] as const;
           },
       );
       const MAX_CONCURRENCY = 6;
-      const runTask = async (
-        task: () => Promise<readonly [string, EsqlResponse]>,
-      ): Promise<PromiseSettledResult<readonly [string, EsqlResponse]>> => {
-        try {
-          return { status: "fulfilled", value: await task() };
-        } catch (reason) {
-          return { status: "rejected", reason };
-        }
-      };
       const entries: Array<PromiseSettledResult<readonly [string, EsqlResponse]>> = [];
       for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
         if (ctrl.signal.aborted) return;
         const batch = tasks.slice(i, i + MAX_CONCURRENCY);
-        entries.push(...(await Promise.all(batch.map(runTask))));
+        entries.push(...(await Promise.allSettled(batch.map((task) => task()))));
       }
 
       if (ctrl.signal.aborted) return;
