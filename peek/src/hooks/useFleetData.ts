@@ -27,6 +27,7 @@ export interface FleetData {
   outputHealth: FleetOutputHealth[];
   agentInventory: ElasticAgentInfo[];
   agentInventoryTotal: number;
+  agentInventoryTotalErrorCount: number;
   actions: FleetAction[];
   actionResults: FleetActionResult[];
 }
@@ -46,6 +47,7 @@ const EMPTY_DATA: FleetData = {
   outputHealth: [],
   agentInventory: [],
   agentInventoryTotal: 0,
+  agentInventoryTotalErrorCount: 0,
   actions: [],
   actionResults: [],
 };
@@ -62,7 +64,14 @@ export function useFleetData(): UseFleetDataResult {
   const query = useQuery({
     queryKey: ["fleet-data", connection?.url],
     queryFn: createQueryFn(async (client): Promise<FleetQueryResult> => {
-      const results = await Promise.allSettled([
+      const [
+        serverStatusResult,
+        agentVersionsResult,
+        outputHealthResult,
+        inventoryResultSettled,
+        actionsResult,
+        actionResultsResult,
+      ] = await Promise.allSettled([
         loadFleetServerStatus(client),
         loadFleetAgentVersions(client),
         loadFleetOutputHealth(client),
@@ -83,17 +92,18 @@ export function useFleetData(): UseFleetDataResult {
         return null;
       };
 
-      const inventoryResult = value(results[3]!, "Agent inventory");
+      const inventoryResult = value(inventoryResultSettled, "Agent inventory");
 
       return {
         data: {
-          serverStatus: value(results[0]!, "Server status") ?? null,
-          agentVersions: value(results[1]!, "Agent versions") ?? [],
-          outputHealth: value(results[2]!, "Output health") ?? [],
+          serverStatus: value(serverStatusResult, "Server status") ?? null,
+          agentVersions: value(agentVersionsResult, "Agent versions") ?? [],
+          outputHealth: value(outputHealthResult, "Output health") ?? [],
           agentInventory: inventoryResult?.agents ?? [],
           agentInventoryTotal: inventoryResult?.total ?? 0,
-          actions: value(results[4]!, "Actions") ?? [],
-          actionResults: value(results[5]!, "Action results") ?? [],
+          agentInventoryTotalErrorCount: inventoryResult?.errorAgentTotal ?? 0,
+          actions: value(actionsResult, "Actions") ?? [],
+          actionResults: value(actionResultsResult, "Action results") ?? [],
         },
         partialErrors: errors,
       };

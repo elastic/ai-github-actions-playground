@@ -48,6 +48,7 @@ export default function FleetPage() {
       outputHealth,
       agentInventory,
       agentInventoryTotal,
+      agentInventoryTotalErrorCount,
       actions,
       actionResults,
     },
@@ -119,8 +120,8 @@ export default function FleetPage() {
             <FleetOverviewTab
               serverStatus={serverStatus}
               agentVersions={agentVersions}
-              agentInventory={agentInventory}
               agentInventoryTotal={agentInventoryTotal}
+              agentInventoryTotalErrorCount={agentInventoryTotalErrorCount}
               onDrillIn={handleDrillIn}
             />
           )}

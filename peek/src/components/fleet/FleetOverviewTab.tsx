@@ -5,11 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DevicesIcon from "@mui/icons-material/Devices";
 
-import type {
-  FleetServerStatusMetrics,
-  FleetAgentVersionCount,
-  ElasticAgentInfo,
-} from "../../services/fleet";
+import type { FleetServerStatusMetrics, FleetAgentVersionCount } from "../../services/fleet";
 import type { AgentFilter } from "../../store/useFleetStore";
 import EmptyState from "../EmptyState";
 
@@ -20,16 +16,16 @@ import FleetVersionChart from "./FleetVersionChart";
 interface Props {
   serverStatus: FleetServerStatusMetrics | null;
   agentVersions: FleetAgentVersionCount[];
-  agentInventory: ElasticAgentInfo[];
   agentInventoryTotal: number;
+  agentInventoryTotalErrorCount: number;
   onDrillIn: (updates: Partial<AgentFilter>) => void;
 }
 
 export default function FleetOverviewTab({
   serverStatus,
   agentVersions,
-  agentInventory,
   agentInventoryTotal,
+  agentInventoryTotalErrorCount,
   onDrillIn,
 }: Props) {
   return (
@@ -142,12 +138,10 @@ export default function FleetOverviewTab({
             <FleetStatCard title="Agents (from logs)" value={agentInventoryTotal} />
             <FleetStatCard
               title="With Errors"
-              value={agentInventory.filter((a) => a.errorCount > 0).length}
+              value={agentInventoryTotalErrorCount}
               color="error.main"
               onClick={
-                agentInventory.some((a) => a.errorCount > 0)
-                  ? () => onDrillIn({ hasErrors: true })
-                  : undefined
+                agentInventoryTotalErrorCount > 0 ? () => onDrillIn({ hasErrors: true }) : undefined
               }
             />
           </Stack>
