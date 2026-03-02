@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
@@ -208,13 +208,15 @@ export default function PartialResultPanel({
 }: PartialResultPanelProps) {
   const [expanded, setExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCopy = () => {
     if (!navigator.clipboard) return;
     void navigator.clipboard.writeText(JSON.stringify(metadata, null, 2)).then(
       () => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
       },
       () => {
         // writeText rejected — fail silently

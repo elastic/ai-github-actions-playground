@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -35,6 +35,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedUsername = useMemo(() => {
     if (users.length === 0) return urlUsername;
@@ -105,7 +106,8 @@ export default function UsersPage() {
     const copied = await copyToClipboard("GET /_security/user");
     if (!copied) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   }, []);
 
   const handleSelectUser = useCallback(

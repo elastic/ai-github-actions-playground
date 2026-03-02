@@ -160,7 +160,7 @@ export default function PanelContainer({ panel }: Props) {
 
   return (
     <Paper
-      elevation={1}
+      elevation={0}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -234,6 +234,7 @@ export default function PanelContainer({ panel }: Props) {
                 size="small"
                 onClick={handleExportImage}
                 disabled={loading || !exportImage}
+                aria-label="Download PNG"
               >
                 <DownloadIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -256,7 +257,7 @@ export default function PanelContainer({ panel }: Props) {
         )}
         {supportsQuery && (
           <Tooltip title="Refresh">
-            <IconButton size="small" onClick={fetchData} disabled={loading}>
+            <IconButton size="small" onClick={fetchData} disabled={loading} aria-label="Refresh">
               <RefreshIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
@@ -264,6 +265,7 @@ export default function PanelContainer({ panel }: Props) {
         <Tooltip title="Duplicate panel">
           <IconButton
             size="small"
+            aria-label="Duplicate panel"
             onClick={() => {
               const newId = duplicatePanel(panel.id);
               if (newId) setEditingPanelId(newId);
@@ -273,7 +275,11 @@ export default function PanelContainer({ panel }: Props) {
           </IconButton>
         </Tooltip>
         <Tooltip title="Edit panel">
-          <IconButton size="small" onClick={() => setEditingPanelId(panel.id)}>
+          <IconButton
+            size="small"
+            aria-label="Edit panel"
+            onClick={() => setEditingPanelId(panel.id)}
+          >
             <EditIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>

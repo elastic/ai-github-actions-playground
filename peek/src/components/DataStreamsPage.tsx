@@ -240,6 +240,7 @@ export default function DataStreamsPage() {
               placeholder="Search streams"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              inputProps={{ "aria-label": "Search streams" }}
             />
             <FormControlLabel
               control={
@@ -390,6 +391,7 @@ export default function DataStreamsPage() {
                 placeholder="Search fields"
                 value={fieldSearch}
                 onChange={(e) => setFieldSearch(e.target.value)}
+                inputProps={{ "aria-label": "Search fields" }}
               />
             )}
             {loadingFields ? (

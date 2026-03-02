@@ -45,6 +45,7 @@ export default function AddDataPage() {
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const endpointTypeManuallySetRef = useRef(false);
   /** `null` = not yet probed, `true` = reachable, `false` = unreachable */
@@ -107,7 +108,8 @@ export default function AddDataPage() {
     const ok = await copyToClipboard(apiKeyValue);
     if (!ok) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   }, [apiKeyValue]);
 
   // ---- Ingestion verification ----

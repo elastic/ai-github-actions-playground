@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -37,6 +37,7 @@ export default function RolesPage() {
   const [roles, setRoles] = useState<RoleEntry[]>([]);
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedRoleName = useMemo(() => {
     if (roles.length === 0) return urlRole;
@@ -123,7 +124,8 @@ export default function RolesPage() {
     const copied = await copyToClipboard("GET /_security/role");
     if (!copied) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   }, []);
 
   return (
