@@ -1,9 +1,8 @@
-import { test, expect, devices } from "@playwright/test";
+import { test, expect, devices, type Page } from "@playwright/test";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function connectToMockCluster(page: any) {
+async function connectToMockCluster(page: Page) {
   await registerElasticsearchMocks(page, {
     esUrl: DEFAULT_ES_URL,
     data: { clusterInfo: { cluster_name: "mobile-exploration-cluster" } },

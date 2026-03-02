@@ -42,15 +42,19 @@ export default function ConnectionProfilesList({
 
   const handleUnlockProfile = useCallback(
     async (profileId: string) => {
-      const ok = await unlockProfile(profileId, unlockPin);
-      if (ok) {
-        setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
-        setUnlockingProfileId(null);
-        setUnlockPin("");
-        setUnlockError(null);
-        onLoadProfile(profileId);
-      } else {
-        setUnlockError("Incorrect PIN");
+      try {
+        const ok = await unlockProfile(profileId, unlockPin);
+        if (ok) {
+          setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
+          setUnlockingProfileId(null);
+          setUnlockPin("");
+          setUnlockError(null);
+          onLoadProfile(profileId);
+        } else {
+          setUnlockError("Incorrect PIN");
+        }
+      } catch {
+        setUnlockError("Failed to unlock profile");
       }
     },
     [unlockProfile, unlockPin, onLoadProfile],
@@ -59,7 +63,11 @@ export default function ConnectionProfilesList({
   const handleRenameProfile = useCallback(
     (id: string) => {
       const trimmed = editingProfileName.trim();
-      if (!trimmed) return;
+      if (!trimmed) {
+        setEditingProfileId(null);
+        setEditingProfileName("");
+        return;
+      }
       onRenameProfile(id, trimmed);
       setEditingProfileId(null);
       setEditingProfileName("");
@@ -71,7 +79,7 @@ export default function ConnectionProfilesList({
 
   return (
     <>
-      <Typography variant="subtitle2" sx={{ mt: 1 }}>
+      <Typography variant="body2" sx={{ mt: 1 }}>
         Saved Profiles
       </Typography>
       <List dense disablePadding sx={{ borderRadius: 1, bgcolor: "action.hover" }}>
@@ -80,17 +88,15 @@ export default function ConnectionProfilesList({
             key={profile.id}
             selected={profile.id === activeProfileId}
             onClick={() => {
-              if (
-                profile.encrypted &&
-                !unlockedProfileIds.has(profile.id) &&
-                unlockingProfileId !== profile.id
-              ) {
-                setUnlockingProfileId(profile.id);
-                setUnlockPin("");
-                setUnlockError(null);
-              } else {
-                onLoadProfile(profile.id);
+              if (profile.encrypted && !unlockedProfileIds.has(profile.id)) {
+                if (unlockingProfileId !== profile.id) {
+                  setUnlockingProfileId(profile.id);
+                  setUnlockPin("");
+                  setUnlockError(null);
+                }
+                return;
               }
+              onLoadProfile(profile.id);
             }}
             data-testid={`profile-${profile.id}`}
           >

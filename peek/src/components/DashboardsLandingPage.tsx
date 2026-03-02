@@ -210,8 +210,14 @@ export default function DashboardsLandingPage() {
   const handleImport = useCallback(
     (scope: "dashboard" | "workspace") => {
       triggerFileImport(scope, importDashboard, importWorkspace, {
-        onSuccess: setImportSuccess,
-        onError: setImportError,
+        onSuccess: (message) => {
+          setImportError(null);
+          setImportSuccess(message);
+        },
+        onError: (message) => {
+          setImportSuccess(null);
+          setImportError(message);
+        },
       });
     },
     [importDashboard, importWorkspace],

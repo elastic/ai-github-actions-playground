@@ -46,7 +46,7 @@ export default function DashboardCard({
     >
       <CardActionArea onClick={() => onNavigate(entry.id)}>
         <CardContent sx={{ pb: 1 }}>
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 0.5, pr: 8 }}>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 0.5, pr: 6 }}>
             <Typography variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }} noWrap>
               {entry.title}
             </Typography>

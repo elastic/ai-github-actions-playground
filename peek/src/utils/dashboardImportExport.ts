@@ -41,17 +41,24 @@ export function triggerFileImport(
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const text = String(reader.result ?? "");
-      const result = scope === "workspace" ? importWorkspace(text) : importDashboard(text);
-      if (result.success) {
-        callbacks.onSuccess(
-          scope === "workspace"
-            ? "Workspace imported successfully."
-            : "Dashboard imported successfully.",
-        );
-      } else {
-        callbacks.onError(result.error ?? "Import failed.");
+      try {
+        const text = String(reader.result ?? "");
+        const result = scope === "workspace" ? importWorkspace(text) : importDashboard(text);
+        if (result.success) {
+          callbacks.onSuccess(
+            scope === "workspace"
+              ? "Workspace imported successfully."
+              : "Dashboard imported successfully.",
+          );
+        } else {
+          callbacks.onError(result.error ?? "Import failed.");
+        }
+      } catch {
+        callbacks.onError("Failed to process import file.");
       }
+    };
+    reader.onerror = () => {
+      callbacks.onError("Failed to read import file.");
     };
     reader.readAsText(file);
   };

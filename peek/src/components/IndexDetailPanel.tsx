@@ -35,7 +35,7 @@ function MetaGrid({ children }: { children: React.ReactNode }) {
       sx={{
         display: "grid",
         gridTemplateColumns: "minmax(160px, auto) 1fr",
-        rowGap: 0.75,
+        rowGap: 1,
         columnGap: 1.5,
       }}
     >
@@ -199,7 +199,7 @@ function SettingsContent({
           sx={{
             display: "grid",
             gridTemplateColumns: "minmax(200px, 1fr) 1fr",
-            rowGap: 0.25,
+            rowGap: 0.5,
             columnGap: 1,
           }}
         >
@@ -208,11 +208,11 @@ function SettingsContent({
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ py: 0.25, wordBreak: "break-all" }}
+                sx={{ py: 0.5, wordBreak: "break-all" }}
               >
                 {key}
               </Typography>
-              <Typography variant="body2" sx={{ py: 0.25, wordBreak: "break-all" }}>
+              <Typography variant="body2" sx={{ py: 0.5, wordBreak: "break-all" }}>
                 {value}
               </Typography>
             </Fragment>
@@ -328,25 +328,25 @@ function DiskUsageContent({
             </MetaValue>
           </MetaGrid>
           <Divider />
-          <Typography variant="subtitle2">
+          <Typography variant="body2">
             Per-field breakdown ({diskUsageFields.length} fields)
           </Typography>
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: "1fr auto",
-              rowGap: 0.25,
+              rowGap: 0.5,
               columnGap: 2,
             }}
           >
             {diskUsageFields.map(({ name, totalBytes }) => (
               <Box key={name} sx={{ display: "contents" }}>
-                <Typography variant="body2" sx={{ py: 0.25, wordBreak: "break-all" }}>
+                <Typography variant="body2" sx={{ py: 0.5, wordBreak: "break-all" }}>
                   {name}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ py: 0.25, textAlign: "right", whiteSpace: "nowrap" }}
+                  sx={{ py: 0.5, textAlign: "right", whiteSpace: "nowrap" }}
                 >
                   {formatBytes(totalBytes)}
                 </Typography>
@@ -391,7 +391,7 @@ export default function IndexDetailPanel({
       {selectedIndex ? (
         <>
           <Box sx={{ pt: 1.5, pb: 0, px: 2 }}>
-            <Typography variant="h6" component="h2">
+            <Typography variant="subtitle1" component="h2">
               {selectedIndex}
             </Typography>
           </Box>

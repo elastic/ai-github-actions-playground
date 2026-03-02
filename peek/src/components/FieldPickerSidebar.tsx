@@ -10,6 +10,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
+import ListItemButton from "@mui/material/ListItemButton";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CodeIcon from "@mui/icons-material/Code";
@@ -62,7 +63,7 @@ export default function FieldPickerSidebar({
       }}
     >
       <Box sx={{ py: 1, px: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="subtitle2">Fields</Typography>
+        <Typography variant="subtitle1">Fields</Typography>
         {columns.length > 0 && (
           <Typography variant="caption" color="text.secondary">
             {selectedFields.size} / {columns.length} selected
@@ -100,20 +101,12 @@ export default function FieldPickerSidebar({
             const isExpanded = expandedInsight === col.name;
             return (
               <Box key={col.name}>
-                <Box
-                  component="button"
-                  type="button"
+                <ListItemButton
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    width: "100%",
-                    py: 0.25,
+                    py: 0.5,
                     px: 0.5,
-                    border: 0,
-                    bgcolor: "transparent",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    "&:hover": { bgcolor: "action.hover" },
                   }}
                   onClick={() => onToggleField(col.name)}
                 >
@@ -146,7 +139,7 @@ export default function FieldPickerSidebar({
                       e.stopPropagation();
                       onToggleInsight(col.name, col.type);
                     }}
-                    sx={{ p: 0.25 }}
+                    sx={{ p: 0.5 }}
                   >
                     {isExpanded ? (
                       <ExpandLessIcon sx={{ fontSize: 16 }} />
@@ -154,9 +147,9 @@ export default function FieldPickerSidebar({
                       <ExpandMoreIcon sx={{ fontSize: 16 }} />
                     )}
                   </IconButton>
-                </Box>
+                </ListItemButton>
                 <Collapse in={isExpanded}>
-                  <Box sx={{ py: 0.75, px: 1.5, bgcolor: "action.hover" }}>
+                  <Box sx={{ py: 1, px: 1.5, bgcolor: "action.hover" }}>
                     {insight?.loading && (
                       <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
                         <CircularProgress size={16} />
@@ -187,7 +180,7 @@ export default function FieldPickerSidebar({
                             sx={{
                               display: "flex",
                               flexDirection: "column",
-                              gap: 0.25,
+                              gap: 0.5,
                               fontSize: "0.7rem",
                             }}
                           >
@@ -235,22 +228,20 @@ export default function FieldPickerSidebar({
                             />
                           );
                         }
+                        const valIdx = insight.data!.columns.findIndex((c) => c.name === col.name);
+                        const cntIdx = insight.data!.columns.findIndex(
+                          (c) => c.name === "value_count",
+                        );
                         return (
                           <Box
                             sx={{
                               display: "flex",
                               flexDirection: "column",
-                              gap: 0.25,
+                              gap: 0.5,
                               fontSize: "0.7rem",
                             }}
                           >
                             {vals.map((row, i) => {
-                              const valIdx = insight.data!.columns.findIndex(
-                                (c) => c.name === col.name,
-                              );
-                              const cntIdx = insight.data!.columns.findIndex(
-                                (c) => c.name === "value_count",
-                              );
                               const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
                               const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
                               return (

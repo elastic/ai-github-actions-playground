@@ -34,7 +34,10 @@ export default function DashboardNameDialog({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") onConfirm();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (value.trim()) onConfirm();
+            }
             if (e.key === "Escape") onCancel();
           }}
           sx={{ mt: 1 }}

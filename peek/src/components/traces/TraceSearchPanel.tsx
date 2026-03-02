@@ -85,7 +85,16 @@ export default function TraceSearchPanel({
         <PageHeader
           title="Trace Search"
           actions={
-            <Button size="small" variant="text" onClick={resetFilters}>
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => {
+                resetFilters();
+                setServiceFilter("");
+                setMinDurationInput("");
+                setMaxDurationInput("");
+              }}
+            >
               Reset Filters
             </Button>
           }

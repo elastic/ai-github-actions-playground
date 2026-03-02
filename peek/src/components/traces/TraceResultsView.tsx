@@ -203,7 +203,7 @@ export default function TraceResultsView({
               heading="Drift Radar is not available for custom queries. Use filter chips to scope the window."
               description="Use filter chips to define the current window before opening Drift Radar."
             />
-          ) : driftRadarLoading || driftRadarBaselineLoading ? (
+          ) : driftRadarLoading || (driftRadarBaselineEnabled && driftRadarBaselineLoading) ? (
             <Box sx={{ p: 2 }}>
               <ContentSkeleton variant="chart" />
             </Box>

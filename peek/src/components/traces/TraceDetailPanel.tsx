@@ -51,7 +51,7 @@ export default function TraceDetailPanel({
           borderColor: "divider",
         }}
       >
-        <Typography variant="subtitle2">Trace: {selectedTraceId.slice(0, 16)}…</Typography>
+        <Typography variant="subtitle1">Trace: {selectedTraceId.slice(0, 16)}…</Typography>
         <Typography variant="caption" color="text.secondary">
           {selectedTraceSpans.length} spans
         </Typography>
