@@ -406,39 +406,40 @@ export default function DataStreamsPage() {
               <ContentSkeleton variant="table" />
             ) : (
               <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-                {fieldRows.map((field) => (
-                  <Stack
-                    key={`${field.name}:${field.type}`}
-                    component="button"
-                    direction="row"
-                    spacing={1}
-                    onClick={() => setSelectedField({ name: field.name, type: field.type })}
-                    aria-pressed={
-                      selectedField?.name === field.name && selectedField?.type === field.type
-                    }
-                    sx={{
-                      alignItems: "center",
-                      width: "100%",
-                      py: 0.5,
-                      px: 0.5,
-                      border: "none",
-                      borderRadius: 1,
-                      background: "none",
-                      bgcolor:
+                {displayedDataStream &&
+                  fieldRows.map((field) => (
+                    <Stack
+                      key={`${field.name}:${field.type}`}
+                      component="button"
+                      direction="row"
+                      spacing={1}
+                      onClick={() => setSelectedField({ name: field.name, type: field.type })}
+                      aria-pressed={
                         selectedField?.name === field.name && selectedField?.type === field.type
-                          ? "action.selected"
-                          : "transparent",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      "&:hover": { bgcolor: "action.hover" },
-                    }}
-                  >
-                    <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
-                      {field.name}
-                    </Typography>
-                    <Chip size="small" label={field.type} />
-                  </Stack>
-                ))}
+                      }
+                      sx={{
+                        alignItems: "center",
+                        width: "100%",
+                        py: 0.5,
+                        px: 0.5,
+                        border: "none",
+                        borderRadius: 1,
+                        background: "none",
+                        bgcolor:
+                          selectedField?.name === field.name && selectedField?.type === field.type
+                            ? "action.selected"
+                            : "transparent",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
+                        {field.name}
+                      </Typography>
+                      <Chip size="small" label={field.type} />
+                    </Stack>
+                  ))}
                 {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
                   <Typography variant="body2" color="text.secondary">
                     No fields found for this data stream.

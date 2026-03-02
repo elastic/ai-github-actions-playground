@@ -164,7 +164,9 @@ describe("DataStreamsPage", () => {
         { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
       ],
     });
-    getFieldCapsMock.mockResolvedValue({ fields: {} });
+    getFieldCapsMock.mockResolvedValue({
+      fields: { "host.name": { keyword: { type: "keyword" } } },
+    });
 
     render(
       <MemoryRouter>
@@ -179,6 +181,7 @@ describe("DataStreamsPage", () => {
     await waitFor(() => {
       expect(screen.queryByRole("heading", { level: 6, name: "logs-a" })).not.toBeInTheDocument();
       expect(screen.getByText("Select a data stream")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /host\.name/i })).not.toBeInTheDocument();
     });
   });
 
