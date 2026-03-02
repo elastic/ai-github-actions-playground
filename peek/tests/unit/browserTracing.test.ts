@@ -105,6 +105,21 @@ describe("browser tracing helpers", () => {
     );
   });
 
+  it("derives ingest URL for cloud.es.io ES URLs", () => {
+    const esUrl = "https://my-deploy.es.us-central1.gcp.cloud.es.io";
+    const ingestBase = deriveOtlpEndpoint(esUrl);
+    expect(ingestBase).toBe("https://my-deploy.ingest.us-central1.gcp.cloud.es.io");
+    expect(deriveDefaultOtlpEndpoint(ingestBase!)).toBe(
+      "https://my-deploy.ingest.us-central1.gcp.cloud.es.io/v1/traces",
+    );
+  });
+
+  it("derives ingest URL from Kibana cloud.es.io URLs (.kb.)", () => {
+    const kbUrl = "https://my-deploy.kb.us-central1.gcp.cloud.es.io";
+    const ingestBase = deriveOtlpEndpoint(kbUrl);
+    expect(ingestBase).toBe("https://my-deploy.ingest.us-central1.gcp.cloud.es.io");
+  });
+
   it("falls back to ES URL for non-Cloud URLs", () => {
     const esUrl = "https://es.example.com:9200";
     expect(deriveOtlpEndpoint(esUrl)).toBeNull();

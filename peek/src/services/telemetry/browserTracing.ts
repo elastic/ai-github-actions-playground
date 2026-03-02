@@ -191,9 +191,9 @@ export async function syncBrowserTracingForConnection(
     return;
   }
 
-  const endpoint =
-    connection.otlpEndpoint?.trim() ||
-    deriveDefaultOtlpEndpoint(deriveOtlpEndpoint(connection.url) ?? connection.url);
+  const ingestBase =
+    connection.ingestUrl?.trim() || deriveOtlpEndpoint(connection.url) || connection.url;
+  const endpoint = connection.otlpEndpoint?.trim() || deriveDefaultOtlpEndpoint(ingestBase);
   if (!endpoint) {
     await stopBrowserTracing();
     return;

@@ -77,7 +77,10 @@ export default function AddDataPage() {
   }, [connection]);
 
   const esUrl = connection?.url ?? "<YOUR_ELASTICSEARCH_ENDPOINT>";
-  const derivedOtlpUrl = useMemo(() => deriveOtlpEndpoint(esUrl), [esUrl]);
+  const derivedOtlpUrl = useMemo(
+    () => connection?.ingestUrl || deriveOtlpEndpoint(esUrl),
+    [connection?.ingestUrl, esUrl],
+  );
   const otlpUrl = derivedOtlpUrl ?? "<YOUR_OTLP_ENDPOINT>";
 
   // Probe the derived OTLP ingest endpoint; auto-select OTLP when reachable

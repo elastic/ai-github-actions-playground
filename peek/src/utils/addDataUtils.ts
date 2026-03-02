@@ -7,16 +7,26 @@ import type { ElasticsearchClient } from "../services/es";
 export type EndpointType = "elasticsearch" | "managed_otlp";
 
 /**
- * Attempt to derive the managed OTLP ingest endpoint from an Elasticsearch URL.
- * Elastic Cloud URLs follow the pattern `<id>.es.<region>.<provider>.elastic.cloud`;
- * replacing the `.es.` segment with `.ingest.` yields the OTLP endpoint.
- * Returns `null` when the URL does not match the Elastic Cloud pattern.
+ * Attempt to derive the managed OTLP ingest endpoint from an Elasticsearch (or Kibana) URL.
+ *
+ * Supported patterns:
+ * - `<id>.es.<region>.<provider>.elastic.cloud`  → `<id>.ingest.<region>.<provider>.elastic.cloud`
+ * - `<id>.es.<region>.<provider>.cloud.es.io`    → `<id>.ingest.<region>.<provider>.cloud.es.io`
+ * - `<id>.kb.<region>.<provider>.cloud.es.io`    → `<id>.ingest.<region>.<provider>.cloud.es.io`
+ *
+ * Returns `null` when the URL does not match any known Elastic Cloud pattern.
  */
 export function deriveOtlpEndpoint(esUrl: string): string | null {
   try {
     const url = new URL(esUrl);
     const parts = url.hostname.split(".");
-    if (url.hostname.endsWith(".elastic.cloud") && parts.length >= 3 && parts[1] === "es") {
+    const isElasticCloud =
+      url.hostname.endsWith(".elastic.cloud") && parts.length >= 3 && parts[1] === "es";
+    const isCloudEsIo =
+      url.hostname.endsWith(".cloud.es.io") &&
+      parts.length >= 3 &&
+      (parts[1] === "es" || parts[1] === "kb");
+    if (isElasticCloud || isCloudEsIo) {
       parts[1] = "ingest";
       url.hostname = parts.join(".");
       return url.toString().replace(/\/+$/, "");
@@ -25,6 +35,29 @@ export function deriveOtlpEndpoint(esUrl: string): string | null {
     /* invalid URL — fall through */
   }
   return null;
+}
+
+/**
+ * Return candidate ingest URLs for the given connection URL.
+ * For `.cloud.es.io` URLs an additional `.elastic-cloud.com` variant is
+ * included so the caller can probe both and use whichever responds.
+ */
+export function deriveIngestCandidates(esUrl: string): string[] {
+  const primary = deriveOtlpEndpoint(esUrl);
+  if (!primary) return [];
+  const candidates = [primary];
+  try {
+    const url = new URL(primary);
+    if (url.hostname.endsWith(".cloud.es.io")) {
+      const alt = new URL(primary);
+      // Replace trailing .cloud.es.io with .elastic-cloud.com
+      alt.hostname = alt.hostname.replace(/\.cloud\.es\.io$/, ".elastic-cloud.com");
+      candidates.push(alt.toString().replace(/\/+$/, ""));
+    }
+  } catch {
+    /* ignore */
+  }
+  return candidates;
 }
 
 /**
