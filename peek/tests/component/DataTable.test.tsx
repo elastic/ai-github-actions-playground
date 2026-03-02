@@ -411,4 +411,69 @@ describe("DataTable", () => {
       position: "sticky",
     });
   });
+
+  it("navigates to the next row with ArrowDown when inspector is open", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[1]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+
+    fireEvent.keyDown(rows[1]!, { key: "ArrowDown" });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("foo bar");
+    });
+  });
+
+  it("navigates to the previous row with ArrowUp when inspector is open", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[2]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+
+    fireEvent.keyDown(rows[2]!, { key: "ArrowUp" });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("hello world");
+    });
+  });
+
+  it("does not navigate past the first row with ArrowUp", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[1]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+
+    fireEvent.keyDown(rows[1]!, { key: "ArrowUp" });
+
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("hello world");
+  });
+
+  it("does not navigate past the last row with ArrowDown", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[3]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+
+    fireEvent.keyDown(rows[3]!, { key: "ArrowDown" });
+
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("aaa");
+  });
+
+  it("does not navigate with arrow keys when inspector is closed", () => {
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    fireEvent.keyDown(rows[1]!, { key: "ArrowDown" });
+
+    expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument();
+  });
 });
