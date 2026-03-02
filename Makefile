@@ -3,7 +3,7 @@ PEEK_DIR := peek
 # Base ref for changed-file targets (override: make lint BASE=HEAD~3)
 BASE ?= main
 
-.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e docker-build docker-run electron-dev electron-build electron-dist
+.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e test-e2e-preview docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
@@ -31,6 +31,7 @@ help:
 	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
+	@echo "  test-e2e-preview - Run e2e tests against production build (catches bundle issues)"
 	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
 	@echo "  seed-es          - Seed Elasticsearch with non-OTLP test data (set ES_URL)"
 	@echo "  screenshot-all   - Capture all page screenshots (mocked data)"
@@ -233,6 +234,10 @@ test-integration:
 test-e2e:
 	@echo "Running e2e tests..."
 	@cd $(PEEK_DIR) && npm run test:e2e
+
+test-e2e-preview: build
+	@echo "Running e2e tests against production build (vite preview)..."
+	@cd $(PEEK_DIR) && PLAYWRIGHT_PREVIEW=1 npx playwright test
 
 test-e2e-live:
 	@echo "Running live ES end-to-end tests..."

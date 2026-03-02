@@ -28,11 +28,13 @@ import {
 let latestSwitchRequestId = 0;
 const latestRequestIdByProfileId = new Map<string, number>();
 const latestRetestIdByProfileId = new Map<string, number>();
+const latestProfileHealthSeqById = new Map<string, number>();
 
 export const clearConnectionProfileRequestTracking = () => {
   latestSwitchRequestId = 0;
   latestRequestIdByProfileId.clear();
   latestRetestIdByProfileId.clear();
+  latestProfileHealthSeqById.clear();
 };
 
 const credentialsSchema = z
@@ -96,6 +98,7 @@ export const createConnectionProfileSlice: StateCreator<
     set((s) => {
       latestRequestIdByProfileId.delete(id);
       latestRetestIdByProfileId.delete(id);
+      latestProfileHealthSeqById.delete(id);
       if (isElectronAvailable()) {
         // Fire-and-forget: credential deletion is async but UI update is sync.
         // Errors are logged but do not block the profile removal.
@@ -157,6 +160,8 @@ export const createConnectionProfileSlice: StateCreator<
     const prevActiveProfileId = get().activeProfileId;
     const requestId = ++latestSwitchRequestId;
     latestRequestIdByProfileId.set(id, requestId);
+    const healthSeq = (latestProfileHealthSeqById.get(id) ?? 0) + 1;
+    latestProfileHealthSeqById.set(id, healthSeq);
     set({ activeProfileId: id });
     try {
       const caps = await fetchCapabilitiesForConnection(profile.connection);
@@ -168,14 +173,17 @@ export const createConnectionProfileSlice: StateCreator<
         connected: true,
         capabilities: caps,
         activeProfileId: id,
-        profileHealthMap: {
-          ...s.profileHealthMap,
-          [id]: {
-            status: "healthy",
-            checkedAt: new Date().toISOString(),
-            errorSummary: null,
-          },
-        },
+        profileHealthMap:
+          latestProfileHealthSeqById.get(id) === healthSeq
+            ? {
+                ...s.profileHealthMap,
+                [id]: {
+                  status: "healthy",
+                  checkedAt: new Date().toISOString(),
+                  errorSummary: null,
+                },
+              }
+            : s.profileHealthMap,
       }));
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
@@ -195,16 +203,17 @@ export const createConnectionProfileSlice: StateCreator<
                 ? prevActiveProfileId
                 : null
               : s.activeProfileId,
-          profileHealthMap: targetStillExists
-            ? {
-                ...s.profileHealthMap,
-                [id]: {
-                  status: "needs_attention",
-                  checkedAt: new Date().toISOString(),
-                  errorSummary: message,
-                },
-              }
-            : s.profileHealthMap,
+          profileHealthMap:
+            targetStillExists && latestProfileHealthSeqById.get(id) === healthSeq
+              ? {
+                  ...s.profileHealthMap,
+                  [id]: {
+                    status: "needs_attention",
+                    checkedAt: new Date().toISOString(),
+                    errorSummary: message,
+                  },
+                }
+              : s.profileHealthMap,
         };
       });
       return { ok: false, profileName: profile.name, message };
@@ -218,9 +227,14 @@ export const createConnectionProfileSlice: StateCreator<
     }
     const retestId = (latestRetestIdByProfileId.get(id) ?? 0) + 1;
     latestRetestIdByProfileId.set(id, retestId);
+    const healthSeq = (latestProfileHealthSeqById.get(id) ?? 0) + 1;
+    latestProfileHealthSeqById.set(id, healthSeq);
     try {
       await fetchCapabilitiesForConnection(profile.connection);
-      if (latestRetestIdByProfileId.get(id) !== retestId) {
+      if (
+        latestRetestIdByProfileId.get(id) !== retestId ||
+        latestProfileHealthSeqById.get(id) !== healthSeq
+      ) {
         return { ok: true, profileName: profile.name };
       }
       set((s) => ({
@@ -236,7 +250,10 @@ export const createConnectionProfileSlice: StateCreator<
       return { ok: true, profileName: profile.name };
     } catch (err: unknown) {
       const message = isElasticsearchError(err) ? err.message : String(err);
-      if (latestRetestIdByProfileId.get(id) !== retestId) {
+      if (
+        latestRetestIdByProfileId.get(id) !== retestId ||
+        latestProfileHealthSeqById.get(id) !== healthSeq
+      ) {
         return { ok: false, profileName: profile.name, message };
       }
       set((s) => ({

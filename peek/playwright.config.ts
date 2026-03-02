@@ -1,11 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const preview = Boolean(process.env.PLAYWRIGHT_PREVIEW);
+const port = preview ? 4173 : 3000;
+const baseURL = `http://localhost:${port}/ai-github-actions-playground/`;
+
 export default defineConfig({
   testDir: "tests/e2e",
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? "50%" : undefined,
   use: {
-    baseURL: "http://localhost:3000/ai-github-actions-playground/",
+    baseURL,
     trace: process.env.CI ? "on-first-retry" : "on",
   },
   projects: [
@@ -14,8 +18,8 @@ export default defineConfig({
     { name: "mobile-safari", use: { ...devices["iPhone 14"] } },
   ],
   webServer: {
-    command: "npm run dev -- --port 3000",
-    url: "http://localhost:3000/ai-github-actions-playground/",
+    command: preview ? `npm run preview -- --port ${port}` : `npm run dev -- --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: process.env.CI ? 120_000 : undefined,
   },
