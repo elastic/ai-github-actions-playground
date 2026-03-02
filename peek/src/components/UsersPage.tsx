@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { ElasticsearchClient, type SecurityUser } from "../services/es";
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
@@ -35,6 +36,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   const selectedUsername = useMemo(() => {
     if (users.length === 0) return urlUsername;
@@ -105,8 +107,8 @@ export default function UsersPage() {
     const copied = await copyToClipboard("GET /_security/user");
     if (!copied) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
+    scheduleCopyFeedbackReset();
+  }, [scheduleCopyFeedbackReset]);
 
   const handleSelectUser = useCallback(
     (username: string) => {

@@ -15,6 +15,8 @@ import Typography from "@mui/material/Typography";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
+
 // -----------------------------------------------------------------------
 // Defensive types for the ES|QL profile payload.
 // The profile shape is documented as unstable in the OpenAPI spec, so we
@@ -178,13 +180,14 @@ interface QueryProfilePanelProps {
 export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
   const [expanded, setExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   const handleCopy = () => {
     if (!navigator.clipboard) return;
     void navigator.clipboard.writeText(JSON.stringify(profile, null, 2)).then(
       () => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        scheduleCopyFeedbackReset();
       },
       () => {
         // writeText rejected (e.g. permission denied) — fail silently
