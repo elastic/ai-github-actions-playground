@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useDeferredValue, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -89,6 +89,7 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [fieldFilter, setFieldFilter] = useState("");
+  const deferredFieldFilter = useDeferredValue(fieldFilter);
   const [tableVersion, setTableVersion] = useState(0);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
@@ -297,8 +298,8 @@ export default function DiscoverPage() {
   }, [filteredResult]);
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
   const visibleColumns = useMemo(
-    () => filterColumnsByName(columns, fieldFilter),
-    [columns, fieldFilter],
+    () => filterColumnsByName(columns, deferredFieldFilter),
+    [columns, deferredFieldFilter],
   );
   const selectVisibleFields = useCallback(() => {
     const next = new Set(selectedFields);
