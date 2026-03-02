@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import type { FleetServerStatusMetrics } from "../../services/fleet";
+import { STATUS_COLORS } from "../../types/tokens";
 import { useEChartTheme } from "../visualizations/useEChartTheme";
 import EChartWrapper from "../visualizations/EChartWrapper";
 
@@ -8,12 +9,12 @@ interface Props {
   status: FleetServerStatusMetrics;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  Healthy: "#4caf50",
-  Unhealthy: "#ff9800",
-  Offline: "#9e9e9e",
-  Updating: "#2196f3",
-  Inactive: "#607d8b",
+const FLEET_STATUS_COLORS: Record<string, string> = {
+  Healthy: STATUS_COLORS.success,
+  Unhealthy: STATUS_COLORS.warning,
+  Offline: STATUS_COLORS.unknown,
+  Updating: STATUS_COLORS.inProgress,
+  Inactive: STATUS_COLORS.unknown,
 };
 
 export default function FleetStatusChart({ status }: Props) {
@@ -42,7 +43,7 @@ export default function FleetStatusChart({ status }: Props) {
           data: items.map((d) => ({
             name: d.name,
             value: d.value,
-            itemStyle: { color: STATUS_COLORS[d.name] ?? theme.color?.[0] },
+            itemStyle: { color: FLEET_STATUS_COLORS[d.name] ?? theme.color?.[0] },
           })),
         },
       ],

@@ -76,6 +76,20 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "dist",
       sourcemap: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            echarts: ["echarts/core", "echarts/charts", "echarts/components", "echarts/renderers"],
+            mui: ["@mui/material", "@mui/icons-material"],
+            codemirror: ["@uiw/react-codemirror", "@codemirror/lang-sql"],
+            perses: ["@perses-dev/components", "@perses-dev/core"],
+            "ai-sdk": ["ai", "@ai-sdk/openai"],
+          },
+        },
+      },
+    },
+    optimizeDeps: {
+      include: ["echarts", "@perses-dev/components", "@perses-dev/core"],
     },
   };
 });

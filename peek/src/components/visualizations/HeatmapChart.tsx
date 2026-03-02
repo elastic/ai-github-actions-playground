@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { EChart } from "@perses-dev/components";
 
 import type { EsqlResponse } from "../../types";
-import { CHART_COLORS } from "../../theme";
+import { HEATMAP_GRADIENT } from "../../types/tokens";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
@@ -75,17 +75,7 @@ export default function HeatmapChart({ data }: Props) {
         left: "center",
         bottom: 0,
         inRange: {
-          // Non-sequential palette indices chosen for perceptual contrast in heatmaps.
-          color: [
-            CHART_COLORS[6],
-            CHART_COLORS[4],
-            CHART_COLORS[0],
-            CHART_COLORS[1],
-            CHART_COLORS[8],
-            CHART_COLORS[3],
-            CHART_COLORS[9],
-            CHART_COLORS[2],
-          ],
+          color: [...HEATMAP_GRADIENT],
         },
       },
       series: [

@@ -12,7 +12,7 @@
  */
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 
 import {
   type SessionConnectionSlice,
@@ -20,6 +20,7 @@ import {
 } from "./sessionConnectionSlice";
 import {
   type ConnectionProfileSlice,
+  clearConnectionProfileRequestTracking,
   createConnectionProfileSlice,
 } from "./connectionProfileSlice";
 import {
@@ -35,36 +36,40 @@ export type ConnectionState = SessionConnectionSlice &
   };
 
 export const useConnectionStore = create<ConnectionState>()(
-  persist(
-    (set, get, api) => ({
-      ...createSessionConnectionSlice(set, get, api),
-      ...createConnectionProfileSlice(set, get, api),
+  devtools(
+    persist(
+      (set, get, api) => ({
+        ...createSessionConnectionSlice(set, get, api),
+        ...createConnectionProfileSlice(set, get, api),
 
-      resetConnectionState: () => {
-        for (const profile of get().connectionProfiles) {
-          localStorage.removeItem(
-            CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + profile.id + ENCRYPTED_STORE_SUFFIX,
-          );
-        }
-        void useConnectionStore.persist.clearStorage();
-        set({
-          connection: null,
-          connected: false,
-          capabilities: null,
-          connectionProfiles: [],
-          activeProfileId: null,
-          profileHealthMap: {},
-        });
-      },
-    }),
-    {
-      name: CONNECTION_STORE_NAME,
-      storage: connectionStorage,
-      partialize: (state) => ({
-        connection: state.connection,
-        connectionProfiles: state.connectionProfiles,
-        activeProfileId: state.activeProfileId,
+        resetConnectionState: () => {
+          clearConnectionProfileRequestTracking();
+          for (const profile of get().connectionProfiles) {
+            localStorage.removeItem(
+              CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + profile.id + ENCRYPTED_STORE_SUFFIX,
+            );
+          }
+          void useConnectionStore.persist.clearStorage();
+          set({
+            connection: null,
+            connected: false,
+            capabilities: null,
+            connectionProfiles: [],
+            activeProfileId: null,
+            profileHealthMap: {},
+          });
+        },
       }),
-    },
+      {
+        name: CONNECTION_STORE_NAME,
+        storage: connectionStorage,
+        partialize: (state) => ({
+          connection: state.connection,
+          connectionProfiles: state.connectionProfiles,
+          activeProfileId: state.activeProfileId,
+        }),
+      },
+    ),
+    { name: "ConnectionStore", enabled: import.meta.env.DEV },
   ),
 );

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 import type { Span } from "../components/traces/traceUtils";
 import type { TraceFilters } from "../components/traces/traceQueryBuilder";
@@ -35,44 +36,44 @@ interface TracesState {
   resetFilters: () => void;
 }
 
-export const useTracesStore = create<TracesState>()((set) => ({
+const getInitialTracesState = () => ({
   filters: { ...EMPTY_FILTERS },
-  rawQuery: null,
-  selectedTraceId: null,
-  selectedTraceSpans: [],
-  selectedSpanId: null,
-  viewMode: "list",
+  rawQuery: null as string | null,
+  selectedTraceId: null as string | null,
+  selectedTraceSpans: [] as Span[],
+  selectedSpanId: null as string | null,
+  viewMode: "list" as TracesViewMode,
   drawerOpen: false,
+});
 
-  setFilters: (filters) => set({ filters, rawQuery: null }),
-  updateFilters: (updates) =>
-    set((s) => ({ filters: { ...s.filters, ...updates }, rawQuery: null })),
-  setRawQuery: (query) => set({ rawQuery: query }),
-  setSelectedTraceId: (traceId) =>
-    set({ selectedTraceId: traceId, selectedSpanId: null, drawerOpen: false }),
-  setSelectedTraceSpans: (spans) => set({ selectedTraceSpans: spans }),
-  setSelectedSpanId: (spanId) => set({ selectedSpanId: spanId, drawerOpen: spanId !== null }),
-  setViewMode: (mode) => set({ viewMode: mode }),
-  setDrawerOpen: (open) =>
-    set(open ? { drawerOpen: true } : { drawerOpen: false, selectedSpanId: null }),
-  addTagFilter: (key, value, exclude = false) =>
-    set((s) => ({
-      filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
-      rawQuery: null,
-    })),
-  removeTagFilter: (index) =>
-    set((s) => ({
-      filters: { ...s.filters, tags: s.filters.tags.filter((_, i) => i !== index) },
-      rawQuery: null,
-    })),
-  resetFilters: () =>
-    set({
-      filters: { ...EMPTY_FILTERS },
-      rawQuery: null,
-      selectedTraceId: null,
-      selectedTraceSpans: [],
-      selectedSpanId: null,
-      viewMode: "list",
-      drawerOpen: false,
+export const useTracesStore = create<TracesState>()(
+  devtools(
+    (set) => ({
+      ...getInitialTracesState(),
+
+      setFilters: (filters) => set({ filters, rawQuery: null }),
+      updateFilters: (updates) =>
+        set((s) => ({ filters: { ...s.filters, ...updates }, rawQuery: null })),
+      setRawQuery: (query) => set({ rawQuery: query }),
+      setSelectedTraceId: (traceId) =>
+        set({ selectedTraceId: traceId, selectedSpanId: null, drawerOpen: false }),
+      setSelectedTraceSpans: (spans) => set({ selectedTraceSpans: spans }),
+      setSelectedSpanId: (spanId) => set({ selectedSpanId: spanId, drawerOpen: spanId !== null }),
+      setViewMode: (mode) => set({ viewMode: mode }),
+      setDrawerOpen: (open) =>
+        set(open ? { drawerOpen: true } : { drawerOpen: false, selectedSpanId: null }),
+      addTagFilter: (key, value, exclude = false) =>
+        set((s) => ({
+          filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
+          rawQuery: null,
+        })),
+      removeTagFilter: (index) =>
+        set((s) => ({
+          filters: { ...s.filters, tags: s.filters.tags.filter((_, i) => i !== index) },
+          rawQuery: null,
+        })),
+      resetFilters: () => set(getInitialTracesState()),
     }),
-}));
+    { name: "TracesStore", enabled: import.meta.env.DEV },
+  ),
+);

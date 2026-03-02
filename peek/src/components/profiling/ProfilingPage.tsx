@@ -14,6 +14,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
@@ -69,7 +70,19 @@ export default function ProfilingPage() {
     setViewMode,
     toggleExpandedStacktraceId,
     resetFilters,
-  } = useProfilingStore();
+  } = useProfilingStore(
+    useShallow((s) => ({
+      filters: s.filters,
+      rawQuery: s.rawQuery,
+      viewMode: s.viewMode,
+      expandedStacktraceIds: s.expandedStacktraceIds,
+      updateFilters: s.updateFilters,
+      setRawQuery: s.setRawQuery,
+      setViewMode: s.setViewMode,
+      toggleExpandedStacktraceId: s.toggleExpandedStacktraceId,
+      resetFilters: s.resetFilters,
+    })),
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -321,8 +334,10 @@ export default function ProfilingPage() {
           onChange={(event) => {
             if (viewMode !== "topFunctions") setRawQuery(event.target.value);
           }}
-          InputProps={{ readOnly: viewMode === "topFunctions" }}
-          InputLabelProps={{ sx: { color: "text.primary" } }}
+          slotProps={{
+            input: { readOnly: viewMode === "topFunctions" },
+            inputLabel: { sx: { color: "text.primary" } },
+          }}
         />
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
           <Button variant="contained" size="small" onClick={handleRun} disabled={loading}>

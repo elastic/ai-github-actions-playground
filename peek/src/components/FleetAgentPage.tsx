@@ -17,6 +17,7 @@ import {
   type ElasticAgentLogEntry,
   type ElasticAgentMetricPoint,
 } from "../services/fleet";
+import { STATUS_COLORS } from "../types/tokens";
 import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 
@@ -30,11 +31,11 @@ import EChartWrapper from "./visualizations/EChartWrapper";
 type AgentTab = "overview" | "logs" | "metrics";
 
 const LOG_LEVEL_COLORS: Record<string, string> = {
-  error: "#f44336",
-  warn: "#ff9800",
-  warning: "#ff9800",
-  info: "#2196f3",
-  debug: "#9e9e9e",
+  error: STATUS_COLORS.error,
+  warn: STATUS_COLORS.warning,
+  warning: STATUS_COLORS.warning,
+  info: STATUS_COLORS.info,
+  debug: STATUS_COLORS.unknown,
 };
 
 export default function FleetAgentPage() {

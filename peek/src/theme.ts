@@ -1,14 +1,14 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
-import { COMPONENT_HEIGHTS, type SpaceToken } from "./types/tokens";
+import { COMPONENT_HEIGHTS, STATUS_COLORS, type SpaceToken } from "./types/tokens";
 
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
 const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
 const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
 const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
-const LIGHT_PRIMARY = "#0077CC";
-const DARK_PRIMARY = "#36A2EF";
+const LIGHT_PRIMARY = "#0070C5";
+const DARK_PRIMARY = "#3BAAFF";
 const REDUCED_MOTION_CSS = `
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -126,6 +126,11 @@ const baseOptions: ThemeOptions = {
         }),
       },
     },
+    MuiChip: {
+      styleOverrides: {
+        labelSmall: { paddingLeft: 4, paddingRight: 4 },
+      },
+    },
     MuiTab: {
       styleOverrides: {
         root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.tab },
@@ -157,10 +162,11 @@ export const lightTheme = createTheme({
   palette: {
     mode: "light",
     primary: { main: LIGHT_PRIMARY },
-    secondary: { main: "#00BFB3" },
-    background: { default: "#F5F7FA", paper: "#FFFFFF", subtle: "#F0F2F5", elevated: "#FFFFFF" },
+    secondary: { main: "#00B5A9" },
+    background: { default: "#F4F6FB", paper: "#FFFFFF", subtle: "#EDF0F7", elevated: "#FFFFFF" },
     text: { primary: "#1A1C21", secondary: "#676F7B" },
     border: { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" },
+    status: { ...STATUS_COLORS },
   },
   components: {
     ...baseOptions.components,
@@ -173,10 +179,11 @@ export const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: { main: DARK_PRIMARY },
-    secondary: { main: "#7DE2D1" },
-    background: { default: "#111217", paper: "#25262E", subtle: "#1A1B22", elevated: "#2D2E36" },
+    secondary: { main: "#5EECD5" },
+    background: { default: "#0F1118", paper: "#1A1D27", subtle: "#141720", elevated: "#242838" },
     text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
-    border: { subtle: "#3D3F48", default: "#5A5D68", strong: "#7A7E8A" },
+    border: { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" },
+    status: { ...STATUS_COLORS },
   },
   components: {
     ...baseOptions.components,
@@ -185,21 +192,21 @@ export const darkTheme = createTheme({
 });
 
 /** Tooltip background colors for chart themes */
-export const CHART_TOOLTIP_BG_DARK = "#2D2E36";
+export const CHART_TOOLTIP_BG_DARK = "#242838";
 export const CHART_TOOLTIP_BG_LIGHT = "#FFFFFF";
 
-/** Color palette for chart series, inspired by Elastic's visualization palette */
+/** Color palette for chart series — 12 vibrant, perceptually balanced hues */
 export const CHART_COLORS = [
   "#0077CC",
   "#00BFB3",
-  "#BD271E",
+  "#E03E36",
   "#F5A623",
-  "#6092C0",
-  "#D36086",
-  "#9170B8",
-  "#CA8EAE",
-  "#54B399",
-  "#DA8B45",
-  "#AA6556",
-  "#E7664C",
+  "#7B68EE",
+  "#E05A9C",
+  "#A86FDB",
+  "#2ECC71",
+  "#FFD166",
+  "#FF7849",
+  "#45B7D1",
+  "#96CEB4",
 ];

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -24,6 +24,7 @@ import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
@@ -44,8 +45,6 @@ const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "defa
   RED: "error",
 };
 
-const COMPACT_CHIP_SX = { height: 20, fontSize: "0.7rem" } as const;
-
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
@@ -54,6 +53,8 @@ export default function DataStreamsPage() {
 
   const [search, setSearch] = useState("");
   const [fieldSearch, setFieldSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const deferredFieldSearch = useDeferredValue(fieldSearch);
   const [showSystemStreams, setShowSystemStreams] = useState(false);
   const [loadingStreams, setLoadingStreams] = useState(false);
   const [loadingFields, setLoadingFields] = useState(false);
@@ -155,20 +156,20 @@ export default function DataStreamsPage() {
   }, [selectedName]);
 
   const filteredStreams = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     return dataStreams.filter((stream) => {
       if (!showSystemStreams && stream.name.startsWith(".")) return false;
       if (term && !stream.name.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [dataStreams, search, showSystemStreams]);
+  }, [dataStreams, deferredSearch, showSystemStreams]);
 
   const fieldRows = useMemo(() => {
     const rows = fieldCaps ? toFieldRows(fieldCaps) : [];
-    const term = fieldSearch.trim().toLowerCase();
+    const term = deferredFieldSearch.trim().toLowerCase();
     if (!term) return rows;
     return rows.filter((row) => row.name.toLowerCase().includes(term));
-  }, [fieldCaps, fieldSearch]);
+  }, [fieldCaps, deferredFieldSearch]);
 
   const handleOpenInDiscover = useCallback(() => {
     if (!selectedName) return;
@@ -240,6 +241,7 @@ export default function DataStreamsPage() {
               placeholder="Search streams"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              inputProps={{ "aria-label": "Search streams" }}
             />
             <FormControlLabel
               control={
@@ -390,6 +392,7 @@ export default function DataStreamsPage() {
                 placeholder="Search fields"
                 value={fieldSearch}
                 onChange={(e) => setFieldSearch(e.target.value)}
+                inputProps={{ "aria-label": "Search fields" }}
               />
             )}
             {loadingFields ? (

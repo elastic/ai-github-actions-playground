@@ -1,10 +1,11 @@
 import type { ThresholdColor, Thresholds } from "../../types";
+import { STATUS_COLORS } from "../../types/tokens";
 
-/** Hex colors for each semantic threshold level, accessible in both light and dark themes */
+/** Hex colors for each semantic threshold level, sourced from the unified status palette */
 export const THRESHOLD_PALETTE: Record<ThresholdColor, string> = {
-  success: "#54B399",
-  warning: "#F5A623",
-  error: "#BD271E",
+  success: STATUS_COLORS.success,
+  warning: STATUS_COLORS.warning,
+  error: STATUS_COLORS.error,
 };
 
 /**

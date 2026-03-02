@@ -13,6 +13,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ReplayIcon from "@mui/icons-material/Replay";
 
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
+
 // -----------------------------------------------------------------------
 // Defensive types for the partial-result metadata extracted from ES|QL
 // responses.  These fields (_shards, _clusters) are not in the OpenAPI
@@ -208,13 +210,14 @@ export default function PartialResultPanel({
 }: PartialResultPanelProps) {
   const [expanded, setExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   const handleCopy = () => {
     if (!navigator.clipboard) return;
     void navigator.clipboard.writeText(JSON.stringify(metadata, null, 2)).then(
       () => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        scheduleCopyFeedbackReset();
       },
       () => {
         // writeText rejected — fail silently

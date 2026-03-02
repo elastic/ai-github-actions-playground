@@ -170,6 +170,10 @@ export default function AppSidebar({
                   py: 0.5,
                   px: 2,
                   color: "text.secondary",
+                  letterSpacing: "0.02em",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  fontSize: "0.6875rem",
                 }}
               >
                 {section.label}
@@ -200,6 +204,16 @@ export default function AppSidebar({
                       borderRadius: 1,
                       "&.Mui-selected": {
                         bgcolor: "action.selected",
+                        "&::before": {
+                          position: "absolute",
+                          top: "25%",
+                          bottom: "25%",
+                          left: 0,
+                          width: 3,
+                          borderRadius: 1,
+                          bgcolor: "primary.main",
+                          content: '""',
+                        },
                         "&:hover": { bgcolor: "action.selected" },
                       },
                     }}

@@ -61,7 +61,7 @@ help:
 
 setup:
 	@echo "Installing dependencies..."
-	@cd $(PEEK_DIR) && npm install
+	@cd $(PEEK_DIR) && npm ci
 	@echo ""
 	@echo "✓ Setup complete! Run 'make serve' to start developing."
 

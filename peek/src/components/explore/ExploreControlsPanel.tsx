@@ -1,3 +1,4 @@
+import { useId } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -74,6 +75,7 @@ export default function ExploreControlsPanel({
   onSaveToDashboard,
 }: ExploreControlsPanelProps) {
   const aggOptions = getAggregationOptions(metricType);
+  const aggLabelId = useId();
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -112,9 +114,9 @@ export default function ExploreControlsPanel({
         {/* Aggregation selector — only in full detail mode */}
         {selectedMetric && !showDimensionOverview && (
           <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel id="explore-aggregation-label">Aggregation</InputLabel>
+            <InputLabel id={aggLabelId}>Aggregation</InputLabel>
             <Select
-              labelId="explore-aggregation-label"
+              labelId={aggLabelId}
               value={aggregation}
               label="Aggregation"
               onChange={(e) => onAggregationChange(e.target.value as AggregationType)}

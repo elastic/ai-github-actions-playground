@@ -5,12 +5,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
-import Button from "@mui/material/Button";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
 import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { Toaster, toast } from "sonner";
 
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
@@ -29,9 +27,10 @@ import PanelEditor from "./components/PanelEditor";
 import CommandPalette from "./components/CommandPalette";
 import DashboardViewPage from "./components/DashboardViewPage";
 import WelcomeScreen from "./components/WelcomeScreen";
+import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
-import { PAGE_MANIFEST } from "./routes/manifest";
+import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
 
@@ -46,7 +45,7 @@ export default function App() {
   const handleRequestReset = () => setResetDialogOpen(true);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const dashboardTimeZone = useDashboardEditorStore((s) => s.dashboard.timeZone);
-  const isMobile = useMediaQuery("(max-width:767.95px)");
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
   const { resumeError, clearResumeError } = useSessionResume();
 
@@ -56,7 +55,15 @@ export default function App() {
   const location = useLocation();
   useEffect(() => {
     const match = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, location.pathname));
-    document.title = match ? `${match.nav.label} — Elastic Peek` : "Elastic Peek";
+    if (match) {
+      document.title = `${match.nav.label} — Elastic Peek`;
+      return;
+    }
+    if (matchPath("/dashboards/:id", location.pathname)) {
+      document.title = "Dashboards — Elastic Peek";
+      return;
+    }
+    document.title = "Elastic Peek";
   }, [location.pathname]);
 
   useEffect(() => {
@@ -81,6 +88,19 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undoDashboardChange, redoDashboardChange]);
+
+  useEffect(() => {
+    if (!resumeError) return;
+    toast.warning(`Could not resume session: ${resumeError}`, {
+      action: {
+        label: "Reconnect",
+        onClick: () => {
+          setConnectionDialogOpen(true);
+        },
+      },
+    });
+    clearResumeError();
+  }, [resumeError, clearResumeError, setConnectionDialogOpen]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -130,42 +150,49 @@ export default function App() {
                   p: { sm: 2, xs: 1.5 },
                 }}
               >
-                <Suspense fallback={<LinearProgress />}>
-                  <Routes>
-                    {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                      const PageComponent = config.component;
-                      return (
-                        <Route
-                          key={config.path}
-                          path={config.path}
-                          element={
-                            !connected && config.requiresConnection ? (
-                              <WelcomeScreen />
-                            ) : (
-                              <ErrorBoundary>
+                <Routes>
+                  {Object.entries(PAGE_MANIFEST).map(([, config]) => {
+                    const pageConfig: PageConfig = config;
+                    const PageComponent = pageConfig.component;
+                    const skeletonVariant = pageConfig.skeletonVariant;
+                    const fallback = skeletonVariant ? (
+                      <ContentSkeleton variant={skeletonVariant} />
+                    ) : (
+                      <LinearProgress />
+                    );
+                    return (
+                      <Route
+                        key={pageConfig.path}
+                        path={pageConfig.path}
+                        element={
+                          !connected && pageConfig.requiresConnection ? (
+                            <WelcomeScreen />
+                          ) : (
+                            <ErrorBoundary>
+                              <Suspense fallback={fallback}>
                                 <PageComponent />
-                              </ErrorBoundary>
-                            )
-                          }
-                        />
-                      );
-                    })}
-                    <Route
-                      path="/dashboards/:id"
-                      element={
-                        !connected ? (
-                          <WelcomeScreen />
-                        ) : (
-                          <ErrorBoundary>
-                            <DashboardViewPage />
-                          </ErrorBoundary>
-                        )
-                      }
-                    />
-                    <Route path="/" element={<Navigate to="/dashboards" replace />} />
-                    <Route path="*" element={<Navigate to="/dashboards" replace />} />
-                  </Routes>
-                </Suspense>
+                              </Suspense>
+                            </ErrorBoundary>
+                          )
+                        }
+                      />
+                    );
+                  })}
+                  <Route
+                    path="/dashboards/:id"
+                    element={
+                      !connected ? (
+                        <WelcomeScreen />
+                      ) : (
+                        <ErrorBoundary>
+                          <DashboardViewPage />
+                        </ErrorBoundary>
+                      )
+                    }
+                  />
+                  <Route path="/" element={<Navigate to="/dashboards" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboards" replace />} />
+                </Routes>
               </Box>
               <Box
                 component="footer"
@@ -217,7 +244,11 @@ export default function App() {
                 </Typography>
               </Box>
             </Box>
-            {connected && <AiAssistantDrawer isMobile={isMobile} />}
+            {connected && (
+              <ErrorBoundary>
+                <AiAssistantDrawer isMobile={isMobile} />
+              </ErrorBoundary>
+            )}
           </Box>
         </Box>
         <ConnectionDialog />
@@ -229,33 +260,11 @@ export default function App() {
           }}
           onCancel={() => setResetDialogOpen(false)}
         />
-        <PanelEditor />
+        <ErrorBoundary>
+          <PanelEditor />
+        </ErrorBoundary>
         <CommandPalette />
-        <Snackbar
-          open={Boolean(resumeError)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          onClose={clearResumeError}
-        >
-          <Alert
-            severity="warning"
-            onClose={clearResumeError}
-            action={
-              <Button
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  clearResumeError();
-                  setConnectionDialogOpen(true);
-                }}
-              >
-                Reconnect
-              </Button>
-            }
-            sx={{ width: "100%" }}
-          >
-            Could not resume session: {resumeError}
-          </Alert>
-        </Snackbar>
+        <Toaster theme={themeMode} position="bottom-left" />
       </PersesProviders>
     </ThemeProvider>
   );

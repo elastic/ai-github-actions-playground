@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useId } from "react";
 import Drawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -29,6 +29,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
   const clearMessages = useLLMStore((s) => s.clearMessages);
   const hasMessages = useLLMStore((s) => s.messages.length > 0);
   const setPendingPrompt = useLLMStore((s) => s.setPendingPrompt);
+  const titleId = useId();
 
   const handleExplainClick = useCallback(
     (e: MouseEvent) => {
@@ -70,10 +71,11 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       open={open}
       onClose={() => setOpen(false)}
       variant={isMobile ? "temporary" : "persistent"}
-      PaperProps={{
-        role: "complementary",
-        "aria-labelledby": "ai-drawer-title",
-        "data-ai-drawer": true,
+      slotProps={{
+        paper: {
+          role: "complementary",
+          "aria-labelledby": titleId,
+        },
       }}
       sx={{
         "& .MuiDrawer-paper": {
@@ -86,6 +88,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       }}
     >
       <Box
+        data-ai-drawer
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -94,7 +97,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
         }}
       >
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-          <Typography id="ai-drawer-title" variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
+          <Typography id={titleId} variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             AI Assistant
           </Typography>
           <Tooltip

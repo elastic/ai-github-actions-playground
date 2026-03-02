@@ -70,10 +70,12 @@ export default function WelcomeScreen() {
         sx={{
           maxWidth: 520,
           p: 6,
-          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 2,
           textAlign: "center",
         }}
-        elevation={2}
+        elevation={0}
       >
         <Box
           component="img"

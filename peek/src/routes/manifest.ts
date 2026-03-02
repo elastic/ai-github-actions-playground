@@ -59,6 +59,8 @@ export interface PageConfig {
   showTimeControls: boolean;
   /** Key of `UserCapabilities` that must be `true` for the page to appear in the sidebar. */
   requiredCapability?: keyof UserCapabilities;
+  /** ContentSkeleton variant shown while the lazy page chunk loads. */
+  skeletonVariant?: "table" | "cards" | "chart";
   nav: {
     label: string;
     group: NavGroup;
@@ -74,6 +76,7 @@ export const PAGE_MANIFEST = {
     component: DashboardsLandingPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "cards",
     nav: {
       label: "Dashboards",
       group: "Workspace",
@@ -87,6 +90,7 @@ export const PAGE_MANIFEST = {
     component: DiscoverPage,
     requiresConnection: true,
     showTimeControls: true,
+    skeletonVariant: "table",
     nav: {
       label: "Query Lab",
       group: "Workspace",
@@ -100,6 +104,7 @@ export const PAGE_MANIFEST = {
     component: ExplorePage,
     requiresConnection: true,
     showTimeControls: true,
+    skeletonVariant: "chart",
     nav: {
       label: "Metrics",
       group: "Workspace",
@@ -113,6 +118,7 @@ export const PAGE_MANIFEST = {
     component: TracesPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Traces",
       group: "Workspace",
@@ -165,6 +171,7 @@ export const PAGE_MANIFEST = {
     component: ClusterOverviewPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "cards",
     nav: {
       label: "Cluster Overview",
       group: "System",
@@ -256,6 +263,7 @@ export const PAGE_MANIFEST = {
     component: DataStreamsPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Data Streams",
       group: "System",
@@ -269,6 +277,7 @@ export const PAGE_MANIFEST = {
     component: IndicesPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Indices",
       group: "System",
@@ -282,6 +291,7 @@ export const PAGE_MANIFEST = {
     component: IngestPipelinesPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     nav: {
       label: "Ingest Pipelines",
       group: "System",
@@ -295,6 +305,7 @@ export const PAGE_MANIFEST = {
     component: FleetPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "cards",
     nav: {
       label: "Fleet",
       group: "System",
@@ -321,6 +332,7 @@ export const PAGE_MANIFEST = {
     component: UsersPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     requiredCapability: "canReadSecurityUsers",
     nav: {
       label: "Users",
@@ -349,6 +361,7 @@ export const PAGE_MANIFEST = {
     component: RolesPage,
     requiresConnection: true,
     showTimeControls: false,
+    skeletonVariant: "table",
     requiredCapability: "canReadSecurityRoles",
     nav: {
       label: "Roles",

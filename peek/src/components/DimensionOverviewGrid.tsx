@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
@@ -149,6 +149,7 @@ export default function DimensionOverviewGrid({
 }: Props) {
   const theme = useTheme();
   const echartsTheme = useEChartTheme();
+  const failedListId = useId();
 
   // Discover dimension fields — same logic as DimensionSidebar
   const dimensionFields = useMemo(() => {
@@ -329,7 +330,6 @@ export default function DimensionOverviewGrid({
                     sx={{
                       height: 16,
                       fontSize: "0.6rem",
-                      "& .MuiChip-label": { px: 0.5 },
                     }}
                   />
                 </Box>
@@ -371,7 +371,7 @@ export default function DimensionOverviewGrid({
               size="small"
               onClick={() => setFailedExpanded((prev) => !prev)}
               aria-expanded={failedExpanded}
-              aria-controls="failed-dimensions-list"
+              aria-controls={failedListId}
               aria-label={
                 failedExpanded ? "Collapse failed dimensions" : "Expand failed dimensions"
               }
@@ -398,7 +398,7 @@ export default function DimensionOverviewGrid({
               </Button>
             </Tooltip>
           </Box>
-          <Collapse in={failedExpanded} id="failed-dimensions-list">
+          <Collapse in={failedExpanded} id={failedListId}>
             <Box
               component="ul"
               sx={{ m: 0, mt: 0.5, p: 0, listStyle: "none" }}

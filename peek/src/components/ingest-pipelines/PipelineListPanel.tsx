@@ -9,6 +9,7 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
+import { COMPACT_CHIP_SX } from "../../types/tokens";
 import EmptyState from "../EmptyState";
 
 interface PipelineListPanelProps {
@@ -71,7 +72,7 @@ export default function PipelineListPanel({
                       label={`${processorCount} processor${processorCount === 1 ? "" : "s"}`}
                       size="small"
                       variant="outlined"
-                      sx={{ height: 20, mt: 0.5, fontSize: "0.7rem" }}
+                      sx={{ ...COMPACT_CHIP_SX, mt: 0.5 }}
                     />
                   }
                 />

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -7,7 +7,6 @@ import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Alert from "@mui/material/Alert";
-import Snackbar from "@mui/material/Snackbar";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -24,6 +23,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import StarIcon from "@mui/icons-material/Star";
 import { useShallow } from "zustand/react/shallow";
+import { toast } from "sonner";
 
 import type { DashboardDefinition } from "../types";
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
@@ -41,6 +41,7 @@ import DashboardNameDialog from "./DashboardNameDialog";
 
 export default function DashboardsLandingPage() {
   const navigate = useNavigate();
+  const sortLabelId = useId();
   const {
     dashboards,
     activeDashboardId,
@@ -97,6 +98,7 @@ export default function DashboardsLandingPage() {
   const [nameDialogMode, setNameDialogMode] = useState<"create" | "rename">("create");
   const [nameDialogValue, setNameDialogValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const deleteToastIdRef = useRef<string | number | undefined>(undefined);
 
   const handleCreate = useCallback(() => {
     setNameDialogMode("create");
@@ -167,6 +169,26 @@ export default function DashboardsLandingPage() {
     restoreDashboard(recentlyDeleted, false);
     setRecentlyDeleted(null);
   }, [recentlyDeleted, restoreDashboard]);
+
+  useEffect(() => {
+    if (!recentlyDeleted) return;
+    if (deleteToastIdRef.current !== undefined) {
+      toast.dismiss(deleteToastIdRef.current);
+    }
+    deleteToastIdRef.current = toast.info("Dashboard deleted.", {
+      duration: 8000,
+      action: {
+        label: "Undo",
+        onClick: handleUndoDelete,
+      },
+      onAutoClose: () => {
+        setRecentlyDeleted(null);
+      },
+      onDismiss: () => {
+        setRecentlyDeleted(null);
+      },
+    });
+  }, [recentlyDeleted, handleUndoDelete]);
 
   const handleNameDialogConfirm = useCallback(() => {
     const trimmed = nameDialogValue.trim();
@@ -325,9 +347,9 @@ export default function DashboardsLandingPage() {
           }}
         />
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel id="sort-select-label">Sort by</InputLabel>
+          <InputLabel id={sortLabelId}>Sort by</InputLabel>
           <Select
-            labelId="sort-select-label"
+            labelId={sortLabelId}
             label="Sort by"
             value={sortField}
             onChange={(e) => setSortField(e.target.value as "updated" | "title")}
@@ -457,25 +479,6 @@ export default function DashboardsLandingPage() {
         onConfirm={handleNameDialogConfirm}
         onCancel={handleNameDialogCancel}
       />
-
-      <Snackbar
-        open={Boolean(recentlyDeleted)}
-        autoHideDuration={8000}
-        onClose={() => setRecentlyDeleted(null)}
-      >
-        <Alert
-          severity="info"
-          onClose={() => setRecentlyDeleted(null)}
-          action={
-            <Button color="inherit" size="small" onClick={handleUndoDelete}>
-              Undo
-            </Button>
-          }
-          sx={{ width: "100%" }}
-        >
-          Dashboard deleted.
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

@@ -167,7 +167,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
       onClose={() => setEditingId(null)}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { height: "90vh" } }}
+      slotProps={{ paper: { sx: { height: "90vh" } } }}
     >
       <DialogTitle
         component="div"

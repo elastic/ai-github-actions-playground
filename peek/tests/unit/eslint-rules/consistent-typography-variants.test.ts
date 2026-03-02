@@ -32,6 +32,11 @@ describe("peek/consistent-typography-variants", () => {
           code: `<Typography variant="h3">text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // h6 is the page title variant
+        {
+          code: `<Typography variant="h6">text</Typography>`,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
         // Custom options
         {
           code: `<Typography variant="h1">text</Typography>`,
@@ -67,12 +72,6 @@ describe("peek/consistent-typography-variants", () => {
         // h4 is not in the default allowed set
         {
           code: `<Typography variant="h4">text</Typography>`,
-          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
-          errors: [{ messageId: "invalidVariant" }],
-        },
-        // h6 removed from allowed set
-        {
-          code: `<Typography variant="h6">text</Typography>`,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
           errors: [{ messageId: "invalidVariant" }],
         },

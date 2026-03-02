@@ -165,11 +165,11 @@ const themeLight = EditorView.theme({
   ".cm-ghost-strikethrough": {
     textDecoration: "line-through",
     opacity: "0.5",
-    color: "#dc2626",
+    color: "#DE350B",
     fontStyle: "italic",
   },
   ".cm-ghost-replacement": {
-    color: "#16a34a",
+    color: "#36B37E",
     opacity: "0.65",
     fontStyle: "italic",
     whiteSpace: "pre-wrap",
@@ -199,11 +199,11 @@ const themeDark = EditorView.theme(
     ".cm-ghost-strikethrough": {
       textDecoration: "line-through",
       opacity: "0.45",
-      color: "#ef4444",
+      color: "#DE350B",
       fontStyle: "italic",
     },
     ".cm-ghost-replacement": {
-      color: "#6ee7b7",
+      color: "#36B37E",
       opacity: "0.70",
       fontStyle: "italic",
       whiteSpace: "pre-wrap",

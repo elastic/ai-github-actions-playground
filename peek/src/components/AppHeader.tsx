@@ -9,6 +9,7 @@ import Chip from "@mui/material/Chip";
 import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
@@ -86,7 +87,8 @@ export default function AppHeader({
   const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
   const isDashboardView =
     location.pathname.startsWith("/dashboards/") && location.pathname !== "/dashboards";
-  const isNarrow = useMediaQuery("(max-width:767.95px)");
+  const theme = useTheme();
+  const isNarrow = useMediaQuery(theme.breakpoints.down("md"));
   const showTimeControls = connected && (Boolean(activePage?.showTimeControls) || isDashboardView);
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
@@ -142,14 +144,9 @@ export default function AppHeader({
           variant="subtitle1"
           sx={{
             mr: 1,
-            background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
-            backgroundClip: "text",
-            color: "transparent",
+            color: "primary.main",
             lineHeight: 1,
             fontWeight: 700,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
           }}
         >
           Peek
