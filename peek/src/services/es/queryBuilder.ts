@@ -135,9 +135,14 @@ export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
   const agg = getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField);
+  const escapedMetric = escapeEsqlIdentifier(q.metricField);
+  const whereClause = buildWherePipe([
+    TIMESTAMP_RANGE_CLAUSE,
+    ...(agg === "count" ? [`${escapedMetric} IS NOT NULL`] : []),
+  ]);
   const parts: string[] = [
     `FROM ${indexPattern}`,
-    `WHERE ${TIMESTAMP_RANGE_CLAUSE}`,
+    whereClause,
     `STATS metric = ${aggExpr} BY timestamp = BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`,
     `SORT timestamp`,
   ];
@@ -198,6 +203,8 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
 export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   const indexPattern = validateEsqlIndexPattern(q.indexPattern);
   const buckets = q.bucketCount ?? DEFAULT_BUCKET_COUNT;
+  const effectiveAggregation: AggregationType =
+    q.metricType === "counter" ? "count" : q.aggregation;
   const parts: string[] = [];
 
   // FROM
@@ -206,6 +213,9 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   // WHERE (filters + time range)
   const whereClauses: string[] = [];
   whereClauses.push(TIMESTAMP_RANGE_CLAUSE);
+  if (effectiveAggregation === "count") {
+    whereClauses.push(`${escapeEsqlIdentifier(q.metricField)} IS NOT NULL`);
+  }
   const filterClause = buildFilterClause(q.filters);
   if (filterClause) {
     whereClauses.push(filterClause);
@@ -213,7 +223,7 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   parts.push(buildWherePipe(whereClauses));
 
   // STATS ... BY BUCKET(...)
-  const aggExpr = buildAggExpression(q.aggregation, q.metricField);
+  const aggExpr = buildAggExpression(effectiveAggregation, q.metricField);
   const aggAlias = `metric`;
   const bucketExpr = `BUCKET(@timestamp, ${buckets}, ?_tstart, ?_tend)`;
 
@@ -229,7 +239,7 @@ export function buildExplorerQuery(q: ExplorerQuery): ExplorerQueryResult {
   parts.push("SORT timestamp");
 
   const esql = parts.join(" | ");
-  const yAxisLabel = buildYAxisLabel(q.aggregation, q.metricField);
+  const yAxisLabel = buildYAxisLabel(effectiveAggregation, q.metricField);
 
   return { esql, yAxisLabel };
 }

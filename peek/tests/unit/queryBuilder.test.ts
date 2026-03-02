@@ -36,11 +36,12 @@ describe("buildExplorerQuery", () => {
     expect(result.yAxisLabel).toBe("Avg pct");
   });
 
-  it("builds a sum aggregation for counter metrics", () => {
+  it("forces count aggregation for counter metrics", () => {
     const result = buildExplorerQuery(makeQuery({ metricType: "counter", aggregation: "sum" }));
 
-    expect(result.esql).toContain("SUM(`system.cpu.total.pct`)");
-    expect(result.yAxisLabel).toBe("Sum pct");
+    expect(result.esql).toContain("COUNT(*)");
+    expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
+    expect(result.yAxisLabel).toBe("Count pct");
   });
 
   it("includes WHERE clause with filters", () => {
@@ -115,6 +116,7 @@ describe("buildExplorerQuery", () => {
   it("builds count aggregation", () => {
     const result = buildExplorerQuery(makeQuery({ aggregation: "count" }));
     expect(result.esql).toContain("COUNT(*)");
+    expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
     expect(result.yAxisLabel).toBe("Count pct");
   });
 
@@ -234,6 +236,7 @@ describe("buildOverviewQuery", () => {
   it("uses count aggregation for counter metrics", () => {
     const result = buildOverviewQuery(makeOverviewQuery({ metricType: "counter" }));
     expect(result.esql).toContain("COUNT(*)");
+    expect(result.esql).toContain("`system.cpu.total.pct` IS NOT NULL");
   });
 
   it("includes time range in WHERE clause", () => {
