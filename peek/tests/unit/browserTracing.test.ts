@@ -6,6 +6,7 @@ import {
   getTracingConnectionSnapshot,
   shouldReconfigureTracing,
 } from "../../src/services/telemetry/browserTracing";
+import { deriveOtlpEndpoint } from "../../src/utils/addDataUtils";
 
 describe("browser tracing helpers", () => {
   it("derives /v1/traces endpoint from cluster URL", () => {
@@ -93,5 +94,20 @@ describe("browser tracing helpers", () => {
     );
 
     expect(shouldReconfigureTracing(previous, next)).toBe(true);
+  });
+
+  it("derives ingest URL for Elastic Cloud ES URLs", () => {
+    const esUrl = "https://my-deploy.es.us-east-1.aws.elastic.cloud";
+    const ingestBase = deriveOtlpEndpoint(esUrl);
+    expect(ingestBase).toBe("https://my-deploy.ingest.us-east-1.aws.elastic.cloud");
+    expect(deriveDefaultOtlpEndpoint(ingestBase!)).toBe(
+      "https://my-deploy.ingest.us-east-1.aws.elastic.cloud/v1/traces",
+    );
+  });
+
+  it("falls back to ES URL for non-Cloud URLs", () => {
+    const esUrl = "https://es.example.com:9200";
+    expect(deriveOtlpEndpoint(esUrl)).toBeNull();
+    expect(deriveDefaultOtlpEndpoint(esUrl)).toBe("https://es.example.com:9200/v1/traces");
   });
 });
