@@ -42,6 +42,10 @@ interface Command {
   keywords?: string;
 }
 
+function getRecentQueryCommandId(query: string): string {
+  return `query:${encodeURIComponent(query)}`;
+}
+
 function useCommands(): Command[] {
   const navigate = useNavigate();
   const location = useLocation();
@@ -241,9 +245,9 @@ function useCommands(): Command[] {
     }
 
     // Recent queries
-    for (const [index, query] of queryHistory.entries()) {
+    for (const query of queryHistory) {
       commands.push({
-        id: `query:${index}`,
+        id: getRecentQueryCommandId(query),
         label: query,
         group: "Recent Queries",
         icon: <HistoryIcon fontSize="small" />,
@@ -303,10 +307,30 @@ function CommandPalettePaper({ children }: { children?: React.ReactNode }) {
 export default function CommandPalette() {
   const open = useUIStore((s) => s.commandPaletteOpen);
   const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
+  const { addRecentCommandId, recentCommandIds } = useUIStore(
+    useShallow((s) => ({
+      addRecentCommandId: s.addRecentCommandId,
+      recentCommandIds: s.recentCommandIds,
+    })),
+  );
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const commands = useCommands();
   const listboxId = useId();
+
+  // Inject "Recent Commands" group at the top when search is empty
+  const commandsWithRecent = useMemo(() => {
+    if (search.trim()) return commands;
+    const commandMap = new Map(commands.map((c) => [c.id, c]));
+    const recentCommands: Command[] = [];
+    for (const id of recentCommandIds) {
+      const cmd = commandMap.get(id);
+      if (cmd) {
+        recentCommands.push({ ...cmd, group: "Recent Commands" });
+      }
+    }
+    return recentCommands.length > 0 ? [...recentCommands, ...commands] : commands;
+  }, [search, recentCommandIds, commands]);
 
   // Focus the input once the dialog enter transition completes
   const handleDialogEntered = useCallback(() => {
@@ -347,10 +371,14 @@ export default function CommandPalette() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [aiPanelOpen, setAiPanelOpen]);
 
-  const handleExecute = useCallback((cmd: Command) => {
-    cmd.onExecute();
-    setSearch("");
-  }, []);
+  const handleExecute = useCallback(
+    (cmd: Command) => {
+      addRecentCommandId(cmd.id);
+      cmd.onExecute();
+      setSearch("");
+    },
+    [addRecentCommandId],
+  );
 
   return (
     <Dialog
@@ -375,7 +403,7 @@ export default function CommandPalette() {
       <Autocomplete<Command>
         open
         disablePortal
-        options={commands}
+        options={commandsWithRecent}
         groupBy={(option) => option.group}
         getOptionLabel={(option) => option.label}
         filterOptions={(options, { inputValue }) => {

@@ -405,6 +405,9 @@ describe("DiscoverPage", () => {
     );
 
     expect(screen.getByText("No results yet")).toBeInTheDocument();
+    expect(
+      screen.getByText("Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."),
+    ).toBeInTheDocument();
   });
 
   it("disables Export CSV button when there is no result data", () => {

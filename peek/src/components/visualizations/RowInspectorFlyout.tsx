@@ -86,24 +86,30 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
     return rowFields.filter((field) => field.value !== null && field.value !== undefined);
   }, [rowFields, showNullFields]);
 
+  const preparedFields = useMemo(() => {
+    return visibleFields.map(({ col, value }) => {
+      const displayText =
+        value == null
+          ? "null"
+          : typeof value === "object"
+            ? JSON.stringify(value, null, 2)
+            : String(value);
+      return { col, value, displayText, searchBlobLower: displayText.toLowerCase() };
+    });
+  }, [visibleFields]);
+
   const filteredFields = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
-      return visibleFields;
+      return preparedFields;
     }
-    return visibleFields.filter(({ col, value }) => {
+    return preparedFields.filter(({ col, searchBlobLower }) => {
       const nameMatch = col.name.toLowerCase().includes(query);
       const typeMatch = col.type.toLowerCase().includes(query);
-      const valueText =
-        value === null || value === undefined
-          ? "null"
-          : typeof value === "object"
-            ? JSON.stringify(value)
-            : String(value);
-      const valueMatch = valueText.toLowerCase().includes(query);
+      const valueMatch = searchBlobLower.includes(query);
       return nameMatch || typeMatch || valueMatch;
     });
-  }, [visibleFields, searchQuery]);
+  }, [preparedFields, searchQuery]);
 
   return (
     <Drawer
@@ -175,7 +181,7 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
           </Typography>
         )}
         {row &&
-          filteredFields.map(({ col, value }) => (
+          filteredFields.map(({ col, value, displayText }) => (
             <Box key={col.name} data-testid={`row-inspector-field-${col.name}`}>
               <Box sx={{ py: 1, px: 2 }}>
                 <Box sx={{ display: "flex", gap: 1, alignItems: "baseline", mb: 0.5 }}>
@@ -199,7 +205,7 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
                       fontFamily: "monospace",
                     }}
                   >
-                    {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}
+                    {displayText}
                   </Typography>
                 )}
               </Box>

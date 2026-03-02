@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe } from "vitest-axe";
 
+import { renderWithA11y } from "../helpers/renderWithA11y";
 import FleetStatCard from "../../src/components/fleet/FleetStatCard";
 
 describe("FleetStatCard", () => {
@@ -49,8 +49,6 @@ describe("FleetStatCard", () => {
   });
 
   it("has no obvious accessibility violations", async () => {
-    const { container } = render(<FleetStatCard title="Healthy" value={8} onClick={vi.fn()} />);
-    const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
+    await renderWithA11y(<FleetStatCard title="Healthy" value={8} onClick={vi.fn()} />);
   });
 });

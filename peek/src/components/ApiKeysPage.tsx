@@ -117,6 +117,12 @@ export default function ApiKeysPage() {
     );
   }, [search, keys]);
 
+  // When filtered results don't include the selected key (e.g. search
+  // excludes it), hide the detail panel while keeping the selection so it
+  // restores when the search is cleared.
+  const displayedKey = filteredKeys.some((k) => k.id === selectedKeyId) ? selectedKey : null;
+  const displayedKeyRisk = displayedKey !== null ? selectedKeyRisk : null;
+
   const copyQuery = useCallback(async () => {
     const copied = await copyToClipboard("GET /_security/api_key");
     if (!copied) return;
@@ -190,12 +196,16 @@ export default function ApiKeysPage() {
           variant="outlined"
           sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
         >
-          {selectedKey ? (
+          {displayedKey ? (
             <>
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Typography variant="subtitle1">{selectedKey.name}</Typography>
-                {selectedKeyRisk !== null && selectedKeyRisk.label !== "" && (
-                  <Chip size="small" label={selectedKeyRisk.label} color={selectedKeyRisk.level} />
+                <Typography variant="subtitle1">{displayedKey.name}</Typography>
+                {displayedKeyRisk !== null && displayedKeyRisk.label !== "" && (
+                  <Chip
+                    size="small"
+                    label={displayedKeyRisk.label}
+                    color={displayedKeyRisk.level}
+                  />
                 )}
               </Stack>
 
@@ -203,15 +213,15 @@ export default function ApiKeysPage() {
                 Owner
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
-                {selectedKey.username ? (
-                  <Tooltip title={`View user: ${selectedKey.username}`}>
+                {displayedKey.username ? (
+                  <Tooltip title={`View user: ${displayedKey.username}`}>
                     <Chip
                       size="small"
-                      label={selectedKey.username}
+                      label={displayedKey.username}
                       clickable
-                      aria-label={`View user: ${selectedKey.username}`}
+                      aria-label={`View user: ${displayedKey.username}`}
                       onClick={() =>
-                        navigate(`/users?username=${encodeURIComponent(selectedKey.username)}`)
+                        navigate(`/users?username=${encodeURIComponent(displayedKey.username)}`)
                       }
                     />
                   </Tooltip>
@@ -224,21 +234,21 @@ export default function ApiKeysPage() {
                 Details
               </Typography>
               <Typography variant="body2">
-                <strong>ID:</strong> {selectedKey.id}
+                <strong>ID:</strong> {displayedKey.id}
               </Typography>
               <Typography variant="body2">
-                <strong>Created:</strong> {new Date(selectedKey.creation).toLocaleString()} (
-                {ageLabel(selectedKey.creation)} ago)
+                <strong>Created:</strong> {new Date(displayedKey.creation).toLocaleString()} (
+                {ageLabel(displayedKey.creation)} ago)
               </Typography>
               <Typography variant="body2">
                 <strong>Expires:</strong>{" "}
-                {selectedKey.expiration != null
-                  ? new Date(selectedKey.expiration).toLocaleString()
+                {displayedKey.expiration != null
+                  ? new Date(displayedKey.expiration).toLocaleString()
                   : "Never"}
               </Typography>
-              {selectedKey.realm && (
+              {displayedKey.realm && (
                 <Typography variant="body2">
-                  <strong>Realm:</strong> {selectedKey.realm}
+                  <strong>Realm:</strong> {displayedKey.realm}
                 </Typography>
               )}
 
@@ -250,7 +260,7 @@ export default function ApiKeysPage() {
                 variant="body2"
                 sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
               >
-                {JSON.stringify(selectedKey.metadata ?? {}, null, 2)}
+                {JSON.stringify(displayedKey.metadata ?? {}, null, 2)}
               </Typography>
             </>
           ) : (

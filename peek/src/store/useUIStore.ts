@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+const MAX_RECENT_COMMANDS = 5;
+
 interface UIState {
   themeMode: "light" | "dark";
   editingPanelId: string | null;
@@ -10,6 +12,7 @@ interface UIState {
   explainModeActive: boolean;
   discoverEditorHeight: number;
   panelEditorHeight: number;
+  recentCommandIds: string[];
 
   setThemeMode: (mode: "light" | "dark") => void;
   setEditingPanelId: (id: string | null) => void;
@@ -19,6 +22,7 @@ interface UIState {
   setExplainModeActive: (active: boolean) => void;
   setDiscoverEditorHeight: (height: number) => void;
   setPanelEditorHeight: (height: number) => void;
+  addRecentCommandId: (id: string) => void;
   resetUIState: () => void;
 }
 
@@ -32,6 +36,7 @@ const DEFAULT_UI_STATE = {
   explainModeActive: false,
   discoverEditorHeight: 100,
   panelEditorHeight: 120,
+  recentCommandIds: [] as string[],
 };
 
 export const useUIStore = create<UIState>()(
@@ -48,6 +53,13 @@ export const useUIStore = create<UIState>()(
         setExplainModeActive: (active) => set({ explainModeActive: active }),
         setDiscoverEditorHeight: (height) => set({ discoverEditorHeight: height }),
         setPanelEditorHeight: (height) => set({ panelEditorHeight: height }),
+        addRecentCommandId: (id) =>
+          set((state) => ({
+            recentCommandIds: [id, ...state.recentCommandIds.filter((i) => i !== id)].slice(
+              0,
+              MAX_RECENT_COMMANDS,
+            ),
+          })),
         resetUIState: () => {
           useUIStore.persist.clearStorage();
           set(DEFAULT_UI_STATE);
@@ -59,6 +71,7 @@ export const useUIStore = create<UIState>()(
           themeMode: state.themeMode,
           discoverEditorHeight: state.discoverEditorHeight,
           panelEditorHeight: state.panelEditorHeight,
+          recentCommandIds: state.recentCommandIds,
         }),
       },
     ),

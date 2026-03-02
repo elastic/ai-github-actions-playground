@@ -235,6 +235,35 @@ describe("ApiKeysPage", () => {
     await screen.findByText("No API keys found.");
   });
 
+  it("clears the detail panel when search excludes the selected key", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <ApiKeysPage />
+      </MemoryRouter>,
+    );
+
+    // Wait for detail panel to show the first key
+    await screen.findByRole("heading", { level: 6, name: "ingest-key" });
+
+    // Type a search that matches nothing
+    await user.type(screen.getByPlaceholderText("Search API keys"), "nonexistent");
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { level: 6, name: "ingest-key" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Select an API key.")).toBeInTheDocument();
+    });
+
+    await user.clear(screen.getByPlaceholderText("Search API keys"));
+    await screen.findByRole("heading", { level: 6, name: "ingest-key" });
+    expect(screen.queryByText("Select an API key.")).not.toBeInTheDocument();
+  });
+
   it("shows access warning when canReadApiKeys is false", async () => {
     getCapabilitiesMock.mockResolvedValue(CAPS_NO_READ);
     getApiKeysMock.mockResolvedValue(API_KEYS_RESPONSE);

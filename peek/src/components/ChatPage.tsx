@@ -19,7 +19,6 @@ import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
-import { useChatScreenContextSummary } from "../hooks/useChatScreenContextSummary";
 
 import ChatMessageContent from "./ChatMessageContent";
 import { formatToolResult, type ToolActivity } from "./chatUtils";
@@ -54,7 +53,6 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
   const navigate = useNavigate();
   const location = useLocation();
   const connection = useConnectionStore((s) => s.connection);
-  const screenContextSummary = useChatScreenContextSummary(location.pathname);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -104,7 +102,6 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
           config,
           connection,
           pathname: location.pathname,
-          screenContextSummary,
           signal: controller.signal,
           navigate,
         });
@@ -175,7 +172,6 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       removeMessage,
       connection,
       location.pathname,
-      screenContextSummary,
       navigate,
     ],
   );

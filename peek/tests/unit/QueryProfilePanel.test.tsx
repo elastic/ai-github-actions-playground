@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe } from "vitest-axe";
 
+import { renderWithA11y } from "../helpers/renderWithA11y";
 import QueryProfilePanel from "../../src/components/QueryProfilePanel";
 
 const SAMPLE_PROFILE = {
@@ -36,9 +36,7 @@ const SAMPLE_PROFILE = {
 
 describe("QueryProfilePanel", () => {
   it("has no accessibility violations", async () => {
-    const { container } = render(<QueryProfilePanel profile={SAMPLE_PROFILE} />);
-    const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
+    await renderWithA11y(<QueryProfilePanel profile={SAMPLE_PROFILE} />);
   });
 
   it("renders the panel header", () => {
