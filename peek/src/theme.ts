@@ -9,6 +9,8 @@ const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 const LIGHT_PRIMARY = "#0070C5";
 const DARK_PRIMARY = "#3BAAFF";
+const LIGHT_BORDER = { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" };
+const DARK_BORDER = { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" };
 const REDUCED_MOTION_CSS = `
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -196,15 +198,15 @@ export const lightTheme = createTheme({
     secondary: { main: "#00B5A9" },
     background: { default: "#F4F6FB", paper: "#FFFFFF", subtle: "#EDF0F7", elevated: "#FFFFFF" },
     text: { primary: "#1A1C21", secondary: "#676F7B" },
-    border: { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" },
+    border: LIGHT_BORDER,
     status: { ...STATUS_COLORS },
   },
   components: {
     ...baseOptions.components,
     MuiCssBaseline: {
       styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, {
-        thumb: "#C5CBD3",
-        thumbHover: "#98A2B3",
+        thumb: LIGHT_BORDER.default,
+        thumbHover: LIGHT_BORDER.strong,
         track: "transparent",
       }),
     },
@@ -219,15 +221,15 @@ export const darkTheme = createTheme({
     secondary: { main: "#5EECD5" },
     background: { default: "#0F1118", paper: "#1A1D27", subtle: "#141720", elevated: "#242838" },
     text: { primary: "#DFE5EF", secondary: "#98A2B3" },
-    border: { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" },
+    border: DARK_BORDER,
     status: { ...STATUS_COLORS },
   },
   components: {
     ...baseOptions.components,
     MuiCssBaseline: {
       styleOverrides: cssBaselineOverrides(DARK_PRIMARY, {
-        thumb: "#3D4255",
-        thumbHover: "#5A6070",
+        thumb: DARK_BORDER.default,
+        thumbHover: DARK_BORDER.strong,
         track: "transparent",
       }),
     },
