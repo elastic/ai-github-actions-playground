@@ -155,7 +155,13 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiInputBase-root": { minHeight: TOOLBAR_CONTROL_MIN_HEIGHT },
+          "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
+          "& .MuiOutlinedInput-notchedOutline": { top: 0 },
+          "& .MuiOutlinedInput-root": {
+            height: TOOLBAR_CONTROL_MIN_HEIGHT,
+            minHeight: TOOLBAR_CONTROL_MIN_HEIGHT,
+          },
+          "& .MuiSelect-select.MuiInputBase-inputSizeSmall": { paddingBlock: "4.5px" },
         }}
       >
         <Autocomplete
