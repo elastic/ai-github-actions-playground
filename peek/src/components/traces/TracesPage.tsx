@@ -164,13 +164,14 @@ export default function TracesPage() {
 
   const runTraceQueries = useCallback(
     (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
+      setSearchResult(null);
       setTimeseriesResult(null);
       runSearchQuery(query);
       if (includeTimeseries) {
         runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
       }
     },
-    [filters, rawQuery, runSearchQuery, runTimeseriesQuery],
+    [filters, rawQuery, runSearchQuery, runTimeseriesQuery, setSearchResult, setTimeseriesResult],
   );
 
   const runDriftRadarQueries = useCallback(
