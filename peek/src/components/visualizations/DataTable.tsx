@@ -1,78 +1,26 @@
 import { useMemo, useState, useCallback, memo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DownloadIcon from "@mui/icons-material/Download";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
 import EmptyState from "../EmptyState";
 import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 
-import { isNumericType } from "./chartUtils";
-import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 import RowInspectorFlyout from "./RowInspectorFlyout";
+import DataTableHeader from "./DataTableHeader";
+import DataTableBody from "./DataTableBody";
+import DataTableColumnMenu from "./DataTableColumnMenu";
+import type { SortState, SortDirection } from "./dataTableUtils";
+import { PINNED_COLUMN_MIN_WIDTH, reconcileColumnOrder } from "./dataTableUtils";
 
-type SortDirection = "asc" | "desc";
-
-const PINNED_COLUMN_MIN_WIDTH = 120;
-const CELL_TRUNCATE_LENGTH = 200;
-
-function TruncatedCell({ value }: { value: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const needsTruncation = value.length > CELL_TRUNCATE_LENGTH;
-  if (!needsTruncation) return <>{value}</>;
-  return (
-    <span>
-      <Tooltip title={expanded ? "" : value}>
-        <span>{expanded ? value : value.slice(0, CELL_TRUNCATE_LENGTH) + "…"}</span>
-      </Tooltip>
-      <Button
-        size="small"
-        variant="text"
-        onClick={(e) => {
-          e.stopPropagation();
-          setExpanded((v) => !v);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-          }
-        }}
-        aria-label={expanded ? "Collapse cell value" : "Expand cell value"}
-        sx={{ verticalAlign: "baseline", minWidth: 0, ml: 0.5, p: 0, fontSize: "0.7rem" }}
-      >
-        {expanded ? "less" : "more"}
-      </Button>
-    </span>
-  );
-}
-
-export interface SortState {
-  columnName: string;
-  direction: SortDirection;
-}
-
-function reconcileColumnOrder(order: number[], allIndices: number[]): number[] {
-  const allSet = new Set(allIndices);
-  const kept = order.filter((i) => allSet.has(i));
-  const keptSet = new Set(kept);
-  const missing = allIndices.filter((i) => !keptSet.has(i));
-  return [...kept, ...missing];
-}
+export type { SortState, SortDirection } from "./dataTableUtils";
 
 interface Props {
   data: EsqlResponse;
@@ -179,6 +127,22 @@ export default memo(function DataTable({
     setMenuColumnIndex(null);
   }, []);
 
+  const handlePinColumn = useCallback((colIdx: number) => {
+    setPinnedColumns((prev) => {
+      const next = new Set(prev);
+      next.add(colIdx);
+      return next;
+    });
+  }, []);
+
+  const handleUnpinColumn = useCallback((colIdx: number) => {
+    setPinnedColumns((prev) => {
+      const next = new Set(prev);
+      next.delete(colIdx);
+      return next;
+    });
+  }, []);
+
   if (data.columns.length === 0) {
     return <EmptyState size="small" heading="No data" />;
   }
@@ -216,175 +180,29 @@ export default memo(function DataTable({
       )}
       <TableContainer sx={{ flex: 1, minHeight: 0 }}>
         <Table size="small" stickyHeader>
-          <TableHead>
-            <TableRow>
-              {orderedVisibleColumnIndices.map((colIdx) => {
-                const col = data.columns[colIdx]!;
-                const isSorted = currentSort?.columnName === col.name;
-                const isPinned = pinnedColumns.has(colIdx);
-                const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
-                return (
-                  <TableCell
-                    key={col.name}
-                    sx={{
-                      whiteSpace: "nowrap",
-                      fontWeight: 600,
-                      fontSize: "0.75rem",
-                      ...(isPinned
-                        ? {
-                            position: "sticky",
-                            zIndex: 4,
-                            left: stickyLeft,
-                            width: PINNED_COLUMN_MIN_WIDTH,
-                            minWidth: PINNED_COLUMN_MIN_WIDTH,
-                            maxWidth: PINNED_COLUMN_MIN_WIDTH,
-                            overflow: "hidden",
-                            borderRight: "1px solid",
-                            borderRightColor: "divider",
-                            backgroundColor: "background.paper",
-                          }
-                        : {}),
-                    }}
-                  >
-                    <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                      <Box
-                        sx={
-                          isPinned
-                            ? {
-                                display: "flex",
-                                flex: 1,
-                                gap: 0.25,
-                                alignItems: "center",
-                                minWidth: 0,
-                                overflow: "hidden",
-                              }
-                            : { display: "contents" }
-                        }
-                      >
-                        <TableSortLabel
-                          active={isSorted}
-                          direction={isSorted ? currentSort!.direction : "asc"}
-                          onClick={() => handleSortToggle(col.name)}
-                          sx={
-                            isPinned
-                              ? {
-                                  overflow: "hidden",
-                                  "& .MuiTableSortLabel-root": { overflow: "hidden" },
-                                }
-                              : {}
-                          }
-                        >
-                          {col.name}
-                        </TableSortLabel>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{ flexShrink: 0, opacity: 0.5 }}
-                        >
-                          {col.type}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        aria-label={`column actions for ${col.name}`}
-                        onClick={(event) => {
-                          setMenuAnchor(event.currentTarget);
-                          setMenuColumnIndex(colIdx);
-                        }}
-                      >
-                        <MoreVertIcon fontSize="inherit" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {visibleRows.map((row, rowIdx) => (
-              <Tooltip
-                key={page * rowsPerPage + rowIdx}
-                title="Click to inspect row"
-                placement="left"
-                enterDelay={600}
-              >
-                <TableRow
-                  hover
-                  tabIndex={0}
-                  onClick={() => handleRowClick(row)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      handleRowClick(row);
-                    }
-                  }}
-                  sx={{ cursor: "pointer" }}
-                >
-                  {orderedVisibleColumnIndices.map((colIdx) => {
-                    const col = data.columns[colIdx];
-                    const cell = row[colIdx];
-                    const numeric = col ? isNumericType(col.type) : false;
-                    const thresholds = options?.thresholds;
-                    const thresholdColumns = options?.thresholdColumns;
-                    const applyThreshold =
-                      numeric &&
-                      thresholds &&
-                      thresholds.steps.length > 0 &&
-                      cell != null &&
-                      (!thresholdColumns ||
-                        thresholdColumns.length === 0 ||
-                        (col && thresholdColumns.includes(col.name)));
-                    const thresholdColor =
-                      applyThreshold && col
-                        ? resolveThresholdColor(Number(cell), thresholds!)
-                        : undefined;
-                    const bgColor = thresholdColor
-                      ? `${THRESHOLD_PALETTE[thresholdColor]}26`
-                      : undefined;
-                    const isPinned = pinnedColumns.has(colIdx);
-                    const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
-                    return (
-                      <TableCell
-                        key={colIdx}
-                        sx={{
-                          maxWidth: isPinned ? undefined : 400,
-                          textAlign: numeric ? "right" : "left",
-                          wordBreak: isPinned ? "normal" : "break-word",
-                          whiteSpace: isPinned ? "nowrap" : "normal",
-                          fontSize: "0.75rem",
-                          fontFamily: numeric ? "monospace" : "inherit",
-                          ...(bgColor ? { backgroundColor: bgColor } : {}),
-                          ...(isPinned
-                            ? {
-                                position: "sticky",
-                                zIndex: 1,
-                                left: stickyLeft,
-                                width: PINNED_COLUMN_MIN_WIDTH,
-                                minWidth: PINNED_COLUMN_MIN_WIDTH,
-                                maxWidth: PINNED_COLUMN_MIN_WIDTH,
-                                overflow: "hidden",
-                                borderRight: "1px solid",
-                                borderRightColor: "divider",
-                                backgroundColor: bgColor ?? "background.paper",
-                                textOverflow: "ellipsis",
-                              }
-                            : {}),
-                        }}
-                      >
-                        {cell === null ? (
-                          <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
-                            null
-                          </Typography>
-                        ) : (
-                          <TruncatedCell value={String(cell)} />
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              </Tooltip>
-            ))}
-          </TableBody>
+          <DataTableHeader
+            data={data}
+            orderedVisibleColumnIndices={orderedVisibleColumnIndices}
+            currentSort={currentSort}
+            pinnedColumns={pinnedColumns}
+            pinnedLeftOffsets={pinnedLeftOffsets}
+            onSortToggle={handleSortToggle}
+            onOpenMenu={(event, colIdx) => {
+              setMenuAnchor(event.currentTarget);
+              setMenuColumnIndex(colIdx);
+            }}
+          />
+          <DataTableBody
+            data={data}
+            options={options}
+            visibleRows={visibleRows}
+            orderedVisibleColumnIndices={orderedVisibleColumnIndices}
+            pinnedColumns={pinnedColumns}
+            pinnedLeftOffsets={pinnedLeftOffsets}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onRowClick={handleRowClick}
+          />
         </Table>
       </TableContainer>
       <Box
@@ -423,90 +241,20 @@ export default memo(function DataTable({
         columns={data.columns}
         row={inspectedRow}
       />
-      <Menu anchorEl={menuAnchor} open={menuColumnIndex !== null} onClose={closeMenu}>
-        <MenuItem
-          disabled={!onSortChange}
-          onClick={() => {
-            if (menuColumnIndex !== null && onSortChange) {
-              const col = data.columns[menuColumnIndex];
-              if (col) onSortChange(col.name, "asc");
-              setPage(0);
-            }
-            closeMenu();
-          }}
-        >
-          Sort A→Z
-        </MenuItem>
-        <MenuItem
-          disabled={!onSortChange}
-          onClick={() => {
-            if (menuColumnIndex !== null && onSortChange) {
-              const col = data.columns[menuColumnIndex];
-              if (col) onSortChange(col.name, "desc");
-              setPage(0);
-            }
-            closeMenu();
-          }}
-        >
-          Sort Z→A
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuColumnIndex !== null) moveColumn(menuColumnIndex, "left");
-            closeMenu();
-          }}
-        >
-          Move column left
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuColumnIndex !== null) moveColumn(menuColumnIndex, "right");
-            closeMenu();
-          }}
-        >
-          Move column right
-        </MenuItem>
-        <MenuItem
-          disabled={menuColumnIndex === null || !onRemoveColumn}
-          onClick={() => {
-            if (menuColumnIndex !== null) {
-              const column = data.columns[menuColumnIndex];
-              if (column && onRemoveColumn) onRemoveColumn(column.name);
-            }
-            closeMenu();
-          }}
-        >
-          Remove column
-        </MenuItem>
-        {menuColumnIndex !== null && !pinnedColumns.has(menuColumnIndex) && (
-          <MenuItem
-            onClick={() => {
-              setPinnedColumns((prev) => {
-                const next = new Set(prev);
-                next.add(menuColumnIndex);
-                return next;
-              });
-              closeMenu();
-            }}
-          >
-            Pin left
-          </MenuItem>
-        )}
-        {menuColumnIndex !== null && pinnedColumns.has(menuColumnIndex) && (
-          <MenuItem
-            onClick={() => {
-              setPinnedColumns((prev) => {
-                const next = new Set(prev);
-                next.delete(menuColumnIndex);
-                return next;
-              });
-              closeMenu();
-            }}
-          >
-            Unpin
-          </MenuItem>
-        )}
-      </Menu>
+      <DataTableColumnMenu
+        data={data}
+        menuAnchor={menuAnchor}
+        menuColumnIndex={menuColumnIndex}
+        orderedColumnIndices={orderedVisibleColumnIndices}
+        pinnedColumns={pinnedColumns}
+        onSortChange={onSortChange}
+        onRemoveColumn={onRemoveColumn}
+        onMoveColumn={moveColumn}
+        onPinColumn={handlePinColumn}
+        onUnpinColumn={handleUnpinColumn}
+        onClose={closeMenu}
+        onResetPage={() => setPage(0)}
+      />
     </Box>
   );
 });
