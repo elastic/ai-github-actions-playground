@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useDeferredValue, useMemo } from "react";
 import {
   parseAsArrayOf,
   parseAsBoolean,
@@ -23,6 +23,7 @@ export function useDashboardFilters(dashboards: DashboardDefinition[]) {
   });
 
   const searchQuery = filterState.q;
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const selectedTags = filterState.tags;
   const sortField = filterState.sort;
   const showArchived = filterState.archived;
@@ -92,7 +93,7 @@ export function useDashboardFilters(dashboards: DashboardDefinition[]) {
   }, [dashboards]);
 
   const visibleDashboards = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
+    const q = deferredSearchQuery.toLowerCase().trim();
     let result = dashboards.filter((d) => {
       if (!showArchived && d.archived) return false;
       if (showFavoritesOnly && !d.favoritedAt) return false;
@@ -114,7 +115,7 @@ export function useDashboardFilters(dashboards: DashboardDefinition[]) {
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
     return result;
-  }, [dashboards, showArchived, showFavoritesOnly, searchQuery, selectedTags, sortField]);
+  }, [dashboards, showArchived, showFavoritesOnly, deferredSearchQuery, selectedTags, sortField]);
 
   return {
     searchQuery,

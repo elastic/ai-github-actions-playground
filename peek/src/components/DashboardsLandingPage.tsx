@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -41,6 +41,7 @@ import DashboardNameDialog from "./DashboardNameDialog";
 
 export default function DashboardsLandingPage() {
   const navigate = useNavigate();
+  const sortLabelId = useId();
   const {
     dashboards,
     activeDashboardId,
@@ -346,9 +347,9 @@ export default function DashboardsLandingPage() {
           }}
         />
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel id="sort-select-label">Sort by</InputLabel>
+          <InputLabel id={sortLabelId}>Sort by</InputLabel>
           <Select
-            labelId="sort-select-label"
+            labelId={sortLabelId}
             label="Sort by"
             value={sortField}
             onChange={(e) => setSortField(e.target.value as "updated" | "title")}

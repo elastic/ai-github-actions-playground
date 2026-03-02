@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useId, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -282,6 +282,7 @@ export default function CommandPalette() {
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const commands = useCommands();
+  const listboxId = useId();
 
   // Focus the input once the dialog enter transition completes
   const handleDialogEntered = useCallback(() => {
@@ -360,7 +361,9 @@ export default function CommandPalette() {
         isOptionEqualToValue={(option, value) => option.id === value.id}
         noOptionsText="No matching commands"
         slots={{ popper: CommandPalettePopper, paper: CommandPalettePaper }}
-        slotProps={{ listbox: { id: "command-palette-list", "aria-label": "Commands" } }}
+        slotProps={{
+          listbox: { id: listboxId, "aria-label": "Commands" },
+        }}
         renderInput={(params) => (
           <Box
             ref={params.InputProps.ref}

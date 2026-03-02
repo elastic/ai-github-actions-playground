@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 
 import { createSplitSecretStorage } from "./createSplitSecretStorage";
 
@@ -83,63 +83,66 @@ const llmSplitStorage = createSplitSecretStorage<PersistedLLMState>({
 });
 
 export const useLLMStore = create<LLMState>()(
-  persist(
-    (set, get) => ({
-      config: { ...DEFAULT_CONFIG },
-      messages: [],
-      pendingPrompt: null,
+  devtools(
+    persist(
+      (set, get) => ({
+        config: { ...DEFAULT_CONFIG },
+        messages: [],
+        pendingPrompt: null,
 
-      setProvider: (provider) =>
-        set((s) => ({
-          config: {
-            ...s.config,
-            provider,
-            model: DEFAULT_MODEL_BY_PROVIDER[provider],
-          },
-        })),
-      setApiKey: (apiKey) => set((s) => ({ config: { ...s.config, apiKey } })),
-      setModel: (model) => set((s) => ({ config: { ...s.config, model } })),
-      setTabAutocompleteEnabled: (enabled) =>
-        set((s) => ({ config: { ...s.config, tabAutocompleteEnabled: enabled } })),
-      setElasticDocsEnabled: (enabled) =>
-        set((s) => ({ config: { ...s.config, elasticDocsEnabled: enabled } })),
-      isConfigured: () => {
-        const { config } = get();
-        return config.apiKey.trim().length > 0;
-      },
+        setProvider: (provider) =>
+          set((s) => ({
+            config: {
+              ...s.config,
+              provider,
+              model: DEFAULT_MODEL_BY_PROVIDER[provider],
+            },
+          })),
+        setApiKey: (apiKey) => set((s) => ({ config: { ...s.config, apiKey } })),
+        setModel: (model) => set((s) => ({ config: { ...s.config, model } })),
+        setTabAutocompleteEnabled: (enabled) =>
+          set((s) => ({ config: { ...s.config, tabAutocompleteEnabled: enabled } })),
+        setElasticDocsEnabled: (enabled) =>
+          set((s) => ({ config: { ...s.config, elasticDocsEnabled: enabled } })),
+        isConfigured: () => {
+          const { config } = get();
+          return config.apiKey.trim().length > 0;
+        },
 
-      addMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
-      updateMessage: (id, content) =>
-        set((s) => ({
-          messages: s.messages.map((m) => (m.id === id ? { ...m, content } : m)),
-        })),
-      removeMessage: (id) =>
-        set((s) => ({
-          messages: s.messages.filter((m) => m.id !== id),
-        })),
-      clearMessages: () => set({ messages: [] }),
-      setPendingPrompt: (prompt) => set({ pendingPrompt: prompt }),
-      resetLLMConfig: () => {
-        useLLMStore.persist.clearStorage();
-        set({
-          config: { ...DEFAULT_CONFIG },
-        });
-      },
-      resetLLMState: () => {
-        useLLMStore.persist.clearStorage();
-        set({
-          config: { ...DEFAULT_CONFIG },
-          messages: [],
-          pendingPrompt: null,
-        });
-      },
-    }),
-    {
-      name: "elastic-peek-llm",
-      storage: llmSplitStorage,
-      partialize: (state) => ({
-        config: state.config,
+        addMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
+        updateMessage: (id, content) =>
+          set((s) => ({
+            messages: s.messages.map((m) => (m.id === id ? { ...m, content } : m)),
+          })),
+        removeMessage: (id) =>
+          set((s) => ({
+            messages: s.messages.filter((m) => m.id !== id),
+          })),
+        clearMessages: () => set({ messages: [] }),
+        setPendingPrompt: (prompt) => set({ pendingPrompt: prompt }),
+        resetLLMConfig: () => {
+          useLLMStore.persist.clearStorage();
+          set({
+            config: { ...DEFAULT_CONFIG },
+          });
+        },
+        resetLLMState: () => {
+          useLLMStore.persist.clearStorage();
+          set({
+            config: { ...DEFAULT_CONFIG },
+            messages: [],
+            pendingPrompt: null,
+          });
+        },
       }),
-    },
+      {
+        name: "elastic-peek-llm",
+        storage: llmSplitStorage,
+        partialize: (state) => ({
+          config: state.config,
+        }),
+      },
+    ),
+    { name: "LLMStore", enabled: import.meta.env.DEV },
   ),
 );

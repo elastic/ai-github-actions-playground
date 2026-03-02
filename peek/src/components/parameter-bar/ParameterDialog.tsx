@@ -178,7 +178,7 @@ export default function ParameterDialog({
           onChange={(e) =>
             setDraft((d) => ({ ...d, name: e.target.value.replace(/[^a-zA-Z0-9_]/g, "") }))
           }
-          helperText="Used in queries as ?name (letters, numbers, underscore only)"
+          helperText="Used in queries as ?name (letters, numbers, and underscores only)"
           fullWidth
         />
         <TextField
