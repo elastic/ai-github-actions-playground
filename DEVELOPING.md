@@ -229,6 +229,7 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 | Live Elasticsearch | All pages with real OTel data and a real cluster | `explore-live-es.yml` |
 | Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `explore-customer-feedback.yml` |
 | Design: Modern UI Review | Design modernization, spacing, typography, cards, tables, empty states, loading patterns | `ui-designer-review.yml` |
+| UX: Papercuts & Polish | UI inconsistencies, confusing labels, misplaced buttons, micro-friction, dead-end flows | `explore-ux-papercuts.yml` |
 
 Agents use **Playwright MCP tools** (`browser_navigate`, `browser_click`,
 `browser_type`, `browser_snapshot`, `browser_take_screenshot`) for interactive

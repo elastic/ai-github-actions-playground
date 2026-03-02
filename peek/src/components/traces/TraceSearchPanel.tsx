@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,11 +13,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import type { Extension } from "@codemirror/state";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
 import PageHeader from "../PageHeader";
+import QueryAnnotationOverlay from "../QueryAnnotationOverlay";
 
 import { getServiceColor } from "./traceColors";
 import type { TraceFilters } from "./traceQueryBuilder";
@@ -51,6 +52,20 @@ export default function TraceSearchPanel({
 }: TraceSearchPanelProps) {
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
+  const [editorFocused, setEditorFocused] = useState(false);
+
+  const editorExtensions = useMemo(
+    () => [
+      ...queryEditorExtensions,
+      EditorView.focusChangeEffect.of((_state, focusing) => {
+        setEditorFocused(focusing);
+        return null;
+      }),
+    ],
+    // queryEditorExtensions is stable (useMemo([], []) in TracesPage); setEditorFocused is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
@@ -256,16 +271,23 @@ export default function TraceSearchPanel({
 
       {/* ES|QL editor */}
       <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-        <CodeMirror
-          value={effectiveQuery}
-          onChange={onRawQueryChange}
-          onCreateEditor={onCreateEditor}
-          extensions={queryEditorExtensions}
-          theme={themeMode}
-          height="120px"
-          basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-          aria-label="Trace search query editor"
-        />
+        <Box sx={{ position: "relative" }}>
+          <CodeMirror
+            value={effectiveQuery}
+            onChange={onRawQueryChange}
+            onCreateEditor={onCreateEditor}
+            extensions={editorExtensions}
+            theme={themeMode}
+            height="120px"
+            basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
+            aria-label="Trace search query editor"
+          />
+          <QueryAnnotationOverlay
+            query={effectiveQuery}
+            editorFocused={editorFocused}
+            height={120}
+          />
+        </Box>
       </Box>
 
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

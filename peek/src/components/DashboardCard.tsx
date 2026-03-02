@@ -13,6 +13,7 @@ import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 
 import type { DashboardDefinition } from "../types";
+import { formatDate } from "../utils/formatDate";
 
 interface DashboardCardProps {
   entry: DashboardDefinition;
@@ -75,7 +76,7 @@ export default memo(function DashboardCard({
               {entry.panels.length} panel{entry.panels.length !== 1 ? "s" : ""}
             </Typography>
             <Typography variant="caption" color="text.primary">
-              Updated {new Date(entry.updatedAt).toLocaleDateString()}
+              Updated {formatDate(entry.updatedAt)}
             </Typography>
           </Stack>
           {entry.tags && entry.tags.length > 0 && (
