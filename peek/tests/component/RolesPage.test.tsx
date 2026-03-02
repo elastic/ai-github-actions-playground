@@ -186,6 +186,10 @@ describe("RolesPage", () => {
       ).not.toBeInTheDocument();
       expect(screen.getByText("Select a role.")).toBeInTheDocument();
     });
+
+    await user.clear(screen.getByPlaceholderText("Search roles"));
+    await screen.findByRole("heading", { level: 6, name: "empty_role" });
+    expect(screen.queryByText("Select a role.")).not.toBeInTheDocument();
   });
 
   it("shows access warning when canReadSecurityRoles is false", async () => {

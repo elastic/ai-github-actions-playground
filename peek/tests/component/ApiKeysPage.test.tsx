@@ -258,6 +258,10 @@ describe("ApiKeysPage", () => {
       ).not.toBeInTheDocument();
       expect(screen.getByText("Select an API key.")).toBeInTheDocument();
     });
+
+    await user.clear(screen.getByPlaceholderText("Search API keys"));
+    await screen.findByRole("heading", { level: 6, name: "ingest-key" });
+    expect(screen.queryByText("Select an API key.")).not.toBeInTheDocument();
   });
 
   it("shows access warning when canReadApiKeys is false", async () => {
