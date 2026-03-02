@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { QueryFunction } from "@tanstack/react-query";
 
 import { type ElasticsearchClient } from "../services/es";
@@ -28,4 +28,24 @@ export function useEsQuery() {
   );
 
   return { connection, createQueryFn };
+}
+
+export function useRefetchOnConnectionChange(
+  connection: ReturnType<typeof useConnectionStore.getState>["connection"],
+  refetch: () => void | Promise<unknown>,
+) {
+  const previousConnectionRef = useRef(connection);
+
+  useEffect(() => {
+    const previousConnection = previousConnectionRef.current;
+    if (
+      previousConnection &&
+      connection &&
+      previousConnection !== connection &&
+      previousConnection.url === connection.url
+    ) {
+      void refetch();
+    }
+    previousConnectionRef.current = connection;
+  }, [connection, refetch]);
 }

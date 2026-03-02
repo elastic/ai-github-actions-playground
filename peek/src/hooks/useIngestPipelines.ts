@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { IngestPipeline } from "../services/es";
 import type { DataFetchResult } from "../types/query";
 
-import { useEsQuery } from "./useEsQuery";
+import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 export type PipelineEntry = { name: string; pipeline: IngestPipeline };
 
@@ -23,6 +23,7 @@ export function useIngestPipelines(): DataFetchResult<PipelineEntry[]> & {
         .map(([name, pipeline]) => ({ name, pipeline }))
         .sort((a, b) => a.name.localeCompare(b.name)),
   });
+  useRefetchOnConnectionChange(connection, query.refetch);
 
   const refresh = () => {
     void query.refetch();

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { CatIndexRecord, IndexStatsResponse } from "../services/es";
 import type { DataFetchResult } from "../types/query";
 
-import { useEsQuery } from "./useEsQuery";
+import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 export function useIndices(): DataFetchResult<CatIndexRecord[]> & {
   refresh: () => void;
@@ -18,6 +18,7 @@ export function useIndices(): DataFetchResult<CatIndexRecord[]> & {
     refetchOnReconnect: false,
     select: (data) => [...data].sort((a, b) => a.index.localeCompare(b.index)),
   });
+  useRefetchOnConnectionChange(connection, query.refetch);
 
   const refresh = () => {
     void query.refetch();
@@ -65,6 +66,7 @@ export function useIndexDetail(indexName: string | null): DataFetchResult<IndexD
       };
     },
   });
+  useRefetchOnConnectionChange(connection, query.refetch);
 
   if (!connection || !indexName) return { status: "idle" };
   if (query.isFetching) return { status: "loading" };

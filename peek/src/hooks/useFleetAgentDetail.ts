@@ -11,7 +11,7 @@ import {
 } from "../services/fleet";
 import type { DataFetchResult } from "../types/query";
 
-import { useEsQuery } from "./useEsQuery";
+import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 export interface FleetAgentDetailData {
   agentInfo: ElasticAgentInfo | null;
@@ -54,6 +54,7 @@ export function useFleetAgentDetail(agentId: string): DataFetchResult<FleetAgent
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+  useRefetchOnConnectionChange(connection, query.refetch);
 
   const refresh = () => {
     void query.refetch();
