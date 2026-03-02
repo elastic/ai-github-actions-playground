@@ -15,6 +15,7 @@ import { resolveDateTime } from "../services/datemath";
 import type { TimeRange } from "../types";
 
 import { DASHBOARD_TIME_PRESETS } from "./timePresets";
+import { getCustomRangeValidationError } from "./dateRangeValidation";
 
 /** Format a datetime-local string (YYYY-MM-DDTHH:mm) from a date-math or ISO value. */
 function toDatetimeLocal(value: string): string {
@@ -73,25 +74,16 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
     handleClose();
   };
 
+  const customRangeError = getCustomRangeValidationError(customFrom, customTo);
+  const customRangeInvalid = customRangeError !== null;
+
   const handleApplyCustom = () => {
+    if (customRangeInvalid) return;
     const fromDate = new Date(customFrom);
     const toDate = new Date(customTo);
-    if (
-      !customFrom ||
-      !customTo ||
-      Number.isNaN(fromDate.getTime()) ||
-      Number.isNaN(toDate.getTime()) ||
-      fromDate.getTime() >= toDate.getTime()
-    )
-      return;
     onChange({ from: fromDate.toISOString(), to: toDate.toISOString() });
     handleClose();
   };
-
-  const fromMs = new Date(customFrom).getTime();
-  const toMs = new Date(customTo).getTime();
-  const customRangeInvalid =
-    !customFrom || !customTo || Number.isNaN(fromMs) || Number.isNaN(toMs) || fromMs >= toMs;
 
   return (
     <>
@@ -169,6 +161,8 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
               size="small"
               value={customFrom}
               onChange={(e) => setCustomFrom(e.target.value)}
+              error={customRangeInvalid}
+              helperText={customRangeError}
               slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
             />
@@ -178,6 +172,8 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
               size="small"
               value={customTo}
               onChange={(e) => setCustomTo(e.target.value)}
+              error={customRangeInvalid}
+              helperText={customRangeError}
               slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
             />
