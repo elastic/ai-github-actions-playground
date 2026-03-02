@@ -9,6 +9,8 @@ const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 const LIGHT_PRIMARY = "#0070C5";
 const DARK_PRIMARY = "#3BAAFF";
+const LIGHT_TEXT = { primary: "#1A1C21", secondary: "#676F7B" };
+const DARK_TEXT = { primary: "#DFE5EF", secondary: "#98A2B3" };
 const LIGHT_BORDER = { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" };
 const DARK_BORDER = { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" };
 const REDUCED_MOTION_CSS = `
@@ -187,6 +189,13 @@ function cssBaselineOverrides(primaryColor: string, scrollbar: ScrollbarColors):
     *::-webkit-scrollbar-corner {
       background: ${scrollbar.track};
     }
+
+    @media (forced-colors: active) {
+      * {
+        scrollbar-width: auto;
+        scrollbar-color: auto;
+      }
+    }
   `;
 }
 
@@ -197,7 +206,7 @@ export const lightTheme = createTheme({
     primary: { main: LIGHT_PRIMARY },
     secondary: { main: "#00B5A9" },
     background: { default: "#F4F6FB", paper: "#FFFFFF", subtle: "#EDF0F7", elevated: "#FFFFFF" },
-    text: { primary: "#1A1C21", secondary: "#676F7B" },
+    text: LIGHT_TEXT,
     border: LIGHT_BORDER,
     status: { ...STATUS_COLORS },
   },
@@ -205,8 +214,8 @@ export const lightTheme = createTheme({
     ...baseOptions.components,
     MuiCssBaseline: {
       styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, {
-        thumb: LIGHT_BORDER.default,
-        thumbHover: LIGHT_BORDER.strong,
+        thumb: LIGHT_TEXT.secondary,
+        thumbHover: LIGHT_TEXT.primary,
         track: "transparent",
       }),
     },
@@ -220,7 +229,7 @@ export const darkTheme = createTheme({
     primary: { main: DARK_PRIMARY },
     secondary: { main: "#5EECD5" },
     background: { default: "#0F1118", paper: "#1A1D27", subtle: "#141720", elevated: "#242838" },
-    text: { primary: "#DFE5EF", secondary: "#98A2B3" },
+    text: DARK_TEXT,
     border: DARK_BORDER,
     status: { ...STATUS_COLORS },
   },
@@ -228,8 +237,8 @@ export const darkTheme = createTheme({
     ...baseOptions.components,
     MuiCssBaseline: {
       styleOverrides: cssBaselineOverrides(DARK_PRIMARY, {
-        thumb: DARK_BORDER.default,
-        thumbHover: DARK_BORDER.strong,
+        thumb: DARK_TEXT.secondary,
+        thumbHover: DARK_TEXT.primary,
         track: "transparent",
       }),
     },
