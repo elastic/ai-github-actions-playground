@@ -21,6 +21,7 @@ interface DataTableBodyProps {
   page: number;
   rowsPerPage: number;
   onRowClick: (row: unknown[]) => void;
+  selectedRowIndex?: number | null;
 }
 
 export default function DataTableBody({
@@ -33,6 +34,7 @@ export default function DataTableBody({
   page,
   rowsPerPage,
   onRowClick,
+  selectedRowIndex,
 }: DataTableBodyProps) {
   return (
     <TableBody>
@@ -46,6 +48,8 @@ export default function DataTableBody({
           <TableRow
             hover
             tabIndex={0}
+            data-row-index={rowIdx}
+            selected={selectedRowIndex === rowIdx}
             onClick={() => onRowClick(row)}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {

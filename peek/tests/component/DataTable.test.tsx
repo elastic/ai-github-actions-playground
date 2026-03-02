@@ -411,4 +411,132 @@ describe("DataTable", () => {
       position: "sticky",
     });
   });
+
+  it("navigates to the next row with ArrowDown when inspector is open", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[1]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[1]!.focus();
+    expect(rows[1]).toHaveFocus();
+
+    await user.keyboard("{ArrowDown}");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("foo bar");
+    });
+  });
+
+  it("navigates to the previous row with ArrowUp when inspector is open", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[2]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[2]!.focus();
+    expect(rows[2]).toHaveFocus();
+
+    await user.keyboard("{ArrowUp}");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("hello world");
+    });
+  });
+
+  it("does not navigate past the first row with ArrowUp", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[1]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[1]!.focus();
+    expect(rows[1]).toHaveFocus();
+
+    await user.keyboard("{ArrowUp}");
+
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("hello world");
+  });
+
+  it("does not navigate past the last row with ArrowDown", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    await user.click(rows[3]!);
+    expect(screen.getByText("Row Inspector")).toBeInTheDocument();
+    rows[3]!.focus();
+    expect(rows[3]).toHaveFocus();
+
+    await user.keyboard("{ArrowDown}");
+
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("aaa");
+  });
+
+  it("does not navigate with arrow keys when inspector is closed", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={mockData} />);
+
+    const rows = screen.getAllByRole("row");
+    rows[1]!.focus();
+    expect(rows[1]).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+
+    expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument();
+  });
+
+  it("does not navigate rows when arrow keys are pressed on pagination controls", async () => {
+    const user = userEvent.setup();
+    const paginatedData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: Array.from({ length: 30 }, (_, i) => [`row-${i}`]),
+    };
+    render(<DataTable data={paginatedData} />);
+    const nextPageButton = screen.getByRole("button", { name: /next page/i });
+
+    await user.click(screen.getByText("row-0"));
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-0");
+
+    nextPageButton.focus();
+    expect(nextPageButton).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{ArrowUp}");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-0");
+    });
+  });
+
+  it("keeps arrow navigation functional and bounded after pagination changes", async () => {
+    const user = userEvent.setup();
+    const paginatedData: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: Array.from({ length: 30 }, (_, i) => [`row-${i}`]),
+    };
+    render(<DataTable data={paginatedData} />);
+
+    await user.click(screen.getByRole("button", { name: /next page/i }));
+    await user.click(screen.getByText("row-25"));
+    let dataRows = screen.getAllByRole("row", { hidden: true }).slice(1);
+    expect(dataRows[0]).toHaveAttribute("data-row-index", "0");
+    dataRows[0]!.focus();
+    expect(dataRows[0]).toHaveFocus();
+
+    await user.keyboard("{ArrowDown}");
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-26");
+    });
+    dataRows = screen.getAllByRole("row", { hidden: true }).slice(1);
+    expect(dataRows[1]).toHaveAttribute("data-row-index", "1");
+    dataRows[1]!.focus();
+    expect(dataRows[1]).toHaveFocus();
+
+    await user.keyboard("{ArrowUp}");
+    await waitFor(() => {
+      expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-25");
+    });
+  });
 });

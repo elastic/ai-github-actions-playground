@@ -422,6 +422,44 @@ describe("DiscoverPage", () => {
     expect(screen.queryByRole("button", { name: /export csv/i })).not.toBeInTheDocument();
   });
 
+  it("clears stale results when a subsequent query fails", async () => {
+    const user = userEvent.setup();
+    // First call succeeds
+    queryMock.mockResolvedValueOnce({
+      columns: [{ name: "@timestamp", type: "date" }],
+      values: [["2025-06-15T12:00:00.000Z"]],
+      executionTimeMs: 1,
+    });
+    // Second call fails with a syntax error
+    queryMock.mockRejectedValueOnce(
+      Object.assign(new Error("line 1:18: Unknown command [LIIMT]"), {
+        status: 400,
+        message: "line 1:18: Unknown command [LIIMT]",
+      }),
+    );
+
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    // Run the first (successful) query
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId("datatable-mock")).toBeInTheDocument();
+
+    // Run the second (failing) query
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(2));
+
+    // Old results should be cleared and error shown
+    await waitFor(() => {
+      expect(screen.queryByTestId("datatable-mock")).not.toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent("Unknown command [LIIMT]");
+    });
+  });
+
   it("disables the Run Query button when query is empty", () => {
     useQueryStore.getState().setDiscoverSessionQuery("   ");
 

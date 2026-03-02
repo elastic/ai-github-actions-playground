@@ -28,6 +28,7 @@ interface TracingConnectionSnapshot {
   connected: boolean;
   url: string;
   proxyUrl: string;
+  ingestUrl: string;
   otlpEnabled: boolean;
   otlpEndpoint: string;
   otlpUseElasticAuth: boolean;
@@ -61,6 +62,7 @@ export function getTracingConnectionSnapshot(
     connected,
     url: (connection?.url ?? "").trim(),
     proxyUrl: (connection?.proxyUrl ?? "").trim(),
+    ingestUrl: (connection?.ingestUrl ?? "").trim(),
     otlpEnabled: connection?.otlpEnabled ?? false,
     otlpEndpoint: (connection?.otlpEndpoint ?? "").trim(),
     otlpUseElasticAuth: connection?.otlpUseElasticAuth ?? true,
@@ -77,6 +79,7 @@ export function shouldReconfigureTracing(
     previous.connected !== next.connected ||
     previous.url !== next.url ||
     previous.proxyUrl !== next.proxyUrl ||
+    previous.ingestUrl !== next.ingestUrl ||
     previous.otlpEnabled !== next.otlpEnabled ||
     previous.otlpEndpoint !== next.otlpEndpoint ||
     previous.otlpUseElasticAuth !== next.otlpUseElasticAuth ||
@@ -197,9 +200,9 @@ export async function syncBrowserTracingForConnection(
     return;
   }
 
-  const endpoint =
-    connection.otlpEndpoint?.trim() ||
-    deriveDefaultOtlpEndpoint(deriveOtlpEndpoint(connection.url) ?? connection.url);
+  const ingestBase =
+    connection.ingestUrl?.trim() || deriveOtlpEndpoint(connection.url) || connection.url;
+  const endpoint = connection.otlpEndpoint?.trim() || deriveDefaultOtlpEndpoint(ingestBase);
   if (!endpoint) {
     await stopBrowserTracing();
     return;

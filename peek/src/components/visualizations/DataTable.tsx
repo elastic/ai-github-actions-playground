@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, memo } from "react";
+import { useMemo, useState, useCallback, memo, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
@@ -42,7 +42,9 @@ export default memo(function DataTable({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuColumnIndex, setMenuColumnIndex] = useState<number | null>(null);
@@ -82,13 +84,51 @@ export default memo(function DataTable({
     [data.values, page, rowsPerPage],
   );
 
-  const handleRowClick = useCallback((row: unknown[]) => {
-    setInspectedRow(row);
-  }, []);
+  const handleRowClick = useCallback(
+    (row: unknown[]) => {
+      setInspectedRow(row);
+      const idx = visibleRows.indexOf(row);
+      setSelectedRowIndex(idx >= 0 ? idx : null);
+    },
+    [visibleRows],
+  );
 
   const handleCloseInspector = useCallback(() => {
     setInspectedRow(null);
+    setSelectedRowIndex(null);
   }, []);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (inspectedRow === null || selectedRowIndex === null) return;
+      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest("tr[data-row-index]")) return;
+      if (visibleRows.length === 0) return;
+      const maxIndex = visibleRows.length - 1;
+      const currentIndex = Math.min(Math.max(selectedRowIndex, 0), maxIndex);
+      event.preventDefault();
+
+      const nextIndex =
+        event.key === "ArrowDown"
+          ? Math.min(currentIndex + 1, maxIndex)
+          : Math.max(currentIndex - 1, 0);
+
+      if (nextIndex === currentIndex) return;
+
+      const nextRow = visibleRows[nextIndex];
+      if (nextRow) {
+        setSelectedRowIndex(nextIndex);
+        setInspectedRow(nextRow);
+
+        const rowEl = tableContainerRef.current?.querySelector(`[data-row-index="${nextIndex}"]`);
+        if (rowEl && typeof rowEl.scrollIntoView === "function") {
+          rowEl.scrollIntoView({ block: "nearest" });
+        }
+      }
+    },
+    [inspectedRow, selectedRowIndex, visibleRows],
+  );
 
   const handleSortToggle = useCallback(
     (columnName: string) => {
@@ -150,7 +190,10 @@ export default memo(function DataTable({
   const hiddenCount = emptyColumnIndices.size;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+      onKeyDown={handleKeyDown}
+    >
       {hiddenCount > 0 && (
         <Box
           sx={{
@@ -178,7 +221,7 @@ export default memo(function DataTable({
           </Link>
         </Box>
       )}
-      <TableContainer sx={{ flex: 1, minHeight: 0 }}>
+      <TableContainer ref={tableContainerRef} sx={{ flex: 1, minHeight: 0 }}>
         <Table size="small" stickyHeader>
           <DataTableHeader
             data={data}
@@ -202,6 +245,7 @@ export default memo(function DataTable({
             page={page}
             rowsPerPage={rowsPerPage}
             onRowClick={handleRowClick}
+            selectedRowIndex={selectedRowIndex}
           />
         </Table>
       </TableContainer>

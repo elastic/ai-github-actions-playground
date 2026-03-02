@@ -7,7 +7,7 @@ Use the Add Data page to onboard Elastic Distribution of OpenTelemetry (EDOT) co
 Before choosing a platform, select an endpoint type:
 
 - **Elasticsearch** — send data directly to an Elasticsearch endpoint using an API key. The starter command includes `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` placeholders for your Elasticsearch URL and API key.
-- **Managed OTLP** — send data to a managed OTLP ingest endpoint (e.g. Elastic Cloud). When selected, the page validates the derived OTLP URL and shows a status message indicating whether the endpoint is reachable. For Elastic Cloud the URL follows the pattern `https://<id>.ingest.<region>.<provider>.elastic.cloud`. The starter command is adjusted to target the OTLP endpoint instead of Elasticsearch directly.
+- **Managed OTLP** — send data to a managed OTLP ingest endpoint (e.g. Elastic Cloud). When selected, the page validates the derived OTLP URL and shows a status message indicating whether the endpoint is reachable. Supported auto-derivation patterns include `.elastic.cloud`, `.cloud.es.io`, and `.kb.*.cloud.es.io` URLs. For `.cloud.es.io`, the wizard probes both `.cloud.es.io` and `.elastic-cloud.com` ingest hosts and uses the first reachable endpoint in the starter command.
 
 The page links to official quickstart guides and provides starter commands whose placeholders vary by the selected endpoint type.
 

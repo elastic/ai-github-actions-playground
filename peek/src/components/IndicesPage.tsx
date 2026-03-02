@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -17,6 +16,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
+import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 import { type DiskUsageIndexEntry } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -29,7 +29,7 @@ import { useIndices, useIndexDetail } from "../hooks/useIndices";
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import IndexDetailPanel from "./IndexDetailPanel";
-import { type IndexTab, healthColor } from "./indicesUtils";
+import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -41,10 +41,18 @@ export default function IndicesPage() {
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useQueryState(
+    "search",
+    parseAsString.withDefault("").withOptions({ history: "replace" }),
+  );
   const [showSystemIndices, setShowSystemIndices] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<IndexTab>("overview");
+  const [selectedIndex, setSelectedIndex] = useQueryState("index", parseAsString);
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsStringEnum<IndexTab>(INDEX_TABS)
+      .withDefault("overview")
+      .withOptions({ history: "replace" }),
+  );
   const [diskUsage, setDiskUsage] = useState<DiskUsageIndexEntry | null>(null);
   const [diskUsageLoading, setDiskUsageLoading] = useState(false);
   const [diskUsageError, setDiskUsageError] = useState<string | null>(null);
@@ -63,14 +71,12 @@ export default function IndicesPage() {
   // Auto-select the first index when data loads
   useEffect(() => {
     if (!indicesData) return;
-    setSelectedIndex((current) => {
-      if (current && indicesData.some((i) => i.index === current)) return current;
-      const first = showSystemIndices
-        ? indicesData[0]
-        : indicesData.find((i) => !i.index.startsWith("."));
-      return first?.index ?? null;
-    });
-  }, [indicesData, showSystemIndices]);
+    if (selectedIndex && indicesData.some((i) => i.index === selectedIndex)) return;
+    const first = showSystemIndices
+      ? indicesData[0]
+      : indicesData.find((i) => !i.index.startsWith("."));
+    void setSelectedIndex(first?.index ?? null);
+  }, [indicesData, showSystemIndices, selectedIndex, setSelectedIndex]);
 
   // Clear disk usage when selectedIndex changes
   useEffect(() => {
@@ -83,8 +89,8 @@ export default function IndicesPage() {
     if (showSystemIndices) return;
     if (!selectedIndex?.startsWith(".")) return;
     const first = indices.find((i) => !i.index.startsWith("."));
-    setSelectedIndex(first?.index ?? null);
-  }, [showSystemIndices, selectedIndex, indices]);
+    void setSelectedIndex(first?.index ?? null);
+  }, [showSystemIndices, selectedIndex, indices, setSelectedIndex]);
 
   const deferredSearch = useDeferredValue(search);
   const filteredIndices = useMemo(() => {
@@ -205,13 +211,13 @@ export default function IndicesPage() {
             minHeight: 0,
           }}
         >
-          <Box sx={{ p: 1 }}>
+          <Box sx={{ p: 1, borderBottom: 1, borderColor: "border.subtle" }}>
             <TextField
               size="small"
               fullWidth
               placeholder="Search indices"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => void setSearch(e.target.value)}
               inputProps={{ "aria-label": "Search indices" }}
             />
             <FormControlLabel
@@ -231,7 +237,6 @@ export default function IndicesPage() {
               sx={{ mt: 0.5, ml: 0 }}
             />
           </Box>
-          <Divider />
           <List
             dense
             sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
@@ -242,7 +247,7 @@ export default function IndicesPage() {
               <ListItem key={idx.index} disablePadding>
                 <ListItemButton
                   selected={idx.index === selectedIndex}
-                  onClick={() => setSelectedIndex(idx.index)}
+                  onClick={() => void setSelectedIndex(idx.index)}
                 >
                   <Chip
                     size="small"
@@ -283,7 +288,7 @@ export default function IndicesPage() {
           selectedRecord={selectedRecord}
           loadingDetail={loadingDetail}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => void setActiveTab(tab)}
           mappings={mappings}
           settings={settings}
           indexStats={indexStats}
