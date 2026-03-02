@@ -65,29 +65,28 @@ export function useMarkdownEsql({
       if (!uniqueBlocks.has(b.raw)) uniqueBlocks.set(b.raw, b.query);
     }
 
-    let cancelled = false;
-
     void (async () => {
-      const next = new Map<string, EsqlResponse>();
+      if (!connection) return;
 
-      for (const [raw, query] of uniqueBlocks) {
-        if (cancelled) return;
-        if (!connection) continue;
-        try {
+      const entries = await Promise.allSettled(
+        [...uniqueBlocks].map(async ([raw, query]) => {
           const datasource = createPersesEsqlDatasource(connection);
           const request = buildPersesEsqlRequest(query, { timeRange, parameters });
           const data = await datasource.execute(request, ctrl.signal);
-          if (!ctrl.signal.aborted) next.set(raw, data);
-        } catch {
-          // Query failed — leave the raw token in place.
-        }
-      }
+          return [raw, data] as const;
+        }),
+      );
 
-      if (!cancelled) setResults({ key: blocksKey, values: next });
+      if (ctrl.signal.aborted) return;
+
+      const next = new Map<string, EsqlResponse>();
+      for (const entry of entries) {
+        if (entry.status === "fulfilled") next.set(...entry.value);
+      }
+      setResults({ key: blocksKey, values: next });
     })();
 
     return () => {
-      cancelled = true;
       ctrl.abort();
     };
   }, [blocks, blocksKey, connection, timeRange, parameters]);
