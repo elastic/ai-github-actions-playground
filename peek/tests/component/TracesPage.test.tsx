@@ -27,7 +27,7 @@ let mockErrorsByHook: Array<string | null> = [];
 let esqlHookCallCount = 0;
 vi.mock("../../src/hooks/useEsqlQuery", () => ({
   useEsqlQuery: (opts: { onSuccess?: (data: EsqlResponse, query: string) => void }) => {
-    const hookIndex = esqlHookCallCount % 5;
+    const hookIndex = esqlHookCallCount % Math.max(mockErrorsByHook.length, 1);
     esqlHookCallCount += 1;
     capturedCallbacks.push(opts.onSuccess);
     return { runQuery: mockRunQuery, loading: false, error: mockErrorsByHook[hookIndex] ?? null };
