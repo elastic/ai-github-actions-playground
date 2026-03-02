@@ -29,6 +29,12 @@ let latestSwitchRequestId = 0;
 const latestRequestIdByProfileId = new Map<string, number>();
 const latestRetestIdByProfileId = new Map<string, number>();
 
+export const clearConnectionProfileRequestTracking = () => {
+  latestSwitchRequestId = 0;
+  latestRequestIdByProfileId.clear();
+  latestRetestIdByProfileId.clear();
+};
+
 const credentialsSchema = z
   .object({
     apiKey: z.string().optional().catch(""),
