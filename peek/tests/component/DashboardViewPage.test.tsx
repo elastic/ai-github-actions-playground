@@ -42,10 +42,17 @@ describe("DashboardViewPage", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(`/dashboards/${id}`);
   });
 
-  it("redirects to /dashboards when id does not match any dashboard", () => {
+  it("shows not-found empty state when id does not match any dashboard", () => {
     renderViewPage("nonexistent-id");
 
     expect(screen.queryByTestId("dashboard-grid")).not.toBeInTheDocument();
-    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards");
+    expect(screen.getByText("Dashboard not found")).toBeInTheDocument();
+    expect(
+      screen.getByText("The dashboard you requested does not exist or may have been deleted."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /back to dashboards/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create dashboard/i })).toBeInTheDocument();
+    // Stays on the same route instead of redirecting
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/nonexistent-id");
   });
 });
