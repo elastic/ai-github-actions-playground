@@ -1,7 +1,19 @@
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+let originalPlaywrightPreview: string | undefined;
 
 beforeEach(() => {
+  originalPlaywrightPreview = process.env.PLAYWRIGHT_PREVIEW;
   vi.resetModules();
+});
+
+afterEach(() => {
+  if (originalPlaywrightPreview === undefined) {
+    delete process.env.PLAYWRIGHT_PREVIEW;
+    return;
+  }
+
+  process.env.PLAYWRIGHT_PREVIEW = originalPlaywrightPreview;
 });
 
 test.each(["0", "false", ""])(
