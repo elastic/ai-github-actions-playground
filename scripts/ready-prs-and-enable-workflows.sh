@@ -109,14 +109,22 @@ is_bot_author() {
   [[ "$author" =~ $BOT_AUTHOR_PATTERN ]]
 }
 
+# Global cache for workflow runs — populated by fetch_all_runs().
+# Avoids N+1 API calls by fetching once per phase and filtering locally.
+ALL_RUNS=""
+
+fetch_all_runs() {
+  ALL_RUNS=$(gh run list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --limit 200 \
+    --json databaseId,status,conclusion,workflowName,event,headSha,name,headBranch)
+}
+
 # Compute CI status for a given head SHA.
+# Requires ALL_RUNS to be populated via fetch_all_runs().
 # Returns: NO_RUNS | ACTION_REQUIRED | QUEUED | IN_PROGRESS | PASSING | FAILING
 compute_ci_status() {
   local head_sha="$1"
   local runs
-  runs=$(gh run list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --limit 50 \
-    --json databaseId,status,conclusion,event,headSha \
-    --jq "[.[] | select(.event == \"pull_request\" and .headSha == \"$head_sha\")]")
+  runs=$(echo "$ALL_RUNS" | jq "[.[] | select(.event == \"pull_request\" and .headSha == \"$head_sha\")]")
 
   local count
   count=$(echo "$runs" | jq 'length')
@@ -156,13 +164,12 @@ compute_ci_status() {
 }
 
 # Check if Address PR Review Feedback workflow is running for a branch.
+# Requires ALL_RUNS to be populated via fetch_all_runs().
 # Returns: RUNNING | IDLE
 check_address_workflow() {
   local branch="$1"
   local active
-  active=$(gh run list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --branch "$branch" --limit 10 \
-    --json name,status \
-    --jq '[.[] | select(.name == "Address PR Review Feedback" and (.status == "in_progress" or .status == "queued"))] | length')
+  active=$(echo "$ALL_RUNS" | jq '[.[] | select(.name == "Address PR Review Feedback" and .headBranch == "'"$branch"'" and (.status == "in_progress" or .status == "queued"))] | length')
 
   if [[ "$active" -gt 0 ]]; then
     echo "RUNNING"
@@ -327,15 +334,15 @@ phase_approve_runs() {
     return 0
   fi
 
+  fetch_all_runs
+
   local approved=0 failed=0
 
   while IFS=$'\t' read -r pr_number pr_title pr_sha; do
     [[ -z "$pr_number" ]] && continue
 
     local action_runs
-    action_runs=$(gh run list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --limit 200 \
-      --json databaseId,status,conclusion,workflowName,event,headSha \
-      --jq '.[] | select(.event == "pull_request" and (.status == "action_required" or .conclusion == "action_required") and .headSha == "'"$pr_sha"'") | "\(.databaseId)\t\(.workflowName)"')
+    action_runs=$(echo "$ALL_RUNS" | jq -r '.[] | select(.event == "pull_request" and (.status == "action_required" or .conclusion == "action_required") and .headSha == "'"$pr_sha"'") | "\(.databaseId)\t\(.workflowName)"')
 
     [[ -z "$action_runs" ]] && continue
 
@@ -392,6 +399,8 @@ phase_kick_ci() {
     return 0
   fi
 
+  fetch_all_runs
+
   local kicked=0
 
   while IFS=$'\t' read -r pr_number pr_title head_sha branch; do
@@ -417,9 +426,7 @@ phase_kick_ci() {
 
     # Try to re-run an existing completed CI run
     local run_id
-    run_id=$(gh run list ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} --branch "$branch" --limit 10 \
-      --json databaseId,name,status \
-      --jq '[.[] | select(.name == "CI" and .status == "completed")] | first | .databaseId // empty')
+    run_id=$(echo "$ALL_RUNS" | jq -r '[.[] | select(.name == "CI" and .status == "completed" and .headBranch == "'"$branch"'")] | first | .databaseId // empty')
 
     if [[ -n "$run_id" ]]; then
       if gh run rerun "$run_id" ${REPO_ARGS[@]+"${REPO_ARGS[@]}"} 2>/dev/null; then
@@ -496,6 +503,8 @@ phase_report_status() {
     return 0
   fi
 
+  fetch_all_runs
+
   # Classify each PR and collect as "STATE\tentry" lines
   local classified_lines=""
 
@@ -505,15 +514,29 @@ phase_report_status() {
     local state
     state=$(classify_pr "$number" "$title" "$is_draft" "$mergeable" "$review" "$head_sha" "$branch" "$author")
 
-    # Build detail string
+    # Derive CI/review labels from the already-classified state (no extra API calls)
     local ci_label="" review_label=""
     case "$state" in
       SKIP_HUMAN|SKIP_WIP|DRAFT_READY|UNKNOWN_MERGE|CONFLICTING)
         ;;
-      *)
-        local ci_raw
-        ci_raw=$(compute_ci_status "$head_sha")
-        ci_label="CI:$ci_raw"
+      MERGE_READY|REVIEW_NEEDED|CHANGES_ADDRESSABLE|CHANGES_DELEGATED)
+        ci_label="CI:PASSING"
+        review_label="Review:$review"
+        ;;
+      RUNS_BLOCKED)
+        ci_label="CI:ACTION_REQUIRED"
+        review_label="Review:$review"
+        ;;
+      CI_MISSING_BOT|CI_MISSING_STALE)
+        ci_label="CI:NO_RUNS"
+        review_label="Review:$review"
+        ;;
+      CI_PENDING|CI_PENDING_LONG)
+        ci_label="CI:IN_PROGRESS"
+        review_label="Review:$review"
+        ;;
+      CI_FAILING_ADDRESSABLE|CI_FAILING_DELEGATED)
+        ci_label="CI:FAILING"
         review_label="Review:$review"
         ;;
     esac
