@@ -173,7 +173,11 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
         component="div"
         sx={{ display: "flex", gap: 1, alignItems: "baseline", pt: 2, pb: 1.5, px: 3 }}
       >
-        <Typography variant="h6" component="span" sx={{ flexShrink: 0, lineHeight: "inherit" }}>
+        <Typography
+          variant="subtitle1"
+          component="span"
+          sx={{ flexShrink: 0, lineHeight: "inherit" }}
+        >
           Edit
         </Typography>
         <InputBase
@@ -204,7 +208,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
           <Box
             sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
           >
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               {isMarkdown ? "Markdown Content" : "ES|QL Query"}
             </Typography>
             {!isMarkdown && (
@@ -318,7 +322,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
 
         {/* Visualization type selector */}
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ flexShrink: 0 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
             Visualization
           </Typography>
           <ToggleButtonGroup

@@ -168,7 +168,7 @@ export default function SpanDetailDrawer({
             }}
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" noWrap>
+            <Typography variant="body2" noWrap>
               {span.name}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>

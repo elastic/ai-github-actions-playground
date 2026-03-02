@@ -230,7 +230,7 @@ export default function ProfilingPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary">
             Profiling Explorer
           </Typography>
           <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>

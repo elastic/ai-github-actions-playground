@@ -148,7 +148,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
       {/* Agent info */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Stack spacing={1}>
-          <Typography variant="h6">{agent.hostname}</Typography>
+          <Typography variant="subtitle1">{agent.hostname}</Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Chip size="small" label={agent.agentId} />
             <Chip size="small" label={`v${agent.version}`} color="primary" variant="outlined" />
@@ -167,7 +167,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
 
       {/* Log level breakdown */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Typography variant="subtitle2" gutterBottom>
+        <Typography variant="body2" gutterBottom>
           Log Level Breakdown
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -194,7 +194,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
       {/* Recent errors */}
       {recentErrors.length > 0 && (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Typography variant="subtitle2" gutterBottom color="error.main">
+          <Typography variant="body2" gutterBottom color="error.main">
             Recent Errors
           </Typography>
           <Stack spacing={0.5}>
@@ -463,7 +463,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       {cpuOption && (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Typography variant="subtitle2" gutterBottom>
+          <Typography variant="body2" gutterBottom>
             CPU Usage
           </Typography>
           <Box sx={{ height: 200 }}>
@@ -473,7 +473,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
       )}
       {memoryOption && (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Typography variant="subtitle2" gutterBottom>
+          <Typography variant="body2" gutterBottom>
             Memory Usage
           </Typography>
           <Box sx={{ height: 200 }}>
@@ -483,7 +483,7 @@ function AgentMetrics({ metrics }: { metrics: ElasticAgentMetricPoint[] }) {
       )}
       {eventsOption && (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Typography variant="subtitle2" gutterBottom>
+          <Typography variant="body2" gutterBottom>
             Events
           </Typography>
           <Box sx={{ height: 200 }}>
