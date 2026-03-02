@@ -8,6 +8,8 @@ interface UIState {
   commandPaletteOpen: boolean;
   aiPanelOpen: boolean;
   explainModeActive: boolean;
+  discoverEditorHeight: number;
+  panelEditorHeight: number;
 
   setThemeMode: (mode: "light" | "dark") => void;
   setEditingPanelId: (id: string | null) => void;
@@ -15,6 +17,8 @@ interface UIState {
   setCommandPaletteOpen: (open: boolean) => void;
   setAiPanelOpen: (open: boolean) => void;
   setExplainModeActive: (active: boolean) => void;
+  setDiscoverEditorHeight: (height: number) => void;
+  setPanelEditorHeight: (height: number) => void;
   resetUIState: () => void;
 }
 
@@ -26,6 +30,8 @@ const DEFAULT_UI_STATE = {
   commandPaletteOpen: false,
   aiPanelOpen: false,
   explainModeActive: false,
+  discoverEditorHeight: 100,
+  panelEditorHeight: 120,
 };
 
 export const useUIStore = create<UIState>()(
@@ -40,6 +46,8 @@ export const useUIStore = create<UIState>()(
         setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
         setAiPanelOpen: (open) => set({ aiPanelOpen: open }),
         setExplainModeActive: (active) => set({ explainModeActive: active }),
+        setDiscoverEditorHeight: (height) => set({ discoverEditorHeight: height }),
+        setPanelEditorHeight: (height) => set({ panelEditorHeight: height }),
         resetUIState: () => {
           useUIStore.persist.clearStorage();
           set(DEFAULT_UI_STATE);
@@ -49,6 +57,8 @@ export const useUIStore = create<UIState>()(
         name: STORE_NAME,
         partialize: (state) => ({
           themeMode: state.themeMode,
+          discoverEditorHeight: state.discoverEditorHeight,
+          panelEditorHeight: state.panelEditorHeight,
         }),
       },
     ),
