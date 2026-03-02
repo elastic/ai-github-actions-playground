@@ -220,7 +220,12 @@ export default function IndicesPage() {
             />
           </Box>
           <Divider />
-          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} aria-label="Index list">
+          <List
+            dense
+            sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
+            aria-label="Index list"
+            tabIndex={0}
+          >
             {filteredIndices.map((idx) => (
               <ListItem key={idx.index} disablePadding>
                 <ListItemButton
