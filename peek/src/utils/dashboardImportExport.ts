@@ -3,7 +3,10 @@ import { toPersesDashboard } from "../services/perses/dashboardAdapters";
 
 export function exportDashboardJson(dashboard: DashboardDefinition): void {
   const json = JSON.stringify(toPersesDashboard(dashboard), null, 2);
-  const safeTitle = dashboard.title.replace(/\s+/g, "-").toLowerCase();
+  const safeTitle = dashboard.title
+    .replace(/[^a-zA-Z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase();
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

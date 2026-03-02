@@ -54,9 +54,12 @@ export default function TraceSearchPanel({
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
     const maxMs = maxDurationInput !== "" ? Number(maxDurationInput) : null;
+    const validMin = minMs !== null && Number.isFinite(minMs) && minMs >= 0 ? minMs : null;
+    const validMax = maxMs !== null && Number.isFinite(maxMs) && maxMs >= 0 ? maxMs : null;
     applyFiltersAndRun({
-      minDurationMs: minMs !== null && !isNaN(minMs) ? minMs : null,
-      maxDurationMs: maxMs !== null && !isNaN(maxMs) ? maxMs : null,
+      minDurationMs: validMin,
+      maxDurationMs:
+        validMax !== null && validMin !== null && validMax < validMin ? null : validMax,
     });
   }, [minDurationInput, maxDurationInput, applyFiltersAndRun]);
 

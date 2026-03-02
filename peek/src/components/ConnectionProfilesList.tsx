@@ -7,7 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
+import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -44,6 +44,8 @@ export default function ConnectionProfilesList({
     async (profileId: string) => {
       try {
         const ok = await unlockProfile(profileId, unlockPin);
+        // Guard against stale async result if user canceled or switched rows
+        if (unlockingProfileId !== profileId) return;
         if (ok) {
           setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
           setUnlockingProfileId(null);
@@ -54,10 +56,11 @@ export default function ConnectionProfilesList({
           setUnlockError("Incorrect PIN");
         }
       } catch {
+        if (unlockingProfileId !== profileId) return;
         setUnlockError("Failed to unlock profile");
       }
     },
-    [unlockProfile, unlockPin, onLoadProfile],
+    [unlockProfile, unlockPin, unlockingProfileId, onLoadProfile],
   );
 
   const handleRenameProfile = useCallback(
@@ -84,105 +87,12 @@ export default function ConnectionProfilesList({
       </Typography>
       <List dense disablePadding sx={{ borderRadius: 1, bgcolor: "action.hover" }}>
         {connectionProfiles.map((profile) => (
-          <ListItemButton
+          <ListItem
             key={profile.id}
-            selected={profile.id === activeProfileId}
-            onClick={() => {
-              if (profile.encrypted && !unlockedProfileIds.has(profile.id)) {
-                if (unlockingProfileId !== profile.id) {
-                  setUnlockingProfileId(profile.id);
-                  setUnlockPin("");
-                  setUnlockError(null);
-                }
-                return;
-              }
-              onLoadProfile(profile.id);
-            }}
-            data-testid={`profile-${profile.id}`}
-          >
-            {editingProfileId === profile.id ? (
-              <TextField
-                size="small"
-                value={editingProfileName}
-                onChange={(e) => setEditingProfileName(e.target.value)}
-                onBlur={() => handleRenameProfile(profile.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleRenameProfile(profile.id);
-                  if (e.key === "Escape") setEditingProfileId(null);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline rename
-                autoFocus
-                sx={{ mr: 1 }}
-              />
-            ) : unlockingProfileId === profile.id ? (
-              <Box
-                sx={{ display: "flex", flex: 1, gap: 1, alignItems: "flex-start", py: 0.5 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <TextField
-                  size="small"
-                  type="password"
-                  label="Enter PIN"
-                  value={unlockPin}
-                  onChange={(e) => {
-                    setUnlockPin(e.target.value);
-                    setUnlockError(null);
-                  }}
-                  error={!!unlockError}
-                  helperText={unlockError ?? undefined}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      void handleUnlockProfile(profile.id);
-                    }
-                    if (e.key === "Escape") {
-                      setUnlockingProfileId(null);
-                      setUnlockError(null);
-                    }
-                  }}
-                  // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline PIN entry
-                  autoFocus
-                  sx={{ flex: 1 }}
-                />
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => void handleUnlockProfile(profile.id)}
-                  sx={{ mt: 0.5 }}
-                >
-                  Unlock
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    setUnlockingProfileId(null);
-                    setUnlockError(null);
-                  }}
-                  sx={{ mt: 0.5 }}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            ) : (
-              <ListItemText
-                primary={
-                  <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                    {profile.encrypted && (
-                      <LockIcon fontSize="small" color="action" aria-label="Encrypted" />
-                    )}
-                    {profile.name}
-                  </Box>
-                }
-                secondary={profile.connection.url}
-                onDoubleClick={() => {
-                  setEditingProfileId(profile.id);
-                  setEditingProfileName(profile.name);
-                }}
-              />
-            )}
-            {unlockingProfileId !== profile.id && (
-              <ListItemSecondaryAction>
-                {confirmDeleteId === profile.id ? (
+            disablePadding
+            secondaryAction={
+              unlockingProfileId !== profile.id ? (
+                confirmDeleteId === profile.id ? (
                   <Box sx={{ display: "flex", gap: 1 }}>
                     <Button
                       size="small"
@@ -232,10 +142,108 @@ export default function ConnectionProfilesList({
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </>
-                )}
-              </ListItemSecondaryAction>
-            )}
-          </ListItemButton>
+                )
+              ) : undefined
+            }
+          >
+            <ListItemButton
+              selected={profile.id === activeProfileId}
+              onClick={() => {
+                if (profile.encrypted && !unlockedProfileIds.has(profile.id)) {
+                  if (unlockingProfileId !== profile.id) {
+                    setUnlockingProfileId(profile.id);
+                    setUnlockPin("");
+                    setUnlockError(null);
+                  }
+                  return;
+                }
+                onLoadProfile(profile.id);
+              }}
+              data-testid={`profile-${profile.id}`}
+            >
+              {editingProfileId === profile.id ? (
+                <TextField
+                  size="small"
+                  aria-label={`Rename profile ${profile.name}`}
+                  value={editingProfileName}
+                  onChange={(e) => setEditingProfileName(e.target.value)}
+                  onBlur={() => handleRenameProfile(profile.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleRenameProfile(profile.id);
+                    if (e.key === "Escape") setEditingProfileId(null);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline rename
+                  autoFocus
+                  sx={{ mr: 1 }}
+                />
+              ) : unlockingProfileId === profile.id ? (
+                <Box
+                  sx={{ display: "flex", flex: 1, gap: 1, alignItems: "flex-start", py: 0.5 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <TextField
+                    size="small"
+                    type="password"
+                    label="Enter PIN"
+                    value={unlockPin}
+                    onChange={(e) => {
+                      setUnlockPin(e.target.value);
+                      setUnlockError(null);
+                    }}
+                    error={!!unlockError}
+                    helperText={unlockError ?? undefined}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        void handleUnlockProfile(profile.id);
+                      }
+                      if (e.key === "Escape") {
+                        setUnlockingProfileId(null);
+                        setUnlockError(null);
+                      }
+                    }}
+                    // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: user just triggered inline PIN entry
+                    autoFocus
+                    sx={{ flex: 1 }}
+                  />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => void handleUnlockProfile(profile.id)}
+                    sx={{ mt: 0.5 }}
+                  >
+                    Unlock
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setUnlockingProfileId(null);
+                      setUnlockError(null);
+                    }}
+                    sx={{ mt: 0.5 }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              ) : (
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                      {profile.encrypted && (
+                        <LockIcon fontSize="small" color="action" aria-label="Encrypted" />
+                      )}
+                      {profile.name}
+                    </Box>
+                  }
+                  secondary={profile.connection.url}
+                  onDoubleClick={() => {
+                    setEditingProfileId(profile.id);
+                    setEditingProfileName(profile.name);
+                  }}
+                />
+              )}
+            </ListItemButton>
+          </ListItem>
         ))}
       </List>
       <Divider />

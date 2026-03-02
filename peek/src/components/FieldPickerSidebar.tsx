@@ -166,9 +166,12 @@ export default function FieldPickerSidebar({
                       isNumericType(col.type) &&
                       (() => {
                         const row = insight.data!.values[0];
+                        const colMap = new Map(
+                          insight.data!.columns.map((c, idx) => [c.name, idx]),
+                        );
                         const getVal = (name: string) => {
-                          const idx = insight.data!.columns.findIndex((c) => c.name === name);
-                          return idx >= 0 && row ? (row[idx] ?? null) : null;
+                          const idx = colMap.get(name);
+                          return idx !== undefined && row ? (row[idx] ?? null) : null;
                         };
                         const min = getVal("min_value");
                         const max = getVal("max_value");
@@ -241,12 +244,12 @@ export default function FieldPickerSidebar({
                               fontSize: "0.7rem",
                             }}
                           >
-                            {vals.map((row, i) => {
+                            {vals.map((row) => {
                               const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
                               const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
                               return (
                                 <Box
-                                  key={i}
+                                  key={value == null ? "__null__" : String(value)}
                                   sx={{
                                     display: "flex",
                                     gap: 0.5,
@@ -260,9 +263,12 @@ export default function FieldPickerSidebar({
                                     title={value == null ? "null" : String(value)}
                                   >
                                     {value == null ? (
-                                      <span style={{ opacity: 0.4, fontStyle: "italic" }}>
+                                      <Box
+                                        component="span"
+                                        sx={{ opacity: 0.4, fontStyle: "italic" }}
+                                      >
                                         null
-                                      </span>
+                                      </Box>
                                     ) : (
                                       String(value)
                                     )}
