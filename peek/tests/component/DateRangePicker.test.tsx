@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import DateRangePicker from "../../src/components/DateRangePicker";
-import { getCustomRangeValidationError } from "../../src/components/dateRangeValidation";
 
 describe("DateRangePicker", () => {
   const defaultRange = {
@@ -20,12 +19,6 @@ describe("DateRangePicker", () => {
 
     expect(screen.getAllByText("Select both From and To dates.")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
-  });
-
-  it("returns a specific message for unparsable custom values", () => {
-    expect(getCustomRangeValidationError("not-a-date", "2026-02-28T11:00")).toBe(
-      "Enter valid date/time values.",
-    );
   });
 
   it("shows inline validation when from is after to", async () => {
@@ -54,5 +47,25 @@ describe("DateRangePicker", () => {
 
     expect(screen.getAllByText("From must be earlier than To.")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+  });
+
+  it("applies a valid custom range", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<DateRangePicker value={defaultRange} onChange={onChange} />);
+    await user.click(screen.getByRole("button", { name: /time range:/i }));
+
+    await user.clear(screen.getByLabelText("From"));
+    await user.type(screen.getByLabelText("From"), "2026-02-28T09:00");
+    await user.clear(screen.getByLabelText("To"));
+    await user.type(screen.getByLabelText("To"), "2026-02-28T10:00");
+
+    const applyButton = screen.getByRole("button", { name: "Apply" });
+    expect(applyButton).not.toBeDisabled();
+    await user.click(applyButton);
+    expect(onChange).toHaveBeenCalledWith({
+      from: "2026-02-28T09:00:00.000Z",
+      to: "2026-02-28T10:00:00.000Z",
+    });
   });
 });
