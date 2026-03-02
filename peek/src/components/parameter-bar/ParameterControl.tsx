@@ -46,6 +46,7 @@ export default function ParameterControl({
   // Fetch options from ES|QL when source mode is esql
   useEffect(() => {
     if (!hasQueryableEsqlSource || param.source.mode !== "esql" || !connection) return;
+    const esqlQuery = param.source.query;
 
     abortRef.current?.abort();
     const ctrl = new AbortController();
@@ -54,7 +55,7 @@ export default function ParameterControl({
     void (async () => {
       try {
         const datasource = createPersesEsqlDatasource(connection);
-        const request = buildPersesEsqlRequest(param.source.query, { parameters });
+        const request = buildPersesEsqlRequest(esqlQuery, { parameters });
         const result = await datasource.execute(request, ctrl.signal);
         if (!ctrl.signal.aborted && result.values) {
           setEsqlOptions(result.values.map((row) => String(row[0] ?? "")).filter(Boolean));
