@@ -1,5 +1,7 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
+import { COMPONENT_HEIGHTS } from "./types/tokens";
+
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
 
 const baseOptions: ThemeOptions = {
@@ -36,14 +38,17 @@ const baseOptions: ThemeOptions = {
         root: {
           textTransform: "none",
           fontWeight: 500,
-          height: 32,
+          height: COMPONENT_HEIGHTS.button,
           borderRadius: 6,
           [MOBILE_OR_COARSE_QUERY]: {
             height: "auto",
-            minHeight: 44,
-            paddingTop: 10,
-            paddingBottom: 10,
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
+            paddingTop: 12,
+            paddingBottom: 12,
           },
+        },
+        sizeSmall: {
+          height: COMPONENT_HEIGHTS.buttonSmall,
         },
       },
     },
@@ -51,9 +56,9 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           [MOBILE_OR_COARSE_QUERY]: {
-            width: 44,
-            height: 44,
-            padding: 10,
+            width: COMPONENT_HEIGHTS.touchTarget,
+            height: COMPONENT_HEIGHTS.touchTarget,
+            padding: 12,
           },
         },
       },
@@ -62,7 +67,7 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           [MOBILE_OR_COARSE_QUERY]: {
-            minHeight: 44,
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
           },
         },
       },
@@ -88,10 +93,10 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
-            height: 32,
+            height: COMPONENT_HEIGHTS.input,
             [MOBILE_OR_COARSE_QUERY]: {
               height: "auto",
-              minHeight: 44,
+              minHeight: COMPONENT_HEIGHTS.touchTarget,
             },
           },
         },
@@ -116,7 +121,7 @@ const baseOptions: ThemeOptions = {
     },
     MuiTab: {
       styleOverrides: {
-        root: { textTransform: "none", minHeight: 36 },
+        root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.input },
       },
     },
     MuiTypography: {
