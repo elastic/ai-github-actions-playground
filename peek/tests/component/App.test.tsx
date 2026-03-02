@@ -14,7 +14,7 @@ describe("App shell visibility", () => {
     resetAllStores();
   });
 
-  it("hides navigation and shows footer reset when disconnected", () => {
+  it("hides navigation when disconnected", () => {
     render(
       <MemoryRouter>
         <App />
@@ -22,7 +22,6 @@ describe("App shell visibility", () => {
     );
 
     expect(screen.queryByRole("navigation", { name: /main navigation/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /reset state/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /connect to elasticsearch/i })).toBeInTheDocument();
   });
 
@@ -103,7 +102,7 @@ describe("App shell visibility", () => {
     expect(screen.queryByRole("button", { name: /go to settings/i })).not.toBeInTheDocument();
   });
 
-  it("shows navigation and keeps footer reset when connected", () => {
+  it("shows navigation when connected and does not show reset in footer", () => {
     useConnectionStore.getState().setConnected(true);
     render(
       <MemoryRouter>
@@ -112,7 +111,7 @@ describe("App shell visibility", () => {
     );
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /reset state/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
   });
 
   it("does not intercept undo shortcut inside contenteditable editors", () => {
