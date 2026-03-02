@@ -161,6 +161,37 @@ describe("RolesPage", () => {
     await screen.findByText("No roles found.");
   });
 
+  it("clears the detail panel when search excludes the selected role", async () => {
+    const user = userEvent.setup();
+    getCapabilitiesMock.mockResolvedValue(CAPS_OK);
+    getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <RolesPage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    // Wait for detail panel to show the first role
+    await screen.findByRole("heading", { level: 6, name: "empty_role" });
+
+    // Type a search that matches nothing
+    await user.type(screen.getByPlaceholderText("Search roles"), "nonexistent");
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { level: 6, name: "empty_role" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Select a role.")).toBeInTheDocument();
+    });
+
+    await user.clear(screen.getByPlaceholderText("Search roles"));
+    await screen.findByRole("heading", { level: 6, name: "empty_role" });
+    expect(screen.queryByText("Select a role.")).not.toBeInTheDocument();
+  });
+
   it("shows access warning when canReadSecurityRoles is false", async () => {
     getCapabilitiesMock.mockResolvedValue(CAPS_NO_READ);
     getSecurityRolesMock.mockResolvedValue(ROLES_RESPONSE);
