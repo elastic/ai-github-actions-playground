@@ -282,7 +282,7 @@ export default function ClusterOverviewPage() {
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Health">
+              <OverviewInfoCard title="Health" onClick={() => navigate("/cluster-health")}>
                 {clusterHealth ? (
                   <Stack spacing={1}>
                     <Chip
@@ -315,13 +315,15 @@ export default function ClusterOverviewPage() {
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Data Streams">
+              <OverviewInfoCard title="Data Streams" onClick={() => navigate("/data-streams")}>
                 {renderCount(data.dataStreamCount)}
               </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Indices">{renderCount(data.indexCount)}</OverviewInfoCard>
+              <OverviewInfoCard title="Indices" onClick={() => navigate("/indices")}>
+                {renderCount(data.indexCount)}
+              </OverviewInfoCard>
             </Box>
 
             <Box sx={{ flex: 1 }}>
