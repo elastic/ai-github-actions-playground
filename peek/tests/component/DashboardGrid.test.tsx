@@ -2,6 +2,7 @@ import { createRef, type ReactNode } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 import DashboardGrid from "../../src/components/DashboardGrid";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
@@ -31,7 +32,11 @@ describe("DashboardGrid", () => {
       useDashboardStore.getState().removePanel(p.id);
     }
 
-    render(<DashboardGrid />);
+    render(
+      <MemoryRouter>
+        <DashboardGrid />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("No panels yet")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /load default dashboard/i })).toBeInTheDocument();
@@ -47,7 +52,11 @@ describe("DashboardGrid", () => {
       layout: { x: 0, y: 0, w: 6, h: 4 },
     });
 
-    render(<DashboardGrid />);
+    render(
+      <MemoryRouter>
+        <DashboardGrid />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("Panel One")).toBeInTheDocument();
   });
@@ -60,7 +69,11 @@ describe("DashboardGrid", () => {
       useDashboardStore.getState().removePanel(p.id);
     }
 
-    render(<DashboardGrid />);
+    render(
+      <MemoryRouter>
+        <DashboardGrid />
+      </MemoryRouter>,
+    );
 
     await user.click(screen.getByRole("button", { name: /add panel/i }));
 
@@ -78,7 +91,11 @@ describe("DashboardGrid", () => {
       useDashboardStore.getState().removePanel(p.id);
     }
 
-    render(<DashboardGrid />);
+    render(
+      <MemoryRouter>
+        <DashboardGrid />
+      </MemoryRouter>,
+    );
 
     await user.click(screen.getByRole("button", { name: /load default dashboard/i }));
 
