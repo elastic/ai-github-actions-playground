@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -83,9 +85,6 @@ STATE_META: dict[PRState, StateMeta] = {
 
 # ── Data types ───────────────────────────────────────────────────────────────
 
-BOT_RE = re.compile(r"^(copilot|github-actions)\[bot\]$|^copilot-swe-agent\[bot\]$")
-
-
 @dataclass
 class PRInfo:
     number: int
@@ -96,10 +95,11 @@ class PRInfo:
     is_draft: bool
     mergeable: str
     review_decision: str
+    author_is_bot: bool = False
 
     @property
     def is_bot(self) -> bool:
-        return bool(BOT_RE.match(self.author))
+        return self.author_is_bot
 
     @property
     def is_wip(self) -> bool:
@@ -232,6 +232,7 @@ def fetch_prs(ctx: Ctx) -> list[PRInfo]:
         head_sha=p["headRefOid"], branch=p["headRefName"], is_draft=p["isDraft"],
         mergeable=p.get("mergeable", "UNKNOWN"),
         review_decision=p.get("reviewDecision") or "null",
+        author_is_bot=p["author"].get("is_bot", False),
     ) for p in raw]
 
 
@@ -330,17 +331,39 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             print(f"{YELLOW}would kick CI{RESET}")
             kicked += 1
             continue
+        # This can still exist when a matching-head run was created by a non-PR event.
         prev = [r for r in runs if r.get("name") == "CI"
-                and r.get("status") == "completed" and r.get("headBranch") == pr.branch]
+                and r.get("headBranch") == pr.branch and r.get("headSha") == pr.head_sha]
         if prev:
             try:
                 gh_text("run", "rerun", str(prev[0]["databaseId"]), repo=ctx.repo_args)
                 print(f"{GREEN}✓ re-ran{RESET}")
                 kicked += 1
+                continue
             except RuntimeError:
-                print(f"{RED}✗ failed{RESET}")
-        else:
-            print(f"{YELLOW}no CI run to re-run (empty commit may be needed){RESET}")
+                pass  # Fall through to empty commit
+        # No CI run exists for the current head — push an empty commit to trigger one.
+        os.makedirs("/tmp/gh-aw/agent", exist_ok=True)
+        tmpdir = tempfile.mkdtemp(prefix=f"kick_ci_{pr.number}_", dir="/tmp/gh-aw/agent")
+        try:
+            subprocess.run(
+                ["git", "clone", "--depth=1", "--branch", pr.branch,
+                 f"https://github.com/{ctx.repo_slug}.git", tmpdir],
+                capture_output=True, check=True)
+            subprocess.run(
+                ["git", "-C", tmpdir,
+                 "commit", "--allow-empty", "-m", "ci: trigger CI re-run"],
+                capture_output=True, check=True)
+            # Requires authenticated git credentials for github.com.
+            subprocess.run(
+                ["git", "-C", tmpdir, "push"],
+                capture_output=True, check=True)
+            print(f"{GREEN}✓ empty commit pushed{RESET}")
+            kicked += 1
+        except subprocess.CalledProcessError:
+            print(f"{RED}✗ failed to push empty commit{RESET}")
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
     if not kicked:
         print("  No bot PRs needed CI kicked.")
     else:
