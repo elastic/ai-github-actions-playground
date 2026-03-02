@@ -111,6 +111,7 @@ describe("ExplorePage", () => {
       expect(screen.getByText("Metric not found")).toBeInTheDocument();
     });
 
+    expect(listFieldsMock).toHaveBeenCalled();
     expect(queryMock).not.toHaveBeenCalled();
   });
 });
