@@ -226,7 +226,9 @@ describe("TracesPage auto-run on quick filter changes", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -337,7 +339,9 @@ describe("TracesPage duration parsing", () => {
   it("falls back to nanosecond duration when microsecond field is missing", () => {
     render(
       <MemoryRouter>
-        <TracesPage />
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
