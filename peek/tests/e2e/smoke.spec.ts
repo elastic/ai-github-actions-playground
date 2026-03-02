@@ -60,7 +60,6 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     },
     Indices: {
       "color-contrast": 2,
-      "scrollable-region-focusable": 1,
     },
   },
 };
