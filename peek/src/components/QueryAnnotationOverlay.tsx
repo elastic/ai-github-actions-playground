@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import ButtonBase from "@mui/material/ButtonBase";
 import Fade from "@mui/material/Fade";
+import { alpha } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
@@ -9,10 +10,9 @@ import { useShallow } from "zustand/react/shallow";
 import { useLLMStore } from "../store/useLLMStore";
 
 const EXPLAIN_SYSTEM_PROMPT =
-  "You are an ES|QL expert. Given an ES|QL query, describe its goal or intent in plain language — " +
-  "what question is it trying to answer or what data is it trying to surface? " +
-  "Be concise — one to two sentences. " +
-  "Do not include any code. Do not wrap the response in quotes or markdown.";
+  "You are an ES|QL expert. Respond with a single-sentence TL;DR of what the query is doing — " +
+  "its goal or intent in plain language. " +
+  "No code, no markdown, no quotes.";
 
 const MAX_CACHE_SIZE = 50;
 
@@ -150,10 +150,11 @@ export default function QueryAnnotationOverlay({
           height: `${height}px`,
           px: 2,
           borderRadius: 1,
-          bgcolor: "background.default",
-          opacity: 0.94,
-          transition: "opacity 0.2s",
-          "&:hover": { opacity: 0.85 },
+          bgcolor: (theme) => alpha(theme.palette.background.default, 0.82),
+          transition: "background-color 0.2s",
+          "&:hover": {
+            bgcolor: (theme) => alpha(theme.palette.background.default, 0.65),
+          },
           backdropFilter: "blur(2px)",
           inset: 0,
         }}
