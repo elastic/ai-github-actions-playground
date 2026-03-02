@@ -101,9 +101,9 @@ describe("serializeClickedElement", () => {
     // Click on the "42" cell (CPU %)
     const cpuCell = dataRow.children[1] as HTMLElement;
     const result = serializeClickedElement(cpuCell);
-    expect(result).toContain("columns: [Name, CPU %, Memory %]");
-    expect(result).toContain('column: "CPU %"');
-    expect(result).toContain("row: [node-1, 42, 78]");
+    expect(result).toContain(
+      'table({"columns":["Name","CPU %","Memory %"],"column":"CPU %","row":["node-1","42","78"]})',
+    );
   });
 
   it("omits table context when element is not inside a table", () => {
@@ -115,6 +115,7 @@ describe("serializeClickedElement", () => {
 
   it("extracts panel title from panel-drag-handle sibling", () => {
     const panel = document.createElement("div");
+    panel.classList.add("panel-root");
     const header = document.createElement("div");
     const dragHandle = document.createElement("svg");
     dragHandle.classList.add("panel-drag-handle");

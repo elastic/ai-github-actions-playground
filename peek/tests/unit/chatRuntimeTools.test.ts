@@ -181,8 +181,14 @@ describe("buildChatRuntime — new tools", () => {
       connection: null,
       pathname: "/discover",
     });
-    expect(systemPrompt).toContain("<screen_context>");
-    expect(systemPrompt).toContain("Query Lab");
-    expect(systemPrompt).toContain('"path"');
+    const match = systemPrompt.match(/<screen_context>\n([\s\S]*?)\n<\/screen_context>/);
+    expect(match?.[1]).toBeTruthy();
+    const json = (match?.[1] ?? "")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&amp;", "&");
+    const parsed = JSON.parse(json) as { page?: { label?: string; path?: string } };
+    expect(parsed.page?.label).toBe("Query Lab");
+    expect(parsed.page?.path).toBe("/discover");
   });
 });
