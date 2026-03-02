@@ -17,7 +17,7 @@ const US_TO_MS = 1000;
 const MIN_EDGE_WIDTH = 1.5;
 const EDGE_WIDTH_SCALE = 0.4;
 const MAX_EDGE_WIDTH = 5;
-const DEFAULT_ERROR_COLOR = "#BD271E";
+const DEFAULT_ERROR_COLOR = "#DE350B";
 
 // ---------------------------------------------------------------------------
 // Types

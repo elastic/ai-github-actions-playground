@@ -66,7 +66,7 @@ export default function WaterfallChart({
       const isSelected = selectedSpanId === node.span.spanId;
       return {
         color: getServiceColor(node.span.serviceName),
-        borderColor: isSelected ? "#FFD700" : isError ? "#BD271E" : "transparent",
+        borderColor: isSelected ? "#FFD700" : isError ? "#DE350B" : "transparent",
         borderWidth: isSelected ? 2 : isError ? 2 : 0,
       };
     });

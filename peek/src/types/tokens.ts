@@ -8,6 +8,30 @@
 /** Semantic status colors used across cards, badges, and indicators. */
 export type StatusColor = "healthy" | "warning" | "critical" | "unknown" | "info";
 
+/**
+ * Canonical status color hex values — single source of truth.
+ * Use these for contexts outside React (e.g. ECharts configs) where
+ * `theme.palette.status.*` is not available.
+ */
+export const STATUS_COLORS = {
+  success: "#36B37E",
+  warning: "#FFAB00",
+  error: "#DE350B",
+  info: "#0065FF",
+  unknown: "#6B778C",
+  inProgress: "#00B8D9",
+} as const;
+
+/** Heatmap gradient stops from deep blue through teal/yellow to red. */
+export const HEATMAP_GRADIENT = [
+  "#0A1A3F",
+  "#0077CC",
+  "#00BFB3",
+  "#FFE27A",
+  "#F5A623",
+  "#E03E36",
+] as const;
+
 /** Approved MUI spacing multipliers. Maps to `theme.spacing(n)`. */
 export type SpaceToken = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 6;
 
