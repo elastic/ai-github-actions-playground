@@ -95,7 +95,8 @@ function buildAggExpression(
       return `MAX(${escapedField})`;
     case "count":
       // Counter fields don't support COUNT(field) in ES|QL; use COUNT(*) instead.
-      // Callers must add a `field IS NOT NULL` WHERE clause to preserve semantics.
+      // buildOverviewQuery and buildExplorerQuery add a `field IS NOT NULL`
+      // WHERE clause automatically to preserve correct counting semantics.
       return metricType === "counter" ? "COUNT(*)" : `COUNT(${escapedField})`;
     case "p50":
       return `PERCENTILE(${escapedField}, 50)`;
