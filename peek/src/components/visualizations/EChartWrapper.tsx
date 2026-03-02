@@ -21,6 +21,7 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 echarts.use([
   LineChart,
@@ -42,7 +43,7 @@ echarts.use([
 
 interface Props {
   option: Record<string, unknown>;
-  style?: React.CSSProperties;
+  sx?: SxProps<Theme>;
   onExportReady?: (exportFn: (() => string) | null) => void;
   onClick?: (params: { dataIndex: number; seriesIndex?: number; data: unknown }) => void;
 }
@@ -51,7 +52,7 @@ interface Props {
  * Lightweight ECharts wrapper component.
  * Perses uses a similar pattern via @perses-dev/components EChart.
  */
-export default function EChartWrapper({ option, style, onExportReady, onClick }: Props) {
+export default function EChartWrapper({ option, sx: sxProp, onExportReady, onClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
 
@@ -95,6 +96,12 @@ export default function EChartWrapper({ option, style, onExportReady, onClick }:
   }, [onExportReady]);
 
   return (
-    <Box ref={containerRef} sx={{ width: "100%", height: "100%", minHeight: 120, ...style }} />
+    <Box
+      ref={containerRef}
+      sx={[
+        { width: "100%", height: "100%", minHeight: 120 },
+        ...(sxProp ? (Array.isArray(sxProp) ? sxProp : [sxProp]) : []),
+      ]}
+    />
   );
 }

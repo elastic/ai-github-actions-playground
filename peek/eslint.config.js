@@ -77,7 +77,7 @@ export default tseslint.config(
       "peek/consistent-typography-variants": "error",
       "peek/no-direct-echarts-import": "error",
       "peek/no-div-onclick": "error",
-      "peek/enforce-spacing-tokens": "warn",
+      "peek/enforce-spacing-tokens": "error",
     },
   },
   // rules that only apply to component files

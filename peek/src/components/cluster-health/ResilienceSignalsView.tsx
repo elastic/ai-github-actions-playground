@@ -102,7 +102,7 @@ export default function ResilienceSignalsView({ data }: ResilienceSignalsViewPro
 
       {ilmPhases.size > 0 ? (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
             ILM Phase Distribution
           </Typography>
           {Array.from(ilmPhases.entries())

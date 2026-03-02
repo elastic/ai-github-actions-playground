@@ -6,7 +6,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
@@ -186,10 +186,10 @@ export default function MetricOverviewGrid({
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
-        <Typography variant="subtitle2" component="div">
+        <Typography variant="body2" component="div">
           {namespace} namespace
         </Typography>
-        {isLoading && <CircularProgress size={16} />}
+        {isLoading && <LinearProgress sx={{ flexShrink: 0, width: 80 }} />}
         {!isLoading && (
           <>
             <Chip
@@ -285,16 +285,7 @@ export default function MetricOverviewGrid({
                   {result?.data ? (
                     <EChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
                   ) : (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "100%",
-                      }}
-                    >
-                      <CircularProgress size={16} />
-                    </Box>
+                    <Skeleton variant="rounded" height="100%" />
                   )}
                 </Box>
               </ButtonBase>

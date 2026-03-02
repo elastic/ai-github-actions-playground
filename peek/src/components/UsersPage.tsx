@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -15,6 +15,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { ElasticsearchClient, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -26,19 +27,20 @@ import { loadSecurityResource } from "./securityResourceLoader";
 
 export default function UsersPage() {
   const connection = useConnectionStore((s) => s.connection);
-  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedUsername = searchParams.get("username");
+  const [urlUsername, setUrlUsername] = useQueryState("username", parseAsString);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<SecurityUser[]>([]);
-  const [selectedUsername, setSelectedUsername] = useState<string | null>(
-    searchParams.get("username"),
-  );
   const [copied, setCopied] = useState(false);
+
+  const selectedUsername = useMemo(() => {
+    if (users.length === 0) return urlUsername;
+    if (urlUsername && users.some((user) => user.username === urlUsername)) return urlUsername;
+    return users[0]?.username ?? null;
+  }, [users, urlUsername]);
 
   const selectedUser = useMemo(
     () => users.find((user) => user.username === selectedUsername) ?? null,
@@ -73,14 +75,8 @@ export default function UsersPage() {
           }))
           .sort((a, b) => a.username.localeCompare(b.username));
         setUsers(nextUsers);
-        setSelectedUsername((current) =>
-          current && nextUsers.some((user) => user.username === current)
-            ? current
-            : (nextUsers[0]?.username ?? null),
-        );
       } else {
         setUsers([]);
-        setSelectedUsername(null);
       }
     } finally {
       setLoading(false);
@@ -91,40 +87,13 @@ export default function UsersPage() {
     void loadUsers();
   }, [loadUsers]);
 
+  // Sync URL when the resolved selection differs from the URL param
   useEffect(() => {
-    const resolvedUsername =
-      users.length === 0
-        ? (requestedUsername ?? selectedUsername)
-        : requestedUsername && users.some((user) => user.username === requestedUsername)
-          ? requestedUsername
-          : !requestedUsername &&
-              selectedUsername &&
-              users.some((user) => user.username === selectedUsername)
-            ? selectedUsername
-            : (users[0]?.username ?? null);
-    if (resolvedUsername !== selectedUsername) {
-      setSelectedUsername(resolvedUsername);
+    if (users.length === 0) return;
+    if (selectedUsername !== urlUsername) {
+      void setUrlUsername(selectedUsername);
     }
-    if (
-      users.length === 0 ||
-      resolvedUsername === requestedUsername ||
-      !location.pathname.startsWith("/users")
-    ) {
-      return;
-    }
-    setSearchParams(
-      (currentParams) => {
-        const nextParams = new URLSearchParams(currentParams);
-        if (resolvedUsername) {
-          nextParams.set("username", resolvedUsername);
-        } else {
-          nextParams.delete("username");
-        }
-        return nextParams;
-      },
-      { replace: true },
-    );
-  }, [location.pathname, requestedUsername, selectedUsername, setSearchParams, users]);
+  }, [users, selectedUsername, urlUsername, setUrlUsername]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -141,12 +110,9 @@ export default function UsersPage() {
 
   const handleSelectUser = useCallback(
     (username: string) => {
-      setSelectedUsername(username);
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.set("username", username);
-      setSearchParams(nextParams);
+      void setUrlUsername(username);
     },
-    [searchParams, setSearchParams],
+    [setUrlUsername],
   );
 
   return (
@@ -229,7 +195,7 @@ export default function UsersPage() {
             {selectedUser ? (
               <>
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                  <Typography variant="h6">{selectedUser.username}</Typography>
+                  <Typography variant="subtitle1">{selectedUser.username}</Typography>
                   <Chip
                     size="small"
                     color={selectedUser.enabled === false ? "warning" : "success"}

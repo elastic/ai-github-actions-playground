@@ -1,19 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { deserializeExplorerState, useExplorerStore } from "../../src/store/useExplorerStore";
 
-describe("deserializeExplorerState", () => {
+import { useExplorerStore } from "../../src/store/useExplorerStore";
+
+describe("useExplorerStore", () => {
   beforeEach(() => {
     useExplorerStore.getState().reset();
-  });
-
-  it("accepts valid aggregation values", () => {
-    const state = deserializeExplorerState("?agg=p95&index=metrics-*");
-    expect(state.aggregation).toBe("p95");
-  });
-
-  it("ignores invalid aggregation values", () => {
-    const state = deserializeExplorerState("?agg=median&index=metrics-*");
-    expect(state.aggregation).toBeUndefined();
   });
 
   it("clears dependent state when index pattern changes", () => {

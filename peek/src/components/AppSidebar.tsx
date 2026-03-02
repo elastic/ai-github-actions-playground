@@ -42,6 +42,7 @@ interface AppSidebarProps {
   onToggleCollapse?: () => void;
   mobile?: boolean;
   onNavigate?: () => void;
+  onRequestReset?: () => void;
 }
 
 function buildNavSections(): NavSection[] {
@@ -82,6 +83,7 @@ export default function AppSidebar({
   onToggleCollapse,
   mobile = false,
   onNavigate,
+  onRequestReset,
 }: AppSidebarProps) {
   const isCollapsed = mobile ? false : collapsed;
   const { connected, capabilities } = useConnectionStore(
@@ -162,7 +164,7 @@ export default function AppSidebar({
           <Box key={section.label} sx={{ pt: 1 }}>
             {!isCollapsed && (
               <Typography
-                variant="overline"
+                variant="caption"
                 sx={{
                   display: "block",
                   py: 0.5,
@@ -320,6 +322,16 @@ export default function AppSidebar({
           }}
         >
           LLM Settings
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            onRequestReset?.();
+            setSettingsAnchor(null);
+          }}
+          sx={{ color: "error.main" }}
+        >
+          Reset All State…
         </MenuItem>
       </Menu>
     </Box>

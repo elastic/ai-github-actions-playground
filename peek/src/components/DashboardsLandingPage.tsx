@@ -409,7 +409,7 @@ export default function DashboardsLandingPage() {
         <Box sx={{ py: 8, textAlign: "center" }}>
           {hasActiveFilters ? (
             <>
-              <Typography variant="h6" color="text.secondary">
+              <Typography variant="subtitle1" color="text.secondary">
                 No dashboards match your filters
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -421,7 +421,7 @@ export default function DashboardsLandingPage() {
             </>
           ) : (
             <>
-              <Typography variant="h6" color="text.secondary">
+              <Typography variant="subtitle1" color="text.secondary">
                 No dashboards yet
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

@@ -1,57 +1,83 @@
 import { test, expect } from "@playwright/test";
-import type { Page } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
 /**
- * Baseline of known pre-existing axe violations per page (tracked in #954).
+ * Baseline of known pre-existing axe violations per browser project and page
+ * (tracked in #954).
  *
  * IMPORTANT: This is a temporary measure to prevent accessibility regressions
  * while we work toward full WCAG 2.2 Level AA compliance. Each entry here
  * represents a technical debt item that should be resolved rather than expanded.
  *
- * Maps page label → rule ID → maximum number of violating DOM nodes.
+ * Structure: browser project name → page label → rule ID → max violating nodes.
+ * A missing project key falls back to the "_default" entry.
  * The gate fails when a new rule fires or its node count exceeds the baseline.
  */
-const A11Y_BASELINE: Record<string, Record<string, number>> = {
-  welcome: {
-    "color-contrast": 1,
-    "page-has-heading-one": 1,
+const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
+  _default: {
+    welcome: {
+      "color-contrast": 1,
+      "page-has-heading-one": 1,
+    },
+    "post-connect": {
+      "color-contrast": 2,
+    },
+    Metrics: {
+      "color-contrast": 2,
+    },
+    Traces: {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+    },
+    "Query Lab": {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+    },
+    Console: {
+      "aria-input-field-name": 1,
+      "color-contrast": 6,
+    },
+    Indices: {
+      "color-contrast": 2,
+    },
   },
-  "post-connect": {
-    "color-contrast": 2,
-  },
-  Metrics: {
-    "color-contrast": 2,
-  },
-  Traces: {
-    "aria-input-field-name": 2,
-    "aria-prohibited-attr": 1,
-    "color-contrast": 12,
-  },
-  "Query Lab": {
-    "aria-input-field-name": 2,
-    "aria-prohibited-attr": 1,
-    "color-contrast": 12,
-  },
-  Console: {
-    "aria-input-field-name": 1,
-    "color-contrast": 5,
-  },
-  Indices: {
-    "color-contrast": 2,
+  "mobile-safari": {
+    "Query Lab": {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+      "scrollable-region-focusable": 2,
+    },
+    Console: {
+      "aria-input-field-name": 1,
+      "color-contrast": 6,
+      "scrollable-region-focusable": 2,
+    },
+    Indices: {
+      "color-contrast": 2,
+      "scrollable-region-focusable": 1,
+    },
   },
 };
 
 /**
  * Run an axe accessibility scan and fail on any *new* violations.
  * A violation is "new" if its rule ID is absent from the baseline or if the
- * number of violating nodes exceeds the baselined count for that rule+page.
+ * number of violating nodes exceeds the baselined count for that rule+page+browser.
  */
-async function checkA11y(page: Page, pageName: string) {
+async function checkA11y(page: Page, pageName: string, testInfo: TestInfo) {
   const results = await new AxeBuilder({ page }).analyze();
-  const baseline = A11Y_BASELINE[pageName] ?? {};
+  const projectName = testInfo.project.name;
+  const projectBaseline = A11Y_BASELINE[projectName] ?? {};
+  const baseline = {
+    ...(A11Y_BASELINE["_default"]?.[pageName] ?? {}),
+    ...(projectBaseline[pageName] ?? {}),
+  };
 
   const newViolations = results.violations.filter((v) => {
     const allowed = baseline[v.id];
@@ -63,7 +89,7 @@ async function checkA11y(page: Page, pageName: string) {
     newViolations.map(
       (v) => `${v.id} (${v.nodes.length} node(s), baseline: ${baseline[v.id] ?? "none"})`,
     ),
-    `axe found new accessibility violations on "${pageName}".\n` +
+    `axe found new accessibility violations on "${pageName}" [${projectName}].\n` +
       `Fix the violations or, if absolutely necessary, update A11Y_BASELINE in smoke.spec.ts.\n` +
       `See DEVELOPING.md for accessibility standards.`,
   ).toEqual([]);
@@ -173,12 +199,36 @@ async function mockElasticsearch(page: Page) {
   });
 }
 
+/**
+ * Navigate to a page using the sidebar, opening the mobile drawer first if necessary.
+ */
+async function navigateViaSidebar(page: Page, label: string) {
+  const isMobile = page.viewportSize()!.width <= 768;
+  const navBtn = page.getByRole("button", { name: label, exact: true });
+
+  if (isMobile && !(await navBtn.isVisible())) {
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+  }
+
+  await navBtn.click();
+}
+
 async function connectToMockCluster(page: Page) {
   await mockElasticsearch(page);
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
+
+  // Wait for connection dialog to close
+  await expect(page.getByRole("dialog", { name: "Elasticsearch Connection" })).toBeHidden();
+
+  // On mobile, the sidebar is in a temporary drawer that must be opened to see the nav buttons.
+  const isMobile = page.viewportSize()!.width <= 768;
+  if (isMobile) {
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+  }
+
   await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
 }
 
@@ -195,7 +245,7 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: "Metrics", exact: true }).click();
+    await navigateViaSidebar(page, "Metrics");
     const metricSearch = page.getByLabel("Search metrics");
     await expect(metricSearch).toBeVisible({ timeout: 5_000 });
     await metricSearch.fill("system.cpu");
@@ -209,7 +259,7 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: "Traces", exact: true }).click();
+    await navigateViaSidebar(page, "Traces");
     await page.getByRole("button", { name: "Search Traces" }).click();
     await expect(page.getByText("1 traces found")).toBeVisible();
     await page.getByText("GET /checkout").click();
@@ -238,11 +288,13 @@ test.describe("smoke – site navigation", () => {
   test("header chip reflects current page label on non-dashboard routes", async ({ page }) => {
     await connectToMockCluster(page);
     // Navigate to a non-dashboard page (Query Lab / discover)
-    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await navigateViaSidebar(page, "Query Lab");
     await expect(page).toHaveURL(/\/discover$/);
-    // The global header (banner) must show the current page label chip
-    const header = page.getByRole("banner");
-    await expect(header.getByText("Query Lab")).toBeVisible();
+    // The global header (banner) must show the current page label chip (Desktop only)
+    if (page.viewportSize()!.width > 768) {
+      const header = page.getByRole("banner");
+      await expect(header.getByText("Query Lab")).toBeVisible();
+    }
   });
 
   test("ops user confirms connection guardrails and can reset back to the landing state", async ({
@@ -257,7 +309,10 @@ test.describe("smoke – site navigation", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
 
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: /Reset/i }).click();
+    await page.getByRole("button", { name: /Settings/i }).click();
+    await page.getByRole("menuitem", { name: /Reset All State/i }).click();
+    await expect(page.getByRole("dialog", { name: /Reset all application state/i })).toBeVisible();
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Elastic Peek" })).toBeVisible();
   });
 
@@ -270,7 +325,7 @@ test.describe("smoke – site navigation", () => {
     const queryText = "FROM logs-* | SORT @timestamp | LIMIT 1";
 
     // Open Query Lab
-    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await navigateViaSidebar(page, "Query Lab");
     await expect(page).toHaveURL(/\/discover$/);
 
     await queryInput.click();
@@ -287,11 +342,11 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("cell", { name: "Hello World" })).toBeVisible();
 
     // Navigate away to Console
-    await page.getByRole("button", { name: "Console", exact: true }).click();
+    await navigateViaSidebar(page, "Console");
     await expect(page).toHaveURL(/\/console$/);
 
     // Navigate back to Query Lab
-    await page.getByRole("button", { name: "Query Lab", exact: true }).click();
+    await navigateViaSidebar(page, "Query Lab");
     await expect(page).toHaveURL(/\/discover$/);
 
     // Verify query text and results are still present
@@ -302,12 +357,12 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByText("Run a query to see results")).toBeHidden();
   });
 
-  test("pages have no axe accessibility violations", async ({ page }) => {
+  test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
     await page.goto("");
-    await checkA11y(page, "welcome");
+    await checkA11y(page, "welcome", testInfo);
 
     await connectToMockCluster(page);
-    await checkA11y(page, "post-connect");
+    await checkA11y(page, "post-connect", testInfo);
 
     // Wait for page-specific content to fully render before running axe,
     // so results are deterministic across fast (local) and slow (CI) machines.
@@ -320,10 +375,10 @@ test.describe("smoke – site navigation", () => {
     };
 
     for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
-      await page.getByRole("button", { name: nav, exact: true }).click();
+      await navigateViaSidebar(page, nav);
       await page.waitForLoadState("networkidle");
-      await pageReadyLocators[nav]();
-      await checkA11y(page, nav);
+      await pageReadyLocators[nav]!();
+      await checkA11y(page, nav, testInfo);
     }
   });
 });

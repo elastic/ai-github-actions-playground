@@ -284,7 +284,7 @@ export default function DataStreamsPage() {
           <Box sx={{ p: 1.5 }}>
             {selectedDataStream ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Typography variant="h6">{selectedDataStream.name}</Typography>
+                <Typography variant="subtitle1">{selectedDataStream.name}</Typography>
                 <Box
                   sx={{
                     display: "grid",

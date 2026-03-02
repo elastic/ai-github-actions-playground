@@ -12,7 +12,11 @@ import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
 
-import { type DiskUsageIndexEntry, type CatIndexRecord } from "../services/es";
+import {
+  type DiskUsageIndexEntry,
+  type CatIndexRecord,
+  type IndexStatsResponse,
+} from "../services/es";
 import { formatBytes } from "../utils/formatBytes";
 
 import ContentSkeleton from "./ContentSkeleton";
@@ -70,7 +74,6 @@ function MetaValue({
 // Types & helpers
 // ---------------------------------------------------------------------------
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IndexDetailPanelProps {
   selectedIndex: string | null;
   selectedRecord: CatIndexRecord | null;
@@ -79,13 +82,12 @@ export interface IndexDetailPanelProps {
   onTabChange: (tab: IndexTab) => void;
   mappings: Record<string, unknown> | null;
   settings: Record<string, unknown> | null;
-  indexStats: any;
+  indexStats: IndexStatsResponse | null;
   diskUsage: DiskUsageIndexEntry | null;
   diskUsageLoading: boolean;
   diskUsageError: string | null;
   onAnalyzeDiskUsage: () => void;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const tabPanelId = (tab: IndexTab) => `index-tabpanel-${tab}`;
 const tabId = (tab: IndexTab) => `index-tab-${tab}`;
@@ -223,11 +225,9 @@ function SettingsContent({
   );
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function StatsContent({ indexStats }: { indexStats: any }) {
+function StatsContent({ indexStats }: { indexStats: IndexStatsResponse | null }) {
   const totalStats = indexStats?._all?.total;
   const primaryStats = indexStats?._all?.primaries;
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   return (
     <MetaGrid>

@@ -117,7 +117,7 @@ export default function OverviewView({ data }: OverviewViewProps) {
 
       {unassigned > 0 && data.allocationExplain ? (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
             Allocation Explain
           </Typography>
           <Alert severity="info" sx={{ fontSize: "0.8rem", fontFamily: "monospace" }}>

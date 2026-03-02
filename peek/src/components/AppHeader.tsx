@@ -139,7 +139,7 @@ export default function AppHeader({
           />
         </Box>
         <Typography
-          variant="h6"
+          variant="subtitle1"
           sx={{
             mr: 1,
             background: (theme) =>

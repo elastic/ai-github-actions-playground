@@ -280,6 +280,23 @@ describe("AppSidebar", () => {
     expect(useUIStore.getState().themeMode).toBe("light");
   });
 
+  it("calls onRequestReset when Reset All State menu item is clicked", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    const onRequestReset = vi.fn();
+    render(
+      <MemoryRouter>
+        <AppSidebar onRequestReset={onRequestReset} />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("menuitem", { name: /reset all state/i }));
+
+    expect(onRequestReset).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menuitem", { name: /reset all state/i })).not.toBeInTheDocument();
+  });
+
   it("hides Users nav item when canReadSecurityUsers is false", () => {
     useConnectionStore.getState().setConnected(true);
     useConnectionStore.getState().setCapabilities({

@@ -595,11 +595,19 @@ export const useDashboardStore = create<DashboardState>()(
             }
             importedDashboard = result.data;
           }
-          set((s) => ({
-            ...replaceActiveDashboard(s, importedDashboard),
-            historyPast: [],
-            historyFuture: [],
-          }));
+          set((s) => {
+            const collidesWithNonActive = s.dashboards.some(
+              (d) => d.id === importedDashboard.id && d.id !== s.activeDashboardId,
+            );
+            const dashboard = collidesWithNonActive
+              ? { ...importedDashboard, id: crypto.randomUUID() }
+              : importedDashboard;
+            return {
+              ...replaceActiveDashboard(s, dashboard),
+              historyPast: [],
+              historyFuture: [],
+            };
+          });
           return { success: true };
         } catch (errorLike) {
           const error = errorLike instanceof Error ? errorLike.message : String(errorLike);

@@ -147,7 +147,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
           alignItems: "center",
         }}
       >
-        <Typography variant="h6" color="text.secondary">
+        <Typography variant="subtitle1" color="text.secondary">
           LLM provider not configured
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -168,7 +168,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
     <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
       {!hideHeader && (
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-          <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
+          <Typography variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             Chat
           </Typography>
           <Button

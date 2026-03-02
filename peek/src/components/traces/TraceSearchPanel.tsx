@@ -183,6 +183,8 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
+          "& .MuiOutlinedInput-input": { paddingBlock: "4.5px" },
+          "& .MuiOutlinedInput-notchedOutline": { top: 0 },
         }}
       >
         <TextField

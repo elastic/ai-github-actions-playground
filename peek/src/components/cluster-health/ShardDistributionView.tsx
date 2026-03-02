@@ -55,7 +55,7 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
 
       {unassignedReasons.size > 0 ? (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
             Unassigned Shard Reasons
           </Typography>
           {Array.from(unassignedReasons.entries())

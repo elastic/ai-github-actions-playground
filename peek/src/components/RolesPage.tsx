@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -15,6 +15,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { ElasticsearchClient, type SecurityRole, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -28,15 +29,20 @@ type RoleEntry = { name: string; role: SecurityRole };
 export default function RolesPage() {
   const connection = useConnectionStore((s) => s.connection);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [urlRole, setUrlRole] = useQueryState("role", parseAsString);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roles, setRoles] = useState<RoleEntry[]>([]);
   const [users, setUsers] = useState<SecurityUser[]>([]);
-  const [selectedRoleName, setSelectedRoleName] = useState<string | null>(searchParams.get("role"));
   const [copied, setCopied] = useState(false);
+
+  const selectedRoleName = useMemo(() => {
+    if (roles.length === 0) return urlRole;
+    if (urlRole && roles.some((entry) => entry.name === urlRole)) return urlRole;
+    return roles[0]?.name ?? null;
+  }, [roles, urlRole]);
 
   const selectedRole = useMemo(
     () => roles.find((entry) => entry.name === selectedRoleName) ?? null,
@@ -69,14 +75,8 @@ export default function RolesPage() {
             .map(([name, role]) => ({ name, role }))
             .sort((a, b) => a.name.localeCompare(b.name));
           setRoles(nextRoles);
-          setSelectedRoleName((current) =>
-            current && nextRoles.some((entry) => entry.name === current)
-              ? current
-              : (nextRoles[0]?.name ?? null),
-          );
         } else {
           setRoles([]);
-          setSelectedRoleName(null);
         }
       }
       if (usersResult.status === "fulfilled") {
@@ -99,9 +99,13 @@ export default function RolesPage() {
     void loadRoles();
   }, [loadRoles]);
 
+  // Sync URL when the resolved selection differs from the URL param
   useEffect(() => {
-    setSelectedRoleName(searchParams.get("role"));
-  }, [searchParams]);
+    if (roles.length === 0) return;
+    if (selectedRoleName !== urlRole) {
+      void setUrlRole(selectedRoleName);
+    }
+  }, [roles, selectedRoleName, urlRole, setUrlRole]);
 
   const filteredRoles = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -163,7 +167,7 @@ export default function RolesPage() {
               <ListItem key={entry.name} disablePadding>
                 <ListItemButton
                   selected={entry.name === selectedRoleName}
-                  onClick={() => setSelectedRoleName(entry.name)}
+                  onClick={() => void setUrlRole(entry.name)}
                 >
                   <ListItemText
                     primary={entry.name}
@@ -186,7 +190,7 @@ export default function RolesPage() {
         >
           {selectedRole ? (
             <>
-              <Typography variant="h6">{selectedRole.name}</Typography>
+              <Typography variant="subtitle1">{selectedRole.name}</Typography>
               <Typography variant="caption" color="text.secondary">
                 Cluster privileges
               </Typography>

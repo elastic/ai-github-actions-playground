@@ -23,6 +23,7 @@ import AppSidebar from "./components/AppSidebar";
 import AiAssistantDrawer from "./components/AiAssistantDrawer";
 import ParameterBar from "./components/ParameterBar";
 import ConnectionDialog from "./components/ConnectionDialog";
+import ResetConfirmationDialog from "./components/ResetConfirmationDialog";
 import PanelEditor from "./components/PanelEditor";
 import CommandPalette from "./components/CommandPalette";
 import DashboardViewPage from "./components/DashboardViewPage";
@@ -39,6 +40,8 @@ export default function App() {
   const resetState = useResetAllStores();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const handleRequestReset = () => setResetDialogOpen(true);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
@@ -94,12 +97,17 @@ export default function App() {
                 variant="temporary"
                 ModalProps={{ keepMounted: true }}
               >
-                <AppSidebar mobile onNavigate={() => setMobileNavOpen(false)} />
+                <AppSidebar
+                  mobile
+                  onNavigate={() => setMobileNavOpen(false)}
+                  onRequestReset={handleRequestReset}
+                />
               </Drawer>
             ) : (
               <AppSidebar
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+                onRequestReset={handleRequestReset}
               />
             ))}
           <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>
@@ -162,7 +170,7 @@ export default function App() {
                 gap: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                py: 0.75,
+                py: 1,
                 px: 2,
                 borderTop: 1,
                 borderColor: "divider",
@@ -175,7 +183,7 @@ export default function App() {
                 rel="noopener noreferrer"
                 underline="none"
                 sx={{
-                  py: 0.25,
+                  py: 0.5,
                   px: 1,
                   borderRadius: 1,
                   bgcolor: "warning.main",
@@ -201,22 +209,20 @@ export default function App() {
                   Elasticsearch B.V.
                 </Link>
               </Typography>
-              <Button
-                size="small"
-                color="error"
-                variant="text"
-                onClick={resetState}
-                aria-label="Reset state"
-                sx={{ position: "absolute", right: 8 }}
-              >
-                Reset
-              </Button>
             </Box>
           </Box>
           {connected && <AiAssistantDrawer isMobile={isMobile} />}
         </Box>
       </Box>
       <ConnectionDialog />
+      <ResetConfirmationDialog
+        open={resetDialogOpen}
+        onConfirm={() => {
+          resetState();
+          setResetDialogOpen(false);
+        }}
+        onCancel={() => setResetDialogOpen(false)}
+      />
       <PanelEditor />
       <CommandPalette />
       <Snackbar

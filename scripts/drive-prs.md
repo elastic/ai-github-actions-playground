@@ -1,11 +1,16 @@
 # Drive PRs Forward
 
+> **See also:** [`pr-state-machine.md`](./pr-state-machine.md) — the canonical
+> state machine spec defining all PR states, dimensions, and transitions.
+> [`ready-prs.py`](./ready-prs.py) implements the automated subset of that
+> state machine.
+
 A runbook for an AI agent (Copilot CLI, Gemini CLI, etc.) to assess every open
 PR in the repository and advance it to its next logical state.
 
-Unlike the automated bash script (`ready-prs-and-enable-workflows.sh`), this
-runbook is designed to be followed by an agent that can **read diffs, resolve
-merge conflicts, and make judgment calls** about what a PR actually needs.
+Unlike the automated script (`ready-prs.py`), this runbook is designed to be
+followed by an agent that can **read diffs, resolve merge conflicts, and make
+judgment calls** about what a PR actually needs.
 
 > **Scope:** This runbook only processes PRs authored by `copilot[bot]` /
 > `copilot-swe-agent[bot]` and `github-actions[bot]`. Human-authored PRs are

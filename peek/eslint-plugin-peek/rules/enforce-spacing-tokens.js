@@ -16,7 +16,7 @@ const SPACING_KEYS = new Set([
   "gap",
 ]);
 
-const SPACE_TOKENS = new Set([0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6]);
+const SPACE_TOKENS = new Set([0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8]);
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
@@ -24,12 +24,12 @@ export default {
     type: "suggestion",
     docs: {
       description:
-        "Enforce SpaceToken usage for numeric sx spacing values (0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6).",
+        "Enforce SpaceToken usage for numeric sx spacing values (0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8).",
     },
     schema: [],
     messages: {
       invalidSpacingToken:
-        "Spacing token '{{property}}: {{value}}' is not in SpaceToken. Use one of: 0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6.",
+        "Spacing token '{{property}}: {{value}}' is not in SpaceToken. Use one of: 0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8.",
     },
   },
   create(context) {
