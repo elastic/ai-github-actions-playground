@@ -254,7 +254,7 @@ export const createConnectionProfileSlice: StateCreator<
         latestRetestIdByProfileId.get(id) !== retestId ||
         latestProfileHealthSeqById.get(id) !== healthSeq
       ) {
-        return { ok: false, profileName: profile.name, message };
+        return { ok: true, profileName: profile.name };
       }
       set((s) => ({
         profileHealthMap: {
