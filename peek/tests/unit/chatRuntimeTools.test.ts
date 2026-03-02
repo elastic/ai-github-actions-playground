@@ -174,4 +174,21 @@ describe("buildChatRuntime — new tools", () => {
       timeTool.inputSchema.parse({ from: "2024-01-01", to: "2024-12-31" }),
     ).not.toThrow();
   });
+
+  it("system prompt includes detailed screen context as JSON", async () => {
+    const { systemPrompt } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+    });
+    const match = systemPrompt.match(/<screen_context>\n([\s\S]*?)\n<\/screen_context>/);
+    expect(match?.[1]).toBeTruthy();
+    const json = (match?.[1] ?? "")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&amp;", "&");
+    const parsed = JSON.parse(json) as { page?: { label?: string; path?: string } };
+    expect(parsed.page?.label).toBe("Query Lab");
+    expect(parsed.page?.path).toBe("/discover");
+  });
 });

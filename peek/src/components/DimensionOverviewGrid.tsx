@@ -16,6 +16,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useTheme } from "@mui/material/styles";
+import { EChart } from "@perses-dev/components";
 
 import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
 import { buildDimensionOverviewQuery } from "../services/es";
@@ -24,7 +25,6 @@ import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedO
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EmptyState from "./EmptyState";
-import EChartWrapper from "./visualizations/EChartWrapper";
 import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
 
 // ---------------------------------------------------------------------------
@@ -337,12 +337,14 @@ export default function DimensionOverviewGrid({
                 {/* Multi-series sparkline */}
                 <Box sx={{ flex: 1, minHeight: 120 }}>
                   {result?.data ? (
-                    <EChartWrapper
+                    <EChart
                       option={buildMultiSeriesSparkline(
                         result.data,
                         echartsTheme,
                         theme.palette.text.primary,
                       )}
+                      theme={echartsTheme}
+                      sx={{ width: "100%", height: "100%", minHeight: 120 }}
                     />
                   ) : (
                     <Skeleton variant="rounded" height="100%" />

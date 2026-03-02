@@ -85,7 +85,9 @@ export default function TraceResultsView({
   filters,
 }: TraceResultsViewProps) {
   return (
-    <>
+    <Box
+      sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "hidden" }}
+    >
       {/* View switcher */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, alignItems: "center", mb: 1 }}>
         {(["list", "timeseries", "scatter", "serviceMap", "driftRadar"] as TracesViewMode[]).map(
@@ -118,7 +120,7 @@ export default function TraceResultsView({
       </Box>
 
       {/* Results view */}
-      <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+      <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {!searchResult && !searchLoading && viewMode !== "driftRadar" && (
           <EmptyState
             heading="Search for traces"
@@ -132,7 +134,7 @@ export default function TraceResultsView({
         )}
         {searchResult && viewMode === "list" && traceRows.length === 0 && (
           <EmptyState
-            heading="No traces matched current filters."
+            heading="No traces matched the current filters."
             description="Adjust filters or widen the time range."
           />
         )}
@@ -229,6 +231,6 @@ export default function TraceResultsView({
             />
           ))}
       </Paper>
-    </>
+    </Box>
   );
 }

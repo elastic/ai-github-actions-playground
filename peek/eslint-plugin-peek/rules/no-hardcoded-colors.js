@@ -53,7 +53,12 @@ export default {
         (node) =>
           node.type === "ImportDeclaration" &&
           typeof node.source.value === "string" &&
-          node.source.value.startsWith("echarts"),
+          node.source.value.startsWith("echarts") &&
+          node.importKind !== "type" &&
+          !(
+            node.specifiers.length > 0 &&
+            node.specifiers.every((s) => s.type === "ImportSpecifier" && s.importKind === "type")
+          ),
       );
     }
 

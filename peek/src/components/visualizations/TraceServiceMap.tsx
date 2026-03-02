@@ -1,10 +1,12 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { Span } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
 import EmptyState from "../EmptyState";
 
-import EChartWrapper from "./EChartWrapper";
+import { useEChartTheme } from "./useEChartTheme";
 import { buildServiceGraphOption } from "./serviceGraphOptions";
 
 interface Props {
@@ -13,6 +15,8 @@ interface Props {
 }
 
 export default function TraceServiceMap({ spans, onNodeClick }: Props) {
+  const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const mapData = useMemo(() => buildServiceMapData(spans), [spans]);
 
   const option = useMemo(() => buildServiceGraphOption({ mapData }), [mapData]);
@@ -28,6 +32,15 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
     [onNodeClick],
   );
 
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance || !onNodeClick) return;
+    instance.on("click", handleClick);
+    return () => {
+      instance.off("click", handleClick);
+    };
+  }, [onNodeClick, handleClick]);
+
   if (mapData.edges.length === 0) {
     return (
       <EmptyState
@@ -38,5 +51,12 @@ export default function TraceServiceMap({ spans, onNodeClick }: Props) {
     );
   }
 
-  return <EChartWrapper option={option} onClick={handleClick} />;
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }

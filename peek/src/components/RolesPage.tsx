@@ -115,6 +115,13 @@ export default function RolesPage() {
     return roles.filter((entry) => entry.name.toLowerCase().includes(term));
   }, [roles, search]);
 
+  // When filtered results don't include the selected role (e.g. search
+  // excludes it), hide the detail panel while keeping the selection so it
+  // restores when the search is cleared.
+  const displayedRole = filteredRoles.some((entry) => entry.name === selectedRoleName)
+    ? selectedRole
+    : null;
+
   const assignedUsers = useMemo(
     () =>
       selectedRoleName ? users.filter((user) => (user.roles ?? []).includes(selectedRoleName)) : [],
@@ -190,17 +197,17 @@ export default function RolesPage() {
           variant="outlined"
           sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
         >
-          {selectedRole ? (
+          {displayedRole ? (
             <>
-              <Typography variant="subtitle1">{selectedRole.name}</Typography>
+              <Typography variant="subtitle1">{displayedRole.name}</Typography>
               <Typography variant="caption" color="text.secondary">
                 Cluster privileges
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {(selectedRole.role.cluster ?? []).map((privilege) => (
+                {(displayedRole.role.cluster ?? []).map((privilege) => (
                   <Chip key={privilege} size="small" label={privilege} />
                 ))}
-                {(selectedRole.role.cluster ?? []).length === 0 && (
+                {(displayedRole.role.cluster ?? []).length === 0 && (
                   <Typography variant="body2" color="text.secondary">
                     No cluster privileges.
                   </Typography>
@@ -215,7 +222,7 @@ export default function RolesPage() {
                 variant="body2"
                 sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
               >
-                {JSON.stringify(selectedRole.role.indices ?? [], null, 2)}
+                {JSON.stringify(displayedRole.role.indices ?? [], null, 2)}
               </Typography>
 
               <Typography variant="caption" color="text.secondary">

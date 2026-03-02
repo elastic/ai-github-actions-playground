@@ -44,6 +44,8 @@ import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import { formatEsqlQuery } from "./discoverUtils";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
 import { getAllPersesPanelEntries, getPersesPanelEntry } from "./perses/panelRegistry";
+import ResizableEditorContainer from "./ResizableEditorContainer";
+import QueryAnnotationOverlay from "./QueryAnnotationOverlay";
 
 export default function PanelEditor() {
   const editingId = useUIStore((s) => s.editingPanelId);
@@ -58,10 +60,17 @@ export default function PanelEditor() {
 }
 
 function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
-  const { setEditingPanelId: setEditingId, themeMode } = useUIStore(
+  const {
+    setEditingPanelId: setEditingId,
+    themeMode,
+    panelEditorHeight,
+    setPanelEditorHeight,
+  } = useUIStore(
     useShallow((s) => ({
       setEditingPanelId: s.setEditingPanelId,
       themeMode: s.themeMode,
+      panelEditorHeight: s.panelEditorHeight,
+      setPanelEditorHeight: s.setPanelEditorHeight,
     })),
   );
   const { updatePanel, removePanel, timeRange, timeZone, parameters } = useDashboardEditorStore(
@@ -90,6 +99,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   const [preview, setPreview] = useState<EsqlResponse | null>(null);
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
+  const [editorFocused, setEditorFocused] = useState(false);
   const buildRequest = useCallback(
     (queryText: string) => buildPersesEsqlRequest(queryText, { timeRange, parameters }),
     [timeRange, parameters],
@@ -131,11 +141,20 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   useEffect(() => {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
+  const setEditorFocusedRef = useRef(setEditorFocused);
+  useEffect(() => {
+    setEditorFocusedRef.current = setEditorFocused;
+  }, [setEditorFocused]);
   const queryEditorExtensions = useMemo(
     () => [
       EditorView.lineWrapping,
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
       ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+      // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
+      EditorView.focusChangeEffect.of((_state, focusing) => {
+        setEditorFocusedRef.current(focusing);
+        return null;
+      }),
     ],
     [],
   );
@@ -247,16 +266,28 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
                   borderRadius: 1,
                 }}
               >
-                <CodeMirror
-                  value={query}
-                  onChange={setQuery}
-                  onCreateEditor={handleCreateEditor}
-                  extensions={queryEditorExtensions}
-                  theme={themeMode}
-                  height="120px"
-                  basicSetup={basicSetup}
-                  aria-label="ES|QL query editor"
-                />
+                <ResizableEditorContainer
+                  height={panelEditorHeight}
+                  onHeightChange={setPanelEditorHeight}
+                >
+                  <Box sx={{ position: "relative", height: "100%" }}>
+                    <CodeMirror
+                      value={query}
+                      onChange={setQuery}
+                      onCreateEditor={handleCreateEditor}
+                      extensions={queryEditorExtensions}
+                      theme={themeMode}
+                      height={`${panelEditorHeight}px`}
+                      basicSetup={basicSetup}
+                      aria-label="ES|QL query editor"
+                    />
+                    <QueryAnnotationOverlay
+                      query={query}
+                      editorFocused={editorFocused}
+                      height={panelEditorHeight}
+                    />
+                  </Box>
+                </ResizableEditorContainer>
               </Box>
               <QueryPipelineSteps
                 query={query}

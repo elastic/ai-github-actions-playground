@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import IconButton from "@mui/material/IconButton";
@@ -11,13 +11,15 @@ import { useTheme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { FlamegraphNode, FrameType } from "../profiling/profilingUtils";
 import { findSubtreeByPath } from "../profiling/profilingUtils";
 import { CHART_COLORS } from "../../theme";
 import { STATUS_COLORS } from "../../types/tokens";
 
-import EChartWrapper from "./EChartWrapper";
+import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
 
 interface Props {
@@ -120,6 +122,8 @@ const TEXT_PADDING = 6;
 
 export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const muiTheme = useTheme();
+  const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const [zoomPath, setZoomPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [prevTree, setPrevTree] = useState(tree);
@@ -240,6 +244,15 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
       onFrameClick(frameName);
     }
   }, [zoomPath, onFrameClick]);
+
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance || !option) return;
+    instance.on("click", handleClick);
+    return () => {
+      instance.off("click", handleClick);
+    };
+  }, [handleClick, option]);
 
   if (tree.value === 0 || !option) {
     return (
@@ -367,9 +380,11 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
       {/* Chart */}
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        <EChartWrapper
+        <EChart
           option={option as Record<string, unknown>}
-          onClick={handleClick as (params: { dataIndex: number; data: unknown }) => void}
+          theme={theme}
+          _instance={instanceRef}
+          sx={{ width: "100%", height: "100%", minHeight: 120 }}
         />
       </Box>
     </Box>

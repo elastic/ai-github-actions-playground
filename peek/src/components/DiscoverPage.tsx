@@ -49,6 +49,8 @@ import PageHeader from "./PageHeader";
 import DataTable from "./visualizations/DataTable";
 import type { SortState } from "./visualizations/DataTable";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
+import ResizableEditorContainer from "./ResizableEditorContainer";
+import QueryAnnotationOverlay from "./QueryAnnotationOverlay";
 
 export default function DiscoverPage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -56,6 +58,9 @@ export default function DiscoverPage() {
   const addPanel = useDashboardEditorStore((s) => s.addPanel);
   const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
+  const discoverEditorHeight = useUIStore((s) => s.discoverEditorHeight);
+  const setDiscoverEditorHeight = useUIStore((s) => s.setDiscoverEditorHeight);
+  const [editorFocused, setEditorFocused] = useState(false);
   const {
     discoverQueryDraft,
     setDiscoverQueryDraft,
@@ -243,7 +248,13 @@ export default function DiscoverPage() {
       EditorView.lineWrapping,
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
       ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
+      EditorView.focusChangeEffect.of((_state, focusing) => {
+        setEditorFocused(focusing);
+        return null;
+      }),
     ],
+    // setEditorFocused is a stable useState setter — safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
   const basicSetup = useMemo(
@@ -358,16 +369,28 @@ export default function DiscoverPage() {
           }
         />
         <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-          <CodeMirror
-            value={effectiveQuery}
-            onChange={handleQueryChange}
-            onCreateEditor={handleCreateEditor}
-            extensions={queryEditorExtensions}
-            theme={themeMode}
-            height="100px"
-            basicSetup={basicSetup}
-            aria-label="ES|QL query editor"
-          />
+          <ResizableEditorContainer
+            height={discoverEditorHeight}
+            onHeightChange={setDiscoverEditorHeight}
+          >
+            <Box sx={{ position: "relative", height: "100%" }}>
+              <CodeMirror
+                value={effectiveQuery}
+                onChange={handleQueryChange}
+                onCreateEditor={handleCreateEditor}
+                extensions={queryEditorExtensions}
+                theme={themeMode}
+                height={`${discoverEditorHeight}px`}
+                basicSetup={basicSetup}
+                aria-label="ES|QL query editor"
+              />
+              <QueryAnnotationOverlay
+                query={effectiveQuery}
+                editorFocused={editorFocused}
+                height={discoverEditorHeight}
+              />
+            </Box>
+          </ResizableEditorContainer>
         </Box>
         <QueryPipelineSteps
           query={effectiveQuery}
@@ -444,7 +467,16 @@ export default function DiscoverPage() {
       {lastRunProfile !== null && <QueryProfilePanel profile={lastRunProfile} />}
 
       {/* Content area: field picker + table */}
-      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          flexDirection: { md: "row", xs: "column" },
+          gap: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         <FieldPickerSidebar
           columns={columns}
           selectedFields={selectedFields}
@@ -465,7 +497,7 @@ export default function DiscoverPage() {
             <EmptyState
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
-              description="Write an ES|QL query above and press Ctrl+Enter to run it."
+              description="Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
             />
           )}
           {loading && !result && (

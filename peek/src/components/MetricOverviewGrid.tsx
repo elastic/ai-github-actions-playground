@@ -17,6 +17,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import { EChart } from "@perses-dev/components";
 
 import type { FieldInfo, ElasticsearchClient } from "../services/es";
 import { buildOverviewQuery } from "../services/es";
@@ -27,7 +28,6 @@ import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
-import EChartWrapper from "./visualizations/EChartWrapper";
 import EmptyState from "./EmptyState";
 
 // ---------------------------------------------------------------------------
@@ -281,9 +281,13 @@ export default function MetricOverviewGrid({
                 </Box>
 
                 {/* Sparkline chart */}
-                <Box sx={{ flex: 1, minHeight: 80 }}>
+                <Box sx={{ flex: 1, minHeight: 120 }}>
                   {result?.data ? (
-                    <EChartWrapper option={buildSparklineOption(result.data, echartsTheme)} />
+                    <EChart
+                      option={buildSparklineOption(result.data, echartsTheme)}
+                      theme={echartsTheme}
+                      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+                    />
                   ) : (
                     <Skeleton variant="rounded" height="100%" />
                   )}

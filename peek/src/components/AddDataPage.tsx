@@ -325,7 +325,7 @@ export default function AddDataPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Create API key API
+              Create API key endpoint
             </Link>{" "}
             or ask an administrator to provision one for collector onboarding.
           </Alert>

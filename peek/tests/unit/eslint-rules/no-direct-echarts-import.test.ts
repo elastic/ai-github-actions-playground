@@ -9,12 +9,7 @@ describe("peek/no-direct-echarts-import", () => {
   it("passes RuleTester valid/invalid cases", () => {
     tester.run("no-direct-echarts-import", rule, {
       valid: [
-        { code: `import EChartWrapper from "./EChartWrapper";` },
         { code: `import { EChart } from "@perses-dev/components";` },
-        {
-          code: `import * as echarts from "echarts/core";`,
-          filename: "src/components/visualizations/EChartWrapper.tsx",
-        },
         {
           code: `import * as echarts from "echarts/core";`,
           filename: "src/components/perses/PersesEChartWrapper.tsx",
