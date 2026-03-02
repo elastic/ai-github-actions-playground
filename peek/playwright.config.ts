@@ -8,10 +8,14 @@ export default defineConfig({
     baseURL: "http://localhost:3000/ai-github-actions-playground/",
     trace: process.env.CI ? "on-first-retry" : "on",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
+    { name: "mobile-safari", use: { ...devices["iPhone 14"] } },
+  ],
   webServer: {
     command: "npm run dev -- --port 3000",
-    port: 3000,
+    url: "http://localhost:3000/ai-github-actions-playground/",
     reuseExistingServer: !process.env.CI,
     timeout: process.env.CI ? 120_000 : undefined,
   },
