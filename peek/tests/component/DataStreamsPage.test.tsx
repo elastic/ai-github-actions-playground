@@ -156,6 +156,35 @@ describe("DataStreamsPage", () => {
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
   });
 
+  it("clears the detail panel when search excludes the selected stream", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({
+      fields: { "host.name": { keyword: { type: "keyword" } } },
+    });
+
+    render(
+      <MemoryRouter>
+        <DataStreamsPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { level: 6, name: "logs-a" });
+
+    await user.type(screen.getByRole("textbox", { name: /search streams/i }), "non-existent");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { level: 6, name: "logs-a" })).not.toBeInTheDocument();
+      expect(screen.getByText("Select a data stream")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /host\.name/i })).not.toBeInTheDocument();
+    });
+  });
+
   it("truncates long data stream names with a title tooltip", async () => {
     const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
     getDataStreamsMock.mockResolvedValue({
