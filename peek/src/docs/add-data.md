@@ -1,31 +1,59 @@
 # Add Data
 
-Use the Add Data page to onboard Elastic Distribution of OpenTelemetry (EDOT) collectors for Kubernetes, Docker, and Hosts/VMs.
+Use the Add Data wizard to onboard Elastic Distribution of OpenTelemetry (EDOT) in an explicit five-step flow.
 
-## Endpoint type
+## Step 1 — What are you monitoring?
 
-Before choosing a platform, select an endpoint type:
+Choose a technology from:
 
-- **Elasticsearch** — send data directly to an Elasticsearch endpoint using an API key. The starter command includes `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` placeholders for your Elasticsearch URL and API key.
-- **Managed OTLP** — send data to a managed OTLP ingest endpoint (e.g. Elastic Cloud). When selected, the page validates the derived OTLP URL and shows a status message indicating whether the endpoint is reachable. Supported auto-derivation patterns include `.elastic.cloud`, `.cloud.es.io`, and `.kb.*.cloud.es.io` URLs. For `.cloud.es.io`, the wizard probes both `.cloud.es.io` and `.elastic-cloud.com` ingest hosts and uses the first reachable endpoint in the starter command.
+- **Search** (find technologies quickly)
+- **Category filters** (Cloud, Containers, Databases, Applications, Operating Systems, Network)
+- **Recommended for you** shortcuts
 
-The page links to official quickstart guides and provides starter commands whose placeholders vary by the selected endpoint type.
+Your selection drives the expected signals and contextual guidance for later steps.
 
-If your credentials have API key privileges, you can generate a collector key directly in-app. Otherwise, use the Elasticsearch Create API key API or ask an administrator to provision one.
+## Step 2 — Select your environment
 
-## Verify ingestion
+Reuse the existing environment controls:
 
-After starting the collector, click **Check now** to verify whether telemetry data streams have appeared in Elasticsearch. Verification also starts automatically once an API key is generated or a starter command is copied.
+- **Endpoint type**: Elasticsearch or Managed OTLP
+- **Platform**: Kubernetes, Docker, Linux, macOS, Windows
 
-Once initiated, verification continues polling automatically in the background — you do not need to click again. A pulsing "Listening for data…" indicator confirms that auto-polling is active.
+When Managed OTLP is selected, the wizard probes derived ingest endpoints and surfaces endpoint health inline.
 
-Possible outcomes:
+## Step 3 — Install and configure
 
-- **found** — telemetry data was detected. The alert lists the signal types found (e.g. logs, metrics, traces) and provides navigation buttons to jump directly to the corresponding page for each signal.
-- **not_found** — no telemetry data streams found yet. Make sure the collector is running — the page will keep checking automatically. A link to the OpenTelemetry troubleshooting docs is provided.
-- **error** — the verification request failed. Check your connection and permissions, then retry.
+Generate tailored install commands with:
 
-Official references:
+- Progressive command step cards with per-step copy
+- Copy-all support
+- Official quickstart docs link
+- API key generation and copy workflow (when permissions allow)
+
+The command template pre-fills available endpoint/version/API key values.
+
+## Step 4 — Validate data receipt
+
+Verification keeps the existing ingestion primitives:
+
+- `runVerifyOnce` for one-shot checks
+- `startPolling` for automatic polling
+- **Check now** for manual trigger
+
+Validation messaging is contextual to the selected technology’s expected signals and supports partial success guidance.
+
+## Step 5 — Explore your data + next steps
+
+Success outcomes now include contextual CTAs beyond signal-only routes:
+
+- Open signal page (Metrics, Traces, Query Lab)
+- Open Dashboards
+- Set up alerting
+- Add another source
+
+This provides a direct “aha moment” and clear follow-up actions after setup.
+
+## References
 
 - https://www.elastic.co/docs/solutions/observability/get-started
 - https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-security-create-api-key
