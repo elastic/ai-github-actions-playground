@@ -37,6 +37,8 @@ interface TraceSearchPanelProps {
   searchResultCount: number | null;
 }
 
+const TRACE_FILTER_CONTROL_HEIGHT = 36;
+
 export default function TraceSearchPanel({
   filters,
   resetFilters,
@@ -168,7 +170,7 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiInputBase-root": { height: 36 },
+          "& .MuiInputBase-root": { height: TRACE_FILTER_CONTROL_HEIGHT },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
         }}
       >
@@ -202,7 +204,7 @@ export default function TraceSearchPanel({
           )}
           sx={{
             minWidth: 160,
-            "& .MuiInputBase-root": { height: "auto", minHeight: 36 },
+            "& .MuiInputBase-root": { height: "auto", minHeight: TRACE_FILTER_CONTROL_HEIGHT },
           }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -223,7 +225,12 @@ export default function TraceSearchPanel({
             onChange={(e) => setMaxDurationInput(e.target.value)}
             sx={{ width: 100 }}
           />
-          <Button size="small" variant="outlined" onClick={handleApplyDuration} sx={{ height: 36 }}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleApplyDuration}
+            sx={{ height: TRACE_FILTER_CONTROL_HEIGHT }}
+          >
             Apply
           </Button>
         </Stack>
@@ -239,7 +246,7 @@ export default function TraceSearchPanel({
               applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
             }
           }}
-          sx={{ minWidth: 150, height: 36 }}
+          sx={{ minWidth: 150, height: TRACE_FILTER_CONTROL_HEIGHT }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
             <MenuItem key={opt.label} value={opt.from ?? ""}>
@@ -255,7 +262,7 @@ export default function TraceSearchPanel({
               size="medium"
               variant={filters.statusCodes.includes(status) ? "filled" : "outlined"}
               color={status === "Error" ? "error" : "default"}
-              sx={{ height: 36 }}
+              sx={{ height: TRACE_FILTER_CONTROL_HEIGHT }}
               onClick={() => {
                 if (filters.statusCodes.includes(status)) {
                   applyFiltersAndRun({
