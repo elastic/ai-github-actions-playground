@@ -27,7 +27,7 @@
 ## Quick Start
 
 ```bash
-make setup        # install Node.js dependencies (run this first)
+make setup        # install Node.js dependencies (recommended first)
 make serve        # install deps + start Vite dev server with hot reload
 make serve-proxy  # install deps + start dev server with Elasticsearch proxy (set ES_URL)
 make build        # production build to peek/dist/
