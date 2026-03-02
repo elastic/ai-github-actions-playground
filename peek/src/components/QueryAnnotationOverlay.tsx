@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import Box from "@mui/material/Box";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import ButtonBase from "@mui/material/ButtonBase";
-import LinearProgress from "@mui/material/LinearProgress";
+import Fade from "@mui/material/Fade";
 import Typography from "@mui/material/Typography";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
@@ -10,8 +9,9 @@ import { useShallow } from "zustand/react/shallow";
 import { useLLMStore } from "../store/useLLMStore";
 
 const EXPLAIN_SYSTEM_PROMPT =
-  "You are an ES|QL expert. Given an ES|QL query, provide a brief plain-language " +
-  "explanation of what the query does. Be concise — one to three sentences. " +
+  "You are an ES|QL expert. Given an ES|QL query, describe its goal or intent in plain language — " +
+  "what question is it trying to answer or what data is it trying to surface? " +
+  "Be concise — one to two sentences. " +
   "Do not include any code. Do not wrap the response in quotes or markdown.";
 
 const MAX_CACHE_SIZE = 50;
@@ -59,37 +59,31 @@ export default function QueryAnnotationOverlay({
       model: s.config.model,
     })),
   );
-  const [explanation, setExplanation] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
-  const lastQueryRef = useRef(query);
-
-  // Reset dismissed state when the query changes
-  useEffect(() => {
-    if (query !== lastQueryRef.current) {
-      lastQueryRef.current = query;
-      setDismissed(false);
-      setExplanation(null);
-    }
-  }, [query]);
-
   const hasApiKey = Boolean(apiKey?.trim());
 
-  // Fetch explanation when unfocused, not dismissed, and query is non-trivial
-  useEffect(() => {
-    if (editorFocused || dismissed || !query.trim() || !hasApiKey) {
-      return;
-    }
+  // Derive the cache key and check synchronously during render (avoids setState-in-effect)
+  const cacheKey = useMemo(
+    () => getCacheKey(query, provider, llmModel),
+    [query, provider, llmModel],
+  );
+  const cachedExplanation = useMemo(() => explanationCache.get(cacheKey) ?? null, [cacheKey]);
 
-    const cacheKey = getCacheKey(query, provider, llmModel);
-    const cached = explanationCache.get(cacheKey);
-    if (cached) {
-      setExplanation(cached);
+  // Async-fetched result, keyed to its query to auto-invalidate when query changes
+  const [asyncResult, setAsyncResult] = useState<{ query: string; text: string } | null>(null);
+
+  // `dismissed` is keyed to the dismissed query string — auto-resets when query changes
+  const [dismissedForQuery, setDismissedForQuery] = useState<string | null>(null);
+  const dismissed = dismissedForQuery === query;
+
+  const explanation = cachedExplanation ?? (asyncResult?.query === query ? asyncResult.text : null);
+
+  // Fetch explanation when unfocused, not dismissed, and not already in cache
+  useEffect(() => {
+    if (editorFocused || dismissed || !query.trim() || !hasApiKey || cachedExplanation) {
       return;
     }
 
     const controller = new AbortController();
-    setLoading(true);
 
     void (async () => {
       try {
@@ -109,57 +103,61 @@ export default function QueryAnnotationOverlay({
         const text = result.text.trim();
         if (text) {
           cacheSet(cacheKey, text);
-          setExplanation(text);
+          setAsyncResult({ query, text });
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Query annotation failed:", err);
         }
-      } finally {
-        setLoading(false);
       }
     })();
 
     return () => {
       controller.abort();
     };
-  }, [editorFocused, dismissed, query, hasApiKey, apiKey, provider, llmModel]);
+  }, [
+    editorFocused,
+    dismissed,
+    query,
+    hasApiKey,
+    apiKey,
+    provider,
+    llmModel,
+    cacheKey,
+    cachedExplanation,
+  ]);
 
   const handleClick = useCallback(() => {
-    setDismissed(true);
-  }, []);
+    setDismissedForQuery(query);
+  }, [query]);
 
-  // Don't render when focused, dismissed, no API key, or no content
-  if (editorFocused || dismissed || !hasApiKey || (!explanation && !loading)) {
+  // Don't render when focused, dismissed, no API key, or explanation not yet ready
+  if (editorFocused || dismissed || !hasApiKey || !explanation) {
     return null;
   }
 
   return (
-    <ButtonBase
-      onClick={handleClick}
-      aria-label="Click to edit the ES|QL query"
-      sx={{
-        position: "absolute",
-        zIndex: 2,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: `${height}px`,
-        px: 2,
-        borderRadius: 1,
-        bgcolor: "background.default",
-        opacity: 0.94,
-        transition: "opacity 0.2s",
-        "&:hover": { opacity: 0.85 },
-        backdropFilter: "blur(2px)",
-        inset: 0,
-      }}
-    >
-      {loading ? (
-        <Box sx={{ width: "60%" }}>
-          <LinearProgress />
-        </Box>
-      ) : (
+    <Fade in timeout={400}>
+      <ButtonBase
+        onClick={handleClick}
+        aria-label="Click to edit the ES|QL query"
+        sx={{
+          position: "absolute",
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: `${height}px`,
+          px: 2,
+          borderRadius: 1,
+          bgcolor: "background.default",
+          opacity: 0.94,
+          transition: "opacity 0.2s",
+          "&:hover": { opacity: 0.85 },
+          backdropFilter: "blur(2px)",
+          inset: 0,
+        }}
+      >
         <Typography
           variant="body2"
           sx={{
@@ -172,7 +170,7 @@ export default function QueryAnnotationOverlay({
         >
           {explanation}
         </Typography>
-      )}
-    </ButtonBase>
+      </ButtonBase>
+    </Fade>
   );
 }
