@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { Fragment, useState, useCallback, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
@@ -206,7 +206,7 @@ export default function DimensionSidebar({
             const state = dimensionStates[field.name];
             const isGroupBy = groupBy === field.name;
             return (
-              <li key={field.name}>
+              <Fragment key={field.name}>
                 <ListItem
                   disablePadding
                   secondaryAction={
@@ -311,7 +311,7 @@ export default function DimensionSidebar({
                     </Typography>
                   )}
                 </Collapse>
-              </li>
+              </Fragment>
             );
           })}
         </List>
