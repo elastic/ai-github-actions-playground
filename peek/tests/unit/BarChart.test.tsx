@@ -1,9 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import * as echarts from "echarts/core";
 
 import BarChart from "../../src/components/visualizations/BarChart";
 import type { EsqlResponse } from "../../src/types";
+
+const { mockSetOption, mockInit } = vi.hoisted(() => {
+  const mockSetOption = vi.fn();
+  const mockInit = vi.fn(() => ({
+    setOption: mockSetOption,
+    resize: vi.fn(),
+    dispose: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    getDataURL: vi.fn(() => "data:image/png;base64,mock"),
+  }));
+  return { mockSetOption, mockInit };
+});
 
 vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
   useEChartTheme: () => ({
@@ -15,19 +27,26 @@ vi.mock("../../src/components/visualizations/useEChartTheme", () => ({
   }),
 }));
 
-/** Returns the option object from the most recent echarts.init().setOption() call. */
+vi.mock("@perses-dev/components", () => ({
+  EChart: function MockEChart(props: Record<string, unknown>) {
+    const inst = mockInit(null, props.theme);
+    inst.setOption(props.option, true);
+    const ref = props._instance as React.MutableRefObject<unknown> | undefined;
+    if (ref) ref.current = inst;
+    return null;
+  },
+}));
+
+/** Returns the option object from the most recent EChart setOption() call. */
 function getLastSetOptionCall(): Record<string, unknown> {
-  const mockInit = echarts.init as ReturnType<typeof vi.fn>;
-  const results = mockInit.mock.results;
-  const mockInstance = results[results.length - 1]?.value;
-  const setOption = mockInstance?.setOption as ReturnType<typeof vi.fn>;
-  const calls = setOption.mock.calls;
+  const calls = mockSetOption.mock.calls;
   return calls[calls.length - 1]?.[0] as Record<string, unknown>;
 }
 
 describe("BarChart", () => {
   beforeEach(() => {
-    (echarts.init as ReturnType<typeof vi.fn>).mockClear();
+    mockInit.mockClear();
+    mockSetOption.mockClear();
   });
 
   it("uses column name as series name with single string column", () => {

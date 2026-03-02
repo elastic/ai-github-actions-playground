@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse } from "../../types";
+import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
-import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
@@ -12,6 +14,7 @@ interface Props {
 
 export default function HeatmapChart({ data }: Props) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -51,7 +54,6 @@ export default function HeatmapChart({ data }: Props) {
     });
 
     return {
-      ...theme,
       grid: { left: 80, right: 40, top: 16, bottom: 40 },
       tooltip: {
         ...theme.tooltip,
@@ -76,14 +78,14 @@ export default function HeatmapChart({ data }: Props) {
         bottom: 0,
         inRange: {
           color: [
-            "#313695",
-            "#4575b4",
-            "#74add1",
-            "#abd9e9",
-            "#fee090",
-            "#fdae61",
-            "#f46d43",
-            "#d73027",
+            CHART_COLORS[6],
+            CHART_COLORS[4],
+            CHART_COLORS[0],
+            CHART_COLORS[1],
+            CHART_COLORS[8],
+            CHART_COLORS[3],
+            CHART_COLORS[9],
+            CHART_COLORS[2],
           ],
         },
       },
@@ -92,12 +94,19 @@ export default function HeatmapChart({ data }: Props) {
           type: "heatmap" as const,
           data: heatmapData,
           emphasis: {
-            itemStyle: { shadowBlur: 10, shadowColor: "rgba(0, 0, 0, 0.5)" },
+            itemStyle: { shadowBlur: 10, shadowColor: theme.textStyle?.color },
           },
         },
       ],
     };
   }, [data, theme]);
 
-  return <EChartWrapper option={option} />;
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }

@@ -1,12 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse, GaugePanelOptions, ThresholdColor, ThresholdStep } from "../../types";
 import { toGaugeData } from "../../services/perses/dataTransformers";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { THRESHOLD_PALETTE } from "./thresholdUtils";
-import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
@@ -48,6 +49,13 @@ function buildGaugeSegments(
 
 export default function GaugePanel({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   const option = useMemo(() => {
     const gauge = toGaugeData(data);
@@ -65,10 +73,9 @@ export default function GaugePanel({ data, options, onExportReady }: Props) {
     const axisLineColor: [number, string][] =
       thresholds && thresholds.steps.length > 0
         ? buildGaugeSegments(thresholds.steps, minVal, maxVal, thresholds.baseColor ?? "success")
-        : [[1, theme.color[0] ?? "#0077CC"]];
+        : [[1, theme.color[0] ?? theme.textStyle.color ?? "currentColor"]];
 
     return {
-      ...theme,
       series: [
         {
           type: "gauge" as const,
@@ -101,5 +108,12 @@ export default function GaugePanel({ data, options, onExportReady }: Props) {
     };
   }, [data, theme, options]);
 
-  return <EChartWrapper option={option} onExportReady={onExportReady} />;
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }

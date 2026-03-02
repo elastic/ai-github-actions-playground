@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse, BarChartOptions } from "../../types";
 import { toBarChartData } from "../../services/perses/dataTransformers";
+import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
-import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
@@ -15,19 +17,25 @@ interface Props {
 
 export default function BarChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const stacked = options?.stacked === true;
   const horizontal = options?.horizontal === true;
   const format = options?.format;
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   const option = useMemo(() => {
     const transformed = toBarChartData(data);
     const seriesData = transformed.series;
     const categories = transformed.categories;
-    const textColor = theme.textStyle?.color ?? "#9CA3AF";
+    const textColor = theme.textStyle?.color ?? CHART_COLORS[0];
 
     if (seriesData.length === 0) {
       return {
-        ...theme,
         graphic: {
           type: "group",
           left: "center",
@@ -87,7 +95,7 @@ export default function BarChart({ data, options, onExportReady }: Props) {
       data: entry.values,
       stack: stacked ? "total" : undefined,
       itemStyle: {
-        color: theme.color.length ? theme.color[i % theme.color.length] : "#0077CC",
+        color: theme.color.length ? theme.color[i % theme.color.length] : CHART_COLORS[0],
         borderRadius: stacked ? undefined : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
       },
     }));
@@ -112,7 +120,6 @@ export default function BarChart({ data, options, onExportReady }: Props) {
     };
 
     return {
-      ...theme,
       grid: { left: 48, right: 16, top: 32, bottom: 40 },
       tooltip: {
         ...theme.tooltip,
@@ -130,5 +137,12 @@ export default function BarChart({ data, options, onExportReady }: Props) {
     };
   }, [data, theme, stacked, horizontal, format]);
 
-  return <EChartWrapper option={option} onExportReady={onExportReady} />;
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }
