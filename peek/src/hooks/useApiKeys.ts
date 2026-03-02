@@ -12,7 +12,10 @@ export function useApiKeys() {
   const query = useQuery({
     queryKey: ["security-api-keys", connection?.url],
     queryFn: async () => {
-      const client = new ElasticsearchClient(connection!);
+      if (!connection) {
+        throw new Error("No active connection");
+      }
+      const client = new ElasticsearchClient(connection);
       return loadSecurityResource({
         client,
         fetchResource: (c) => c.getApiKeys(),
@@ -34,6 +37,7 @@ export function useApiKeys() {
   }, [query.data]);
 
   const refresh = () => {
+    if (!connection) return;
     void query.refetch();
   };
 

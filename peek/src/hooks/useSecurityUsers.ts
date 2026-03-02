@@ -12,7 +12,10 @@ export function useSecurityUsers() {
   const query = useQuery({
     queryKey: ["security-users", connection?.url],
     queryFn: async () => {
-      const client = new ElasticsearchClient(connection!);
+      if (!connection) {
+        throw new Error("No active connection");
+      }
+      const client = new ElasticsearchClient(connection);
       return loadSecurityResource({
         client,
         fetchResource: (c) => c.getSecurityUsers(),
@@ -43,6 +46,7 @@ export function useSecurityUsers() {
   }, [query.data]);
 
   const refresh = () => {
+    if (!connection) return;
     void query.refetch();
   };
 

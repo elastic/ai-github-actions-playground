@@ -14,7 +14,10 @@ export function useSecurityRoles() {
   const rolesQuery = useQuery({
     queryKey: ["security-roles", connection?.url],
     queryFn: async () => {
-      const client = new ElasticsearchClient(connection!);
+      if (!connection) {
+        throw new Error("No active connection");
+      }
+      const client = new ElasticsearchClient(connection);
       return loadSecurityResource({
         client,
         fetchResource: (c) => c.getSecurityRoles(),
@@ -31,7 +34,10 @@ export function useSecurityRoles() {
   const usersQuery = useQuery({
     queryKey: ["security-role-users", connection?.url],
     queryFn: async () => {
-      const client = new ElasticsearchClient(connection!);
+      if (!connection) {
+        throw new Error("No active connection");
+      }
+      const client = new ElasticsearchClient(connection);
       return client.getSecurityUsers();
     },
     enabled: Boolean(connection),
@@ -60,7 +66,10 @@ export function useSecurityRoles() {
     }));
   }, [usersQuery.data]);
 
+  const usersError = usersQuery.isError ? usersQuery.error.message : null;
+
   const refresh = () => {
+    if (!connection) return;
     void rolesQuery.refetch();
     void usersQuery.refetch();
   };
@@ -71,6 +80,7 @@ export function useSecurityRoles() {
     loading: rolesQuery.isFetching || usersQuery.isFetching,
     error: rolesQuery.data?.error ?? (rolesQuery.isError ? rolesQuery.error.message : null),
     accessNotice: rolesQuery.data?.notice ?? null,
+    usersError,
     refresh,
   };
 }

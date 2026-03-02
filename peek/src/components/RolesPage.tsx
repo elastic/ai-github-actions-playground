@@ -24,7 +24,7 @@ import { copyToClipboard } from "../utils/copyToClipboard";
 import PageHeader from "./PageHeader";
 
 export default function RolesPage() {
-  const { roles, users, loading, error, accessNotice, refresh } = useSecurityRoles();
+  const { roles, users, loading, error, accessNotice, usersError, refresh } = useSecurityRoles();
   const navigate = useNavigate();
   const [urlRole, setUrlRole] = useQueryState("role", parseAsString);
   const [search, setSearch] = useQueryState(
@@ -99,6 +99,11 @@ export default function RolesPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
       {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
+      {usersError && (
+        <Alert severity="warning">
+          Unable to load users for role assignment display: {usersError}
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         <Paper
