@@ -130,7 +130,7 @@ export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick
     return () => {
       instance.off("click", handleClick);
     };
-  }, [onNodeClick, handleClick, mapData.edges.length]);
+  }, [onNodeClick, handleClick, mapData.edges.length, theme]);
 
   if (mapData.edges.length === 0) {
     return (
