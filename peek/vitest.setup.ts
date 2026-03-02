@@ -1,9 +1,31 @@
+import React from "react";
 import { vi, afterEach, expect } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as matchers from "vitest-axe/matchers";
 
 expect.extend(matchers);
+
+vi.mock("@testing-library/react", async () => {
+  const actual = await vi.importActual("@testing-library/react");
+  const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
+
+  return {
+    ...actual,
+    render: (ui: React.ReactNode, options?: { [key: string]: unknown }) => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+      return (actual as { render: (...args: unknown[]) => unknown }).render(
+        React.createElement(QueryClientProvider, { client: queryClient }, ui),
+        options,
+      );
+    },
+  };
+});
 
 class StorageMock implements Storage {
   private store: Record<string, string> = {};
