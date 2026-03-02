@@ -69,7 +69,7 @@ export default function EmptyState({
           underline="hover"
           variant="body2"
           color="text.secondary"
-          sx={{ alignItems: "center", display: "inline-flex", gap: 0.5, mt: 1 }}
+          sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 1 }}
         >
           <RocketLaunchIcon sx={{ fontSize: 16 }} />
           Add data

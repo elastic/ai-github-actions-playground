@@ -53,6 +53,7 @@ export default function ConnectionDialog() {
   );
   const {
     connection: savedConn,
+    connected,
     setConnection,
     setConnected,
     setCapabilities,
@@ -68,6 +69,7 @@ export default function ConnectionDialog() {
   } = useConnectionStore(
     useShallow((s) => ({
       connection: s.connection,
+      connected: s.connected,
       setConnection: s.setConnection,
       setConnected: s.setConnected,
       setCapabilities: s.setCapabilities,
@@ -526,9 +528,11 @@ export default function ConnectionDialog() {
         </Box>
       </DialogContent>
       <DialogActions sx={{ pb: 2, px: 3 }}>
-        <Button onClick={handleDisconnect} color="warning">
-          Disconnect
-        </Button>
+        {connected && (
+          <Button onClick={handleDisconnect} color="warning" disabled={testing}>
+            Disconnect
+          </Button>
+        )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
         <Button onClick={handleTest} disabled={testing || !url}>
