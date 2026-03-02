@@ -529,7 +529,7 @@ export default function ConnectionDialog() {
       </DialogContent>
       <DialogActions sx={{ pb: 2, px: 3 }}>
         {connected && (
-          <Button onClick={handleDisconnect} color="warning">
+          <Button onClick={handleDisconnect} color="warning" disabled={testing}>
             Disconnect
           </Button>
         )}
