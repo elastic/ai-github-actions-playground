@@ -42,3 +42,4 @@ jobs:
         the change rather than making a potentially incorrect fix.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      EXTRA_COMMIT_GITHUB_TOKEN: ${{ secrets.COMMIT_GITHUB_TOKEN }}
