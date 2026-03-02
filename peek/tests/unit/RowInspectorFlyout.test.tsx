@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe } from "vitest-axe";
 
+import { renderWithA11y } from "../helpers/renderWithA11y";
 import RowInspectorFlyout from "../../src/components/visualizations/RowInspectorFlyout";
 
 const SAMPLE_COLUMNS = [
@@ -21,7 +21,7 @@ describe("RowInspectorFlyout", () => {
   });
 
   it("has no accessibility violations", async () => {
-    const { container } = render(
+    await renderWithA11y(
       <RowInspectorFlyout
         open={true}
         onClose={() => {}}
@@ -29,8 +29,6 @@ describe("RowInspectorFlyout", () => {
         row={SAMPLE_ROW}
       />,
     );
-    const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
   });
 
   it("renders the Row Inspector header", () => {

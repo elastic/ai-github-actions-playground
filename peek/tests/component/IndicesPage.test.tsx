@@ -289,7 +289,7 @@ describe("IndicesPage", () => {
     await screen.findByTestId("index-meta-health");
 
     const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
+    expect(results).toHaveNoViolations();
   });
 
   it("shows Disk Usage tab with analyze button and renders field breakdown", async () => {

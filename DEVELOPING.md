@@ -274,7 +274,7 @@ Shared layout and feedback components (`EmptyState`, `ContentSkeleton`, `PageHea
 
 - Test behavior (what the user sees), not implementation details (internal state, hook call counts).
 - Test error states, loading states, and empty states — not just the happy path.
-- Include at least one `vitest-axe` accessibility check per component test suite.
+- Include at least one `vitest-axe` accessibility check per component test suite. Use the shared `renderWithA11y` helper from `peek/tests/helpers/renderWithA11y.tsx` instead of manual `axe(container)` + assertion boilerplate. For tests that must wait for async content before running axe, use `toHaveNoViolations()` as the assertion style.
 - Prefer component tests (`@testing-library/react` + `userEvent`) over E2E for rendering and interaction.
 - Mock at boundaries (`fetch`, `localStorage`, `echarts/core`); everything else uses real code paths.
 - No trivial tests — skip "renders without crashing" with zero assertions.

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe } from "vitest-axe";
 
+import { renderWithA11y } from "../helpers/renderWithA11y";
 import PartialResultPanel from "../../src/components/PartialResultPanel";
 
 const SAMPLE_SHARDS_METADATA = {
@@ -61,9 +61,7 @@ const SAMPLE_CLUSTERS_METADATA = {
 
 describe("PartialResultPanel", () => {
   it("has no accessibility violations", async () => {
-    const { container } = render(<PartialResultPanel metadata={SAMPLE_SHARDS_METADATA} />);
-    const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
+    await renderWithA11y(<PartialResultPanel metadata={SAMPLE_SHARDS_METADATA} />);
   });
 
   it("renders the panel header with warning icon", () => {
