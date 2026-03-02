@@ -26,6 +26,7 @@ export default function ResizableEditorContainer({
   const dragging = useRef(false);
   const startY = useRef(0);
   const startHeight = useRef(0);
+  const pendingHeight = useRef(height);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -33,22 +34,28 @@ export default function ResizableEditorContainer({
       dragging.current = true;
       startY.current = e.clientY;
       startHeight.current = height;
+      pendingHeight.current = height;
 
       const onPointerMove = (moveEvent: PointerEvent) => {
         if (!dragging.current) return;
         const delta = moveEvent.clientY - startY.current;
-        const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startHeight.current + delta));
-        onHeightChange(next);
+        pendingHeight.current = Math.max(
+          MIN_HEIGHT,
+          Math.min(MAX_HEIGHT, startHeight.current + delta),
+        );
+        onHeightChange(pendingHeight.current);
       };
 
-      const onPointerUp = () => {
+      const onPointerEnd = () => {
         dragging.current = false;
         document.removeEventListener("pointermove", onPointerMove);
-        document.removeEventListener("pointerup", onPointerUp);
+        document.removeEventListener("pointerup", onPointerEnd);
+        document.removeEventListener("pointercancel", onPointerEnd);
       };
 
       document.addEventListener("pointermove", onPointerMove);
-      document.addEventListener("pointerup", onPointerUp);
+      document.addEventListener("pointerup", onPointerEnd);
+      document.addEventListener("pointercancel", onPointerEnd);
     },
     [height, onHeightChange],
   );

@@ -16,8 +16,12 @@ const EXPLAIN_SYSTEM_PROMPT =
 
 const MAX_CACHE_SIZE = 50;
 
-/** LRU-bounded cache of query → explanation. */
+/** LRU-bounded cache of `provider::model::query` → explanation. */
 const explanationCache = new Map<string, string>();
+
+function getCacheKey(query: string, provider: string, model: string) {
+  return `${provider}::${model}::${query}`;
+}
 
 function cacheSet(key: string, value: string) {
   explanationCache.delete(key);
@@ -69,13 +73,16 @@ export default function QueryAnnotationOverlay({
     }
   }, [query]);
 
+  const hasApiKey = Boolean(apiKey?.trim());
+
   // Fetch explanation when unfocused, not dismissed, and query is non-trivial
   useEffect(() => {
-    if (editorFocused || dismissed || !query.trim() || !apiKey.trim()) {
+    if (editorFocused || dismissed || !query.trim() || !hasApiKey) {
       return;
     }
 
-    const cached = explanationCache.get(query);
+    const cacheKey = getCacheKey(query, provider, llmModel);
+    const cached = explanationCache.get(cacheKey);
     if (cached) {
       setExplanation(cached);
       return;
@@ -101,7 +108,7 @@ export default function QueryAnnotationOverlay({
 
         const text = result.text.trim();
         if (text) {
-          cacheSet(query, text);
+          cacheSet(cacheKey, text);
           setExplanation(text);
         }
       } catch (err) {
@@ -116,14 +123,14 @@ export default function QueryAnnotationOverlay({
     return () => {
       controller.abort();
     };
-  }, [editorFocused, dismissed, query, apiKey, provider, llmModel]);
+  }, [editorFocused, dismissed, query, hasApiKey, apiKey, provider, llmModel]);
 
   const handleClick = useCallback(() => {
     setDismissed(true);
   }, []);
 
-  // Don't render when focused, dismissed, or no content
-  if (editorFocused || dismissed || (!explanation && !loading)) {
+  // Don't render when focused, dismissed, no API key, or no content
+  if (editorFocused || dismissed || !hasApiKey || (!explanation && !loading)) {
     return null;
   }
 

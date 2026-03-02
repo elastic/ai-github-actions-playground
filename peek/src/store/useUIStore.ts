@@ -2,6 +2,14 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 const MAX_RECENT_COMMANDS = 5;
+const MIN_EDITOR_HEIGHT = 60;
+const MAX_EDITOR_HEIGHT = 600;
+
+function clampEditorHeight(value: number, fallback: number): number {
+  return Number.isFinite(value)
+    ? Math.min(MAX_EDITOR_HEIGHT, Math.max(MIN_EDITOR_HEIGHT, value))
+    : fallback;
+}
 
 interface UIState {
   themeMode: "light" | "dark";
@@ -51,8 +59,12 @@ export const useUIStore = create<UIState>()(
         setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
         setAiPanelOpen: (open) => set({ aiPanelOpen: open }),
         setExplainModeActive: (active) => set({ explainModeActive: active }),
-        setDiscoverEditorHeight: (height) => set({ discoverEditorHeight: height }),
-        setPanelEditorHeight: (height) => set({ panelEditorHeight: height }),
+        setDiscoverEditorHeight: (height) =>
+          set({
+            discoverEditorHeight: clampEditorHeight(height, DEFAULT_UI_STATE.discoverEditorHeight),
+          }),
+        setPanelEditorHeight: (height) =>
+          set({ panelEditorHeight: clampEditorHeight(height, DEFAULT_UI_STATE.panelEditorHeight) }),
         addRecentCommandId: (id) =>
           set((state) => ({
             recentCommandIds: [id, ...state.recentCommandIds.filter((i) => i !== id)].slice(

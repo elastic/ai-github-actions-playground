@@ -244,9 +244,6 @@ export default function DiscoverPage() {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
   const setEditorFocusedRef = useRef(setEditorFocused);
-  useEffect(() => {
-    setEditorFocusedRef.current = setEditorFocused;
-  }, [setEditorFocused]);
   const queryEditorExtensions = useMemo(
     () => [
       EditorView.lineWrapping,
