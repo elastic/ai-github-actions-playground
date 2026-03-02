@@ -63,9 +63,11 @@ describe("DateRangePicker", () => {
     const applyButton = screen.getByRole("button", { name: "Apply" });
     expect(applyButton).not.toBeDisabled();
     await user.click(applyButton);
+    const expectedFrom = new Date("2026-02-28T09:00").toISOString();
+    const expectedTo = new Date("2026-02-28T10:00").toISOString();
     expect(onChange).toHaveBeenCalledWith({
-      from: "2026-02-28T09:00:00.000Z",
-      to: "2026-02-28T10:00:00.000Z",
+      from: expectedFrom,
+      to: expectedTo,
     });
   });
 });
