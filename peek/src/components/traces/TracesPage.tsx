@@ -16,6 +16,7 @@ import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import ResizableSplitPane from "../ResizableSplitPane";
+import type { EsqlResponse } from "../../types";
 
 import { parseSpansFromEsql } from "./traceUtils";
 import type { Span } from "./traceUtils";
@@ -90,13 +91,6 @@ export default function TracesPage() {
   // Sync selectedTraceId with URL query parameter
   const [urlTraceId, setUrlTraceId] = useQueryState("traceId", parseAsString);
 
-  // Store → URL: keep URL in sync when store changes
-  useEffect(() => {
-    if (selectedTraceId !== urlTraceId) {
-      void setUrlTraceId(selectedTraceId);
-    }
-  }, [selectedTraceId, urlTraceId, setUrlTraceId]);
-
   // Drift Radar state
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
@@ -111,6 +105,11 @@ export default function TracesPage() {
   }, [filters, setRawQuery]);
 
   // Main search query
+  const handleSearchSuccess = useCallback(
+    (data: EsqlResponse) => setSearchResult(data),
+    [setSearchResult],
+  );
+  const handleSearchFailure = useCallback(() => setSearchResult(null), [setSearchResult]);
   const {
     runQuery: runSearchQuery,
     loading: searchLoading,
@@ -118,26 +117,34 @@ export default function TracesPage() {
   } = useEsqlQuery({
     connection,
     queryContextView,
-    onSuccess: (data) => setSearchResult(data),
-    onFailure: () => setSearchResult(null),
+    onSuccess: handleSearchSuccess,
+    onFailure: handleSearchFailure,
   });
 
   // Trace detail query
+  const handleDetailSuccess = useCallback(
+    (data: EsqlResponse) => {
+      const spans = parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
+      setSelectedTraceSpans(spans);
+    },
+    [setSelectedTraceSpans],
+  );
   const {
     runQuery: runDetailQuery,
     loading: detailLoading,
     error: detailError,
   } = useEsqlQuery({
     connection,
-    onSuccess: (data) => {
-      const spans = parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
-      setSelectedTraceSpans(spans);
-    },
+    onSuccess: handleDetailSuccess,
   });
 
-  // URL → store: keep store in sync when URL changes (initial load + browser navigation)
+  // URL → store: restore trace selection on initial load and browser back/forward.
+  // We read selectedTraceId from the store (not as a dependency) to avoid a
+  // bidirectional sync loop — the URL is updated directly in handleSelectTrace
+  // and clearTraceSelection instead.
   useEffect(() => {
-    if (urlTraceId !== selectedTraceId) {
+    const currentTraceId = useTracesStore.getState().selectedTraceId;
+    if (urlTraceId !== currentTraceId) {
       setSelectedTraceId(urlTraceId);
       if (urlTraceId) {
         runDetailQuery(buildTraceDetailQuery(urlTraceId));
@@ -145,7 +152,7 @@ export default function TracesPage() {
         setSelectedTraceSpans([]);
       }
     }
-  }, [urlTraceId, selectedTraceId, setSelectedTraceId, runDetailQuery, setSelectedTraceSpans]);
+  }, [urlTraceId, setSelectedTraceId, runDetailQuery, setSelectedTraceSpans]);
 
   const {
     runQuery: runTimeseriesQuery,
@@ -244,9 +251,10 @@ export default function TracesPage() {
       setSelectedTraceId(traceId);
       setSelectedRootSpanId(spanId ?? null);
       setSelectedTraceTimestamp(timestamp ?? null);
+      void setUrlTraceId(traceId);
       runDetailQuery(buildTraceDetailQuery(traceId));
     },
-    [setSelectedTraceId, runDetailQuery],
+    [setSelectedTraceId, setUrlTraceId, runDetailQuery],
   );
 
   const handleOpenInDiscover = useCallback(
@@ -261,7 +269,8 @@ export default function TracesPage() {
     setSelectedTraceId(null);
     setSelectedRootSpanId(null);
     setSelectedTraceTimestamp(null);
-  }, [setSelectedTraceId]);
+    void setUrlTraceId(null);
+  }, [setSelectedTraceId, setUrlTraceId]);
 
   const handleServiceMapNodeClick = useCallback(
     (serviceName: string) => {
