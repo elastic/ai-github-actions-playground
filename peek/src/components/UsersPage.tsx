@@ -17,27 +17,21 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { parseAsString, useQueryState } from "nuqs";
 
-import { ElasticsearchClient, type SecurityUser } from "../services/es";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
-import { useConnectionStore } from "../store/useConnectionStore";
+import { useSecurityUsers } from "../hooks/useSecurityUsers";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
-import { loadSecurityResource } from "./securityResourceLoader";
 
 export default function UsersPage() {
-  const connection = useConnectionStore((s) => s.connection);
+  const { users, loading, error, accessNotice, refresh } = useSecurityUsers();
   const navigate = useNavigate();
   const [urlUsername, setUrlUsername] = useQueryState("username", parseAsString);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [search, setSearch] = useQueryState(
     "search",
     parseAsString.withDefault("").withOptions({ history: "replace" }),
   );
-  const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
@@ -51,46 +45,6 @@ export default function UsersPage() {
     () => users.find((user) => user.username === selectedUsername) ?? null,
     [users, selectedUsername],
   );
-
-  const loadUsers = useCallback(async () => {
-    if (!connection) return;
-    setLoading(true);
-    setError(null);
-    setAccessNotice(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const result = await loadSecurityResource({
-        client,
-        fetchResource: (c) => c.getSecurityUsers(),
-        canRead: (caps) => caps.canReadSecurityUsers,
-        authDeniedNotice: "Your credentials cannot read all user data.",
-      });
-      setAccessNotice(result.notice);
-      if (result.error !== null) {
-        setError(result.error);
-      } else if (result.data !== null) {
-        const nextUsers = Object.entries(result.data)
-          .map(([username, user]) => ({
-            username: user.username ?? username,
-            enabled: user.enabled,
-            roles: user.roles ?? [],
-            full_name: user.full_name ?? null,
-            email: user.email ?? null,
-            metadata: user.metadata ?? {},
-          }))
-          .sort((a, b) => a.username.localeCompare(b.username));
-        setUsers(nextUsers);
-      } else {
-        setUsers([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [connection]);
-
-  useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
 
   // Sync URL when the resolved selection differs from the URL param
   useEffect(() => {
@@ -127,7 +81,7 @@ export default function UsersPage() {
           title="Users"
           actions={
             <>
-              <Button size="small" variant="outlined" onClick={loadUsers} disabled={loading}>
+              <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
                 {loading ? <CircularProgress size={16} /> : "Refresh"}
               </Button>
               <Button size="small" variant="contained" onClick={() => void copyQuery()}>
