@@ -1,11 +1,12 @@
 import { useMemo } from "react";
+import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
 
 import type { EsqlResponse, HistogramChartOptions } from "../../types";
+import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, getColumnValues } from "./chartUtils";
-import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
@@ -54,7 +55,6 @@ export default function HistogramChart({ data, options }: Props) {
     const axisLabelFormatter = format ? { formatter: (v: number) => formatValue(v, format) } : {};
 
     return {
-      ...theme,
       grid: { left: 48, right: 16, top: 32, bottom: 40 },
       tooltip: {
         ...theme.tooltip,
@@ -84,7 +84,7 @@ export default function HistogramChart({ data, options }: Props) {
           type: "bar" as const,
           data: counts,
           itemStyle: {
-            color: theme.color?.length ? theme.color[0] : "#0077CC",
+            color: theme.color?.length ? theme.color[0] : CHART_COLORS[0],
             borderRadius: [4, 4, 0, 0],
           },
           barWidth: "90%",
@@ -93,5 +93,7 @@ export default function HistogramChart({ data, options }: Props) {
     };
   }, [data, theme, bins, format]);
 
-  return <EChartWrapper option={option} />;
+  return (
+    <EChart option={option} theme={theme} sx={{ width: "100%", height: "100%", minHeight: 120 }} />
+  );
 }

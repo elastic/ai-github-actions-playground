@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse, ScatterChartOptions } from "../../types";
+import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
-import EChartWrapper from "./EChartWrapper";
 
 interface Props {
   data: EsqlResponse;
@@ -14,6 +16,8 @@ interface Props {
 
 export default function ScatterChart({ data, options }: Props) {
   const theme = useEChartTheme();
+  // TODO: wire up onExportReady for PNG export (phase 3)
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const format = options?.format;
 
   const option = useMemo(() => {
@@ -57,12 +61,11 @@ export default function ScatterChart({ data, options }: Props) {
       type: "scatter" as const,
       data: points,
       itemStyle: {
-        color: theme.color?.length ? theme.color[i % theme.color.length] : "#0077CC",
+        color: theme.color?.length ? theme.color[i % theme.color.length] : CHART_COLORS[0],
       },
     }));
 
     return {
-      ...theme,
       grid: { left: 48, right: 16, top: 32, bottom: 40 },
       tooltip: {
         ...theme.tooltip,
@@ -92,5 +95,12 @@ export default function ScatterChart({ data, options }: Props) {
     };
   }, [data, theme, format]);
 
-  return <EChartWrapper option={option} />;
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
+  );
 }
