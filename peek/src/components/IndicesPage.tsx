@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -91,11 +91,14 @@ export default function IndicesPage() {
     setSelectedIndex(first?.index ?? null);
   }, [showSystemIndices, selectedIndex, indices]);
 
-  const filteredIndices = indices.filter((idx) => {
-    if (!showSystemIndices && idx.index.startsWith(".")) return false;
-    const term = search.trim().toLowerCase();
-    return !term || idx.index.toLowerCase().includes(term);
-  });
+  const deferredSearch = useDeferredValue(search);
+  const filteredIndices = useMemo(() => {
+    return indices.filter((idx) => {
+      if (!showSystemIndices && idx.index.startsWith(".")) return false;
+      const term = deferredSearch.trim().toLowerCase();
+      return !term || idx.index.toLowerCase().includes(term);
+    });
+  }, [indices, showSystemIndices, deferredSearch]);
 
   const selectedRecord = indices.find((i) => i.index === selectedIndex) ?? null;
 

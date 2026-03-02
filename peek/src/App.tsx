@@ -27,9 +27,10 @@ import PanelEditor from "./components/PanelEditor";
 import CommandPalette from "./components/CommandPalette";
 import DashboardViewPage from "./components/DashboardViewPage";
 import WelcomeScreen from "./components/WelcomeScreen";
+import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
-import { PAGE_MANIFEST } from "./routes/manifest";
+import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
 
@@ -141,42 +142,50 @@ export default function App() {
                   p: { sm: 2, xs: 1.5 },
                 }}
               >
-                <Suspense fallback={<LinearProgress />}>
-                  <Routes>
-                    {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                      const PageComponent = config.component;
-                      return (
-                        <Route
-                          key={config.path}
-                          path={config.path}
-                          element={
-                            !connected && config.requiresConnection ? (
-                              <WelcomeScreen />
-                            ) : (
-                              <ErrorBoundary>
+                <Routes>
+                  {Object.entries(PAGE_MANIFEST).map(([, config]) => {
+                    const PageComponent = config.component;
+                    const skeletonVariant = (config as PageConfig).skeletonVariant;
+                    const fallback = skeletonVariant ? (
+                      <ContentSkeleton variant={skeletonVariant} />
+                    ) : (
+                      <LinearProgress />
+                    );
+                    return (
+                      <Route
+                        key={config.path}
+                        path={config.path}
+                        element={
+                          !connected && config.requiresConnection ? (
+                            <WelcomeScreen />
+                          ) : (
+                            <ErrorBoundary>
+                              <Suspense fallback={fallback}>
                                 <PageComponent />
-                              </ErrorBoundary>
-                            )
-                          }
-                        />
-                      );
-                    })}
-                    <Route
-                      path="/dashboards/:id"
-                      element={
-                        !connected ? (
-                          <WelcomeScreen />
-                        ) : (
-                          <ErrorBoundary>
+                              </Suspense>
+                            </ErrorBoundary>
+                          )
+                        }
+                      />
+                    );
+                  })}
+                  <Route
+                    path="/dashboards/:id"
+                    element={
+                      !connected ? (
+                        <WelcomeScreen />
+                      ) : (
+                        <ErrorBoundary>
+                          <Suspense fallback={<ContentSkeleton variant="cards" />}>
                             <DashboardViewPage />
-                          </ErrorBoundary>
-                        )
-                      }
-                    />
-                    <Route path="/" element={<Navigate to="/dashboards" replace />} />
-                    <Route path="*" element={<Navigate to="/dashboards" replace />} />
-                  </Routes>
-                </Suspense>
+                          </Suspense>
+                        </ErrorBoundary>
+                      )
+                    }
+                  />
+                  <Route path="/" element={<Navigate to="/dashboards" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboards" replace />} />
+                </Routes>
               </Box>
               <Box
                 component="footer"
