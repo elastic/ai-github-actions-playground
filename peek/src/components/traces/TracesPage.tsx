@@ -390,6 +390,7 @@ export default function TracesPage() {
                   driftRadarBaselineEnabled={driftRadarBaselineEnabled}
                   onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
                   filters={filters}
+                  onSearch={handleSearch}
                 />
               }
               bottom={
@@ -433,6 +434,7 @@ export default function TracesPage() {
               driftRadarBaselineEnabled={driftRadarBaselineEnabled}
               onDriftRadarBaselineChange={setDriftRadarBaselineEnabled}
               filters={filters}
+              onSearch={handleSearch}
             />
           )}
         </Box>

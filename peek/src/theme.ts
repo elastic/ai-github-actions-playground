@@ -77,6 +77,7 @@ const baseOptions: ThemeOptions = {
     MuiListItemButton: {
       styleOverrides: {
         root: {
+          transition: "background-color 150ms ease",
           [MOBILE_OR_COARSE_QUERY]: {
             minHeight: COMPONENT_HEIGHTS.touchTarget,
           },
@@ -126,6 +127,9 @@ const baseOptions: ThemeOptions = {
     MuiTableRow: {
       styleOverrides: {
         root: ({ theme }) => ({
+          "tbody &": {
+            transition: "background-color 150ms ease",
+          },
           "tbody &:hover": { backgroundColor: theme.palette.background.subtle },
         }),
       },
