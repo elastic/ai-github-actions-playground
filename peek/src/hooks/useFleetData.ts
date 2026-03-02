@@ -19,6 +19,7 @@ const AUTO_REFRESH_MS = 30_000;
 export function useFleetData() {
   const connection = useConnectionStore((s) => s.connection);
 
+  // Get stable setter references without subscribing this hook to store updates.
   const {
     setServerStatus,
     setAgentVersions,
@@ -106,7 +107,10 @@ export function useFleetData() {
   loadRef.current = loadFleetData;
   const runRefresh = useCallback(async (signal?: AbortSignal) => {
     const s = signal ?? abortRef.current?.signal;
-    if (!s || s.aborted) return;
+    if (!s || s.aborted) {
+      if (import.meta.env.DEV && !s) console.warn("runRefresh called without active AbortSignal");
+      return;
+    }
     await loadRef.current(s);
   }, []);
 

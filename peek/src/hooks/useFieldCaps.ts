@@ -7,9 +7,12 @@ import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 export function useFieldCaps(dataStreamName: string | null): DataFetchResult<FieldCapsResponse> {
   const { connection, createQueryFn } = useEsQuery();
+  const queryFn = dataStreamName
+    ? createQueryFn((client) => client.getFieldCaps(dataStreamName))
+    : undefined;
   const query = useQuery({
     queryKey: ["field-caps", connection?.url, dataStreamName],
-    queryFn: createQueryFn((client) => client.getFieldCaps(dataStreamName!)),
+    queryFn,
     enabled: Boolean(connection && dataStreamName),
     retry: false,
     refetchOnWindowFocus: false,

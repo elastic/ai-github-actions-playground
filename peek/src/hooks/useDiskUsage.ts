@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { DiskUsageIndexEntry } from "../services/es";
 import type { DataFetchResult } from "../types/query";
 
-import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
+import { useEsQuery } from "./useEsQuery";
 
 export function useDiskUsage(
   indexName: string | null,
@@ -21,8 +21,6 @@ export function useDiskUsage(
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
-  useRefetchOnConnectionChange(connection, query.refetch);
-
   const analyze = () => {
     if (connection && indexName) void query.refetch();
   };

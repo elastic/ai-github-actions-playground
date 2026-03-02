@@ -9,6 +9,7 @@ export interface PipelineSimulateResult {
   error: string | null;
   result: SimulateIngestPipelineResponse | null;
   simulate: (docs: Record<string, unknown>[], verbose: boolean) => void;
+  reset: () => void;
 }
 
 export function usePipelineSimulate(
@@ -25,7 +26,14 @@ export function usePipelineSimulate(
     setSimulating(false);
     setResult(null);
     setError(null);
-  }, [pipelineName]);
+  }, [pipelineName, connection]);
+
+  const reset = useCallback(() => {
+    requestSeqRef.current += 1;
+    setSimulating(false);
+    setResult(null);
+    setError(null);
+  }, []);
 
   const simulate = useCallback(
     (docs: Record<string, unknown>[], verbose: boolean) => {
@@ -54,5 +62,5 @@ export function usePipelineSimulate(
     [connection, pipelineName],
   );
 
-  return { simulating, error, result, simulate };
+  return { simulating, error, result, simulate, reset };
 }

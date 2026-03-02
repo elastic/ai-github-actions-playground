@@ -38,6 +38,7 @@ export default function PipelineDetailPanel({
     error: simulateApiError,
     result: simulateResult,
     simulate,
+    reset,
   } = usePipelineSimulate(connection, selectedPipeline?.name);
 
   const simulateError = validationError ?? simulateApiError;
@@ -49,11 +50,12 @@ export default function PipelineDetailPanel({
       setValidationError(
         "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
       );
+      reset();
       return;
     }
     setValidationError(null);
     simulate(docs, verbose);
-  }, [selectedPipeline, simulateInput, verbose, simulate]);
+  }, [selectedPipeline, simulateInput, verbose, simulate, reset]);
 
   if (!selectedPipeline) {
     return (
