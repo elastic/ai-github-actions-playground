@@ -333,3 +333,9 @@ jobs:
               });
               core.info("Created new PR comment");
             }
+
+      - name: Fail if smoke tests or preflight failed
+        if: steps.smoke.outcome == 'failure' || steps.preflight.outcome == 'failure'
+        run: |
+          echo "::error::Smoke tests or screenshot preflight failed — see PR comment for details."
+          exit 1
