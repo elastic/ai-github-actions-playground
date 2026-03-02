@@ -11,6 +11,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 import { EChart } from "@perses-dev/components";
+import { parseAsStringEnum, useQueryState } from "nuqs";
 
 import {
   computeCheckinStaleness,
@@ -29,6 +30,7 @@ import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresenta
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 
 type AgentTab = "overview" | "logs" | "metrics";
+const AGENT_TABS: AgentTab[] = ["overview", "logs", "metrics"];
 
 const LOG_LEVEL_COLORS: Record<string, string> = {
   error: STATUS_COLORS.error,
@@ -49,7 +51,12 @@ export default function FleetAgentPage() {
     }
   })();
 
-  const [activeTab, setActiveTab] = useState<AgentTab>("overview");
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsStringEnum<AgentTab>(AGENT_TABS)
+      .withDefault("overview")
+      .withOptions({ history: "replace" }),
+  );
   const [logLevelFilter, setLogLevelFilter] = useState<string | null>(null);
 
   const agentResult = useFleetAgentDetail(decodedAgentId);
@@ -96,7 +103,7 @@ export default function FleetAgentPage() {
         <>
           <Tabs
             value={activeTab}
-            onChange={(_, v: AgentTab) => setActiveTab(v)}
+            onChange={(_, v: AgentTab) => void setActiveTab(v)}
             sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
           >
             <Tab value="overview" label="Overview" />

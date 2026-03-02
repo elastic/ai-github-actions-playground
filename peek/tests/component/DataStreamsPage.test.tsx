@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import DataStreamsPage from "../../src/components/DataStreamsPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -95,8 +96,10 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
-        <LocationDisplay />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+          <LocationDisplay />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -137,7 +140,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -170,7 +175,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -202,7 +209,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -230,7 +239,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -260,7 +271,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -290,7 +303,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -320,7 +335,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -346,7 +363,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -383,7 +402,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -413,7 +434,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -442,7 +465,9 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -470,8 +495,10 @@ describe("DataStreamsPage", () => {
 
     render(
       <MemoryRouter>
-        <DataStreamsPage />
-        <LocationDisplay />
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+          <LocationDisplay />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

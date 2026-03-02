@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import IndicesPage from "../../src/components/IndicesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -135,8 +136,10 @@ function LocationDisplay() {
 function renderPage() {
   return render(
     <MemoryRouter>
-      <IndicesPage />
-      <LocationDisplay />
+      <NuqsTestingAdapter hasMemory>
+        <IndicesPage />
+        <LocationDisplay />
+      </NuqsTestingAdapter>
     </MemoryRouter>,
   );
 }

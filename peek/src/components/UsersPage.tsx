@@ -33,7 +33,10 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useQueryState(
+    "search",
+    parseAsString.withDefault("").withOptions({ history: "replace" }),
+  );
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
@@ -160,7 +163,7 @@ export default function UsersPage() {
                 fullWidth
                 placeholder="Search users"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => void setSearch(event.target.value)}
                 inputProps={{ "aria-label": "Search users" }}
               />
             </Box>

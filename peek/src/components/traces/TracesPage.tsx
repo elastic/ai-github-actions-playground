@@ -6,6 +6,7 @@ import { EditorView } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 import { useShallow } from "zustand/react/shallow";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -79,6 +80,24 @@ export default function TracesPage() {
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
+
+  // Sync selectedTraceId with URL query parameter
+  const [urlTraceId, setUrlTraceId] = useQueryState("traceId", parseAsString);
+
+  // URL → store: seed store from URL on mount
+  useEffect(() => {
+    if (urlTraceId && urlTraceId !== selectedTraceId) {
+      setSelectedTraceId(urlTraceId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Store → URL: keep URL in sync when store changes
+  useEffect(() => {
+    if (selectedTraceId !== urlTraceId) {
+      void setUrlTraceId(selectedTraceId);
+    }
+  }, [selectedTraceId, urlTraceId, setUrlTraceId]);
 
   // Drift Radar state
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);
