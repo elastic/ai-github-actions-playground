@@ -11,8 +11,8 @@ import type { ElasticsearchConnection } from "../es";
 import { deriveOtlpEndpoint } from "../../utils/addDataUtils";
 
 export const EDOT_DISTRO_NAME = "elastic";
-export const EDOT_DISTRO_VERSION =
-  typeof appPackage.version === "string" ? appPackage.version : "0.0.0";
+const APP_VERSION = typeof appPackage.version === "string" ? appPackage.version : "0.0.0";
+export const EDOT_DISTRO_VERSION = APP_VERSION;
 
 export interface BrowserTracingStartConfig {
   enabled: boolean;
@@ -99,8 +99,6 @@ function buildConfigKey(config: BrowserTracingStartConfig): string {
     environment: config.environment ?? "",
   });
 }
-
-const APP_VERSION = typeof appPackage.version === "string" ? appPackage.version : "0.0.0";
 
 function parseUrlOrigin(url: string): string {
   try {
