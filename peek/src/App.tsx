@@ -16,6 +16,7 @@ import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
 import { useUIStore } from "./store/useUIStore";
 import { useDashboardHistoryStore } from "./store/useDashboardHistoryStore";
+import { useDashboardEditorStore } from "./store/useDashboardEditorStore";
 import { useResetAllStores } from "./hooks/useResetAllStores";
 import { useSessionResume } from "./hooks/useSessionResume";
 import AppHeader from "./components/AppHeader";
@@ -29,6 +30,7 @@ import CommandPalette from "./components/CommandPalette";
 import DashboardViewPage from "./components/DashboardViewPage";
 import WelcomeScreen from "./components/WelcomeScreen";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PersesProviders from "./components/perses/PersesProviders";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
@@ -43,6 +45,7 @@ export default function App() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const handleRequestReset = () => setResetDialogOpen(true);
   const theme = useMemo(() => (themeMode === "dark" ? darkTheme : lightTheme), [themeMode]);
+  const dashboardTimeZone = useDashboardEditorStore((s) => s.dashboard.timeZone);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
   const { resumeError, clearResumeError } = useSessionResume();
@@ -82,174 +85,178 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflowX: "hidden" }}>
-        <AppHeader
-          showMobileNavToggle={connected && isMobile}
-          onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)}
-        />
-        <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflowX: "hidden" }}>
-          {connected &&
-            (isMobile ? (
-              <Drawer
-                anchor="left"
-                open={mobileNavOpen}
-                onClose={() => setMobileNavOpen(false)}
-                variant="temporary"
-                ModalProps={{ keepMounted: true }}
-              >
+      <PersesProviders timeZone={dashboardTimeZone}>
+        <Box
+          sx={{ display: "flex", flexDirection: "column", height: "100vh", overflowX: "hidden" }}
+        >
+          <AppHeader
+            showMobileNavToggle={connected && isMobile}
+            onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)}
+          />
+          <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflowX: "hidden" }}>
+            {connected &&
+              (isMobile ? (
+                <Drawer
+                  anchor="left"
+                  open={mobileNavOpen}
+                  onClose={() => setMobileNavOpen(false)}
+                  variant="temporary"
+                  ModalProps={{ keepMounted: true }}
+                >
+                  <AppSidebar
+                    mobile
+                    onNavigate={() => setMobileNavOpen(false)}
+                    onRequestReset={handleRequestReset}
+                  />
+                </Drawer>
+              ) : (
                 <AppSidebar
-                  mobile
-                  onNavigate={() => setMobileNavOpen(false)}
+                  collapsed={sidebarCollapsed}
+                  onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
                   onRequestReset={handleRequestReset}
                 />
-              </Drawer>
-            ) : (
-              <AppSidebar
-                collapsed={sidebarCollapsed}
-                onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-                onRequestReset={handleRequestReset}
-              />
-            ))}
-          <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>
-            {connected && isDashboardView && <ParameterBar />}
-            <Box
-              component="main"
-              sx={{
-                display: "flex",
-                flex: 1,
-                flexDirection: "column",
-                minHeight: 0,
-                overflowX: "hidden",
-                overflowY: "auto",
-                p: { sm: 2, xs: 1.5 },
-              }}
-            >
-              <Suspense fallback={<LinearProgress />}>
-                <Routes>
-                  {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                    const PageComponent = config.component;
-                    return (
-                      <Route
-                        key={config.path}
-                        path={config.path}
-                        element={
-                          !connected && config.requiresConnection ? (
-                            <WelcomeScreen />
-                          ) : (
-                            <ErrorBoundary>
-                              <PageComponent />
-                            </ErrorBoundary>
-                          )
-                        }
-                      />
-                    );
-                  })}
-                  <Route
-                    path="/dashboards/:id"
-                    element={
-                      !connected ? (
-                        <WelcomeScreen />
-                      ) : (
-                        <ErrorBoundary>
-                          <DashboardViewPage />
-                        </ErrorBoundary>
-                      )
-                    }
-                  />
-                  <Route path="/" element={<Navigate to="/dashboards" replace />} />
-                  <Route path="*" element={<Navigate to="/dashboards" replace />} />
-                </Routes>
-              </Suspense>
-            </Box>
-            <Box
-              component="footer"
-              sx={{
-                position: "relative",
-                display: "flex",
-                flexShrink: 0,
-                gap: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                py: 1,
-                px: 2,
-                borderTop: 1,
-                borderColor: "divider",
-                bgcolor: "background.paper",
-              }}
-            >
-              <Link
-                href="https://github.com/elastic/ai-github-actions-playground"
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="none"
+              ))}
+            <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>
+              {connected && isDashboardView && <ParameterBar />}
+              <Box
+                component="main"
                 sx={{
-                  py: 0.5,
-                  px: 1,
-                  borderRadius: 1,
-                  bgcolor: "warning.main",
-                  color: "warning.contrastText",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  fontWeight: 700,
-                  fontSize: "0.7rem",
-                  "&:hover": { bgcolor: "warning.dark" },
+                  display: "flex",
+                  flex: 1,
+                  flexDirection: "column",
+                  minHeight: 0,
+                  overflowX: "hidden",
+                  overflowY: "auto",
+                  p: { sm: 2, xs: 1.5 },
                 }}
               >
-                Research Project
-              </Link>
-              <Typography variant="caption" color="text.secondary">
-                Not an official product &mdash; &copy; {currentYear}{" "}
+                <Suspense fallback={<LinearProgress />}>
+                  <Routes>
+                    {Object.entries(PAGE_MANIFEST).map(([, config]) => {
+                      const PageComponent = config.component;
+                      return (
+                        <Route
+                          key={config.path}
+                          path={config.path}
+                          element={
+                            !connected && config.requiresConnection ? (
+                              <WelcomeScreen />
+                            ) : (
+                              <ErrorBoundary>
+                                <PageComponent />
+                              </ErrorBoundary>
+                            )
+                          }
+                        />
+                      );
+                    })}
+                    <Route
+                      path="/dashboards/:id"
+                      element={
+                        !connected ? (
+                          <WelcomeScreen />
+                        ) : (
+                          <ErrorBoundary>
+                            <DashboardViewPage />
+                          </ErrorBoundary>
+                        )
+                      }
+                    />
+                    <Route path="/" element={<Navigate to="/dashboards" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboards" replace />} />
+                  </Routes>
+                </Suspense>
+              </Box>
+              <Box
+                component="footer"
+                sx={{
+                  position: "relative",
+                  display: "flex",
+                  flexShrink: 0,
+                  gap: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  py: 1,
+                  px: 2,
+                  borderTop: 1,
+                  borderColor: "divider",
+                  bgcolor: "background.paper",
+                }}
+              >
                 <Link
-                  href="https://www.elastic.co"
+                  href="https://github.com/elastic/ai-github-actions-playground"
                   target="_blank"
                   rel="noopener noreferrer"
-                  color="inherit"
-                  underline="hover"
+                  underline="none"
+                  sx={{
+                    py: 0.5,
+                    px: 1,
+                    borderRadius: 1,
+                    bgcolor: "warning.main",
+                    color: "warning.contrastText",
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    fontWeight: 700,
+                    fontSize: "0.7rem",
+                    "&:hover": { bgcolor: "warning.dark" },
+                  }}
                 >
-                  Elasticsearch B.V.
+                  Research Project
                 </Link>
-              </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Not an official product &mdash; &copy; {currentYear}{" "}
+                  <Link
+                    href="https://www.elastic.co"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="inherit"
+                    underline="hover"
+                  >
+                    Elasticsearch B.V.
+                  </Link>
+                </Typography>
+              </Box>
             </Box>
+            {connected && <AiAssistantDrawer isMobile={isMobile} />}
           </Box>
-          {connected && <AiAssistantDrawer isMobile={isMobile} />}
         </Box>
-      </Box>
-      <ConnectionDialog />
-      <ResetConfirmationDialog
-        open={resetDialogOpen}
-        onConfirm={() => {
-          resetState();
-          setResetDialogOpen(false);
-        }}
-        onCancel={() => setResetDialogOpen(false)}
-      />
-      <PanelEditor />
-      <CommandPalette />
-      <Snackbar
-        open={Boolean(resumeError)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        onClose={clearResumeError}
-      >
-        <Alert
-          severity="warning"
+        <ConnectionDialog />
+        <ResetConfirmationDialog
+          open={resetDialogOpen}
+          onConfirm={() => {
+            resetState();
+            setResetDialogOpen(false);
+          }}
+          onCancel={() => setResetDialogOpen(false)}
+        />
+        <PanelEditor />
+        <CommandPalette />
+        <Snackbar
+          open={Boolean(resumeError)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
           onClose={clearResumeError}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => {
-                clearResumeError();
-                setConnectionDialogOpen(true);
-              }}
-            >
-              Reconnect
-            </Button>
-          }
-          sx={{ width: "100%" }}
         >
-          Could not resume session: {resumeError}
-        </Alert>
-      </Snackbar>
+          <Alert
+            severity="warning"
+            onClose={clearResumeError}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  clearResumeError();
+                  setConnectionDialogOpen(true);
+                }}
+              >
+                Reconnect
+              </Button>
+            }
+            sx={{ width: "100%" }}
+          >
+            Could not resume session: {resumeError}
+          </Alert>
+        </Snackbar>
+      </PersesProviders>
     </ThemeProvider>
   );
 }

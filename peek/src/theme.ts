@@ -1,6 +1,23 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
+import { COMPONENT_HEIGHTS, type SpaceToken } from "./types/tokens";
+
 const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
+const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
+const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
+const MOBILE_ICON_BUTTON_PADDING =
+  (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
+const LIGHT_PRIMARY = "#0077CC";
+const DARK_PRIMARY = "#36A2EF";
+const REDUCED_MOTION_CSS = `
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+`;
 
 const baseOptions: ThemeOptions = {
   typography: {
@@ -20,30 +37,25 @@ const baseOptions: ThemeOptions = {
   shape: { borderRadius: 6 },
   components: {
     MuiCssBaseline: {
-      styleOverrides: `
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
-      `,
+      styleOverrides: REDUCED_MOTION_CSS,
     },
     MuiButton: {
-      defaultProps: { size: "small", disableElevation: true },
+      defaultProps: { disableElevation: true },
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           textTransform: "none",
           fontWeight: 500,
-          height: 32,
+          height: COMPONENT_HEIGHTS.button,
           borderRadius: 6,
           [MOBILE_OR_COARSE_QUERY]: {
             height: "auto",
-            minHeight: 44,
-            paddingTop: 10,
-            paddingBottom: 10,
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
+            paddingTop: theme.spacing(MOBILE_BUTTON_VERTICAL_PADDING_SPACE),
+            paddingBottom: theme.spacing(MOBILE_BUTTON_VERTICAL_PADDING_SPACE),
           },
+        }),
+        sizeSmall: {
+          height: COMPONENT_HEIGHTS.buttonSmall,
         },
       },
     },
@@ -51,9 +63,9 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           [MOBILE_OR_COARSE_QUERY]: {
-            width: 44,
-            height: 44,
-            padding: 10,
+            width: COMPONENT_HEIGHTS.touchTarget,
+            height: COMPONENT_HEIGHTS.touchTarget,
+            padding: MOBILE_ICON_BUTTON_PADDING,
           },
         },
       },
@@ -62,7 +74,7 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           [MOBILE_OR_COARSE_QUERY]: {
-            minHeight: 44,
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
           },
         },
       },
@@ -88,10 +100,10 @@ const baseOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
-            height: 32,
+            height: COMPONENT_HEIGHTS.input,
             [MOBILE_OR_COARSE_QUERY]: {
               height: "auto",
-              minHeight: 44,
+              minHeight: COMPONENT_HEIGHTS.touchTarget,
             },
           },
         },
@@ -116,7 +128,7 @@ const baseOptions: ThemeOptions = {
     },
     MuiTab: {
       styleOverrides: {
-        root: { textTransform: "none", minHeight: 36 },
+        root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.tab },
       },
     },
     MuiTypography: {
@@ -130,15 +142,29 @@ const baseOptions: ThemeOptions = {
   },
 };
 
+/** Build CssBaseline overrides with a theme-aware CodeMirror focus ring. */
+function cssBaselineOverrides(primaryColor: string): string {
+  return `
+    ${REDUCED_MOTION_CSS}
+    .cm-editor.cm-focused {
+      outline: 2px solid ${primaryColor};
+    }
+  `;
+}
+
 export const lightTheme = createTheme({
   ...baseOptions,
   palette: {
     mode: "light",
-    primary: { main: "#0077CC" },
+    primary: { main: LIGHT_PRIMARY },
     secondary: { main: "#00BFB3" },
     background: { default: "#F5F7FA", paper: "#FFFFFF", subtle: "#F0F2F5", elevated: "#FFFFFF" },
     text: { primary: "#1A1C21", secondary: "#676F7B" },
     border: { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" },
+  },
+  components: {
+    ...baseOptions.components,
+    MuiCssBaseline: { styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY) },
   },
 });
 
@@ -146,11 +172,15 @@ export const darkTheme = createTheme({
   ...baseOptions,
   palette: {
     mode: "dark",
-    primary: { main: "#36A2EF" },
+    primary: { main: DARK_PRIMARY },
     secondary: { main: "#7DE2D1" },
     background: { default: "#111217", paper: "#25262E", subtle: "#1A1B22", elevated: "#2D2E36" },
     text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
     border: { subtle: "#3D3F48", default: "#5A5D68", strong: "#7A7E8A" },
+  },
+  components: {
+    ...baseOptions.components,
+    MuiCssBaseline: { styleOverrides: cssBaselineOverrides(DARK_PRIMARY) },
   },
 });
 

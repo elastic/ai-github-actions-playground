@@ -272,6 +272,10 @@ function CommandPalettePopper({ children }: PopperProps) {
   return <Box sx={{ width: "100%" }}>{children as React.ReactNode}</Box>;
 }
 
+function CommandPalettePaper({ children }: { children?: React.ReactNode }) {
+  return <DialogContent sx={{ p: 0 }}>{children}</DialogContent>;
+}
+
 export default function CommandPalette() {
   const open = useUIStore((s) => s.commandPaletteOpen);
   const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
@@ -355,14 +359,8 @@ export default function CommandPalette() {
         }}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         noOptionsText="No matching commands"
-        PopperComponent={CommandPalettePopper}
-        PaperComponent={({ children }) => <DialogContent sx={{ p: 0 }}>{children}</DialogContent>}
-        ListboxProps={
-          {
-            id: "command-palette-list",
-            "aria-label": "Commands",
-          } as React.HTMLAttributes<HTMLUListElement>
-        }
+        slots={{ popper: CommandPalettePopper, paper: CommandPalettePaper }}
+        slotProps={{ listbox: { id: "command-palette-list", "aria-label": "Commands" } }}
         renderInput={(params) => (
           <Box
             ref={params.InputProps.ref}
