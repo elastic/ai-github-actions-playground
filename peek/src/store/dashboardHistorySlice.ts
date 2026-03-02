@@ -8,6 +8,7 @@
 import type { StateCreator } from "zustand";
 
 import {
+  MAX_HISTORY_DEPTH,
   type DashboardStoreSharedState,
   type HistoryEntry,
   replaceActiveDashboard,
@@ -47,7 +48,9 @@ export const createDashboardHistorySlice: StateCreator<
       if (!entry) return {};
       return {
         ...replaceActiveDashboard(s, entry.dashboard),
-        historyPast: [...s.historyPast, { dashboard: s.dashboard, label: entry.label }],
+        historyPast: [...s.historyPast, { dashboard: s.dashboard, label: entry.label }].slice(
+          -MAX_HISTORY_DEPTH,
+        ),
         historyFuture: s.historyFuture.slice(1),
       };
     }),

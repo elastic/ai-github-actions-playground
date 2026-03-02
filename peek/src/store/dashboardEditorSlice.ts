@@ -77,10 +77,13 @@ export const createDashboardEditorSlice: StateCreator<
 
   setDashboardTitle: (title) =>
     set((s) => {
+      const nextTitle = title.trim();
+      if (!nextTitle) return {};
       const active = getActiveDashboard(s);
+      if (active.title === nextTitle) return {};
       return {
         ...pushToHistory(s, "Renamed dashboard"),
-        ...replaceActiveDashboard(s, { ...active, title, updatedAt: nowIso() }),
+        ...replaceActiveDashboard(s, { ...active, title: nextTitle, updatedAt: nowIso() }),
       };
     }),
 
@@ -101,7 +104,8 @@ export const createDashboardEditorSlice: StateCreator<
     set((s) => {
       const active = getActiveDashboard(s);
       const panel = active.panels.find((p) => p.id === id);
-      const label = panel ? `Updated panel "${updates.title ?? panel.title}"` : "Updated panel";
+      if (!panel) return {};
+      const label = `Updated panel "${updates.title ?? panel.title}"`;
       return {
         ...pushToHistory(s, label),
         ...replaceActiveDashboard(s, {
@@ -116,7 +120,8 @@ export const createDashboardEditorSlice: StateCreator<
     set((s) => {
       const active = getActiveDashboard(s);
       const panel = active.panels.find((p) => p.id === id);
-      const label = panel ? `Removed panel "${panel.title}"` : "Removed panel";
+      if (!panel) return {};
+      const label = `Removed panel "${panel.title}"`;
       return {
         ...pushToHistory(s, label),
         ...replaceActiveDashboard(s, {
@@ -159,10 +164,11 @@ export const createDashboardEditorSlice: StateCreator<
   updatePanelLayouts: (layouts) =>
     set((s) => {
       const active = getActiveDashboard(s);
+      const layoutsById = new Map(layouts.map((layout) => [layout.id, layout]));
       return replaceActiveDashboard(s, {
         ...active,
         panels: active.panels.map((panel) => {
-          const layout = layouts.find((entry) => entry.id === panel.id);
+          const layout = layoutsById.get(panel.id);
           return layout ? { ...panel, layout } : panel;
         }),
         updatedAt: nowIso(),
@@ -213,11 +219,13 @@ export const createDashboardEditorSlice: StateCreator<
   removeParameter: (name) =>
     set((s) => {
       const active = getActiveDashboard(s);
+      const parameters = active.parameters ?? [];
+      if (!parameters.some((parameter) => parameter.name === name)) return {};
       return {
         ...pushToHistory(s, `Removed parameter "${name}"`),
         ...replaceActiveDashboard(s, {
           ...active,
-          parameters: (active.parameters ?? []).filter((parameter) => parameter.name !== name),
+          parameters: parameters.filter((parameter) => parameter.name !== name),
           updatedAt: nowIso(),
         }),
       };

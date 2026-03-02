@@ -84,6 +84,7 @@ export const createDashboardCatalogSlice: StateCreator<
     set((s) => {
       const nextTitle = title.trim();
       if (!nextTitle) return {};
+      if (!s.dashboards.some((dashboard) => dashboard.id === id)) return {};
       const dashboards = s.dashboards.map((dashboard) =>
         dashboard.id === id ? { ...dashboard, title: nextTitle, updatedAt: nowIso() } : dashboard,
       );
@@ -92,6 +93,7 @@ export const createDashboardCatalogSlice: StateCreator<
 
   updateDashboardMetadata: (id, metadata) =>
     set((s) => {
+      if (!s.dashboards.some((dashboard) => dashboard.id === id)) return {};
       const dashboards = s.dashboards.map((dashboard) =>
         dashboard.id === id ? { ...dashboard, ...metadata, updatedAt: nowIso() } : dashboard,
       );
@@ -124,6 +126,7 @@ export const createDashboardCatalogSlice: StateCreator<
 
   archiveDashboard: (id, archived) =>
     set((s) => {
+      if (!s.dashboards.some((dashboard) => dashboard.id === id)) return {};
       const dashboards = s.dashboards.map((dashboard) =>
         dashboard.id === id ? { ...dashboard, archived, updatedAt: nowIso() } : dashboard,
       );
@@ -132,6 +135,7 @@ export const createDashboardCatalogSlice: StateCreator<
 
   toggleFavoriteDashboard: (id) =>
     set((s) => {
+      if (!s.dashboards.some((dashboard) => dashboard.id === id)) return {};
       const dashboards = s.dashboards.map((dashboard) =>
         dashboard.id === id
           ? {

@@ -44,11 +44,12 @@ export function syncActiveState(
   dashboards: DashboardDefinition[],
   activeDashboardId: string,
 ): Pick<DashboardStoreSharedState, "dashboard" | "dashboards" | "activeDashboardId"> {
-  const active =
-    dashboards.find((d) => d.id === activeDashboardId) ?? dashboards[0] ?? createDefaultDashboard();
+  const fallback = createDefaultDashboard();
+  const active = dashboards.find((d) => d.id === activeDashboardId) ?? dashboards[0] ?? fallback;
+  const nextDashboards = dashboards.length > 0 ? dashboards : [active];
   return {
     dashboard: active,
-    dashboards,
+    dashboards: nextDashboards,
     activeDashboardId: active.id,
   };
 }
