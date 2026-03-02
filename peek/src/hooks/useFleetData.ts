@@ -130,7 +130,7 @@ export function useFleetData(): UseFleetDataResult {
         : String(query.error)
       : null,
     partialErrors: query.data?.partialErrors ?? [],
-    lastUpdatedAt: query.dataUpdatedAt || null,
+    lastUpdatedAt: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
     refresh,
   };
 }
