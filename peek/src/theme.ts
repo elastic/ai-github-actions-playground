@@ -7,6 +7,17 @@ const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
 const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
 const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
+const LIGHT_PRIMARY = "#0077CC";
+const DARK_PRIMARY = "#36A2EF";
+const REDUCED_MOTION_CSS = `
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+`;
 
 const baseOptions: ThemeOptions = {
   typography: {
@@ -26,15 +37,7 @@ const baseOptions: ThemeOptions = {
   shape: { borderRadius: 6 },
   components: {
     MuiCssBaseline: {
-      styleOverrides: `
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
-      `,
+      styleOverrides: REDUCED_MOTION_CSS,
     },
     MuiButton: {
       defaultProps: { disableElevation: true },
@@ -142,13 +145,7 @@ const baseOptions: ThemeOptions = {
 /** Build CssBaseline overrides with a theme-aware CodeMirror focus ring. */
 function cssBaselineOverrides(primaryColor: string): string {
   return `
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
+    ${REDUCED_MOTION_CSS}
     .cm-editor.cm-focused {
       outline: 2px solid ${primaryColor};
     }
@@ -159,7 +156,7 @@ export const lightTheme = createTheme({
   ...baseOptions,
   palette: {
     mode: "light",
-    primary: { main: "#0077CC" },
+    primary: { main: LIGHT_PRIMARY },
     secondary: { main: "#00BFB3" },
     background: { default: "#F5F7FA", paper: "#FFFFFF", subtle: "#F0F2F5", elevated: "#FFFFFF" },
     text: { primary: "#1A1C21", secondary: "#676F7B" },
@@ -167,7 +164,7 @@ export const lightTheme = createTheme({
   },
   components: {
     ...baseOptions.components,
-    MuiCssBaseline: { styleOverrides: cssBaselineOverrides("#0077CC") },
+    MuiCssBaseline: { styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY) },
   },
 });
 
@@ -175,7 +172,7 @@ export const darkTheme = createTheme({
   ...baseOptions,
   palette: {
     mode: "dark",
-    primary: { main: "#36A2EF" },
+    primary: { main: DARK_PRIMARY },
     secondary: { main: "#7DE2D1" },
     background: { default: "#111217", paper: "#25262E", subtle: "#1A1B22", elevated: "#2D2E36" },
     text: { primary: "#DFE5EF", secondary: "#B0B8C4" },
@@ -183,7 +180,7 @@ export const darkTheme = createTheme({
   },
   components: {
     ...baseOptions.components,
-    MuiCssBaseline: { styleOverrides: cssBaselineOverrides("#36A2EF") },
+    MuiCssBaseline: { styleOverrides: cssBaselineOverrides(DARK_PRIMARY) },
   },
 });
 
