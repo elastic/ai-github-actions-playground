@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 import time
@@ -83,9 +82,6 @@ STATE_META: dict[PRState, StateMeta] = {
 
 # ── Data types ───────────────────────────────────────────────────────────────
 
-BOT_RE = re.compile(r"^(copilot|github-actions)\[bot\]$|^copilot-swe-agent\[bot\]$")
-
-
 @dataclass
 class PRInfo:
     number: int
@@ -96,10 +92,11 @@ class PRInfo:
     is_draft: bool
     mergeable: str
     review_decision: str
+    author_is_bot: bool = False
 
     @property
     def is_bot(self) -> bool:
-        return bool(BOT_RE.match(self.author))
+        return self.author_is_bot
 
     @property
     def is_wip(self) -> bool:
@@ -232,6 +229,7 @@ def fetch_prs(ctx: Ctx) -> list[PRInfo]:
         head_sha=p["headRefOid"], branch=p["headRefName"], is_draft=p["isDraft"],
         mergeable=p.get("mergeable", "UNKNOWN"),
         review_decision=p.get("reviewDecision") or "null",
+        author_is_bot=p["author"].get("is_bot", False),
     ) for p in raw]
 
 
@@ -330,17 +328,39 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             print(f"{YELLOW}would kick CI{RESET}")
             kicked += 1
             continue
+        # Try re-running the latest CI run for this branch first.
         prev = [r for r in runs if r.get("name") == "CI"
-                and r.get("status") == "completed" and r.get("headBranch") == pr.branch]
+                and r.get("headBranch") == pr.branch and r.get("headSha") == pr.head_sha]
         if prev:
             try:
                 gh_text("run", "rerun", str(prev[0]["databaseId"]), repo=ctx.repo_args)
                 print(f"{GREEN}✓ re-ran{RESET}")
                 kicked += 1
+                continue
             except RuntimeError:
-                print(f"{RED}✗ failed{RESET}")
-        else:
-            print(f"{YELLOW}no CI run to re-run (empty commit may be needed){RESET}")
+                pass  # Fall through to empty commit
+        # No CI run exists for the current head — push an empty commit to trigger one.
+        try:
+            gh_text("api", f"repos/{ctx.repo_slug}/git/refs/heads/{pr.branch}",
+                     "-X", "PATCH", "-f", f"sha={pr.head_sha}", "--silent")
+            # Push empty commit via the API
+            subprocess.run(
+                ["git", "clone", "--depth=1", "--branch", pr.branch,
+                 f"https://github.com/{ctx.repo_slug}.git", f"/tmp/_kick_{pr.number}"],
+                capture_output=True, check=True)
+            subprocess.run(
+                ["git", "-C", f"/tmp/_kick_{pr.number}",
+                 "commit", "--allow-empty", "-m", "ci: trigger CI re-run"],
+                capture_output=True, check=True)
+            subprocess.run(
+                ["git", "-C", f"/tmp/_kick_{pr.number}", "push"],
+                capture_output=True, check=True)
+            subprocess.run(["rm", "-rf", f"/tmp/_kick_{pr.number}"], capture_output=True)
+            print(f"{GREEN}✓ empty commit pushed{RESET}")
+            kicked += 1
+        except (RuntimeError, subprocess.CalledProcessError):
+            subprocess.run(["rm", "-rf", f"/tmp/_kick_{pr.number}"], capture_output=True)
+            print(f"{RED}✗ failed to push empty commit{RESET}")
     if not kicked:
         print("  No bot PRs needed CI kicked.")
     else:
