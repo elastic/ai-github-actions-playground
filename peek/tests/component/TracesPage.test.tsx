@@ -55,6 +55,8 @@ describe("TracesPage duration filter", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -138,6 +140,8 @@ describe("TracesPage empty states", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
@@ -183,6 +187,8 @@ describe("TracesPage auto-run on quick filter changes", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      timeseriesResult: null,
     });
   });
 
