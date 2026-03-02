@@ -51,7 +51,7 @@ const SAMPLE_INDICES = [
     "pri.store.size": "1048576",
   },
   {
-    index: "metrics-host",
+    index: "metrics-service_destination.1m.otel-default-2026.03.02-000001",
     health: "yellow",
     status: "open",
     pri: "1",
@@ -167,19 +167,19 @@ describe("IndicesPage", () => {
 
     // Both visible non-system indices should appear in the list
     expect(within(listEl).getAllByText("logs-app").length).toBeGreaterThan(0);
-    expect(within(listEl).getByText("metrics-host")).toBeInTheDocument();
+    expect(
+      within(listEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
+    ).toBeInTheDocument();
     expect(within(listEl).queryByText(".system-index")).not.toBeInTheDocument();
   });
 
   it("truncates long index names with a title tooltip", async () => {
     renderPage();
     const listEl = await screen.findByRole("list", { name: /index list/i });
+    const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
 
-    // Each index name should have a title attribute for tooltip on hover
-    const logsLabel = within(listEl).getByText("logs-app");
-    expect(logsLabel).toHaveAttribute("title", "logs-app");
-    const metricsLabel = within(listEl).getByText("metrics-host");
-    expect(metricsLabel).toHaveAttribute("title", "metrics-host");
+    const metricsLabel = within(listEl).getByText(longName);
+    expect(metricsLabel).toHaveAttribute("title", longName);
   });
 
   it("shows system indices when the toggle is enabled", async () => {
@@ -202,7 +202,9 @@ describe("IndicesPage", () => {
     await user.type(screen.getByRole("textbox", { name: /search indices/i }), "metrics");
 
     expect(within(listEl).queryByText("logs-app")).not.toBeInTheDocument();
-    expect(within(listEl).getByText("metrics-host")).toBeInTheDocument();
+    expect(
+      within(listEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
+    ).toBeInTheDocument();
   });
 
   it("shows overview metadata for the selected index", async () => {

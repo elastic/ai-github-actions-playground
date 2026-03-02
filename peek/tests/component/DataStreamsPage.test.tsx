@@ -156,14 +156,15 @@ describe("DataStreamsPage", () => {
   });
 
   it("truncates long data stream names with a title tooltip", async () => {
+    const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         {
-          name: "logs-a",
+          name: longName,
           status: "YELLOW",
           generation: 1,
           template: "logs",
-          indices: [{ index_name: ".ds-logs-a-000001" }],
+          indices: [{ index_name: `${longName}-000001` }],
         },
       ],
     });
@@ -175,11 +176,9 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    const nameEls = await screen.findAllByText("logs-a");
-    // The list item primary text should have a title attribute for tooltip on hover
-    const listLabel = nameEls.find((el) => el.hasAttribute("title"));
-    expect(listLabel).toBeDefined();
-    expect(listLabel).toHaveAttribute("title", "logs-a");
+    const list = await screen.findByRole("list");
+    const listLabel = within(list).getByText(longName);
+    expect(listLabel).toHaveAttribute("title", longName);
   });
 
   it("shows system streams when the toggle is enabled", async () => {
