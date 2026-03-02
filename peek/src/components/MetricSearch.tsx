@@ -111,7 +111,7 @@ export default function MetricSearch({
                 ...params.InputProps,
                 endAdornment: (
                   <>
-                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {loading ? <CircularProgress color="inherit" size={16} /> : null}
                     {params.InputProps.endAdornment}
                   </>
                 ),

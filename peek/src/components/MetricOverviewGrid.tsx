@@ -7,6 +7,7 @@ import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -305,18 +306,8 @@ export default function MetricOverviewGrid({
         {isLoading &&
           metricsWithData.length === 0 &&
           namespaceMetrics.slice(0, 6).map((field) => (
-            <Paper
-              key={`loading-${field.name}`}
-              variant="outlined"
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: 140,
-                p: 1,
-              }}
-            >
-              <CircularProgress size={24} />
+            <Paper key={`loading-${field.name}`} variant="outlined" sx={{ minHeight: 140, p: 1 }}>
+              <Skeleton variant="rounded" height="100%" />
             </Paper>
           ))}
       </Box>

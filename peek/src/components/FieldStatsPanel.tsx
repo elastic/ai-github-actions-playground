@@ -3,7 +3,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -148,11 +148,7 @@ export default function FieldStatsPanel({
       <Box
         sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, overflow: "auto", p: 1.5 }}
       >
-        {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-            <CircularProgress size={24} />
-          </Box>
-        )}
+        {loading && <LinearProgress sx={{ my: 2 }} />}
 
         {!loading && error && <Alert severity="error">{error}</Alert>}
 

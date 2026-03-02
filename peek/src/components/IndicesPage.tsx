@@ -6,6 +6,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import LinearProgress from "@mui/material/LinearProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -478,11 +479,7 @@ export default function IndicesPage() {
           </Button>
         </Stack>
       )}
-      {diskUsageLoading && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress size={24} />
-        </Box>
-      )}
+      {diskUsageLoading && <LinearProgress sx={{ my: 2 }} />}
       {diskUsageError && <Alert severity="error">{diskUsageError}</Alert>}
       {diskUsage && (
         <Stack spacing={1.5}>
