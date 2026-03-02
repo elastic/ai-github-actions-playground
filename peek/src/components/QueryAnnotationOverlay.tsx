@@ -24,6 +24,10 @@ const OVERLAY_BG_HOVER_ALPHA = 0.65;
 /** LRU-bounded cache of `provider::model::query` → explanation. */
 const explanationCache = new Map<string, string>();
 
+export function clearQueryAnnotationExplanationCache() {
+  explanationCache.clear();
+}
+
 function getCacheKey(query: string, provider: string, model: string) {
   return `${provider}::${model}::${query}`;
 }

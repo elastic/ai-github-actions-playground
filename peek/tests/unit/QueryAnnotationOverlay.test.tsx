@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { resetAllStores } from "../fixtures/test-utils";
-import QueryAnnotationOverlay from "../../src/components/QueryAnnotationOverlay";
+import QueryAnnotationOverlay, {
+  clearQueryAnnotationExplanationCache,
+} from "../../src/components/QueryAnnotationOverlay";
 
 // Mock the AI SDK to avoid real LLM calls
 vi.mock("ai", () => ({
@@ -18,6 +20,7 @@ vi.mock("@ai-sdk/openai", () => ({
 describe("QueryAnnotationOverlay", () => {
   beforeEach(() => {
     resetAllStores();
+    clearQueryAnnotationExplanationCache();
     useLLMStore.getState().setApiKey("test-key");
     useLLMStore.getState().setProvider("openai");
     useLLMStore.getState().setModel("gpt-4");
