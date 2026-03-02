@@ -39,7 +39,9 @@ export function extractMappingFields(
   mappingResponse: Record<string, unknown>,
   indexName: string,
 ): MappingField[] {
-  const indexData = mappingResponse[indexName] as Record<string, unknown> | undefined;
+  const indexData = (mappingResponse[indexName] ?? Object.values(mappingResponse)[0]) as
+    | Record<string, unknown>
+    | undefined;
   if (!indexData) return [];
   const mappings = indexData.mappings as Record<string, unknown> | undefined;
   if (!mappings) return [];
@@ -68,7 +70,9 @@ export function extractSettings(
   settingsResponse: Record<string, unknown>,
   indexName: string,
 ): Array<{ key: string; value: string }> {
-  const indexData = settingsResponse[indexName] as Record<string, unknown> | undefined;
+  const indexData = (settingsResponse[indexName] ?? Object.values(settingsResponse)[0]) as
+    | Record<string, unknown>
+    | undefined;
   if (!indexData) return [];
   const settings = indexData.settings as Record<string, unknown> | undefined;
   if (!settings) return [];

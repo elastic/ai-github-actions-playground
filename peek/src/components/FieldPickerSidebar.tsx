@@ -38,6 +38,124 @@ export interface FieldPickerSidebarProps {
   onToggleInsight: (columnName: string, columnType: string) => void;
 }
 
+interface NumericInsightStatsProps {
+  insightData: EsqlResponse;
+}
+
+interface TopValuesInsightProps {
+  insightData: EsqlResponse;
+  columnName: string;
+}
+
+function NumericInsightStats({ insightData }: NumericInsightStatsProps) {
+  const row = insightData.values[0];
+  const colMap = new Map(insightData.columns.map((c, idx) => [c.name, idx]));
+  const getVal = (name: string) => {
+    const idx = colMap.get(name);
+    return idx !== undefined && row ? (row[idx] ?? null) : null;
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.5,
+        fontSize: "0.7rem",
+      }}
+    >
+      {[
+        { label: "Min", value: getVal("min_value") },
+        { label: "Max", value: getVal("max_value") },
+        { label: "Avg", value: getVal("avg_value") },
+        { label: "Count", value: getVal("total_count") },
+        { label: "Nulls", value: getVal("null_count") },
+      ].map(({ label, value }) => (
+        <Box
+          key={label}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            {label}
+          </Typography>
+          <Typography variant="caption" fontFamily="monospace" fontWeight={600}>
+            {value == null ? "—" : String(value)}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function TopValuesInsight({ insightData, columnName }: TopValuesInsightProps) {
+  const vals = insightData.values;
+  if (vals.length === 0) {
+    return (
+      <EmptyState size="small" heading="No values" description="No data found for this field." />
+    );
+  }
+
+  const valIdx = insightData.columns.findIndex((c) => c.name === columnName);
+  const cntIdx = insightData.columns.findIndex((c) => c.name === "value_count");
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.5,
+        fontSize: "0.7rem",
+      }}
+    >
+      {vals.map((row) => {
+        const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
+        const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
+        return (
+          <Box
+            key={value == null ? "__null__" : String(value)}
+            sx={{
+              display: "flex",
+              gap: 0.5,
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ flex: 1, minWidth: 0, fontFamily: "monospace" }}
+              title={value == null ? "null" : String(value)}
+            >
+              {value == null ? (
+                <Box component="span" sx={{ opacity: 0.4, fontStyle: "italic" }}>
+                  null
+                </Box>
+              ) : (
+                String(value)
+              )}
+            </Typography>
+            <Typography
+              variant="caption"
+              fontFamily="monospace"
+              color="text.secondary"
+              sx={{ flexShrink: 0 }}
+            >
+              {count == null ? "—" : String(count)}
+            </Typography>
+          </Box>
+        );
+      })}
+      {vals.length >= 10 && (
+        <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.6 }}>
+          Top 10 only
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 export default function FieldPickerSidebar({
   columns,
   selectedFields,
@@ -163,139 +281,13 @@ export default function FieldPickerSidebar({
                     {!insight?.loading &&
                       !insight?.error &&
                       insight?.data &&
-                      isNumericType(col.type) &&
-                      (() => {
-                        const row = insight.data!.values[0];
-                        const colMap = new Map(
-                          insight.data!.columns.map((c, idx) => [c.name, idx]),
-                        );
-                        const getVal = (name: string) => {
-                          const idx = colMap.get(name);
-                          return idx !== undefined && row ? (row[idx] ?? null) : null;
-                        };
-                        const min = getVal("min_value");
-                        const max = getVal("max_value");
-                        const avg = getVal("avg_value");
-                        const total = getVal("total_count");
-                        const nulls = getVal("null_count");
-                        return (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 0.5,
-                              fontSize: "0.7rem",
-                            }}
-                          >
-                            {[
-                              { label: "Min", value: min },
-                              { label: "Max", value: max },
-                              { label: "Avg", value: avg },
-                              { label: "Count", value: total },
-                              { label: "Nulls", value: nulls },
-                            ].map(({ label, value }) => (
-                              <Box
-                                key={label}
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                }}
-                              >
-                                <Typography variant="caption" color="text.secondary">
-                                  {label}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  fontFamily="monospace"
-                                  fontWeight={600}
-                                >
-                                  {value == null ? "—" : String(value)}
-                                </Typography>
-                              </Box>
-                            ))}
-                          </Box>
-                        );
-                      })()}
+                      isNumericType(col.type) && <NumericInsightStats insightData={insight.data} />}
                     {!insight?.loading &&
                       !insight?.error &&
                       insight?.data &&
-                      !isNumericType(col.type) &&
-                      (() => {
-                        const vals = insight.data!.values;
-                        if (vals.length === 0) {
-                          return (
-                            <EmptyState
-                              size="small"
-                              heading="No values"
-                              description="No data found for this field."
-                            />
-                          );
-                        }
-                        const valIdx = insight.data!.columns.findIndex((c) => c.name === col.name);
-                        const cntIdx = insight.data!.columns.findIndex(
-                          (c) => c.name === "value_count",
-                        );
-                        return (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 0.5,
-                              fontSize: "0.7rem",
-                            }}
-                          >
-                            {vals.map((row) => {
-                              const value = valIdx >= 0 ? (row[valIdx] ?? null) : null;
-                              const count = cntIdx >= 0 ? (row[cntIdx] ?? null) : null;
-                              return (
-                                <Box
-                                  key={value == null ? "__null__" : String(value)}
-                                  sx={{
-                                    display: "flex",
-                                    gap: 0.5,
-                                    justifyContent: "space-between",
-                                  }}
-                                >
-                                  <Typography
-                                    variant="caption"
-                                    noWrap
-                                    sx={{ flex: 1, minWidth: 0, fontFamily: "monospace" }}
-                                    title={value == null ? "null" : String(value)}
-                                  >
-                                    {value == null ? (
-                                      <Box
-                                        component="span"
-                                        sx={{ opacity: 0.4, fontStyle: "italic" }}
-                                      >
-                                        null
-                                      </Box>
-                                    ) : (
-                                      String(value)
-                                    )}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    fontFamily="monospace"
-                                    color="text.secondary"
-                                    sx={{ flexShrink: 0 }}
-                                  >
-                                    {count == null ? "—" : String(count)}
-                                  </Typography>
-                                </Box>
-                              );
-                            })}
-                            {vals.length >= 10 && (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ opacity: 0.6 }}
-                              >
-                                Top 10 only
-                              </Typography>
-                            )}
-                          </Box>
-                        );
-                      })()}
+                      !isNumericType(col.type) && (
+                        <TopValuesInsight insightData={insight.data} columnName={col.name} />
+                      )}
                     {!insight?.loading && !insight?.error && !insight?.data && (
                       <Typography variant="caption" color="text.secondary">
                         No data

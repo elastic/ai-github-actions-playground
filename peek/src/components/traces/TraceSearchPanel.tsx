@@ -56,10 +56,10 @@ export default function TraceSearchPanel({
     const maxMs = maxDurationInput !== "" ? Number(maxDurationInput) : null;
     const validMin = minMs !== null && Number.isFinite(minMs) && minMs >= 0 ? minMs : null;
     const validMax = maxMs !== null && Number.isFinite(maxMs) && maxMs >= 0 ? maxMs : null;
+    const shouldSwap = validMin !== null && validMax !== null && validMax < validMin;
     applyFiltersAndRun({
-      minDurationMs: validMin,
-      maxDurationMs:
-        validMax !== null && validMin !== null && validMax < validMin ? null : validMax,
+      minDurationMs: shouldSwap ? validMax : validMin,
+      maxDurationMs: shouldSwap ? validMin : validMax,
     });
   }, [minDurationInput, maxDurationInput, applyFiltersAndRun]);
 
