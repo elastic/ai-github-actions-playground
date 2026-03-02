@@ -351,6 +351,13 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
                  f"https://github.com/{ctx.repo_slug}.git", tmpdir],
                 capture_output=True, check=True)
             subprocess.run(
+                ["git", "-C", tmpdir, "config", "user.name", "github-actions[bot]"],
+                capture_output=True, check=True)
+            subprocess.run(
+                ["git", "-C", tmpdir, "config", "user.email",
+                 "41898282+github-actions[bot]@users.noreply.github.com"],
+                capture_output=True, check=True)
+            subprocess.run(
                 ["git", "-C", tmpdir,
                  "commit", "--allow-empty", "-m", "ci: trigger CI re-run"],
                 capture_output=True, check=True)
