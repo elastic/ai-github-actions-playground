@@ -309,6 +309,7 @@ export default function AppSidebar({
           selected={location.pathname === PAGE_MANIFEST.settings.path}
           onClick={() => {
             navigate(PAGE_MANIFEST.settings.path);
+            onNavigate?.();
             setSettingsAnchor(null);
           }}
         >

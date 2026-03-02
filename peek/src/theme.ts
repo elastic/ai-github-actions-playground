@@ -1,5 +1,7 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
+const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
+
 const baseOptions: ThemeOptions = {
   typography: {
     fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
@@ -36,7 +38,7 @@ const baseOptions: ThemeOptions = {
           fontWeight: 500,
           height: 32,
           borderRadius: 6,
-          "@media (max-width:767.95px), (pointer: coarse)": {
+          [MOBILE_OR_COARSE_QUERY]: {
             height: "auto",
             minHeight: 44,
             paddingTop: 10,
@@ -48,7 +50,7 @@ const baseOptions: ThemeOptions = {
     MuiIconButton: {
       styleOverrides: {
         root: {
-          "@media (max-width:767.95px), (pointer: coarse)": {
+          [MOBILE_OR_COARSE_QUERY]: {
             width: 44,
             height: 44,
             padding: 10,
@@ -59,7 +61,7 @@ const baseOptions: ThemeOptions = {
     MuiListItemButton: {
       styleOverrides: {
         root: {
-          "@media (max-width:767.95px), (pointer: coarse)": {
+          [MOBILE_OR_COARSE_QUERY]: {
             minHeight: 44,
           },
         },
@@ -87,7 +89,7 @@ const baseOptions: ThemeOptions = {
         root: {
           "&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)": {
             height: 32,
-            "@media (max-width:767.95px), (pointer: coarse)": {
+            [MOBILE_OR_COARSE_QUERY]: {
               height: "auto",
               minHeight: 44,
             },
