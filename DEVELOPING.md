@@ -99,20 +99,24 @@ Static SPA. Three runtimes: direct browser→ES (requires CORS), browser→proxy
 
 ## Perses Architecture
 
-Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, ECharts-based). For visual/theming rules (tooltip style, colors, series behavior), see DESIGN_LANGUAGE.md § Charts. For the full migration roadmap, see PERSES_MIGRATION_PLAN.md.
+Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, ECharts-based). For visual/theming rules (tooltip style, colors, series behavior), see DESIGN_LANGUAGE.md § Charts.
 
 **Architecture layers:**
 
 - **Data model** — dashboards serialize to the Perses resource format (`kind: "Dashboard"`, panels as `kind: "Panel"` with plugin kinds). Adapters in `services/perses/dashboardAdapters.ts` convert between internal `DashboardDefinition` and the Perses wire format.
 - **Panel plugins** — each visualization type maps to a Perses plugin kind via `VISUALIZATION_TO_PLUGIN_KIND` in the adapter layer (`TimeSeriesChart`, `StatChart`, `GaugeChart`, `BarChart`, `TablePanel`, `PieChart`, `ScatterChart`, `HeatMapChart`, `HistogramChart`, `MarkdownPanel`).
 - **Viz registry** — `vizRegistry.tsx` and `components/perses/panelRegistry.ts` use the same `VizRegistryEntry` interface. Registry entries are auto-discovered from `visualizations/registry/*.tsx`.
-- **Rendering** — charts render through `EChartWrapper`, which wraps the ECharts core that Perses itself uses internally. Do not import ECharts directly in new chart components; use `EChartWrapper` or Perses's `@perses-dev/components` `EChart` component.
-- **Theming** — `useEChartTheme()` produces ECharts-compatible options from MUI palette tokens. This hook is modeled on Perses's `generateChartsTheme` and will be replaced by Perses's `ChartsProvider` context once the migration completes. Until then, all chart theming flows through this single hook — charts never set their own colors.
+- **Rendering** — charts render through the Perses `EChart` component from `@perses-dev/components`. Graph-type charts (service maps, drift radar) import `EChart` from `components/perses/PersesEChartWrapper`, a thin shim that registers the ECharts `GraphChart` extension before re-exporting `EChart`. This is the permanent pattern for any chart type not registered in Perses's upstream bundle. Do not import ECharts directly in new chart components; use the Perses `EChart` component (or `PersesEChartWrapper` when an additional chart type registration is needed).
+- **Theming** — `useEChartTheme()` produces ECharts-compatible options from MUI palette tokens. When rendered inside `PersesProviders`, the hook delegates to the centrally-managed `ChartsProvider` theme via `PeekChartsThemeContext`; otherwise it falls back to an equivalent inline theme. All chart theming flows through this single hook — charts never set their own colors.
 
 **Code-structure rules for chart components:**
 
 - Chart components receive data via `VizRendererProps`. They do not fetch data — the panel container handles queries.
 - New chart types must be registered as a `VizRegistryDescriptor` in `visualizations/registry/`. One file per chart type.
+
+**Legacy dashboard format support:**
+
+`schemas.ts` and `dashboardImportExport.ts` accept both the canonical Perses format (`plugin` + `queries`) and the legacy format (`query` + `visualization`). The import pipeline in `hydrateWorkspaceFromPersistedState` tries four formats in order: nested Perses workspace, flat Perses workspace, legacy workspace snapshot, and legacy single dashboard. This is required for backward-compatible imports of dashboards persisted before the Perses migration. Legacy format support can be removed after one full release cycle in which all persisted dashboards have been migrated to the canonical Perses format on load.
 
 ## Adding a New Elasticsearch Endpoint
 

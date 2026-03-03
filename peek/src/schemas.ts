@@ -188,6 +188,9 @@ const persesPanelSpecSchema = z
     queries: z.array(persesPanelQuerySchema).optional(),
     refreshInterval: z.number().optional(),
     // Legacy hybrid support for backward-compatible imports.
+    // TODO: Remove legacy fields (query, visualization, options) after one full release
+    // cycle once all persisted dashboards have been migrated to the canonical
+    // plugin+queries format on load.  See DEVELOPING.md § Perses Architecture.
     query: z.string().optional(),
     visualization: visualizationTypeSchema.optional(),
     options: z.record(z.string(), z.unknown()).optional(),
