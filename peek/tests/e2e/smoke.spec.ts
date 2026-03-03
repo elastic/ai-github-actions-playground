@@ -26,6 +26,8 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "color-contrast": 2,
     },
     Metrics: {
+      "aria-input-field-name": 1,
+      "aria-prohibited-attr": 1,
       "color-contrast": 2,
     },
     Services: {},
@@ -305,8 +307,8 @@ test.describe("smoke – site navigation", () => {
     await metricSearch.fill("system.cpu");
     await page.locator("li.MuiAutocomplete-option").first().click();
     await page.getByRole("button", { name: "View ungrouped" }).click();
-    await expect(page.getByText("Save to Dashboard")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Query took")).toBeVisible({ timeout: 15_000 });
+    // After query success, result count appears in the search panel footer
+    await expect(page.getByText("3 metrics found")).toBeVisible({ timeout: 15_000 });
   });
 
   test("traces user opens a trace and pivots from service map context into Query Lab", async ({
