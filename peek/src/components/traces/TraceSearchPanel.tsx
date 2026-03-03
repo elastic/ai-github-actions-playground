@@ -305,6 +305,8 @@ export default function TraceSearchPanel({
                     if (!(target instanceof HTMLInputElement)) return;
                     const val = target.value.trim();
                     if (val && !filters.services.includes(val)) {
+                      (e as typeof e & { defaultMuiPrevented?: boolean }).defaultMuiPrevented =
+                        true;
                       applyFiltersAndRun({ services: [...filters.services, val] });
                     }
                   }
