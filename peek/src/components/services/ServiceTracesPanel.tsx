@@ -24,7 +24,7 @@ export default function ServiceTracesPanel({
   onViewAllTraces,
 }: ServiceTracesPanelProps) {
   return (
-    <Paper variant="outlined" sx={{ overflow: "auto" }}>
+    <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto" }}>
       <Box
         sx={{
           display: "flex",

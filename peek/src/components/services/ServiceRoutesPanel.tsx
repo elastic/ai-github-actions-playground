@@ -19,7 +19,7 @@ export default function ServiceRoutesPanel({
   onSort,
 }: ServiceRoutesPanelProps) {
   return (
-    <Paper variant="outlined" sx={{ overflow: "auto" }}>
+    <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto" }}>
       <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
           Top Routes

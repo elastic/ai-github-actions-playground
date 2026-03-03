@@ -79,7 +79,19 @@ export default function TraceDetailPanel({
         // Without it, the flex-height chain breaks and the span table shows empty.
         <Box sx={{ position: "relative", flex: 1, minHeight: 0 }}>
           <Box
-            sx={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, overflow: "hidden" }}
+            sx={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              overflow: "hidden",
+              // Perses TraceDetails uses MUI h3/h4 variants which default to 3rem/2.125rem,
+              // far too large for a panel header. Scope them down so the gantt table
+              // gets adequate vertical space.
+              "& .MuiTypography-h3": { lineHeight: 1.4, fontSize: "1.25rem" },
+              "& .MuiTypography-h4": { lineHeight: 1.4, fontSize: "0.95rem" },
+            }}
           >
             <VariableContext.Provider value={EMPTY_VARIABLE_SRV}>
               <TracingGanttChart key={selectedTraceId} options={GANTT_OPTIONS} trace={otlpTrace} />
