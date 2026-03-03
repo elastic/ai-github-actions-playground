@@ -8,6 +8,27 @@ import type { InvestigateTab } from "./investigateUtils";
 import { buildRecentEntitiesQuery } from "./investigateQueryBuilder";
 import { parseRecentEntities } from "./investigateParser";
 
+interface TabCache {
+  entities: RecentEntity[];
+  connectionKey: string | null;
+}
+
+const EMPTY_TAB_CACHE: TabCache = { entities: [], connectionKey: null };
+
+function makeEmptyCache(): Record<InvestigateTab, TabCache> {
+  return {
+    user: { ...EMPTY_TAB_CACHE },
+    host: { ...EMPTY_TAB_CACHE },
+    ip: { ...EMPTY_TAB_CACHE },
+    domain: { ...EMPTY_TAB_CACHE },
+    file: { ...EMPTY_TAB_CACHE },
+  };
+}
+
+function makeLoadedFlags(): Record<InvestigateTab, boolean> {
+  return { user: false, host: false, ip: false, domain: false, file: false };
+}
+
 interface UseSuggestionsResult {
   visibleRecentEntities: RecentEntity[];
   suggestionsLoading: boolean;
@@ -18,17 +39,8 @@ export function useSuggestions(
   connectionKey: string | null,
   activeTab: InvestigateTab,
 ): UseSuggestionsResult {
-  const [recentEntitiesByTab, setRecentEntitiesByTab] = useState<{
-    user: { entities: RecentEntity[]; connectionKey: string | null };
-    host: { entities: RecentEntity[]; connectionKey: string | null };
-  }>({
-    user: { entities: [], connectionKey: null },
-    host: { entities: [], connectionKey: null },
-  });
-  const suggestionsLoadedRef = useRef<{ user: boolean; host: boolean }>({
-    user: false,
-    host: false,
-  });
+  const [recentEntitiesByTab, setRecentEntitiesByTab] = useState(makeEmptyCache);
+  const suggestionsLoadedRef = useRef(makeLoadedFlags());
   const suggestionsRequestTabRef = useRef<InvestigateTab>("user");
 
   const handleSuggestionsSuccess = useCallback(
@@ -59,7 +71,7 @@ export function useSuggestions(
   });
 
   useEffect(() => {
-    suggestionsLoadedRef.current = { user: false, host: false };
+    suggestionsLoadedRef.current = makeLoadedFlags();
   }, [connectionKey]);
 
   useEffect(() => {

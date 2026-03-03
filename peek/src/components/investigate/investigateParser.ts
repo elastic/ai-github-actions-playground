@@ -1,13 +1,14 @@
 import type { EsqlResponse } from "../../types";
 
 import type { InvestigateTab, TimelineEvent } from "./investigateUtils";
+import { investigateField } from "./investigateQueryBuilder";
 
 /** Parse ES|QL response into a list of recent entity suggestions. */
 export function parseRecentEntities(
   data: EsqlResponse,
   tab: InvestigateTab,
 ): Array<{ name: string; eventCount: number; lastSeen: string }> {
-  const fieldName = tab === "user" ? "user.name" : "host.name";
+  const fieldName = investigateField(tab);
   const colIndex = new Map<string, number>();
   for (let i = 0; i < data.columns.length; i++) {
     colIndex.set(data.columns[i]!.name, i);

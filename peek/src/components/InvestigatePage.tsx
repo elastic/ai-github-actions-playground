@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -16,6 +16,7 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
+import InvestigateQueryBar from "./investigate/InvestigateQueryBar";
 import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
 import InvestigateSuggestionsPanel from "./investigate/InvestigateSuggestionsPanel";
 import InvestigateTimelineTable from "./investigate/InvestigateTimelineTable";
@@ -23,6 +24,14 @@ import { useSuggestions } from "./investigate/useSuggestions";
 import type { InvestigateTab, TimelineEvent } from "./investigate/investigateUtils";
 import { buildInvestigateQuery } from "./investigate/investigateQueryBuilder";
 import { parseTimelineEvents } from "./investigate/investigateParser";
+
+const TAB_LABELS: Record<InvestigateTab, { label: string; placeholder: string }> = {
+  user: { label: "User", placeholder: "Enter user name…" },
+  host: { label: "Host", placeholder: "Enter host name…" },
+  ip: { label: "IP Address", placeholder: "Enter IP address…" },
+  domain: { label: "Domain", placeholder: "Enter domain name…" },
+  file: { label: "File", placeholder: "Enter file name or hash…" },
+};
 
 export default function InvestigatePage() {
   const connection = useConnectionStore((s) => s.connection);
@@ -53,6 +62,11 @@ export default function InvestigatePage() {
     onFailure: handleFailure,
   });
 
+  const currentQuery = useMemo(
+    () => (searchedEntity ? buildInvestigateQuery(activeTab, searchedEntity) : null),
+    [activeTab, searchedEntity],
+  );
+
   const handleSearch = useCallback(() => {
     const trimmed = entityInput.trim();
     if (!trimmed) return;
@@ -77,17 +91,21 @@ export default function InvestigatePage() {
     setSearchedEntity(null);
   }, []);
 
+  const tabConfig = TAB_LABELS[activeTab];
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Investigate"
-          description="Search for a user or host to view their recent security event timeline."
+          description="Search for a user, host, IP address, domain, or file to view their recent security event timeline."
         />
       </Paper>
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{
           minHeight: COMPONENT_HEIGHTS.tab,
           "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
@@ -95,19 +113,22 @@ export default function InvestigatePage() {
       >
         <Tab value="user" label="User" />
         <Tab value="host" label="Host" />
+        <Tab value="ip" label="IP Address" />
+        <Tab value="domain" label="Domain" />
+        <Tab value="file" label="File" />
       </Tabs>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <TextField
             size="small"
             fullWidth
-            placeholder={activeTab === "user" ? "Enter user name…" : "Enter host name…"}
+            placeholder={tabConfig.placeholder}
             value={entityInput}
             onChange={(e) => setEntityInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch();
             }}
-            inputProps={{ "aria-label": activeTab === "user" ? "User name" : "Host name" }}
+            inputProps={{ "aria-label": tabConfig.label }}
           />
           <Button
             variant="contained"
@@ -122,13 +143,14 @@ export default function InvestigatePage() {
           </Button>
         </Box>
       </Paper>
+      {currentQuery && <InvestigateQueryBar query={currentQuery} />}
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {searchedEntity && !loading && events.length === 0 && !error ? (
           <EmptyState
             icon={<PolicyIcon sx={{ fontSize: 32 }} />}
-            heading={`No events found for ${activeTab} "${searchedEntity}"`}
-            description={`No matching events were found in logs-*, filebeat-*, auditbeat-*, or winlogbeat-* indices. Make sure the ${activeTab} name is correct and that security event data is being ingested.`}
+            heading={`No events found for ${tabConfig.label.toLowerCase()} "${searchedEntity}"`}
+            description={`No matching events were found in logs-*, filebeat-*, auditbeat-*, or winlogbeat-* indices. Make sure the ${tabConfig.label.toLowerCase()} is correct and that security event data is being ingested.`}
           />
         ) : events.length > 0 ? (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -150,8 +172,8 @@ export default function InvestigatePage() {
             {!suggestionsLoading && visibleRecentEntities.length === 0 && (
               <EmptyState
                 icon={<PolicyIcon sx={{ fontSize: 32 }} />}
-                heading={`Investigate a ${activeTab}`}
-                description={`Enter a ${activeTab} name above and search to see their recent security event timeline.`}
+                heading={`Investigate a ${tabConfig.label.toLowerCase()}`}
+                description={`Enter a ${tabConfig.label.toLowerCase()} above and search to see their recent security event timeline.`}
               />
             )}
           </Box>

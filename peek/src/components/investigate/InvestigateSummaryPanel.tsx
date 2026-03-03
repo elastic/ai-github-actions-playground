@@ -25,6 +25,14 @@ import {
   TIMELINE_SYSTEM_PROMPT,
 } from "./investigateUtils";
 
+const TAB_LABEL: Record<InvestigateTab, string> = {
+  user: "user",
+  host: "host",
+  ip: "IP address",
+  domain: "domain",
+  file: "file",
+};
+
 interface InvestigateSummaryPanelProps {
   events: TimelineEvent[];
   activeTab: InvestigateTab;
@@ -78,8 +86,8 @@ export default function InvestigateSummaryPanel({
     <>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }} gutterBottom>
-          {events.length} event{events.length !== 1 ? "s" : ""} found for {activeTab} &ldquo;
-          {searchedEntity}&rdquo;
+          {events.length} event{events.length !== 1 ? "s" : ""} found for {TAB_LABEL[activeTab]}{" "}
+          &ldquo;{searchedEntity}&rdquo;
         </Typography>
         {eventCategoryCounts.length > 0 && (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
