@@ -45,7 +45,7 @@ export default function IndicesPage() {
     parseAsString.withDefault("").withOptions({ history: "replace" }),
   );
   const [showSystemIndices, setShowSystemIndices] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useQueryState("index", parseAsString);
+  const [selectedIndex, setSelectedIndex] = useQueryState("selectedIndex", parseAsString);
   const [activeTab, setActiveTab] = useQueryState(
     "tab",
     parseAsStringEnum<IndexTab>(INDEX_TABS)

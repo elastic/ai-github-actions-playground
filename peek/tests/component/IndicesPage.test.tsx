@@ -215,7 +215,7 @@ describe("IndicesPage", () => {
 
   it("restores search, selected index, and tab from URL on mount", async () => {
     const indexName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
-    renderPage([`/?search=metrics&index=${encodeURIComponent(indexName)}&tab=settings`]);
+    renderPage([`/?search=metrics&selectedIndex=${encodeURIComponent(indexName)}&tab=settings`]);
 
     expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("metrics");
     expect(await screen.findByRole("heading", { level: 2, name: indexName })).toBeInTheDocument();
