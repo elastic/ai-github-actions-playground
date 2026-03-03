@@ -54,6 +54,15 @@ describe("spansToOtlpTracesData", () => {
     expect(span.endTimeUnixNano).toBe("1005000000");
   });
 
+  it("keeps epoch-scale nanosecond strings exact", () => {
+    const result = spansToOtlpTracesData([
+      makeSpan({ startTimeUs: 1_700_000_000_000_123, durationUs: 7 }),
+    ]);
+    const span = result.resourceSpans[0]!.scopeSpans[0]!.spans[0]!;
+    expect(span.startTimeUnixNano).toBe("1700000000000123000");
+    expect(span.endTimeUnixNano).toBe("1700000000000130000");
+  });
+
   it("groups spans by service into separate ResourceSpans", () => {
     const result = spansToOtlpTracesData([
       makeSpan({ spanId: "a", serviceName: "svc-a" }),

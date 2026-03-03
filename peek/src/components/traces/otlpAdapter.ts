@@ -35,10 +35,19 @@ function toOtlpStatus(status: string): otlptracev1.Status {
   return { code: "STATUS_CODE_UNSET" };
 }
 
+function microsToNanosString(micros: number): string {
+  return (BigInt(Math.trunc(micros)) * 1_000n).toString();
+}
+
+function isoToNanosString(timestamp: string): string {
+  const ms = Date.parse(timestamp);
+  return Number.isFinite(ms) ? (BigInt(ms) * 1_000_000n).toString() : "0";
+}
+
 /** Convert app SpanEvents to OTLP Events. */
 function convertEvents(events: SpanEvent[]): otlptracev1.Event[] {
   return events.map((e) => ({
-    timeUnixNano: String(new Date(e.timestamp).getTime() * 1_000_000),
+    timeUnixNano: isoToNanosString(e.timestamp),
     name: e.name,
     attributes: toKeyValues(e.attributes),
   }));
@@ -61,8 +70,8 @@ function convertSpan(span: Span): otlptracev1.Span {
     parentSpanId: span.parentSpanId ?? undefined,
     name: span.name,
     kind: span.kind || undefined,
-    startTimeUnixNano: String(span.startTimeUs * 1000),
-    endTimeUnixNano: String((span.startTimeUs + span.durationUs) * 1000),
+    startTimeUnixNano: microsToNanosString(span.startTimeUs),
+    endTimeUnixNano: microsToNanosString(span.startTimeUs + span.durationUs),
     attributes: toKeyValues(span.attributes),
     events: span.events ? convertEvents(span.events) : undefined,
     links: span.links ? convertLinks(span.links) : undefined,

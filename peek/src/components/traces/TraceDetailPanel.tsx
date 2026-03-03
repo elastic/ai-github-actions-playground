@@ -70,7 +70,7 @@ export default function TraceDetailPanel({
         </Box>
       ) : selectedTraceSpans.length > 0 ? (
         <Box sx={{ flex: 1, overflow: "auto" }}>
-          <TracingGanttChart options={GANTT_OPTIONS} trace={otlpTrace} />
+          <TracingGanttChart key={selectedTraceId} options={GANTT_OPTIONS} trace={otlpTrace} />
         </Box>
       ) : (
         <Box sx={{ flex: 1 }}>
