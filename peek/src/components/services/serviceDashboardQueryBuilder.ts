@@ -99,6 +99,6 @@ export function buildServiceDeploymentsQuery(
     buildWherePipe(whereClauses),
     `EVAL version_key = CASE(${fields.serviceVersion} IS NULL OR TRIM(${fields.serviceVersion}) == "", "unknown", ${fields.serviceVersion})`,
     `STATS first_seen = MIN(${fields.timestamp}), last_seen = MAX(${fields.timestamp}), request_count = COUNT(*) BY version_key`,
-    `SORT last_seen DESC`,
+    `SORT last_seen DESC, first_seen DESC`,
   ]);
 }

@@ -22,6 +22,11 @@ export type RouteSortField = "route" | "requestCount" | "avgLatencyMs" | "errorR
 export type TraceSortField = "spanName" | "durationMs" | "statusCode" | "timestamp";
 export type SortDirection = "asc" | "desc";
 
+function toNonEmptyString(value: unknown, fallback: string): string {
+  const parsed = String(value ?? "").trim();
+  return parsed.length > 0 ? parsed : fallback;
+}
+
 export function parseRouteRows(result: EsqlResponse): RouteRow[] {
   const get = buildColumnAccessor(result.columns);
 
@@ -57,14 +62,10 @@ export interface DeploymentRow {
 export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
   const get = buildColumnAccessor(result.columns);
 
-  return result.values.map((row) => {
-    const rawVersion = get(row, "version_key");
-    const trimmed = rawVersion == null ? "" : String(rawVersion).trim();
-    return {
-      version: trimmed.length > 0 ? trimmed : "unknown",
-      firstSeen: String(get(row, "first_seen") ?? ""),
-      lastSeen: String(get(row, "last_seen") ?? ""),
-      requestCount: toFiniteNumber(get(row, "request_count")),
-    };
-  });
+  return result.values.map((row) => ({
+    version: toNonEmptyString(get(row, "version_key"), "unknown"),
+    firstSeen: String(get(row, "first_seen") ?? ""),
+    lastSeen: String(get(row, "last_seen") ?? ""),
+    requestCount: toFiniteNumber(get(row, "request_count")),
+  }));
 }

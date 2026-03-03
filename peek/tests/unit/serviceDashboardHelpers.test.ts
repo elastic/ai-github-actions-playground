@@ -238,7 +238,7 @@ describe("serviceDashboardHelpers", () => {
       });
     });
 
-    it("treats empty and whitespace-only version as 'unknown'", () => {
+    it("normalizes blank and whitespace versions to unknown", () => {
       const response: EsqlResponse = {
         columns: [
           { name: "version_key", type: "keyword" },
@@ -248,15 +248,15 @@ describe("serviceDashboardHelpers", () => {
         ],
         values: [
           ["", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 10],
-          ["  ", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 20],
+          ["  ", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 5],
         ],
       };
       const rows = parseDeploymentRows(response);
-      expect(rows[0]!.version).toBe("unknown");
-      expect(rows[1]!.version).toBe("unknown");
+      expect(rows[0]?.version).toBe("unknown");
+      expect(rows[1]?.version).toBe("unknown");
     });
 
-    it("handles malformed numeric request_count values", () => {
+    it("handles malformed request_count values with defaults", () => {
       const response: EsqlResponse = {
         columns: [
           { name: "version_key", type: "keyword" },
@@ -264,10 +264,15 @@ describe("serviceDashboardHelpers", () => {
           { name: "last_seen", type: "date" },
           { name: "request_count", type: "long" },
         ],
-        values: [["1.0.0", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", "abc"]],
+        values: [["1.0.0", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", "bad"]],
       };
       const rows = parseDeploymentRows(response);
-      expect(rows[0]!.requestCount).toBe(0);
+      expect(rows[0]).toEqual({
+        version: "1.0.0",
+        firstSeen: "2026-01-01T00:00:00Z",
+        lastSeen: "2026-01-01T01:00:00Z",
+        requestCount: 0,
+      });
     });
   });
 });
