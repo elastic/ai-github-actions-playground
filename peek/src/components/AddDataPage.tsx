@@ -52,12 +52,7 @@ type WizardStep = 1 | 2 | 3 | 4 | 5;
 type TechnologyCategoryFilter = "all" | AddDataTechnologyCategory;
 const CATEGORIES: readonly TechnologyCategoryFilter[] = [
   "all",
-  "cloud",
-  "containers",
-  "databases",
-  "applications",
-  "operating_systems",
-  "network",
+  ...(Object.keys(ADD_DATA_CATEGORY_LABELS) as AddDataTechnologyCategory[]),
 ];
 
 const STEP_TITLES: Record<WizardStep, string> = {
