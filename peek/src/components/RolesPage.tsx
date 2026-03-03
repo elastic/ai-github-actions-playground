@@ -10,7 +10,6 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
@@ -22,7 +21,7 @@ import { useSecurityRoles } from "../hooks/useSecurityRoles";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
-import PageHeader from "./PageHeader";
+import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
 
 export default function RolesPage() {
   const { roles, users, loading, error, accessNotice, usersError, refresh } = useSecurityRoles();
@@ -91,36 +90,31 @@ export default function RolesPage() {
   }, [roles, selectedRoleName, setPageSection]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Roles"
-          actions={
-            <>
-              <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-                {loading ? <CircularProgress size={16} /> : "Refresh"}
-              </Button>
-              <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-                {copied ? "Copied" : "Copy API call"}
-              </Button>
-            </>
-          }
-        />
-      </Paper>
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
-      {usersError && (
-        <Alert severity="warning">
-          Unable to load users for role assignment display: {usersError}
-        </Alert>
-      )}
-
-      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
-        <Paper
-          variant="outlined"
-          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 320, minHeight: 0 }}
-        >
+    <SecurityMasterDetailPage
+      title="Roles"
+      actions={
+        <>
+          <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
+            {loading ? <CircularProgress size={16} /> : "Refresh"}
+          </Button>
+          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+            {copied ? "Copied" : "Copy API call"}
+          </Button>
+        </>
+      }
+      alerts={
+        <>
+          {error && <Alert severity="error">{error}</Alert>}
+          {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
+          {usersError && (
+            <Alert severity="warning">
+              Unable to load users for role assignment display: {usersError}
+            </Alert>
+          )}
+        </>
+      }
+      masterPane={
+        <>
           <Box sx={{ p: 1 }}>
             <TextField
               size="small"
@@ -151,71 +145,65 @@ export default function RolesPage() {
               </Typography>
             )}
           </List>
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
-        >
-          {displayedRole ? (
-            <>
-              <Typography variant="subtitle1">{displayedRole.name}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                Cluster privileges
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {(displayedRole.role.cluster ?? []).map((privilege) => (
-                  <Chip key={privilege} size="small" label={privilege} />
-                ))}
-                {(displayedRole.role.cluster ?? []).length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    No cluster privileges.
-                  </Typography>
-                )}
-              </Stack>
-
-              <Typography variant="caption" color="text.secondary">
-                Index privileges
-              </Typography>
-              <Typography
-                component="pre"
-                variant="body2"
-                sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
-              >
-                {JSON.stringify(displayedRole.role.indices ?? [], null, 2)}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary">
-                Assigned users
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {assignedUsers.map((user) => (
-                  <Tooltip key={user.username} title={`View user: ${user.username}`}>
-                    <Chip
-                      size="small"
-                      label={user.username}
-                      clickable
-                      aria-label={`View user: ${user.username}`}
-                      onClick={() =>
-                        navigate(`/users?username=${encodeURIComponent(user.username)}`)
-                      }
-                    />
-                  </Tooltip>
-                ))}
-                {assignedUsers.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    No users assigned.
-                  </Typography>
-                )}
-              </Stack>
-            </>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Select a role.
+        </>
+      }
+      detailPane={
+        displayedRole ? (
+          <>
+            <Typography variant="subtitle1">{displayedRole.name}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Cluster privileges
             </Typography>
-          )}
-        </Paper>
-      </Box>
-    </Box>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {(displayedRole.role.cluster ?? []).map((privilege) => (
+                <Chip key={privilege} size="small" label={privilege} />
+              ))}
+              {(displayedRole.role.cluster ?? []).length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No cluster privileges.
+                </Typography>
+              )}
+            </Stack>
+
+            <Typography variant="caption" color="text.secondary">
+              Index privileges
+            </Typography>
+            <Typography
+              component="pre"
+              variant="body2"
+              sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
+            >
+              {JSON.stringify(displayedRole.role.indices ?? [], null, 2)}
+            </Typography>
+
+            <Typography variant="caption" color="text.secondary">
+              Assigned users
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {assignedUsers.map((user) => (
+                <Tooltip key={user.username} title={`View user: ${user.username}`}>
+                  <Chip
+                    size="small"
+                    label={user.username}
+                    clickable
+                    aria-label={`View user: ${user.username}`}
+                    onClick={() => navigate(`/users?username=${encodeURIComponent(user.username)}`)}
+                  />
+                </Tooltip>
+              ))}
+              {assignedUsers.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No users assigned.
+                </Typography>
+              )}
+            </Stack>
+          </>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            Select a role.
+          </Typography>
+        )
+      }
+    />
   );
 }
