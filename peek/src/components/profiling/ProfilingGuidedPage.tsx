@@ -21,7 +21,7 @@ import ProfilingResults from "./ProfilingResults";
 import { useProfilingData } from "./useProfilingData";
 
 function isProfilingFocusDimension(value: string | null): value is ProfilingFocusDimension {
-  return !!value && value in PROFILING_DIMENSION_LABELS;
+  return !!value && Object.prototype.hasOwnProperty.call(PROFILING_DIMENSION_LABELS, value);
 }
 
 export default function ProfilingGuidedPage() {

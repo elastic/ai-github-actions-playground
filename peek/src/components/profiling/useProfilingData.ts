@@ -280,11 +280,14 @@ export function useProfilingData({
 
   const resetResults = useCallback(() => {
     abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
     hasRunRef.current = false;
     setHasRun(false);
     setTopFunctionsRows([]);
     setStacktraces([]);
     setTimelineResult(null);
+    setFlamescopeWindow(null);
     setError(null);
   }, []);
 
