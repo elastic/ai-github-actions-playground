@@ -6,8 +6,29 @@ import type { InvestigateTab } from "./investigateUtils";
 
 const INVESTIGATE_INDICES = "logs-*, .ds-logs-*, filebeat-*, auditbeat-*, winlogbeat-*";
 
-const INVESTIGATE_KEEP_FIELDS = INVESTIGATE_TIMELINE_FIELDS.join(", ");
 const FILE_MATCH_FIELDS = ["file.name", "file.hash.md5", "file.hash.sha1", "file.hash.sha256"];
+
+/**
+ * Query flavor controls which KEEP fields are requested.
+ * - "full": all ECS + common fields (default)
+ * - "otel": drops ECS-specific fields not present in OTel indices
+ * - "minimal": only universally-safe fields (`@timestamp`, message, _index)
+ */
+export type QueryFlavor = "full" | "otel" | "minimal";
+
+/** Ordered fallback chain: try each flavor in sequence on column errors. */
+export const QUERY_FLAVOR_CHAIN = [
+  "full",
+  "otel",
+  "minimal",
+] as const satisfies readonly QueryFlavor[];
+
+/** KEEP fields per flavor. */
+const FLAVOR_KEEP_FIELDS: Readonly<Record<QueryFlavor, string>> = {
+  full: INVESTIGATE_TIMELINE_FIELDS.join(", "),
+  otel: "@timestamp, host.name, message, _index",
+  minimal: "@timestamp, message, _index",
+} as const;
 
 /** Map each investigate tab to its primary ECS field. */
 export function investigateField(tab: InvestigateTab): string {
@@ -26,7 +47,11 @@ export function investigateField(tab: InvestigateTab): string {
 }
 
 /** Build an ES|QL query to fetch recent events for a given entity. */
-export function buildInvestigateQuery(tab: InvestigateTab, entity: string): string {
+export function buildInvestigateQuery(
+  tab: InvestigateTab,
+  entity: string,
+  flavor: QueryFlavor = "full",
+): string {
   const field = investigateField(tab);
   const escapedEntity = escapeEsqlString(entity);
   const predicate =
@@ -37,7 +62,7 @@ export function buildInvestigateQuery(tab: InvestigateTab, entity: string): stri
     `FROM ${INVESTIGATE_INDICES} METADATA _index`,
     buildWherePipe([predicate]),
     "SORT @timestamp DESC",
-    `KEEP ${INVESTIGATE_KEEP_FIELDS}`,
+    `KEEP ${FLAVOR_KEEP_FIELDS[flavor]}`,
     "LIMIT 200",
   ]);
 }
