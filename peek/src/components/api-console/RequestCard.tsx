@@ -26,6 +26,13 @@ import AskAiButton from "../AskAiButton";
 import type { HttpMethod, RequestCardProps } from "./apiConsoleTypes";
 import { METHOD_COLORS, METHODS_WITH_BODY, httpStatusColor } from "./apiConsoleTypes";
 
+function sanitizeForAi(text: string): string {
+  return text
+    .replace(/(authorization\s*[:=]\s*)(.+)/gi, "$1<redacted>")
+    .replace(/(api[_-]?key\s*[:=]\s*)(.+)/gi, "$1<redacted>")
+    .replace(/(token\s*[:=]\s*)(.+)/gi, "$1<redacted>");
+}
+
 function serializeResponse(body: unknown): string {
   try {
     return JSON.stringify(
@@ -251,7 +258,7 @@ export default function RequestCard({
                 </Typography>
                 <AskAiButton
                   label="Explain error"
-                  prompt={`Explain this Elasticsearch API error and suggest a likely fix.\nMethod: ${entry.method}\nPath: ${entry.path}\nError: ${entry.response.message}`}
+                  prompt={`Explain this Elasticsearch API error and suggest a likely fix.\nMethod: ${entry.method}\nPath: ${entry.path}\nError: ${sanitizeForAi(entry.response.message)}`}
                 />
                 <Tooltip title="Dismiss">
                   <IconButton
@@ -277,7 +284,7 @@ export default function RequestCard({
                   </Typography>
                   <AskAiButton
                     label="Explain response"
-                    prompt={`Explain this Elasticsearch API response in one concise sentence.\nMethod: ${entry.method}\nPath: ${entry.path}\nHTTP status: ${entry.response.httpStatus}\nBody: ${serializeResponse(entry.response.body).slice(0, 4000)}`}
+                    prompt={`Explain this Elasticsearch API response in one concise sentence.\nMethod: ${entry.method}\nPath: ${entry.path}\nHTTP status: ${entry.response.httpStatus}\nBody: ${sanitizeForAi(serializeResponse(entry.response.body).slice(0, 4000))}`}
                   />
                   <Box sx={{ flex: 1 }} />
                   <Tooltip title={copied ? "Copied!" : "Copy response"}>

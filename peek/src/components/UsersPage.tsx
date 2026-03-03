@@ -95,11 +95,9 @@ export default function UsersPage() {
           context={JSON.stringify({
             totalUsers: users.length,
             disabledUsers: users.filter((u) => u.enabled === false).length,
-            selectedUser: displayedUser?.username ?? null,
-            selectedRoles: displayedUser?.roles ?? [],
           })}
           systemPrompt="You are an Elasticsearch security posture analyst. Provide one concise user security posture insight and one least-privilege recommendation."
-          cacheKey={`users-security::${users.length}::${users.filter((u) => u.enabled === false).length}::${displayedUser?.username ?? ""}`}
+          cacheKey={`users-security::${users.length}::${users.filter((u) => u.enabled === false).length}`}
         />
       )}
       <SecurityMasterDetailPage

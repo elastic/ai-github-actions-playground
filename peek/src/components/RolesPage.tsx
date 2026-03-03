@@ -98,10 +98,10 @@ export default function RolesPage() {
             role: displayedRole.name,
             clusterPrivileges: displayedRole.role.cluster ?? [],
             indexPrivileges: displayedRole.role.indices ?? [],
-            assignedUsers: assignedUsers.map((user) => user.username),
+            assignedUserCount: assignedUsers.length,
           })}
           systemPrompt="You are an Elasticsearch authorization analyst. Explain this role's effective privilege scope in one concise sentence and include one least-privilege recommendation."
-          cacheKey={`role-security::${displayedRole.name}::${assignedUsers.length}`}
+          cacheKey={`role-security::${displayedRole.name}::${assignedUsers.length}::${JSON.stringify(displayedRole.role.cluster ?? [])}::${JSON.stringify(displayedRole.role.indices ?? [])}`}
         />
       )}
       <SecurityMasterDetailPage
@@ -135,6 +135,7 @@ export default function RolesPage() {
                 size="small"
                 fullWidth
                 placeholder="Search roles"
+                inputProps={{ "aria-label": "Search roles" }}
                 value={search}
                 onChange={(event) => void setSearch(event.target.value)}
               />
