@@ -18,7 +18,10 @@ export function isSearchResultsMode(spans: Span[]): boolean {
 /** Build initial expanded set by expanding all nodes up to maxDepth */
 function buildInitialExpandedSet(roots: SpanTreeNode[], maxDepth: number): Set<string> {
   const expanded = new Set<string>();
+  const visited = new Set<string>();
   function walk(node: SpanTreeNode): void {
+    if (visited.has(node.span.spanId)) return;
+    visited.add(node.span.spanId);
     if (node.depth < maxDepth && node.children.length > 0) {
       expanded.add(node.span.spanId);
       for (const child of node.children) {
@@ -80,9 +83,10 @@ export function useSpanTree(
   }));
 
   // When the span set changes, reset expansion atomically in a single setState call.
-  // React re-renders immediately when setState is called during rendering (approved pattern).
-  let expandedSet = expansion.expandedSet;
-  let expandedGroups = expansion.expandedGroups;
+  // Calling setState during rendering is the React-approved pattern for derived state resets
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
+  // Note: setState-in-effect is disallowed by the project's ESLint rules.
+  let { expandedSet, expandedGroups } = expansion;
   if (expansion.fingerprint !== spanFingerprint) {
     const reset: ExpansionState = {
       fingerprint: spanFingerprint,
@@ -98,8 +102,11 @@ export function useSpanTree(
 
   const flatRows = useMemo((): SpanTreeRowItem[] => {
     const rows: SpanTreeRowItem[] = [];
+    const visited = new Set<string>();
 
     function emitNode(node: SpanTreeNode): void {
+      if (visited.has(node.span.spanId)) return;
+      visited.add(node.span.spanId);
       const isExpanded = expandedSet.has(node.span.spanId);
       rows.push({
         type: "span",
@@ -188,7 +195,10 @@ export function useSpanTree(
 
   const expandAll = useCallback(() => {
     const all = new Set<string>();
+    const visited = new Set<string>();
     function walk(node: SpanTreeNode): void {
+      if (visited.has(node.span.spanId)) return;
+      visited.add(node.span.spanId);
       if (node.children.length > 0) {
         all.add(node.span.spanId);
         for (const child of node.children) {

@@ -12,7 +12,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { alpha } from "@mui/material/styles";
 
 import type { SpanTreeNode } from "../traceUtils";
-import { formatSpanDuration, isErrorStatus } from "../traceUtils";
+import { formatSpanDuration, formatStatusLabel, isErrorStatus } from "../traceUtils";
 import { getServiceColor } from "../traceColors";
 
 interface SpanTreeRowProps {
@@ -47,6 +47,7 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
 
   return (
     <ButtonBase
+      component="div"
       role="listitem"
       data-spanid={span.spanId}
       onClick={() => onClick(span.spanId)}
@@ -102,7 +103,7 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
           borderRadius: "50%",
           bgcolor: isError
             ? "error.main"
-            : span.status === "Unset"
+            : formatStatusLabel(span.status) === "Unset"
               ? "text.disabled"
               : "success.main",
         }}

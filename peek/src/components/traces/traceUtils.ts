@@ -409,6 +409,7 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
 /** Map a raw span status code to a user-facing display label. */
 export function formatStatusLabel(status: string): string {
   if (status === "OK" || status === "STATUS_CODE_OK") return "Success";
+  if (status === "STATUS_CODE_UNSET") return "Unset";
   return status;
 }
 

@@ -14,14 +14,18 @@ export default function TracingSpanTreePanel(props: PanelProps<TracingSpanTreeOp
   const { spec, queryResults } = props;
 
   const data = queryResults?.[0]?.data;
-  const spans =
-    data && "columns" in data && "values" in data
-      ? parseSpansFromEsql(
-          data.columns as Array<{ name: string; type: string }>,
-          data.values as unknown[][],
-          { ...DEFAULT_FIELD_MAPPING, ...spec.fieldMapping },
-        )
-      : [];
+  const hasTabularData =
+    !!data &&
+    typeof data === "object" &&
+    Array.isArray((data as { columns?: unknown }).columns) &&
+    Array.isArray((data as { values?: unknown }).values);
+  const spans = hasTabularData
+    ? parseSpansFromEsql(
+        (data as { columns: Array<{ name: string; type: string }> }).columns,
+        (data as { values: unknown[][] }).values,
+        { ...DEFAULT_FIELD_MAPPING, ...spec.fieldMapping },
+      )
+    : [];
 
   return <SpanTreeView spans={spans} options={spec} />;
 }

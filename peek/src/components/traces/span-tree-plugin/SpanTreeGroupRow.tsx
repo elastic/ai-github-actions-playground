@@ -42,7 +42,8 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
 
   return (
     <ButtonBase
-      role="listitem"
+      aria-expanded={expanded}
+      aria-label={expanded ? "Collapse grouped spans" : "Expand grouped spans"}
       onClick={() => onToggle(groupKey)}
       sx={{
         display: "flex",
@@ -156,8 +157,9 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
             sx={{
               position: "absolute",
               top: 0,
-              left: timelineOffset != null ? `${timelineOffset * 100}%` : 0,
-              width: `${Math.max(timelineFraction * 100, 0.5)}%`,
+              left:
+                timelineOffset != null ? `${Math.min(Math.max(timelineOffset, 0), 1) * 100}%` : 0,
+              width: `${Math.min(Math.max(timelineFraction * 100, 0.5), 100)}%`,
               height: "100%",
               borderRadius: 0.5,
               bgcolor: alpha(serviceColor, 0.5),
