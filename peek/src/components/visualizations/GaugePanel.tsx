@@ -1,12 +1,12 @@
 import { useMemo, useRef, useEffect } from "react";
-import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
-import type { ECharts } from "echarts/core";
 
+import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, GaugePanelOptions, ThresholdColor, ThresholdStep } from "../../types";
 import { toGaugeData } from "../../services/perses/dataTransformers";
 
 import { useEChartTheme } from "./useEChartTheme";
+import { createPngExporter, type EChartImageExporter } from "./chartExport";
 import { THRESHOLD_PALETTE } from "./thresholdUtils";
 
 interface Props {
@@ -49,11 +49,11 @@ function buildGaugeSegments(
 
 export default function GaugePanel({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartImageExporter | undefined>(undefined);
 
   useEffect(() => {
     if (!onExportReady) return;
-    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    onExportReady(createPngExporter(instanceRef));
     return () => onExportReady(null);
   }, [onExportReady]);
 
