@@ -779,8 +779,9 @@ export default function AddDataPage() {
                   if (cta.id === "additional_source") {
                     setSelectedTechnology(null);
                     setTechnologySearch("");
-                    setActiveCategory("All");
+                    setActiveCategory("all");
                     resetVerification();
+                    lastAutoStartedApiKeyRef.current = null;
                     setWizardStep(1);
                     return;
                   }
