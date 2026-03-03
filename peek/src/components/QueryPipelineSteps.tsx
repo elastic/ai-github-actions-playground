@@ -6,7 +6,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
-import { splitEsqlPipeline } from "./discoverUtils";
+import { splitEsqlPipeline } from "../services/es/queryText";
+
 import { formatDuration } from "./formatDuration";
 
 interface QueryPipelineStepsProps {

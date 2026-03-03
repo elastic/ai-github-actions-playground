@@ -20,11 +20,7 @@ import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
 import InvestigateSuggestionsPanel from "./investigate/InvestigateSuggestionsPanel";
 import InvestigateTimelineTable from "./investigate/InvestigateTimelineTable";
 import { useSuggestions } from "./investigate/useSuggestions";
-import {
-  type InvestigateTab,
-  type TimelineEvent,
-  buildSummaryPrompt,
-} from "./investigate/investigateUtils";
+import type { InvestigateTab, TimelineEvent } from "./investigate/investigateUtils";
 import { buildInvestigateQuery } from "./investigate/investigateQueryBuilder";
 import { parseTimelineEvents } from "./investigate/investigateParser";
 
@@ -34,7 +30,6 @@ export default function InvestigatePage() {
   const [entityInput, setEntityInput] = useState("");
   const [searchedEntity, setSearchedEntity] = useState<string | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
-  const [summaryPrompt, setSummaryPrompt] = useState<string | null>(null);
   const connectionKey = connection ? JSON.stringify(connection) : null;
 
   const { visibleRecentEntities, suggestionsLoading } = useSuggestions(
@@ -43,20 +38,13 @@ export default function InvestigatePage() {
     activeTab,
   );
 
-  const handleSuccess = useCallback(
-    (data: EsqlResponse) => {
-      const parsed = parseTimelineEvents(data);
-      setEvents(parsed);
-      setSummaryPrompt(
-        parsed.length > 0 ? buildSummaryPrompt(parsed, activeTab, entityInput) : null,
-      );
-    },
-    [activeTab, entityInput],
-  );
+  const handleSuccess = useCallback((data: EsqlResponse) => {
+    const parsed = parseTimelineEvents(data);
+    setEvents(parsed);
+  }, []);
 
   const handleFailure = useCallback(() => {
     setEvents([]);
-    setSummaryPrompt(null);
   }, []);
 
   const { runQuery, loading, error } = useEsqlQuery({
@@ -70,7 +58,6 @@ export default function InvestigatePage() {
     if (!trimmed) return;
     setSearchedEntity(trimmed);
     setEvents([]);
-    setSummaryPrompt(null);
     runQuery(buildInvestigateQuery(activeTab, trimmed));
   }, [entityInput, activeTab, runQuery]);
 
@@ -79,7 +66,6 @@ export default function InvestigatePage() {
       setEntityInput(name);
       setSearchedEntity(name);
       setEvents([]);
-      setSummaryPrompt(null);
       runQuery(buildInvestigateQuery(activeTab, name));
     },
     [activeTab, runQuery],
@@ -89,17 +75,7 @@ export default function InvestigatePage() {
     setActiveTab(value);
     setEvents([]);
     setSearchedEntity(null);
-    setSummaryPrompt(null);
   }, []);
-
-  const handleCopySummaryPrompt = useCallback(async () => {
-    if (!summaryPrompt) return;
-    try {
-      await navigator.clipboard?.writeText(summaryPrompt);
-    } catch {
-      /* clipboard may not be available */
-    }
-  }, [summaryPrompt]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
@@ -157,8 +133,6 @@ export default function InvestigatePage() {
               events={events}
               activeTab={activeTab}
               searchedEntity={searchedEntity!}
-              summaryPrompt={summaryPrompt}
-              onCopyPrompt={handleCopySummaryPrompt}
             />
             <InvestigateTimelineTable events={events} activeTab={activeTab} />
           </Box>

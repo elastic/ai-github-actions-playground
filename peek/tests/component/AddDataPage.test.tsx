@@ -149,14 +149,22 @@ describe("AddDataPage", () => {
   });
 
   it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
-    mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] })
-      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
-
     const user = userEvent.setup();
     renderPage();
 
     await goToStep4(user);
+
+    // The mount-time detectTelemetrySignals effect should have already fired.
+    expect(mockGetDataStreams).toHaveBeenCalled();
+
+    // Set up mock AFTER navigation so the mount-time detectTelemetrySignals
+    // call has already resolved with the default (empty) mock.  The next
+    // getDataStreams invocation — triggered by "Check now" — will return
+    // partial data immediately, avoiding a 5 s polling wait.
+    mockGetDataStreams.mockResolvedValueOnce({
+      data_streams: [{ name: "metrics-host.otel-default" }],
+    });
+
     await user.click(screen.getByRole("button", { name: /Check now/i }));
 
     await waitFor(() => {
@@ -210,6 +218,26 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
     expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
+  });
+
+  it("shows OTLP alert when no ingest endpoint can be derived", async () => {
+    // Use a non-cloud URL so no OTLP endpoint can be derived
+    useConnectionStore.getState().setConnection({
+      url: "http://localhost:9200",
+      apiKey: "testkey",
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+
+    // Switch to Managed OTLP
+    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+
+    // The alert should appear even though no endpoint was derived
+    expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
   });
 });
 

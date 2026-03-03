@@ -218,7 +218,7 @@ describe("InvestigatePage", () => {
     await screen.findByText("verification_exception");
   });
 
-  it("shows LLM summary prompt section when events are found", async () => {
+  it("does not show AI insight section when no LLM key is configured", async () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
@@ -233,8 +233,11 @@ describe("InvestigatePage", () => {
     await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
     await user.click(screen.getByRole("button", { name: /search/i }));
 
-    await screen.findByText("LLM Summary");
-    expect(screen.getByRole("button", { name: /copy prompt to clipboard/i })).toBeInTheDocument();
+    await screen.findByText(/2 events found/i);
+    expect(screen.queryByText("LLM Summary")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy prompt to clipboard/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows category and data source breakdowns", async () => {

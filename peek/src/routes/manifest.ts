@@ -458,5 +458,15 @@ export const PAGE_MANIFEST = {
 
 export type PageId = keyof typeof PAGE_MANIFEST;
 
+/** Returns true when we positively know the user lacks a required capability. */
+export function isHiddenByCapability(
+  requiredCapability: keyof UserCapabilities | undefined,
+  capabilities: UserCapabilities | null,
+): boolean {
+  if (!requiredCapability) return false;
+  if (!capabilities) return false; // not yet fetched — keep visible
+  return !capabilities[requiredCapability];
+}
+
 /** Sidebar section display order. Sections not listed here won't appear. */
 export const NAV_SECTION_ORDER: NavGroup[] = ["Data", "Workspace", "Security", "System", "Help"];
