@@ -1,89 +1,24 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Collapse from "@mui/material/Collapse";
 import LinearProgress from "@mui/material/LinearProgress";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
-import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
-import { escapeEsqlString } from "../../services/es/esqlUtils";
-import DateRangePicker from "../DateRangePicker";
-import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
-import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
-import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
-import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
-import type { EsqlResponse } from "../../types";
-import type { ProfilingFilters } from "../../types/pageFilters";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
-import EmptyState from "../EmptyState";
 
-import {
-  buildProfilingEventsQuery,
-  buildProfilingFlamescopeQuery,
-  buildProfilingTimelineQuery,
-  PROFILING_DIMENSION_LABELS,
-  buildStackframeLookupQuery,
-  buildStacktraceLookupQuery,
-  buildTopFunctionsRequest,
-  type ProfilingFocusDimension,
-} from "./profilingQueryBuilder";
-import type {
-  FrameSymbol,
-  ProfilingEvent,
-  StacktraceFrameMap,
-  SymbolizedStacktrace,
-  TopFunctionRow,
-} from "./profilingUtils";
-import {
-  buildFlamegraphTree,
-  joinStacktraces,
-  normalizeTopFunctions,
-  parseFrameIds,
-} from "./profilingUtils";
+import { PROFILING_DIMENSION_LABELS, type ProfilingFocusDimension } from "./profilingQueryBuilder";
 import ProfilingFocusPicker from "./ProfilingFocusPicker";
 import ProfilingFocusHeader from "./ProfilingFocusHeader";
 import ProfilingValuePicker from "./ProfilingValuePicker";
-
-function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
-  const index = columns.findIndex((column) => column.name === field);
-  return index >= 0 ? row[index] : null;
-}
-
-/** Map a focus dimension + value to a partial ProfilingFilters override. */
-function dimensionToFilters(
-  dimension: ProfilingFocusDimension | null,
-  value: string | null,
-): Partial<ProfilingFilters> {
-  if (!dimension || !value) return {};
-  switch (dimension) {
-    case "service.name":
-      return { serviceName: value };
-    case "host.name":
-      return { hostName: value };
-    case "process.executable.name":
-      return { executableName: value };
-    case "process.thread.name":
-      return { threadName: value };
-  }
-}
-
-type ViewMode = "topFunctions" | "stacktraces" | "timeline" | "flamegraph" | "flamescope";
+import ProfilingToolbar from "./ProfilingToolbar";
+import ProfilingResults from "./ProfilingResults";
+import { useProfilingData } from "./useProfilingData";
 
 function isProfilingFocusDimension(value: string | null): value is ProfilingFocusDimension {
   return !!value && value in PROFILING_DIMENSION_LABELS;
@@ -113,167 +48,37 @@ export default function ProfilingGuidedPage() {
   const [timeTo, setTimeTo] = useState(EMPTY_PROFILING_FILTERS.timeTo);
 
   // View mode (flamegraph by default in guided flow)
-  const [viewMode, setViewMode] = useState<ViewMode>("flamegraph");
+  const [viewMode, setViewMode] = useState<
+    "topFunctions" | "stacktraces" | "timeline" | "flamegraph" | "flamescope"
+  >("flamegraph");
 
-  // Result state
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  // Prevents EmptyState from flashing before the first query completes.
-  const hasRunRef = useRef(false);
-  const [topFunctionsRows, setTopFunctionsRows] = useState<TopFunctionRow[]>([]);
-  const [timelineResult, setTimelineResult] = useState<EsqlResponse | null>(null);
-  const [stacktraces, setStacktraces] = useState<SymbolizedStacktrace[]>([]);
-  const [flamescopeWindow, setFlamescopeWindow] = useState<{ from: string; to: string } | null>(
-    null,
-  );
-
-  // Derive the full filters from the guided focus selection
-  const filters = useMemo<ProfilingFilters>(
-    () => ({
-      ...EMPTY_PROFILING_FILTERS,
-      ...dimensionToFilters(dimension, value),
-      timeFrom,
-      timeTo,
-    }),
-    [dimension, value, timeFrom, timeTo],
-  );
-
-  const effectiveQuery = useMemo(() => {
-    if (viewMode === "timeline") return buildProfilingTimelineQuery(filters);
-    if (viewMode === "flamescope") return buildProfilingFlamescopeQuery(filters);
-    return buildProfilingEventsQuery(filters);
-  }, [viewMode, filters]);
-
-  const runTopFunctions = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const response = await client.getTopFunctions(buildTopFunctionsRequest(filters), signal);
-      setTopFunctionsRows(normalizeTopFunctions(response));
-      setTimelineResult(null);
-      setStacktraces([]);
-    },
-    [filters],
-  );
-
-  const runTimeline = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const result = await client.query({ query: effectiveQuery }, signal);
-      setTimelineResult(result);
-      setTopFunctionsRows([]);
-      setStacktraces([]);
-    },
-    [effectiveQuery],
-  );
-
-  const runStacktraces = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const eventsResponse = await client.query({ query: effectiveQuery }, signal);
-      const events: ProfilingEvent[] = eventsResponse.values
-        .map((row) => ({
-          timestamp: String(readColumn(row, eventsResponse.columns, "@timestamp") ?? ""),
-          stacktraceId: String(readColumn(row, eventsResponse.columns, "Stacktrace.id") ?? ""),
-          count: Number(readColumn(row, eventsResponse.columns, "Stacktrace.count") ?? 0),
-          serviceName: String(readColumn(row, eventsResponse.columns, "service.name") ?? ""),
-          hostName: String(readColumn(row, eventsResponse.columns, "host.name") ?? ""),
-        }))
-        .filter((event) => event.stacktraceId.length > 0);
-      const stacktraceIds = [...new Set(events.map((event) => event.stacktraceId))];
-      if (stacktraceIds.length === 0) {
-        setStacktraces([]);
-        setTopFunctionsRows([]);
-        setTimelineResult(null);
-        setFlamescopeWindow(null);
-        return;
-      }
-
-      const stacktraceResponse = await client.query(
-        { query: buildStacktraceLookupQuery(stacktraceIds) },
-        signal,
-      );
-      const stacktraceRows: StacktraceFrameMap[] = stacktraceResponse.values
-        .map((row) => ({
-          id: String(readColumn(row, stacktraceResponse.columns, "_id") ?? ""),
-          frameIds: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.ids") ?? "",
-          ),
-          frameTypes: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.types") ?? "",
-          ),
-        }))
-        .filter((item) => item.id.length > 0);
-
-      const frameIds = [...new Set(stacktraceRows.flatMap((row) => parseFrameIds(row.frameIds)))];
-      const frameResponse = await client.query(
-        { query: buildStackframeLookupQuery(frameIds) },
-        signal,
-      );
-      const frames: FrameSymbol[] = frameResponse.values
-        .map((row) => ({
-          id: String(readColumn(row, frameResponse.columns, "_id") ?? ""),
-          functionName: String(
-            readColumn(row, frameResponse.columns, "Stackframe.function.name") ?? "(unknown)",
-          ),
-          fileName: String(readColumn(row, frameResponse.columns, "Stackframe.file.name") ?? ""),
-          lineNumber: (() => {
-            const v = readColumn(row, frameResponse.columns, "Stackframe.line.number");
-            return v != null ? Number(v) : null;
-          })(),
-          functionOffset: (() => {
-            const v = readColumn(row, frameResponse.columns, "Stackframe.function.offset");
-            return v != null ? Number(v) : null;
-          })(),
-        }))
-        .filter((frame) => frame.id.length > 0);
-
-      setStacktraces(joinStacktraces(events, stacktraceRows, frames));
-      setTopFunctionsRows([]);
-      setTimelineResult(null);
-      setFlamescopeWindow(null);
-    },
-    [effectiveQuery],
-  );
-
-  const handleRun = useCallback(async () => {
-    if (!connection) return;
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const client = new ElasticsearchClient(connection);
-    hasRunRef.current = true;
-    setLoading(true);
-    setError(null);
-    // Clear stale results from a previous view mode so the empty state
-    // doesn't briefly show while the new query is in flight.
-    setTopFunctionsRows([]);
-    setTimelineResult(null);
-    setStacktraces([]);
-    try {
-      if (viewMode === "topFunctions") {
-        await runTopFunctions(client, controller.signal);
-      } else if (viewMode === "timeline") {
-        await runTimeline(client, controller.signal);
-      } else {
-        await runStacktraces(client, controller.signal);
-      }
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      setError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, [connection, runTopFunctions, runTimeline, runStacktraces, viewMode]);
-
-  // Auto-run whenever we are in the results view and dependencies change
   // Track "ready to show results": dimension has been chosen (null = "Everything") and if
   // dimension is non-null, a value must also be set.
   const showResults = (isEverything || dimension !== null) && (isEverything || urlValue !== null);
 
-  useEffect(() => {
-    if (!showResults || !connection) return;
-    void handleRun();
-    return () => abortRef.current?.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showResults, viewMode, filters, connection]);
+  const {
+    loading,
+    error,
+    topFunctionsRows,
+    timelineResult,
+    stacktraces,
+    setFlamescopeWindow,
+    flamegraphTree,
+    handleOpenInQueryLab,
+    handleFrameClick,
+    hasRun,
+    resetResults,
+  } = useProfilingData({
+    connection,
+    viewMode,
+    dimension,
+    value,
+    timeFrom,
+    timeTo,
+    showResults,
+    navigate,
+    setDiscoverQueryDraft,
+  });
 
   const handleSelectDimension = useCallback(
     async (dim: ProfilingFocusDimension | null) => {
@@ -295,36 +100,9 @@ export default function ProfilingGuidedPage() {
   );
 
   const handleChangeFocus = useCallback(async () => {
-    abortRef.current?.abort();
-    hasRunRef.current = false;
+    resetResults();
     await Promise.all([setUrlDimension(null), setUrlValue(null)]);
-    setTopFunctionsRows([]);
-    setStacktraces([]);
-    setTimelineResult(null);
-    setError(null);
-  }, [setUrlDimension, setUrlValue]);
-
-  const handleOpenInQueryLab = useCallback(() => {
-    if (viewMode === "topFunctions") return;
-    const draft =
-      viewMode === "flamescope" && flamescopeWindow
-        ? `${effectiveQuery}\n| WHERE @timestamp >= "${escapeEsqlString(flamescopeWindow.from)}" AND @timestamp < "${escapeEsqlString(flamescopeWindow.to)}"`
-        : effectiveQuery;
-    setDiscoverQueryDraft(draft);
-    navigate(PAGE_MANIFEST.discover.path);
-  }, [effectiveQuery, flamescopeWindow, navigate, setDiscoverQueryDraft, viewMode]);
-
-  const handleFrameClick = useCallback(
-    (frameName: string) => {
-      if (frameName === "(unknown)") return;
-      const draft = `${effectiveQuery}\n| WHERE Stackframe.function.name == "${escapeEsqlString(frameName)}"`;
-      setDiscoverQueryDraft(draft);
-      navigate(PAGE_MANIFEST.discover.path);
-    },
-    [effectiveQuery, navigate, setDiscoverQueryDraft],
-  );
-
-  const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
+  }, [resetResults, setUrlDimension, setUrlValue]);
 
   const displayDimension = isEverything ? null : dimension;
 
@@ -356,169 +134,37 @@ export default function ProfilingGuidedPage() {
         onChangeFocus={() => void handleChangeFocus()}
       />
 
-      {/* Toolbar: time range + view mode chips + advanced link */}
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
-          <DateRangePicker
-            value={toDashboardTimeRange({ from: timeFrom, to: timeTo })}
-            onChange={(range) => {
-              const traceRange = toTraceTimeRange(range);
-              setTimeFrom(traceRange.from);
-              setTimeTo(traceRange.to);
-            }}
-          />
-          <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
-            {viewMode !== "topFunctions" && (
-              <Button
-                size="small"
-                variant="text"
-                endIcon={<OpenInNewIcon fontSize="small" />}
-                onClick={handleOpenInQueryLab}
-              >
-                Open in Query Lab
-              </Button>
-            )}
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(PAGE_MANIFEST.profilingAdvanced.path)}
-            >
-              Advanced view
-            </Button>
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-          {(["flamegraph", "topFunctions", "timeline", "flamescope", "stacktraces"] as const).map(
-            (mode) => (
-              <Chip
-                key={mode}
-                label={
-                  mode === "topFunctions"
-                    ? "Top Functions"
-                    : mode === "stacktraces"
-                      ? "Stacktraces"
-                      : mode === "timeline"
-                        ? "Timeline"
-                        : mode === "flamegraph"
-                          ? "Flamegraph"
-                          : "Flamescope"
-                }
-                size="small"
-                variant={viewMode === mode ? "filled" : "outlined"}
-                color={viewMode === mode ? "primary" : "default"}
-                onClick={() => setViewMode(mode)}
-                sx={{ cursor: "pointer" }}
-              />
-            ),
-          )}
-        </Box>
-      </Paper>
+      <ProfilingToolbar
+        timeFrom={timeFrom}
+        timeTo={timeTo}
+        onTimeChange={(from, to) => {
+          setTimeFrom(from);
+          setTimeTo(to);
+        }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        showOpenInQueryLab={viewMode !== "topFunctions"}
+        onOpenInQueryLab={handleOpenInQueryLab}
+        onAdvancedView={() => navigate(PAGE_MANIFEST.profilingAdvanced.path)}
+      />
 
       {loading && <LinearProgress />}
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-          {hasRunRef.current &&
-            topFunctionsRows.length === 0 &&
-            stacktraces.length === 0 &&
-            !timelineResult && (
-              <EmptyState
-                heading="No profiling data found"
-                description="No samples matched the selected focus and time range."
-                size="small"
-              />
-            )}
-          {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Function</TableCell>
-                  <TableCell align="right">Self count</TableCell>
-                  <TableCell align="right">Total count</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {topFunctionsRows.map((row, index) => (
-                  <TableRow key={`${row.functionName}-${index}`}>
-                    <TableCell>{row.functionName}</TableCell>
-                    <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
-                    <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {viewMode === "timeline" && timelineResult && (
-            <Box sx={{ height: 360 }}>
-              <TimeSeriesChart data={timelineResult} options={{ smooth: true, showArea: false }} />
-            </Box>
-          )}
-          {viewMode === "stacktraces" && stacktraces.length > 0 && (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Stacktrace ID</TableCell>
-                  <TableCell align="right">Count</TableCell>
-                  <TableCell>Service</TableCell>
-                  <TableCell>Host</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {stacktraces.map((stacktrace) => (
-                  <Fragment key={stacktrace.stacktraceId}>
-                    <TableRow
-                      hover
-                      onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
-                        {stacktrace.stacktraceId}
-                      </TableCell>
-                      <TableCell align="right">{stacktrace.count}</TableCell>
-                      <TableCell>{stacktrace.serviceName || "—"}</TableCell>
-                      <TableCell>{stacktrace.hostName || "—"}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={4} sx={{ py: 0 }}>
-                        <Collapse in={expandedStacktraceIds.has(stacktrace.stacktraceId)}>
-                          <Box sx={{ p: 1 }}>
-                            {stacktrace.frames.map((frame) => (
-                              <Typography
-                                key={`${stacktrace.stacktraceId}-${frame.frameId}`}
-                                variant="caption"
-                                sx={{ display: "block", fontFamily: "monospace" }}
-                              >
-                                {frame.functionName}{" "}
-                                {frame.fileName
-                                  ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
-                                  : ""}
-                              </Typography>
-                            ))}
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {viewMode === "flamegraph" && stacktraces.length > 0 && (
-            <Box sx={{ height: 480 }}>
-              <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
-            </Box>
-          )}
-          {viewMode === "flamescope" && stacktraces.length > 0 && (
-            <ProfilingFlamescope
-              stacktraces={stacktraces}
-              onWindowChange={setFlamescopeWindow}
-              onFrameClick={handleFrameClick}
-            />
-          )}
-        </Paper>
-      )}
+      <ProfilingResults
+        loading={loading}
+        hasRun={hasRun}
+        viewMode={viewMode}
+        topFunctionsRows={topFunctionsRows}
+        timelineResult={timelineResult}
+        stacktraces={stacktraces}
+        flamegraphTree={flamegraphTree}
+        onFlamescopeWindowChange={setFlamescopeWindow}
+        handleFrameClick={handleFrameClick}
+        expandedStacktraceIds={expandedStacktraceIds}
+        toggleExpandedStacktraceId={toggleExpandedStacktraceId}
+      />
     </Box>
   );
 }
