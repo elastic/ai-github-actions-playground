@@ -92,17 +92,17 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
   const TAB_SYSTEM_PROMPTS: Record<ClusterHealthView, string> = useMemo(
     () => ({
       overview:
-        "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks.",
+        "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks. If needed data is unavailable in context, explicitly say it is unavailable.",
       nodes:
-        "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag any nodes with high resource usage or unusual roles.",
+        "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag unusual node roles only when present in context. If needed data is unavailable in context, explicitly say it is unavailable.",
       taskBacklog:
-        "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns.",
+        "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns. If needed data is unavailable in context, explicitly say it is unavailable.",
       capacityPressure:
-        "You are an Elasticsearch capacity analyst. Identify nodes under capacity pressure and summarize disk, memory, or CPU concerns.",
+        "You are an Elasticsearch capacity analyst. Summarize capacity pressure indicators from the provided context only. If needed data is unavailable in context, explicitly say it is unavailable.",
       shardDistribution:
-        "You are an Elasticsearch shard analyst. Identify any indices with skewed shard distribution or shards concentrated on a single node.",
+        "You are an Elasticsearch shard analyst. Summarize shard-distribution concerns from the provided context only. If needed data is unavailable in context, explicitly say it is unavailable.",
       resilienceSignals:
-        "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals and any single points of failure.",
+        "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals from the provided context only. If needed data is unavailable in context, explicitly say it is unavailable.",
     }),
     [],
   );
@@ -118,7 +118,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     });
   }, [data, activeTab]);
 
-  const insightCacheKey = `cluster-health::${activeTab}::${data?.clusterHealth?.status ?? ""}`;
+  const insightCacheKey = `cluster-health::${activeTab}::${data?.clusterHealth?.status ?? ""}::${data?.clusterHealth?.unassigned_shards ?? 0}::${data?.pendingTasks?.tasks?.length ?? 0}::${data?.clusterHealth?.number_of_nodes ?? 0}`;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>

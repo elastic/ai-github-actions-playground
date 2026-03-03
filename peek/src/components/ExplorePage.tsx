@@ -302,7 +302,7 @@ export default function ExplorePage() {
             sampleValues: chartData.values.slice(0, 10),
           })}
           systemPrompt="You are a metrics anomaly detector for Elasticsearch. Analyze the current chart data and flag if latest values are significantly different from the mean (e.g. CPU > 90%, disk > 80%). Keep the response to one concise sentence."
-          cacheKey={`explore::${selectedMetric}::${aggregation}::${chartData.values.length}`}
+          cacheKey={`explore::${selectedMetric}::${aggregation}::${groupBy ?? ""}::${filters.length}::${JSON.stringify(chartData.values.slice(0, 10))}`}
         />
       )}
 

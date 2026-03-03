@@ -103,7 +103,7 @@ export default function FleetPage() {
     });
   }, [agentInventoryTotal, agentInventoryTotalErrorCount, agentVersions]);
 
-  const insightCacheKey = `fleet::${agentInventoryTotal ?? ""}::${agentInventoryTotalErrorCount ?? ""}`;
+  const insightCacheKey = `fleet::${agentInventoryTotal ?? ""}::${agentInventoryTotalErrorCount ?? ""}::${JSON.stringify(agentVersions)}`;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
