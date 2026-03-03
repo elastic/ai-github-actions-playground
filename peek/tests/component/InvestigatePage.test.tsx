@@ -27,6 +27,14 @@ vi.mock("../../src/services/perses/esqlDatasource", () => ({
   }),
 }));
 
+vi.mock("ai", () => ({
+  generateObject: vi.fn().mockResolvedValue({ object: { markers: [] } }),
+}));
+
+vi.mock("@ai-sdk/openai", () => ({
+  createOpenAI: vi.fn(() => vi.fn(() => ({ id: "test-model" }))),
+}));
+
 const ESQL_RESPONSE = {
   columns: [
     { name: "@timestamp", type: "date" },
@@ -337,5 +345,24 @@ describe("InvestigatePage", () => {
     expect(progressBar).toBeInTheDocument();
     expect(progressBar).toHaveClass("MuiCircularProgress-root");
     expect(searchButton).toHaveTextContent(/search/i);
+  });
+
+  it("shows event timeline when search results are displayed", async () => {
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <InvestigatePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
+    await user.click(screen.getByRole("button", { name: /search/i }));
+
+    await screen.findByText(/2 events found/i);
+    expect(screen.getByText("Event timeline")).toBeInTheDocument();
   });
 });
