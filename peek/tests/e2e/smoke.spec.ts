@@ -299,7 +299,7 @@ test.describe("smoke – site navigation", () => {
   }) => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Traces");
-    await page.getByRole("button", { name: "Search Traces" }).click();
+    await page.getByRole("button", { name: "Search Traces" }).first().click();
     await expect(page.getByText("1 traces found")).toBeVisible();
     await page.getByText("GET /checkout").click();
     await expect(page.getByText("2 spans")).toBeVisible();
