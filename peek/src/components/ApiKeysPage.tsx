@@ -86,23 +86,20 @@ export default function ApiKeysPage() {
     });
   }, [keys, effectiveKeyId, setPageSection]);
 
-  const insightStats = useMemo(() => {
-    if (keys.length === 0) return null;
+  const insightContext = useMemo(() => {
+    if (keys.length === 0) return "";
     const noExpiration = keys.filter((k) => k.expiration == null).length;
     const highRisk = keys.filter(
       (k) => riskLevel(k) === "warning" || riskLevel(k) === "error",
     ).length;
-    const oldKeys = keys.filter((k) => riskLevel(k) === "warning").length;
-    return {
+    return JSON.stringify({
       totalKeys: keys.length,
       keysWithoutExpiration: noExpiration,
       highRiskKeys: highRisk,
-      oldKeys,
-    };
+    });
   }, [keys]);
 
-  const insightContext = insightStats ? JSON.stringify(insightStats) : "";
-  const insightCacheKey = `api-keys::${insightContext}`;
+  const insightCacheKey = `api-keys::${keys.length}`;
 
   const copyQuery = useCallback(async () => {
     const copied = await copyToClipboard("GET /_security/api_key");
@@ -132,7 +129,7 @@ export default function ApiKeysPage() {
           {insightContext && (
             <PageInsightBanner
               context={insightContext}
-              systemPrompt="You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, keys without expiration, and keys older than policy threshold that should be rotated."
+              systemPrompt="You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, how many lack expiration (security risk), and any keys that are old and should be rotated."
               cacheKey={insightCacheKey}
               severity="warning"
             />

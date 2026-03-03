@@ -1,6 +1,11 @@
 import type { ProfilingTopFunctionsRequest } from "../../services/es/client";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
-import { buildWherePipe } from "../../services/es/queryParts";
+import {
+  buildPipeline,
+  buildValueList,
+  buildWherePipe,
+  normalizeTimeExpression,
+} from "../../services/es/queryParts";
 
 export interface ProfilingFilters {
   executableName: string | null;
@@ -22,15 +27,8 @@ export const EMPTY_FILTERS: ProfilingFilters = {
   limit: 100,
 };
 
-function quoteList(values: string[]): string {
-  return values.map((value) => `"${escapeEsqlString(value)}"`).join(", ");
-}
-
 function normalizeEsqlDateTimeExpression(expr: string): string {
-  const trimmed = expr.trim();
-  const parsed = Date.parse(trimmed);
-  if (Number.isNaN(parsed)) return expr;
-  return `"${escapeEsqlString(new Date(parsed).toISOString())}"`;
+  return normalizeTimeExpression(expr) ?? expr;
 }
 
 function buildProfilingWhereClause(filters: ProfilingFilters): string[] {
@@ -54,22 +52,22 @@ function buildProfilingWhereClause(filters: ProfilingFilters): string[] {
 
 export function buildProfilingEventsQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
-  return [
+  return buildPipeline([
     "FROM profiling-events-all",
     buildWherePipe(where),
     `LIMIT ${Math.max(1, Math.min(1000, filters.limit))}`,
-  ].join(" | ");
+  ]);
 }
 
 export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
-  return [
+  return buildPipeline([
     "FROM profiling-events-all",
     buildWherePipe(where),
     "KEEP @timestamp, Stacktrace.id, Stacktrace.count, service.name, host.name",
     "SORT @timestamp ASC",
     `LIMIT ${Math.max(1, Math.min(5000, filters.limit * 20))}`,
-  ].join(" | ");
+  ]);
 }
 
 function buildLookupQuery(index: string, ids: string[]): string {
@@ -77,7 +75,7 @@ function buildLookupQuery(index: string, ids: string[]): string {
     // Empty IDs should never return documents.
     return `FROM ${index} METADATA _id | WHERE 1 == 0`;
   }
-  return `FROM ${index} METADATA _id | WHERE _id IN (${quoteList(ids)})`;
+  return `FROM ${index} METADATA _id | WHERE _id IN (${buildValueList(ids)})`;
 }
 
 export function buildStacktraceLookupQuery(ids: string[]): string {
@@ -92,12 +90,12 @@ export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {
   const where = buildProfilingWhereClause(filters);
   const timeFrom = normalizeEsqlDateTimeExpression(filters.timeFrom);
   const timeTo = normalizeEsqlDateTimeExpression(filters.timeTo);
-  return [
+  return buildPipeline([
     "FROM profiling-events-all",
     buildWherePipe(where),
     `STATS count = SUM(Stacktrace.count) BY bucket = BUCKET(@timestamp, 50, ${timeFrom}, ${timeTo})`,
     "SORT bucket",
-  ].join(" | ");
+  ]);
 }
 
 function normalizeRangeTimestamp(expr: string): string {

@@ -39,88 +39,21 @@ import type {
   Platform,
   TelemetrySignal,
 } from "../utils/addDataUtils";
+import {
+  ADD_DATA_CATEGORY_LABELS,
+  ADD_DATA_TECHNOLOGY_CATALOG,
+  type AddDataTechnologyCatalogEntry,
+  type AddDataTechnologyCategory,
+} from "../services/addData/catalog";
 
 import AskAiButton from "./AskAiButton";
 import PageHeader from "./PageHeader";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
-type TechnologyCategory =
-  | "Cloud"
-  | "Containers"
-  | "Databases"
-  | "Applications"
-  | "Operating Systems"
-  | "Network";
-
-interface TechnologyOption {
-  id: string;
-  name: string;
-  category: TechnologyCategory;
-  summary: string;
-  expectedSignals: TelemetrySignal[];
-  defaultPlatform: Platform;
-}
-
-const TECHNOLOGY_OPTIONS: TechnologyOption[] = [
-  {
-    id: "kubernetes",
-    name: "Kubernetes",
-    category: "Containers",
-    summary: "Collect cluster, node, and workload telemetry.",
-    expectedSignals: ["metrics", "logs", "traces"],
-    defaultPlatform: "kubernetes",
-  },
-  {
-    id: "docker",
-    name: "Docker",
-    category: "Containers",
-    summary: "Collect container and host telemetry with Docker Compose.",
-    expectedSignals: ["metrics", "logs"],
-    defaultPlatform: "docker",
-  },
-  {
-    id: "linux-host",
-    name: "Linux Host",
-    category: "Operating Systems",
-    summary: "Install EDOT Collector on Linux hosts/VMs.",
-    expectedSignals: ["metrics", "logs"],
-    defaultPlatform: "linux",
-  },
-  {
-    id: "windows-host",
-    name: "Windows Host",
-    category: "Operating Systems",
-    summary: "Install EDOT Collector on Windows hosts/VMs.",
-    expectedSignals: ["metrics", "logs"],
-    defaultPlatform: "windows",
-  },
-  {
-    id: "postgresql",
-    name: "PostgreSQL",
-    category: "Databases",
-    summary: "Capture query performance and resource telemetry.",
-    expectedSignals: ["metrics", "logs"],
-    defaultPlatform: "linux",
-  },
-  {
-    id: "nginx",
-    name: "Nginx",
-    category: "Applications",
-    summary: "Capture request logs and latency metrics.",
-    expectedSignals: ["logs", "metrics"],
-    defaultPlatform: "linux",
-  },
-];
-
-const RECOMMENDED_TECHNOLOGY_IDS = ["kubernetes", "docker", "linux-host"];
-const CATEGORIES: Array<"All" | TechnologyCategory> = [
-  "All",
-  "Cloud",
-  "Containers",
-  "Databases",
-  "Applications",
-  "Operating Systems",
-  "Network",
+type TechnologyCategoryFilter = "all" | AddDataTechnologyCategory;
+const CATEGORIES: readonly TechnologyCategoryFilter[] = [
+  "all",
+  ...(Object.keys(ADD_DATA_CATEGORY_LABELS) as AddDataTechnologyCategory[]),
 ];
 
 const STEP_TITLES: Record<WizardStep, string> = {
@@ -137,9 +70,10 @@ export default function AddDataPage() {
   const capabilities = useConnectionStore((s) => s.capabilities);
 
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
-  const [selectedTechnology, setSelectedTechnology] = useState<TechnologyOption | null>(null);
+  const [selectedTechnology, setSelectedTechnology] =
+    useState<AddDataTechnologyCatalogEntry | null>(null);
   const [technologySearch, setTechnologySearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState<"All" | TechnologyCategory>("All");
+  const [activeCategory, setActiveCategory] = useState<TechnologyCategoryFilter>("all");
 
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
@@ -285,7 +219,7 @@ export default function AddDataPage() {
     }
   }, [connection, apiKeyValue, verifyStatus, startPolling]);
 
-  const selectedSignals = selectedTechnology?.expectedSignals ?? [];
+  const selectedSignals = (selectedTechnology?.expectedSignals ?? []) as readonly TelemetrySignal[];
   const signalExpectation =
     selectedSignals.length > 1
       ? `${selectedSignals.slice(0, -1).join(", ")} and ${selectedSignals[selectedSignals.length - 1]}`
@@ -295,17 +229,17 @@ export default function AddDataPage() {
   const foundExpectedSignals = selectedSignals.filter((signal) => foundSignals.has(signal));
 
   const recommendedTechnologies = useMemo(
-    () => TECHNOLOGY_OPTIONS.filter((tech) => RECOMMENDED_TECHNOLOGY_IDS.includes(tech.id)),
+    () => ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.recommended),
     [],
   );
 
   const filteredTechnologies = useMemo(() => {
     const query = technologySearch.trim().toLowerCase();
-    return TECHNOLOGY_OPTIONS.filter((tech) => {
-      const categoryMatches = activeCategory === "All" || tech.category === activeCategory;
+    return ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => {
+      const categoryMatches = activeCategory === "all" || tech.category === activeCategory;
       const queryMatches =
         query.length === 0 ||
-        tech.name.toLowerCase().includes(query) ||
+        tech.technology.toLowerCase().includes(query) ||
         tech.summary.toLowerCase().includes(query);
       return categoryMatches && queryMatches;
     });
@@ -314,7 +248,7 @@ export default function AddDataPage() {
   const outcomeSignals: TelemetrySignal[] =
     foundSignals.size > 0
       ? (Array.from(foundSignals).sort() as TelemetrySignal[])
-      : selectedSignals;
+      : Array.from(selectedSignals);
   const outcomeSignalsKey = outcomeSignals.join(",");
 
   const outcomeCtas = useMemo(() => {
@@ -400,14 +334,14 @@ export default function AddDataPage() {
             value={activeCategory}
             exclusive
             size="small"
-            onChange={(_, value: "All" | TechnologyCategory | null) => {
+            onChange={(_, value: TechnologyCategoryFilter | null) => {
               if (value) setActiveCategory(value);
             }}
             aria-label="Technology category"
           >
             {CATEGORIES.map((category) => (
               <ToggleButton key={category} value={category}>
-                {category}
+                {category === "all" ? "All" : ADD_DATA_CATEGORY_LABELS[category]}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
@@ -427,7 +361,7 @@ export default function AddDataPage() {
                     setPlatform(tech.defaultPlatform);
                   }}
                 >
-                  {tech.name}
+                  {tech.technology}
                 </Button>
               ))}
             </Stack>
@@ -444,10 +378,10 @@ export default function AddDataPage() {
                 >
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {tech.name}
+                      {tech.technology}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {tech.category} • {tech.summary}
+                      {ADD_DATA_CATEGORY_LABELS[tech.category]} • {tech.summary}
                     </Typography>
                   </Box>
                   <Button
@@ -485,7 +419,7 @@ export default function AddDataPage() {
           <Typography variant="h6">Step 2: Select your environment</Typography>
           <Typography variant="body2" color="text.secondary">
             {selectedTechnology
-              ? `${selectedTechnology.name} can emit ${signalExpectation}.`
+              ? `${selectedTechnology.technology} can emit ${signalExpectation}.`
               : "Choose endpoint and platform options for your deployment."}
           </Typography>
 
@@ -555,7 +489,7 @@ export default function AddDataPage() {
           <Typography variant="h6">Step 3: Install and configure</Typography>
           <Typography variant="body2" color="text.secondary">
             Use the generated {activeGuide.label} quickstart commands for{" "}
-            {selectedTechnology?.name ?? "your source"}.
+            {selectedTechnology?.technology ?? "your source"}.
           </Typography>
 
           <Box role="tabpanel">
@@ -714,7 +648,7 @@ export default function AddDataPage() {
         <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5 }}>
           <Typography variant="h6">Step 4: Validate data receipt</Typography>
           <Typography variant="body2" color="text.secondary">
-            For {selectedTechnology?.name ?? "this integration"}, we expect to receive{" "}
+            For {selectedTechnology?.technology ?? "this integration"}, we expect to receive{" "}
             {signalExpectation}.
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -789,7 +723,7 @@ export default function AddDataPage() {
                   <Typography variant="body2">
                     We found {foundExpectedSignals.join(", ") || "telemetry"}, but still missing{" "}
                     {expectedButMissingSignals.join(", ")} for{" "}
-                    {selectedTechnology?.name ?? "this source"}.
+                    {selectedTechnology?.technology ?? "this source"}.
                   </Typography>
                 </Box>
               )}
@@ -814,7 +748,7 @@ export default function AddDataPage() {
         >
           <Typography variant="h6">Step 5: Explore your data + next steps</Typography>
           <Typography variant="body2" color="text.secondary">
-            {selectedTechnology?.name ?? "Your source"} is configured. Choose a next action to
+            {selectedTechnology?.technology ?? "Your source"} is configured. Choose a next action to
             explore dashboards, set up alerting, or onboard another source.
           </Typography>
           {outcomeSignals.length > 0 && (

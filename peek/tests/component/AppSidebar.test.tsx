@@ -39,6 +39,7 @@ describe("AppSidebar", () => {
   it("renders all section headings", () => {
     renderSidebar();
 
+    expect(screen.getByText("Data")).toBeInTheDocument();
     expect(screen.getByText("Workspace")).toBeInTheDocument();
     expect(screen.getByText("System")).toBeInTheDocument();
     expect(screen.getByText("Help")).toBeInTheDocument();
@@ -102,11 +103,11 @@ describe("AppSidebar", () => {
       "aria-disabled",
       "true",
     );
-    expect(screen.getByRole("button", { name: /cluster overview/i })).not.toHaveAttribute(
+    expect(screen.getByRole("button", { name: /^overview$/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
     );
-    expect(screen.getByRole("button", { name: /cluster health/i })).not.toHaveAttribute(
+    expect(screen.getByRole("button", { name: /^health$/i })).not.toHaveAttribute(
       "aria-disabled",
       "true",
     );
@@ -166,7 +167,7 @@ describe("AppSidebar", () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.click(screen.getByRole("button", { name: /cluster overview/i }));
+    await user.click(screen.getByRole("button", { name: /^overview$/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-overview");
   });
@@ -176,7 +177,7 @@ describe("AppSidebar", () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.click(screen.getByRole("button", { name: /cluster health/i }));
+    await user.click(screen.getByRole("button", { name: /^health$/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
   });
@@ -185,10 +186,10 @@ describe("AppSidebar", () => {
     useConnectionStore.getState().setConnected(true);
     renderSidebar();
 
-    expect(screen.queryByRole("button", { name: /cluster tasks/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /cluster capacity/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /cluster shards/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /cluster resilience/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^tasks$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^capacity$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^shards$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^resilience$/i })).not.toBeInTheDocument();
   });
 
   it("navigates to Fleet when clicked while connected", async () => {
@@ -250,6 +251,7 @@ describe("AppSidebar", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.queryByText("Data")).not.toBeInTheDocument();
     expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
     expect(screen.queryByText("System")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /dashboards/i })).toBeInTheDocument();
