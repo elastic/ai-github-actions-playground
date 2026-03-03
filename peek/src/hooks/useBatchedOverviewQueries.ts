@@ -170,7 +170,9 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
   }, [allSettled]);
 
   const queriesRef = useRef(queries);
-  queriesRef.current = queries;
+  useEffect(() => {
+    queriesRef.current = queries;
+  });
 
   const retryFailed = useCallback(() => {
     const currentQueries = queriesRef.current;

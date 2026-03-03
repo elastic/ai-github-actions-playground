@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 
 import { isElasticsearchError } from "../services/es";
@@ -53,13 +53,13 @@ export function useEsqlQuery({
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const onSuccessRef = useRef(onSuccess);
-  useLayoutEffect(() => {
+  useEffect(() => {
     onSuccessRef.current = onSuccess;
-  });
+  }, [onSuccess]);
   const onFailureRef = useRef(onFailure);
-  useLayoutEffect(() => {
+  useEffect(() => {
     onFailureRef.current = onFailure;
-  });
+  }, [onFailure]);
   const clearError = useCallback(() => setError(null), []);
   const clearTimings = useCallback(() => {
     setStepDurationsMs({});
