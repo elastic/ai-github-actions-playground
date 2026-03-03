@@ -121,7 +121,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
             { role: "user" as const, content: trimmed },
           ],
           tools,
-          ...(stopWhen ? { stopWhen } : {}),
+          stopWhen,
           abortSignal: controller.signal,
         });
 
