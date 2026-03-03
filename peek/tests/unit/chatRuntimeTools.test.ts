@@ -352,6 +352,19 @@ describe("buildChatRuntime — ES-dependent tools", () => {
     expect(rawRequestSpy).not.toHaveBeenCalled();
   });
 
+  it("run_raw_es_request only allows GET methods", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const rawTool = tools.run_raw_es_request as {
+      inputSchema: { parse: (v: unknown) => unknown };
+    };
+    expect(() => rawTool.inputSchema.parse({ method: "POST", path: "/_search" })).toThrow();
+    expect(() => rawTool.inputSchema.parse({ method: "DELETE", path: "/_index" })).toThrow();
+  });
+
   it("explain_ingest_pipeline trims name and rejects whitespace-only values", async () => {
     const getPipelinesSpy = vi
       .spyOn(ElasticsearchClient.prototype, "getIngestPipelines")

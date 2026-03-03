@@ -30,7 +30,7 @@ Chat has the following built-in tools available by default whenever an Elasticse
 
 **get_index_info** — Get details about a specific index including its mappings, settings, stats, and health.
 
-**run_raw_es_request** — Execute an arbitrary Elasticsearch REST API request (GET, POST, PUT, or DELETE). Use this for APIs not covered by other tools. Response payloads are bounded to prevent excessive token usage.
+**run_raw_es_request** — Execute a read-only Elasticsearch REST API request (GET only). Use this for read APIs not covered by other tools. Response payloads are bounded to prevent excessive token usage.
 
 **explain_ingest_pipeline** — Get the definition of a named ingest pipeline and optionally simulate it with a sample document.
 

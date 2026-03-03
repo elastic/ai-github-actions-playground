@@ -22,7 +22,7 @@ const MAX_TOOL_ROWS_RETURNED = 50;
 const MAX_TOOL_COLUMNS_RETURNED = 20;
 const MAX_TOOL_CELL_LENGTH = 500;
 const MAX_RAW_RESPONSE_LENGTH = 50_000;
-const ALLOWED_RAW_METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
+const ALLOWED_RAW_METHODS = ["GET"] as const;
 
 interface ChatRuntimeArgs {
   config: LLMConfig;
@@ -211,7 +211,7 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
 
     run_raw_es_request: tool({
       description:
-        "Execute an arbitrary Elasticsearch REST API request. Use for APIs not covered by other tools.",
+        "Execute a read-only Elasticsearch REST API request (GET only). Use for read APIs not covered by other tools.",
       inputSchema: z.object({
         method: z.enum(ALLOWED_RAW_METHODS),
         path: z.string().min(1).describe("REST API path (e.g. '/_cat/nodes?v')."),
