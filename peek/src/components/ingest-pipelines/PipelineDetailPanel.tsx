@@ -40,7 +40,7 @@ export default function PipelineDetailPanel({
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
   const [verbose, setVerbose] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [expandedProcessors, setExpandedProcessors] = useState<Set<number>>(new Set());
+  const [expandedProcessors, setExpandedProcessors] = useState<Set<string>>(new Set());
 
   const {
     simulating,
@@ -156,7 +156,8 @@ export default function PipelineDetailPanel({
               {(selectedPipeline.pipeline.processors ?? []).map((processor, index) => {
                 const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
                 const configJson = JSON.stringify(config, null, 2);
-                const isExpanded = expandedProcessors.has(index);
+                const processorKey = `${selectedPipeline.name}:${index}`;
+                const isExpanded = expandedProcessors.has(processorKey);
                 return (
                   <Box
                     key={index}
@@ -188,8 +189,8 @@ export default function PipelineDetailPanel({
                         onClick={() =>
                           setExpandedProcessors((prev) => {
                             const next = new Set(prev);
-                            if (next.has(index)) next.delete(index);
-                            else next.add(index);
+                            if (next.has(processorKey)) next.delete(processorKey);
+                            else next.add(processorKey);
                             return next;
                           })
                         }

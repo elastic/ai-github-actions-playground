@@ -104,6 +104,7 @@ describe("IngestPipelinesPage", () => {
     // The "set" processor type should appear as a legend
     expect(processorsList).toHaveTextContent("set");
     // The processor config is collapsed by default — expand it
+    expect(processorsList).not.toHaveTextContent("production");
     await userEvent.click(screen.getByRole("button", { name: /show config/i }));
     // The processor config should now be visible
     expect(processorsList).toHaveTextContent("production");
