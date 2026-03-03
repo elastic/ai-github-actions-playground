@@ -1,6 +1,6 @@
 # Tips & Shortcuts
 
-Press Ctrl/Cmd+K to open the command palette. Quickly jump between pages, open settings, toggle themes, and load recent queries — all without leaving the keyboard.
+Press Ctrl/Cmd+K to open the command palette. Quickly jump between pages, open settings, toggle themes, and load recent queries — all without leaving the keyboard. On narrow or mobile layouts, tap the search icon in the header to open the same palette.
 
 Press Ctrl/Cmd+Shift+A to toggle the AI Assistant drawer open or closed from any page.
 
