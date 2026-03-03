@@ -29,26 +29,26 @@ describe("createSplitSecretStorage", () => {
     sessionStorage.clear();
   });
 
-  it("getItem returns null when localStorage has no entry", () => {
+  it("getItem returns null when localStorage has no entry", async () => {
     const storage = makeTestStorage();
-    expect(storage.getItem("my-store")).toBeNull();
+    expect(await storage.getItem("my-store")).toBeNull();
   });
 
-  it("getItem returns null and recovers gracefully on malformed JSON", () => {
+  it("getItem returns null and recovers gracefully on malformed JSON", async () => {
     localStorage.setItem("my-store", "not-valid-json");
     const storage = makeTestStorage();
-    expect(storage.getItem("my-store")).toBeNull();
+    expect(await storage.getItem("my-store")).toBeNull();
   });
 
-  it("getItem returns null when stored value has no state", () => {
+  it("getItem returns null when stored value has no state", async () => {
     localStorage.setItem("my-store", JSON.stringify({ version: 1 }));
     const storage = makeTestStorage();
-    expect(storage.getItem("my-store")).toBeNull();
+    expect(await storage.getItem("my-store")).toBeNull();
   });
 
-  it("setItem writes stripped state to localStorage and secrets to sessionStorage", () => {
+  it("setItem writes stripped state to localStorage and secrets to sessionStorage", async () => {
     const storage = makeTestStorage();
-    storage.setItem("my-store", {
+    await storage.setItem("my-store", {
       state: { username: "alice", secret: "hunter2" },
       version: 1,
     });
@@ -62,44 +62,44 @@ describe("createSplitSecretStorage", () => {
     expect(sessionStorage.getItem("test-secret")).toBe("hunter2");
   });
 
-  it("getItem restores secrets from sessionStorage", () => {
+  it("getItem restores secrets from sessionStorage", async () => {
     const storage = makeTestStorage();
-    storage.setItem("my-store", {
+    await storage.setItem("my-store", {
       state: { username: "alice", secret: "hunter2" },
       version: 1,
     });
 
-    const result = storage.getItem("my-store");
+    const result = await storage.getItem("my-store");
     expect(result).not.toBeNull();
     expect(result!.state.username).toBe("alice");
     expect(result!.state.secret).toBe("hunter2");
   });
 
-  it("getItem restores empty string when session key is absent", () => {
+  it("getItem restores empty string when session key is absent", async () => {
     localStorage.setItem(
       "my-store",
       JSON.stringify({ state: { username: "bob", secret: "" }, version: 1 }),
     );
     // sessionStorage has no entry — expect empty string restored
     const storage = makeTestStorage();
-    const result = storage.getItem("my-store");
+    const result = await storage.getItem("my-store");
     expect(result!.state.secret).toBe("");
   });
 
-  it("removeItem clears localStorage and sessionStorage", () => {
+  it("removeItem clears localStorage and sessionStorage", async () => {
     const storage = makeTestStorage();
-    storage.setItem("my-store", {
+    await storage.setItem("my-store", {
       state: { username: "alice", secret: "hunter2" },
       version: 1,
     });
 
-    storage.removeItem("my-store");
+    await storage.removeItem("my-store");
 
     expect(localStorage.getItem("my-store")).toBeNull();
     expect(sessionStorage.getItem("test-secret")).toBeNull();
   });
 
-  it("removeItem passes the current localStorage raw string to clearSecrets", () => {
+  it("removeItem passes the current localStorage raw string to clearSecrets", async () => {
     const cleared: Array<string | null> = [];
     const storage = createSplitSecretStorage<TestState>({
       restoreSecrets: (_name, state) => state,
@@ -110,14 +110,14 @@ describe("createSplitSecretStorage", () => {
       },
     });
 
-    storage.setItem("my-store", { state: { username: "x" }, version: 0 });
-    storage.removeItem("my-store");
+    await storage.setItem("my-store", { state: { username: "x" }, version: 0 });
+    await storage.removeItem("my-store");
 
     expect(cleared).toHaveLength(1);
     expect(cleared[0]).not.toBeNull();
   });
 
-  it("removeItem passes null to clearSecrets when localStorage entry is absent", () => {
+  it("removeItem passes null to clearSecrets when localStorage entry is absent", async () => {
     const cleared: Array<string | null> = [];
     const storage = createSplitSecretStorage<TestState>({
       restoreSecrets: (_name, state) => state,
@@ -128,7 +128,7 @@ describe("createSplitSecretStorage", () => {
       },
     });
 
-    storage.removeItem("nonexistent");
+    await storage.removeItem("nonexistent");
     expect(cleared[0]).toBeNull();
   });
 });

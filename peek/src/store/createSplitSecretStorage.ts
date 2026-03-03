@@ -1,4 +1,4 @@
-import type { StorageValue } from "zustand/middleware";
+import { createSplitStorage, type SplitStorageCallbacks } from "./splitStorageCore";
 
 export interface SplitSecretStorageCallbacks<S> {
   /** Read secrets from sessionStorage and inject them into the restored state. */
@@ -26,31 +26,5 @@ export interface SplitSecretStorageCallbacks<S> {
  * keeping this helper free of domain knowledge.
  */
 export function createSplitSecretStorage<S>(callbacks: SplitSecretStorageCallbacks<S>) {
-  const { restoreSecrets, persistSecrets, stripSecrets, clearSecrets } = callbacks;
-
-  return {
-    getItem: (name: string): StorageValue<S> | null => {
-      const localRaw = localStorage.getItem(name);
-      if (!localRaw) return null;
-      try {
-        const stored = JSON.parse(localRaw) as StorageValue<S>;
-        if (!stored || !stored.state) return null;
-        stored.state = restoreSecrets(name, stored.state);
-        return stored;
-      } catch {
-        return null;
-      }
-    },
-
-    setItem: (name: string, value: StorageValue<S>): void => {
-      persistSecrets(name, value.state);
-      const toStore: StorageValue<S> = { ...value, state: stripSecrets(value.state) };
-      localStorage.setItem(name, JSON.stringify(toStore));
-    },
-
-    removeItem: (name: string): void => {
-      clearSecrets(name, localStorage.getItem(name));
-      localStorage.removeItem(name);
-    },
-  };
+  return createSplitStorage(callbacks as SplitStorageCallbacks<S>);
 }
