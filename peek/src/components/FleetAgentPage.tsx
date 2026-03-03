@@ -26,6 +26,7 @@ import { usePageContextStore } from "../store/usePageContextStore";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
+import PageInsightBanner from "./PageInsightBanner";
 import EmptyState from "./EmptyState";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
@@ -80,6 +81,20 @@ export default function FleetAgentPage() {
     });
   }, [agentInfo, setPageSection]);
 
+  const insightContext = useMemo(() => {
+    if (!agentInfo) return "";
+    return JSON.stringify({
+      agentId: agentInfo.agentId,
+      hostname: agentInfo.hostname,
+      version: agentInfo.version,
+      os: agentInfo.os?.full || agentInfo.os?.name || "unknown",
+      errorCount: agentInfo.errorCount,
+      logCount: logs.length,
+    });
+  }, [agentInfo, logs.length]);
+
+  const insightCacheKey = `fleet-agent::${decodedAgentId}::${agentInfo?.errorCount ?? ""}`;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       {/* Header */}
@@ -103,6 +118,14 @@ export default function FleetAgentPage() {
           }
         />
       </Paper>
+
+      {insightContext && (
+        <PageInsightBanner
+          context={insightContext}
+          systemPrompt="You are an Elastic Agent health advisor. Summarize this agent's health in one concise sentence. Include hostname, version, OS, and note any error-level logs or concerns."
+          cacheKey={insightCacheKey}
+        />
+      )}
 
       {error && <Alert severity="error">{error}</Alert>}
 

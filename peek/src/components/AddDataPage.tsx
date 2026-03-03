@@ -46,6 +46,7 @@ import {
   type AddDataTechnologyCategory,
 } from "../services/addData/catalog";
 
+import AskAiButton from "./AskAiButton";
 import PageHeader from "./PageHeader";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
@@ -692,17 +693,23 @@ export default function AddDataPage() {
 
           {(verifyStatus === "not_found" ||
             (verifyStatus === "polling" && foundSignals.size === 0)) && (
-            <Alert severity="info">
-              No telemetry data streams found yet. Make sure the collector is running — we&apos;ll
-              keep checking automatically.{" "}
-              <Link
-                href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Troubleshooting docs
-              </Link>
-            </Alert>
+            <>
+              <Alert severity="info">
+                No telemetry data streams found yet. Make sure the collector is running — we&apos;ll
+                keep checking automatically.{" "}
+                <Link
+                  href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Troubleshooting docs
+                </Link>
+              </Alert>
+              <AskAiButton
+                prompt="No data found yet. Describe what you see or paste an error, and I'll help troubleshoot."
+                label="Troubleshoot with AI"
+              />
+            </>
           )}
 
           {verifyStatus === "found" && (

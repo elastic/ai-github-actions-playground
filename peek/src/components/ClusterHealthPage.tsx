@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -11,6 +11,7 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import CapacityPressureView from "./cluster-health/CapacityPressureView";
 import NodeDetailTable from "./cluster-health/NodeDetailTable";
 import OverviewView from "./cluster-health/OverviewView";
+import PageInsightBanner from "./PageInsightBanner";
 import type { RefreshIntervalOption } from "./RefreshIntervalPicker";
 import RefreshToolbar from "./RefreshToolbar";
 import ResilienceSignalsView from "./cluster-health/ResilienceSignalsView";
@@ -88,6 +89,37 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     [setPageSection],
   );
 
+  const TAB_SYSTEM_PROMPTS: Record<ClusterHealthView, string> = useMemo(
+    () => ({
+      overview:
+        "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks.",
+      nodes:
+        "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag any nodes with high resource usage or unusual roles.",
+      taskBacklog:
+        "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns.",
+      capacityPressure:
+        "You are an Elasticsearch capacity analyst. Identify nodes under capacity pressure and summarize disk, memory, or CPU concerns.",
+      shardDistribution:
+        "You are an Elasticsearch shard analyst. Identify any indices with skewed shard distribution or shards concentrated on a single node.",
+      resilienceSignals:
+        "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals and any single points of failure.",
+    }),
+    [],
+  );
+
+  const insightContext = useMemo(() => {
+    if (!data) return "";
+    return JSON.stringify({
+      activeTab,
+      status: data.clusterHealth?.status ?? "unknown",
+      unassignedShards: data.clusterHealth?.unassigned_shards ?? 0,
+      pendingTasks: data.pendingTasks?.tasks?.length ?? 0,
+      nodeCount: data.clusterHealth?.number_of_nodes ?? 0,
+    });
+  }, [data, activeTab]);
+
+  const insightCacheKey = `cluster-health::${activeTab}::${data?.clusterHealth?.status ?? ""}`;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -123,6 +155,14 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
           <Tab key={t.value} value={t.value} label={t.label} />
         ))}
       </Tabs>
+
+      {insightContext && (
+        <PageInsightBanner
+          context={insightContext}
+          systemPrompt={TAB_SYSTEM_PROMPTS[activeTab]}
+          cacheKey={insightCacheKey}
+        />
+      )}
 
       <Paper role="tabpanel" variant="outlined" sx={{ flex: 1, overflow: "auto", p: 2 }}>
         {activeTab === "overview" && <OverviewView data={data} />}
