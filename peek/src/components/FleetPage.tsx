@@ -77,11 +77,11 @@ export default function FleetPage() {
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
   useEffect(() => {
-    if (agentInventoryTotal === null) return;
+    if (agentInventoryTotal == null || agentInventoryTotalErrorCount == null) return;
     setPageSection("fleet", {
-      totalAgents: agentInventoryTotal ?? 0,
-      healthyCount: (agentInventoryTotal ?? 0) - (agentInventoryTotalErrorCount ?? 0),
-      unhealthyCount: agentInventoryTotalErrorCount ?? 0,
+      totalAgents: agentInventoryTotal,
+      healthyCount: agentInventoryTotal - agentInventoryTotalErrorCount,
+      unhealthyCount: agentInventoryTotalErrorCount,
     });
   }, [agentInventoryTotal, agentInventoryTotalErrorCount, setPageSection]);
 

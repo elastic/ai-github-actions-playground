@@ -69,7 +69,10 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
   useEffect(() => {
-    if (!data) return;
+    if (!data) {
+      setPageSection("clusterHealth", undefined);
+      return;
+    }
     setPageSection("clusterHealth", {
       status: data.clusterHealth?.status ?? "unknown",
       unassignedShards: data.clusterHealth?.unassigned_shards ?? 0,
@@ -77,6 +80,13 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
       activeTab,
     });
   }, [data, activeTab, setPageSection]);
+
+  useEffect(
+    () => () => {
+      setPageSection("clusterHealth", undefined);
+    },
+    [setPageSection],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
