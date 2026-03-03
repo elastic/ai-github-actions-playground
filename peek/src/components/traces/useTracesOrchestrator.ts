@@ -129,12 +129,22 @@ export function useTracesOrchestrator() {
     if (urlTraceId !== currentTraceId) {
       setSelectedTraceId(urlTraceId);
       if (urlTraceId) {
+        setSelectedTraceSpans([]);
+        setSelectedSpanId(null);
+        setDrawerOpen(false);
         runDetailQuery(buildTraceDetailQuery(urlTraceId));
       } else {
         setSelectedTraceSpans([]);
       }
     }
-  }, [urlTraceId, setSelectedTraceId, runDetailQuery, setSelectedTraceSpans]);
+  }, [
+    urlTraceId,
+    setSelectedTraceId,
+    runDetailQuery,
+    setSelectedTraceSpans,
+    setSelectedSpanId,
+    setDrawerOpen,
+  ]);
 
   const {
     runQuery: runTimeseriesQuery,
@@ -242,10 +252,20 @@ export function useTracesOrchestrator() {
       setSelectedTraceId(traceId);
       setSelectedRootSpanId(spanId ?? null);
       setSelectedTraceTimestamp(timestamp ?? null);
+      setSelectedTraceSpans([]);
+      setSelectedSpanId(null);
+      setDrawerOpen(false);
       void setUrlTraceId(traceId);
       runDetailQuery(buildTraceDetailQuery(traceId));
     },
-    [setSelectedTraceId, setUrlTraceId, runDetailQuery],
+    [
+      setSelectedTraceId,
+      setSelectedTraceSpans,
+      setSelectedSpanId,
+      setDrawerOpen,
+      setUrlTraceId,
+      runDetailQuery,
+    ],
   );
 
   const handleOpenInDiscover = useCallback(
@@ -258,10 +278,13 @@ export function useTracesOrchestrator() {
 
   const clearTraceSelection = useCallback(() => {
     setSelectedTraceId(null);
+    setSelectedTraceSpans([]);
+    setSelectedSpanId(null);
+    setDrawerOpen(false);
     setSelectedRootSpanId(null);
     setSelectedTraceTimestamp(null);
     void setUrlTraceId(null);
-  }, [setSelectedTraceId, setUrlTraceId]);
+  }, [setSelectedTraceId, setSelectedTraceSpans, setSelectedSpanId, setDrawerOpen, setUrlTraceId]);
 
   const handleServiceMapNodeClick = useCallback(
     (serviceName: string) => {
@@ -272,8 +295,9 @@ export function useTracesOrchestrator() {
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
       runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runDriftRadarQueries(updatedFilters);
     },
-    [runTraceQueries],
+    [runTraceQueries, runDriftRadarQueries],
   );
 
   // Parse trace searchResults for display
@@ -324,8 +348,9 @@ export function useTracesOrchestrator() {
       useTracesStore.getState().addTagFilter(key, value, false);
       const updatedFilters = useTracesStore.getState().filters;
       runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runDriftRadarQueries(updatedFilters);
     },
-    [runTraceQueries],
+    [runTraceQueries, runDriftRadarQueries],
   );
 
   const handleDrawerExclude = useCallback(
@@ -333,8 +358,9 @@ export function useTracesOrchestrator() {
       useTracesStore.getState().addTagFilter(key, value, true);
       const updatedFilters = useTracesStore.getState().filters;
       runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runDriftRadarQueries(updatedFilters);
     },
-    [runTraceQueries],
+    [runTraceQueries, runDriftRadarQueries],
   );
 
   const handleDrawerOpenInQueryLab = useCallback(

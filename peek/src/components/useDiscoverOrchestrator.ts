@@ -232,6 +232,10 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
       setDiscoverQueryDraft(null);
       clearTimings();
       setQuery(selectedQuery);
+      setCurrentSort(null);
+      setInsightsCache({});
+      setExpandedInsight(null);
+      insightQueryToColumnRef.current.clear();
       setHistoryAnchor(null);
     },
     [setDiscoverQueryDraft, clearTimings, setQuery],

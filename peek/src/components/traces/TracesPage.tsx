@@ -17,7 +17,7 @@ import { useTracesOrchestrator } from "./useTracesOrchestrator";
 
 export default function TracesPage() {
   const themeMode = useUIStore((s) => s.themeMode);
-  const o = useTracesOrchestrator();
+  const orchestrator = useTracesOrchestrator();
 
   const queryEditorExtensions = useMemo(
     () => [
@@ -44,56 +44,60 @@ export default function TracesPage() {
 
   const resultsView = (
     <TraceResultsView
-      viewMode={o.viewMode}
-      onViewModeChange={o.setViewMode}
-      searchResult={o.searchResult}
-      searchLoading={o.searchLoading}
-      traceRows={o.traceRows}
-      selectedTraceId={o.selectedTraceId}
-      onSelectTrace={o.handleSelectTrace}
-      maxDuration={o.maxDuration}
-      rawQuery={o.rawQuery}
-      timeseriesLoading={o.timeseriesLoading}
-      timeseriesResult={o.timeseriesResult}
-      detailLoading={o.detailLoading}
-      selectedTraceSpans={o.selectedTraceSpans}
-      onServiceMapNodeClick={o.handleServiceMapNodeClick}
-      driftRadarLoading={o.driftRadarLoading}
-      driftRadarBaselineLoading={o.driftRadarBaselineLoading}
-      driftRadarSpans={o.driftRadarSpans}
-      driftRadarBaselineSpans={o.driftRadarBaselineSpans}
-      driftRadarBaselineEnabled={o.driftRadarBaselineEnabled}
-      onDriftRadarBaselineChange={o.handleDriftRadarBaselineChange}
-      filters={o.filters}
-      onSearch={o.handleSearch}
+      viewMode={orchestrator.viewMode}
+      onViewModeChange={orchestrator.setViewMode}
+      searchResult={orchestrator.searchResult}
+      searchLoading={orchestrator.searchLoading}
+      traceRows={orchestrator.traceRows}
+      selectedTraceId={orchestrator.selectedTraceId}
+      onSelectTrace={orchestrator.handleSelectTrace}
+      maxDuration={orchestrator.maxDuration}
+      rawQuery={orchestrator.rawQuery}
+      timeseriesLoading={orchestrator.timeseriesLoading}
+      timeseriesResult={orchestrator.timeseriesResult}
+      detailLoading={orchestrator.detailLoading}
+      selectedTraceSpans={orchestrator.selectedTraceSpans}
+      onServiceMapNodeClick={orchestrator.handleServiceMapNodeClick}
+      driftRadarLoading={orchestrator.driftRadarLoading}
+      driftRadarBaselineLoading={orchestrator.driftRadarBaselineLoading}
+      driftRadarSpans={orchestrator.driftRadarSpans}
+      driftRadarBaselineSpans={orchestrator.driftRadarBaselineSpans}
+      driftRadarBaselineEnabled={orchestrator.driftRadarBaselineEnabled}
+      onDriftRadarBaselineChange={orchestrator.handleDriftRadarBaselineChange}
+      filters={orchestrator.filters}
+      onSearch={orchestrator.handleSearch}
     />
   );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       <TraceSearchPanel
-        filters={o.filters}
-        resetFilters={o.resetFilters}
-        applyFiltersAndRun={o.applyFiltersAndRun}
-        effectiveQuery={o.effectiveQuery}
-        onRawQueryChange={(val) => o.setRawQuery(val)}
-        onCreateEditor={(view) => o.setQueryContextView(view)}
+        filters={orchestrator.filters}
+        resetFilters={orchestrator.resetFilters}
+        applyFiltersAndRun={orchestrator.applyFiltersAndRun}
+        effectiveQuery={orchestrator.effectiveQuery}
+        onRawQueryChange={(val) => orchestrator.setRawQuery(val)}
+        onCreateEditor={(view) => orchestrator.setQueryContextView(view)}
         queryEditorExtensions={queryEditorExtensions}
         themeMode={themeMode}
-        searchLoading={o.searchLoading}
-        onSearch={o.handleSearch}
-        searchResultCount={o.searchResult ? o.searchResult.values.length : null}
-        collapsed={o.traceSearchCollapsed}
-        onToggleCollapsed={() => o.setTraceSearchCollapsed(!o.traceSearchCollapsed)}
+        searchLoading={orchestrator.searchLoading}
+        onSearch={orchestrator.handleSearch}
+        searchResultCount={
+          orchestrator.searchResult ? orchestrator.searchResult.values.length : null
+        }
+        collapsed={orchestrator.traceSearchCollapsed}
+        onToggleCollapsed={() =>
+          orchestrator.setTraceSearchCollapsed(!orchestrator.traceSearchCollapsed)
+        }
       />
 
       <TraceErrorAlerts
         errors={[
-          o.searchError,
-          o.detailError,
-          o.timeseriesError,
-          o.driftRadarError,
-          o.driftRadarBaselineError,
+          orchestrator.searchError,
+          orchestrator.detailError,
+          orchestrator.timeseriesError,
+          orchestrator.driftRadarError,
+          orchestrator.driftRadarBaselineError,
         ]}
       />
 
@@ -117,7 +121,7 @@ export default function TracesPage() {
             minHeight: 0,
           }}
         >
-          {o.selectedTraceId ? (
+          {orchestrator.selectedTraceId ? (
             <ResizableSplitPane
               /* 45 % top / 55 % bottom keeps the waterfall chart majority-visible on load */
               initialTopFraction={0.45}
@@ -125,19 +129,19 @@ export default function TracesPage() {
               top={resultsView}
               bottom={
                 <TraceDetailPanel
-                  selectedTraceId={o.selectedTraceId}
-                  selectedTraceSpans={o.selectedTraceSpans}
-                  detailLoading={o.detailLoading}
-                  selectedSpanId={o.selectedSpanId}
-                  onSpanClick={(spanId) => o.setSelectedSpanId(spanId)}
+                  selectedTraceId={orchestrator.selectedTraceId}
+                  selectedTraceSpans={orchestrator.selectedTraceSpans}
+                  detailLoading={orchestrator.detailLoading}
+                  selectedSpanId={orchestrator.selectedSpanId}
+                  onSpanClick={(spanId) => orchestrator.setSelectedSpanId(spanId)}
                   onOpenInQueryLab={() =>
-                    o.handleOpenInDiscover(
-                      o.selectedTraceId!,
-                      o.selectedRootSpanId,
-                      o.selectedTraceTimestamp,
+                    orchestrator.handleOpenInDiscover(
+                      orchestrator.selectedTraceId!,
+                      orchestrator.selectedRootSpanId,
+                      orchestrator.selectedTraceTimestamp,
                     )
                   }
-                  onClose={o.clearTraceSelection}
+                  onClose={orchestrator.clearTraceSelection}
                 />
               }
             />
@@ -149,12 +153,12 @@ export default function TracesPage() {
 
       {/* Span Detail Drawer */}
       <SpanDetailDrawer
-        span={o.selectedSpan}
-        open={o.drawerOpen}
-        onClose={() => o.setDrawerOpen(false)}
-        onFilterBy={o.handleDrawerFilterBy}
-        onExclude={o.handleDrawerExclude}
-        onOpenInQueryLab={o.handleDrawerOpenInQueryLab}
+        span={orchestrator.selectedSpan}
+        open={orchestrator.drawerOpen}
+        onClose={() => orchestrator.setDrawerOpen(false)}
+        onFilterBy={orchestrator.handleDrawerFilterBy}
+        onExclude={orchestrator.handleDrawerExclude}
+        onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}
       />
     </Box>
   );
