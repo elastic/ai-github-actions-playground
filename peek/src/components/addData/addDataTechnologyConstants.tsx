@@ -5,9 +5,12 @@ import LanIcon from "@mui/icons-material/Lan";
 import StorageIcon from "@mui/icons-material/Storage";
 import ViewInArIcon from "@mui/icons-material/ViewInAr";
 
-import type { AddDataTechnologyCategory } from "../../services/addData/catalog";
+import type {
+  AddDataExpectedSignal,
+  AddDataTechnologyCategory,
+} from "../../services/addData/catalog";
 
-export const SIGNAL_COLORS: Record<string, "info" | "success" | "warning"> = {
+export const SIGNAL_COLORS: Record<AddDataExpectedSignal, "info" | "success" | "warning"> = {
   logs: "info",
   metrics: "success",
   traces: "warning",

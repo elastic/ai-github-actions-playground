@@ -56,7 +56,8 @@ export default function AddDataStepTechnology({
         query.length === 0 ||
         tech.technology.toLowerCase().includes(query) ||
         tech.summary.toLowerCase().includes(query) ||
-        tech.category.toLowerCase().includes(query);
+        tech.category.toLowerCase().replaceAll("_", " ").includes(query) ||
+        ADD_DATA_CATEGORY_LABELS[tech.category].toLowerCase().includes(query);
       return categoryMatches && queryMatches;
     });
   }, [activeCategory, technologySearch]);

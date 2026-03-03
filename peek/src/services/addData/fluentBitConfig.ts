@@ -76,10 +76,12 @@ export function generateFluentBitConfig(opts: {
  */
 export function generateFluentBitInstallCommand(): string {
   return `# 1. Install Fluent Bit
-curl -fsSL -o /tmp/fluent-bit-install.sh https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh
+install_script="$(mktemp -t fluent-bit-install.XXXXXX.sh)"
+trap 'rm -f "$install_script"' EXIT
+curl -fsSL -o "$install_script" https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh
 # Review the script before running it.
-cat /tmp/fluent-bit-install.sh
-sh /tmp/fluent-bit-install.sh
+cat "$install_script"
+sh "$install_script"
 
 # 2. Save the configuration above as /etc/fluent-bit/fluent-bit.conf
 

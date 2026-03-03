@@ -50,6 +50,12 @@ export function interpolateReceiverTemplate(
   for (const [key, value] of Object.entries(values)) {
     result = result.replaceAll(`{{${key}}}`, escapeYamlValue(value));
   }
+  const unresolved = [...result.matchAll(/{{\s*([\w.-]+)\s*}}/g)].map(([, key]) => key);
+  if (unresolved.length > 0) {
+    throw new Error(
+      `Unresolved receiver template placeholders: ${[...new Set(unresolved)].join(", ")}`,
+    );
+  }
   return result;
 }
 
@@ -65,7 +71,12 @@ export function buildFullOtelConfig(
     signals: readonly AddDataExpectedSignal[];
   },
 ): string {
-  const pipelines = opts.signals
+  const uniqueSignals = [...new Set(opts.signals)];
+  if (uniqueSignals.length === 0) {
+    throw new Error("At least one signal is required to build pipelines.");
+  }
+
+  const pipelines = uniqueSignals
     .map(
       (signal) => `    ${signal}:
       receivers: [configured_receiver]

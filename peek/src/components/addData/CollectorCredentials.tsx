@@ -26,14 +26,15 @@ export default function CollectorCredentials({
   creatingApiKey,
   onCreateApiKey,
 }: CollectorCredentialsProps) {
-  const [copied, setCopied] = useState(false);
-  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
+  const [copiedApiKeyValue, setCopiedApiKeyValue] = useState<string | null>(null);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopiedApiKeyValue(null));
+  const copied = apiKeyValue !== null && copiedApiKeyValue === apiKeyValue;
 
   const handleCopyApiKey = useCallback(async () => {
     if (!apiKeyValue) return;
     const ok = await copyToClipboard(apiKeyValue);
     if (!ok) return;
-    setCopied(true);
+    setCopiedApiKeyValue(apiKeyValue);
     scheduleCopyFeedbackReset();
   }, [apiKeyValue, scheduleCopyFeedbackReset]);
 
@@ -41,7 +42,7 @@ export default function CollectorCredentials({
     <>
       <Typography variant="body2">Collector credentials</Typography>
       {apiKeyError && <Alert severity="error">{apiKeyError}</Alert>}
-      {capabilities?.canCreateApiKeys ? (
+      {capabilities == null ? null : capabilities.canCreateApiKeys ? (
         <>
           <Stack direction="row" spacing={1} alignItems="center">
             <Button
@@ -49,8 +50,16 @@ export default function CollectorCredentials({
               variant="contained"
               onClick={onCreateApiKey}
               disabled={creatingApiKey}
+              aria-busy={creatingApiKey}
             >
-              {creatingApiKey ? <CircularProgress size={16} /> : "Generate API key"}
+              {creatingApiKey ? (
+                <>
+                  <CircularProgress size={16} sx={{ mr: 1 }} aria-hidden="true" />
+                  Generating API key...
+                </>
+              ) : (
+                "Generate API key"
+              )}
             </Button>
             <Typography variant="body2" color="text.secondary">
               Generates an API key for collector setup.
