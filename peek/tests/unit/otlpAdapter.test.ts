@@ -42,7 +42,7 @@ describe("spansToOtlpTracesData", () => {
     expect(span.spanId).toBe("span1");
     expect(span.parentSpanId).toBeUndefined();
     expect(span.name).toBe("GET /api");
-    expect(span.kind).toBe("SERVER");
+    expect(span.kind).toBe("2");
   });
 
   it("converts time from microseconds to nanosecond strings", () => {
@@ -109,6 +109,24 @@ describe("spansToOtlpTracesData", () => {
       const result = spansToOtlpTracesData([makeSpan({ status: input })]);
       const span = result.resourceSpans[0]!.scopeSpans[0]!.spans[0]!;
       expect(span.status?.code).toBe(expected);
+    }
+  });
+
+  it("maps span kind strings to OTLP integer enum values", () => {
+    const cases: Array<{ input: string; expected: string }> = [
+      { input: "SERVER", expected: "2" },
+      { input: "CLIENT", expected: "3" },
+      { input: "INTERNAL", expected: "1" },
+      { input: "PRODUCER", expected: "4" },
+      { input: "CONSUMER", expected: "5" },
+      { input: "server", expected: "2" },
+      { input: "UNKNOWN_KIND", expected: "0" },
+      { input: "", expected: "0" },
+    ];
+    for (const { input, expected } of cases) {
+      const result = spansToOtlpTracesData([makeSpan({ kind: input })]);
+      const span = result.resourceSpans[0]!.scopeSpans[0]!.spans[0]!;
+      expect(span.kind).toBe(expected);
     }
   });
 

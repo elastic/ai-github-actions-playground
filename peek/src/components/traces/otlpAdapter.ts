@@ -24,6 +24,24 @@ function toKeyValues(attrs: Record<string, unknown>): otlpcommonv1.KeyValue[] {
   return Object.entries(attrs).map(([key, value]) => ({ key, value: toAnyValue(value) }));
 }
 
+/**
+ * Map an app span-kind string (e.g. "SERVER") to the OTLP SpanKind integer enum.
+ *
+ * OTLP defines: UNSPECIFIED=0, INTERNAL=1, SERVER=2, CLIENT=3, PRODUCER=4, CONSUMER=5.
+ */
+const SPAN_KIND_MAP: Record<string, number> = {
+  INTERNAL: 1,
+  SERVER: 2,
+  CLIENT: 3,
+  PRODUCER: 4,
+  CONSUMER: 5,
+};
+
+function toOtlpSpanKind(kind: string | undefined): number {
+  if (!kind) return 0;
+  return SPAN_KIND_MAP[kind.toUpperCase()] ?? 0;
+}
+
 /** Map an app status string to an OTLP Status object. */
 function toOtlpStatus(status: string): otlptracev1.Status {
   if (status === "Error" || status === "STATUS_CODE_ERROR") {
@@ -60,7 +78,7 @@ function convertSpan(span: Span): otlptracev1.Span {
     spanId: span.spanId,
     parentSpanId: span.parentSpanId ?? undefined,
     name: span.name,
-    kind: span.kind || undefined,
+    kind: String(toOtlpSpanKind(span.kind)),
     startTimeUnixNano: String(span.startTimeUs * 1000),
     endTimeUnixNano: String((span.startTimeUs + span.durationUs) * 1000),
     attributes: toKeyValues(span.attributes),
