@@ -17,16 +17,19 @@ vi.mock("@uiw/react-codemirror", () => ({
     value,
     onChange,
     editable = true,
+    placeholder,
   }: {
     value: string;
     onChange?: (value: string) => void;
     editable?: boolean;
+    placeholder?: string;
   }) => (
     <textarea
       data-testid="codemirror-mock"
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
       readOnly={!editable}
+      placeholder={placeholder}
     />
   ),
 }));
@@ -200,7 +203,9 @@ describe("ApiConsolePage", () => {
 
     render(<ApiConsolePage />);
 
-    expect(screen.getByDisplayValue("/_search")).toBeInTheDocument();
+    const editors = screen.getAllByTestId("codemirror-mock");
+    const pathEditor = editors.find((el) => (el as HTMLTextAreaElement).value === "/_search");
+    expect(pathEditor).toBeTruthy();
   });
 
   it("clears all entries and resets to a single blank entry when Clear Session is confirmed", async () => {
@@ -228,8 +233,11 @@ describe("ApiConsolePage", () => {
 
     render(<ApiConsolePage />);
 
-    const pathInputs = screen.getAllByPlaceholderText("/_cat/indices?v");
-    expect(pathInputs[0]).toHaveValue("/my-index/_mapping");
+    const editors = screen.getAllByTestId("codemirror-mock");
+    const draftEditor = editors.find(
+      (el) => (el as HTMLTextAreaElement).value === "/my-index/_mapping",
+    );
+    expect(draftEditor).toBeTruthy();
     expect(useApiConsoleStore.getState().consoleDraft).toBeNull();
   });
 

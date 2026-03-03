@@ -22,10 +22,10 @@ import { useSuggestions } from "./investigate/useSuggestions";
 import {
   type InvestigateTab,
   type TimelineEvent,
-  buildInvestigateQuery,
   buildSummaryPrompt,
-  parseTimelineEvents,
 } from "./investigate/investigateUtils";
+import { buildInvestigateQuery } from "./investigate/investigateQueryBuilder";
+import { parseTimelineEvents } from "./investigate/investigateParser";
 
 export default function InvestigatePage() {
   const connection = useConnectionStore((s) => s.connection);

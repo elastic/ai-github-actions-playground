@@ -4,7 +4,11 @@
  */
 import { DEFAULT_FIELD_MAPPING, type TraceFieldMapping } from "../traces/traceQueryBuilder";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
-import { buildWherePipe } from "../../services/es/queryParts";
+import {
+  buildPipeline,
+  buildWherePipe,
+  normalizeTimeExpression,
+} from "../../services/es/queryParts";
 
 export interface ServiceInventoryFilters {
   /** ES|QL date expression for the lower time bound, e.g. "NOW() - 1 hour" */
@@ -19,18 +23,8 @@ export const DEFAULT_SERVICE_INVENTORY_FILTERS: ServiceInventoryFilters = {
 };
 
 function toSafeRelativeTimeExpression(value: string): string {
-  const normalized = value.trim();
-  const match = normalized.match(/^NOW\(\)(?:\s*-\s*(\d+)\s+(minutes?|hours?|days?))?$/i);
-  if (match) {
-    if (!match[1]) return "NOW()";
-    return `NOW() - ${match[1]} ${match[2]!.toLowerCase()}`;
-  }
-
-  const parsed = new Date(normalized);
-  if (!Number.isNaN(parsed.getTime())) {
-    return `"${escapeEsqlString(parsed.toISOString())}"`;
-  }
-
+  const normalized = normalizeTimeExpression(value);
+  if (normalized) return normalized;
   throw new Error(`Unsupported time expression: ${value}`);
 }
 
@@ -52,7 +46,7 @@ export function buildServiceInventoryQuery(
 
   const durationExpr = `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000)`;
 
-  return [
+  return buildPipeline([
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
     "EVAL duration_ms = " +
@@ -67,7 +61,7 @@ export function buildServiceInventoryQuery(
     `EVAL error_rate = error_count / request_count`,
     `SORT request_count DESC`,
     `LIMIT 200`,
-  ].join(" | ");
+  ]);
 }
 
 /**
