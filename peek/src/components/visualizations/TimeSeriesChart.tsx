@@ -1,5 +1,6 @@
 import { useMemo, useRef, useEffect } from "react";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, TimeSeriesOptions } from "../../types";
@@ -7,7 +8,7 @@ import { toTimeSeriesData } from "../../services/perses/dataTransformers";
 import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { createPngExporter, type EChartImageExporter } from "./chartExport";
+import { createPngExporter } from "./chartExport";
 import { findDateColumnIndex } from "./chartUtils";
 
 interface Props {
@@ -19,7 +20,7 @@ interface Props {
 
 export default function TimeSeriesChart({ data, options, onExportReady, timeZone }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<EChartImageExporter | undefined>(undefined);
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const smooth = options?.smooth !== false;
   const showArea = options?.showArea !== false;
   const stacked = options?.stacked === true;

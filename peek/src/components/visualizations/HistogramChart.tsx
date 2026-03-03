@@ -1,12 +1,13 @@
 import { useMemo, useRef, useEffect } from "react";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, HistogramChartOptions } from "../../types";
 import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { createPngExporter, type EChartImageExporter } from "./chartExport";
+import { createPngExporter } from "./chartExport";
 import { findNumericColumnIndices, getColumnValues } from "./chartUtils";
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
 
 export default function HistogramChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<EChartImageExporter | undefined>(undefined);
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const bins = Math.min(100, Math.max(1, Math.round(options?.bins ?? 10)));
   const format = options?.format;
 

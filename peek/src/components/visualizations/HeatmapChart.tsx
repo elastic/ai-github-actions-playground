@@ -1,11 +1,12 @@
 import { useMemo, useRef, useEffect } from "react";
+import type { ECharts } from "echarts/core";
 
 import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse } from "../../types";
 import { HEATMAP_GRADIENT } from "../../types/tokens";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { createPngExporter, type EChartImageExporter } from "./chartExport";
+import { createPngExporter } from "./chartExport";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 
 export default function HeatmapChart({ data, onExportReady }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<EChartImageExporter | undefined>(undefined);
+  const instanceRef = useRef<ECharts | undefined>(undefined);
 
   useEffect(() => {
     if (!onExportReady) return;

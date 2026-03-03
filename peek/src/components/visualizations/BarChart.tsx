@@ -1,5 +1,6 @@
 import { useMemo, useRef, useEffect } from "react";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, BarChartOptions } from "../../types";
@@ -7,7 +8,7 @@ import { toBarChartData } from "../../services/perses/dataTransformers";
 import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { createPngExporter, type EChartImageExporter } from "./chartExport";
+import { createPngExporter } from "./chartExport";
 
 interface Props {
   data: EsqlResponse;
@@ -17,7 +18,7 @@ interface Props {
 
 export default function BarChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<EChartImageExporter | undefined>(undefined);
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const stacked = options?.stacked === true;
   const horizontal = options?.horizontal === true;
   const format = options?.format;
