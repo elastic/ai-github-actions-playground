@@ -13,6 +13,7 @@ import {
 } from "../store/usePageFiltersStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { useFleetData } from "../hooks/useFleetData";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import FleetOverviewTab from "./fleet/FleetOverviewTab";
 import FleetAgentsTable from "./fleet/FleetAgentsTable";
@@ -148,7 +149,10 @@ export default function FleetPage() {
       <Tabs
         value={activeTab}
         onChange={(_, v: FleetViewTab) => setActiveTab(v)}
-        sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
+        sx={{
+          minHeight: COMPONENT_HEIGHTS.tab,
+          "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
+        }}
       >
         {TABS.map((t) => (
           <Tab key={t.value} value={t.value} label={t.label} />

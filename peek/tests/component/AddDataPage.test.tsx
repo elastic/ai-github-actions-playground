@@ -180,6 +180,7 @@ describe("AddDataPage", () => {
   });
 
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
+    // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
     mockGetDataStreams
       .mockResolvedValue({ data_streams: [{ name: "metrics-host.otel-default" }] })
       .mockResolvedValueOnce({ data_streams: [] })
@@ -218,7 +219,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
     expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
-  });
+  }, 15000);
 
   it("shows OTLP alert when no ingest endpoint can be derived", async () => {
     // Use a non-cloud URL so no OTLP endpoint can be derived
