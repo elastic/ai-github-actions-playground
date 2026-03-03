@@ -192,3 +192,131 @@ describe("buildChatRuntime — new tools", () => {
     expect(parsed.page?.path).toBe("/discover");
   });
 });
+
+describe("buildChatRuntime — ES-dependent tools", () => {
+  const fakeConnection = { url: "http://localhost:9200" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetAllStores();
+    window.history.pushState({}, "", "/discover");
+  });
+
+  it("includes get_cluster_health when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("get_cluster_health");
+  });
+
+  it("includes get_index_info when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("get_index_info");
+  });
+
+  it("includes run_raw_es_request when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("run_raw_es_request");
+  });
+
+  it("includes explain_ingest_pipeline when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("explain_ingest_pipeline");
+  });
+
+  it("does not include ES-dependent tools when connection is null", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+    });
+    expect(tools).not.toHaveProperty("get_cluster_health");
+    expect(tools).not.toHaveProperty("get_index_info");
+    expect(tools).not.toHaveProperty("run_raw_es_request");
+    expect(tools).not.toHaveProperty("explain_ingest_pipeline");
+    expect(tools).not.toHaveProperty("run_esql_query");
+  });
+});
+
+describe("buildChatRuntime — generate_esql_query tool", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetAllStores();
+    window.history.pushState({}, "", "/discover");
+  });
+
+  it("includes generate_esql_query when navigate is provided", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+      navigate,
+    });
+    expect(tools).toHaveProperty("generate_esql_query");
+  });
+
+  it("does not include generate_esql_query when navigate is not provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+    });
+    expect(tools).not.toHaveProperty("generate_esql_query");
+  });
+
+  it("generate_esql_query sets draft query without navigating when navigate_to_query_lab is false", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/traces",
+      navigate,
+    });
+    const genTool = tools.generate_esql_query as {
+      execute: (args: { query: string; navigate_to_query_lab?: boolean }) => Promise<unknown>;
+    };
+    const result = await genTool.execute({
+      query: "FROM logs-* | STATS count() BY host.name",
+    });
+    expect(useQueryStore.getState().discoverQueryDraft).toBe(
+      "FROM logs-* | STATS count() BY host.name",
+    );
+    expect(navigate).not.toHaveBeenCalled();
+    expect(result).toEqual({ set: true, navigatedTo: undefined });
+  });
+
+  it("generate_esql_query sets draft and navigates when navigate_to_query_lab is true", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/traces",
+      navigate,
+    });
+    const genTool = tools.generate_esql_query as {
+      execute: (args: { query: string; navigate_to_query_lab?: boolean }) => Promise<unknown>;
+    };
+    const result = await genTool.execute({
+      query: "FROM metrics-* | LIMIT 5",
+      navigate_to_query_lab: true,
+    });
+    expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM metrics-* | LIMIT 5");
+    expect(navigate).toHaveBeenCalledWith("/discover");
+    expect(result).toEqual({ set: true, navigatedTo: "discover" });
+  });
+});

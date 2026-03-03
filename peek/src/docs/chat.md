@@ -26,6 +26,16 @@ Chat has the following built-in tools available by default whenever an Elasticse
 
 **set_time_range** — Set the active time range on the current dashboard using date-math expressions (e.g. `now-15m`, `now-1h`, `now`).
 
+**get_cluster_health** — Get the current cluster health status, node count, shard allocation summary, and pending tasks. Optionally includes cluster-wide node statistics.
+
+**get_index_info** — Get details about a specific index including its mappings, settings, stats, and health.
+
+**run_raw_es_request** — Execute an arbitrary Elasticsearch REST API request (GET, POST, PUT, or DELETE). Use this for APIs not covered by other tools. Response payloads are bounded to prevent excessive token usage.
+
+**explain_ingest_pipeline** — Get the definition of a named ingest pipeline and optionally simulate it with a sample document.
+
+**generate_esql_query** — Draft an ES|QL query in the Query Lab editor. Accepts a fully-formed query string and optionally navigates to Query Lab for the user to review and execute.
+
 ## Elastic Docs search
 
 When **Enable Elastic Docs search in chat** is turned on in LLM Settings, the assistant can also search the official Elastic documentation to answer questions about Elasticsearch features, APIs, ES|QL syntax, and configuration. This tool has a 30-second timeout and a per-query step limit. Disable the toggle in Settings to restrict the assistant to cluster-local tools only.
