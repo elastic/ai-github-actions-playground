@@ -38,17 +38,18 @@ export default function InvestigatePage() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [summaryPrompt, setSummaryPrompt] = useState<string | null>(null);
   const [recentEntitiesByTab, setRecentEntitiesByTab] = useState<{
-    user: RecentEntity[];
-    host: RecentEntity[];
+    user: { entities: RecentEntity[]; connectionKey: string | null };
+    host: { entities: RecentEntity[]; connectionKey: string | null };
   }>({
-    user: [],
-    host: [],
+    user: { entities: [], connectionKey: null },
+    host: { entities: [], connectionKey: null },
   });
   const suggestionsLoadedRef = useRef<{ user: boolean; host: boolean }>({
     user: false,
     host: false,
   });
   const suggestionsRequestTabRef = useRef<InvestigateTab>("user");
+  const connectionKey = connection ? JSON.stringify(connection) : null;
 
   const handleSuccess = useCallback(
     (data: EsqlResponse) => {
@@ -72,19 +73,37 @@ export default function InvestigatePage() {
     onFailure: handleFailure,
   });
 
-  const handleSuggestionsSuccess = useCallback((data: EsqlResponse) => {
+  const handleSuggestionsSuccess = useCallback(
+    (data: EsqlResponse) => {
+      const tab = suggestionsRequestTabRef.current;
+      setRecentEntitiesByTab((previous) => ({
+        ...previous,
+        [tab]: { entities: parseRecentEntities(data, tab), connectionKey },
+      }));
+      suggestionsLoadedRef.current[tab] = true;
+    },
+    [connectionKey],
+  );
+
+  const handleSuggestionsFailure = useCallback(() => {
     const tab = suggestionsRequestTabRef.current;
     setRecentEntitiesByTab((previous) => ({
       ...previous,
-      [tab]: parseRecentEntities(data, tab),
+      [tab]: { entities: [], connectionKey },
     }));
     suggestionsLoadedRef.current[tab] = true;
-  }, []);
+  }, [connectionKey]);
 
   const { runQuery: runSuggestionsQuery, loading: suggestionsLoading } = useEsqlQuery({
     connection,
     onSuccess: handleSuggestionsSuccess,
+    onFailure: handleSuggestionsFailure,
   });
+
+  useEffect(() => {
+    suggestionsLoadedRef.current = { user: false, host: false };
+  }, [connectionKey]);
+
   useEffect(() => {
     if (connection && !suggestionsLoading && !suggestionsLoadedRef.current[activeTab]) {
       suggestionsRequestTabRef.current = activeTab;
@@ -127,6 +146,11 @@ export default function InvestigatePage() {
       /* clipboard may not be available */
     }
   }, [summaryPrompt]);
+
+  const visibleRecentEntities =
+    recentEntitiesByTab[activeTab].connectionKey === connectionKey
+      ? recentEntitiesByTab[activeTab].entities
+      : [];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
@@ -190,11 +214,11 @@ export default function InvestigatePage() {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%" }}>
             <InvestigateSuggestionsPanel
               activeTab={activeTab}
-              entities={recentEntitiesByTab[activeTab]}
+              entities={visibleRecentEntities}
               loading={suggestionsLoading}
               onEntityClick={handleEntityClick}
             />
-            {!suggestionsLoading && recentEntitiesByTab[activeTab].length === 0 && (
+            {!suggestionsLoading && visibleRecentEntities.length === 0 && (
               <EmptyState
                 icon={<PolicyIcon sx={{ fontSize: 32 }} />}
                 heading={`Investigate a ${activeTab}`}
