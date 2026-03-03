@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
 import type { ECharts } from "echarts/core";
@@ -12,13 +12,19 @@ import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } fr
 interface Props {
   data: EsqlResponse;
   options?: ScatterChartOptions;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function ScatterChart({ data, options }: Props) {
+export default function ScatterChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
-  // TODO: wire up onExportReady for PNG export (phase 3)
   const instanceRef = useRef<ECharts | undefined>(undefined);
   const format = options?.format;
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);

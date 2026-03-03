@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse, HistogramChartOptions } from "../../types";
 import { CHART_COLORS } from "../../theme";
@@ -11,12 +12,20 @@ import { findNumericColumnIndices, getColumnValues } from "./chartUtils";
 interface Props {
   data: EsqlResponse;
   options?: HistogramChartOptions;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function HistogramChart({ data, options }: Props) {
+export default function HistogramChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
   const bins = Math.min(100, Math.max(1, Math.round(options?.bins ?? 10)));
   const format = options?.format;
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -94,6 +103,11 @@ export default function HistogramChart({ data, options }: Props) {
   }, [data, theme, bins, format]);
 
   return (
-    <EChart option={option} theme={theme} sx={{ width: "100%", height: "100%", minHeight: 120 }} />
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
   );
 }
