@@ -82,6 +82,9 @@ export default function LogsPage() {
   const [fieldValuesError, setFieldValuesError] = useState<string | null>(null);
   const [fieldValuesLoading, setFieldValuesLoading] = useState(false);
   const [searchInput, setSearchInput] = useState(searchText);
+  useEffect(() => {
+    setSearchInput(searchText);
+  }, [searchText]);
   const handleRunQueryRef = useRef<() => void>(() => undefined);
   const generatedQuery = useMemo(
     () =>
