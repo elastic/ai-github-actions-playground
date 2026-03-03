@@ -16,7 +16,8 @@ const RESTORE_QS = RESTORE_URL.slice(RESTORE_URL.indexOf("?"));
 const COUNTER_URL =
   "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now";
 const COUNTER_QS = COUNTER_URL.slice(COUNTER_URL.indexOf("?"));
-const NOT_FOUND_URL = "/?index=metrics-system*&metric=zzz.nonexistent&agg=avg&from=now-24h&to=now";
+const NOT_FOUND_URL =
+  "/?index=metrics-system*&metric=zzz.nonexistent&agg=avg&groupBy=host.name&from=now-24h&to=now";
 const NOT_FOUND_QS = NOT_FOUND_URL.slice(NOT_FOUND_URL.indexOf("?"));
 
 const { queryMock, listFieldsMock } = vi.hoisted(() => ({

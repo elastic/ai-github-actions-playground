@@ -192,7 +192,14 @@ export default function ExplorePage() {
 
   // Run query when metric/aggregation/filters/groupBy/timeRange change
   useEffect(() => {
-    if (!client || !selectedMetric || !indexPattern || showDimensionOverview || metricNotFound)
+    if (
+      !client ||
+      !selectedMetric ||
+      !indexPattern ||
+      fieldsLoading ||
+      showDimensionOverview ||
+      metricNotFound
+    )
       return;
 
     abortRef.current?.abort();
@@ -244,6 +251,7 @@ export default function ExplorePage() {
     client,
     indexPattern,
     selectedMetric,
+    fieldsLoading,
     showDimensionOverview,
     metricNotFound,
     metricType,
