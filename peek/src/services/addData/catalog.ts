@@ -5,13 +5,12 @@ export type AddDataGuideType =
   | "fluent_bit"
   | "apm";
 
-export type AddDataTechnologyCategory =
-  | "cloud"
-  | "containers"
-  | "databases"
-  | "applications"
-  | "operating_systems"
-  | "network";
+export type AddDataGuidedExperience =
+  | "cloud_providers"
+  | "kubernetes"
+  | "servers"
+  | "saas_databases"
+  | "advanced";
 
 export type AddDataEnvironment =
   | "kubernetes"
@@ -36,7 +35,7 @@ export interface AddDataRecommendedNextStep {
 export interface AddDataTechnologyCatalogEntry {
   readonly id: string;
   readonly technology: string;
-  readonly category: AddDataTechnologyCategory;
+  readonly experience: AddDataGuidedExperience;
   readonly guideType: AddDataGuideType;
   readonly summary: string;
   readonly defaultPlatform: AddDataInstallPlatform;
@@ -46,20 +45,27 @@ export interface AddDataTechnologyCatalogEntry {
   recommendedNextSteps: readonly AddDataRecommendedNextStep[];
 }
 
-export const ADD_DATA_CATEGORY_LABELS: Readonly<Record<AddDataTechnologyCategory, string>> = {
-  cloud: "Cloud",
-  containers: "Containers",
-  databases: "Databases",
-  applications: "Applications",
-  operating_systems: "Operating Systems",
-  network: "Network",
+export const ADD_DATA_EXPERIENCE_LABELS: Readonly<Record<AddDataGuidedExperience, string>> = {
+  cloud_providers: "Cloud Service Providers",
+  kubernetes: "Kubernetes",
+  servers: "Servers, Desktops & Laptops",
+  saas_databases: "SaaS & Databases",
+  advanced: "Advanced",
+};
+
+export const ADD_DATA_EXPERIENCE_DESCRIPTIONS: Readonly<Record<AddDataGuidedExperience, string>> = {
+  cloud_providers: "Monitor AWS, GCP, or Azure cloud workloads",
+  kubernetes: "Collect cluster, node, and workload telemetry",
+  servers: "Monitor Linux, Windows, or macOS hosts and VMs",
+  saas_databases: "Connect databases and services with OTel receivers",
+  advanced: "Configure custom collectors, FluentBit, or APM agents",
 };
 
 export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "aws",
     technology: "AWS",
-    category: "cloud",
+    experience: "cloud_providers",
     guideType: "aws_cloud_deploy",
     summary: "Collect service metrics, logs, and traces from AWS workloads.",
     defaultPlatform: "linux",
@@ -75,7 +81,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "vpc-flow-logs",
     technology: "VPC Flow Logs",
-    category: "network",
+    experience: "cloud_providers",
     guideType: "edot_collector",
     summary: "Track network flow telemetry and connection patterns.",
     defaultPlatform: "linux",
@@ -90,7 +96,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "kubernetes",
     technology: "Kubernetes",
-    category: "containers",
+    experience: "kubernetes",
     guideType: "edot_collector",
     summary: "Collect cluster, node, and workload telemetry.",
     defaultPlatform: "kubernetes",
@@ -106,7 +112,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "docker",
     technology: "Docker",
-    category: "containers",
+    experience: "kubernetes",
     guideType: "edot_collector",
     summary: "Collect container and host telemetry with Docker Compose.",
     defaultPlatform: "docker",
@@ -122,7 +128,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "linux-host",
     technology: "Linux Host",
-    category: "operating_systems",
+    experience: "servers",
     guideType: "edot_collector",
     summary: "Install EDOT Collector on Linux hosts/VMs.",
     defaultPlatform: "linux",
@@ -137,7 +143,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "windows-host",
     technology: "Windows Host",
-    category: "operating_systems",
+    experience: "servers",
     guideType: "edot_collector",
     summary: "Install EDOT Collector on Windows hosts/VMs.",
     defaultPlatform: "windows",
@@ -150,9 +156,24 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     ],
   },
   {
+    id: "macos-host",
+    technology: "macOS Host",
+    experience: "servers",
+    guideType: "edot_collector",
+    summary: "Install EDOT Collector on macOS.",
+    defaultPlatform: "macos",
+    recommended: false,
+    supportedEnvironments: ["macos", "on_prem"],
+    expectedSignals: ["logs", "metrics"],
+    recommendedNextSteps: [
+      { id: "view-host-overview", label: "Explore metrics", path: "/explore" },
+      { id: "inspect-system-logs", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
     id: "nginx",
     technology: "Nginx",
-    category: "applications",
+    experience: "saas_databases",
     guideType: "otel_receiver",
     summary: "Capture request logs and latency metrics.",
     defaultPlatform: "linux",
@@ -167,7 +188,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "postgresql",
     technology: "PostgreSQL",
-    category: "databases",
+    experience: "saas_databases",
     guideType: "otel_receiver",
     summary: "Capture query performance and resource telemetry.",
     defaultPlatform: "linux",
@@ -182,7 +203,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "redis",
     technology: "Redis",
-    category: "databases",
+    experience: "saas_databases",
     guideType: "otel_receiver",
     summary: "Monitor Redis performance and memory usage.",
     defaultPlatform: "linux",
@@ -196,7 +217,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "mysql",
     technology: "MySQL",
-    category: "databases",
+    experience: "saas_databases",
     guideType: "otel_receiver",
     summary: "Monitor MySQL query performance and server status.",
     defaultPlatform: "linux",
@@ -210,7 +231,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "mongodb",
     technology: "MongoDB",
-    category: "databases",
+    experience: "saas_databases",
     guideType: "otel_receiver",
     summary: "Monitor MongoDB performance and replica set status.",
     defaultPlatform: "linux",
@@ -224,7 +245,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "java-apm",
     technology: "Java",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Auto-instrument Java applications with the Elastic APM agent.",
     defaultPlatform: "linux",
@@ -239,7 +260,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "python-apm",
     technology: "Python",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Auto-instrument Python applications with the Elastic APM agent.",
     defaultPlatform: "linux",
@@ -254,7 +275,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "nodejs-apm",
     technology: "Node.js",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Auto-instrument Node.js applications with the Elastic APM agent.",
     defaultPlatform: "linux",
@@ -269,7 +290,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "go-apm",
     technology: "Go",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Instrument Go applications with the Elastic APM Go agent.",
     defaultPlatform: "linux",
@@ -284,7 +305,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "dotnet-apm",
     technology: ".NET",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Auto-instrument .NET applications with the Elastic APM agent.",
     defaultPlatform: "linux",
@@ -299,7 +320,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "ruby-apm",
     technology: "Ruby",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Auto-instrument Ruby applications with the Elastic APM agent.",
     defaultPlatform: "linux",
@@ -314,7 +335,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "php-apm",
     technology: "PHP",
-    category: "applications",
+    experience: "advanced",
     guideType: "apm",
     summary: "Auto-instrument PHP applications with the Elastic APM agent.",
     defaultPlatform: "linux",
@@ -329,7 +350,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "fluent-bit",
     technology: "Fluent Bit",
-    category: "applications",
+    experience: "advanced",
     guideType: "fluent_bit",
     summary: "Forward logs to Elasticsearch or OTLP endpoints using Fluent Bit.",
     defaultPlatform: "linux",
@@ -345,8 +366,8 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
 export const ADD_DATA_TECHNOLOGY_BY_ID: ReadonlyMap<string, AddDataTechnologyCatalogEntry> =
   new Map(ADD_DATA_TECHNOLOGY_CATALOG.map((entry) => [entry.id, entry] as const));
 
-export function getAddDataTechnologiesByCategory(
-  category: AddDataTechnologyCategory,
+export function getAddDataTechnologiesByExperience(
+  experience: AddDataGuidedExperience,
 ): readonly AddDataTechnologyCatalogEntry[] {
-  return ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) => entry.category === category);
+  return ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) => entry.experience === experience);
 }

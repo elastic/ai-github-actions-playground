@@ -7,11 +7,11 @@ import Typography from "@mui/material/Typography";
 
 import EmptyState from "../EmptyState";
 import {
-  ADD_DATA_CATEGORY_LABELS,
+  ADD_DATA_EXPERIENCE_LABELS,
   type AddDataTechnologyCatalogEntry,
 } from "../../services/addData/catalog";
 
-import { CATEGORY_ICONS, SIGNAL_COLORS } from "./addDataTechnologyConstants";
+import { EXPERIENCE_ICONS, SIGNAL_COLORS, TECHNOLOGY_ICONS } from "./addDataTechnologyConstants";
 
 function TechnologyCard({
   tech,
@@ -25,6 +25,7 @@ function TechnologyCard({
   variant?: "standard" | "hero";
 }) {
   const isHero = variant === "hero";
+  const icon = TECHNOLOGY_ICONS[tech.id] ?? EXPERIENCE_ICONS[tech.experience];
 
   return (
     <ButtonBase
@@ -66,7 +67,7 @@ function TechnologyCard({
               transition: "background-color 0.15s, color 0.15s",
             }}
           >
-            {CATEGORY_ICONS[tech.category]}
+            {icon}
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Stack direction="row" spacing={0.5} alignItems="center">
@@ -103,7 +104,7 @@ function TechnologyCard({
             />
           ))}
           <Chip
-            label={ADD_DATA_CATEGORY_LABELS[tech.category]}
+            label={ADD_DATA_EXPERIENCE_LABELS[tech.experience]}
             size="small"
             variant="outlined"
             sx={{ height: 20, ml: "auto", fontSize: "0.7rem" }}
@@ -115,52 +116,18 @@ function TechnologyCard({
 }
 
 interface AddDataTechnologyResultsProps {
-  showRecommended: boolean;
-  recommendedTechnologies: readonly AddDataTechnologyCatalogEntry[];
   filteredTechnologies: readonly AddDataTechnologyCatalogEntry[];
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   onSelectTechnology: (tech: AddDataTechnologyCatalogEntry) => void;
 }
 
 export default function AddDataTechnologyResults({
-  showRecommended,
-  recommendedTechnologies,
   filteredTechnologies,
   selectedTechnology,
   onSelectTechnology,
 }: AddDataTechnologyResultsProps) {
   return (
     <Box>
-      {showRecommended && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-            Recommended
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
-              gap: 1.5,
-            }}
-          >
-            {recommendedTechnologies.map((tech) => (
-              <TechnologyCard
-                key={tech.id}
-                tech={tech}
-                selected={selectedTechnology?.id === tech.id}
-                onClick={() => onSelectTechnology(tech)}
-                variant="hero"
-              />
-            ))}
-          </Box>
-        </Box>
-      )}
-
-      {showRecommended && (
-        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-          All integrations
-        </Typography>
-      )}
       {filteredTechnologies.length === 0 ? (
         <EmptyState
           heading="No integrations found"

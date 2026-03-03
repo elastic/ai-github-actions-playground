@@ -1,73 +1,88 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
+import ButtonBase from "@mui/material/ButtonBase";
+import Collapse from "@mui/material/Collapse";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchIcon from "@mui/icons-material/Search";
 
 import {
-  ADD_DATA_CATEGORY_LABELS,
+  ADD_DATA_EXPERIENCE_DESCRIPTIONS,
+  ADD_DATA_EXPERIENCE_LABELS,
   ADD_DATA_TECHNOLOGY_CATALOG,
+  type AddDataGuidedExperience,
   type AddDataTechnologyCatalogEntry,
-  type AddDataTechnologyCategory,
 } from "../../services/addData/catalog";
 
 import AddDataTechnologyResults from "./AddDataTechnologyResults";
-import { CATEGORY_ICONS } from "./addDataTechnologyConstants";
+import { EXPERIENCE_ICONS } from "./addDataTechnologyConstants";
 
-type TechnologyCategoryFilter = "all" | AddDataTechnologyCategory;
+const PRIMARY_EXPERIENCES: readonly AddDataGuidedExperience[] = [
+  "cloud_providers",
+  "kubernetes",
+  "servers",
+  "saas_databases",
+];
 
 interface AddDataStepTechnologyProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   onSelectTechnology: (tech: AddDataTechnologyCatalogEntry) => void;
   technologySearch: string;
   onTechnologySearchChange: (search: string) => void;
-  activeCategory: TechnologyCategoryFilter;
-  onActiveCategoryChange: (category: TechnologyCategoryFilter) => void;
   onContinue: () => void;
 }
-
-export type { TechnologyCategoryFilter };
 
 export default function AddDataStepTechnology({
   selectedTechnology,
   onSelectTechnology,
   technologySearch,
   onTechnologySearchChange,
-  activeCategory,
-  onActiveCategoryChange,
   onContinue,
 }: AddDataStepTechnologyProps) {
-  const recommendedTechnologies = useMemo(
-    () => ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.recommended),
-    [],
+  const [selectedExperience, setSelectedExperience] = useState<AddDataGuidedExperience | null>(
+    null,
   );
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const filteredTechnologies = useMemo(() => {
     const query = technologySearch.trim().toLowerCase();
-    return ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => {
-      if (tech.recommended && activeCategory === "all" && query.length === 0) return false;
-      const categoryMatches = activeCategory === "all" || tech.category === activeCategory;
-      const queryMatches =
-        query.length === 0 ||
-        tech.technology.toLowerCase().includes(query) ||
-        tech.summary.toLowerCase().includes(query) ||
-        tech.category.toLowerCase().replaceAll("_", " ").includes(query) ||
-        ADD_DATA_CATEGORY_LABELS[tech.category].toLowerCase().includes(query);
-      return categoryMatches && queryMatches;
-    });
-  }, [activeCategory, technologySearch]);
 
-  const showRecommended = activeCategory === "all" && technologySearch.trim().length === 0;
+    // If searching, filter across all experiences
+    if (query.length > 0) {
+      return ADD_DATA_TECHNOLOGY_CATALOG.filter(
+        (tech) =>
+          tech.technology.toLowerCase().includes(query) ||
+          tech.summary.toLowerCase().includes(query) ||
+          ADD_DATA_EXPERIENCE_LABELS[tech.experience].toLowerCase().includes(query),
+      );
+    }
+
+    // If an experience is selected, filter to that experience
+    if (selectedExperience) {
+      return ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.experience === selectedExperience);
+    }
+
+    return [];
+  }, [technologySearch, selectedExperience]);
+
+  const advancedTechnologies = useMemo(
+    () => ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.experience === "advanced"),
+    [],
+  );
+
+  const showExperienceTiles = !selectedExperience && technologySearch.trim().length === 0;
+  const showSearchResults = technologySearch.trim().length > 0;
 
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 2, p: 2 }}>
       <Box>
-        <Typography variant="h6">Step 1: What are you monitoring?</Typography>
+        <Typography variant="h6">What are you monitoring?</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Pick a technology to tailor environment choices, setup commands, and verification checks.
         </Typography>
@@ -76,7 +91,10 @@ export default function AddDataStepTechnology({
       <TextField
         placeholder="Search integrations..."
         value={technologySearch}
-        onChange={(e) => onTechnologySearchChange(e.target.value)}
+        onChange={(e) => {
+          onTechnologySearchChange(e.target.value);
+          if (e.target.value.trim().length > 0) setSelectedExperience(null);
+        }}
         fullWidth
         size="small"
         slotProps={{
@@ -90,40 +108,150 @@ export default function AddDataStepTechnology({
         }}
       />
 
-      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-        {(
-          [
-            "all",
-            ...(Object.keys(ADD_DATA_CATEGORY_LABELS) as AddDataTechnologyCategory[]),
-          ] as TechnologyCategoryFilter[]
-        ).map((category) => (
-          <Chip
-            key={category}
-            label={category === "all" ? "All" : ADD_DATA_CATEGORY_LABELS[category]}
-            icon={category !== "all" ? CATEGORY_ICONS[category] : undefined}
-            size="small"
-            variant={activeCategory === category ? "filled" : "outlined"}
-            color={activeCategory === category ? "primary" : "default"}
-            onClick={() => onActiveCategoryChange(category)}
-            aria-pressed={activeCategory === category}
-            sx={{ cursor: "pointer" }}
-          />
-        ))}
-      </Stack>
+      {/* Experience hero tiles (2x2 grid) */}
+      {showExperienceTiles && (
+        <>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
+              gap: 1.5,
+            }}
+          >
+            {PRIMARY_EXPERIENCES.map((exp) => (
+              <ExperienceTile
+                key={exp}
+                experience={exp}
+                onClick={() => setSelectedExperience(exp)}
+              />
+            ))}
+          </Box>
 
-      <AddDataTechnologyResults
-        showRecommended={showRecommended}
-        recommendedTechnologies={recommendedTechnologies}
-        filteredTechnologies={filteredTechnologies}
-        selectedTechnology={selectedTechnology}
-        onSelectTechnology={onSelectTechnology}
-      />
+          {/* Advanced section — collapsible */}
+          <Box>
+            <ButtonBase
+              onClick={() => setAdvancedOpen((prev) => !prev)}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                py: 1,
+                px: 0.5,
+                borderRadius: 1,
+                "&:hover": { bgcolor: "action.hover" },
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                {EXPERIENCE_ICONS.advanced}
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {ADD_DATA_EXPERIENCE_LABELS.advanced}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {ADD_DATA_EXPERIENCE_DESCRIPTIONS.advanced}
+                </Typography>
+              </Stack>
+              <ExpandMoreIcon
+                fontSize="small"
+                sx={{
+                  transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
+              />
+            </ButtonBase>
+            <Collapse in={advancedOpen}>
+              <Box sx={{ pt: 1 }}>
+                <AddDataTechnologyResults
+                  filteredTechnologies={advancedTechnologies}
+                  selectedTechnology={selectedTechnology}
+                  onSelectTechnology={onSelectTechnology}
+                />
+              </Box>
+            </Collapse>
+          </Box>
+        </>
+      )}
+
+      {/* Breadcrumb back to experience selection */}
+      {selectedExperience && !showSearchResults && (
+        <Button
+          size="small"
+          startIcon={<ArrowBackIcon fontSize="small" />}
+          onClick={() => setSelectedExperience(null)}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          {ADD_DATA_EXPERIENCE_LABELS[selectedExperience]}
+        </Button>
+      )}
+
+      {/* Technology results for selected experience or search */}
+      {(selectedExperience || showSearchResults) && (
+        <AddDataTechnologyResults
+          filteredTechnologies={filteredTechnologies}
+          selectedTechnology={selectedTechnology}
+          onSelectTechnology={onSelectTechnology}
+        />
+      )}
 
       <Stack direction="row" justifyContent="flex-end">
         <Button variant="contained" onClick={onContinue} disabled={selectedTechnology === null}>
-          Continue to step 2
+          Continue
         </Button>
       </Stack>
     </Paper>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Experience tile
+// ---------------------------------------------------------------------------
+
+function ExperienceTile({
+  experience,
+  onClick,
+}: {
+  experience: AddDataGuidedExperience;
+  onClick: () => void;
+}) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      sx={{ display: "block", width: "100%", borderRadius: 1, textAlign: "left" }}
+    >
+      <Paper
+        variant="outlined"
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          height: "100%",
+          p: 2,
+          cursor: "pointer",
+          transition: "border-color 0.15s, box-shadow 0.15s",
+          "&:hover": { boxShadow: 1, borderColor: "text.secondary" },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: 48,
+            height: 48,
+            borderRadius: 1.5,
+            bgcolor: "action.selected",
+            color: "text.secondary",
+          }}
+        >
+          {EXPERIENCE_ICONS[experience]}
+        </Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          {ADD_DATA_EXPERIENCE_LABELS[experience]}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {ADD_DATA_EXPERIENCE_DESCRIPTIONS[experience]}
+        </Typography>
+      </Paper>
+    </ButtonBase>
   );
 }
