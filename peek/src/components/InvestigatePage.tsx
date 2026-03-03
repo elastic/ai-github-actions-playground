@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -16,17 +16,14 @@ import type { EsqlResponse } from "../types";
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
-import InvestigateSuggestionsPanel, {
-  type RecentEntity,
-} from "./investigate/InvestigateSuggestionsPanel";
+import InvestigateSuggestionsPanel from "./investigate/InvestigateSuggestionsPanel";
 import InvestigateTimelineTable from "./investigate/InvestigateTimelineTable";
+import { useSuggestions } from "./investigate/useSuggestions";
 import {
   type InvestigateTab,
   type TimelineEvent,
   buildInvestigateQuery,
-  buildRecentEntitiesQuery,
   buildSummaryPrompt,
-  parseRecentEntities,
   parseTimelineEvents,
 } from "./investigate/investigateUtils";
 
@@ -37,19 +34,13 @@ export default function InvestigatePage() {
   const [searchedEntity, setSearchedEntity] = useState<string | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [summaryPrompt, setSummaryPrompt] = useState<string | null>(null);
-  const [recentEntitiesByTab, setRecentEntitiesByTab] = useState<{
-    user: { entities: RecentEntity[]; connectionKey: string | null };
-    host: { entities: RecentEntity[]; connectionKey: string | null };
-  }>({
-    user: { entities: [], connectionKey: null },
-    host: { entities: [], connectionKey: null },
-  });
-  const suggestionsLoadedRef = useRef<{ user: boolean; host: boolean }>({
-    user: false,
-    host: false,
-  });
-  const suggestionsRequestTabRef = useRef<InvestigateTab>("user");
   const connectionKey = connection ? JSON.stringify(connection) : null;
+
+  const { visibleRecentEntities, suggestionsLoading } = useSuggestions(
+    connection,
+    connectionKey,
+    activeTab,
+  );
 
   const handleSuccess = useCallback(
     (data: EsqlResponse) => {
@@ -72,44 +63,6 @@ export default function InvestigatePage() {
     onSuccess: handleSuccess,
     onFailure: handleFailure,
   });
-
-  const handleSuggestionsSuccess = useCallback(
-    (data: EsqlResponse) => {
-      const tab = suggestionsRequestTabRef.current;
-      setRecentEntitiesByTab((previous) => ({
-        ...previous,
-        [tab]: { entities: parseRecentEntities(data, tab), connectionKey },
-      }));
-      suggestionsLoadedRef.current[tab] = true;
-    },
-    [connectionKey],
-  );
-
-  const handleSuggestionsFailure = useCallback(() => {
-    const tab = suggestionsRequestTabRef.current;
-    setRecentEntitiesByTab((previous) => ({
-      ...previous,
-      [tab]: { entities: [], connectionKey },
-    }));
-    suggestionsLoadedRef.current[tab] = true;
-  }, [connectionKey]);
-
-  const { runQuery: runSuggestionsQuery, loading: suggestionsLoading } = useEsqlQuery({
-    connection,
-    onSuccess: handleSuggestionsSuccess,
-    onFailure: handleSuggestionsFailure,
-  });
-
-  useEffect(() => {
-    suggestionsLoadedRef.current = { user: false, host: false };
-  }, [connectionKey]);
-
-  useEffect(() => {
-    if (connection && !suggestionsLoading && !suggestionsLoadedRef.current[activeTab]) {
-      suggestionsRequestTabRef.current = activeTab;
-      runSuggestionsQuery(buildRecentEntitiesQuery(activeTab));
-    }
-  }, [connection, activeTab, runSuggestionsQuery, suggestionsLoading]);
 
   const handleSearch = useCallback(() => {
     const trimmed = entityInput.trim();
@@ -146,11 +99,6 @@ export default function InvestigatePage() {
       /* clipboard may not be available */
     }
   }, [summaryPrompt]);
-
-  const visibleRecentEntities =
-    recentEntitiesByTab[activeTab].connectionKey === connectionKey
-      ? recentEntitiesByTab[activeTab].entities
-      : [];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
