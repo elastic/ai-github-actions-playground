@@ -72,7 +72,10 @@ export default function ServiceTracesTable({
       </TableHead>
       <TableBody>
         {traces.map((trace) => (
-          <TableRow key={`${trace.traceId}-${trace.timestamp}-${trace.spanName}`} hover>
+          <TableRow
+            key={trace.spanId || `${trace.traceId}-${trace.timestamp}-${trace.spanName}`}
+            hover
+          >
             <TableCell>
               <Typography
                 variant="body2"

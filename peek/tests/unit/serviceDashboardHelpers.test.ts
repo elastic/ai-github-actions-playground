@@ -103,20 +103,22 @@ describe("serviceDashboardHelpers", () => {
       const response: EsqlResponse = {
         columns: [
           { name: "trace.id", type: "keyword" },
+          { name: "span.id", type: "keyword" },
           { name: "name", type: "keyword" },
           { name: "duration_ms", type: "double" },
           { name: "status.code", type: "keyword" },
           { name: "@timestamp", type: "date" },
         ],
         values: [
-          ["abc123", "GET /api/users", 45.2, "OK", "2026-01-01T00:00:00Z"],
-          ["def456", "POST /api/orders", 120.5, "Error", "2026-01-01T00:01:00Z"],
+          ["abc123", "span-1", "GET /api/users", 45.2, "OK", "2026-01-01T00:00:00Z"],
+          ["def456", "span-2", "POST /api/orders", 120.5, "Error", "2026-01-01T00:01:00Z"],
         ],
       };
       const traces = parseRecentTraces(response);
       expect(traces).toHaveLength(2);
       expect(traces[0]).toEqual({
         traceId: "abc123",
+        spanId: "span-1",
         spanName: "GET /api/users",
         durationMs: 45.2,
         statusCode: "OK",
@@ -124,6 +126,7 @@ describe("serviceDashboardHelpers", () => {
       });
       expect(traces[1]).toEqual({
         traceId: "def456",
+        spanId: "span-2",
         spanName: "POST /api/orders",
         durationMs: 120.5,
         statusCode: "Error",
@@ -139,6 +142,7 @@ describe("serviceDashboardHelpers", () => {
       const traces = parseRecentTraces(response);
       expect(traces[0]).toEqual({
         traceId: "abc123",
+        spanId: "",
         spanName: "unknown",
         durationMs: 0,
         statusCode: "",
@@ -150,16 +154,18 @@ describe("serviceDashboardHelpers", () => {
       const response: EsqlResponse = {
         columns: [
           { name: "trace.id", type: "keyword" },
+          { name: "span.id", type: "keyword" },
           { name: "name", type: "keyword" },
           { name: "duration_ms", type: "double" },
           { name: "status.code", type: "keyword" },
           { name: "@timestamp", type: "date" },
         ],
-        values: [["abc123", "op", "abc", "OK", "2026-01-01T00:00:00Z"]],
+        values: [["abc123", "span-1", "op", "abc", "OK", "2026-01-01T00:00:00Z"]],
       };
       const traces = parseRecentTraces(response);
       expect(traces[0]).toEqual({
         traceId: "abc123",
+        spanId: "span-1",
         spanName: "op",
         durationMs: 0,
         statusCode: "OK",

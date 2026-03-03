@@ -76,7 +76,7 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("@timestamp >= NOW() - 1 hour");
       expect(query).toContain("@timestamp <= NOW()");
       expect(query).toContain("EVAL duration_ms =");
-      expect(query).toContain("KEEP trace.id, name, duration_ms, status.code, @timestamp");
+      expect(query).toContain("KEEP trace.id, span.id, name, duration_ms, status.code, @timestamp");
       expect(query).toContain("SORT @timestamp DESC");
       expect(query).toContain("LIMIT 100");
     });

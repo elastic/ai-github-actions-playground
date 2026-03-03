@@ -10,6 +10,7 @@ export interface RouteRow {
 
 export interface RecentTrace {
   traceId: string;
+  spanId: string;
   spanName: string;
   durationMs: number;
   statusCode: string;
@@ -53,6 +54,7 @@ export function parseRecentTraces(result: EsqlResponse): RecentTrace[] {
 
   return result.values.map((row) => ({
     traceId: String(get(row, "trace.id") ?? ""),
+    spanId: String(get(row, "span.id") ?? ""),
     spanName: String(get(row, "name") ?? "unknown"),
     durationMs: toFiniteNumber(get(row, "duration_ms")),
     statusCode: String(get(row, "status.code") ?? ""),

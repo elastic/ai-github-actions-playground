@@ -77,7 +77,7 @@ export function buildServiceRecentTracesQuery(
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
     `EVAL duration_ms = ${durationExpr} / 1000.0`,
-    `KEEP ${fields.traceId}, ${fields.spanName}, duration_ms, ${fields.statusCode}, ${fields.timestamp}`,
+    `KEEP ${fields.traceId}, ${fields.spanId}, ${fields.spanName}, duration_ms, ${fields.statusCode}, ${fields.timestamp}`,
     `SORT ${fields.timestamp} DESC`,
     `LIMIT 100`,
   ]);
