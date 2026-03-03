@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Fade from "@mui/material/Fade";
@@ -8,6 +9,8 @@ import Tooltip from "@mui/material/Tooltip";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { useLLMStore } from "../store/useLLMStore";
 import { usePageInsight } from "../hooks/usePageInsight";
@@ -101,9 +104,34 @@ export default function PageInsightBanner({
             </IconButton>
           </>
         }
-        sx={{ "& .MuiAlert-message": { fontStyle: "italic" } }}
+        sx={{
+          "& .MuiAlert-message": {
+            fontStyle: "italic",
+            "& code": {
+              px: 0.5,
+              borderRadius: 0.5,
+              bgcolor: "action.selected",
+              fontSize: "0.85em",
+              fontFamily: "monospace",
+            },
+            "& h1,& h2,& h3,& h4,& h5,& h6": { mt: 1, mb: 0.5 },
+            "& li": { mb: 0.5 },
+            "& p": { mt: 0, mb: 1 },
+            "& p:last-child": { mb: 0 },
+            "& pre": {
+              overflow: "auto",
+              p: 1,
+              borderRadius: 1,
+              bgcolor: "action.selected",
+              "& code": { p: 0, bgcolor: "transparent" },
+            },
+            "& ul,& ol": { mb: 1, pl: 2.5 },
+          },
+        }}
       >
-        {insight}
+        <Box component="span">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{insight}</ReactMarkdown>
+        </Box>
       </Alert>
     </Fade>
   );
