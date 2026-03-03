@@ -37,7 +37,7 @@ export function usePageSlotInsights({
   slots,
   enabled = true,
 }: UsePageSlotInsightsOptions) {
-  const slotsKey = slots.map((slot) => `${slot.slotId}:${slot.label}`).join("|");
+  const slotsKey = JSON.stringify(slots);
   const {
     apiKey,
     provider,
