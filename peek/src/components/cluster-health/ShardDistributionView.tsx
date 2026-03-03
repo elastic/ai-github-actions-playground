@@ -61,9 +61,9 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
   const indexDistribution = useMemo(() => {
     const map = new Map<string, { primary: number; replica: number; unassigned: number }>();
     for (const shard of shards) {
-      const idx = shard.index ?? "unknown";
-      if (!map.has(idx)) map.set(idx, { primary: 0, replica: 0, unassigned: 0 });
-      const entry = map.get(idx)!;
+      const indexName = shard.index ?? "unknown";
+      if (!map.has(indexName)) map.set(indexName, { primary: 0, replica: 0, unassigned: 0 });
+      const entry = map.get(indexName)!;
       if (shard.state === "UNASSIGNED") {
         entry.unassigned++;
       } else if (shard.prirep === "p") {
@@ -107,7 +107,7 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
             Shard Distribution by Index
           </Typography>
           <TableContainer>
-            <Table size="small">
+            <Table size="small" aria-label="Shard Distribution by Index">
               <TableHead>
                 <TableRow>
                   {(

@@ -26,7 +26,7 @@ export default function NodeDiskUsageTable({ allocation, watermarks }: NodeDiskU
         Node Disk Usage
       </Typography>
       <TableContainer>
-        <Table size="small">
+        <Table size="small" aria-label="Node Disk Usage">
           <TableHead>
             <TableRow>
               <TableCell>Node</TableCell>
