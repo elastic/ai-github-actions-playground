@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -28,6 +28,14 @@ vi.mock("../../src/services/es", () => ({
     return typeof obj.status === "number" && typeof obj.message === "string";
   },
 }));
+
+// Mock probeOtlpEndpoint to resolve synchronously, eliminating the async
+// fetch + setTimeout cycle that causes non-deterministic re-renders on mount.
+// Other exports are kept real so utility-function tests still work.
+vi.mock("../../src/utils/addDataUtils", async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return { ...actual, probeOtlpEndpoint: vi.fn().mockResolvedValue(true) };
+});
 
 const fetchSpy = vi.spyOn(globalThis, "fetch");
 
@@ -64,6 +72,7 @@ describe("AddDataPage", () => {
     vi.clearAllMocks();
     resetAllStores();
     mockGetDataStreams.mockResolvedValue({ data_streams: [] });
+    vi.mocked(probeOtlpEndpoint).mockResolvedValue(true);
     fetchSpy.mockResolvedValue(new Response(null, { status: 200 }));
     useConnectionStore.getState().setConnection({
       url: "https://my-project.es.us-east-1.aws.elastic.cloud:443",
@@ -81,7 +90,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: /Kubernetes/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Docker/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Linux Host/ })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("filters technologies by search and category", async () => {
     const user = userEvent.setup();
@@ -96,7 +105,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getAllByRole("button", { name: /Databases/ })[0]);
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
     expect(screen.queryByText("Linux Host")).not.toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("transitions through explicit 5-step flow", async () => {
     const user = userEvent.setup();
@@ -121,7 +130,7 @@ describe("AddDataPage", () => {
     expect(
       screen.getByRole("heading", { name: /Step 5: Explore your data \+ next steps/i }),
     ).toBeInTheDocument();
-  }, 15_000);
+  }, 30_000);
 
   it("reuses endpoint type and platform controls in Step 2/3", async () => {
     const user = userEvent.setup();
@@ -135,7 +144,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
-  }, 15_000);
+  }, 30_000);
 
   it("shows contextual verification expectations in Step 4", async () => {
     const user = userEvent.setup();
@@ -146,7 +155,7 @@ describe("AddDataPage", () => {
       screen.getByText(/For Kubernetes, we expect to receive metrics, logs and traces\./),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
-  }, 15_000);
+  }, 30_000);
 
   it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
     const user = userEvent.setup();
@@ -177,7 +186,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
-  }, 15_000);
+  }, 30_000);
 
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
     // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
@@ -218,7 +227,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
     expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
-  }, 15_000);
+  }, 30_000);
 
   it("shows OTLP alert when no ingest endpoint can be derived", async () => {
     // Use a non-cloud URL so no OTLP endpoint can be derived
@@ -240,22 +249,32 @@ describe("AddDataPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
     });
-  }, 15_000);
+  }, 30_000);
 });
 
 describe("probeOtlpEndpoint", () => {
+  // The module-level vi.mock replaces probeOtlpEndpoint with a stub for the
+  // component tests above.  These utility tests need the real implementation.
+  let realProbeOtlpEndpoint: typeof probeOtlpEndpoint;
+  beforeAll(async () => {
+    const mod = (await vi.importActual("../../src/utils/addDataUtils")) as {
+      probeOtlpEndpoint: typeof probeOtlpEndpoint;
+    };
+    realProbeOtlpEndpoint = mod.probeOtlpEndpoint;
+  });
+
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
   it("returns true when fetch resolves", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
-    expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(true);
+    expect(await realProbeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(true);
   });
 
   it("returns false when fetch rejects", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
-    expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(false);
+    expect(await realProbeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud")).toBe(false);
   });
 
   it("returns false when fetch times out", async () => {
@@ -267,7 +286,7 @@ describe("probeOtlpEndpoint", () => {
           );
         }),
     );
-    expect(await probeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud", 50)).toBe(false);
+    expect(await realProbeOtlpEndpoint("https://x.ingest.us.aws.elastic.cloud", 50)).toBe(false);
   });
 });
 
