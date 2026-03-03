@@ -26,6 +26,7 @@ import type {
 import { getFieldValues, isDimensionField } from "../services/es";
 
 import EmptyState from "./EmptyState";
+import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
 
 interface Props {
   fields: FieldInfo[];
@@ -199,6 +200,7 @@ export default function DimensionSidebar({
           {filteredDimensions.map((field) => {
             const state = dimensionStates[field.name];
             const isGroupBy = groupBy === field.name;
+            const fieldVisual = classifyFieldVisual(field.name, field.metricType);
             return (
               <Fragment key={field.name}>
                 <ListItem
@@ -249,9 +251,12 @@ export default function DimensionSidebar({
                     sx={{ py: 0.5, px: 1 }}
                   >
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="caption" noWrap display="block" title={field.name}>
-                        {field.name}
-                      </Typography>
+                      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                        {getFieldVisualIcon(fieldVisual, 12)}
+                        <Typography variant="caption" noWrap display="block" title={field.name}>
+                          {field.name}
+                        </Typography>
+                      </Box>
                       <Chip
                         label={field.type}
                         size="small"
