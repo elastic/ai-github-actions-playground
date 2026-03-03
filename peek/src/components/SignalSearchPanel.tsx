@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, useId, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -78,6 +78,7 @@ export default function SignalSearchPanel({
 }: SignalSearchPanelProps) {
   const [editorFocused, setEditorFocused] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
+  const explainPanelId = useId();
   const resultLabel = (count: number) => (count === 1 ? resultNoun.replace(/s$/, "") : resultNoun);
 
   const editorExtensions = useMemo(
@@ -211,6 +212,8 @@ export default function SignalSearchPanel({
                     variant="outlined"
                     startIcon={<AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />}
                     onClick={() => setExplainOpen((v) => !v)}
+                    aria-expanded={explainOpen}
+                    aria-controls={explainPanelId}
                     sx={{
                       minHeight: "unset",
                       py: 0.5,
@@ -227,6 +230,7 @@ export default function SignalSearchPanel({
               </Box>
               <Collapse in={explainOpen}>
                 <Box
+                  id={explainPanelId}
                   sx={{
                     py: 1,
                     px: 1.5,

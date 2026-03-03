@@ -53,9 +53,10 @@ export function useTracesOrchestrator() {
   const dashboardTimeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
   useEffect(() => {
     const { from, to } = toTraceTimeRange(dashboardTimeRange);
+    const { filters: currentFilters } = useTracesStore.getState();
+    if (currentFilters.timeFrom === from && currentFilters.timeTo === to) return;
     updateFilters({ timeFrom: from, timeTo: to });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboardTimeRange]);
+  }, [dashboardTimeRange, updateFilters]);
 
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);

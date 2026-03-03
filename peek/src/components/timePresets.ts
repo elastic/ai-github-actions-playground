@@ -1,4 +1,5 @@
 import { resolveDateTime } from "../services/datemath";
+import { escapeEsqlString } from "../services/es/esqlUtils";
 import type { TimeRange } from "../types";
 
 const RELATIVE_TIME_PRESETS: Array<{
@@ -87,7 +88,7 @@ export function toTraceTimeRange(range: TimeRange): { from: string; to: string }
   const fromIso = fromResolved ? fromResolved.toISOString() : range.from;
   const toIso = toResolved ? toResolved.toISOString() : range.to;
   return {
-    from: `TO_DATETIME("${fromIso}")`,
-    to: `TO_DATETIME("${toIso}")`,
+    from: `TO_DATETIME("${escapeEsqlString(fromIso)}")`,
+    to: `TO_DATETIME("${escapeEsqlString(toIso)}")`,
   };
 }
