@@ -1,3 +1,10 @@
+export type AddDataGuideType =
+  | "edot_collector"
+  | "aws_cloud_deploy"
+  | "otel_receiver"
+  | "fluent_bit"
+  | "apm";
+
 export type AddDataTechnologyCategory =
   | "cloud"
   | "containers"
@@ -30,6 +37,7 @@ export interface AddDataTechnologyCatalogEntry {
   readonly id: string;
   readonly technology: string;
   readonly category: AddDataTechnologyCategory;
+  readonly guideType: AddDataGuideType;
   readonly summary: string;
   readonly defaultPlatform: AddDataInstallPlatform;
   readonly recommended: boolean;
@@ -52,6 +60,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "aws",
     technology: "AWS",
     category: "cloud",
+    guideType: "edot_collector",
     summary: "Collect service metrics, logs, and traces from AWS workloads.",
     defaultPlatform: "linux",
     recommended: false,
@@ -67,6 +76,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "vpc-flow-logs",
     technology: "VPC Flow Logs",
     category: "network",
+    guideType: "edot_collector",
     summary: "Track network flow telemetry and connection patterns.",
     defaultPlatform: "linux",
     recommended: false,
@@ -81,6 +91,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "kubernetes",
     technology: "Kubernetes",
     category: "containers",
+    guideType: "edot_collector",
     summary: "Collect cluster, node, and workload telemetry.",
     defaultPlatform: "kubernetes",
     recommended: true,
@@ -96,6 +107,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "docker",
     technology: "Docker",
     category: "containers",
+    guideType: "edot_collector",
     summary: "Collect container and host telemetry with Docker Compose.",
     defaultPlatform: "docker",
     recommended: true,
@@ -111,6 +123,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "linux-host",
     technology: "Linux Host",
     category: "operating_systems",
+    guideType: "edot_collector",
     summary: "Install EDOT Collector on Linux hosts/VMs.",
     defaultPlatform: "linux",
     recommended: true,
@@ -125,6 +138,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "windows-host",
     technology: "Windows Host",
     category: "operating_systems",
+    guideType: "edot_collector",
     summary: "Install EDOT Collector on Windows hosts/VMs.",
     defaultPlatform: "windows",
     recommended: false,
@@ -139,6 +153,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "nginx",
     technology: "Nginx",
     category: "applications",
+    guideType: "edot_collector",
     summary: "Capture request logs and latency metrics.",
     defaultPlatform: "linux",
     recommended: false,
@@ -153,6 +168,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "postgresql",
     technology: "PostgreSQL",
     category: "databases",
+    guideType: "edot_collector",
     summary: "Capture query performance and resource telemetry.",
     defaultPlatform: "linux",
     recommended: false,
