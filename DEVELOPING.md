@@ -257,6 +257,40 @@ and adapts. They report only genuine bugs.
 
 Many rules (no `any`, `import type`, import ordering, no duplicate imports) are enforced automatically by ESLint and TypeScript — see `peek/eslint.config.js` and `peek/tsconfig.json`. This section covers the design guidance that requires human judgment.
 
+### Custom ESLint Rules (`eslint-plugin-peek`)
+
+The project has a custom ESLint plugin at `peek/eslint-plugin-peek/` that enforces the design language at lint time. These rules run on every commit via a husky pre-commit hook and in CI. Knowing them prevents commit failures.
+
+**All source files** (`src/**/*.ts`, `src/**/*.tsx`):
+
+| Rule | Severity | What It Enforces |
+|------|----------|------------------|
+| `peek/no-hardcoded-colors` | error | No inline hex values in `sx` props — use theme tokens (`text.secondary`, `background.paper`, etc.) |
+| `peek/consistent-typography-variants` | error | Only approved Typography variants: `h3` (metrics only), `h5`, `h6`, `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, `overline`. Notably, `h4` is banned. |
+| `peek/no-direct-echarts-import` | error | No `import * as echarts from 'echarts/core'` — use `EChartWrapper` or Perses components |
+| `peek/no-div-onclick` | error | No `<Box onClick>` or `<div onClick>` — use `ButtonBase`, `Button`, `IconButton`, or `ListItemButton` |
+| `peek/enforce-spacing-tokens` | error | MUI spacing values must be in the approved set: `0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6`. Values like `0.75` or `0.125` are rejected. |
+| `peek/no-hardcoded-heights` | error | No hardcoded pixel heights for standard UI elements — use `COMPONENT_HEIGHTS` from `src/types/tokens.ts` |
+
+**Component files only** (`src/components/**/*.tsx`):
+
+| Rule | Severity | What It Enforces |
+|------|----------|------------------|
+| `peek/max-component-lines` | warn | Component files should not exceed 200 lines — consider decomposing |
+| `peek/enforce-empty-state` | error | Empty-data branches must render the `<EmptyState>` component, not bare placeholders |
+| `peek/no-circular-progress` | error | No `<CircularProgress>` — use `<ContentSkeleton>` or `<LinearProgress>` for loading states |
+| `peek/require-icon-button-aria-label` | error | Every `<IconButton>` must have an `aria-label` prop |
+
+**Other enforced rules** (from third-party plugins):
+
+| Rule | What It Enforces |
+|------|------------------|
+| `import/order` | Import groups separated by blank lines (builtin → external → internal → parent → sibling → index) |
+| `import/no-duplicates` | No duplicate import statements |
+| `no-restricted-imports` | No barrel MUI imports (`@mui/material`) — use path imports (`@mui/material/Button`). Components cannot import directly from `services/es/client`. |
+| `mui/sort-sx-keys` | Sort keys in `sx` props alphabetically (auto-fixable with `eslint --fix`) |
+| `@typescript-eslint/consistent-type-imports` | Use `import type` for type-only imports |
+
 ### TypeScript
 
 - Prefer discriminated unions for state modeling (e.g., `{ status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: Error }`) over optional fields.

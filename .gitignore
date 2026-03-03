@@ -6,5 +6,6 @@ coverage
 
 __pycache__/
 
-# Claude agent temporary files
-.claude/
+# Claude agent temporary files (but track skills)
+.claude/*
+!.claude/skills/
