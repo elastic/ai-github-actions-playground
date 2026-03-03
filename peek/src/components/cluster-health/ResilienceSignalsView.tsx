@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
 
-import InfoCard from "./InfoCard";
+import InfoCard, { type InfoCardSeverity } from "./InfoCard";
 
 interface ResilienceSignalsViewProps {
   data: ClusterHealthData;
@@ -12,6 +12,18 @@ interface ResilienceSignalsViewProps {
 
 export default function ResilienceSignalsView({ data }: ResilienceSignalsViewProps) {
   const nodeValues = Object.values(data.nodeStats?.nodes ?? {});
+
+  // Cluster health
+  const healthStatus = data.clusterHealth?.status ?? "unknown";
+  const healthSeverity: InfoCardSeverity | undefined =
+    healthStatus === "red"
+      ? "error"
+      : healthStatus === "yellow"
+        ? "warning"
+        : healthStatus === "green"
+          ? "success"
+          : undefined;
+  const unassignedShards = data.clusterHealth?.unassigned_shards ?? 0;
 
   // Recovery
   const recoveringIndices = Object.keys(data.recovery ?? {}).length;
@@ -64,6 +76,16 @@ export default function ResilienceSignalsView({ data }: ResilienceSignalsViewPro
   return (
     <>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
+        <InfoCard
+          title="Cluster health"
+          value={healthStatus.toUpperCase()}
+          severity={healthSeverity}
+        />
+        <InfoCard
+          title="Unassigned shards"
+          value={unassignedShards.toLocaleString()}
+          severity={unassignedShards > 0 ? "error" : "success"}
+        />
         <InfoCard title="Recovering indices" value={recoveringIndices.toString()} />
         <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />
         <InfoCard

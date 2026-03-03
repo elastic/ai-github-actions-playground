@@ -1,5 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
@@ -37,6 +44,47 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
 
   const unassignedReasons = useMemo(() => groupUnassignedReasons(shards), [shards]);
 
+  // Shard distribution per index
+  type SortKey = "index" | "primary" | "replica" | "unassigned";
+  const [sortKey, setSortKey] = useState<SortKey>("index");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "index" ? "asc" : "desc");
+    }
+  };
+
+  const indexDistribution = useMemo(() => {
+    const map = new Map<string, { primary: number; replica: number; unassigned: number }>();
+    for (const shard of shards) {
+      const idx = shard.index ?? "unknown";
+      if (!map.has(idx)) map.set(idx, { primary: 0, replica: 0, unassigned: 0 });
+      const entry = map.get(idx)!;
+      if (shard.state === "UNASSIGNED") {
+        entry.unassigned++;
+      } else if (shard.prirep === "p") {
+        entry.primary++;
+      } else {
+        entry.replica++;
+      }
+    }
+    return Array.from(map.entries()).map(([index, counts]) => ({ index, ...counts }));
+  }, [shards]);
+
+  const sortedDistribution = useMemo(() => {
+    const rows = [...indexDistribution];
+    rows.sort((a, b) => {
+      const mul = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "index") return mul * a.index.localeCompare(b.index);
+      return mul * (a[sortKey] - b[sortKey]);
+    });
+    return rows;
+  }, [indexDistribution, sortKey, sortDir]);
+
   return (
     <>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexWrap: "wrap" }}>
@@ -52,6 +100,57 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
         <InfoCard title="Shard skew" value={shardSkew.toString()} detail="max-min per node" />
         <InfoCard title="Primary/replica ratio" value={ratio} />
       </Stack>
+
+      {indexDistribution.length > 0 ? (
+        <>
+          <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
+            Shard Distribution by Index
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  {(
+                    [
+                      ["index", "Index"],
+                      ["primary", "Primary"],
+                      ["replica", "Replica"],
+                      ["unassigned", "Unassigned"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <TableCell key={key} align={key === "index" ? undefined : "right"}>
+                      <TableSortLabel
+                        active={sortKey === key}
+                        direction={sortKey === key ? sortDir : "asc"}
+                        onClick={() => handleSort(key)}
+                      >
+                        {label}
+                      </TableSortLabel>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedDistribution.map((row) => (
+                  <TableRow key={row.index}>
+                    <TableCell>{row.index}</TableCell>
+                    <TableCell align="right">{row.primary}</TableCell>
+                    <TableCell align="right">{row.replica}</TableCell>
+                    <TableCell
+                      align="right"
+                      sx={
+                        row.unassigned > 0 ? { color: "error.main", fontWeight: "bold" } : undefined
+                      }
+                    >
+                      {row.unassigned}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
+      ) : null}
 
       {unassignedReasons.size > 0 ? (
         <>

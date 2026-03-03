@@ -16,6 +16,7 @@ import {
   percentSeverity,
 } from "./clusterHealthUtils";
 import InfoCard from "./InfoCard";
+import NodeDiskUsageTable from "./NodeDiskUsageTable";
 
 interface CapacityPressureViewProps {
   data: ClusterHealthData;
@@ -117,6 +118,8 @@ export default function CapacityPressureView({ data }: CapacityPressureViewProps
           value={(data.clusterStats?.indices?.count ?? 0).toLocaleString()}
         />
       </Stack>
+
+      <NodeDiskUsageTable allocation={data.allocation ?? []} watermarks={watermarks} />
 
       {gcSummary.length > 0 ? (
         <>
