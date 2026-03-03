@@ -42,10 +42,12 @@ export function useSuggestions(
   const [recentEntitiesByTab, setRecentEntitiesByTab] = useState(makeEmptyCache);
   const suggestionsLoadedRef = useRef(makeLoadedFlags());
   const suggestionsRequestTabRef = useRef<InvestigateTab>("user");
+  const suggestionsRequestConnectionKeyRef = useRef<string | null>(null);
 
   const handleSuggestionsSuccess = useCallback(
     (data: EsqlResponse) => {
       const tab = suggestionsRequestTabRef.current;
+      if (suggestionsRequestConnectionKeyRef.current !== connectionKey) return;
       setRecentEntitiesByTab((previous) => ({
         ...previous,
         [tab]: { entities: parseRecentEntities(data, tab), connectionKey },
@@ -57,6 +59,7 @@ export function useSuggestions(
 
   const handleSuggestionsFailure = useCallback(() => {
     const tab = suggestionsRequestTabRef.current;
+    if (suggestionsRequestConnectionKeyRef.current !== connectionKey) return;
     setRecentEntitiesByTab((previous) => ({
       ...previous,
       [tab]: { entities: [], connectionKey },
@@ -77,9 +80,10 @@ export function useSuggestions(
   useEffect(() => {
     if (connection && !suggestionsLoading && !suggestionsLoadedRef.current[activeTab]) {
       suggestionsRequestTabRef.current = activeTab;
+      suggestionsRequestConnectionKeyRef.current = connectionKey;
       runSuggestionsQuery(buildRecentEntitiesQuery(activeTab));
     }
-  }, [connection, activeTab, runSuggestionsQuery, suggestionsLoading]);
+  }, [connection, connectionKey, activeTab, runSuggestionsQuery, suggestionsLoading]);
 
   const visibleRecentEntities =
     recentEntitiesByTab[activeTab].connectionKey === connectionKey

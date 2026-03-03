@@ -1,12 +1,12 @@
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { buildPipeline, buildWherePipe } from "../../services/es/queryParts";
 
+import { INVESTIGATE_TIMELINE_FIELDS } from "./investigateSchema";
 import type { InvestigateTab } from "./investigateUtils";
 
 const INVESTIGATE_INDICES = "logs-*, .ds-logs-*, filebeat-*, auditbeat-*, winlogbeat-*";
 
-const INVESTIGATE_KEEP_FIELDS =
-  "@timestamp, event.category, event.action, event.outcome, user.name, host.name, source.ip, message, _index";
+const INVESTIGATE_KEEP_FIELDS = INVESTIGATE_TIMELINE_FIELDS.join(", ");
 const FILE_MATCH_FIELDS = ["file.name", "file.hash.md5", "file.hash.sha1", "file.hash.sha256"];
 
 /** Map each investigate tab to its primary ECS field. */

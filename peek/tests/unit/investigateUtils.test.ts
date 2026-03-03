@@ -9,6 +9,7 @@ import {
   buildRecentEntitiesQuery,
   investigateField,
 } from "../../src/components/investigate/investigateQueryBuilder";
+import { INVESTIGATE_TIMELINE_FIELDS } from "../../src/components/investigate/investigateSchema";
 import {
   parseRecentEntities,
   parseTimelineEvents,
@@ -74,6 +75,14 @@ describe("buildInvestigateQuery", () => {
     const keepClause = query.split("|").find((pipe) => pipe.trimStart().startsWith("KEEP"));
     expect(keepClause).toContain("event.category");
     expect(keepClause).toContain("_index");
+  });
+
+  it("includes all timeline fields in KEEP clause", () => {
+    const query = buildInvestigateQuery("user", "alice");
+    const keepClause = query.split("|").find((pipe) => pipe.trimStart().startsWith("KEEP"));
+    for (const field of INVESTIGATE_TIMELINE_FIELDS) {
+      expect(keepClause).toContain(field);
+    }
   });
 
   it("builds an IP address query", () => {
