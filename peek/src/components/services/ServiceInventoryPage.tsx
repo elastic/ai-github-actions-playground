@@ -76,10 +76,15 @@ export default function ServiceInventoryPage() {
 
   const handleViewTraces = useCallback(
     (serviceName: string) => {
-      useTracesStore.getState().setFilters({ ...EMPTY_FILTERS, services: [serviceName] });
+      useTracesStore.getState().setFilters({
+        ...EMPTY_FILTERS,
+        timeFrom: filters.timeFrom,
+        timeTo: filters.timeTo,
+        services: [serviceName],
+      });
       navigate(PAGE_MANIFEST.traces.path);
     },
-    [navigate],
+    [navigate, filters.timeFrom, filters.timeTo],
   );
 
   const serviceRows = useMemo(() => {

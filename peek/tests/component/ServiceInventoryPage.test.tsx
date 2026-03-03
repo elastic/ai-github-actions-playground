@@ -190,7 +190,12 @@ describe("ServiceInventoryPage", () => {
   it("navigates to Traces with a clean service filter when View Traces is clicked", async () => {
     const user = userEvent.setup();
     // Pre-seed stale filters that should be wiped by the drilldown
-    useTracesStore.getState().updateFilters({ statusCodes: ["ERROR"], services: ["old-service"] });
+    useTracesStore.getState().updateFilters({
+      statusCodes: ["ERROR"],
+      services: ["old-service"],
+      timeFrom: "NOW() - 15 minutes",
+      timeTo: "NOW()",
+    });
 
     renderPage();
 
@@ -205,5 +210,7 @@ describe("ServiceInventoryPage", () => {
     expect(tracesFilters.services).toEqual(["frontend"]);
     // Stale filters must be cleared
     expect(tracesFilters.statusCodes).toEqual([]);
+    expect(tracesFilters.timeFrom).toBe("NOW() - 1 hour");
+    expect(tracesFilters.timeTo).toBe("NOW()");
   });
 });
