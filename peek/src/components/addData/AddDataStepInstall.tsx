@@ -13,9 +13,11 @@ import type { UserCapabilities } from "../../services/es";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import { useCopyFeedbackTimeout } from "../../hooks/useCopyFeedbackTimeout";
 import type { EndpointType, Platform } from "../../utils/addDataUtils";
+import type { OtelReceiverDefinition } from "../../services/addData/otelReceiverCatalog";
 
 import { GUIDE_TYPE_DEFINITIONS } from "./guideRegistry";
 import EdotCollectorInstall from "./guides/EdotCollectorInstall";
+import OtelReceiverInstall from "./guides/OtelReceiverInstall";
 
 interface AddDataStepInstallProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
@@ -35,6 +37,8 @@ interface AddDataStepInstallProps {
   derivedOtlpUrl: string | null;
   clusterVersion: string | null;
   connectionUrl: string | null;
+  receiver: OtelReceiverDefinition | null;
+  receiverFieldValues: Record<string, string>;
   onBack: () => void;
   onContinue: () => void;
 }
@@ -57,6 +61,8 @@ export default function AddDataStepInstall({
   derivedOtlpUrl,
   clusterVersion,
   connectionUrl,
+  receiver,
+  receiverFieldValues,
   onBack,
   onContinue,
 }: AddDataStepInstallProps) {
@@ -93,6 +99,15 @@ export default function AddDataStepInstall({
           derivedOtlpUrl={derivedOtlpUrl}
           clusterVersion={clusterVersion}
           connectionUrl={connectionUrl}
+        />
+      )}
+
+      {guideType === "otel_receiver" && receiver && (
+        <OtelReceiverInstall
+          receiver={receiver}
+          fieldValues={receiverFieldValues}
+          esUrl={esUrl}
+          apiKey={apiKey}
         />
       )}
 

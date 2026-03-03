@@ -17,6 +17,7 @@ import {
 } from "../utils/addDataUtils";
 import type { EndpointType, Platform, TelemetrySignal } from "../utils/addDataUtils";
 import type { AddDataTechnologyCatalogEntry } from "../services/addData/catalog";
+import { OTEL_RECEIVER_BY_ID } from "../services/addData/otelReceiverCatalog";
 
 import PageHeader from "./PageHeader";
 import AddDataStepTechnology from "./addData/AddDataStepTechnology";
@@ -48,6 +49,7 @@ export default function AddDataPage() {
 
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
+  const [receiverFieldValues, setReceiverFieldValues] = useState<Record<string, string>>({});
 
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const endpointTypeManuallySetRef = useRef(false);
@@ -171,9 +173,18 @@ export default function AddDataPage() {
       ? `${selectedSignals.slice(0, -1).join(", ")} and ${selectedSignals[selectedSignals.length - 1]}`
       : (selectedSignals[0] ?? "telemetry");
 
+  const receiver = useMemo(
+    () =>
+      selectedTechnology?.guideType === "otel_receiver"
+        ? (OTEL_RECEIVER_BY_ID.get(selectedTechnology.id) ?? null)
+        : null,
+    [selectedTechnology],
+  );
+
   const handleSelectTechnology = (tech: AddDataTechnologyCatalogEntry) => {
     setSelectedTechnology(tech);
     setPlatform(tech.defaultPlatform);
+    setReceiverFieldValues({});
   };
 
   const handleAddAnotherSource = () => {
@@ -257,6 +268,9 @@ export default function AddDataPage() {
           ingestAvailable={ingestAvailable}
           platform={platform}
           onPlatformChange={setPlatform}
+          receiver={receiver}
+          receiverFieldValues={receiverFieldValues}
+          onReceiverFieldValuesChange={setReceiverFieldValues}
           onBack={() => setWizardStep(1)}
           onContinue={() => setWizardStep(3)}
         />
@@ -281,6 +295,8 @@ export default function AddDataPage() {
           derivedOtlpUrl={derivedOtlpUrl}
           clusterVersion={clusterVersion}
           connectionUrl={connection?.url ?? null}
+          receiver={receiver}
+          receiverFieldValues={receiverFieldValues}
           onBack={() => setWizardStep(2)}
           onContinue={() => setWizardStep(4)}
         />

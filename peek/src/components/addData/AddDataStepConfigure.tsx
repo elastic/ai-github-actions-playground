@@ -5,9 +5,11 @@ import Typography from "@mui/material/Typography";
 
 import type { AddDataTechnologyCatalogEntry } from "../../services/addData/catalog";
 import type { EndpointType, Platform } from "../../utils/addDataUtils";
+import type { OtelReceiverDefinition } from "../../services/addData/otelReceiverCatalog";
 
 import { GUIDE_TYPE_DEFINITIONS } from "./guideRegistry";
 import EdotCollectorConfigure from "./guides/EdotCollectorConfigure";
+import OtelReceiverConfigure from "./guides/OtelReceiverConfigure";
 
 interface AddDataStepConfigureProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
@@ -19,6 +21,9 @@ interface AddDataStepConfigureProps {
   ingestAvailable: boolean | null;
   platform: Platform;
   onPlatformChange: (platform: Platform) => void;
+  receiver: OtelReceiverDefinition | null;
+  receiverFieldValues: Record<string, string>;
+  onReceiverFieldValuesChange: (values: Record<string, string>) => void;
   onBack: () => void;
   onContinue: () => void;
 }
@@ -33,6 +38,9 @@ export default function AddDataStepConfigure({
   ingestAvailable,
   platform,
   onPlatformChange,
+  receiver,
+  receiverFieldValues,
+  onReceiverFieldValuesChange,
   onBack,
   onContinue,
 }: AddDataStepConfigureProps) {
@@ -57,6 +65,14 @@ export default function AddDataStepConfigure({
           ingestAvailable={ingestAvailable}
           platform={platform}
           onPlatformChange={onPlatformChange}
+        />
+      )}
+
+      {guideType === "otel_receiver" && receiver && (
+        <OtelReceiverConfigure
+          receiver={receiver}
+          fieldValues={receiverFieldValues}
+          onFieldValuesChange={onReceiverFieldValuesChange}
         />
       )}
 
