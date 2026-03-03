@@ -16,14 +16,16 @@ import {
 } from "./investigateUtils";
 
 const timelineMarkersSchema = z.object({
-  markers: z.array(
-    z.object({
-      timestamp: z.string(),
-      label: z.string(),
-      description: z.string(),
-      severity: z.enum(["info", "warning", "critical"]),
-    }),
-  ),
+  markers: z
+    .array(
+      z.object({
+        timestamp: z.string(),
+        label: z.string(),
+        description: z.string(),
+        severity: z.enum(["info", "warning", "critical"]),
+      }),
+    )
+    .max(8),
 });
 
 interface UseTimelineMarkersOptions {
@@ -61,7 +63,8 @@ export function useTimelineMarkers({
       model: s.config.model,
     })),
   );
-  const hasApiKey = Boolean(apiKey?.trim());
+  const normalizedApiKey = apiKey?.trim() ?? "";
+  const hasApiKey = normalizedApiKey.length > 0;
   const queryClient = useQueryClient();
 
   const context = useMemo(
@@ -92,7 +95,7 @@ export function useTimelineMarkers({
     queryKey: ["timeline-markers", cacheKey, provider, llmModel, hasApiKey] as const,
     queryFn: async ({ signal }) => {
       const openai = createOpenAI({
-        apiKey,
+        apiKey: normalizedApiKey,
         ...(provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
       });
       const model = provider === "openrouter" ? openai.chat(llmModel) : openai(llmModel);
@@ -108,10 +111,12 @@ export function useTimelineMarkers({
       const eventTimestampMs = new Set(
         events.map((e) => Date.parse(e.timestamp)).filter((t) => Number.isFinite(t)),
       );
-      return ((result.object.markers ?? []) as TimelineMarker[]).filter((m) => {
-        const ms = Date.parse(m.timestamp);
-        return Number.isFinite(ms) && eventTimestampMs.has(ms);
-      });
+      return ((result.object.markers ?? []) as TimelineMarker[])
+        .filter((m) => {
+          const ms = Date.parse(m.timestamp);
+          return Number.isFinite(ms) && eventTimestampMs.has(ms);
+        })
+        .slice(0, Math.min(8, events.length));
     },
     enabled: hasApiKey && events.length > 0 && Boolean(context.trim()),
     staleTime: Infinity,

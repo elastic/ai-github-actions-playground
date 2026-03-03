@@ -20,9 +20,9 @@ interface TimelineMarkersLayerProps {
 }
 
 export default function TimelineMarkersLayer({ markers, fmtTime }: TimelineMarkersLayerProps) {
-  return markers.map((m, i) => (
+  return markers.map((m) => (
     <Tooltip
-      key={i}
+      key={`${m.timestamp}-${m.severity}-${m.label}`}
       describeChild
       title={
         <Box>
