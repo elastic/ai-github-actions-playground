@@ -200,7 +200,10 @@ export function buildDetailedScreenContext(
   if (pageCtx.ingestPipelines) snapshot.ingestPipelines = pageCtx.ingestPipelines;
   if (pageCtx.fleet) snapshot.fleet = pageCtx.fleet;
   if (pageCtx.fleetAgent) snapshot.fleetAgent = pageCtx.fleetAgent;
-  if (pageCtx.security) snapshot.security = pageCtx.security;
+  const isSecurityPage = ["/users", "/roles", "/api-keys"].some(
+    (p) => matchPath(p, pathname) !== null,
+  );
+  if (pageCtx.security && isSecurityPage) snapshot.security = pageCtx.security;
 
   return snapshot;
 }
