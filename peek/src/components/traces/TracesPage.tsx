@@ -61,7 +61,7 @@ function TraceErrorAlerts({ errors }: { errors: (string | null)[] }) {
 
   return (
     <Alert
-      severity="warning"
+      severity="error"
       sx={{ position: "relative", zIndex: 0, pointerEvents: "auto" }}
       action={
         <Button
@@ -74,7 +74,7 @@ function TraceErrorAlerts({ errors }: { errors: (string | null)[] }) {
         </Button>
       }
     >
-      <AlertTitle>Query warning</AlertTitle>
+      <AlertTitle>Query error</AlertTitle>
       {summaries.join(" ")}
       <Collapse in={expanded}>
         <Box
