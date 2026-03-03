@@ -12,6 +12,7 @@ import PolicyIcon from "@mui/icons-material/Policy";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import type { EsqlResponse } from "../types";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
@@ -111,7 +112,10 @@ export default function InvestigatePage() {
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
-        sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
+        sx={{
+          minHeight: COMPONENT_HEIGHTS.tab,
+          "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
+        }}
       >
         <Tab value="user" label="User" />
         <Tab value="host" label="Host" />

@@ -313,7 +313,11 @@ export default function ExplorePage() {
           <Alert
             severity="error"
             action={
-              <IconButton size="small" onClick={() => setDismissedError(queryResult.error ?? null)}>
+              <IconButton
+                size="small"
+                aria-label="Dismiss error"
+                onClick={() => setDismissedError(queryResult.error ?? null)}
+              >
                 <CloseIcon fontSize="small" />
               </IconButton>
             }

@@ -455,7 +455,7 @@ export default function DashboardsLandingPage() {
       </Box>
 
       {visibleDashboards.length === 0 && (
-        <Box sx={{ py: 8, textAlign: "center" }}>
+        <Box sx={{ py: 6, textAlign: "center" }}>
           {hasActiveFilters ? (
             <>
               <Typography variant="subtitle1" color="text.secondary">

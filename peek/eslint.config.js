@@ -78,6 +78,7 @@ export default tseslint.config(
       "peek/no-direct-echarts-import": "error",
       "peek/no-div-onclick": "error",
       "peek/enforce-spacing-tokens": "error",
+      "peek/no-hardcoded-heights": "error",
     },
   },
   // rules that only apply to component files
@@ -88,6 +89,7 @@ export default tseslint.config(
       "peek/max-component-lines": ["warn", { max: 200 }],
       "peek/enforce-empty-state": "error",
       "peek/no-circular-progress": "error",
+      "peek/require-icon-button-aria-label": "error",
     },
   },
   {

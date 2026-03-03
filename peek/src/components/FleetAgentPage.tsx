@@ -19,7 +19,7 @@ import {
   type ElasticAgentLogEntry,
   type ElasticAgentMetricPoint,
 } from "../services/fleet";
-import { STATUS_COLORS } from "../types/tokens";
+import { COMPONENT_HEIGHTS, STATUS_COLORS } from "../types/tokens";
 import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 import { usePageContextStore } from "../store/usePageContextStore";
@@ -140,7 +140,10 @@ export default function FleetAgentPage() {
           <Tabs
             value={activeTab}
             onChange={(_, v: AgentTab) => void setActiveTab(v)}
-            sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
+            sx={{
+              minHeight: COMPONENT_HEIGHTS.tab,
+              "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
+            }}
           >
             <Tab value="overview" label="Overview" />
             <Tab value="logs" label={`Logs (${logs.length})`} />

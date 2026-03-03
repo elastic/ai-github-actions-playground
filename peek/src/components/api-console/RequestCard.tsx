@@ -18,6 +18,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 
 import { buildCurlCommand } from "../../utils/buildCurlCommand";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 
@@ -111,7 +112,7 @@ export default function RequestCard({
           onChange={(e) =>
             onUpdate(entry.id, { method: e.target.value as HttpMethod, response: null })
           }
-          sx={{ minWidth: 100, height: 36 }}
+          sx={{ minWidth: 100, height: COMPONENT_HEIGHTS.input }}
           inputProps={{ "aria-label": "HTTP method" }}
           renderValue={(v) => (
             <Chip

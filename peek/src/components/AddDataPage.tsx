@@ -23,6 +23,7 @@ import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useIngestionVerification } from "../hooks/useIngestionVerification";
 import {
@@ -461,7 +462,10 @@ export default function AddDataPage() {
             onChange={(_, value: Platform) => setPlatform(value)}
             variant="scrollable"
             scrollButtons="auto"
-            sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
+            sx={{
+              minHeight: COMPONENT_HEIGHTS.tab,
+              "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
+            }}
           >
             <Tab value="kubernetes" label="Kubernetes" />
             <Tab value="docker" label="Docker" />
