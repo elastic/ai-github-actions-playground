@@ -27,10 +27,15 @@ export interface OtelReceiverDefinition {
 
 /**
  * Escape a value for safe inclusion in a YAML double-quoted scalar.
- * Handles backslashes, double quotes, and newlines.
+ * Handles backslashes, double quotes, newlines, carriage returns, and tabs.
  */
 function escapeYamlValue(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")
+    .replace(/\t/g, "\\t");
 }
 
 /**
