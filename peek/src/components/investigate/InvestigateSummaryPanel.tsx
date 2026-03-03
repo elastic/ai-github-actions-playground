@@ -16,6 +16,7 @@ import remarkGfm from "remark-gfm";
 
 import { useLLMStore } from "../../store/useLLMStore";
 import { usePageInsight } from "../../hooks/usePageInsight";
+import insightMarkdownSx from "../insightMarkdownSx";
 
 import {
   type InvestigateTab,
@@ -154,30 +155,7 @@ export default function InvestigateSummaryPanel({
                 </IconButton>
               </>
             }
-            sx={{
-              "& .MuiAlert-message": {
-                fontStyle: "italic",
-                "& code": {
-                  px: 0.5,
-                  borderRadius: 0.5,
-                  bgcolor: "action.selected",
-                  fontSize: "0.85em",
-                  fontFamily: "monospace",
-                },
-                "& h1,& h2,& h3,& h4,& h5,& h6": { mt: 1, mb: 0.5 },
-                "& li": { mb: 0.5 },
-                "& p": { mt: 0, mb: 1 },
-                "& p:last-child": { mb: 0 },
-                "& pre": {
-                  overflow: "auto",
-                  p: 1,
-                  borderRadius: 1,
-                  bgcolor: "action.selected",
-                  "& code": { p: 0, bgcolor: "transparent" },
-                },
-                "& ul,& ol": { mb: 1, pl: 2.5 },
-              },
-            }}
+            sx={insightMarkdownSx}
           >
             <Box component="span">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{insight}</ReactMarkdown>
