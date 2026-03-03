@@ -51,15 +51,21 @@ export interface PerSignalDelta {
 async function queryHostAgentCardinality(
   client: ElasticsearchClient,
   signalType: TelemetrySignal,
+  signal?: AbortSignal,
 ): Promise<{ hostCount: number; agentCount: number }> {
-  const data = await gracefulSearch(client, `${signalType}-*`, {
-    size: 0,
-    query: { range: { "@timestamp": { gte: "now-15m" } } },
-    aggs: {
-      host_count: { cardinality: { field: "host.name", precision_threshold: 3000 } },
-      agent_count: { cardinality: { field: "agent.id", precision_threshold: 3000 } },
+  const data = await gracefulSearch(
+    client,
+    `${signalType}-*`,
+    {
+      size: 0,
+      query: { range: { "@timestamp": { gte: "now-15m" } } },
+      aggs: {
+        host_count: { cardinality: { field: "host.name", precision_threshold: 3000 } },
+        agent_count: { cardinality: { field: "agent.id", precision_threshold: 3000 } },
+      },
     },
-  });
+    signal,
+  );
   if (!data?.aggregations) return { hostCount: 0, agentCount: 0 };
   return {
     hostCount: (data.aggregations.host_count as { value?: number })?.value ?? 0,
@@ -70,12 +76,18 @@ async function queryHostAgentCardinality(
 async function queryDocCount(
   client: ElasticsearchClient,
   signalType: TelemetrySignal,
+  signal?: AbortSignal,
 ): Promise<number> {
-  const data = await gracefulSearch(client, `${signalType}-*`, {
-    size: 0,
-    track_total_hits: true,
-    query: { range: { "@timestamp": { gte: "now-5m" } } },
-  });
+  const data = await gracefulSearch(
+    client,
+    `${signalType}-*`,
+    {
+      size: 0,
+      track_total_hits: true,
+      query: { range: { "@timestamp": { gte: "now-5m" } } },
+    },
+    signal,
+  );
   if (!data?.hits?.total) return 0;
   const total = data.hits.total;
   return typeof total === "number" ? total : (total?.value ?? 0);
@@ -84,11 +96,17 @@ async function queryDocCount(
 async function queryLatestTimestamp(
   client: ElasticsearchClient,
   signalType: TelemetrySignal,
+  signal?: AbortSignal,
 ): Promise<string | null> {
-  const data = await gracefulSearch(client, `${signalType}-*`, {
-    size: 0,
-    aggs: { latest: { max: { field: "@timestamp" } } },
-  });
+  const data = await gracefulSearch(
+    client,
+    `${signalType}-*`,
+    {
+      size: 0,
+      aggs: { latest: { max: { field: "@timestamp" } } },
+    },
+    signal,
+  );
   if (!data?.aggregations) return null;
   return (data.aggregations.latest as { value_as_string?: string })?.value_as_string ?? null;
 }
@@ -101,17 +119,18 @@ export async function captureIngestionSnapshot(
   client: ElasticsearchClient,
   expectedSignals: readonly TelemetrySignal[],
   dataStreamSignals: Set<TelemetrySignal>,
+  signal?: AbortSignal,
 ): Promise<IngestionSnapshot> {
   const signals = await Promise.all(
-    expectedSignals.map(async (signal): Promise<PerSignalSnapshot> => {
+    expectedSignals.map(async (signalType): Promise<PerSignalSnapshot> => {
       const [cardinality, docCount, maxTimestamp] = await Promise.all([
-        queryHostAgentCardinality(client, signal),
-        queryDocCount(client, signal),
-        queryLatestTimestamp(client, signal),
+        queryHostAgentCardinality(client, signalType, signal),
+        queryDocCount(client, signalType, signal),
+        queryLatestTimestamp(client, signalType, signal),
       ]);
       return {
-        signal,
-        dataStreamExists: dataStreamSignals.has(signal),
+        signal: signalType,
+        dataStreamExists: dataStreamSignals.has(signalType),
         hostCount: cardinality.hostCount,
         agentCount: cardinality.agentCount,
         docCount,
@@ -131,7 +150,12 @@ export async function captureFullSnapshot(
   signal?: AbortSignal,
 ): Promise<{ snapshot: IngestionSnapshot; dataStreamSignals: Set<TelemetrySignal> }> {
   const dataStreamSignals = await detectTelemetrySignals(client, signal);
-  const snapshot = await captureIngestionSnapshot(client, expectedSignals, dataStreamSignals);
+  const snapshot = await captureIngestionSnapshot(
+    client,
+    expectedSignals,
+    dataStreamSignals,
+    signal,
+  );
   return { snapshot, dataStreamSignals };
 }
 
