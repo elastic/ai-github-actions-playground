@@ -7,6 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useShallow } from "zustand/react/shallow";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
@@ -27,15 +28,25 @@ import ServiceInventoryTable from "./ServiceInventoryTable";
 
 export default function ServiceInventoryPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
-  const { filters, searchResult, updateFilters, setSearchResult, resetFilters } = useServicesStore(
+  const { filters, updateFilters, resetFilters } = useServicesStore(
     useShallow((s) => ({
       filters: s.filters,
-      searchResult: s.searchResult,
       updateFilters: s.updateFilters,
-      setSearchResult: s.setSearchResult,
       resetFilters: s.resetFilters,
     })),
+  );
+
+  const { data: searchResult = null } = useQuery<EsqlResponse | null>({
+    queryKey: ["services-search"],
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setSearchResult = useCallback(
+    (result: EsqlResponse | null) => queryClient.setQueryData(["services-search"], result),
+    [queryClient],
   );
 
   const [sortField, setSortField] = useState<SortField>("requestCount");

@@ -20,6 +20,7 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useShallow } from "zustand/react/shallow";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
@@ -67,6 +68,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
   const discoverEditorHeight = useUIStore((s) => s.discoverEditorHeight);
   const setDiscoverEditorHeight = useUIStore((s) => s.setDiscoverEditorHeight);
   const [editorFocused, setEditorFocused] = useState(false);
+  const queryClient = useQueryClient();
   const {
     discoverQueryDraft,
     setDiscoverQueryDraft,
@@ -74,8 +76,6 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
     appendQueryToHistory,
     query,
     setQuery,
-    result,
-    setResult,
     selectedFields,
     setSelectedFields,
   } = useQueryStore(
@@ -86,11 +86,19 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
       appendQueryToHistory: s.appendQueryToHistory,
       query: s.discoverSessionQuery,
       setQuery: s.setDiscoverSessionQuery,
-      result: s.discoverSessionResult,
-      setResult: s.setDiscoverSessionResult,
       selectedFields: s.discoverSelectedFields,
       setSelectedFields: s.setDiscoverSelectedFields,
     })),
+  );
+  const { data: result = null } = useQuery<EsqlResponse | null>({
+    queryKey: ["discover-result"],
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setResult = useCallback(
+    (data: EsqlResponse | null) => queryClient.setQueryData(["discover-result"], data),
+    [queryClient],
   );
   const refreshInterval = useDashboardEditorStore(
     (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
