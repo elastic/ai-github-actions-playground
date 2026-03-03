@@ -1,33 +1,35 @@
+import { useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
+import { TracingGanttChart } from "@perses-dev/tracing-gantt-chart-plugin/lib/TracingGanttChart/TracingGanttChart";
 
 import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
-import WaterfallChart from "../visualizations/WaterfallChart";
 
 import type { Span } from "./traceUtils";
+import { spansToOtlpTracesData } from "./otlpAdapter";
 
 interface TraceDetailPanelProps {
   selectedTraceId: string;
   selectedTraceSpans: Span[];
   detailLoading: boolean;
-  selectedSpanId: string | null;
-  onSpanClick: (spanId: string) => void;
   onOpenInQueryLab: () => void;
   onClose: () => void;
 }
+
+const GANTT_OPTIONS = { visual: { palette: { mode: "auto" as const } } };
 
 export default function TraceDetailPanel({
   selectedTraceId,
   selectedTraceSpans,
   detailLoading,
-  selectedSpanId,
-  onSpanClick,
   onOpenInQueryLab,
   onClose,
 }: TraceDetailPanelProps) {
+  const otlpTrace = useMemo(() => spansToOtlpTracesData(selectedTraceSpans), [selectedTraceSpans]);
+
   return (
     <Paper
       variant="outlined"
@@ -67,12 +69,8 @@ export default function TraceDetailPanel({
           <ContentSkeleton variant="table" />
         </Box>
       ) : selectedTraceSpans.length > 0 ? (
-        <Box sx={{ flex: 1, overflow: "hidden" }}>
-          <WaterfallChart
-            spans={selectedTraceSpans}
-            onSpanClick={onSpanClick}
-            selectedSpanId={selectedSpanId}
-          />
+        <Box sx={{ flex: 1, overflow: "auto" }}>
+          <TracingGanttChart key={selectedTraceId} options={GANTT_OPTIONS} trace={otlpTrace} />
         </Box>
       ) : (
         <Box sx={{ flex: 1 }}>

@@ -8,7 +8,6 @@ import { useUIStore } from "../../store/useUIStore";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import ResizableSplitPane from "../ResizableSplitPane";
 
-import SpanDetailDrawer from "./SpanDetailDrawer";
 import TraceSearchPanel from "./TraceSearchPanel";
 import TraceDetailPanel from "./TraceDetailPanel";
 import TraceResultsView from "./TraceResultsView";
@@ -132,8 +131,6 @@ export default function TracesPage() {
                   selectedTraceId={orchestrator.selectedTraceId}
                   selectedTraceSpans={orchestrator.selectedTraceSpans}
                   detailLoading={orchestrator.detailLoading}
-                  selectedSpanId={orchestrator.selectedSpanId}
-                  onSpanClick={(spanId) => orchestrator.setSelectedSpanId(spanId)}
                   onOpenInQueryLab={() =>
                     orchestrator.handleOpenInDiscover(
                       orchestrator.selectedTraceId!,
@@ -150,16 +147,6 @@ export default function TracesPage() {
           )}
         </Box>
       </Box>
-
-      {/* Span Detail Drawer */}
-      <SpanDetailDrawer
-        span={orchestrator.selectedSpan}
-        open={orchestrator.drawerOpen}
-        onClose={() => orchestrator.setDrawerOpen(false)}
-        onFilterBy={orchestrator.handleDrawerFilterBy}
-        onExclude={orchestrator.handleDrawerExclude}
-        onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}
-      />
     </Box>
   );
 }
