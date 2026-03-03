@@ -538,45 +538,55 @@ export default function AddDataPage() {
             </Stack>
 
             <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-              {commandSteps.map((step, index) => (
-                <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                    <Chip
-                      label={step.number}
-                      size="small"
-                      color="primary"
-                      sx={{ minWidth: 28, fontWeight: 700 }}
-                    />
-                    <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-                      {step.title}
-                    </Typography>
-                    <Button
-                      size="small"
-                      variant="text"
-                      startIcon={<ContentCopyIcon fontSize="small" />}
-                      onClick={() => void handleCopyStep(index)}
+              {commandSteps.map((step, index) => {
+                const safeCommand =
+                  apiKeyValue && apiKeyValue.length > 0
+                    ? step.command.split(apiKeyValue).join("<REDACTED_API_KEY>")
+                    : step.command;
+                return (
+                  <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <Chip
+                        label={step.number}
+                        size="small"
+                        color="primary"
+                        sx={{ minWidth: 28, fontWeight: 700 }}
+                      />
+                      <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+                        {step.title}
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<ContentCopyIcon fontSize="small" />}
+                        onClick={() => void handleCopyStep(index)}
+                      >
+                        {stepCopiedIndex === index ? "Copied!" : "Copy"}
+                      </Button>
+                      <AskAiButton
+                        label="Explain"
+                        prompt={`Explain what this onboarding command step does and why it matters.\nStep ${step.number}: ${step.title}\nCommand:\n${safeCommand}`}
+                      />
+                    </Stack>
+                    <Box
+                      component="pre"
+                      sx={{
+                        overflow: "auto",
+                        m: 0,
+                        p: 1.5,
+                        borderRadius: 1,
+                        bgcolor: "background.default",
+                        wordBreak: "break-all",
+                        whiteSpace: "pre-wrap",
+                        fontSize: "0.8rem",
+                        fontFamily: "monospace",
+                      }}
                     >
-                      {stepCopiedIndex === index ? "Copied!" : "Copy"}
-                    </Button>
-                  </Stack>
-                  <Box
-                    component="pre"
-                    sx={{
-                      overflow: "auto",
-                      m: 0,
-                      p: 1.5,
-                      borderRadius: 1,
-                      bgcolor: "background.default",
-                      wordBreak: "break-all",
-                      whiteSpace: "pre-wrap",
-                      fontSize: "0.8rem",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {step.command}
-                  </Box>
-                </Paper>
-              ))}
+                      {step.command}
+                    </Box>
+                  </Paper>
+                );
+              })}
             </Stack>
 
             <Alert severity="info" sx={{ mt: 1.5 }}>
@@ -795,9 +805,6 @@ export default function AddDataPage() {
                     resetVerification();
                     lastAutoStartedApiKeyRef.current = null;
                     setWizardStep(1);
-                    setSelectedTechnology(null);
-                    setTechnologySearch("");
-                    setActiveCategory("all");
                     return;
                   }
                   navigate(cta.path);

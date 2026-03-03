@@ -21,9 +21,17 @@ import { buildCurlCommand } from "../../utils/buildCurlCommand";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
+import AskAiButton from "../AskAiButton";
 
 import type { HttpMethod, RequestCardProps } from "./apiConsoleTypes";
 import { METHOD_COLORS, METHODS_WITH_BODY, httpStatusColor } from "./apiConsoleTypes";
+
+function sanitizeForAi(text: string): string {
+  return text
+    .replace(/(authorization\s*[:=]\s*)(.+)/gi, "$1<redacted>")
+    .replace(/(api[_-]?key\s*[:=]\s*)(.+)/gi, "$1<redacted>")
+    .replace(/(token\s*[:=]\s*)(.+)/gi, "$1<redacted>");
+}
 
 function serializeResponse(body: unknown): string {
   try {
@@ -248,6 +256,10 @@ export default function RequestCard({
                 <Typography variant="body2" color="error.main" sx={{ flex: 1 }}>
                   {entry.response.message}
                 </Typography>
+                <AskAiButton
+                  label="Explain error"
+                  prompt={`Explain this Elasticsearch API error and suggest a likely fix.\nMethod: ${entry.method}\nPath: ${entry.path}\nError: ${sanitizeForAi(entry.response.message)}`}
+                />
                 <Tooltip title="Dismiss">
                   <IconButton
                     size="small"
@@ -270,6 +282,10 @@ export default function RequestCard({
                   <Typography variant="caption" color="text.secondary">
                     {entry.response.executionTimeMs} ms
                   </Typography>
+                  <AskAiButton
+                    label="Explain response"
+                    prompt={`Explain this Elasticsearch API response in one concise sentence.\nMethod: ${entry.method}\nPath: ${entry.path}\nHTTP status: ${entry.response.httpStatus}\nBody: ${sanitizeForAi(serializeResponse(entry.response.body).slice(0, 4000))}`}
+                  />
                   <Box sx={{ flex: 1 }} />
                   <Tooltip title={copied ? "Copied!" : "Copy response"}>
                     <IconButton

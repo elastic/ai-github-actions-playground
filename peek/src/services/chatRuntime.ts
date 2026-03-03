@@ -11,6 +11,11 @@ import { buildDetailedScreenContext } from "./screenContext";
 
 const CHAT_TIMEOUT_MS = 15_000;
 
+// Minimum steps to allow when only local tools are active.
+// Without this, AI SDK v6 stops after the first tool call and never generates
+// the follow-up text response (e.g. after get_screen_context → "Done" → silence).
+const LOCAL_TOOLS_MAX_STEPS = 5;
+
 interface ChatRuntimeArgs {
   config: LLMConfig;
   connection: ElasticsearchConnection | null;
@@ -35,7 +40,7 @@ export async function buildChatRuntime({
 }: ChatRuntimeArgs): Promise<{
   systemPrompt: string;
   tools: ToolSet;
-  stopWhen?: ReturnType<typeof stepCountIs>;
+  stopWhen: ReturnType<typeof stepCountIs>;
 }> {
   const localTools: ToolSet = {
     ...getLocalChatTools(connection),
@@ -64,6 +69,6 @@ export async function buildChatRuntime({
   return {
     systemPrompt,
     tools,
-    stopWhen: maxStepCountLimit > 0 ? stepCountIs(maxStepCountLimit) : undefined,
+    stopWhen: stepCountIs(maxStepCountLimit > 0 ? maxStepCountLimit : LOCAL_TOOLS_MAX_STEPS),
   };
 }

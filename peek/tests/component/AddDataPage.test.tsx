@@ -63,6 +63,7 @@ describe("AddDataPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    mockGetDataStreams.mockResolvedValue({ data_streams: [] });
     fetchSpy.mockResolvedValue(new Response(null, { status: 200 }));
     useConnectionStore.getState().setConnection({
       url: "https://my-project.es.us-east-1.aws.elastic.cloud:443",
@@ -182,7 +183,6 @@ describe("AddDataPage", () => {
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
     // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
     mockGetDataStreams
-      .mockResolvedValue({ data_streams: [{ name: "metrics-host.otel-default" }] })
       .mockResolvedValueOnce({ data_streams: [] })
       .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
 
@@ -206,9 +206,11 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: "Add another source" }));
 
     // Should return to Step 1 with a clean slate
-    expect(
-      screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
+      ).toBeInTheDocument();
+    });
     expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByLabelText("Search technologies")).toHaveValue("");
     expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
@@ -219,7 +221,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
     expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
-  }, 15000);
+  }, 15_000);
 
   it("shows OTLP alert when no ingest endpoint can be derived", async () => {
     // Use a non-cloud URL so no OTLP endpoint can be derived
@@ -238,7 +240,9 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
 
     // The alert should appear even though no endpoint was derived
-    expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
+    });
   });
 });
 
