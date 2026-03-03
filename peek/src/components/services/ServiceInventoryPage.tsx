@@ -19,14 +19,22 @@ import { PAGE_MANIFEST } from "../../routes/manifest";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
+import PageInsightBanner from "../PageInsightBanner";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import type { EsqlResponse } from "../../types";
 
 import { buildServiceInventoryQuery } from "./serviceInventoryQueryBuilder";
-import { type SortField, type SortDirection, parseServiceRows } from "./serviceInventoryHelpers";
+import {
+  type SortField,
+  type SortDirection,
+  parseServiceRows,
+  formatLatency,
+  formatErrorRate,
+} from "./serviceInventoryHelpers";
 import ServiceOverviewCards from "./ServiceOverviewCards";
 import ServicePerformanceCharts from "./ServicePerformanceCharts";
 import ServiceBusiestPanel from "./ServiceBusiestPanel";
+import ServiceInsightsPanel from "./ServiceInsightsPanel";
 import ServiceInventoryTable from "./ServiceInventoryTable";
 
 export default function ServiceInventoryPage() {
@@ -129,6 +137,42 @@ export default function ServiceInventoryPage() {
     });
   }, [searchResult, sortField, sortDirection]);
 
+  const insightContext = useMemo(() => {
+    if (serviceRows.length === 0) return "";
+    const slowest = serviceRows.reduce((a, b) => (b.avgLatencyMs > a.avgLatencyMs ? b : a));
+    const highestError = serviceRows.reduce((a, b) => (b.errorRate > a.errorRate ? b : a));
+    const mostActive = serviceRows.reduce((a, b) => (b.requestCount > a.requestCount ? b : a));
+    return JSON.stringify({
+      totalServices: serviceRows.length,
+      services: serviceRows.map((r) => ({
+        name: r.serviceName,
+        requests: r.requestCount,
+        avgLatencyMs: r.avgLatencyMs,
+        errorRate: r.errorRate,
+        topError: r.topError,
+        language: r.language,
+        environment: r.environment,
+      })),
+      slowestService: { name: slowest.serviceName, latency: formatLatency(slowest.avgLatencyMs) },
+      highestErrorRate: {
+        name: highestError.serviceName,
+        rate: formatErrorRate(highestError.errorRate),
+      },
+      mostActiveService: { name: mostActive.serviceName, requests: mostActive.requestCount },
+    });
+  }, [serviceRows]);
+
+  const insightCacheKey = useMemo(
+    () =>
+      `services::${serviceRows.length}::${serviceRows
+        .map(
+          (r) =>
+            `${r.serviceName}:${r.requestCount}:${r.avgLatencyMs.toFixed(0)}:${r.errorRate.toFixed(4)}`,
+        )
+        .join(",")}`,
+    [serviceRows],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
       <PageHeader
@@ -183,6 +227,12 @@ export default function ServiceInventoryPage() {
 
       {serviceRows.length > 0 && (
         <Stack spacing={2}>
+          <PageInsightBanner
+            context={insightContext}
+            systemPrompt="You are an APM performance advisor analyzing OpenTelemetry service data. Provide 2-3 concise, actionable insights about service health, latency outliers, error patterns, or resource concerns. Focus on what an SRE should investigate first. Keep it brief."
+            cacheKey={insightCacheKey}
+          />
+          <ServiceInsightsPanel serviceRows={serviceRows} />
           <ServiceOverviewCards serviceRows={serviceRows} />
           <ServicePerformanceCharts serviceRows={serviceRows} />
           <ServiceBusiestPanel serviceRows={serviceRows} onViewTraces={handleViewTraces} />
