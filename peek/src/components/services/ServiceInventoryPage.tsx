@@ -162,16 +162,13 @@ export default function ServiceInventoryPage() {
     });
   }, [serviceRows]);
 
-  const insightCacheKey = useMemo(
-    () =>
-      `services::${serviceRows.length}::${serviceRows
-        .map(
-          (r) =>
-            `${r.serviceName}:${r.requestCount}:${r.avgLatencyMs.toFixed(0)}:${r.errorRate.toFixed(4)}`,
-        )
-        .join(",")}`,
-    [serviceRows],
-  );
+  const insightCacheKey = useMemo(() => {
+    if (serviceRows.length === 0) return "";
+    const totalRequests = serviceRows.reduce((sum, r) => sum + r.requestCount, 0);
+    const totalErrors = serviceRows.reduce((sum, r) => sum + r.errorCount, 0);
+    const maxLatency = Math.max(...serviceRows.map((r) => r.avgLatencyMs));
+    return `services::${serviceRows.length}::${totalRequests}::${totalErrors}::${maxLatency.toFixed(0)}`;
+  }, [serviceRows]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
