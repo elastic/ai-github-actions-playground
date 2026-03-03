@@ -121,6 +121,43 @@ describe("InvestigatePage", () => {
     await screen.findByText("Investigate a host");
   });
 
+  it("preserves loaded suggestions when switching back to a tab", async () => {
+    const USER_SUGGESTIONS_RESPONSE = {
+      columns: [
+        { name: "event_count", type: "long" },
+        { name: "last_seen", type: "date" },
+        { name: "user.name", type: "keyword" },
+      ],
+      values: [[42, "2026-03-01T10:00:00Z", "admin"]],
+    };
+    const HOST_SUGGESTIONS_RESPONSE = {
+      columns: [
+        { name: "event_count", type: "long" },
+        { name: "last_seen", type: "date" },
+        { name: "host.name", type: "keyword" },
+      ],
+      values: [[17, "2026-03-01T10:00:00Z", "web-01"]],
+    };
+    queryMock
+      .mockResolvedValueOnce(USER_SUGGESTIONS_RESPONSE)
+      .mockResolvedValueOnce(HOST_SUGGESTIONS_RESPONSE);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <InvestigatePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("admin (42)");
+    await user.click(screen.getByRole("tab", { name: /host/i }));
+    await screen.findByText("web-01 (17)");
+    await user.click(screen.getByRole("tab", { name: /user/i }));
+    expect(screen.getByText("admin (42)")).toBeInTheDocument();
+  });
+
   it("displays search results in a timeline table", async () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();

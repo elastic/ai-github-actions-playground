@@ -37,11 +37,18 @@ export default function InvestigatePage() {
   const [searchedEntity, setSearchedEntity] = useState<string | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [summaryPrompt, setSummaryPrompt] = useState<string | null>(null);
-  const [recentEntities, setRecentEntities] = useState<RecentEntity[]>([]);
+  const [recentEntitiesByTab, setRecentEntitiesByTab] = useState<{
+    user: RecentEntity[];
+    host: RecentEntity[];
+  }>({
+    user: [],
+    host: [],
+  });
   const suggestionsLoadedRef = useRef<{ user: boolean; host: boolean }>({
     user: false,
     host: false,
   });
+  const suggestionsRequestTabRef = useRef<InvestigateTab>("user");
 
   const handleSuccess = useCallback(
     (data: EsqlResponse) => {
@@ -65,23 +72,25 @@ export default function InvestigatePage() {
     onFailure: handleFailure,
   });
 
-  const handleSuggestionsSuccess = useCallback(
-    (data: EsqlResponse) => {
-      setRecentEntities(parseRecentEntities(data, activeTab));
-      suggestionsLoadedRef.current[activeTab] = true;
-    },
-    [activeTab],
-  );
+  const handleSuggestionsSuccess = useCallback((data: EsqlResponse) => {
+    const tab = suggestionsRequestTabRef.current;
+    setRecentEntitiesByTab((previous) => ({
+      ...previous,
+      [tab]: parseRecentEntities(data, tab),
+    }));
+    suggestionsLoadedRef.current[tab] = true;
+  }, []);
 
   const { runQuery: runSuggestionsQuery, loading: suggestionsLoading } = useEsqlQuery({
     connection,
     onSuccess: handleSuggestionsSuccess,
   });
   useEffect(() => {
-    if (connection && !suggestionsLoadedRef.current[activeTab]) {
+    if (connection && !suggestionsLoading && !suggestionsLoadedRef.current[activeTab]) {
+      suggestionsRequestTabRef.current = activeTab;
       runSuggestionsQuery(buildRecentEntitiesQuery(activeTab));
     }
-  }, [connection, activeTab, runSuggestionsQuery]);
+  }, [connection, activeTab, runSuggestionsQuery, suggestionsLoading]);
 
   const handleSearch = useCallback(() => {
     const trimmed = entityInput.trim();
@@ -108,7 +117,6 @@ export default function InvestigatePage() {
     setEvents([]);
     setSearchedEntity(null);
     setSummaryPrompt(null);
-    setRecentEntities([]);
   }, []);
 
   const handleCopySummaryPrompt = useCallback(async () => {
@@ -182,11 +190,11 @@ export default function InvestigatePage() {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%" }}>
             <InvestigateSuggestionsPanel
               activeTab={activeTab}
-              entities={recentEntities}
+              entities={recentEntitiesByTab[activeTab]}
               loading={suggestionsLoading}
               onEntityClick={handleEntityClick}
             />
-            {!suggestionsLoading && recentEntities.length === 0 && (
+            {!suggestionsLoading && recentEntitiesByTab[activeTab].length === 0 && (
               <EmptyState
                 icon={<PolicyIcon sx={{ fontSize: 32 }} />}
                 heading={`Investigate a ${activeTab}`}
