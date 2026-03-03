@@ -27,6 +27,14 @@ vi.mock("../../src/services/perses/esqlDatasource", () => ({
   }),
 }));
 
+vi.mock("ai", () => ({
+  generateObject: vi.fn().mockResolvedValue({ object: { markers: [] } }),
+}));
+
+vi.mock("@ai-sdk/openai", () => ({
+  createOpenAI: vi.fn(() => vi.fn(() => ({ id: "test-model" }))),
+}));
+
 const ESQL_RESPONSE = {
   columns: [
     { name: "@timestamp", type: "date" },
@@ -178,6 +186,7 @@ describe("InvestigatePage", () => {
     expect(screen.getByText("auditbeat-2026.03.01")).toBeInTheDocument();
     expect(screen.getByText("User admin logged in")).toBeInTheDocument();
     expect(screen.getByText("Failed login attempt")).toBeInTheDocument();
+    expect(screen.getByText("Event timeline")).toBeInTheDocument();
   });
 
   it("shows empty state when no events are found", async () => {

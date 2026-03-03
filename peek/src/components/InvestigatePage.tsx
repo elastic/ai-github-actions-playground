@@ -16,11 +16,13 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
+import InvestigateEventTimeline from "./investigate/InvestigateEventTimeline";
 import InvestigateQueryBar from "./investigate/InvestigateQueryBar";
 import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
 import InvestigateSuggestionsPanel from "./investigate/InvestigateSuggestionsPanel";
 import InvestigateTimelineTable from "./investigate/InvestigateTimelineTable";
 import { useSuggestions } from "./investigate/useSuggestions";
+import { useTimelineMarkers } from "./investigate/useTimelineMarkers";
 import type { InvestigateTab, TimelineEvent } from "./investigate/investigateUtils";
 import { buildInvestigateQuery } from "./investigate/investigateQueryBuilder";
 import { parseTimelineEvents } from "./investigate/investigateParser";
@@ -94,6 +96,12 @@ export default function InvestigatePage() {
     setSearchedEntity(null);
   }, []);
 
+  const { markers, loading: markersLoading } = useTimelineMarkers({
+    events,
+    activeTab,
+    searchedEntity: searchedEntity ?? "",
+  });
+
   const tabConfig = TAB_LABELS[activeTab];
 
   return (
@@ -161,6 +169,11 @@ export default function InvestigatePage() {
               events={events}
               activeTab={activeTab}
               searchedEntity={searchedEntity!}
+            />
+            <InvestigateEventTimeline
+              events={events}
+              markers={markers}
+              markersLoading={markersLoading}
             />
             <InvestigateTimelineTable events={events} activeTab={activeTab} />
           </Box>
