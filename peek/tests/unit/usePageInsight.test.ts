@@ -6,6 +6,7 @@ import { generateText } from "ai";
 
 import { clearInsightCache, usePageInsight } from "../../src/hooks/usePageInsight";
 import { useLLMStore } from "../../src/store/useLLMStore";
+import { resetAllStores } from "../fixtures/test-utils";
 
 vi.mock("ai", () => ({
   generateText: vi.fn(),
@@ -19,6 +20,7 @@ describe("usePageInsight – insightCache", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+    resetAllStores();
     clearInsightCache();
     useLLMStore.getState().setApiKey("sk-test-key");
     vi.mocked(generateText).mockReset();

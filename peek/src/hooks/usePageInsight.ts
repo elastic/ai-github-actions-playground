@@ -64,6 +64,7 @@ export function usePageInsight({
 
   useEffect(() => {
     if (!enabled || !hasApiKey || !context.trim() || cachedInsight) {
+      setLoading(false);
       return;
     }
 
