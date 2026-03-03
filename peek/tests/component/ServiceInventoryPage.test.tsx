@@ -77,6 +77,7 @@ vi.mock("../../src/hooks/useEsqlQuery", () => ({
     },
     loading: false,
     error: null,
+    clearError: vi.fn(),
   }),
 }));
 
@@ -104,6 +105,9 @@ describe("ServiceInventoryPage", () => {
     renderPage();
     expect(screen.getByText("Services")).toBeInTheDocument();
     expect(screen.getByText("No service data loaded")).toBeInTheDocument();
+    expect(
+      screen.getByText("Click Search to discover services from your OpenTelemetry trace data."),
+    ).toBeInTheDocument();
   });
 
   it("shows service table after clicking Search", async () => {

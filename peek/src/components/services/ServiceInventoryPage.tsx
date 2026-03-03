@@ -70,9 +70,10 @@ export default function ServiceInventoryPage() {
     runQuery(query);
   }, [filters, runQuery]);
   const handleReset = useCallback(() => {
+    if (loading) return;
     clearError();
     resetFilters();
-  }, [clearError, resetFilters]);
+  }, [clearError, resetFilters, loading]);
 
   const handleViewTraces = useCallback(
     (serviceName: string) => {
@@ -121,7 +122,7 @@ export default function ServiceInventoryPage() {
           <Button variant="contained" size="small" onClick={handleSearch} disabled={loading}>
             {loading ? <CircularProgress size={14} color="inherit" /> : "Search"}
           </Button>
-          <Button variant="text" size="small" onClick={handleReset}>
+          <Button variant="text" size="small" onClick={handleReset} disabled={loading}>
             Reset
           </Button>
           {searchResult && (

@@ -83,21 +83,7 @@ export default function ServiceInventoryTable({
       </TableHead>
       <TableBody>
         {serviceRows.map((row) => (
-          <TableRow
-            key={row.serviceName}
-            hover
-            tabIndex={0}
-            role="button"
-            aria-label={`View traces for ${row.serviceName}`}
-            sx={{ cursor: "pointer" }}
-            onClick={() => handleViewTraces(row.serviceName)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleViewTraces(row.serviceName);
-              }
-            }}
-          >
+          <TableRow key={row.serviceName} hover>
             <TableCell>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {row.serviceName}
@@ -143,10 +129,7 @@ export default function ServiceInventoryTable({
                 size="small"
                 variant="text"
                 aria-label={`View traces for ${row.serviceName}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewTraces(row.serviceName);
-                }}
+                onClick={() => handleViewTraces(row.serviceName)}
               >
                 View Traces
               </Button>
