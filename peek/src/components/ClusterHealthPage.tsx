@@ -69,10 +69,11 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
   useEffect(() => {
+    if (!data) return;
     setPageSection("clusterHealth", {
-      status: data?.clusterHealth?.status ?? "unknown",
-      unassignedShards: data?.clusterHealth?.unassigned_shards ?? 0,
-      pendingTasks: data?.pendingTasks?.tasks?.length ?? 0,
+      status: data.clusterHealth?.status ?? "unknown",
+      unassignedShards: data.clusterHealth?.unassigned_shards ?? 0,
+      pendingTasks: data.pendingTasks?.tasks?.length ?? 0,
       activeTab,
     });
   }, [data, activeTab, setPageSection]);

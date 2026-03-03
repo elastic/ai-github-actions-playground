@@ -144,6 +144,7 @@ export default function DataStreamsPage() {
       selectedStream: selectedName,
       totalStreams: streamsData.length,
     });
+    return () => setPageSection("dataStreams", undefined);
   }, [streamsData, selectedName, setPageSection]);
 
   const fieldRows = useMemo(() => {
