@@ -10,7 +10,7 @@ import { useRefetchOnConnectionChange } from "./useEsQuery";
 interface UseSimpleEsqlQueryOptions {
   /** The ES|QL query string to execute. Pass `null` to disable execution. */
   query: string | null;
-  /** Optional custom React Query key. Defaults to `["esql", connectionUrl, query]`. */
+  /** Optional custom React Query key. Defaults to `["esql", connectionUrl, trimmedQuery, request]`. */
   queryKey?: readonly unknown[];
   /** Optional request builder — transforms the query text into a full `EsqlQueryParams`. */
   buildRequest?: (queryText: string) => EsqlQueryParams;
@@ -46,19 +46,24 @@ export function useSimpleEsqlQuery({
 }: UseSimpleEsqlQueryOptions) {
   const connection = useConnectionStore((s) => s.connection);
   const trimmedQuery = query?.trim() ?? "";
+  const request =
+    trimmedQuery.length > 0
+      ? buildRequest
+        ? buildRequest(trimmedQuery)
+        : { query: trimmedQuery }
+      : null;
 
   const effectiveEnabled = enabled && Boolean(connection) && Boolean(trimmedQuery);
 
   const result = useQuery<EsqlResponse>({
-    queryKey: queryKey ?? ["esql", connection?.url, trimmedQuery],
+    queryKey: queryKey ?? ["esql", connection?.url, trimmedQuery, request],
     queryFn: async ({ signal }) => {
-      if (!connection || !trimmedQuery) {
+      if (!connection || !request) {
         throw new Error(
           "Cannot execute ES|QL query without an active connection and non-empty query.",
         );
       }
       const datasource = createPersesEsqlDatasource(connection);
-      const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
       return datasource.execute(request, signal);
     },
     enabled: effectiveEnabled,
