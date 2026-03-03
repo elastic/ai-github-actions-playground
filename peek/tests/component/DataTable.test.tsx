@@ -147,6 +147,21 @@ describe("DataTable", () => {
     expect(screen.getByText("No data")).toBeInTheDocument();
   });
 
+  it("renders empty state message when columns exist but rows are empty", () => {
+    const emptyRowData: EsqlResponse = {
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "message", type: "keyword" },
+      ],
+      values: [],
+    };
+    render(<DataTable data={emptyRowData} />);
+
+    expect(screen.getByText("No results match your query")).toBeInTheDocument();
+    expect(screen.getByText("@timestamp")).toBeInTheDocument();
+    expect(screen.getByText("message")).toBeInTheDocument();
+  });
+
   it("renders pagination showing total row count", () => {
     const data: EsqlResponse = {
       columns: [{ name: "val", type: "long" }],

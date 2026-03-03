@@ -248,6 +248,9 @@ export default memo(function DataTable({
             selectedRowIndex={selectedRowIndex}
           />
         </Table>
+        {data.values.length === 0 && (
+          <EmptyState size="small" heading="No results match your query" />
+        )}
       </TableContainer>
       <Box
         sx={{
