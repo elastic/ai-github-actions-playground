@@ -15,9 +15,22 @@ describe("buildLogsQuery", () => {
     });
 
     expect(query).toContain(
-      'FROM logs-* | WHERE @timestamp >= NOW() - 1 hour AND service.name == "checkout-service" AND log.level != "debug"',
+      'FROM logs-* | WHERE @timestamp >= NOW() - 1 hour AND service.name == "checkout-service" AND (log.level != "debug" OR log.level IS NULL)',
     );
     expect(query).toContain("KEEP @timestamp, service.name, log.level, message");
+  });
+
+  it("skips blank filter values", () => {
+    const query = buildLogsQuery({
+      indexPattern: "logs-*",
+      searchText: "",
+      filters: [{ field: "service.name", value: "   " }],
+      selectedColumns: ["@timestamp", "message"],
+    });
+
+    expect(query).toBe(
+      "FROM logs-* | WHERE @timestamp >= NOW() - 1 hour | SORT @timestamp DESC | KEEP @timestamp, message | LIMIT 500",
+    );
   });
 
   it("uses phrase query when search text is quoted", () => {

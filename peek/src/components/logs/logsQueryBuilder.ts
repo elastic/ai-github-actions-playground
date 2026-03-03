@@ -41,9 +41,13 @@ export function buildLogsQuery(state: LogsQueryState): string {
   const whereClauses: string[] = ["@timestamp >= NOW() - 1 hour"];
 
   for (const filter of state.filters) {
+    const trimmedValue = filter.value.trim();
+    if (!trimmedValue) continue;
     const field = validateEsqlIdentifier(filter.field);
-    const value = escapeEsqlString(filter.value);
-    whereClauses.push(filter.exclude ? `${field} != "${value}"` : `${field} == "${value}"`);
+    const value = escapeEsqlString(trimmedValue);
+    whereClauses.push(
+      filter.exclude ? `(${field} != "${value}" OR ${field} IS NULL)` : `${field} == "${value}"`,
+    );
   }
 
   const searchClause = buildSearchClause(state.searchText);
@@ -62,5 +66,7 @@ export function buildLogsQuery(state: LogsQueryState): string {
     "SORT @timestamp DESC",
     `KEEP ${keepColumns}`,
     "LIMIT 500",
-  ].join(" | ");
+  ]
+    .filter(Boolean)
+    .join(" | ");
 }

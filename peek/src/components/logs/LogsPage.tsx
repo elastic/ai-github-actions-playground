@@ -11,7 +11,6 @@ import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
@@ -34,6 +33,7 @@ import QueryAnnotationOverlay from "../QueryAnnotationOverlay";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 import { PAGE_MANIFEST } from "../../routes/manifest";
+import { escapeEsqlString } from "../../services/es/esqlUtils";
 
 import { buildLogsQuery } from "./logsQueryBuilder";
 
@@ -96,8 +96,8 @@ export default function LogsPage() {
   const effectiveQuery = rawQuery ?? generatedQuery;
 
   useEffect(() => {
-    if (rawQuery !== null) setRawQuery(null);
-  }, [generatedQuery, rawQuery, setRawQuery]);
+    setRawQuery(null);
+  }, [generatedQuery, setRawQuery]);
 
   const { runQuery, loading, error } = useEsqlQuery({
     connection,
@@ -155,7 +155,7 @@ export default function LogsPage() {
       mounted = false;
       controller.abort();
     };
-  }, [connection, indexPattern, filters]);
+  }, [connection, indexPattern]);
 
   const handleCellFilter = useCallback(
     (field: string, value: string, exclude = false) => {
@@ -167,10 +167,11 @@ export default function LogsPage() {
 
   const handleTracePivot = useCallback(
     (traceId: string) => {
-      const safeTraceId = traceId.trim();
-      if (!safeTraceId) return;
+      const trimmed = traceId.trim();
+      if (!trimmed) return;
+      const safeTraceId = escapeEsqlString(trimmed);
       setDiscoverQueryDraft(
-        `FROM traces-* | WHERE trace.id == "${safeTraceId.replaceAll('"', '\\"')}" | SORT @timestamp DESC | LIMIT 200`,
+        `FROM traces-* | WHERE trace.id == "${safeTraceId}" | SORT @timestamp DESC | LIMIT 200`,
       );
       navigate(PAGE_MANIFEST.discover.path);
     },
@@ -288,7 +289,11 @@ export default function LogsPage() {
                   </ListItem>
                   {(fieldValues[field] ?? []).map((entry) => (
                     <ListItem key={`${field}-${entry.value}`} disablePadding>
-                      <ListItemButton sx={{ pl: 2, py: 0.5 }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center", width: "100%", pl: 2, py: 0.5 }}
+                      >
                         <ListItemText
                           primary={
                             <Typography variant="caption" noWrap title={entry.value}>
@@ -315,7 +320,7 @@ export default function LogsPage() {
                             <RemoveIcon fontSize="inherit" />
                           </Button>
                         </Stack>
-                      </ListItemButton>
+                      </Stack>
                     </ListItem>
                   ))}
                   <Divider />

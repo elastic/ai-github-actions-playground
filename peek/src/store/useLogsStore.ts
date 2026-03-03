@@ -21,7 +21,15 @@ interface LogsState extends LogsQueryState {
   reset: () => void;
 }
 
-const initialState: LogsQueryState = { ...DEFAULT_LOGS_QUERY_STATE };
+function createInitialState(): LogsQueryState {
+  return {
+    ...DEFAULT_LOGS_QUERY_STATE,
+    filters: [...DEFAULT_LOGS_QUERY_STATE.filters],
+    selectedColumns: [...DEFAULT_LOGS_QUERY_STATE.selectedColumns],
+  };
+}
+
+const initialState: LogsQueryState = createInitialState();
 
 export const useLogsStore = create<LogsState>()(
   devtools(
@@ -39,7 +47,7 @@ export const useLogsStore = create<LogsState>()(
               Boolean(item.exclude) === Boolean(filter.exclude),
           );
           if (exists) return state;
-          return { filters: [...state.filters, filter], rawQuery: null };
+          return { filters: [...state.filters, { ...filter }], rawQuery: null };
         }),
       removeFilter: (index) =>
         set((state) => ({
@@ -47,10 +55,14 @@ export const useLogsStore = create<LogsState>()(
           rawQuery: null,
         })),
       clearFilters: () => set({ filters: [], rawQuery: null }),
-      setSelectedColumns: (selectedColumns) => set({ selectedColumns, rawQuery: null }),
+      setSelectedColumns: (selectedColumns) =>
+        set({ selectedColumns: [...selectedColumns], rawQuery: null }),
       setRawQuery: (rawQuery) => set({ rawQuery }),
       setResult: (result) => set({ result }),
-      reset: () => set({ ...initialState, rawQuery: null, result: null }),
+      reset: () => {
+        const next = createInitialState();
+        set({ ...next, rawQuery: null, result: null });
+      },
     }),
     { name: "LogsStore", enabled: import.meta.env.DEV },
   ),

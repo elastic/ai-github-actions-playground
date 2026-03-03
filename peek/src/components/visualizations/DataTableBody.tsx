@@ -115,24 +115,37 @@ export default function DataTableBody({
                     <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
                       null
                     </Typography>
-                  ) : (
+                  ) : onCellClick ? (
                     <ButtonBase
                       component="span"
                       disableRipple
+                      tabIndex={0}
                       onClick={(event) => {
-                        if (!onCellClick) return;
                         event.stopPropagation();
                         onCellClick({ columnName: col.name, value: String(cell) });
+                      }}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" ||
+                          event.key === " " ||
+                          event.key === "Spacebar"
+                        ) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onCellClick({ columnName: col.name, value: String(cell) });
+                        }
                       }}
                       sx={{
                         display: "inline",
                         p: 0,
-                        cursor: onCellClick ? "pointer" : "text",
+                        cursor: "pointer",
                         textAlign: "inherit",
                       }}
                     >
                       <TruncatedCell value={String(cell)} />
                     </ButtonBase>
+                  ) : (
+                    <TruncatedCell value={String(cell)} />
                   )}
                 </TableCell>
               );
