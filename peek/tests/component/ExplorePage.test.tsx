@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
@@ -16,6 +16,9 @@ const RESTORE_QS = RESTORE_URL.slice(RESTORE_URL.indexOf("?"));
 const COUNTER_URL =
   "/?index=metrics-system*&metric=system.network.in.bytes&agg=sum&from=now-24h&to=now";
 const COUNTER_QS = COUNTER_URL.slice(COUNTER_URL.indexOf("?"));
+const NOT_FOUND_URL =
+  "/?index=metrics-system*&metric=zzz.nonexistent&agg=avg&groupBy=host.name&from=now-24h&to=now";
+const NOT_FOUND_QS = NOT_FOUND_URL.slice(NOT_FOUND_URL.indexOf("?"));
 
 const { queryMock, listFieldsMock } = vi.hoisted(() => ({
   queryMock: vi.fn().mockResolvedValue({
@@ -94,5 +97,38 @@ describe("ExplorePage", () => {
       expect(explorerState.metricType).toBe("counter");
       expect(explorerState.aggregation).toBe("count");
     });
+  });
+
+  it("shows metric-not-found empty state for a non-existent metric URL", async () => {
+    render(
+      <MemoryRouter initialEntries={[NOT_FOUND_URL]}>
+        <NuqsTestingAdapter searchParams={NOT_FOUND_QS} hasMemory>
+          <ExplorePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Metric not found")).toBeInTheDocument();
+    });
+
+    expect(listFieldsMock).toHaveBeenCalled();
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it("does not query when metric is invalid and field loading fails", async () => {
+    listFieldsMock.mockRejectedValueOnce(new Error("boom"));
+    render(
+      <MemoryRouter initialEntries={[NOT_FOUND_URL]}>
+        <NuqsTestingAdapter searchParams={NOT_FOUND_QS} hasMemory>
+          <ExplorePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Metric not found")).toBeInTheDocument();
+    });
+    expect(queryMock).not.toHaveBeenCalled();
   });
 });
