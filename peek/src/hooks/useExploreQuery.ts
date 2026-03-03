@@ -75,7 +75,7 @@ export function useExploreQuery({
       "explore-query",
       connection?.url,
       // When override is active, key on the override text; otherwise use structured params
-      queryOverride ?? null,
+      trimmedOverride ?? null,
       indexPattern,
       selectedMetric,
       metricType,
