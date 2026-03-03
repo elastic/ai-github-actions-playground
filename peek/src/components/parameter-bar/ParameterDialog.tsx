@@ -232,7 +232,7 @@ export default function ParameterDialog({
   const [esqlError, setEsqlError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const { control, handleSubmit, getValues, setValue, reset, formState } =
+  const { control, handleSubmit, getValues, setValue, reset, trigger, formState } =
     useForm<ParameterDialogFormValues>({
       resolver: parameterDialogFormResolver,
       mode: "onChange",
@@ -245,9 +245,10 @@ export default function ParameterDialog({
   useEffect(() => {
     if (!open) return;
     reset(toFormValues(editing));
+    void trigger();
     setEsqlOptions([]);
     setEsqlError(null);
-  }, [open, editing, reset]);
+  }, [open, editing, reset, trigger]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
