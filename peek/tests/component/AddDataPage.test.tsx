@@ -149,14 +149,22 @@ describe("AddDataPage", () => {
   });
 
   it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
-    mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] })
-      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
-
     const user = userEvent.setup();
     renderPage();
 
     await goToStep4(user);
+
+    // The mount-time detectTelemetrySignals effect should have already fired.
+    expect(mockGetDataStreams).toHaveBeenCalled();
+
+    // Set up mock AFTER navigation so the mount-time detectTelemetrySignals
+    // call has already resolved with the default (empty) mock.  The next
+    // getDataStreams invocation — triggered by "Check now" — will return
+    // partial data immediately, avoiding a 5 s polling wait.
+    mockGetDataStreams.mockResolvedValueOnce({
+      data_streams: [{ name: "metrics-host.otel-default" }],
+    });
+
     await user.click(screen.getByRole("button", { name: /Check now/i }));
 
     await waitFor(() => {
