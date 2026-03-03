@@ -139,7 +139,7 @@ export default function TraceResultsView({
                   startIcon={<SearchIcon />}
                   onClick={onSearch}
                 >
-                  Search Traces
+                  Run query
                 </Button>
               ) : undefined
             }
