@@ -134,7 +134,12 @@ export const usePageFiltersStore = create<PageFiltersState>()(
       setFleetActiveTab: (tab) => set({ fleetActiveTab: tab }),
       updateAgentFilter: (updates) =>
         set((s) => ({ agentFilter: { ...s.agentFilter, ...updates } })),
-      resetFleetFilters: () => set({ agentFilter: { ...DEFAULT_AGENT_FILTER } }),
+      resetFleetFilters: () =>
+        set({
+          agentFilter: { ...DEFAULT_AGENT_FILTER },
+          fleetActiveTab: "overview" as FleetViewTab,
+          fleetAutoRefreshEnabled: true,
+        }),
     }),
     { name: "PageFiltersStore", enabled: import.meta.env.DEV },
   ),
