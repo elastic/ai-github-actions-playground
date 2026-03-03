@@ -185,7 +185,7 @@ export function flattenSpanTree(roots: SpanTreeNode[]): SpanTreeNode[] {
   return result;
 }
 
-function isErrorStatus(status: string): boolean {
+export function isErrorStatus(status: string): boolean {
   return status === "Error" || status === "STATUS_CODE_ERROR";
 }
 

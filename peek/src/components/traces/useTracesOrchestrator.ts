@@ -304,6 +304,20 @@ export function useTracesOrchestrator() {
     [runTraceQueries, runDriftRadarQueries],
   );
 
+  // Parse search results into full Span[] for SpanTreeView
+  const searchSpans = useMemo(() => {
+    if (!searchResult) return [];
+    return parseSpansFromEsql(searchResult.columns, searchResult.values, DEFAULT_FIELD_MAPPING);
+  }, [searchResult]);
+
+  const handleSelectSpan = useCallback(
+    (spanId: string) => {
+      setSelectedSpanId(spanId);
+      setDrawerOpen(true);
+    },
+    [setSelectedSpanId, setDrawerOpen],
+  );
+
   // Parse trace searchResults for display
   const traceRows = useMemo(() => {
     if (!searchResult) return [];
@@ -413,6 +427,8 @@ export function useTracesOrchestrator() {
     traceRows,
     maxDuration,
     selectedSpan,
+    searchSpans,
+    handleSelectSpan,
 
     // Drift radar
     driftRadarSpans,
