@@ -64,3 +64,45 @@ export function formatErrorRate(rate: number): string {
   if (!Number.isFinite(rate) || rate < 0) return "—";
   return `${(rate * 100).toFixed(1)}%`;
 }
+
+/** Time-bucketed data point for a service sparkline. */
+export type SparklinePoint = [number, number]; // [timestamp, value]
+
+/** Per-service sparkline series for requests, latency, and error rate. */
+export interface ServiceSparklineData {
+  requests: SparklinePoint[];
+  latency: SparklinePoint[];
+  errorRate: SparklinePoint[];
+}
+
+/**
+ * Parses an ES|QL response from `buildServiceSparklineQuery` into a map
+ * of service name → sparkline data.
+ */
+export function parseServiceSparklineData(
+  result: EsqlResponse,
+): Record<string, ServiceSparklineData> {
+  const colIndex = new Map<string, number>();
+  for (let i = 0; i < result.columns.length; i++) {
+    colIndex.set(result.columns[i]!.name, i);
+  }
+  const get = (row: unknown[], field: string): unknown => {
+    const idx = colIndex.get(field);
+    return idx !== undefined ? row[idx] : null;
+  };
+
+  const map: Record<string, ServiceSparklineData> = {};
+  for (const row of result.values) {
+    const service = String(get(row, "service.name") ?? "unknown");
+    const tsRaw = get(row, "bucket");
+    const ts = tsRaw ? new Date(tsRaw as string).getTime() : 0;
+    if (!map[service]) {
+      map[service] = { requests: [], latency: [], errorRate: [] };
+    }
+    const entry = map[service]!;
+    entry.requests.push([ts, Number(get(row, "request_count") ?? 0)]);
+    entry.latency.push([ts, Number(get(row, "avg_latency_ms") ?? 0)]);
+    entry.errorRate.push([ts, Number(get(row, "error_rate") ?? 0)]);
+  }
+  return map;
+}
