@@ -170,6 +170,60 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   });
+
+  it("resets search, selection, and category when clicking 'Add another source'", async () => {
+    mockGetDataStreams
+      .mockResolvedValueOnce({ data_streams: [] })
+      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    // Type a search query and select a technology
+    await user.type(screen.getByLabelText("Search technologies"), "post");
+    await user.click(screen.getByRole("button", { name: "Choose" }));
+
+    // Walk through all steps to step 5
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Telemetry data detected!/)).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
+
+    // Click "Add another source"
+    await user.click(screen.getByRole("button", { name: "Add another source" }));
+
+    // Back on step 1 with reset state
+    expect(
+      screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Search technologies")).toHaveValue("");
+    // No technology should be selected (Continue button disabled)
+    expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
+  });
+
+  it("shows OTLP alert when no ingest endpoint can be derived", async () => {
+    // Use a non-cloud URL so no OTLP endpoint can be derived
+    useConnectionStore.getState().setConnection({
+      url: "http://localhost:9200",
+      apiKey: "testkey",
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+
+    // Switch to Managed OTLP
+    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+
+    // The alert should appear even though no endpoint was derived
+    expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
+  });
 });
 
 describe("probeOtlpEndpoint", () => {

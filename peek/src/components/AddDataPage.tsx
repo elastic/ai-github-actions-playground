@@ -442,17 +442,25 @@ export default function AddDataPage() {
             </ToggleButtonGroup>
           </Stack>
 
-          {endpointType === "managed_otlp" && probeTargetOtlpUrl && (
+          {endpointType === "managed_otlp" && (
             <Alert
               severity={
-                ingestAvailable ? "success" : ingestAvailable === false ? "warning" : "info"
+                !probeTargetOtlpUrl
+                  ? "warning"
+                  : ingestAvailable
+                    ? "success"
+                    : ingestAvailable === false
+                      ? "warning"
+                      : "info"
               }
             >
-              {ingestAvailable === null
-                ? `Checking OTLP endpoint availability at ${probeTargetOtlpUrl}…`
-                : ingestAvailable
-                  ? `OTLP endpoint verified at ${probeTargetOtlpUrl}`
-                  : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
+              {!probeTargetOtlpUrl
+                ? "Could not derive an OTLP endpoint from the Elasticsearch URL. Enter an ingest URL in connection settings or use an Elastic Cloud deployment."
+                : ingestAvailable === null
+                  ? `Checking OTLP endpoint availability at ${probeTargetOtlpUrl}…`
+                  : ingestAvailable
+                    ? `OTLP endpoint verified at ${probeTargetOtlpUrl}`
+                    : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
             </Alert>
           )}
 
@@ -765,6 +773,9 @@ export default function AddDataPage() {
                 onClick={() => {
                   if (cta.id === "additional_source") {
                     setWizardStep(1);
+                    setSelectedTechnology(null);
+                    setTechnologySearch("");
+                    setActiveCategory("all");
                     return;
                   }
                   navigate(cta.path);
