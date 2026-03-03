@@ -59,6 +59,41 @@ export function buildServiceInventoryQuery(
   ]);
 }
 
+const SPARKLINE_BUCKETS = 20;
+
+/**
+ * Builds an ES|QL query that returns time-bucketed per-service metrics for sparklines.
+ * Produces ~SPARKLINE_BUCKETS data points per service for requests, latency, and error rate.
+ */
+export function buildServiceSparklineQuery(
+  filters: ServiceInventoryFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  serviceNames: string[] = [],
+): string {
+  const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
+  const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
+  const whereClauses: string[] = [
+    `${fields.parentSpanId} IS NULL`,
+    `${fields.timestamp} >= ${safeTimeFrom}`,
+    `${fields.timestamp} <= ${safeTimeTo}`,
+  ];
+  if (serviceNames.length > 0) {
+    const serviceInList = serviceNames.map((name) => `"${escapeEsqlString(name)}"`).join(", ");
+    whereClauses.push(`${fields.serviceName} IN (${serviceInList})`);
+  }
+
+  const durationExpr = `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000)`;
+
+  return buildPipeline([
+    `FROM ${fields.index}`,
+    buildWherePipe(whereClauses),
+    `EVAL duration_ms = ${durationExpr} / 1000.0, ` +
+      `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`,
+    `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_rate = SUM(is_error) / COUNT(*) BY ${fields.serviceName}, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
+    `SORT bucket`,
+  ]);
+}
+
 /**
  * Builds an ES|QL query that fetches the list of unique environments for a service.
  */

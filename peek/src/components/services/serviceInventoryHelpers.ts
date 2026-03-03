@@ -1,4 +1,9 @@
 import type { EsqlResponse } from "../../types";
+import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
+
+import type { SortDirection } from "./serviceDashboardHelpers";
+
+export type { SortDirection };
 
 export interface ServiceRow {
   serviceName: string;
@@ -16,7 +21,6 @@ export interface ServiceRow {
 }
 
 export type SortField = "serviceName" | "requestCount" | "avgLatencyMs" | "errorRate";
-export type SortDirection = "asc" | "desc";
 
 export function parseTopValue(value: unknown, fallback = "—"): string {
   if (Array.isArray(value)) {
@@ -29,23 +33,16 @@ export function parseTopValue(value: unknown, fallback = "—"): string {
 }
 
 export function parseServiceRows(result: EsqlResponse): ServiceRow[] {
-  const colIndex = new Map<string, number>();
-  for (let i = 0; i < result.columns.length; i++) {
-    colIndex.set(result.columns[i]!.name, i);
-  }
-  const get = (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
+  const get = buildColumnAccessor(result.columns);
 
   return result.values.map((row) => ({
     serviceName: String(get(row, "service.name") ?? "unknown"),
-    requestCount: Number(get(row, "request_count") ?? 0),
-    avgLatencyMs: Number(get(row, "avg_latency_ms") ?? 0),
-    errorCount: Number(get(row, "error_count") ?? 0),
-    errorRate: Number(get(row, "error_rate") ?? 0),
-    uniqueRoutes: Number(get(row, "unique_routes") ?? 0),
-    uniqueSpanNames: Number(get(row, "unique_span_names") ?? 0),
+    requestCount: toFiniteNumber(get(row, "request_count")),
+    avgLatencyMs: toFiniteNumber(get(row, "avg_latency_ms")),
+    errorCount: toFiniteNumber(get(row, "error_count")),
+    errorRate: toFiniteNumber(get(row, "error_rate")),
+    uniqueRoutes: toFiniteNumber(get(row, "unique_routes")),
+    uniqueSpanNames: toFiniteNumber(get(row, "unique_span_names")),
     topRoute: parseTopValue(get(row, "top_route")),
     topSpanName: parseTopValue(get(row, "top_span_name")),
     topError: parseTopValue(get(row, "top_error")),
@@ -63,6 +60,42 @@ export function formatLatency(ms: number): string {
 export function formatErrorRate(rate: number): string {
   if (!Number.isFinite(rate) || rate < 0) return "—";
   return `${(rate * 100).toFixed(1)}%`;
+}
+
+/** Time-bucketed data point for a service sparkline. */
+export type SparklinePoint = [number, number]; // [timestamp, value]
+
+/** Per-service sparkline series for requests, latency, and error rate. */
+export interface ServiceSparklineData {
+  requests: SparklinePoint[];
+  latency: SparklinePoint[];
+  errorRate: SparklinePoint[];
+}
+
+/**
+ * Parses an ES|QL response from `buildServiceSparklineQuery` into a map
+ * of service name → sparkline data.
+ */
+export function parseServiceSparklineData(
+  result: EsqlResponse,
+): Record<string, ServiceSparklineData> {
+  const get = buildColumnAccessor(result.columns);
+
+  const map = Object.create(null) as Record<string, ServiceSparklineData>;
+  for (const row of result.values) {
+    const service = String(get(row, "service.name") ?? "unknown");
+    const tsRaw = get(row, "bucket");
+    const ts = tsRaw ? new Date(tsRaw as string).getTime() : null;
+    if (ts === null || !Number.isFinite(ts)) continue;
+    if (!map[service]) {
+      map[service] = { requests: [], latency: [], errorRate: [] };
+    }
+    const entry = map[service]!;
+    entry.requests.push([ts, toFiniteNumber(get(row, "request_count"))]);
+    entry.latency.push([ts, toFiniteNumber(get(row, "avg_latency_ms"))]);
+    entry.errorRate.push([ts, toFiniteNumber(get(row, "error_rate"))]);
+  }
+  return map;
 }
 
 /* ────── Actionable insights derived from service data ────── */

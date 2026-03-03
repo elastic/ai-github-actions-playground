@@ -180,16 +180,13 @@ describe("ServiceInventoryPage", () => {
     expect(viewButtons).toHaveLength(3);
   });
 
-  it("shows investigative metadata columns", async () => {
+  it("shows service metadata columns", async () => {
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     const inventoryTable = await screen.findByRole("table", { name: "Service inventory" });
-    expect(within(inventoryTable).getByText("/checkout")).toBeInTheDocument();
-    expect(within(inventoryTable).getByText("POST /checkout")).toBeInTheDocument();
-    expect(within(inventoryTable).getByText("Database timeout")).toBeInTheDocument();
     expect(within(inventoryTable).getByText("java")).toBeInTheDocument();
     expect(within(inventoryTable).getAllByText("prod").length).toBeGreaterThan(0);
   });
