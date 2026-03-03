@@ -75,6 +75,7 @@ export default function ServiceInventoryTable({
           </TableCell>
           <TableCell>Language</TableCell>
           <TableCell>Environment</TableCell>
+          <TableCell>Version</TableCell>
           <TableCell align="right">Routes</TableCell>
           <TableCell align="right">Span Names</TableCell>
           <TableCell>Top Route</TableCell>
@@ -116,6 +117,12 @@ export default function ServiceInventoryTable({
             </TableCell>
             <TableCell>
               <Typography variant="body2">{row.environment}</Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="body2">
+                {row.version}
+                {row.uniqueVersions > 1 ? ` (+${row.uniqueVersions - 1})` : ""}
+              </Typography>
             </TableCell>
             <TableCell align="right">
               <Typography variant="body2">{row.uniqueRoutes.toLocaleString()}</Typography>

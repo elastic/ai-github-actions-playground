@@ -83,3 +83,22 @@ export function buildServiceRecentTracesQuery(
     `LIMIT 100`,
   ]);
 }
+
+/**
+ * Builds an ES|QL query that detects deployment changes by aggregating
+ * distinct service.version values with their first and last seen timestamps.
+ */
+export function buildServiceDeploymentsQuery(
+  filters: ServiceDashboardFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+): string {
+  const whereClauses = buildServiceWhereClauses(filters, fields);
+
+  return buildPipeline([
+    `FROM ${fields.index}`,
+    buildWherePipe(whereClauses),
+    'EVAL version_key = COALESCE(service.version, "unknown")',
+    `STATS first_seen = MIN(${fields.timestamp}), last_seen = MAX(${fields.timestamp}), request_count = COUNT(*) BY version_key`,
+    `SORT first_seen DESC`,
+  ]);
+}

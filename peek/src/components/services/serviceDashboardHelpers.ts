@@ -61,3 +61,21 @@ export function parseRecentTraces(result: EsqlResponse): RecentTrace[] {
     timestamp: String(get(row, "@timestamp") ?? ""),
   }));
 }
+
+export interface DeploymentRow {
+  version: string;
+  firstSeen: string;
+  lastSeen: string;
+  requestCount: number;
+}
+
+export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
+  const get = buildColumnAccessor(result.columns);
+
+  return result.values.map((row) => ({
+    version: String(get(row, "version_key") ?? "unknown"),
+    firstSeen: String(get(row, "first_seen") ?? ""),
+    lastSeen: String(get(row, "last_seen") ?? ""),
+    requestCount: toFiniteNumber(get(row, "request_count")),
+  }));
+}

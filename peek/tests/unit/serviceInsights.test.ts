@@ -19,6 +19,8 @@ function makeRow(overrides: Partial<ServiceRow> = {}): ServiceRow {
     topError: "—",
     language: "java",
     environment: "production",
+    version: "1.0.0",
+    uniqueVersions: 1,
     ...overrides,
   };
 }
