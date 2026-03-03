@@ -25,10 +25,6 @@ describe("peek/no-direct-echarts-import", () => {
           code: `import * as echarts from "echarts/core";`,
           filename: "tests/unit/mytest.test.ts",
         },
-        {
-          code: `import type { ECharts } from "echarts/core";`,
-          filename: "src/components/visualizations/TimeSeriesChart.tsx",
-        },
       ],
       invalid: [
         {
@@ -39,6 +35,11 @@ describe("peek/no-direct-echarts-import", () => {
         {
           code: `import { LineChart } from "echarts/charts";`,
           filename: "src/components/visualizations/BarChart.tsx",
+          errors: [{ messageId: "noDirectECharts" }],
+        },
+        {
+          code: `import type { ECharts } from "echarts/core";`,
+          filename: "src/components/visualizations/TimeSeriesChart.tsx",
           errors: [{ messageId: "noDirectECharts" }],
         },
       ],

@@ -1,6 +1,5 @@
 import { useMemo, useCallback, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
-import type { ECharts } from "echarts/core";
 
 import type { Span, SpanTreeNode } from "../traces/traceUtils";
 import { buildSpanTree, flattenSpanTree, formatSpanDuration } from "../traces/traceUtils";
@@ -8,6 +7,7 @@ import { getServiceColor } from "../traces/traceColors";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
+import type { EChartInstance } from "./chartExport";
 
 interface WaterfallChartProps {
   spans: Span[];
@@ -21,7 +21,7 @@ export default function WaterfallChart({
   selectedSpanId,
 }: WaterfallChartProps) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
 
   // Single memoized computation of the span tree — shared by option and click handler
   const flatNodes: SpanTreeNode[] = useMemo(() => {
