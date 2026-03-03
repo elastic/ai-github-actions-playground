@@ -189,6 +189,7 @@ export default function RequestCard({
             color="warning"
             startIcon={<CancelIcon />}
             onClick={() => onCancel(entry.id)}
+            sx={{ height: COMPONENT_HEIGHTS.input }}
           >
             Cancel
           </Button>
@@ -199,6 +200,7 @@ export default function RequestCard({
             startIcon={<PlayArrowIcon />}
             onClick={() => onSend(entry.id)}
             disabled={!entry.path.trim()}
+            sx={{ height: COMPONENT_HEIGHTS.input }}
           >
             Send
           </Button>
@@ -211,6 +213,7 @@ export default function RequestCard({
               onClick={() => void handleCopyCurl()}
               disabled={!connection || !entry.path.trim()}
               aria-label="Copy as cURL"
+              sx={{ width: COMPONENT_HEIGHTS.input, height: COMPONENT_HEIGHTS.input }}
             >
               <ContentCopyIcon fontSize="small" />
             </IconButton>
@@ -219,7 +222,12 @@ export default function RequestCard({
 
         {removable && (
           <Tooltip title="Remove request">
-            <IconButton size="small" onClick={() => onRemove(entry.id)} aria-label="Remove request">
+            <IconButton
+              size="small"
+              onClick={() => onRemove(entry.id)}
+              aria-label="Remove request"
+              sx={{ width: COMPONENT_HEIGHTS.input, height: COMPONENT_HEIGHTS.input }}
+            >
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
