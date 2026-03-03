@@ -263,7 +263,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
             if (isError) acc.push(QUERY_NAMES[i]!);
             return acc;
           }, []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- spreading errorStates for per-query shallow comparison
     [allFailed, ...errorStates],
   );
 
@@ -275,7 +275,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
       allocExplainUpdatedAt || 0,
     );
     return maxUpdatedAt > 0 ? new Date(maxUpdatedAt).toISOString() : null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- spreading dataUpdatedTimes for per-query shallow comparison
   }, [...dataUpdatedTimes, allocExplainUpdatedAt]);
 
   const refresh = useCallback(() => {
