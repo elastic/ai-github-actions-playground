@@ -147,6 +147,9 @@ export default function TracesPage() {
     })),
   );
 
+  const traceSearchCollapsed = useUIStore((s) => s.traceSearchCollapsed);
+  const setTraceSearchCollapsed = useUIStore((s) => s.setTraceSearchCollapsed);
+
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
@@ -166,6 +169,18 @@ export default function TracesPage() {
   useEffect(() => {
     setRawQuery(null);
   }, [filters, setRawQuery]);
+
+  // Cmd/Ctrl+[ toggles the search panel collapse
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
+        e.preventDefault();
+        setTraceSearchCollapsed(!useUIStore.getState().traceSearchCollapsed);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setTraceSearchCollapsed]);
 
   // Main search query
   const handleSearchSuccess = useCallback(
@@ -428,6 +443,8 @@ export default function TracesPage() {
         searchLoading={searchLoading}
         onSearch={handleSearch}
         searchResultCount={searchResult ? searchResult.values.length : null}
+        collapsed={traceSearchCollapsed}
+        onToggleCollapsed={() => setTraceSearchCollapsed(!traceSearchCollapsed)}
       />
 
       <TraceErrorAlerts

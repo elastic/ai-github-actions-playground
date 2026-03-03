@@ -147,7 +147,7 @@ export default function App() {
                   minHeight: 0,
                   overflowX: "hidden",
                   overflowY: "auto",
-                  p: { sm: 2, xs: 1.5 },
+                  p: { sm: 1.5, xs: 1 },
                 }}
               >
                 <Routes>
@@ -203,7 +203,7 @@ export default function App() {
                   gap: 1,
                   justifyContent: "center",
                   alignItems: "center",
-                  py: 1,
+                  py: 0.5,
                   px: 2,
                   borderTop: 1,
                   borderColor: "divider",
