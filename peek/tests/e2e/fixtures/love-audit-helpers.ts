@@ -220,7 +220,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       );
     },
   },
-  { name: "Query Lab", navButton: "Query Lab", expectedHeading: "ES|QL Query" },
+  { name: "Query Lab", navButton: "Query Lab", expectedHeading: "Query Lab" },
   {
     name: "Metrics",
     navButton: "Metrics",
