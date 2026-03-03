@@ -173,9 +173,7 @@ export default function ServiceInventoryPage() {
     });
   }, [serviceRows]);
 
-  const insightCacheKey = useMemo(() => {
-    return insightContext;
-  }, [insightContext]);
+  const insightCacheKey = insightContext;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
