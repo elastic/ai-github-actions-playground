@@ -113,6 +113,7 @@ export default function RolesPage() {
           )}
         </>
       }
+      showLoadingSkeleton={loading && roles.length === 0}
       masterPane={
         <>
           <Box sx={{ p: 1 }}>

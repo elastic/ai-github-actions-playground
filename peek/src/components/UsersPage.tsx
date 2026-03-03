@@ -59,6 +59,10 @@ export default function UsersPage() {
     return users.filter((user) => user.username.toLowerCase().includes(term));
   }, [search, users]);
 
+  const displayedUser = filteredUsers.some((user) => user.username === selectedUsername)
+    ? selectedUser
+    : null;
+
   const copyQuery = useCallback(async () => {
     const copied = await copyToClipboard("GET /_security/user");
     if (!copied) return;
@@ -142,21 +146,21 @@ export default function UsersPage() {
         </>
       }
       detailPane={
-        selectedUser ? (
+        displayedUser ? (
           <>
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-              <Typography variant="subtitle1">{selectedUser.username}</Typography>
+              <Typography variant="subtitle1">{displayedUser.username}</Typography>
               <Chip
                 size="small"
-                color={selectedUser.enabled === false ? "warning" : "success"}
-                label={selectedUser.enabled === false ? "Disabled" : "Enabled"}
+                color={displayedUser.enabled === false ? "warning" : "success"}
+                label={displayedUser.enabled === false ? "Disabled" : "Enabled"}
               />
             </Stack>
             <Typography variant="caption" color="text.secondary">
               Roles
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {(selectedUser.roles ?? []).map((role) => (
+              {(displayedUser.roles ?? []).map((role) => (
                 <Tooltip key={role} title={`View role: ${role}`}>
                   <Chip
                     size="small"
@@ -167,7 +171,7 @@ export default function UsersPage() {
                   />
                 </Tooltip>
               ))}
-              {(selectedUser.roles ?? []).length === 0 && (
+              {(displayedUser.roles ?? []).length === 0 && (
                 <Typography variant="body2" color="text.secondary">
                   No assigned roles.
                 </Typography>
@@ -181,7 +185,7 @@ export default function UsersPage() {
               variant="body2"
               sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
             >
-              {JSON.stringify(selectedUser.metadata ?? {}, null, 2)}
+              {JSON.stringify(displayedUser.metadata ?? {}, null, 2)}
             </Typography>
           </>
         ) : (

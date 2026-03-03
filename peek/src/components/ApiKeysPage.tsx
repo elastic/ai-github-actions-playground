@@ -114,6 +114,7 @@ export default function ApiKeysPage() {
           {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
         </>
       }
+      showLoadingSkeleton={loading && keys.length === 0}
       masterPane={
         <>
           <Box sx={{ p: 1 }}>
