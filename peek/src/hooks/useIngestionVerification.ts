@@ -31,8 +31,9 @@ export function useIngestionVerification(): IngestionVerificationResult {
   const [hasTriggered, setHasTriggered] = useState(false);
   const [connectionKey, setConnectionKey] = useState(connection?.url);
 
-  // Reset when connection changes — use a derived key comparison instead of
-  // an effect that calls setState synchronously.
+  // Reset when connection changes — this follows the React pattern for
+  // adjusting state based on prop changes during render
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
   if (connection?.url !== connectionKey) {
     setConnectionKey(connection?.url);
     setPollingEnabled(false);
@@ -52,21 +53,19 @@ export function useIngestionVerification(): IngestionVerificationResult {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: (query) => {
-      // Stop polling once signals are found or on error
       if (query.state.error) return false;
       if (query.state.data && query.state.data.size > 0) return false;
-      return pollingEnabled ? AUTO_POLL_INTERVAL_MS : false;
+      return AUTO_POLL_INTERVAL_MS;
     },
   });
 
-  // Derive whether polling should stop — React Query's refetchInterval
-  // callback handles the actual stop; we only need local state for the
-  // UI-facing `pollingEnabled` boolean so that `verifyStatus` is correct.
+  // Derive terminal states from query result — polling is considered
+  // effectively stopped once signals are found or an error occurs.
+  // React Query's refetchInterval callback handles the actual stop;
+  // these derived booleans drive verifyStatus without needing setState.
   const signalsFound = Boolean(query.data && query.data.size > 0);
   const queryErrored = query.isError;
-  if (pollingEnabled && (signalsFound || queryErrored)) {
-    setPollingEnabled(false);
-  }
+  const effectivelyPolling = pollingEnabled && !signalsFound && !queryErrored;
 
   const handleVerifyIngestion = useCallback(() => {
     queryClient.removeQueries({ queryKey: ["ingestion-verify"] });
@@ -85,15 +84,15 @@ export function useIngestionVerification(): IngestionVerificationResult {
 
   // Derive verifyStatus from React Query state
   let verifyStatus: VerifyStatus = "idle";
-  if (pollingEnabled && query.isFetching && !query.data) {
+  if (effectivelyPolling && query.isFetching && !query.data) {
     verifyStatus = "checking";
-  } else if (queryErrored) {
+  } else if (queryErrored && hasTriggered) {
     verifyStatus = "error";
   } else if (signalsFound) {
     verifyStatus = "found";
-  } else if (pollingEnabled) {
+  } else if (effectivelyPolling) {
     verifyStatus = "polling";
-  } else if (query.data && query.data.size === 0 && !pollingEnabled && hasTriggered) {
+  } else if (query.data && query.data.size === 0 && !effectivelyPolling && hasTriggered) {
     verifyStatus = "not_found";
   }
 
