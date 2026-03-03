@@ -83,6 +83,7 @@ interface PageFiltersState {
   setFleetAutoRefreshEnabled: (enabled: boolean) => void;
   setFleetActiveTab: (tab: FleetViewTab) => void;
   updateAgentFilter: (updates: Partial<AgentFilter>) => void;
+  resetFleetAgentFilter: () => void;
   resetFleetFilters: () => void;
 }
 
@@ -138,6 +139,7 @@ export const usePageFiltersStore = create<PageFiltersState>()(
       setFleetActiveTab: (tab) => set({ fleetActiveTab: tab }),
       updateAgentFilter: (updates) =>
         set((s) => ({ agentFilter: { ...s.agentFilter, ...updates } })),
+      resetFleetAgentFilter: () => set({ agentFilter: { ...DEFAULT_AGENT_FILTER } }),
       resetFleetFilters: () =>
         set({
           ...DEFAULT_FLEET_FILTERS,
