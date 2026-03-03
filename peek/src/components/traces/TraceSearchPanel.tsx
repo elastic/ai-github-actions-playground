@@ -294,7 +294,24 @@ export default function TraceSearchPanel({
               })
             }
             renderInput={(params) => (
-              <TextField {...params} size="small" placeholder="Service name" />
+              <TextField
+                {...params}
+                size="small"
+                placeholder="Service name"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (e.nativeEvent.isComposing) return;
+                    const target = e.target;
+                    if (!(target instanceof HTMLInputElement)) return;
+                    const val = target.value.trim();
+                    if (val && !filters.services.includes(val)) {
+                      (e as typeof e & { defaultMuiPrevented?: boolean }).defaultMuiPrevented =
+                        true;
+                      applyFiltersAndRun({ services: [...filters.services, val] });
+                    }
+                  }
+                }}
+              />
             )}
             sx={{
               minWidth: 160,
