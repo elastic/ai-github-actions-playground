@@ -228,13 +228,15 @@ describe("ServiceInventoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() => {
-      const sparklineCall = mockRunQuery.mock.calls.find(([q]: [string]) => q.includes("BUCKET"));
-      expect(sparklineCall).toBeDefined();
-      const sparklineQuery = sparklineCall![0] as string;
-      expect(sparklineQuery).toContain("frontend");
-    })
+      expect(mockRunQuery.mock.calls.some(([q]: [string]) => q.includes("BUCKET"))).toBe(true);
+    });
+
+    const sparklineQuery = mockRunQuery.mock.calls.find(([q]: [string]) =>
+      q.includes("BUCKET"),
+    )![0] as string;
+    expect(sparklineQuery).toContain("frontend");
+    expect(sparklineQuery).toContain("backend-api");
     expect(sparklineQuery).toContain("payment-service");
-    expect(sparklineQuery).toContain("backend-api");;
   });
 
   it("navigates to Traces with a clean service filter when View Traces is clicked", async () => {
