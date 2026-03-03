@@ -24,6 +24,10 @@ const OVERLAY_BG_HOVER_ALPHA = 0.65;
 /** LRU-bounded cache of `provider::model::query` → explanation. */
 const explanationCache = new Map<string, string>();
 
+export function clearQueryAnnotationExplanationCache() {
+  explanationCache.clear();
+}
+
 function getCacheKey(query: string, provider: string, model: string) {
   return `${provider}::${model}::${query}`;
 }
@@ -77,7 +81,17 @@ export default function QueryAnnotationOverlay({
   const [asyncResult, setAsyncResult] = useState<{ query: string; text: string } | null>(null);
 
   // `dismissed` is keyed to the dismissed query string — auto-resets when query changes
+  // and when the editor regains focus so the overlay reappears on each blur.
   const [dismissedForQuery, setDismissedForQuery] = useState<string | null>(null);
+  const [prevFocused, setPrevFocused] = useState(editorFocused);
+  // React "getDerivedStateFromProps" pattern: reset dismissed when editor gains focus
+  // so the annotation reappears each time the user blurs out of the editor.
+  if (editorFocused !== prevFocused) {
+    setPrevFocused(editorFocused);
+    if (editorFocused && dismissedForQuery !== null) {
+      setDismissedForQuery(null);
+    }
+  }
   const dismissed = dismissedForQuery === query;
 
   const explanation = cachedExplanation ?? (asyncResult?.query === query ? asyncResult.text : null);

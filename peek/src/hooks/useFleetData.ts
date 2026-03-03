@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { isElasticsearchError } from "../services/es";
@@ -16,59 +15,71 @@ import {
   type FleetAction,
   type FleetActionResult,
 } from "../services/fleet";
-import { useConnectionStore } from "../store/useConnectionStore";
 import { useFleetStore } from "../store/useFleetStore";
 
-import { runConnectionRequest } from "./useConnectionRequest";
+import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 const AUTO_REFRESH_MS = 30_000;
 
-export interface FleetDataResult {
+export interface FleetData {
   serverStatus: FleetServerStatusMetrics | null;
   agentVersions: FleetAgentVersionCount[];
   outputHealth: FleetOutputHealth[];
   agentInventory: ElasticAgentInfo[];
   agentInventoryTotal: number;
+  agentInventoryTotalErrorCount: number;
   actions: FleetAction[];
   actionResults: FleetActionResult[];
+}
+
+export interface UseFleetDataResult {
+  data: FleetData;
+  loading: boolean;
+  error: string | null;
+  partialErrors: string[];
+  lastUpdatedAt: number | null;
+  refresh: () => void;
+}
+
+const EMPTY_DATA: FleetData = {
+  serverStatus: null,
+  agentVersions: [],
+  outputHealth: [],
+  agentInventory: [],
+  agentInventoryTotal: 0,
+  agentInventoryTotalErrorCount: 0,
+  actions: [],
+  actionResults: [],
+};
+
+interface FleetQueryResult {
+  data: FleetData;
   partialErrors: string[];
 }
 
-/**
- * Fetches all Fleet data sources using React Query, replacing the manual
- * `useCallback` + `setInterval` + `AbortController` pattern that previously
- * lived in `FleetPage`.
- *
- * Results are synced into the Zustand fleet store so that existing UI
- * components continue to work unchanged.
- */
-export function useFleetData() {
-  const connection = useConnectionStore((s) => s.connection);
+export function useFleetData(): UseFleetDataResult {
+  const { connection, createQueryFn } = useEsQuery();
   const autoRefreshEnabled = useFleetStore((s) => s.autoRefreshEnabled);
+  const queryKey = ["fleet-data", connection?.url];
 
   const query = useQuery({
-    queryKey: ["fleet-data", connection?.url],
-    queryFn: async (): Promise<FleetDataResult> => {
-      const { data: results, error } = await runConnectionRequest({
-        connection,
-        run: (client) =>
-          Promise.allSettled([
-            loadFleetServerStatus(client),
-            loadFleetAgentVersions(client),
-            loadFleetOutputHealth(client),
-            loadElasticAgentInventory(client),
-            loadFleetActions(client),
-            loadFleetActionResults(client),
-          ]),
-      });
-
-      if (error !== null) {
-        throw new Error(error);
-      }
-
-      if (results === null) {
-        throw new Error("No active Elasticsearch connection");
-      }
+    queryKey,
+    queryFn: createQueryFn(async (client): Promise<FleetQueryResult> => {
+      const [
+        serverStatusResult,
+        agentVersionsResult,
+        outputHealthResult,
+        inventoryResultSettled,
+        actionsResult,
+        actionResultsResult,
+      ] = await Promise.allSettled([
+        loadFleetServerStatus(client),
+        loadFleetAgentVersions(client),
+        loadFleetOutputHealth(client),
+        loadElasticAgentInventory(client),
+        loadFleetActions(client),
+        loadFleetActionResults(client),
+      ]);
 
       const errors: string[] = [];
       const formatReason = (reason: unknown): string => {
@@ -82,70 +93,66 @@ export function useFleetData() {
         return null;
       };
 
-      const serverStatus = value(results[0]!, "Server status") ?? null;
-      const agentVersions = value(results[1]!, "Agent versions") ?? [];
-      const outputHealth = value(results[2]!, "Output health") ?? [];
-      const inventoryResult = value(results[3]!, "Agent inventory");
-      const agentInventory = inventoryResult?.agents ?? [];
-      const agentInventoryTotal = inventoryResult?.total ?? 0;
-      const actions = value(results[4]!, "Actions") ?? [];
-      const actionResults = value(results[5]!, "Action results") ?? [];
+      const inventoryResult = value(inventoryResultSettled, "Agent inventory");
+
+      const hasSuccessfulSource =
+        serverStatusResult.status === "fulfilled" ||
+        agentVersionsResult.status === "fulfilled" ||
+        outputHealthResult.status === "fulfilled" ||
+        inventoryResultSettled.status === "fulfilled" ||
+        actionsResult.status === "fulfilled" ||
+        actionResultsResult.status === "fulfilled";
+      if (!hasSuccessfulSource) {
+        throw new Error(errors.join("; "));
+      }
 
       return {
-        serverStatus,
-        agentVersions,
-        outputHealth,
-        agentInventory,
-        agentInventoryTotal,
-        actions,
-        actionResults,
+        data: {
+          serverStatus: value(serverStatusResult, "Server status") ?? null,
+          agentVersions: value(agentVersionsResult, "Agent versions") ?? [],
+          outputHealth: value(outputHealthResult, "Output health") ?? [],
+          agentInventory: inventoryResult?.agents ?? [],
+          agentInventoryTotal: inventoryResult?.total ?? 0,
+          agentInventoryTotalErrorCount: inventoryResult?.errorAgentTotal ?? 0,
+          actions: value(actionsResult, "Actions") ?? [],
+          actionResults: value(actionResultsResult, "Action results") ?? [],
+        },
         partialErrors: errors,
       };
-    },
+    }),
     enabled: Boolean(connection),
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: autoRefreshEnabled ? AUTO_REFRESH_MS : false,
   });
+  useRefetchOnConnectionChange(connection, query.refetch);
 
-  // Sync React Query state into the Zustand store so existing UI components
-  // continue to work without modification.
-  useEffect(() => {
-    useFleetStore.getState().setLoading(query.isFetching);
-  }, [query.isFetching]);
+  const refresh = () => {
+    void query.refetch();
+  };
 
-  useEffect(() => {
-    if (query.isError) {
-      const msg = query.error instanceof Error ? query.error.message : String(query.error);
-      useFleetStore.getState().setError(msg);
-    } else {
-      useFleetStore.getState().setError(null);
-    }
-  }, [query.isError, query.error]);
-
-  useEffect(() => {
-    if (!query.data) return;
-    const store = useFleetStore.getState();
-    store.setServerStatus(query.data.serverStatus);
-    store.setAgentVersions(query.data.agentVersions);
-    store.setOutputHealth(query.data.outputHealth);
-    store.setAgentInventory(query.data.agentInventory);
-    store.setAgentInventoryTotal(query.data.agentInventoryTotal);
-    store.setActions(query.data.actions);
-    store.setActionResults(query.data.actionResults);
-    store.setPartialErrors(query.data.partialErrors);
-    if (
-      query.data.serverStatus ||
-      query.data.agentInventory.length > 0 ||
-      query.data.actions.length > 0
-    ) {
-      store.setLastUpdatedAt(Date.now());
-    }
-  }, [query.data]);
+  if (!connection) {
+    return {
+      data: EMPTY_DATA,
+      loading: false,
+      error: null,
+      partialErrors: [],
+      lastUpdatedAt: null,
+      refresh,
+    };
+  }
 
   return {
-    refresh: () => void query.refetch(),
+    data: query.data?.data ?? EMPTY_DATA,
     loading: query.isFetching,
+    error: query.isError
+      ? query.error instanceof Error
+        ? query.error.message
+        : String(query.error)
+      : null,
+    partialErrors: query.data?.partialErrors ?? [],
+    lastUpdatedAt: query.dataUpdatedAt > 0 ? query.dataUpdatedAt : null,
+    refresh,
   };
 }

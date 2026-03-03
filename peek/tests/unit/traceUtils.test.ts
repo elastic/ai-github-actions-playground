@@ -6,6 +6,7 @@ import {
   parseSpansFromEsql,
   parseSpanLinks,
   formatSpanDuration,
+  formatStatusLabel,
   getTraceTimeBounds,
   buildServiceMapData,
 } from "../../src/components/traces/traceUtils";
@@ -253,6 +254,21 @@ describe("formatSpanDuration", () => {
 
   it("formats large seconds without decimal", () => {
     expect(formatSpanDuration(15_000_000)).toBe("15s");
+  });
+});
+
+describe("formatStatusLabel", () => {
+  it('maps "OK" to "Success"', () => {
+    expect(formatStatusLabel("OK")).toBe("Success");
+  });
+
+  it('maps "STATUS_CODE_OK" to "Success"', () => {
+    expect(formatStatusLabel("STATUS_CODE_OK")).toBe("Success");
+  });
+
+  it("passes through other statuses unchanged", () => {
+    expect(formatStatusLabel("Error")).toBe("Error");
+    expect(formatStatusLabel("Unset")).toBe("Unset");
   });
 });
 
