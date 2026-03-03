@@ -6,9 +6,10 @@ import type {
   VisualizationOptions,
   VisualizationType,
 } from "../../types";
+import { getPersesPanelPluginKind } from "../../services/perses/panelPluginKinds";
 import DataTable from "../visualizations/DataTable";
 
-import { getPersesPanelEntry } from "./panelRegistry";
+import { getPersesPanelEntryByPluginKind } from "./panelRegistry";
 
 interface Props {
   type: VisualizationType;
@@ -36,12 +37,13 @@ export default function PersesPanelRenderer({
   parameters,
   timeZone,
 }: Props) {
-  const entry = getPersesPanelEntry(type);
+  const kind = getPersesPanelPluginKind(type);
+  const entry = getPersesPanelEntryByPluginKind(kind);
   if (!entry) {
     return <DataTable data={data} />;
   }
 
-  return entry.renderComponent({
+  return entry.renderPanel({
     data,
     options,
     onExportReady,

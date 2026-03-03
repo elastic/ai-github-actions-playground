@@ -58,11 +58,7 @@ export default memo(function PanelContainer({ panel }: Props) {
   const [exportImage, setExportImage] = useState<(() => string) | null>(null);
   const [, setTick] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
-  const supportsImageExport =
-    panel.visualization === "timeseries" ||
-    panel.visualization === "bar" ||
-    panel.visualization === "gauge" ||
-    panel.visualization === "pie";
+  const supportsImageExport = vizEntry?.supportsImageExport ?? false;
 
   const supportsCSVExport = panel.visualization === "table";
 
