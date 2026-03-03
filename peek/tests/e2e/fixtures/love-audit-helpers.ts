@@ -233,7 +233,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       await captureAriaSnapshot(page, "metrics-pre-search", prefix);
       const metricSearch = page.getByLabel("Search metrics");
       await metricSearch.fill("system.cpu");
-      await page.getByRole("listbox").waitFor({ state: "visible" });
+      await page.getByRole("listbox").waitFor({ state: "visible", timeout: 5_000 });
       await page.screenshot({
         path: `test-results/${prefix}-metrics-search.png`,
         fullPage: true,
