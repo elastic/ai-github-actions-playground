@@ -24,6 +24,11 @@ const STORES_WITH_RESET_API = [
   { name: "useDashboardStore", store: useDashboardStore, method: "resetDashboardState" },
   { name: "useExplorerStore", store: useExplorerStore, method: "reset" },
   { name: "usePageFiltersStore (fleet)", store: usePageFiltersStore, method: "resetFleetFilters" },
+  {
+    name: "usePageFiltersStore (kubernetes)",
+    store: usePageFiltersStore,
+    method: "resetKubernetesFilters",
+  },
   { name: "useLLMStore", store: useLLMStore, method: "resetLLMState" },
   {
     name: "usePageFiltersStore (profiling)",

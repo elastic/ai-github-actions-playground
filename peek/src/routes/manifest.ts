@@ -25,6 +25,7 @@ import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import PolicyIcon from "@mui/icons-material/Policy";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import SubjectIcon from "@mui/icons-material/Subject";
+import CloudIcon from "@mui/icons-material/Cloud";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -56,6 +57,7 @@ const TracesPage = lazy(() => import("../components/traces/TracesPage"));
 const ProfilingPage = lazy(() => import("../components/profiling/ProfilingPage"));
 const InvestigatePage = lazy(() => import("../components/InvestigatePage"));
 const UsersPage = lazy(() => import("../components/UsersPage"));
+const KubernetesPage = lazy(() => import("../components/kubernetes/KubernetesPage"));
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
@@ -188,6 +190,76 @@ export const PAGE_MANIFEST = {
       order: 21,
       showInSidebar: false,
       icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
+    },
+  },
+  kubernetes: {
+    path: "/kubernetes",
+    component: KubernetesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Kubernetes",
+      group: "Workspace",
+      order: 30,
+      showInSidebar: true,
+      icon: createElement(CloudIcon, { fontSize: "small" }),
+    },
+  },
+  kubernetesCluster: {
+    path: "/kubernetes/cluster/:clusterName",
+    component: KubernetesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Kubernetes Cluster",
+      group: "Workspace",
+      order: 31,
+      showInSidebar: false,
+      icon: createElement(CloudIcon, { fontSize: "small" }),
+    },
+  },
+  kubernetesNamespace: {
+    path: "/kubernetes/namespace/:namespace",
+    component: KubernetesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Kubernetes Namespace",
+      group: "Workspace",
+      order: 32,
+      showInSidebar: false,
+      icon: createElement(CloudIcon, { fontSize: "small" }),
+    },
+  },
+  kubernetesWorkload: {
+    path: "/kubernetes/workload/:kind/:name",
+    component: KubernetesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Kubernetes Workload",
+      group: "Workspace",
+      order: 33,
+      showInSidebar: false,
+      icon: createElement(CloudIcon, { fontSize: "small" }),
+    },
+  },
+  kubernetesPod: {
+    path: "/kubernetes/pod/:podName",
+    component: KubernetesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Kubernetes Pod",
+      group: "Workspace",
+      order: 34,
+      showInSidebar: false,
+      icon: createElement(CloudIcon, { fontSize: "small" }),
     },
   },
   console: {
