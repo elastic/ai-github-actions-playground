@@ -1,9 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
-import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -12,9 +10,6 @@ import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useTheme } from "@mui/material/styles";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { EChart } from "@perses-dev/components";
@@ -29,6 +24,8 @@ import { PAGE_MANIFEST } from "../routes/manifest";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EmptyState from "./EmptyState";
+import OverviewFailedItemsSection from "./OverviewFailedItemsSection";
+import type { FailedItem } from "./OverviewFailedItemsSection";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -109,7 +106,6 @@ export default function MetricOverviewGrid({
   const echartsTheme = useEChartTheme();
   const navigate = useNavigate();
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
-  const [failedExpanded, setFailedExpanded] = useState(false);
 
   // Filter to only metric fields in the selected namespace
   const namespaceMetrics = useMemo(() => {
@@ -154,6 +150,15 @@ export default function MetricOverviewGrid({
   const failedMetrics = useMemo(() => {
     return namespaceMetrics.filter((m) => results[m.name]?.status === "error");
   }, [namespaceMetrics, results]);
+
+  const failedMetricItems: FailedItem[] = useMemo(
+    () =>
+      failedMetrics.map((m) => ({
+        name: m.name,
+        reason: results[m.name]?.errorReason ?? "Unknown error",
+      })),
+    [failedMetrics, results],
+  );
 
   const noDataCount = useMemo(() => {
     return namespaceMetrics.filter((m) => {
@@ -308,102 +313,40 @@ export default function MetricOverviewGrid({
       </Box>
 
       {/* Failed metrics expandable section */}
-      {!isLoading && failedMetrics.length > 0 && (
-        <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-            <IconButton
-              size="small"
-              onClick={() => setFailedExpanded((prev) => !prev)}
-              aria-expanded={failedExpanded}
-              aria-label={failedExpanded ? "Collapse failed metrics" : "Expand failed metrics"}
-            >
-              {failedExpanded ? (
-                <ExpandLessIcon fontSize="small" />
-              ) : (
-                <ExpandMoreIcon fontSize="small" />
-              )}
-            </IconButton>
-            <Typography variant="caption" color="error" sx={{ fontWeight: 600 }}>
-              {failedMetrics.length} failed metric{failedMetrics.length !== 1 ? "s" : ""}
-            </Typography>
-            <Tooltip title="Retry all failed metric queries">
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<RefreshIcon />}
-                onClick={retryFailed}
-                sx={{ ml: 1 }}
-              >
-                Retry failed
-              </Button>
-            </Tooltip>
-          </Box>
-          <Collapse in={failedExpanded}>
-            <Box
-              component="ul"
-              sx={{ m: 0, mt: 0.5, p: 0, listStyle: "none" }}
-              role="list"
-              aria-label="Failed metrics"
-            >
-              {failedMetrics.map((field) => {
-                const reason = results[field.name]?.errorReason ?? "Unknown error";
-                return (
-                  <Box
-                    key={field.name}
-                    component="li"
-                    sx={{
-                      display: "flex",
-                      gap: 1,
-                      alignItems: "center",
-                      py: 0.5,
-                      px: 1,
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                    }}
-                  >
-                    <ErrorOutlineIcon fontSize="small" color="error" />
-                    <Typography
-                      variant="caption"
-                      sx={{ flex: 1, fontWeight: 600 }}
-                      noWrap
-                      title={field.name}
-                    >
-                      {field.name}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ flex: 2 }}
-                      noWrap
-                      title={reason}
-                    >
-                      {reason}
-                    </Typography>
-                    <Tooltip title="Open this metric's query in Query Lab">
-                      <IconButton
-                        size="small"
-                        aria-label={`Open ${field.name} in Query Lab`}
-                        onClick={() => {
-                          const metricType = field.metricType === "counter" ? "counter" : "gauge";
-                          const { esql } = buildOverviewQuery({
-                            indexPattern,
-                            metricField: field.name,
-                            metricType,
-                            timeRange,
-                          });
-                          setDiscoverQueryDraft(esql);
-                          navigate(PAGE_MANIFEST.discover.path);
-                        }}
-                      >
-                        <SearchIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Collapse>
-        </Box>
+      {!isLoading && (
+        <OverviewFailedItemsSection
+          items={failedMetricItems}
+          itemLabel="metric"
+          listAriaLabel="Failed metrics"
+          retryTooltip="Retry all failed metric queries"
+          retryLabel="Retry failed"
+          onRetry={retryFailed}
+          renderItemAction={(item) => {
+            const field = failedMetrics.find((m) => m.name === item.name);
+            if (!field) return null;
+            return (
+              <Tooltip title="Open this metric's query in Query Lab">
+                <IconButton
+                  size="small"
+                  aria-label={`Open ${field.name} in Query Lab`}
+                  onClick={() => {
+                    const metricType = field.metricType === "counter" ? "counter" : "gauge";
+                    const { esql } = buildOverviewQuery({
+                      indexPattern,
+                      metricField: field.name,
+                      metricType,
+                      timeRange,
+                    });
+                    setDiscoverQueryDraft(esql);
+                    navigate(PAGE_MANIFEST.discover.path);
+                  }}
+                >
+                  <SearchIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            );
+          }}
+        />
       )}
 
       {/* Empty state after loading */}

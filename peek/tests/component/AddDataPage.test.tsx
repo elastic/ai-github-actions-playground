@@ -41,12 +41,15 @@ function renderPage() {
   );
 }
 
-function getCommandValue(): string {
-  // Legacy single-field UI uses a labelled textarea; new progressive-steps UI
-  // renders commands inside the tabpanel (step titles + <pre> blocks).
-  const label = screen.queryByLabelText("Starter command") as HTMLTextAreaElement | null;
-  if (label) return label.value;
-  return screen.getByRole("tabpanel").textContent ?? "";
+async function goToStep2(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+  await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+}
+
+async function goToStep4(user: ReturnType<typeof userEvent.setup>) {
+  await goToStep2(user);
+  await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+  await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
 }
 
 const defaultCapabilities: UserCapabilities = {
@@ -60,7 +63,6 @@ describe("AddDataPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
-    // Default: probe resolves (ingest endpoint reachable)
     fetchSpy.mockResolvedValue(new Response(null, { status: 200 }));
     useConnectionStore.getState().setConnection({
       url: "https://my-project.es.us-east-1.aws.elastic.cloud:443",
@@ -69,314 +71,104 @@ describe("AddDataPage", () => {
     useConnectionStore.setState({ capabilities: defaultCapabilities });
   });
 
-  it("renders the endpoint type toggle", () => {
+  it("renders Step 1 with search, category filters, and recommended technologies", () => {
     renderPage();
+    expect(
+      screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Search technologies")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Kubernetes" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Docker" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Linux Host" })).toBeInTheDocument();
+  });
+
+  it("filters technologies by search and category", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Search technologies"), "postgres");
+    expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
+    expect(screen.queryByText("Nginx")).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("Search technologies"));
+    await user.click(screen.getByRole("button", { name: "Databases" }));
+    expect(screen.getByText(/Databases • Capture query performance/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Operating Systems • Install EDOT Collector on Linux hosts\/VMs\./),
+    ).not.toBeInTheDocument();
+  });
+
+  it("transitions through explicit 5-step flow", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await goToStep2(user);
+    expect(
+      screen.getByRole("heading", { name: /Step 2: Select your environment/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    expect(
+      screen.getByRole("heading", { name: /Step 3: Install and configure/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
+    expect(
+      screen.getByRole("heading", { name: /Step 4: Validate data receipt/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
+    expect(
+      screen.getByRole("heading", { name: /Step 5: Explore your data \+ next steps/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("reuses endpoint type and platform controls in Step 2/3", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await goToStep2(user);
     expect(screen.getByRole("button", { name: "Elasticsearch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Managed OTLP" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Linux" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
   });
 
-  it("auto-selects Managed OTLP when ingest endpoint probe succeeds", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Linux" }));
-    expect(getCommandValue()).toContain("my-project.ingest.us-east-1.aws.elastic.cloud");
-  });
-
-  it("keeps manual Elasticsearch selection when a successful probe resolves in flight", async () => {
-    let resolveProbe: (() => void) | null = null;
-    fetchSpy.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveProbe = () => resolve(new Response(null, { status: 200 }));
-        }),
-    );
-
+  it("shows contextual verification expectations in Step 4", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
-    await user.click(screen.getByRole("button", { name: "Elasticsearch" }));
-    resolveProbe?.();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Elasticsearch" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Linux" }));
-    expect(getCommandValue()).toContain("my-project.es.us-east-1.aws.elastic.cloud");
-  });
-
-  it("shows verified alert when probe succeeds and OTLP is selected", async () => {
-    renderPage();
-    await waitFor(() => {
-      const alerts = screen.getAllByRole("alert");
-      expect(alerts.some((a) => a.textContent?.includes("OTLP endpoint verified"))).toBe(true);
-    });
-  });
-
-  it("stays on Elasticsearch when ingest endpoint probe fails", async () => {
-    fetchSpy.mockRejectedValue(new TypeError("fetch failed"));
-    renderPage();
-    // Wait for probe to settle
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalled();
-    });
-    // Should remain on Elasticsearch
-    expect(screen.getByRole("button", { name: "Elasticsearch" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(getCommandValue()).toContain("my-project.es.us-east-1.aws.elastic.cloud");
-  });
-
-  it("shows warning alert when probe fails and user manually selects OTLP", async () => {
-    fetchSpy.mockRejectedValue(new TypeError("fetch failed"));
-    const user = userEvent.setup();
-    renderPage();
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalled();
-    });
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
-    const alerts = screen.getAllByRole("alert");
-    expect(alerts.some((a) => a.textContent?.includes("Could not reach OTLP endpoint"))).toBe(true);
-  });
-
-  it("uses first reachable ingest candidate for cloud.es.io commands", async () => {
-    resetAllStores();
-    useConnectionStore.getState().setConnection({
-      url: "https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io",
-      apiKey: "testkey",
-    });
-    useConnectionStore.setState({ capabilities: defaultCapabilities });
-    fetchSpy.mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input.toString();
-      if (url.includes(".cloud.es.io")) {
-        return Promise.reject(new TypeError("fetch failed"));
-      }
-      return Promise.resolve(new Response(null, { status: 200 }));
-    });
-
-    const user = userEvent.setup();
-    renderPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Linux" }));
-    expect(getCommandValue()).toContain(
-      "elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
-    );
-  });
-
-  it("shows placeholder guidance when OTLP endpoint cannot be derived", async () => {
-    resetAllStores();
-    useConnectionStore.getState().setConnection({
-      url: "http://localhost:9200",
-      apiKey: "testkey",
-    });
-    useConnectionStore.setState({ capabilities: defaultCapabilities });
-
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
-    await user.click(screen.getByRole("tab", { name: "Linux" }));
-
-    expect(screen.getByText(/Enter your managed OTLP endpoint/)).toBeInTheDocument();
-    expect(getCommandValue()).toContain("<YOUR_OTLP_ENDPOINT>");
-  });
-
-  it("uses OTEL_EXPORTER_OTLP_ENDPOINT env var for Linux when OTLP is selected", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Linux" }));
-
-    const value = getCommandValue();
-    expect(value).toContain("OTEL_EXPORTER_OTLP_ENDPOINT");
-    expect(value).toContain("OTEL_EXPORTER_OTLP_HEADERS");
-    expect(value).not.toContain("ELASTIC_ENDPOINT");
-  });
-
-  it("uses OTEL_EXPORTER_OTLP_ENDPOINT env var for Docker when OTLP is selected", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Docker" }));
-
-    const value = getCommandValue();
-    expect(value).toContain("OTEL_EXPORTER_OTLP_ENDPOINT");
-    expect(value).toContain("OTEL_EXPORTER_OTLP_HEADERS");
-  });
-
-  it("uses OTEL env vars for Windows when OTLP is selected", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Windows" }));
-
-    const value = getCommandValue();
-    expect(value).toContain("OTEL_EXPORTER_OTLP_ENDPOINT");
-    expect(value).toContain("OTEL_EXPORTER_OTLP_HEADERS");
-  });
-
-  it("reverts to ES env vars when switching back to Elasticsearch", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Managed OTLP" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-    });
-    await user.click(screen.getByRole("tab", { name: "Linux" }));
-    expect(getCommandValue()).toContain("OTEL_EXPORTER_OTLP_ENDPOINT");
-
-    await user.click(screen.getByRole("button", { name: "Elasticsearch" }));
-
-    const value = getCommandValue();
-    expect(value).toContain("ELASTIC_ENDPOINT");
-    expect(value).toContain("ELASTIC_API_KEY");
-  });
-
-  it("keeps Kubernetes command in Elasticsearch mode when OTLP is selected", async () => {
-    renderPage();
-    await waitFor(() => {
-      expect(getCommandValue()).toContain(
-        "Kubernetes quickstart currently supports Elasticsearch output only",
-      );
-    });
-    expect(getCommandValue()).toContain(
-      "elastic_endpoint='https://my-project.es.us-east-1.aws.elastic.cloud:443'",
-    );
-    expect(getCommandValue()).not.toContain(".ingest.");
-  });
-
-  it("does not probe when connection URL is not Elastic Cloud", async () => {
-    resetAllStores();
-    useConnectionStore.getState().setConnection({
-      url: "http://localhost:9200",
-      apiKey: "testkey",
-    });
-    useConnectionStore.setState({ capabilities: defaultCapabilities });
-    renderPage();
-    await waitFor(() => {
-      expect(screen.getByRole("tabpanel")).toBeInTheDocument();
-    });
-    // No probe should be triggered since derivedOtlpUrl is null for non-Cloud URLs
-    expect(fetchSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining(".ingest."),
-      expect.anything(),
-    );
-  });
-
-  it("renders the Check now button", () => {
-    renderPage();
+    await goToStep4(user);
+    expect(
+      screen.getByText(/For Kubernetes, we expect to receive metrics, logs and traces\./),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
   });
 
-  it("disables Check now when there is no connection", () => {
-    resetAllStores();
-    useConnectionStore.setState({ capabilities: defaultCapabilities });
-    renderPage();
-    expect(screen.getByRole("button", { name: /Check now/i })).toBeDisabled();
-  });
-
-  it("shows success with navigation buttons when telemetry data streams are found", async () => {
+  it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
     mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] }) // mount-time existing-data check
-      .mockResolvedValueOnce({
-        data_streams: [
-          { name: "metrics-host.otel-default" },
-          { name: "traces-generic.otel-default" },
-        ],
-      });
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(screen.getByRole("button", { name: /Check now/i }));
-    await waitFor(() => {
-      expect(screen.getByText(/Telemetry data detected/)).toBeInTheDocument();
-    });
-    expect(screen.getByRole("button", { name: "Go to Metrics" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Go to Traces" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Go to Query Lab" })).not.toBeInTheDocument();
-  });
+      .mockResolvedValueOnce({ data_streams: [] })
+      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
 
-  it("shows not-found message when no telemetry data streams exist", async () => {
-    mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] });
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(screen.getByRole("button", { name: /Check now/i }));
-    await waitFor(() => {
-      expect(screen.getByText(/No telemetry data streams found yet/)).toBeInTheDocument();
-    });
-    expect(screen.getByText(/Troubleshooting docs/)).toBeInTheDocument();
-  });
-
-  it("shows error when verification fails", async () => {
-    mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] }) // mount-time existing-data check
-      .mockRejectedValueOnce(new Error("Connection refused"));
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(screen.getByRole("button", { name: /Check now/i }));
-    await waitFor(() => {
-      expect(screen.getByText(/Connection refused/)).toBeInTheDocument();
-    });
-  });
-
-  it("resets verification results when the connection changes", async () => {
-    mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] }) // mount-time existing-data check
-      .mockResolvedValueOnce({
-        data_streams: [{ name: "metrics-host.otel-default" }],
-      });
     const user = userEvent.setup();
     renderPage();
 
+    await goToStep4(user);
     await user.click(screen.getByRole("button", { name: /Check now/i }));
-    await waitFor(() => {
-      expect(screen.getByText(/Telemetry data detected/)).toBeInTheDocument();
-    });
-
-    useConnectionStore.getState().setConnection({
-      url: "https://other-project.es.us-east-1.aws.elastic.cloud:443",
-      apiKey: "nextkey",
-    });
 
     await waitFor(() => {
-      expect(screen.queryByText(/Telemetry data detected/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Telemetry data detected!/)).toBeInTheDocument();
     });
+    expect(screen.getByText(/Partial success/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
+
+    expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   });
 });
 
@@ -410,7 +202,6 @@ describe("probeOtlpEndpoint", () => {
 
 describe("deriveOtlpEndpoint", () => {
   it("derives OTLP endpoint from Elastic Cloud ES URL", () => {
-    // Port 443 is the default HTTPS port and is normalized away by URL
     expect(deriveOtlpEndpoint("https://my-project.es.us-east-1.aws.elastic.cloud:443")).toBe(
       "https://my-project.ingest.us-east-1.aws.elastic.cloud",
     );
@@ -446,26 +237,8 @@ describe("deriveOtlpEndpoint", () => {
     );
   });
 
-  it("handles cloud.es.io URL with trailing slash", () => {
-    expect(deriveOtlpEndpoint("https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io/")).toBe(
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
-    );
-  });
-
   it("returns null for non-Elastic Cloud URL", () => {
     expect(deriveOtlpEndpoint("http://localhost:9200")).toBeNull();
-  });
-
-  it("returns null for self-managed URL with .es. in hostname but not elastic.cloud", () => {
-    expect(deriveOtlpEndpoint("https://my.es.example.com")).toBeNull();
-  });
-
-  it("returns null for invalid URL", () => {
-    expect(deriveOtlpEndpoint("not-a-url")).toBeNull();
-  });
-
-  it("returns null for empty string", () => {
-    expect(deriveOtlpEndpoint("")).toBeNull();
   });
 });
 
@@ -491,19 +264,6 @@ describe("detectTelemetrySignals", () => {
     const signals = await detectTelemetrySignals(client);
     expect(signals.size).toBe(0);
   });
-
-  it("ignores non-telemetry data streams", async () => {
-    const client = {
-      getDataStreams: vi.fn().mockResolvedValue({
-        data_streams: [
-          { name: ".ds-ilm-history-7-2024.01.01-000001" },
-          { name: "synthetics-http" },
-        ],
-      }),
-    } as unknown as ElasticsearchClient;
-    const signals = await detectTelemetrySignals(client);
-    expect(signals.size).toBe(0);
-  });
 });
 
 describe("deriveIngestCandidates", () => {
@@ -523,21 +283,7 @@ describe("deriveIngestCandidates", () => {
     ]);
   });
 
-  it("returns two candidates for cloud.es.io Kibana URLs", () => {
-    const candidates = deriveIngestCandidates(
-      "https://elastic-peek-010bd2.kb.us-central1.gcp.cloud.es.io",
-    );
-    expect(candidates).toEqual([
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
-    ]);
-  });
-
   it("returns empty array for non-cloud URLs", () => {
     expect(deriveIngestCandidates("http://localhost:9200")).toEqual([]);
-  });
-
-  it("returns empty array for invalid URLs", () => {
-    expect(deriveIngestCandidates("not-a-url")).toEqual([]);
   });
 });

@@ -16,7 +16,7 @@ import { copyToClipboard } from "../../utils/copyToClipboard";
 import EmptyState from "../EmptyState";
 
 import type { Span, SpanLink } from "./traceUtils";
-import { formatSpanDuration } from "./traceUtils";
+import { formatSpanDuration, formatStatusLabel } from "./traceUtils";
 import { getServiceColor } from "./traceColors";
 
 const DEFAULT_FIELD_MAPPING_SERVICE = "service.name";
@@ -221,7 +221,7 @@ export default function SpanDetailDrawer({
               />
               <KeyValueRow
                 label="Status"
-                value={span.status}
+                value={formatStatusLabel(span.status)}
                 onCopy={() => handleCopy(span.status)}
               />
               <KeyValueRow
