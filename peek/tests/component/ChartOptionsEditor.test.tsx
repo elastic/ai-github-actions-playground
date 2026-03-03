@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import ChartOptionsEditor from "../../src/components/ChartOptionsEditor";
-import type { VisualizationOptions, FormatOptions } from "../../src/types";
+import type { VisualizationOptions, FormatOptions, VisualizationType } from "../../src/types";
 
 vi.mock("../../src/components/perses/panelRegistry", () => ({
   getPersesPanelCapabilities: (type: string) => {
@@ -41,7 +41,7 @@ vi.mock("../../src/components/perses/panelRegistry", () => ({
         supportsOptions: true,
         supportsQuery: true,
         supportsImageExport: false,
-        OptionsEditor: undefined,
+        OptionsEditor: () => <div data-testid="timeseries-options-editor">Timeseries opts</div>,
       };
     }
     return {
@@ -121,9 +121,16 @@ describe("ChartOptionsEditor", () => {
 
   it("does not render an OptionsEditor when the registry has no entry", () => {
     const onChange = vi.fn();
-    render(<ChartOptionsEditor vizType="timeseries" options={{}} onChange={onChange} />);
+    render(
+      <ChartOptionsEditor
+        vizType={"unknown-viz-type" as VisualizationType}
+        options={{}}
+        onChange={onChange}
+      />,
+    );
 
     expect(screen.queryByTestId("stat-options-editor")).not.toBeInTheDocument();
     expect(screen.queryByTestId("table-options-editor")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("timeseries-options-editor")).not.toBeInTheDocument();
   });
 });
