@@ -12,6 +12,7 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import { useIngestPipelines } from "../hooks/useIngestPipelines";
 
 import PageHeader from "./PageHeader";
+import PageInsightBanner from "./PageInsightBanner";
 import PipelineListPanel from "./ingest-pipelines/PipelineListPanel";
 import PipelineDetailPanel from "./ingest-pipelines/PipelineDetailPanel";
 import { humanizeEsError } from "./ingest-pipelines/ingestPipelineUtils";
@@ -70,6 +71,21 @@ export default function IngestPipelinesPage() {
     });
   }, [pipelinesData, effectiveSelectedName, selectedPipeline, setPageSection]);
 
+  const insightContext = useMemo(() => {
+    if (!selectedPipeline) return "";
+    const processors = selectedPipeline.pipeline.processors ?? [];
+    return JSON.stringify({
+      pipelineName: selectedPipeline.name,
+      processorCount: processors.length,
+      processorTypes: processors.map((p) => Object.keys(p)[0] ?? "unknown"),
+    });
+  }, [selectedPipeline]);
+
+  const processorSignature = (selectedPipeline?.pipeline.processors ?? [])
+    .map((processor) => Object.keys(processor)[0] ?? "unknown")
+    .join(",");
+  const insightCacheKey = `ingest-pipelines::${effectiveSelectedName ?? ""}::${processorSignature}`;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -87,6 +103,14 @@ export default function IngestPipelinesPage() {
           }
         />
       </Paper>
+
+      {insightContext && (
+        <PageInsightBanner
+          context={insightContext}
+          systemPrompt="You are an Elasticsearch ingest pipeline expert. Describe this pipeline in one concise sentence. List the processors it has and what each does (e.g., parses log lines with grok, adds geo-IP lookup, sets timestamp)."
+          cacheKey={insightCacheKey}
+        />
+      )}
 
       {error && (
         <Alert severity="error">

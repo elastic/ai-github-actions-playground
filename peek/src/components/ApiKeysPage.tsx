@@ -21,6 +21,7 @@ import { copyToClipboard } from "../utils/copyToClipboard";
 import { formatTimestamp } from "../utils/formatDate";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
+import PageInsightBanner from "./PageInsightBanner";
 import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
 
 export default function ApiKeysPage() {
@@ -85,6 +86,21 @@ export default function ApiKeysPage() {
     });
   }, [keys, effectiveKeyId, setPageSection]);
 
+  const insightContext = useMemo(() => {
+    if (keys.length === 0) return "";
+    const noExpiration = keys.filter((k) => k.expiration == null).length;
+    const highRisk = keys.filter(
+      (k) => riskLevel(k) === "warning" || riskLevel(k) === "error",
+    ).length;
+    return JSON.stringify({
+      totalKeys: keys.length,
+      keysWithoutExpiration: noExpiration,
+      highRiskKeys: highRisk,
+    });
+  }, [keys]);
+
+  const insightCacheKey = `api-keys::${keys.length}`;
+
   const copyQuery = useCallback(async () => {
     const copied = await copyToClipboard("GET /_security/api_key");
     if (!copied) return;
@@ -110,6 +126,14 @@ export default function ApiKeysPage() {
       }
       alerts={
         <>
+          {insightContext && (
+            <PageInsightBanner
+              context={insightContext}
+              systemPrompt="You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, how many lack expiration (security risk), and any keys that are old and should be rotated."
+              cacheKey={insightCacheKey}
+              severity="warning"
+            />
+          )}
           {error && <Alert severity="error">{error}</Alert>}
           {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
         </>

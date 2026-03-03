@@ -20,6 +20,7 @@ interface UIState {
   explainModeActive: boolean;
   discoverEditorHeight: number;
   panelEditorHeight: number;
+  traceSearchCollapsed: boolean;
   recentCommandIds: string[];
 
   setThemeMode: (mode: "light" | "dark") => void;
@@ -30,6 +31,7 @@ interface UIState {
   setExplainModeActive: (active: boolean) => void;
   setDiscoverEditorHeight: (height: number) => void;
   setPanelEditorHeight: (height: number) => void;
+  setTraceSearchCollapsed: (collapsed: boolean) => void;
   addRecentCommandId: (id: string) => void;
   resetUIState: () => void;
 }
@@ -44,6 +46,7 @@ const DEFAULT_UI_STATE = {
   explainModeActive: false,
   discoverEditorHeight: 100,
   panelEditorHeight: 120,
+  traceSearchCollapsed: false,
   recentCommandIds: [] as string[],
 };
 
@@ -65,6 +68,7 @@ export const useUIStore = create<UIState>()(
           }),
         setPanelEditorHeight: (height) =>
           set({ panelEditorHeight: clampEditorHeight(height, DEFAULT_UI_STATE.panelEditorHeight) }),
+        setTraceSearchCollapsed: (collapsed) => set({ traceSearchCollapsed: collapsed }),
         addRecentCommandId: (id) =>
           set((state) => ({
             recentCommandIds: [id, ...state.recentCommandIds.filter((i) => i !== id)].slice(
@@ -83,6 +87,7 @@ export const useUIStore = create<UIState>()(
           themeMode: state.themeMode,
           discoverEditorHeight: state.discoverEditorHeight,
           panelEditorHeight: state.panelEditorHeight,
+          traceSearchCollapsed: state.traceSearchCollapsed,
           recentCommandIds: state.recentCommandIds,
         }),
       },

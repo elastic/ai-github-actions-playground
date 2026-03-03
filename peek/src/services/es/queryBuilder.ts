@@ -135,6 +135,10 @@ export interface OverviewQuery {
 }
 
 const OVERVIEW_BUCKET_COUNT = 20;
+/**
+ * Perses dashboard time model: these placeholders are substituted by Perses
+ * panel time-picker parameters at query execution time.
+ */
 const TIMESTAMP_RANGE_CLAUSE = buildTimeRangeClause("@timestamp", "?_tstart", "?_tend");
 
 export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
