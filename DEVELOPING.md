@@ -214,7 +214,7 @@ make otel-up && ES_URL=http://localhost:9200 make test-e2e && make otel-down
 
 ### Exploratory Testing Agents
 
-Nine scheduled agents creatively explore the app with Playwright. Each owns a
+Fifteen scheduled agents creatively explore the app with Playwright. Each owns a
 domain of the application and invents novel interaction scenarios every run.
 They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 
