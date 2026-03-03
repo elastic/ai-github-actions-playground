@@ -4,5 +4,9 @@
  * an OTel-formatted index missing ECS fields, or vice-versa).
  */
 export function isUnknownColumnError(error: string): boolean {
-  return error.includes("Unknown column") || /Found \d+ problems/.test(error);
+  return (
+    error.includes("Unknown column") ||
+    /no mapping found for(?: field)?/i.test(error) ||
+    /no such column/i.test(error)
+  );
 }

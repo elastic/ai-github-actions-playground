@@ -12,7 +12,7 @@ const FILE_MATCH_FIELDS = ["file.name", "file.hash.md5", "file.hash.sha1", "file
  * Query flavor controls which KEEP fields are requested.
  * - "full": all ECS + common fields (default)
  * - "otel": drops ECS-specific fields not present in OTel indices
- * - "minimal": only universally-safe fields (@timestamp, host.name, message, _index)
+ * - "minimal": only universally-safe fields (`@timestamp`, message, _index)
  */
 export type QueryFlavor = "full" | "otel" | "minimal";
 
