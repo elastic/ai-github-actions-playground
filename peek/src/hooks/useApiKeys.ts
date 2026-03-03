@@ -13,7 +13,7 @@ export function useApiKeys() {
     queryKey: ["security-api-keys", connection?.url],
     queryFn: async () => {
       if (!connection) {
-        throw new Error("No active connection");
+        throw new Error("No active Elasticsearch connection");
       }
       const client = new ElasticsearchClient(connection);
       return loadSecurityResource({

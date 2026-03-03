@@ -384,7 +384,7 @@ describe("buildChatRuntime — ES-dependent tools", () => {
     };
 
     await expect(pipelineTool.execute({ pipeline_name: "   " })).rejects.toThrow(
-      "pipeline_name must not be empty",
+      "Pipeline name must not be empty",
     );
     const result = await pipelineTool.execute({ pipeline_name: "  pipeline-a " });
     expect(getPipelinesSpy).toHaveBeenCalledWith(expect.any(AbortSignal));
