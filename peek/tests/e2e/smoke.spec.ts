@@ -279,9 +279,7 @@ test.describe("smoke – site navigation", () => {
     ).toBeVisible();
     await page.getByRole("button", { name: "Kubernetes" }).first().click();
     await page.getByRole("button", { name: "Continue to step 2" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Step 2: Set up and verify" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Step 2: Set up and verify" })).toBeVisible();
 
     await page.getByRole("button", { name: "Continue to step 3" }).click();
     await expect(
@@ -467,7 +465,6 @@ test.describe("smoke – site navigation", () => {
       "Indices",
     ]) {
       await navigateViaSidebar(page, nav);
-      await page.waitForLoadState("networkidle");
       await pageReadyLocators[nav]!();
       await checkA11y(page, nav, testInfo);
     }

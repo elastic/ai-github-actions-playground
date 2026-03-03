@@ -96,7 +96,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "prettier --write",
-      "eslint --fix"
+      "eslint --fix --cache --cache-location .eslintcache"
     ]
   },
   "devDependencies": {
