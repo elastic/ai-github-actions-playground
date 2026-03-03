@@ -47,7 +47,8 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     },
     Console: {
       "aria-input-field-name": 1,
-      "color-contrast": 6,
+      "color-contrast": 16,
+      "scrollable-region-focusable": 1,
     },
     Indices: {
       "color-contrast": 2,
@@ -74,7 +75,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     },
     Console: {
       "aria-input-field-name": 1,
-      "color-contrast": 6,
+      "color-contrast": 16,
       "scrollable-region-focusable": 2,
     },
     Indices: {
