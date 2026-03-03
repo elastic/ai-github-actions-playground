@@ -63,6 +63,13 @@ describe("spansToOtlpTracesData", () => {
     expect(span.endTimeUnixNano).toBe("1700000000000130000");
   });
 
+  it("falls back to zero nanoseconds for non-finite microsecond timestamps", () => {
+    const result = spansToOtlpTracesData([makeSpan({ startTimeUs: Number.NaN, durationUs: 5 })]);
+    const span = result.resourceSpans[0]!.scopeSpans[0]!.spans[0]!;
+    expect(span.startTimeUnixNano).toBe("0");
+    expect(span.endTimeUnixNano).toBe("0");
+  });
+
   it("groups spans by service into separate ResourceSpans", () => {
     const result = spansToOtlpTracesData([
       makeSpan({ spanId: "a", serviceName: "svc-a" }),

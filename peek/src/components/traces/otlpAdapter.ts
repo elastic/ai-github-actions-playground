@@ -36,7 +36,7 @@ function toOtlpStatus(status: string): otlptracev1.Status {
 }
 
 function microsToNanosString(micros: number): string {
-  return (BigInt(Math.trunc(micros)) * 1_000n).toString();
+  return Number.isFinite(micros) ? (BigInt(Math.trunc(micros)) * 1_000n).toString() : "0";
 }
 
 function isoToNanosString(timestamp: string): string {
