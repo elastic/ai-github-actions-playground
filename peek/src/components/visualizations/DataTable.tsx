@@ -249,7 +249,11 @@ export default memo(function DataTable({
           />
         </Table>
         {data.values.length === 0 && (
-          <EmptyState size="small" heading="No results match your query" />
+          <EmptyState
+            size="small"
+            heading="No results match your query"
+            description="Try adjusting your filters or time range."
+          />
         )}
       </TableContainer>
       <Box

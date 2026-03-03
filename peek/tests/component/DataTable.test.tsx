@@ -158,6 +158,7 @@ describe("DataTable", () => {
     render(<DataTable data={emptyRowData} />);
 
     expect(screen.getByText("No results match your query")).toBeInTheDocument();
+    expect(screen.getByText("Try adjusting your filters or time range.")).toBeInTheDocument();
     expect(screen.getByText("@timestamp")).toBeInTheDocument();
     expect(screen.getByText("message")).toBeInTheDocument();
   });
