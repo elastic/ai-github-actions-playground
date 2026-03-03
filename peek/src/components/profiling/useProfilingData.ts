@@ -254,21 +254,17 @@ export function useProfilingData({
 
   const handleOpenInQueryLab = useCallback(() => {
     if (viewMode === "topFunctions") return;
-    let draft = effectiveQuery;
-    if (viewMode === "flamescope" && flamescopeWindow) {
-      // Insert the time window WHERE before the trailing LIMIT so we don't
-      // filter an already-limited result set.
-      const limitMatch = /(\| LIMIT \d+)$/.exec(draft);
-      const timeFilter = `| WHERE @timestamp >= "${escapeEsqlString(flamescopeWindow.from)}" AND @timestamp < "${escapeEsqlString(flamescopeWindow.to)}"`;
-      if (limitMatch) {
-        draft = draft.slice(0, limitMatch.index) + timeFilter + "\n" + limitMatch[0];
-      } else {
-        draft = `${draft}\n${timeFilter}`;
-      }
-    }
+    const draft =
+      viewMode === "flamescope" && flamescopeWindow
+        ? buildProfilingFlamescopeQuery({
+            ...filters,
+            timeFrom: flamescopeWindow.from,
+            timeTo: flamescopeWindow.to,
+          })
+        : effectiveQuery;
     setDiscoverQueryDraft(draft);
     navigate(PAGE_MANIFEST.discover.path);
-  }, [effectiveQuery, flamescopeWindow, navigate, setDiscoverQueryDraft, viewMode]);
+  }, [effectiveQuery, filters, flamescopeWindow, navigate, setDiscoverQueryDraft, viewMode]);
 
   const handleFrameClick = useCallback(
     (frameName: string) => {

@@ -315,7 +315,8 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Traces");
     await page.getByRole("button", { name: "Search Traces" }).first().click();
-    await expect(page.getByText("1 traces found")).toBeVisible({ timeout: 10_000 });
+    // "1 trace found" — resultLabel() singularizes for count === 1
+    await expect(page.getByText("1 trace found")).toBeVisible({ timeout: 10_000 });
     await page.getByText("GET /checkout").click();
     await expect(page.getByText("2 spans")).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "Service Map" }).click();
@@ -415,7 +416,7 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
-    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await expect(queryEditor).toBeVisible();
     await queryInput.click();
@@ -431,7 +432,7 @@ test.describe("smoke – site navigation", () => {
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
 
-    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await page.getByLabel("Search logs").fill('"Hello World"');
     await page.getByRole("button", { name: "Apply Search" }).click();
@@ -459,7 +460,7 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
-      Logs: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      Logs: () => expect(page.getByLabel("Logs Explorer query editor")).toBeVisible(),
       Console: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };

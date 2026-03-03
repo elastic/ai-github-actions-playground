@@ -56,7 +56,11 @@ export default function ProfilingToolbar({
           </Button>
         </Box>
       </Box>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+      <Box
+        role="group"
+        aria-label="Profiling view modes"
+        sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+      >
         {(["flamegraph", "topFunctions", "timeline", "flamescope", "stacktraces"] as const).map(
           (mode) => (
             <Chip
@@ -75,6 +79,7 @@ export default function ProfilingToolbar({
               size="small"
               variant={viewMode === mode ? "filled" : "outlined"}
               color={viewMode === mode ? "primary" : "default"}
+              aria-pressed={viewMode === mode}
               onClick={() => onViewModeChange(mode)}
               sx={{ cursor: "pointer" }}
             />

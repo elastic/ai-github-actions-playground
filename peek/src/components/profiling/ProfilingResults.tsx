@@ -98,42 +98,56 @@ export default function ProfilingResults({
             </TableRow>
           </TableHead>
           <TableBody>
-            {stacktraces.map((stacktrace) => (
-              <Fragment key={stacktrace.stacktraceId}>
-                <TableRow
-                  hover
-                  onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
-                  sx={{ cursor: "pointer" }}
-                >
-                  <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
-                    {stacktrace.stacktraceId}
-                  </TableCell>
-                  <TableCell align="right">{stacktrace.count}</TableCell>
-                  <TableCell>{stacktrace.serviceName || "—"}</TableCell>
-                  <TableCell>{stacktrace.hostName || "—"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell colSpan={4} sx={{ py: 0 }}>
-                    <Collapse in={expandedStacktraceIds.has(stacktrace.stacktraceId)}>
-                      <Box sx={{ p: 1 }}>
-                        {stacktrace.frames.map((frame) => (
-                          <Typography
-                            key={`${stacktrace.stacktraceId}-${frame.frameId}`}
-                            variant="caption"
-                            sx={{ display: "block", fontFamily: "monospace" }}
-                          >
-                            {frame.functionName}{" "}
-                            {frame.fileName
-                              ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
-                              : ""}
-                          </Typography>
-                        ))}
-                      </Box>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </Fragment>
-            ))}
+            {stacktraces.map((stacktrace) => {
+              const isExpanded = expandedStacktraceIds.has(stacktrace.stacktraceId);
+              const detailsId = `stacktrace-details-${stacktrace.stacktraceId}`;
+              return (
+                <Fragment key={stacktrace.stacktraceId}>
+                  <TableRow
+                    hover
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    aria-controls={detailsId}
+                    onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggleExpandedStacktraceId(stacktrace.stacktraceId);
+                      }
+                    }}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
+                      {stacktrace.stacktraceId}
+                    </TableCell>
+                    <TableCell align="right">{stacktrace.count}</TableCell>
+                    <TableCell>{stacktrace.serviceName || "—"}</TableCell>
+                    <TableCell>{stacktrace.hostName || "—"}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={4} sx={{ py: 0 }}>
+                      <Collapse in={isExpanded}>
+                        <Box id={detailsId} sx={{ p: 1 }}>
+                          {stacktrace.frames.map((frame) => (
+                            <Typography
+                              key={`${stacktrace.stacktraceId}-${frame.frameId}`}
+                              variant="caption"
+                              sx={{ display: "block", fontFamily: "monospace" }}
+                            >
+                              {frame.functionName}{" "}
+                              {frame.fileName
+                                ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
+                                : ""}
+                            </Typography>
+                          ))}
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       )}

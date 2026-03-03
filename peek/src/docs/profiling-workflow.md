@@ -14,19 +14,19 @@ Use the **breadcrumb** at the top to understand the current focus context. Click
 
 Switch between **Flamegraph**, **Top Functions**, **Timeline**, **Flamescope**, and **Stacktraces** using the chips in the results toolbar.
 
-**Top Functions** calls the Universal Profiling top-functions API and returns a ranked table of function names, their self counts, and total counts.
+**Flamegraph** displays stacktrace data as a hierarchical flame graph visualization. Click any frame to zoom into that subtree and explore deeper call paths. A breadcrumb trail appears above the chart showing the current zoom path — click any segment to jump back. Use the search box to find and highlight specific function names. Click **Open in Query Lab** to pivot to Query Lab with a filtered ES|QL query for that function.
 
-**Stacktraces** queries the `profiling-events-all` index to retrieve raw stacktrace IDs, then resolves each stacktrace against `profiling-stacktraces` and symbolizes the resulting frames using `profiling-stackframes`. Results are displayed as a table of stacktrace IDs with their sample count, service name, and host. Click any row to expand it and see the symbolized frame list.
+**Top Functions** calls the Universal Profiling top-functions API and returns a ranked table of function names, their self counts, and total counts.
 
 **Timeline** queries `profiling-events-all` and aggregates `Stacktrace.count` into time buckets so you can see profiling activity over time as a line chart.
 
-**Flamegraph** displays stacktrace data as a hierarchical flame graph visualization. Click any frame to zoom into that subtree and explore deeper call paths. A breadcrumb trail appears above the chart showing the current zoom path — click any segment to jump back. Use the search box to find and highlight specific function names.
+**Flamescope** visualizes stacktrace density over time as a heatmap (time buckets on X, top stacktrace signatures on Y) with a synchronized flamegraph for the selected bucket. Click any heatmap cell to change the selected time window. **Open in Query Lab** preserves the selected Flamescope window so you can continue investigation with a time-scoped query.
 
-**Flamescope** visualizes stacktrace density over time as a heatmap (time buckets on X, top stacktrace signatures on Y) with a synchronized flamegraph for the selected bucket. Click any heatmap cell to change the selected time window.
+**Stacktraces** queries the `profiling-events-all` index to retrieve raw stacktrace IDs, then resolves each stacktrace against `profiling-stacktraces` and symbolizes the resulting frames using `profiling-stackframes`. Results are displayed as a table of stacktrace IDs with their sample count, service name, and host. Click any row to expand it and see the symbolized frame list.
 
 ### Open in Query Lab
 
-Available from the results toolbar for **Stacktraces**, **Timeline**, **Flamegraph**, and **Flamescope** views. Click **Open in Query Lab** to pivot to Query Lab with the current ES|QL query pre-populated as a draft. For Flamescope, the selected time window is preserved so you can continue investigation with a time-scoped query.
+**Open in Query Lab** is available for Stacktraces, Timeline, Flamegraph, and Flamescope. It opens Query Lab with the current ES|QL query pre-populated as a draft so you can continue analysis.
 
 ## Advanced view
 
@@ -38,7 +38,7 @@ The advanced page has a **← Guided flow** button to return to the picker at an
 
 Use the Time range dropdown in the results toolbar to control the window of profiling data to query. The default range is the last hour. Changing the time range automatically re-runs the current view.
 
-## Query editor (advanced)
+## Query editor
 
 The ES|QL query preview in the advanced page shows the generated query for the Stacktraces and Timeline views. You can edit the query directly; manual edits override the filter-driven query until filters change. The Top Functions view shows the JSON request body, which is always generated from the current filters and cannot be edited.
 
