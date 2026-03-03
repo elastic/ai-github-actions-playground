@@ -1,0 +1,66 @@
+name: UI Smoke Tests (main)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "peek/**"
+      - "Makefile"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-smoke-main
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: Restore node_modules cache
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: peek/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('peek/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: cd peek && npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+      - name: Restore Playwright browser cache
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('peek/package-lock.json') }}
+
+      - name: Install Playwright browser (cache miss)
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+        working-directory: peek
+
+      - name: Install Playwright OS dependencies (cache hit)
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+        working-directory: peek
+
+      - name: Build
+        working-directory: peek
+        run: npm run build
+
+      - name: Run E2E smoke tests
+        working-directory: peek
+        env:
+          PLAYWRIGHT_PREVIEW: "1"
+        run: npx playwright test tests/e2e/smoke.spec.ts --project chromium
