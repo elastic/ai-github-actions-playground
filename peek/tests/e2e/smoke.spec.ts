@@ -274,18 +274,24 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Add Data");
 
-    await expect(
-      page.getByRole("heading", { name: "Step 1: What are you monitoring?" }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Kubernetes" }).first().click();
-    await page.getByRole("button", { name: "Continue to step 2" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Step 2: Set up and verify" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What are you monitoring?" })).toBeVisible();
+    // Click the Kubernetes experience tile
+    await page
+      .getByRole("button", { name: /Kubernetes/ })
+      .first()
+      .click();
+    // Wait for experience tiles to disappear, then click the Kubernetes technology card
+    await expect(page.getByText("Cloud Providers")).toBeHidden();
+    await page
+      .getByRole("button", { name: /Kubernetes/ })
+      .first()
+      .click();
+    await page.getByRole("button", { name: /^Continue$/ }).click();
+    await expect(page.getByRole("heading", { name: "Set up and verify" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Continue to step 3" }).click();
+    await page.getByRole("button", { name: /^Continue$/ }).click();
     await expect(
-      page.getByRole("heading", { name: "Step 3: Explore your data + next steps" }),
+      page.getByRole("heading", { name: "Explore your data + next steps" }),
     ).toBeVisible();
   });
 

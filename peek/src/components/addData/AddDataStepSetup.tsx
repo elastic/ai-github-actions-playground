@@ -88,9 +88,9 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   if (!p.selectedTechnology) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <Typography variant="h6">Step 2: Set up and verify</Typography>
+        <Typography variant="h6">Set up and verify</Typography>
         <Typography variant="body2" color="text.secondary">
-          Select a technology in step 1 before continuing.
+          Select a technology before continuing.
         </Typography>
         <Stack direction="row" justifyContent="space-between">
           <Button variant="outlined" onClick={p.onBack}>
@@ -234,7 +234,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Typography variant="h6">Step 2: Set up and verify</Typography>
+      <Typography variant="h6">Set up and verify</Typography>
       <Typography variant="body2" color="text.secondary">
         {`${p.selectedTechnology.technology} can emit ${p.signalExpectation}.`}
       </Typography>
@@ -281,7 +281,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           Back
         </Button>
         <Button variant="contained" onClick={p.onContinue}>
-          Continue to step 3
+          Continue
         </Button>
       </Stack>
     </Box>

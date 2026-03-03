@@ -1,3 +1,4 @@
+import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -44,6 +45,21 @@ vi.mock("../../src/components/visualizations/TraceServiceMap", () => ({ default:
 vi.mock("../../src/components/visualizations/DriftRadarMap", () => ({ default: () => null }));
 vi.mock("../../src/components/visualizations/TimeSeriesChart", () => ({ default: () => null }));
 vi.mock("../../src/components/traces/SpanDetailDrawer", () => ({ default: () => null }));
+vi.mock("react-virtuoso", () => ({
+  Virtuoso: ({
+    data,
+    itemContent,
+  }: {
+    data: unknown[];
+    itemContent: (index: number, item: unknown) => React.ReactNode;
+  }) => (
+    <div data-testid="virtuoso-mock">
+      {data?.map((item, i) => (
+        <div key={i}>{itemContent(i, item)}</div>
+      ))}
+    </div>
+  ),
+}));
 
 beforeEach(() => {
   esqlHookCallCount = 0;
