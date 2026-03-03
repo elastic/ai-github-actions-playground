@@ -359,7 +359,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
-          title={isLogsExplorer ? "Logs Explorer Query" : "ES|QL Query"}
+          title={isLogsExplorer ? "Logs Explorer Query" : "Query Lab"}
           actions={
             <>
               <Button

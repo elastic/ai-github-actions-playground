@@ -209,12 +209,25 @@ export default function AddDataPage() {
   }, [connection]);
 
   // ---- Ingestion verification with auto-polling (via React Query) ----
-  const { verifyStatus, foundSignals, verifyError, handleVerifyIngestion, startPolling } =
-    useIngestionVerification();
+  const {
+    verifyStatus,
+    foundSignals,
+    verifyError,
+    handleVerifyIngestion,
+    startPolling,
+    resetVerification,
+  } = useIngestionVerification();
+  const lastAutoStartedApiKeyRef = useRef<string | null>(null);
 
   // Auto-start polling when API key is generated
   useEffect(() => {
-    if (connection && apiKeyValue && verifyStatus === "idle") {
+    if (
+      connection &&
+      apiKeyValue &&
+      verifyStatus === "idle" &&
+      lastAutoStartedApiKeyRef.current !== apiKeyValue
+    ) {
+      lastAutoStartedApiKeyRef.current = apiKeyValue;
       startPolling();
     }
   }, [connection, apiKeyValue, verifyStatus, startPolling]);
@@ -764,6 +777,11 @@ export default function AddDataPage() {
                 variant={cta.id === "signal" ? "contained" : "outlined"}
                 onClick={() => {
                   if (cta.id === "additional_source") {
+                    setSelectedTechnology(null);
+                    setTechnologySearch("");
+                    setActiveCategory("all");
+                    resetVerification();
+                    lastAutoStartedApiKeyRef.current = null;
                     setWizardStep(1);
                     return;
                   }
