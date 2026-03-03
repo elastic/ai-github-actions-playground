@@ -4,7 +4,7 @@ export default {
     type: "problem",
     docs: {
       description:
-        "Disallow direct ECharts imports in chart components. Use Perses's EChart component instead.",
+        "Disallow direct ECharts imports in app code. Use Perses panel abstractions instead.",
     },
     schema: [],
     messages: {
@@ -17,15 +17,7 @@ export default {
       ImportDeclaration(node) {
         const source = node.source.value;
         if (typeof source === "string" && source.startsWith("echarts")) {
-          // Allow type-only imports (no runtime effect)
-          const declarationTypeOnly = node.importKind === "type";
-          const specifiersTypeOnly =
-            node.specifiers.length > 0 &&
-            node.specifiers.every((s) => s.type === "ImportSpecifier" && s.importKind === "type");
-          if (declarationTypeOnly || specifiersTypeOnly) {
-            return;
-          }
-          // Allow in Perses EChart wrappers and in tests
+          // Allow only explicit adapter escape hatch and tests.
           const filename = context.getFilename ? context.getFilename() : context.filename;
           const normalizedFilename = filename.replace(/\\/g, "/");
           if (
