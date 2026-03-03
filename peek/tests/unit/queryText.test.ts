@@ -41,6 +41,53 @@ describe("splitEsqlPipeline (services/es/queryText)", () => {
       "LIMIT 5",
     ]);
   });
+
+  it("does not split on pipes inside double-quoted strings with backslash-escaped quote", () => {
+    const query = 'FROM logs-* | WHERE message == "a\\"|b" | LIMIT 5';
+    expect(splitEsqlPipeline(query)).toEqual([
+      "FROM logs-*",
+      'WHERE message == "a\\"|b"',
+      "LIMIT 5",
+    ]);
+  });
+
+  it("handles escaped backslash before closing double quote", () => {
+    // The string is "a\\" — the \\\\ is an escaped backslash, then " closes the string
+    const query = 'FROM logs-* | WHERE message == "a\\\\" | LIMIT 5';
+    expect(splitEsqlPipeline(query)).toEqual([
+      "FROM logs-*",
+      'WHERE message == "a\\\\"',
+      "LIMIT 5",
+    ]);
+  });
+
+  it("handles escaped backslash followed by escaped quote in double-quoted string", () => {
+    // The string is "a\\\"|b" — \\\\=escaped backslash, \\\"=escaped quote, then b"
+    const query = 'FROM logs-* | WHERE message == "a\\\\\\"|b" | LIMIT 5';
+    expect(splitEsqlPipeline(query)).toEqual([
+      "FROM logs-*",
+      'WHERE message == "a\\\\\\"|b"',
+      "LIMIT 5",
+    ]);
+  });
+
+  it("does not split on pipes inside single-quoted strings with backslash-escaped quote", () => {
+    const query = "FROM logs-* | WHERE message == 'a\\'|b' | LIMIT 5";
+    expect(splitEsqlPipeline(query)).toEqual([
+      "FROM logs-*",
+      "WHERE message == 'a\\'|b'",
+      "LIMIT 5",
+    ]);
+  });
+
+  it("handles doubled-quote escaping alongside backslash in double-quoted strings", () => {
+    const query = 'FROM logs-* | WHERE message == "foo""bar" | LIMIT 5';
+    expect(splitEsqlPipeline(query)).toEqual([
+      "FROM logs-*",
+      'WHERE message == "foo""bar"',
+      "LIMIT 5",
+    ]);
+  });
 });
 
 describe("formatEsqlQuery (services/es/queryText)", () => {
