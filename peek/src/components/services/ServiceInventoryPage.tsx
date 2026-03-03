@@ -166,7 +166,7 @@ export default function ServiceInventoryPage() {
     if (serviceRows.length === 0) return "";
     const totalRequests = serviceRows.reduce((sum, r) => sum + r.requestCount, 0);
     const totalErrors = serviceRows.reduce((sum, r) => sum + r.errorCount, 0);
-    const maxLatency = Math.max(...serviceRows.map((r) => r.avgLatencyMs));
+    const maxLatency = serviceRows.reduce((max, row) => Math.max(max, row.avgLatencyMs), 0);
     return `services::${serviceRows.length}::${totalRequests}::${totalErrors}::${maxLatency.toFixed(0)}`;
   }, [serviceRows]);
 

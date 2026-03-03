@@ -10,6 +10,7 @@ import { OverviewInfoCard } from "../OverviewInfoCard";
 
 import {
   type InsightIcon,
+  type InsightSeverity,
   type ServiceRow,
   deriveServiceInsights,
 } from "./serviceInventoryHelpers";
@@ -24,7 +25,7 @@ const iconMap: Record<InsightIcon, React.ReactElement> = {
   trending: <TrendingUpIcon fontSize="small" />,
 };
 
-const severityColors: Record<string, string> = {
+const severityColors: Record<InsightSeverity, string> = {
   info: "info.main",
   warning: "warning.main",
   error: "error.main",

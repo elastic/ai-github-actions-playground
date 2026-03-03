@@ -88,7 +88,7 @@ describe("deriveServiceInsights", () => {
     const active = insights.find((i) => i.label === "Most Active Service");
     expect(active).toBeDefined();
     expect(active!.description).toContain("busy-svc");
-    expect(active!.description).toContain("5,000");
+    expect(active!.description).toContain((5000).toLocaleString());
     expect(active!.severity).toBe("info");
     expect(active!.icon).toBe("trending");
   });
