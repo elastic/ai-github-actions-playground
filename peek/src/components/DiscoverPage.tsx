@@ -139,8 +139,27 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         if (discoverQueryDraft) setDiscoverQueryDraft(null);
         setQuery(executedQuery);
       }
-      // By default select all fields
-      setSelectedFields(new Set(data.columns.map((c) => c.name)));
+      // Select a focused default column set when there are many fields;
+      // fall back to all fields when the result set is small.
+      const allNames = data.columns.map((c) => c.name);
+      const DEFAULT_FIELD_LIMIT = 10;
+      if (allNames.length <= DEFAULT_FIELD_LIMIT) {
+        setSelectedFields(new Set(allNames));
+      } else {
+        const PREFERRED_FIELDS = [
+          "@timestamp",
+          "message",
+          "host.name",
+          "service.name",
+          "log.level",
+          "event.dataset",
+          "agent.name",
+        ];
+        const preferred = PREFERRED_FIELDS.filter((f) => allNames.includes(f));
+        setSelectedFields(
+          new Set(preferred.length > 0 ? preferred : allNames.slice(0, DEFAULT_FIELD_LIMIT)),
+        );
+      }
       setTableVersion((prev) => prev + 1);
       timingsCleared.current = false;
     },
