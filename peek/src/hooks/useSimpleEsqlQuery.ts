@@ -46,14 +46,18 @@ export function useSimpleEsqlQuery({
 }: UseSimpleEsqlQueryOptions) {
   const connection = useConnectionStore((s) => s.connection);
   const trimmedQuery = query?.trim() ?? "";
-  const request =
-    trimmedQuery.length > 0
-      ? buildRequest
-        ? buildRequest(trimmedQuery)
-        : { query: trimmedQuery }
-      : null;
+  let requestBuildError: Error | null = null;
+  let request: EsqlQueryParams | null = null;
+  if (trimmedQuery.length > 0) {
+    try {
+      request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
+    } catch (error) {
+      requestBuildError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
 
-  const effectiveEnabled = enabled && Boolean(connection) && Boolean(trimmedQuery);
+  const effectiveEnabled =
+    enabled && Boolean(connection) && Boolean(trimmedQuery) && requestBuildError == null;
 
   const result = useQuery<EsqlResponse>({
     queryKey: queryKey ?? ["esql", connection?.url, trimmedQuery, request],
@@ -82,11 +86,13 @@ export function useSimpleEsqlQuery({
     data: result.data ?? null,
     loading: result.isFetching,
     error:
-      result.error == null
-        ? null
-        : result.error instanceof Error
-          ? result.error.message
-          : String(result.error),
+      requestBuildError != null
+        ? requestBuildError.message
+        : result.error == null
+          ? null
+          : result.error instanceof Error
+            ? result.error.message
+            : String(result.error),
     refetch: result.refetch,
   };
 }

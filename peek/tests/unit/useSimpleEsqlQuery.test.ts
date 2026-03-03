@@ -217,6 +217,25 @@ describe("useSimpleEsqlQuery", () => {
     );
   });
 
+  it("returns buildRequest errors without executing", () => {
+    useConnectionStore.setState({ connection: MOCK_CONNECTION });
+    const { result } = renderHook(
+      () =>
+        useSimpleEsqlQuery({
+          query: "FROM index | LIMIT 10",
+          buildRequest: () => {
+            throw new Error("invalid request");
+          },
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe("invalid request");
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it("does not execute when query is only whitespace", () => {
     useConnectionStore.setState({ connection: MOCK_CONNECTION });
     const { result } = renderHook(() => useSimpleEsqlQuery({ query: "   " }), {
