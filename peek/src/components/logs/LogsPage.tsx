@@ -153,6 +153,32 @@ export default function LogsPage() {
     [extractedSidebarFields],
   );
 
+  // Derive distinct values for DISSECT/GROK-extracted fields directly from the
+  // current query result. These fields are query-time only and do not exist in
+  // the index mapping, so calling getFieldValues for them would always fail.
+  const extractedFieldValues = useMemo<
+    Record<string, Array<{ value: string; count: number }>>
+  >(() => {
+    if (!result || extractedSidebarFields.length === 0) return {};
+    const out: Record<string, Array<{ value: string; count: number }>> = {};
+    for (const field of extractedSidebarFields) {
+      const colIdx = result.columns.findIndex((c) => c.name === field);
+      if (colIdx < 0) continue;
+      const counts = new Map<string, number>();
+      for (const row of result.values) {
+        const raw = row[colIdx];
+        if (raw == null) continue;
+        const val = String(raw);
+        counts.set(val, (counts.get(val) ?? 0) + 1);
+      }
+      out[field] = Array.from(counts.entries())
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8);
+    }
+    return out;
+  }, [result, extractedSidebarFields]);
+
   const histogramBuckets = useMemo<HistogramBucket[]>(() => {
     if (!result) return [];
     const timestampIndex = result.columns.findIndex((column) => column.name === TIMESTAMP_FIELD);
@@ -256,7 +282,7 @@ export default function LogsPage() {
       setFieldValuesError(null);
       try {
         const entries = await Promise.all(
-          sidebarFields.map(async (field) => [
+          SIDEBAR_FIELDS.map(async (field) => [
             field,
             await getFieldValues(client, indexPattern, field, 8, controller.signal),
           ]),
@@ -277,7 +303,7 @@ export default function LogsPage() {
       mounted = false;
       controller.abort();
     };
-  }, [connection, indexPattern, sidebarFields]);
+  }, [connection, indexPattern]);
 
   const handleCellFilter = useCallback(
     (field: string, value: string, exclude = false) => {
@@ -308,12 +334,12 @@ export default function LogsPage() {
         "EVAL anomaly = CHANGE_POINT(log_count)",
         `WHERE anomaly IS NOT NULL AND bucket >= TO_DATETIME("${new Date(start).toISOString()}") AND bucket < TO_DATETIME("${new Date(end).toISOString()}")`,
       ].join(" | ");
-      const nextQuery = appendPipeClause(generatedQuery, clause);
+      const nextQuery = appendPipeClause(effectiveQuery, clause);
       setRawQuery(nextQuery);
       void runQuery(nextQuery);
       setViewMode("chart");
     },
-    [generatedQuery, runQuery, setRawQuery],
+    [effectiveQuery, runQuery, setRawQuery],
   );
 
   const handleApplyExtraction = useCallback(() => {
@@ -332,13 +358,13 @@ export default function LogsPage() {
 
   const runCategorizeQuery = useCallback(() => {
     const nextQuery = appendPipeClause(
-      generatedQuery,
+      effectiveQuery,
       "STATS pattern_count = COUNT(*) BY pattern = CATEGORIZE(message) | SORT pattern_count DESC",
     );
     setRawQuery(nextQuery);
     void runQuery(nextQuery);
     setViewMode("patterns");
-  }, [generatedQuery, runQuery, setRawQuery]);
+  }, [effectiveQuery, runQuery, setRawQuery]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
@@ -465,7 +491,7 @@ export default function LogsPage() {
                 >
                   <Typography variant="caption">{field}</Typography>
                 </ListSubheader>,
-                ...(fieldValues[field] ?? []).map((entry) => (
+                ...(fieldValues[field] ?? extractedFieldValues[field] ?? []).map((entry) => (
                   <ListItem key={`${field}-${entry.value}`} disablePadding>
                     <Stack
                       direction="row"
@@ -542,6 +568,8 @@ export default function LogsPage() {
                   size="small"
                   variant={bucket.anomaly ? "contained" : "outlined"}
                   color={bucket.anomaly ? "warning" : "inherit"}
+                  disabled={!bucket.anomaly}
+                  aria-label={`${bucket.anomaly ? "Drill into anomaly" : "Bucket"}: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
                   onClick={() => handleAnomalyDrillIn(bucket.start, bucket.end)}
                   sx={{
                     minWidth: 12,
