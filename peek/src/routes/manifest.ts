@@ -22,6 +22,7 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ShieldIcon from "@mui/icons-material/Shield";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import PolicyIcon from "@mui/icons-material/Policy";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -48,9 +49,10 @@ const RolesPage = lazy(() => import("../components/RolesPage"));
 const SettingsPage = lazy(() => import("../components/SettingsPage"));
 const TracesPage = lazy(() => import("../components/traces/TracesPage"));
 const ProfilingPage = lazy(() => import("../components/profiling/ProfilingPage"));
+const InvestigatePage = lazy(() => import("../components/InvestigatePage"));
 const UsersPage = lazy(() => import("../components/UsersPage"));
 
-export type NavGroup = "Workspace" | "System" | "Help" | "Settings";
+export type NavGroup = "Workspace" | "Security" | "System" | "Help" | "Settings";
 
 export interface PageConfig {
   path: string;
@@ -335,6 +337,20 @@ export const PAGE_MANIFEST = {
       icon: createElement(SecurityIcon, { fontSize: "small" }),
     },
   },
+  investigate: {
+    path: "/investigate",
+    component: InvestigatePage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Investigate",
+      group: "Security",
+      order: 10,
+      showInSidebar: true,
+      icon: createElement(PolicyIcon, { fontSize: "small" }),
+    },
+  },
   users: {
     path: "/users",
     component: UsersPage,
@@ -411,4 +427,4 @@ export const PAGE_MANIFEST = {
 export type PageId = keyof typeof PAGE_MANIFEST;
 
 /** Sidebar section display order. Sections not listed here won't appear. */
-export const NAV_SECTION_ORDER: NavGroup[] = ["Workspace", "System", "Help"];
+export const NAV_SECTION_ORDER: NavGroup[] = ["Workspace", "Security", "System", "Help"];
