@@ -65,6 +65,8 @@ const ESQL_RESPONSE = {
   ],
 };
 
+const EMPTY_ESQL_RESPONSE = { columns: [], values: [] };
+
 describe("InvestigatePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,6 +74,7 @@ describe("InvestigatePage", () => {
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
+    queryMock.mockResolvedValue(EMPTY_ESQL_RESPONSE);
   });
 
   it("renders the page header and search controls", () => {
@@ -90,7 +93,7 @@ describe("InvestigatePage", () => {
     expect(screen.getByRole("button", { name: /search/i })).toBeInTheDocument();
   });
 
-  it("shows initial empty state prompting to search", () => {
+  it("shows initial empty state prompting to search", async () => {
     render(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
@@ -99,7 +102,7 @@ describe("InvestigatePage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Investigate a user")).toBeInTheDocument();
+    await screen.findByText("Investigate a user");
   });
 
   it("switches to host tab and updates placeholder", async () => {
@@ -115,11 +118,11 @@ describe("InvestigatePage", () => {
     await user.click(screen.getByRole("tab", { name: /host/i }));
 
     expect(screen.getByRole("textbox", { name: /host name/i })).toBeInTheDocument();
-    expect(screen.getByText("Investigate a host")).toBeInTheDocument();
+    await screen.findByText("Investigate a host");
   });
 
   it("displays search results in a timeline table", async () => {
-    queryMock.mockResolvedValue(ESQL_RESPONSE);
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
     render(
@@ -141,7 +144,7 @@ describe("InvestigatePage", () => {
   });
 
   it("shows empty state when no events are found", async () => {
-    queryMock.mockResolvedValue({ columns: ESQL_RESPONSE.columns, values: [] });
+    queryMock.mockResolvedValue(EMPTY_ESQL_RESPONSE);
     const user = userEvent.setup();
 
     render(
@@ -159,7 +162,9 @@ describe("InvestigatePage", () => {
   });
 
   it("shows error alert on query failure", async () => {
-    queryMock.mockRejectedValue({ status: 400, message: "verification_exception" });
+    queryMock
+      .mockResolvedValueOnce(EMPTY_ESQL_RESPONSE)
+      .mockRejectedValueOnce({ status: 400, message: "verification_exception" });
     const user = userEvent.setup();
 
     render(
@@ -177,7 +182,7 @@ describe("InvestigatePage", () => {
   });
 
   it("shows LLM summary prompt section when events are found", async () => {
-    queryMock.mockResolvedValue(ESQL_RESPONSE);
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
     render(
@@ -196,7 +201,7 @@ describe("InvestigatePage", () => {
   });
 
   it("shows category and data source breakdowns", async () => {
-    queryMock.mockResolvedValue(ESQL_RESPONSE);
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
     render(
@@ -228,7 +233,7 @@ describe("InvestigatePage", () => {
   });
 
   it("triggers search on Enter key press", async () => {
-    queryMock.mockResolvedValue(ESQL_RESPONSE);
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
     render(
@@ -243,5 +248,32 @@ describe("InvestigatePage", () => {
     await user.type(input, "admin{enter}");
 
     await screen.findByText(/2 events found/i);
+  });
+
+  it("shows recent entity suggestions when data is available", async () => {
+    const SUGGESTIONS_RESPONSE = {
+      columns: [
+        { name: "event_count", type: "long" },
+        { name: "last_seen", type: "date" },
+        { name: "user.name", type: "keyword" },
+      ],
+      values: [
+        [42, "2026-03-01T10:00:00Z", "admin"],
+        [18, "2026-03-01T09:00:00Z", "guest"],
+      ],
+    };
+    queryMock.mockResolvedValueOnce(SUGGESTIONS_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <InvestigatePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Recent users");
+    expect(screen.getByText("admin (42)")).toBeInTheDocument();
+    expect(screen.getByText("guest (18)")).toBeInTheDocument();
   });
 });
