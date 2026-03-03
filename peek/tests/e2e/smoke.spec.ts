@@ -28,6 +28,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Metrics: {
       "color-contrast": 2,
     },
+    Services: {},
     Traces: {
       "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
@@ -373,7 +374,7 @@ test.describe("smoke – site navigation", () => {
     await expect(queryInput).toContainText(queryText);
 
     // Run query — the mock returns @timestamp + message columns
-    await page.getByRole("button", { name: "Run" }).click();
+    await page.getByRole("button", { name: /^Run Query\b/ }).click();
     await expect(page.getByText("Run a query to see results")).toBeHidden();
     // Verify results rendered (default mock: columns @timestamp, message, 1 row)
     await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
@@ -407,13 +408,14 @@ test.describe("smoke – site navigation", () => {
     // so results are deterministic across fast (local) and slow (CI) machines.
     const pageReadyLocators: Record<string, () => Promise<void>> = {
       Metrics: () => expect(page.getByText("Explore your metrics")).toBeVisible(),
+      Services: () => expect(page.getByRole("heading", { name: "Services" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Console: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
 
-    for (const nav of ["Metrics", "Traces", "Query Lab", "Console", "Indices"]) {
+    for (const nav of ["Metrics", "Services", "Traces", "Query Lab", "Console", "Indices"]) {
       await navigateViaSidebar(page, nav);
       await page.waitForLoadState("networkidle");
       await pageReadyLocators[nav]!();

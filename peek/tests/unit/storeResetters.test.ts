@@ -9,6 +9,7 @@ import { useFleetStore } from "../../src/store/useFleetStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { useProfilingStore } from "../../src/store/useProfilingStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
+import { useServicesStore } from "../../src/store/useServicesStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
@@ -26,6 +27,7 @@ const STORES_WITH_RESET_API = [
   { name: "useLLMStore", store: useLLMStore, method: "resetLLMState" },
   { name: "useProfilingStore", store: useProfilingStore, method: "resetFilters" },
   { name: "useQueryStore", store: useQueryStore, method: "resetQueryState" },
+  { name: "useServicesStore", store: useServicesStore, method: "resetFilters" },
   { name: "useTracesStore", store: useTracesStore, method: "resetFilters" },
   { name: "useUIStore", store: useUIStore, method: "resetUIState" },
   { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },
