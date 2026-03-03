@@ -20,39 +20,41 @@ export type RouteSortField = "route" | "requestCount" | "avgLatencyMs" | "errorR
 export type TraceSortField = "spanName" | "durationMs" | "statusCode" | "timestamp";
 export type SortDirection = "asc" | "desc";
 
-export function parseRouteRows(result: EsqlResponse): RouteRow[] {
+function buildColumnAccessor(columns: EsqlResponse["columns"]) {
   const colIndex = new Map<string, number>();
-  for (let i = 0; i < result.columns.length; i++) {
-    colIndex.set(result.columns[i]!.name, i);
+  for (let i = 0; i < columns.length; i++) {
+    colIndex.set(columns[i]!.name, i);
   }
-  const get = (row: unknown[], field: string): unknown => {
+  return (row: unknown[], field: string): unknown => {
     const idx = colIndex.get(field);
     return idx !== undefined ? row[idx] : null;
   };
+}
+
+function toFiniteNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+export function parseRouteRows(result: EsqlResponse): RouteRow[] {
+  const get = buildColumnAccessor(result.columns);
 
   return result.values.map((row) => ({
     route: String(get(row, "route_key") ?? "/"),
-    requestCount: Number(get(row, "request_count") ?? 0),
-    avgLatencyMs: Number(get(row, "avg_latency_ms") ?? 0),
-    errorCount: Number(get(row, "error_count") ?? 0),
-    errorRate: Number(get(row, "error_rate") ?? 0),
+    requestCount: toFiniteNumber(get(row, "request_count")),
+    avgLatencyMs: toFiniteNumber(get(row, "avg_latency_ms")),
+    errorCount: toFiniteNumber(get(row, "error_count")),
+    errorRate: toFiniteNumber(get(row, "error_rate")),
   }));
 }
 
 export function parseRecentTraces(result: EsqlResponse): RecentTrace[] {
-  const colIndex = new Map<string, number>();
-  for (let i = 0; i < result.columns.length; i++) {
-    colIndex.set(result.columns[i]!.name, i);
-  }
-  const get = (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
+  const get = buildColumnAccessor(result.columns);
 
   return result.values.map((row) => ({
     traceId: String(get(row, "trace.id") ?? ""),
     spanName: String(get(row, "name") ?? "unknown"),
-    durationMs: Number(get(row, "duration_ms") ?? 0),
+    durationMs: toFiniteNumber(get(row, "duration_ms")),
     statusCode: String(get(row, "status.code") ?? ""),
     timestamp: String(get(row, "@timestamp") ?? ""),
   }));

@@ -75,6 +75,27 @@ describe("serviceDashboardHelpers", () => {
         errorRate: 0,
       });
     });
+
+    it("handles malformed numeric values with defaults", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "route_key", type: "keyword" },
+          { name: "request_count", type: "long" },
+          { name: "avg_latency_ms", type: "double" },
+          { name: "error_count", type: "long" },
+          { name: "error_rate", type: "double" },
+        ],
+        values: [["/api/test", "abc", "oops", "bad", "nope"]],
+      };
+      const rows = parseRouteRows(response);
+      expect(rows[0]).toEqual({
+        route: "/api/test",
+        requestCount: 0,
+        avgLatencyMs: 0,
+        errorCount: 0,
+        errorRate: 0,
+      });
+    });
   });
 
   describe("parseRecentTraces", () => {
@@ -122,6 +143,27 @@ describe("serviceDashboardHelpers", () => {
         durationMs: 0,
         statusCode: "",
         timestamp: "",
+      });
+    });
+
+    it("handles malformed duration values with defaults", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "trace.id", type: "keyword" },
+          { name: "name", type: "keyword" },
+          { name: "duration_ms", type: "double" },
+          { name: "status.code", type: "keyword" },
+          { name: "@timestamp", type: "date" },
+        ],
+        values: [["abc123", "op", "abc", "OK", "2026-01-01T00:00:00Z"]],
+      };
+      const traces = parseRecentTraces(response);
+      expect(traces[0]).toEqual({
+        traceId: "abc123",
+        spanName: "op",
+        durationMs: 0,
+        statusCode: "OK",
+        timestamp: "2026-01-01T00:00:00Z",
       });
     });
   });

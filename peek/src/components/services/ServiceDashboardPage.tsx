@@ -209,6 +209,7 @@ export default function ServiceDashboardPage() {
       timeTo,
       services: [serviceName],
     });
+    useTracesStore.getState().setSelectedTraceId(null);
     navigate(PAGE_MANIFEST.traces.path);
   }, [navigate, serviceName, timeFrom, timeTo]);
 
