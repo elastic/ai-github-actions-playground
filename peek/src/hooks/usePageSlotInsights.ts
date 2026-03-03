@@ -56,7 +56,7 @@ export function usePageSlotInsights({
     isFetching: loading,
     error: queryError,
   } = useQuery({
-    queryKey: [QUERY_KEY_PREFIX, cacheKey, provider, llmModel] as const,
+    queryKey: [QUERY_KEY_PREFIX, cacheKey, provider, llmModel, hasApiKey] as const,
     queryFn: async ({ signal }) => {
       const slotList = slots.map((s) => `- ${s.slotId}: ${s.label}`).join("\n");
       const augmentedSystem = `${systemPrompt}\n\nTarget insight slots:\n${slotList}`;
