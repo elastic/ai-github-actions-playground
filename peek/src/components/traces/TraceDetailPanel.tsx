@@ -39,18 +39,27 @@ export default function TraceDetailPanel({
 
   const depthSummary = useMemo(() => {
     if (selectedTraceSpans.length === 0) return null;
-    let maxDepth = 0;
     const byId = new Map(selectedTraceSpans.map((span) => [span.spanId, span]));
+    const memo = new Map<string, number>();
+    const visiting = new Set<string>();
+
+    const computeDepth = (spanId: string): number => {
+      const cached = memo.get(spanId);
+      if (cached != null) return cached;
+      if (visiting.has(spanId)) return 0;
+
+      visiting.add(spanId);
+      const span = byId.get(spanId);
+      const parentId = span?.parentSpanId;
+      const depth = parentId && byId.has(parentId) ? computeDepth(parentId) + 1 : 0;
+      visiting.delete(spanId);
+      memo.set(spanId, depth);
+      return depth;
+    };
+
+    let maxDepth = 0;
     for (const span of selectedTraceSpans) {
-      let depth = 0;
-      let currentParent = span.parentSpanId;
-      const seen = new Set<string>([span.spanId]);
-      while (currentParent && byId.has(currentParent) && !seen.has(currentParent)) {
-        seen.add(currentParent);
-        depth += 1;
-        currentParent = byId.get(currentParent)?.parentSpanId ?? null;
-      }
-      if (depth > maxDepth) maxDepth = depth;
+      maxDepth = Math.max(maxDepth, computeDepth(span.spanId));
     }
     return maxDepth;
   }, [selectedTraceSpans]);
