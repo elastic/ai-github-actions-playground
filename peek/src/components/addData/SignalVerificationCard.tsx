@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
@@ -27,6 +27,9 @@ interface SignalVerificationCardProps {
 
 export default function SignalVerificationCard({ delta, isPolling }: SignalVerificationCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const baseId = useId();
+  const toggleId = `${baseId}-toggle`;
+  const detailsId = `${baseId}-details`;
 
   const detected =
     delta.dataStreamAppeared ||
@@ -51,9 +54,10 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
     >
       {/* Collapsed header — always visible */}
       <ButtonBase
+        id={toggleId}
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
-        aria-controls={`signal-detail-${delta.signal}`}
+        aria-controls={detailsId}
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -87,8 +91,9 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
       {/* Expandable detail */}
       <Collapse in={expanded}>
         <Box
-          id={`signal-detail-${delta.signal}`}
+          id={detailsId}
           role="region"
+          aria-labelledby={toggleId}
           sx={{ display: "flex", flexDirection: "column", gap: 0.5, pb: 1.5, px: 1.5 }}
         >
           {/* Data stream */}

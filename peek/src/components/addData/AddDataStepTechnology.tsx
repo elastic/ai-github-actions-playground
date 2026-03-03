@@ -21,6 +21,7 @@ import {
 } from "../../services/addData/catalog";
 
 import AddDataTechnologyResults from "./AddDataTechnologyResults";
+import ExperienceTile from "./ExperienceTile";
 import { EXPERIENCE_ICONS } from "./addDataTechnologyConstants";
 
 const PRIMARY_EXPERIENCES: readonly AddDataGuidedExperience[] = [
@@ -95,7 +96,10 @@ export default function AddDataStepTechnology({
         value={technologySearch}
         onChange={(e) => {
           onTechnologySearchChange(e.target.value);
-          if (e.target.value.trim().length > 0) setSelectedExperience(null);
+          if (e.target.value.trim().length > 0) {
+            setSelectedExperience(null);
+            onClearTechnology();
+          }
         }}
         fullWidth
         size="small"
@@ -186,7 +190,10 @@ export default function AddDataStepTechnology({
         <Button
           size="small"
           startIcon={<ArrowBackIcon fontSize="small" />}
-          onClick={() => setSelectedExperience(null)}
+          onClick={() => {
+            setSelectedExperience(null);
+            onClearTechnology();
+          }}
           sx={{ alignSelf: "flex-start" }}
         >
           {ADD_DATA_EXPERIENCE_LABELS[selectedExperience]}
@@ -208,59 +215,5 @@ export default function AddDataStepTechnology({
         </Button>
       </Stack>
     </Paper>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Experience tile
-// ---------------------------------------------------------------------------
-
-function ExperienceTile({
-  experience,
-  onClick,
-}: {
-  experience: AddDataGuidedExperience;
-  onClick: () => void;
-}) {
-  return (
-    <ButtonBase
-      onClick={onClick}
-      sx={{ display: "block", width: "100%", borderRadius: 1, textAlign: "left" }}
-    >
-      <Paper
-        variant="outlined"
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-          height: "100%",
-          p: 2,
-          cursor: "pointer",
-          transition: "border-color 0.15s, box-shadow 0.15s",
-          "&:hover": { boxShadow: 1, borderColor: "text.secondary" },
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            width: 48,
-            height: 48,
-            borderRadius: 1.5,
-            bgcolor: "action.selected",
-            color: "text.secondary",
-          }}
-        >
-          {EXPERIENCE_ICONS[experience]}
-        </Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          {ADD_DATA_EXPERIENCE_LABELS[experience]}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {ADD_DATA_EXPERIENCE_DESCRIPTIONS[experience]}
-        </Typography>
-      </Paper>
-    </ButtonBase>
   );
 }

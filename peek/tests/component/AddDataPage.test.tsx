@@ -55,9 +55,12 @@ function renderPage() {
 async function goToStep2(user: ReturnType<typeof userEvent.setup>) {
   // Click the Kubernetes experience tile
   await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
-  // Select the Kubernetes technology card — the first card with aria-pressed
+  // Select the Kubernetes technology card by matching exact text content
   // (Docker's card also contains "Kubernetes" in its experience label chip)
-  await user.click(screen.getAllByRole("button", { name: /Kubernetes/, pressed: false })[0]);
+  const candidates = screen.getAllByRole("button", { name: /Kubernetes/, pressed: false });
+  const kubernetesCard = candidates.find((el) => /^Kubernetes/i.test(el.textContent ?? ""));
+  expect(kubernetesCard).toBeDefined();
+  await user.click(kubernetesCard!);
   await user.click(screen.getByRole("button", { name: /^Continue$/i }));
 }
 
@@ -87,7 +90,7 @@ describe("AddDataPage", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: /What are you monitoring\?/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Search integrations...")).toBeInTheDocument();
-    expect(screen.getByText("Cloud Service Providers")).toBeInTheDocument();
+    expect(screen.getByText("Cloud Providers")).toBeInTheDocument();
     expect(screen.getByText("Kubernetes")).toBeInTheDocument();
     expect(screen.getByText("Servers, Desktops & Laptops")).toBeInTheDocument();
     expect(screen.getByText("SaaS & Databases")).toBeInTheDocument();

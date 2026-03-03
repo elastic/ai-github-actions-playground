@@ -45,7 +45,7 @@ export interface AddDataTechnologyCatalogEntry {
 }
 
 export const ADD_DATA_EXPERIENCE_LABELS: Readonly<Record<AddDataGuidedExperience, string>> = {
-  cloud_providers: "Cloud Service Providers",
+  cloud_providers: "Cloud Providers",
   kubernetes: "Kubernetes",
   servers: "Servers, Desktops & Laptops",
   saas_databases: "SaaS & Databases",

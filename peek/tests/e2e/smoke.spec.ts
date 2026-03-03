@@ -275,11 +275,13 @@ test.describe("smoke – site navigation", () => {
     await navigateViaSidebar(page, "Add Data");
 
     await expect(page.getByRole("heading", { name: "What are you monitoring?" })).toBeVisible();
-    // Click the Kubernetes experience tile, then the Kubernetes technology card
+    // Click the Kubernetes experience tile
     await page
       .getByRole("button", { name: /Kubernetes/ })
       .first()
       .click();
+    // Wait for experience tiles to disappear, then click the Kubernetes technology card
+    await expect(page.getByText("Cloud Providers")).toBeHidden();
     await page
       .getByRole("button", { name: /Kubernetes/ })
       .first()
