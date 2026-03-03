@@ -60,5 +60,5 @@ export function buildServiceEnvironmentsQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
   const where = buildWherePipe([`${fields.serviceName} == "${escapeEsqlString(serviceName)}"`]);
-  return `FROM ${fields.index} | ${where} | STATS count = COUNT(*) BY service.environment | SORT count DESC | LIMIT 20`;
+  return `FROM ${fields.index} | ${where} | EVAL environment_key = COALESCE(service.environment, deployment.environment, 'unknown') | STATS count = COUNT(*) BY environment_key | SORT count DESC | LIMIT 20`;
 }

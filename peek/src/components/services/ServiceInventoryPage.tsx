@@ -3,15 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 import { useShallow } from "zustand/react/shallow";
 
@@ -28,71 +21,9 @@ import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import type { EsqlResponse } from "../../types";
 
 import { buildServiceInventoryQuery } from "./serviceInventoryQueryBuilder";
-
-interface ServiceRow {
-  serviceName: string;
-  requestCount: number;
-  avgLatencyMs: number;
-  errorCount: number;
-  errorRate: number;
-  uniqueRoutes: number;
-  uniqueSpanNames: number;
-  topRoute: string;
-  topSpanName: string;
-  topError: string;
-  language: string;
-  environment: string;
-}
-
-function parseTopValue(value: unknown, fallback = "—"): string {
-  if (Array.isArray(value)) {
-    const top = value.find((item) => item != null && String(item).trim() !== "");
-    return top != null ? String(top) : fallback;
-  }
-  if (value == null) return fallback;
-  const parsed = String(value).trim();
-  return parsed.length > 0 ? parsed : fallback;
-}
-
-function parseServiceRows(result: EsqlResponse): ServiceRow[] {
-  const colIndex = new Map<string, number>();
-  for (let i = 0; i < result.columns.length; i++) {
-    colIndex.set(result.columns[i]!.name, i);
-  }
-  const get = (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
-
-  return result.values.map((row) => ({
-    serviceName: String(get(row, "service.name") ?? "unknown"),
-    requestCount: Number(get(row, "request_count") ?? 0),
-    avgLatencyMs: Number(get(row, "avg_latency_ms") ?? 0),
-    errorCount: Number(get(row, "error_count") ?? 0),
-    errorRate: Number(get(row, "error_rate") ?? 0),
-    uniqueRoutes: Number(get(row, "unique_routes") ?? 0),
-    uniqueSpanNames: Number(get(row, "unique_span_names") ?? 0),
-    topRoute: parseTopValue(get(row, "top_route")),
-    topSpanName: parseTopValue(get(row, "top_span_name")),
-    topError: parseTopValue(get(row, "top_error")),
-    language: parseTopValue(get(row, "language"), "unknown"),
-    environment: parseTopValue(get(row, "environment"), "unknown"),
-  }));
-}
-
-function formatLatency(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "—";
-  if (ms >= 1000) return `${(ms / 1000).toFixed(ms >= 10000 ? 0 : 1)}s`;
-  return `${ms.toFixed(1)}ms`;
-}
-
-function formatErrorRate(rate: number): string {
-  if (!Number.isFinite(rate) || rate < 0) return "—";
-  return `${(rate * 100).toFixed(1)}%`;
-}
-
-type SortField = "serviceName" | "requestCount" | "avgLatencyMs" | "errorRate";
-type SortDirection = "asc" | "desc";
+import { type SortField, type SortDirection, parseServiceRows } from "./serviceInventoryHelpers";
+import ServiceSummaryPanel from "./ServiceSummaryPanel";
+import ServiceInventoryTable from "./ServiceInventoryTable";
 
 export default function ServiceInventoryPage() {
   const navigate = useNavigate();
@@ -162,33 +93,6 @@ export default function ServiceInventoryPage() {
     });
   }, [searchResult, sortField, sortDirection]);
 
-  const summary = useMemo(() => {
-    if (serviceRows.length === 0) return null;
-    const totals = serviceRows.reduce(
-      (acc, row) => {
-        acc.requests += row.requestCount;
-        acc.errors += row.errorCount;
-        return acc;
-      },
-      { requests: 0, errors: 0 },
-    );
-    const avgLatencyMs =
-      totals.requests > 0
-        ? serviceRows.reduce((acc, row) => acc + row.avgLatencyMs * row.requestCount, 0) /
-          totals.requests
-        : 0;
-    return {
-      totalRequests: totals.requests,
-      totalErrors: totals.errors,
-      overallErrorRate: totals.requests > 0 ? totals.errors / totals.requests : 0,
-      avgLatencyMs,
-      busiestServices: [...serviceRows]
-        .sort((a, b) => b.requestCount - a.requestCount)
-        .slice(0, 3)
-        .map((row) => `${row.serviceName} (${row.requestCount.toLocaleString()})`),
-    };
-  }, [serviceRows]);
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
       <PageHeader
@@ -221,48 +125,7 @@ export default function ServiceInventoryPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {summary && (
-        <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-            <Typography variant="body2" color="text.secondary">
-              Total Requests:{" "}
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{ color: "text.primary", fontWeight: 600 }}
-              >
-                {summary.totalRequests.toLocaleString()}
-              </Typography>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Avg Service Latency:{" "}
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{ color: "text.primary", fontWeight: 600 }}
-              >
-                {formatLatency(summary.avgLatencyMs)}
-              </Typography>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Overall Error Rate:{" "}
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{ color: "text.primary", fontWeight: 600 }}
-              >
-                {formatErrorRate(summary.overallErrorRate)}
-              </Typography>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Busiest Services:
-            </Typography>
-            {summary.busiestServices.map((service) => (
-              <Chip key={service} size="small" label={service} variant="outlined" />
-            ))}
-          </Box>
-        </Paper>
-      )}
+      <ServiceSummaryPanel serviceRows={serviceRows} />
 
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
         {!loading && !searchResult && (
@@ -282,129 +145,13 @@ export default function ServiceInventoryPage() {
         )}
 
         {serviceRows.length > 0 && (
-          <Table size="small" aria-label="Service inventory">
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "serviceName"}
-                    direction={sortField === "serviceName" ? sortDirection : "asc"}
-                    onClick={() => handleSort("serviceName")}
-                  >
-                    Service Name
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">
-                  <TableSortLabel
-                    active={sortField === "requestCount"}
-                    direction={sortField === "requestCount" ? sortDirection : "desc"}
-                    onClick={() => handleSort("requestCount")}
-                  >
-                    Requests
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">
-                  <TableSortLabel
-                    active={sortField === "avgLatencyMs"}
-                    direction={sortField === "avgLatencyMs" ? sortDirection : "desc"}
-                    onClick={() => handleSort("avgLatencyMs")}
-                  >
-                    Avg Latency
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">
-                  <TableSortLabel
-                    active={sortField === "errorRate"}
-                    direction={sortField === "errorRate" ? sortDirection : "desc"}
-                    onClick={() => handleSort("errorRate")}
-                  >
-                    Error Rate
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>Language</TableCell>
-                <TableCell>Environment</TableCell>
-                <TableCell align="right">Routes</TableCell>
-                <TableCell align="right">Span Names</TableCell>
-                <TableCell>Top Route</TableCell>
-                <TableCell>Top Span</TableCell>
-                <TableCell>Top Error</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {serviceRows.map((row) => (
-                <TableRow
-                  key={row.serviceName}
-                  hover
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`View traces for ${row.serviceName}`}
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleViewTraces(row.serviceName)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleViewTraces(row.serviceName);
-                    }
-                  }}
-                >
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {row.serviceName}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">{row.requestCount.toLocaleString()}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">{formatLatency(row.avgLatencyMs)}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      size="small"
-                      label={formatErrorRate(row.errorRate)}
-                      color={row.errorRate > 0.05 ? "error" : "default"}
-                      variant={row.errorRate > 0.05 ? "filled" : "outlined"}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{row.language}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{row.environment}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">{row.uniqueRoutes.toLocaleString()}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">{row.uniqueSpanNames.toLocaleString()}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{row.topRoute}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{row.topSpanName}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{row.topError}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button
-                      size="small"
-                      variant="text"
-                      aria-label={`View traces for ${row.serviceName}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewTraces(row.serviceName);
-                      }}
-                    >
-                      View Traces
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <ServiceInventoryTable
+            serviceRows={serviceRows}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            handleSort={handleSort}
+            handleViewTraces={handleViewTraces}
+          />
         )}
       </Paper>
     </Box>

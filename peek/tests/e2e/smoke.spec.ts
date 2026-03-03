@@ -373,7 +373,7 @@ test.describe("smoke – site navigation", () => {
     await expect(queryInput).toContainText(queryText);
 
     // Run query — the mock returns @timestamp + message columns
-    await page.getByRole("button", { name: "Run Query (Ctrl/Cmd+Enter)" }).click();
+    await page.getByRole("button", { name: /^Run Query\b/ }).click();
     await expect(page.getByText("Run a query to see results")).toBeHidden();
     // Verify results rendered (default mock: columns @timestamp, message, 1 row)
     await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
