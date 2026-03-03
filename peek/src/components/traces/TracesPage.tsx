@@ -132,8 +132,6 @@ export default function TracesPage() {
                   selectedTraceId={orchestrator.selectedTraceId}
                   selectedTraceSpans={orchestrator.selectedTraceSpans}
                   detailLoading={orchestrator.detailLoading}
-                  selectedSpanId={orchestrator.selectedSpanId}
-                  onSpanClick={(spanId) => orchestrator.setSelectedSpanId(spanId)}
                   onOpenInQueryLab={() =>
                     orchestrator.handleOpenInDiscover(
                       orchestrator.selectedTraceId!,

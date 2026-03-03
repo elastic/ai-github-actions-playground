@@ -36,6 +36,9 @@ vi.mock("../../src/hooks/useEsqlQuery", () => ({
 }));
 
 vi.mock("../../src/components/visualizations/WaterfallChart", () => ({ default: () => null }));
+vi.mock("@perses-dev/tracing-gantt-chart-plugin/lib/TracingGanttChart/TracingGanttChart", () => ({
+  TracingGanttChart: () => null,
+}));
 vi.mock("../../src/components/visualizations/TraceScatterChart", () => ({ default: () => null }));
 vi.mock("../../src/components/visualizations/TraceServiceMap", () => ({ default: () => null }));
 vi.mock("../../src/components/visualizations/DriftRadarMap", () => ({ default: () => null }));
