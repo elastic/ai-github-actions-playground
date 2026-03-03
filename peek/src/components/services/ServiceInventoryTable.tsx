@@ -78,7 +78,7 @@ export default function ServiceInventoryTable({
           <TableCell>Top Route</TableCell>
           <TableCell>Top Span</TableCell>
           <TableCell>Top Error</TableCell>
-          <TableCell />
+          <TableCell align="right">Actions</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>

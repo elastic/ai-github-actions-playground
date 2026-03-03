@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -40,6 +40,7 @@ export default function ServiceInventoryPage() {
 
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const latestQueryRef = useRef<string | null>(null);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -54,10 +55,19 @@ export default function ServiceInventoryPage() {
   );
 
   const handleSuccess = useCallback(
-    (data: EsqlResponse) => setSearchResult(data),
+    (data: EsqlResponse, executedQuery: string) => {
+      if (executedQuery !== latestQueryRef.current) return;
+      setSearchResult(data);
+    },
     [setSearchResult],
   );
-  const handleFailure = useCallback(() => setSearchResult(null), [setSearchResult]);
+  const handleFailure = useCallback(
+    (failedQuery: string) => {
+      if (failedQuery !== latestQueryRef.current) return;
+      setSearchResult(null);
+    },
+    [setSearchResult],
+  );
 
   const { runQuery, loading, error, clearError } = useEsqlQuery({
     connection,
@@ -67,10 +77,12 @@ export default function ServiceInventoryPage() {
 
   const handleSearch = useCallback(() => {
     const query = buildServiceInventoryQuery(filters);
+    latestQueryRef.current = query.trim();
     runQuery(query);
   }, [filters, runQuery]);
   const handleReset = useCallback(() => {
     if (loading) return;
+    latestQueryRef.current = null;
     clearError();
     resetFilters();
   }, [clearError, resetFilters, loading]);
@@ -116,6 +128,7 @@ export default function ServiceInventoryPage() {
             value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
             onChange={(range) => {
               const traceRange = toTraceTimeRange(range);
+              latestQueryRef.current = null;
               updateFilters({ timeFrom: traceRange.from, timeTo: traceRange.to });
             }}
           />

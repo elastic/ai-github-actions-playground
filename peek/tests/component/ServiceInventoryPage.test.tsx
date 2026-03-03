@@ -11,69 +11,75 @@ import { resetAllStores } from "../fixtures/test-utils";
 
 const mockRunQuery = vi.fn();
 vi.mock("../../src/hooks/useEsqlQuery", () => ({
-  useEsqlQuery: (opts: { onSuccess: (data: unknown) => void }) => ({
+  useEsqlQuery: (opts: {
+    onSuccess: (data: unknown, executedQuery: string, executedStepIndex: number | null) => void;
+  }) => ({
     runQuery: (query: string) => {
       mockRunQuery(query);
-      opts.onSuccess({
-        columns: [
-          { name: "service.name", type: "keyword" },
-          { name: "request_count", type: "long" },
-          { name: "avg_latency_ms", type: "double" },
-          { name: "error_count", type: "long" },
-          { name: "error_rate", type: "double" },
-          { name: "unique_routes", type: "long" },
-          { name: "unique_span_names", type: "long" },
-          { name: "top_route", type: "keyword" },
-          { name: "top_span_name", type: "keyword" },
-          { name: "top_error", type: "keyword" },
-          { name: "language", type: "keyword" },
-          { name: "environment", type: "keyword" },
-        ],
-        values: [
-          [
-            "frontend",
-            1500,
-            45.2,
-            30,
-            0.02,
-            24,
-            68,
-            ["/products/:id"],
-            ["GET /products/:id"],
-            ["TimeoutError: upstream inventory"],
-            ["nodejs"],
-            ["prod"],
+      opts.onSuccess(
+        {
+          columns: [
+            { name: "service.name", type: "keyword" },
+            { name: "request_count", type: "long" },
+            { name: "avg_latency_ms", type: "double" },
+            { name: "error_count", type: "long" },
+            { name: "error_rate", type: "double" },
+            { name: "unique_routes", type: "long" },
+            { name: "unique_span_names", type: "long" },
+            { name: "top_route", type: "keyword" },
+            { name: "top_span_name", type: "keyword" },
+            { name: "top_error", type: "keyword" },
+            { name: "language", type: "keyword" },
+            { name: "environment", type: "keyword" },
           ],
-          [
-            "backend-api",
-            3200,
-            120.5,
-            320,
-            0.1,
-            40,
-            102,
-            ["/checkout"],
-            ["POST /checkout"],
-            ["Database timeout"],
-            ["java"],
-            ["prod"],
+          values: [
+            [
+              "frontend",
+              1500,
+              45.2,
+              30,
+              0.02,
+              24,
+              68,
+              ["/products/:id"],
+              ["GET /products/:id"],
+              ["TimeoutError: upstream inventory"],
+              ["nodejs"],
+              ["prod"],
+            ],
+            [
+              "backend-api",
+              3200,
+              120.5,
+              320,
+              0.1,
+              40,
+              102,
+              ["/checkout"],
+              ["POST /checkout"],
+              ["Database timeout"],
+              ["java"],
+              ["prod"],
+            ],
+            [
+              "payment-service",
+              800,
+              250.0,
+              8,
+              0.01,
+              16,
+              37,
+              ["/payments/:id"],
+              ["GET /payments/:id"],
+              ["Card declined"],
+              ["go"],
+              ["staging"],
+            ],
           ],
-          [
-            "payment-service",
-            800,
-            250.0,
-            8,
-            0.01,
-            16,
-            37,
-            ["/payments/:id"],
-            ["GET /payments/:id"],
-            ["Card declined"],
-            ["go"],
-            ["staging"],
-          ],
-        ],
-      });
+        },
+        query,
+        null,
+      );
     },
     loading: false,
     error: null,
@@ -86,6 +92,7 @@ function renderPage() {
     <MemoryRouter initialEntries={["/services"]}>
       <Routes>
         <Route path="/services" element={<ServiceInventoryPage />} />
+        <Route path="/traces" element={<div>Traces Route</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -209,6 +216,8 @@ describe("ServiceInventoryPage", () => {
     });
 
     await user.click(screen.getAllByRole("button", { name: /View traces for frontend/i })[0]);
+
+    expect(screen.getByText("Traces Route")).toBeInTheDocument();
 
     const tracesFilters = useTracesStore.getState().filters;
     expect(tracesFilters.services).toEqual(["frontend"]);
