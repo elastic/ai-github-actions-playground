@@ -180,6 +180,20 @@ export default function LogsPage() {
 
   const patternGroups = useMemo(() => {
     if (!result) return [];
+    // CATEGORIZE query result shape: has "pattern" and "pattern_count" columns
+    const patternColIndex = result.columns.findIndex((c) => c.name === "pattern");
+    const countColIndex = result.columns.findIndex((c) => c.name === "pattern_count");
+    if (patternColIndex >= 0 && countColIndex >= 0) {
+      return result.values
+        .map((row) => ({
+          pattern: String(row[patternColIndex] ?? ""),
+          sample: String(row[patternColIndex] ?? ""),
+          count: Number(row[countColIndex] ?? 0),
+        }))
+        .filter((row) => row.pattern.length > 0)
+        .sort((a, b) => b.count - a.count);
+    }
+    // Client-side grouping from raw message rows
     const messageIndex = result.columns.findIndex((column) => column.name === MESSAGE_FIELD);
     if (messageIndex < 0) return [];
     const groups = new Map<string, { pattern: string; sample: string; count: number }>();

@@ -78,4 +78,12 @@ describe("appendPipeClause", () => {
   it("returns query when clause is blank", () => {
     expect(appendPipeClause("FROM logs-*", "  ")).toBe("FROM logs-*");
   });
+
+  it("returns clause when query is blank", () => {
+    expect(appendPipeClause("   ", " LIMIT 10 ")).toBe("LIMIT 10");
+  });
+
+  it("trims both query and clause before joining", () => {
+    expect(appendPipeClause("FROM logs-*  ", "  LIMIT 10")).toBe("FROM logs-* | LIMIT 10");
+  });
 });
