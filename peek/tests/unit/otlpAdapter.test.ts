@@ -111,6 +111,7 @@ describe("spansToOtlpTracesData", () => {
           "http.status_code": 200,
           "http.ok": true,
           "latency.p99": 12.5,
+          meta: { user: "alice", id: 42 },
         },
       }),
     ]);
@@ -120,6 +121,17 @@ describe("spansToOtlpTracesData", () => {
     expect(attrs).toContainEqual({ key: "http.status_code", value: { intValue: "200" } });
     expect(attrs).toContainEqual({ key: "http.ok", value: { boolValue: true } });
     expect(attrs).toContainEqual({ key: "latency.p99", value: { doubleValue: 12.5 } });
+    expect(attrs).toContainEqual({
+      key: "meta",
+      value: {
+        kvlistValue: {
+          values: [
+            { key: "user", value: { stringValue: "alice" } },
+            { key: "id", value: { intValue: "42" } },
+          ],
+        },
+      },
+    });
   });
 
   it("maps status strings to OTLP status codes", () => {

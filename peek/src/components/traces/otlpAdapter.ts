@@ -16,6 +16,9 @@ function toAnyValue(value: unknown): otlpcommonv1.AnyValue {
   if (Array.isArray(value)) {
     return { arrayValue: { values: value.map(toAnyValue) } };
   }
+  if (value && typeof value === "object") {
+    return { kvlistValue: { values: toKeyValues(value as Record<string, unknown>) } };
+  }
   return { stringValue: String(value ?? "") };
 }
 
