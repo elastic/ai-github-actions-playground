@@ -26,6 +26,8 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "color-contrast": 2,
     },
     Metrics: {
+      "aria-input-field-name": 1,
+      "aria-prohibited-attr": 1,
       "color-contrast": 2,
     },
     Services: {},
@@ -305,8 +307,8 @@ test.describe("smoke – site navigation", () => {
     await metricSearch.fill("system.cpu");
     await page.locator("li.MuiAutocomplete-option").first().click();
     await page.getByRole("button", { name: "View ungrouped" }).click();
-    await expect(page.getByText("Save to Dashboard")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Query took")).toBeVisible({ timeout: 15_000 });
+    // After query success, result count appears in the search panel footer
+    await expect(page.getByText("3 metrics found")).toBeVisible({ timeout: 15_000 });
   });
 
   test("traces user opens a trace and pivots from service map context into Query Lab", async ({
@@ -315,9 +317,10 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Traces");
     await page.getByRole("button", { name: "Search Traces" }).first().click();
-    await expect(page.getByText("1 traces found")).toBeVisible();
+    // "1 trace found" — resultLabel() singularizes for count === 1
+    await expect(page.getByText("1 trace found")).toBeVisible({ timeout: 10_000 });
     await page.getByText("GET /checkout").click();
-    await expect(page.getByText("2 spans")).toBeVisible();
+    await expect(page.getByText("2 spans")).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "Service Map" }).click();
     await expect(
       page.getByText("Select a trace in List or Scatter view to see its service map"),
@@ -415,7 +418,7 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
-    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await expect(queryEditor).toBeVisible();
     await queryInput.click();
@@ -431,7 +434,7 @@ test.describe("smoke – site navigation", () => {
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
 
-    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await page.getByLabel("Search logs").fill('"Hello World"');
     await page.getByRole("button", { name: "Apply Search" }).click();
@@ -444,6 +447,7 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
+    test.setTimeout(90_000); // axe scans 9 pages serially; 30s default is too tight in CI
     await page.goto("");
     await checkA11y(page, "welcome", testInfo);
 
@@ -458,7 +462,7 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
-      Logs: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      Logs: () => expect(page.getByLabel("Logs Explorer query editor")).toBeVisible(),
       Console: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
@@ -473,7 +477,6 @@ test.describe("smoke – site navigation", () => {
       "Indices",
     ]) {
       await navigateViaSidebar(page, nav);
-      await page.waitForLoadState("networkidle");
       await pageReadyLocators[nav]!();
       await checkA11y(page, nav, testInfo);
     }

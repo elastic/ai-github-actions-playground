@@ -11,6 +11,41 @@ import { EMPTY_PROFILING_FILTERS, type ProfilingFilters } from "../../types/page
 export type { ProfilingFilters };
 export const EMPTY_FILTERS = EMPTY_PROFILING_FILTERS;
 
+/** A dimension the user can focus on in the guided profiling flow. */
+export type ProfilingFocusDimension =
+  | "service.name"
+  | "host.name"
+  | "process.executable.name"
+  | "process.thread.name";
+
+/** Human-readable labels for each focus dimension. */
+export const PROFILING_DIMENSION_LABELS: Record<ProfilingFocusDimension, string> = {
+  "service.name": "Service",
+  "host.name": "Host",
+  "process.executable.name": "Process",
+  "process.thread.name": "Thread",
+};
+
+/**
+ * Queries the top 50 distinct values for a given dimension, ordered by total
+ * sample count descending. Used to populate the value picker in the guided flow.
+ */
+export function buildDistinctValuesQuery(
+  dimension: ProfilingFocusDimension,
+  timeFrom: string,
+  timeTo: string,
+): string {
+  const from = normalizeEsqlDateTimeExpression(timeFrom);
+  const to = normalizeEsqlDateTimeExpression(timeTo);
+  return buildPipeline([
+    "FROM profiling-events-all",
+    `WHERE @timestamp >= ${from} AND @timestamp <= ${to}`,
+    `STATS samples = SUM(Stacktrace.count) BY \`${dimension}\``,
+    "SORT samples DESC",
+    "LIMIT 50",
+  ]);
+}
+
 function normalizeEsqlDateTimeExpression(expr: string): string {
   return normalizeTimeExpression(expr) ?? expr;
 }

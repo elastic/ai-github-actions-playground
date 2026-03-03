@@ -244,9 +244,16 @@ export default function ProfilingPage() {
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Profiling Explorer
+            Profiling Advanced
           </Typography>
           <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => navigate(PAGE_MANIFEST.profiling.path)}
+            >
+              ← Guided flow
+            </Button>
             <Button size="small" variant="text" onClick={resetFilters}>
               Reset Filters
             </Button>

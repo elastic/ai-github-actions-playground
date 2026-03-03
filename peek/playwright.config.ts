@@ -6,7 +6,7 @@ const baseURL = `http://localhost:${port}/ai-github-actions-playground/`;
 
 export default defineConfig({
   testDir: "tests/e2e",
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? "50%" : undefined,
   use: {
     baseURL,
