@@ -30,10 +30,18 @@ vi.mock("../../src/components/perses/panelRegistry", () => ({
     }
     if (type === "table") {
       return {
-        supportsOptions: false,
+        supportsOptions: true,
         supportsQuery: true,
         supportsImageExport: false,
         OptionsEditor: () => <div data-testid="table-options-editor">Table opts</div>,
+      };
+    }
+    if (type === "timeseries") {
+      return {
+        supportsOptions: true,
+        supportsQuery: true,
+        supportsImageExport: false,
+        OptionsEditor: undefined,
       };
     }
     return {
