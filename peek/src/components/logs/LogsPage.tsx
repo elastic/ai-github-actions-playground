@@ -128,7 +128,12 @@ export default function LogsPage() {
   );
 
   useEffect(() => {
-    if (!connection) return;
+    if (!connection) {
+      setFieldValues({});
+      setFieldValuesError(null);
+      setFieldValuesLoading(false);
+      return;
+    }
     const client = new ElasticsearchClient(connection);
     const controller = new AbortController();
     let mounted = true;
@@ -358,26 +363,28 @@ export default function LogsPage() {
                   handleCellFilter(columnName, value, false);
                 }}
               />
-              {result.columns.some((col) => col.name === TRACE_ID_FIELD) && (
-                <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
-                  <Button
-                    size="small"
-                    variant="text"
-                    startIcon={<OpenInNewIcon />}
-                    onClick={() => {
-                      const traceColIdx = result.columns.findIndex(
-                        (c) => c.name === TRACE_ID_FIELD,
-                      );
-                      const traceValue = traceColIdx >= 0 ? result.values[0]?.[traceColIdx] : null;
-                      if (traceValue != null) {
-                        handleTracePivot(String(traceValue));
-                      }
-                    }}
-                  >
-                    Open first trace in Query Lab
-                  </Button>
-                </Box>
-              )}
+              {result.columns.some((col) => col.name === TRACE_ID_FIELD) &&
+                result.values.length > 0 && (
+                  <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
+                    <Button
+                      size="small"
+                      variant="text"
+                      startIcon={<OpenInNewIcon />}
+                      onClick={() => {
+                        const traceColIdx = result.columns.findIndex(
+                          (c) => c.name === TRACE_ID_FIELD,
+                        );
+                        const traceValue =
+                          traceColIdx >= 0 ? result.values[0]?.[traceColIdx] : null;
+                        if (traceValue != null) {
+                          handleTracePivot(String(traceValue));
+                        }
+                      }}
+                    >
+                      Open first trace in Query Lab
+                    </Button>
+                  </Box>
+                )}
             </>
           )}
         </Paper>
