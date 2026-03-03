@@ -7,6 +7,7 @@ const INVESTIGATE_INDICES = "logs-*, .ds-logs-*, filebeat-*, auditbeat-*, winlog
 
 const INVESTIGATE_KEEP_FIELDS =
   "@timestamp, event.category, event.action, event.outcome, user.name, host.name, source.ip, message, _index";
+const FILE_MATCH_FIELDS = ["file.name", "file.hash.md5", "file.hash.sha1", "file.hash.sha256"];
 
 /** Map each investigate tab to its primary ECS field. */
 export function investigateField(tab: InvestigateTab): string {
@@ -27,9 +28,14 @@ export function investigateField(tab: InvestigateTab): string {
 /** Build an ES|QL query to fetch recent events for a given entity. */
 export function buildInvestigateQuery(tab: InvestigateTab, entity: string): string {
   const field = investigateField(tab);
+  const escapedEntity = escapeEsqlString(entity);
+  const predicate =
+    tab === "file"
+      ? `(${FILE_MATCH_FIELDS.map((matchField) => `${matchField} == "${escapedEntity}"`).join(" OR ")})`
+      : `${field} == "${escapedEntity}"`;
   return buildPipeline([
     `FROM ${INVESTIGATE_INDICES} METADATA _index`,
-    buildWherePipe([`${field} == "${escapeEsqlString(entity)}"`]),
+    buildWherePipe([predicate]),
     "SORT @timestamp DESC",
     `KEEP ${INVESTIGATE_KEEP_FIELDS}`,
     "LIMIT 200",

@@ -68,7 +68,7 @@ export default function InvestigateSuggestionsPanel({
         ))}
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-        Click a {labels.singular} to investigate their recent security events
+        Click a {labels.singular} to investigate recent security events
       </Typography>
     </Paper>
   );

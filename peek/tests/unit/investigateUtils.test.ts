@@ -71,8 +71,9 @@ describe("buildInvestigateQuery", () => {
 
   it("includes KEEP with event.category and _index fields", () => {
     const query = buildInvestigateQuery("user", "alice");
-    expect(query).toContain("event.category");
-    expect(query).toContain("_index");
+    const keepClause = query.split("|").find((pipe) => pipe.trimStart().startsWith("KEEP"));
+    expect(keepClause).toContain("event.category");
+    expect(keepClause).toContain("_index");
   });
 
   it("builds an IP address query", () => {
@@ -89,6 +90,9 @@ describe("buildInvestigateQuery", () => {
   it("builds a file query", () => {
     const query = buildInvestigateQuery("file", "malware.exe");
     expect(query).toContain('file.name == "malware.exe"');
+    expect(query).toContain('file.hash.md5 == "malware.exe"');
+    expect(query).toContain('file.hash.sha1 == "malware.exe"');
+    expect(query).toContain('file.hash.sha256 == "malware.exe"');
   });
 });
 
