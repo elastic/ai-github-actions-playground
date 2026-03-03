@@ -6,6 +6,7 @@ export const PAGE_NAV_BUTTONS = {
   "ingest-pipelines": "Ingest Pipelines",
   investigate: "Investigate",
   "query-lab": "Query Lab",
+  logs: "Logs",
   metrics: "Metrics",
   services: "Services",
   traces: "Traces",

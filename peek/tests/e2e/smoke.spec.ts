@@ -39,6 +39,11 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "aria-prohibited-attr": 1,
       "color-contrast": 12,
     },
+    Logs: {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+    },
     Console: {
       "aria-input-field-name": 1,
       "color-contrast": 6,
@@ -49,6 +54,12 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
   },
   "mobile-safari": {
     "Query Lab": {
+      "aria-input-field-name": 2,
+      "aria-prohibited-attr": 1,
+      "color-contrast": 12,
+      "scrollable-region-focusable": 2,
+    },
+    Logs: {
       "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
       "color-contrast": 12,
@@ -397,6 +408,16 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByText("Run a query to see results")).toBeHidden();
   });
 
+  test("logs explorer route is available and runs a logs query", async ({ page }) => {
+    await connectToMockCluster(page);
+    await navigateViaSidebar(page, "Logs");
+    await expect(page).toHaveURL(/\/logs$/);
+    await expect(page.getByLabel("ES|QL query editor")).toBeVisible();
+    await page.getByRole("button", { name: /^Run Query\b/ }).click();
+    await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
+  });
+
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
     await page.goto("");
     await checkA11y(page, "welcome", testInfo);
@@ -411,11 +432,20 @@ test.describe("smoke – site navigation", () => {
       Services: () => expect(page.getByRole("heading", { name: "Services" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      Logs: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Console: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
 
-    for (const nav of ["Metrics", "Services", "Traces", "Query Lab", "Console", "Indices"]) {
+    for (const nav of [
+      "Metrics",
+      "Services",
+      "Traces",
+      "Query Lab",
+      "Logs",
+      "Console",
+      "Indices",
+    ]) {
       await navigateViaSidebar(page, nav);
       await page.waitForLoadState("networkidle");
       await pageReadyLocators[nav]!();

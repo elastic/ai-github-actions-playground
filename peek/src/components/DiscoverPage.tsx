@@ -52,7 +52,12 @@ import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import ResizableEditorContainer from "./ResizableEditorContainer";
 import QueryAnnotationOverlay from "./QueryAnnotationOverlay";
 
-export default function DiscoverPage() {
+interface DiscoverPageProps {
+  mode?: "query-lab" | "logs";
+}
+
+export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
+  const isLogsExplorer = mode === "logs";
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const addPanel = useDashboardEditorStore((s) => s.addPanel);
@@ -308,10 +313,10 @@ export default function DiscoverPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "query-lab-results.csv";
+    a.download = isLogsExplorer ? "logs-explorer-results.csv" : "query-lab-results.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
-  }, [filteredResult]);
+  }, [filteredResult, isLogsExplorer]);
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
   const visibleColumns = useMemo(
     () => filterColumnsByName(columns, deferredFieldFilter),
@@ -334,7 +339,7 @@ export default function DiscoverPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
-          title="ES|QL Query"
+          title={isLogsExplorer ? "Logs Explorer Query" : "ES|QL Query"}
           actions={
             <>
               <Button
@@ -514,7 +519,11 @@ export default function DiscoverPage() {
             <EmptyState
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="No results yet"
-              description="Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
+              description={
+                isLogsExplorer
+                  ? "Write or refine a logs ES|QL query above and press Ctrl/Cmd+Enter to run it."
+                  : "Write an ES|QL query above and press Ctrl/Cmd+Enter to run it."
+              }
               addDataHref="/add-data"
               action={
                 <Button
