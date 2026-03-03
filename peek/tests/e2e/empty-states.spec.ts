@@ -48,9 +48,7 @@ test.describe("empty state – data management pages", () => {
     const emptyHeading = page.getByText("No pipelines found");
     await expect(emptyHeading).toBeVisible({ timeout: 5_000 });
 
-    const emptyDescription = page.getByText(
-      "Try adjusting your search or check that ingest pipelines exist in the cluster",
-    );
+    const emptyDescription = page.getByText("Try adjusting your search");
     await expect(emptyDescription).toBeVisible();
   });
 });

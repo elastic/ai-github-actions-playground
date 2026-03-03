@@ -1,19 +1,13 @@
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
-import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
 import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useTheme } from "@mui/material/styles";
 import { EChart } from "@perses-dev/components";
@@ -25,6 +19,8 @@ import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedO
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EmptyState from "./EmptyState";
+import OverviewFailedItemsSection from "./OverviewFailedItemsSection";
+import type { FailedItem } from "./OverviewFailedItemsSection";
 import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
 
 // ---------------------------------------------------------------------------
@@ -149,7 +145,6 @@ export default function DimensionOverviewGrid({
 }: Props) {
   const theme = useTheme();
   const echartsTheme = useEChartTheme();
-  const failedListId = useId();
 
   // Discover dimension fields — same logic as DimensionSidebar
   const dimensionFields = useMemo(() => {
@@ -182,8 +177,6 @@ export default function DimensionOverviewGrid({
     [indexPattern, metricField, metricType, timeRange],
   );
 
-  const [failedExpanded, setFailedExpanded] = useState(false);
-
   const { results, retryFailed } = useBatchedOverviewQueries({
     items: dimensionFields,
     client,
@@ -199,6 +192,15 @@ export default function DimensionOverviewGrid({
   const failedDims = useMemo(() => {
     return dimensionFields.filter((f) => results[f.name]?.status === "error");
   }, [dimensionFields, results]);
+
+  const failedDimItems: FailedItem[] = useMemo(
+    () =>
+      failedDims.map((f) => ({
+        name: f.name,
+        reason: results[f.name]?.errorReason ?? "Unknown error",
+      })),
+    [failedDims, results],
+  );
 
   const isLoading = useMemo(
     () => dimensionFields.some((f) => results[f.name]?.status === "loading"),
@@ -360,86 +362,15 @@ export default function DimensionOverviewGrid({
       </Box>
 
       {/* Failed dimensions expandable section */}
-      {!isLoading && failedDims.length > 0 && (
-        <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-            <IconButton
-              size="small"
-              onClick={() => setFailedExpanded((prev) => !prev)}
-              aria-expanded={failedExpanded}
-              aria-controls={failedListId}
-              aria-label={
-                failedExpanded ? "Collapse failed dimensions" : "Expand failed dimensions"
-              }
-            >
-              {failedExpanded ? (
-                <ExpandLessIcon fontSize="small" />
-              ) : (
-                <ExpandMoreIcon fontSize="small" />
-              )}
-            </IconButton>
-            <Typography variant="caption" color="error" sx={{ fontWeight: 600 }}>
-              {failedDims.length} failed dimension{failedDims.length !== 1 ? "s" : ""}
-            </Typography>
-            <Tooltip title="Retry all failed dimension queries">
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<RefreshIcon />}
-                onClick={retryFailed}
-                sx={{ ml: 1 }}
-              >
-                Retry failed
-              </Button>
-            </Tooltip>
-          </Box>
-          <Collapse in={failedExpanded} id={failedListId}>
-            <Box
-              component="ul"
-              sx={{ m: 0, mt: 0.5, p: 0, listStyle: "none" }}
-              role="list"
-              aria-label="Failed dimensions"
-            >
-              {failedDims.map((field) => {
-                const reason = results[field.name]?.errorReason ?? "Unknown error";
-                return (
-                  <Box
-                    key={field.name}
-                    component="li"
-                    sx={{
-                      display: "flex",
-                      gap: 1,
-                      alignItems: "center",
-                      py: 0.5,
-                      px: 1,
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                    }}
-                  >
-                    <ErrorOutlineIcon fontSize="small" color="error" />
-                    <Typography
-                      variant="caption"
-                      sx={{ flex: 1, fontWeight: 600 }}
-                      noWrap
-                      title={field.name}
-                    >
-                      {field.name}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ flex: 2 }}
-                      noWrap
-                      title={reason}
-                    >
-                      {reason}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Collapse>
-        </Box>
+      {!isLoading && (
+        <OverviewFailedItemsSection
+          items={failedDimItems}
+          itemLabel="dimension"
+          listAriaLabel="Failed dimensions"
+          retryTooltip="Retry all failed dimension queries"
+          retryLabel="Retry failed"
+          onRetry={retryFailed}
+        />
       )}
 
       {/* Empty state after loading */}
