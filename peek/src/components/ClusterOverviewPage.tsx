@@ -13,6 +13,7 @@ import { useClusterOverview } from "../hooks/useClusterOverview";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { formatBytes } from "../utils/formatBytes";
 import { formatCompactNumber, toNodeRows } from "../utils/clusterOverviewUtils";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import AskAiButton from "./AskAiButton";
 import ContentSkeleton from "./ContentSkeleton";
@@ -150,7 +151,7 @@ export default function ClusterOverviewPage() {
       {insightContext && (
         <PageInsightBanner
           context={insightContext}
-          systemPrompt="You are an Elasticsearch cluster health advisor. Summarize the cluster state in one concise sentence including cluster name, health status, node count, doc count, shard count, and store size. Keep it factual and brief."
+          systemPrompt={`You are an Elasticsearch cluster health advisor. Summarize the cluster state in one concise sentence including cluster name, health status, node count, doc count, shard count, and store size. Keep it factual and brief.${INSIGHT_GUARDRAIL}`}
           cacheKey={insightCacheKey}
           severity={
             clusterHealth?.status === "green"

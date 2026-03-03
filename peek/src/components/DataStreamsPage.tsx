@@ -27,6 +27,7 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
@@ -228,7 +229,7 @@ export default function DataStreamsPage() {
             backingIndexCount: displayedDataStream.indices.length,
             ilmPolicy: displayedDataStream.ilm_policy ?? null,
           })}
-          systemPrompt="You are an Elasticsearch data stream analyst. Give one concise operational insight and one action for this selected stream."
+          systemPrompt={`You are an Elasticsearch data stream analyst. Give one concise operational insight and one action for this selected stream.${INSIGHT_GUARDRAIL}`}
           cacheKey={`data-stream::${displayedDataStream.name}::${displayedDataStream.status}::${displayedDataStream.generation}::${displayedDataStream.indices.length}::${displayedDataStream.ilm_policy ?? ""}`}
         />
       )}
