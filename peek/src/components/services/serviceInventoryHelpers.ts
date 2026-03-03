@@ -18,6 +18,8 @@ export interface ServiceRow {
   topError: string;
   language: string;
   environment: string;
+  version: string;
+  uniqueVersions: number;
 }
 
 export type SortField = "serviceName" | "requestCount" | "avgLatencyMs" | "errorRate";
@@ -48,6 +50,8 @@ export function parseServiceRows(result: EsqlResponse): ServiceRow[] {
     topError: parseTopValue(get(row, "top_error")),
     language: parseTopValue(get(row, "language"), "unknown"),
     environment: parseTopValue(get(row, "environment"), "unknown"),
+    version: parseTopValue(get(row, "version"), "unknown"),
+    uniqueVersions: toFiniteNumber(get(row, "unique_versions")),
   }));
 }
 

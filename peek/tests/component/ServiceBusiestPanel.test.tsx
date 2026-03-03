@@ -19,6 +19,8 @@ const MOCK_ROWS: ServiceRow[] = [
     topError: "TimeoutError",
     language: "nodejs",
     environment: "prod",
+    version: "1.2.0",
+    uniqueVersions: 1,
   },
   {
     serviceName: "backend-api",
@@ -33,6 +35,8 @@ const MOCK_ROWS: ServiceRow[] = [
     topError: "Database timeout",
     language: "java",
     environment: "prod",
+    version: "2.0.0",
+    uniqueVersions: 2,
   },
 ];
 

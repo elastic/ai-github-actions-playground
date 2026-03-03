@@ -86,6 +86,12 @@ export default function ServiceInventoryTable({
           {hasSparklines && <TableCell>Error rate trend</TableCell>}
           <TableCell>Language</TableCell>
           <TableCell>Environment</TableCell>
+          <TableCell>Version</TableCell>
+          <TableCell align="right">Routes</TableCell>
+          <TableCell align="right">Span Names</TableCell>
+          <TableCell>Top Route</TableCell>
+          <TableCell>Top Span</TableCell>
+          <TableCell>Top Error</TableCell>
           <TableCell align="right">Actions</TableCell>
         </TableRow>
       </TableHead>
@@ -145,6 +151,27 @@ export default function ServiceInventoryTable({
               </TableCell>
               <TableCell>
                 <Typography variant="body2">{row.environment}</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">
+                  {row.version}
+                  {row.uniqueVersions > 1 ? ` (+${row.uniqueVersions - 1})` : ""}
+                </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="body2">{row.uniqueRoutes.toLocaleString()}</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="body2">{row.uniqueSpanNames.toLocaleString()}</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">{row.topRoute}</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">{row.topSpanName}</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">{row.topError}</Typography>
               </TableCell>
               <TableCell align="right">
                 <Button

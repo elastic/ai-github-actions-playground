@@ -67,6 +67,8 @@ export default function ServiceInventoryPage() {
         topError: sanitizeTopError(r.topError),
         language: r.language,
         environment: r.environment,
+        version: r.version,
+        uniqueVersions: r.uniqueVersions,
       })),
       slowestService: { name: slowest.serviceName, latency: formatLatency(slowest.avgLatencyMs) },
       highestErrorRate: {

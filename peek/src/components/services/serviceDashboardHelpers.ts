@@ -22,6 +22,11 @@ export type RouteSortField = "route" | "requestCount" | "avgLatencyMs" | "errorR
 export type TraceSortField = "spanName" | "durationMs" | "statusCode" | "timestamp";
 export type SortDirection = "asc" | "desc";
 
+function toNonEmptyString(value: unknown, fallback: string): string {
+  const parsed = String(value ?? "").trim();
+  return parsed.length > 0 ? parsed : fallback;
+}
+
 export function parseRouteRows(result: EsqlResponse): RouteRow[] {
   const get = buildColumnAccessor(result.columns);
 
@@ -44,5 +49,23 @@ export function parseRecentTraces(result: EsqlResponse): RecentTrace[] {
     durationMs: toFiniteNumber(get(row, "duration_ms")),
     statusCode: String(get(row, "status.code") ?? ""),
     timestamp: String(get(row, "@timestamp") ?? ""),
+  }));
+}
+
+export interface DeploymentRow {
+  version: string;
+  firstSeen: string;
+  lastSeen: string;
+  requestCount: number;
+}
+
+export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
+  const get = buildColumnAccessor(result.columns);
+
+  return result.values.map((row) => ({
+    version: toNonEmptyString(get(row, "version_key"), "unknown"),
+    firstSeen: String(get(row, "first_seen") ?? ""),
+    lastSeen: String(get(row, "last_seen") ?? ""),
+    requestCount: toFiniteNumber(get(row, "request_count")),
   }));
 }
