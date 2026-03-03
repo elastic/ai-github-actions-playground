@@ -21,6 +21,8 @@ const MAX_TOOL_ROW_LIMIT = 200;
 const MAX_TOOL_ROWS_RETURNED = 50;
 const MAX_TOOL_COLUMNS_RETURNED = 20;
 const MAX_TOOL_CELL_LENGTH = 500;
+const MAX_RAW_RESPONSE_LENGTH = 50_000;
+const ALLOWED_RAW_METHODS = ["GET"] as const;
 
 interface ChatRuntimeArgs {
   config: LLMConfig;
@@ -97,6 +99,16 @@ function truncateCellValue(value: unknown): { value: unknown; truncated: boolean
   };
 }
 
+async function runWithToolTimeout<T>(operation: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
+  try {
+    return await operation(controller.signal);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet {
   if (!connection) return {};
 
@@ -119,15 +131,8 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         const client = new ElasticsearchClient(connection);
         const request: EsqlQueryParams = { query: boundedQuery };
         if (profile) request.profile = true;
-
-        const queryController = new AbortController();
-        const queryTimeoutId = window.setTimeout(
-          () => queryController.abort(),
-          CHAT_TOOL_TIMEOUT_MS,
-        );
-
-        try {
-          const response = await client.query(request, queryController.signal);
+        return runWithToolTimeout(async (signal) => {
+          const response = await client.query(request, signal);
           let truncated =
             response.values.length > MAX_TOOL_ROWS_RETURNED ||
             response.columns.length > MAX_TOOL_COLUMNS_RETURNED ||
@@ -150,9 +155,132 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
             executionTimeMs: response.executionTimeMs,
             truncated,
           };
-        } finally {
-          clearTimeout(queryTimeoutId);
+        });
+      },
+    }),
+
+    get_cluster_health: tool({
+      description:
+        "Get current cluster health status, node count, shard allocation summary, and pending tasks.",
+      inputSchema: z.object({
+        include_node_stats: z
+          .boolean()
+          .optional()
+          .describe("When true, includes cluster-wide node statistics."),
+      }),
+      execute: async ({ include_node_stats }) => {
+        const client = new ElasticsearchClient(connection);
+        return runWithToolTimeout(async (signal) => {
+          const health = await client.getClusterHealth("cluster", signal);
+          if (include_node_stats) {
+            const stats = await client.getClusterStats(signal);
+            return { health, stats };
+          }
+          return { health };
+        });
+      },
+    }),
+
+    get_index_info: tool({
+      description: "Get details about a specific index: mappings, settings, stats, and health.",
+      inputSchema: z.object({
+        index: z.string().min(1).describe("Name of the index to inspect."),
+      }),
+      execute: async ({ index }) => {
+        const normalizedIndex = index.trim();
+        if (!normalizedIndex) {
+          throw new Error("Index must not be empty");
         }
+        const client = new ElasticsearchClient(connection);
+        return runWithToolTimeout(async (signal) => {
+          const [mappings, settings, stats, health] = await Promise.all([
+            client.getIndexMappings(normalizedIndex, signal),
+            client.getIndexSettings(normalizedIndex, signal),
+            client.getIndexStats(normalizedIndex, signal),
+            client.rawRequest(
+              "GET",
+              `/_cluster/health/${encodeURIComponent(normalizedIndex)}`,
+              undefined,
+              signal,
+            ),
+          ]);
+          return { index: normalizedIndex, mappings, settings, stats, health: health.body };
+        });
+      },
+    }),
+
+    run_raw_es_request: tool({
+      description:
+        "Execute a read-only Elasticsearch REST API request (GET only). Use for read APIs not covered by other tools.",
+      inputSchema: z.object({
+        method: z.enum(ALLOWED_RAW_METHODS),
+        path: z.string().min(1).describe("REST API path (e.g. '/_cat/nodes?v')."),
+        body: z.string().optional().describe("Optional JSON request body."),
+      }),
+      execute: async ({ method, path, body }) => {
+        const trimmedPath = path.trim();
+        if (!trimmedPath) {
+          throw new Error("Path must not be empty");
+        }
+        const normalizedPath = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
+        const client = new ElasticsearchClient(connection);
+        return runWithToolTimeout(async (signal) => {
+          const result = await client.rawRequest(method, normalizedPath, body, signal);
+          let serialized: string;
+          if (typeof result.body === "string") {
+            serialized = result.body;
+          } else {
+            try {
+              serialized = JSON.stringify(result.body ?? null);
+            } catch {
+              serialized = String(result.body);
+            }
+          }
+          if (serialized.length > MAX_RAW_RESPONSE_LENGTH) {
+            return {
+              status: result.status,
+              body: `${serialized.slice(0, MAX_RAW_RESPONSE_LENGTH)}…`,
+              truncated: true,
+            };
+          }
+          return result;
+        });
+      },
+    }),
+
+    explain_ingest_pipeline: tool({
+      description:
+        "Get the definition of a named ingest pipeline and optionally simulate it with a sample document.",
+      inputSchema: z.object({
+        pipeline_name: z.string().min(1).describe("Name of the ingest pipeline to inspect."),
+        sample_doc: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Optional sample document to simulate through the pipeline."),
+      }),
+      execute: async ({ pipeline_name, sample_doc }) => {
+        const normalizedPipelineName = pipeline_name.trim();
+        if (!normalizedPipelineName) {
+          throw new Error("pipeline_name must not be empty");
+        }
+        const client = new ElasticsearchClient(connection);
+        return runWithToolTimeout(async (signal) => {
+          const pipelines = await client.getIngestPipelines(signal);
+          const definition = pipelines[normalizedPipelineName];
+          if (!definition) {
+            return { error: `Pipeline '${normalizedPipelineName}' not found` };
+          }
+          if (sample_doc) {
+            const simulation = await client.simulateIngestPipeline(
+              normalizedPipelineName,
+              [{ _source: sample_doc }],
+              { verbose: true },
+              signal,
+            );
+            return { pipeline_name: normalizedPipelineName, definition, simulation };
+          }
+          return { pipeline_name: normalizedPipelineName, definition };
+        });
       },
     }),
   };
@@ -231,6 +359,29 @@ function getBrowserControlTools(navigate?: (path: string) => void): ToolSet {
       execute: async ({ from, to }) => {
         useDashboardStore.getState().setTimeRange({ from, to });
         return { set: true, from, to };
+      },
+    }),
+
+    generate_esql_query: tool({
+      description:
+        "Draft an ES|QL query in the Query Lab editor. Accepts a fully-formed ES|QL query string and optionally navigates to Query Lab for the user to review and execute.",
+      inputSchema: z.object({
+        query: z.string().min(1).describe("The ES|QL query to set in the Query Lab editor."),
+        navigate_to_query_lab: z
+          .boolean()
+          .optional()
+          .describe("When true, navigate to the Query Lab page after setting the query."),
+      }),
+      execute: async ({ query, navigate_to_query_lab }) => {
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) {
+          throw new Error("Query must not be empty");
+        }
+        useQueryStore.getState().setDiscoverQueryDraft(trimmedQuery);
+        if (navigate_to_query_lab) {
+          navigate(PAGE_MANIFEST.discover.path);
+        }
+        return { set: true, navigatedTo: navigate_to_query_lab ? "discover" : undefined };
       },
     }),
   };

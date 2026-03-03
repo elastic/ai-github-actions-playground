@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { buildChatRuntime } from "../../src/services/chatRuntime";
+import { ElasticsearchClient } from "../../src/services/es";
+import type { IndexStatsResponse } from "../../src/services/es";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
@@ -190,5 +192,294 @@ describe("buildChatRuntime — new tools", () => {
     const parsed = JSON.parse(json) as { page?: { label?: string; path?: string } };
     expect(parsed.page?.label).toBe("Query Lab");
     expect(parsed.page?.path).toBe("/discover");
+  });
+});
+
+describe("buildChatRuntime — ES-dependent tools", () => {
+  const fakeConnection = { url: "http://localhost:9200" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetAllStores();
+    window.history.pushState({}, "", "/discover");
+  });
+
+  it("includes get_cluster_health when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("get_cluster_health");
+  });
+
+  it("includes get_index_info when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("get_index_info");
+  });
+
+  it("includes run_raw_es_request when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("run_raw_es_request");
+  });
+
+  it("includes explain_ingest_pipeline when connection is provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    expect(tools).toHaveProperty("explain_ingest_pipeline");
+  });
+
+  it("does not include ES-dependent tools when connection is null", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+    });
+    expect(tools).not.toHaveProperty("get_cluster_health");
+    expect(tools).not.toHaveProperty("get_index_info");
+    expect(tools).not.toHaveProperty("run_raw_es_request");
+    expect(tools).not.toHaveProperty("explain_ingest_pipeline");
+    expect(tools).not.toHaveProperty("run_esql_query");
+  });
+
+  it("get_index_info returns mappings, settings, stats, and health", async () => {
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexMappings").mockResolvedValue({ mappings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexSettings").mockResolvedValue({ settings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexStats").mockResolvedValue({
+      _all: {},
+    } satisfies IndexStatsResponse);
+    const rawRequestSpy = vi
+      .spyOn(ElasticsearchClient.prototype, "rawRequest")
+      .mockResolvedValue({ status: 200, body: { status: "green" } });
+
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const indexInfoTool = tools.get_index_info as {
+      execute: (args: { index: string }) => Promise<unknown>;
+    };
+
+    const result = await indexInfoTool.execute({ index: "logs-*" });
+    expect(rawRequestSpy).toHaveBeenCalledWith(
+      "GET",
+      "/_cluster/health/logs-*",
+      undefined,
+      expect.any(AbortSignal),
+    );
+    expect(result).toEqual({
+      index: "logs-*",
+      mappings: { mappings: {} },
+      settings: { settings: {} },
+      stats: { _all: {} },
+      health: { status: "green" },
+    });
+  });
+
+  it("get_index_info trims index and rejects whitespace-only values", async () => {
+    const mappingsSpy = vi
+      .spyOn(ElasticsearchClient.prototype, "getIndexMappings")
+      .mockResolvedValue({ mappings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexSettings").mockResolvedValue({ settings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexStats").mockResolvedValue({
+      _all: {},
+    } satisfies IndexStatsResponse);
+    vi.spyOn(ElasticsearchClient.prototype, "rawRequest").mockResolvedValue({
+      status: 200,
+      body: { status: "green" },
+    });
+
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const indexInfoTool = tools.get_index_info as {
+      execute: (args: { index: string }) => Promise<unknown>;
+    };
+
+    await expect(indexInfoTool.execute({ index: "   " })).rejects.toThrow(
+      "Index must not be empty",
+    );
+    await indexInfoTool.execute({ index: "  logs-*  " });
+    expect(mappingsSpy).toHaveBeenCalledWith("logs-*", expect.any(AbortSignal));
+  });
+
+  it("run_raw_es_request handles undefined response body", async () => {
+    vi.spyOn(ElasticsearchClient.prototype, "rawRequest").mockResolvedValue({
+      status: 200,
+      body: undefined,
+    });
+
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const rawTool = tools.run_raw_es_request as {
+      execute: (args: { method: "GET"; path: string; body?: string }) => Promise<unknown>;
+    };
+    const result = await rawTool.execute({ method: "GET", path: "/_cluster/health" });
+    expect(result).toEqual({ status: 200, body: undefined });
+  });
+
+  it("run_raw_es_request rejects whitespace-only paths", async () => {
+    const rawRequestSpy = vi.spyOn(ElasticsearchClient.prototype, "rawRequest");
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const rawTool = tools.run_raw_es_request as {
+      execute: (args: { method: "GET"; path: string; body?: string }) => Promise<unknown>;
+    };
+
+    await expect(rawTool.execute({ method: "GET", path: "   " })).rejects.toThrow(
+      "Path must not be empty",
+    );
+    expect(rawRequestSpy).not.toHaveBeenCalled();
+  });
+
+  it("run_raw_es_request only allows GET methods", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const rawTool = tools.run_raw_es_request as {
+      inputSchema: { parse: (v: unknown) => unknown };
+    };
+    expect(() => rawTool.inputSchema.parse({ method: "POST", path: "/_search" })).toThrow();
+    expect(() => rawTool.inputSchema.parse({ method: "DELETE", path: "/_index" })).toThrow();
+  });
+
+  it("explain_ingest_pipeline trims name and rejects whitespace-only values", async () => {
+    const getPipelinesSpy = vi
+      .spyOn(ElasticsearchClient.prototype, "getIngestPipelines")
+      .mockResolvedValue({
+        "pipeline-a": { processors: [] },
+      });
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const pipelineTool = tools.explain_ingest_pipeline as {
+      execute: (args: {
+        pipeline_name: string;
+        sample_doc?: Record<string, unknown>;
+      }) => Promise<unknown>;
+    };
+
+    await expect(pipelineTool.execute({ pipeline_name: "   " })).rejects.toThrow(
+      "pipeline_name must not be empty",
+    );
+    const result = await pipelineTool.execute({ pipeline_name: "  pipeline-a " });
+    expect(getPipelinesSpy).toHaveBeenCalledWith(expect.any(AbortSignal));
+    expect(result).toEqual({
+      pipeline_name: "pipeline-a",
+      definition: { processors: [] },
+    });
+  });
+});
+
+describe("buildChatRuntime — generate_esql_query tool", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetAllStores();
+    window.history.pushState({}, "", "/discover");
+  });
+
+  it("includes generate_esql_query when navigate is provided", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+      navigate,
+    });
+    expect(tools).toHaveProperty("generate_esql_query");
+  });
+
+  it("does not include generate_esql_query when navigate is not provided", async () => {
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+    });
+    expect(tools).not.toHaveProperty("generate_esql_query");
+  });
+
+  it("generate_esql_query sets draft query without navigating when navigate_to_query_lab is false", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/traces",
+      navigate,
+    });
+    const genTool = tools.generate_esql_query as {
+      execute: (args: { query: string; navigate_to_query_lab?: boolean }) => Promise<unknown>;
+    };
+    const result = await genTool.execute({
+      query: "FROM logs-* | STATS count() BY host.name",
+    });
+    expect(useQueryStore.getState().discoverQueryDraft).toBe(
+      "FROM logs-* | STATS count() BY host.name",
+    );
+    expect(navigate).not.toHaveBeenCalled();
+    expect(result).toEqual({ set: true, navigatedTo: undefined });
+  });
+
+  it("generate_esql_query sets draft and navigates when navigate_to_query_lab is true", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/traces",
+      navigate,
+    });
+    const genTool = tools.generate_esql_query as {
+      execute: (args: { query: string; navigate_to_query_lab?: boolean }) => Promise<unknown>;
+    };
+    const result = await genTool.execute({
+      query: "FROM metrics-* | LIMIT 5",
+      navigate_to_query_lab: true,
+    });
+    expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM metrics-* | LIMIT 5");
+    expect(navigate).toHaveBeenCalledWith("/discover");
+    expect(result).toEqual({ set: true, navigatedTo: "discover" });
+  });
+
+  it("generate_esql_query trims query and rejects whitespace-only values", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/traces",
+      navigate,
+    });
+    const genTool = tools.generate_esql_query as {
+      execute: (args: { query: string; navigate_to_query_lab?: boolean }) => Promise<unknown>;
+    };
+
+    await expect(genTool.execute({ query: "   " })).rejects.toThrow("Query must not be empty");
+    await genTool.execute({
+      query: "  FROM metrics-* | LIMIT 5  ",
+      navigate_to_query_lab: true,
+    });
+    expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM metrics-* | LIMIT 5");
   });
 });
