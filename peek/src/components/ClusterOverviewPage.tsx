@@ -36,7 +36,7 @@ function renderCount(value: number | null) {
 export default function ClusterOverviewPage() {
   const navigate = useNavigate();
   const { result, partialErrors, refresh } = useClusterOverview();
-  const [partialDismissed, setPartialDismissed] = useState(false);
+  const [dismissedPartialErrorsKey, setDismissedPartialErrorsKey] = useState<string | null>(null);
 
   const loading = result.status === "loading";
   const error = result.status === "error" ? result.error : null;
@@ -79,6 +79,8 @@ export default function ClusterOverviewPage() {
 
   const fleetTotal = data?.fleetStatus?.total ?? data?.agentInventoryCount ?? null;
 
+  const partialErrorsKey = partialErrors.join("|");
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -99,8 +101,8 @@ export default function ClusterOverviewPage() {
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
-      {!error && partialErrors.length > 0 && !partialDismissed && (
-        <Alert severity="warning" onClose={() => setPartialDismissed(true)}>
+      {!error && partialErrors.length > 0 && dismissedPartialErrorsKey !== partialErrorsKey && (
+        <Alert severity="warning" onClose={() => setDismissedPartialErrorsKey(partialErrorsKey)}>
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       )}
