@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+
 import { parseDocSection } from "../../src/docs/sections";
 
 describe("parseDocSection", () => {

@@ -13,7 +13,15 @@ import peekPlugin from "./eslint-plugin-peek/index.js";
 export default tseslint.config(
   { ignores: ["dist", "src/services/es/types.generated.d.ts", "eslint-plugin-peek/**"] },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: ["tsconfig.json", "tsconfig.test.json"],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
   {
     plugins: {
       "react-hooks": reactHooks,
@@ -22,8 +30,30 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-hooks/exhaustive-deps": "error",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-imports": "error",
+      // Type-aware rules — zero violations, enforce as error
+      "@typescript-eslint/await-thenable": "error",
+      // Type-aware rules — warn now, promote to error after fixing violations
+      "@typescript-eslint/no-floating-promises": "warn",
+      "@typescript-eslint/no-misused-promises": "warn",
+      "@typescript-eslint/no-non-null-assertion": "warn",
+      "@typescript-eslint/prefer-nullish-coalescing": "warn",
+      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+      "no-promise-executor-return": "warn",
+      // Disable noisy recommendedTypeChecked rules
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-base-to-string": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/only-throw-error": "off",
+      "@typescript-eslint/prefer-promise-reject-errors": "off",
+      "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-unsafe-enum-comparison": "off",
     },
   },
   {
@@ -93,6 +123,15 @@ export default tseslint.config(
   {
     files: ["**/*.test.ts", "**/*.test.tsx"],
     ...testingLibrary.configs["flat/react"],
+    rules: {
+      ...testingLibrary.configs["flat/react"].rules,
+      "@typescript-eslint/unbound-method": "off",
+    },
+  },
+  // Disable type-aware linting for plain JS/MJS files
+  {
+    files: ["**/*.js", "**/*.mjs"],
+    ...tseslint.configs.disableTypeChecked,
   },
   eslintConfigPrettier,
 );

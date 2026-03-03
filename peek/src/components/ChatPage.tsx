@@ -117,7 +117,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
           model,
           system: systemPrompt,
           messages: [
-            ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
             { role: "user" as const, content: trimmed },
           ],
           tools,

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
+
 import { fetchDemoConfig } from "../../src/services/demo";
 
 afterEach(() => {
@@ -7,10 +8,7 @@ afterEach(() => {
 
 describe("fetchDemoConfig", () => {
   it("returns null when the server responds with 404", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response("Not Found", { status: 404 })),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Not Found", { status: 404 })));
 
     const result = await fetchDemoConfig("https://example.com/app/");
     expect(result).toBeNull();
@@ -26,9 +24,11 @@ describe("fetchDemoConfig", () => {
   it("returns null when the JSON is malformed or missing required fields", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ url: "https://demo.es.io" }), { status: 200 }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ url: "https://demo.es.io" }), { status: 200 }),
+        ),
     );
 
     const result = await fetchDemoConfig("https://example.com/app/");
@@ -38,12 +38,14 @@ describe("fetchDemoConfig", () => {
   it("returns null when any required field is an empty string", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({ url: "https://demo.es.io", username: "", password: "pw" }),
-          { status: 200 },
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ url: "https://demo.es.io", username: "", password: "pw" }),
+            { status: 200 },
+          ),
         ),
-      ),
     );
 
     const result = await fetchDemoConfig("https://example.com/app/");
@@ -66,9 +68,7 @@ describe("fetchDemoConfig", () => {
   });
 
   it("builds the correct URL from the base URL", async () => {
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(new Response("Not Found", { status: 404 }));
+    const fetchSpy = vi.fn().mockResolvedValue(new Response("Not Found", { status: 404 }));
     vi.stubGlobal("fetch", fetchSpy);
 
     await fetchDemoConfig("https://example.com/myapp/");
@@ -77,9 +77,7 @@ describe("fetchDemoConfig", () => {
   });
 
   it("handles base URL without trailing slash", async () => {
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(new Response("Not Found", { status: 404 }));
+    const fetchSpy = vi.fn().mockResolvedValue(new Response("Not Found", { status: 404 }));
     vi.stubGlobal("fetch", fetchSpy);
 
     await fetchDemoConfig("https://example.com/myapp");

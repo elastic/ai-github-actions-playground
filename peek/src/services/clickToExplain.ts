@@ -65,7 +65,7 @@ function getVisibleText(el: HTMLElement): string {
  * the clicked cell plus the values of other cells in the same row.
  */
 function getTableContext(el: HTMLElement): string | null {
-  const cell = el.closest("td, th") as HTMLElement | null;
+  const cell = el.closest("td, th");
   if (!cell) return null;
 
   const table = cell.closest("table");

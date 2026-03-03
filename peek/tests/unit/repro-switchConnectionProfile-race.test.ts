@@ -138,7 +138,7 @@ describe("repro: switchConnectionProfile race", () => {
       .getState()
       .saveConnectionProfile("B", { url: "(b.example.com/redacted)", apiKey: "b-key" });
 
-    useConnectionStore.getState().setActiveProfileId(profileBId!);
+    useConnectionStore.getState().setActiveProfileId(profileBId);
 
     vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockImplementation(async () => {
       await new Promise((resolve) => setTimeout(resolve, 20));

@@ -306,7 +306,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     const id = useConnectionStore
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
-    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setActiveProfileId(id);
     // Not connected
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -326,7 +326,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     const id = useConnectionStore
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
-    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setActiveProfileId(id);
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -342,7 +342,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     const id2 = useConnectionStore
       .getState()
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
-    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setActiveProfileId(id1);
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -365,7 +365,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     const id2 = useConnectionStore
       .getState()
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "k2" });
-    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setActiveProfileId(id);
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -382,7 +382,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     useConnectionStore
       .getState()
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
-    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setActiveProfileId(id1);
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -407,7 +407,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     useConnectionStore
       .getState()
       .saveConnectionProfile("QA", { url: "https://qa.example.com", apiKey: "key3" });
-    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setActiveProfileId(id1);
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);
     const switchPromise = new Promise<never>(() => {});
@@ -434,7 +434,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     const id2 = useConnectionStore
       .getState()
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
-    useConnectionStore.getState().setActiveProfileId(id1!);
+    useConnectionStore.getState().setActiveProfileId(id1);
     useConnectionStore.getState().setConnection({ url: "https://dev.example.com", apiKey: "key" });
     useConnectionStore.getState().setConnected(true);
     useConnectionStore.getState().setCapabilities({

@@ -149,7 +149,7 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
       const q = queries[i]!;
       const item = items[i]!;
       if (q.isSuccess && q.data) {
-        const data = q.data as EsqlResponse;
+        const data = q.data;
         if (data.values.length === 0) continue;
         const metricIdx = data.columns.findIndex((c) => c.name === "metric");
         if (metricIdx >= 0 && data.values.some((row) => row[metricIdx] != null)) {

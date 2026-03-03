@@ -80,7 +80,7 @@ export default function DataTableHeader({
                 >
                   <TableSortLabel
                     active={isSorted}
-                    direction={isSorted ? currentSort!.direction : "asc"}
+                    direction={isSorted ? currentSort.direction : "asc"}
                     onClick={() => onSortToggle(col.name)}
                     sx={
                       isPinned

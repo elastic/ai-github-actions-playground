@@ -723,8 +723,7 @@ export async function loadFleetActions(client: ElasticsearchClient): Promise<Fle
     type: (hit._source.type as string) ?? "UNKNOWN",
     agents: Array.isArray(hit._source.agents) ? (hit._source.agents as string[]) : [],
     createdAt: readNestedString(hit._source, ["@timestamp"], ""),
-    expiration:
-      typeof hit._source.expiration === "string" ? (hit._source.expiration as string) : null,
+    expiration: typeof hit._source.expiration === "string" ? hit._source.expiration : null,
     data: (hit._source.data as Record<string, unknown>) ?? {},
   }));
 }
@@ -745,7 +744,7 @@ export async function loadFleetActionResults(
   return extractHits(data).map((hit) => ({
     actionId: (hit._source.action_id as string) ?? "",
     agentId: (hit._source.agent_id as string) ?? "",
-    error: typeof hit._source.error === "string" ? (hit._source.error as string) : null,
+    error: typeof hit._source.error === "string" ? hit._source.error : null,
     completedAt:
       (hit._source.completed_at as string) ?? readNestedString(hit._source, ["@timestamp"], ""),
   }));

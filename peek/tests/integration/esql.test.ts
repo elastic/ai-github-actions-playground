@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+
 import { ElasticsearchClient, isElasticsearchError } from "../../src/services/es";
 import type { ElasticsearchConnection } from "../../src/types";
+
 import { startElasticsearch, seedWebLogs, seedOrders, type TestContext } from "./setup";
 
 let ctx: TestContext;
@@ -180,9 +182,7 @@ describe("orders queries", () => {
     const catIdx = result.columns.findIndex((c) => c.name === "category");
     const revIdx = result.columns.findIndex((c) => c.name === "revenue");
 
-    const rows = Object.fromEntries(
-      result.values.map((row) => [row[catIdx], row[revIdx]]),
-    );
+    const rows = Object.fromEntries(result.values.map((row) => [row[catIdx], row[revIdx]]));
 
     expect(rows["books"]).toBeCloseTo(19.99 + 29.99, 1);
     expect(rows["clothing"]).toBeCloseTo(49.99 + 79.99 + 39.99, 1);
@@ -228,9 +228,7 @@ describe("orders queries", () => {
     const regionIdx = result.columns.findIndex((c) => c.name === "region");
     const countIdx = result.columns.findIndex((c) => c.name === "order_count");
 
-    const rows = Object.fromEntries(
-      result.values.map((row) => [row[regionIdx], row[countIdx]]),
-    );
+    const rows = Object.fromEntries(result.values.map((row) => [row[regionIdx], row[countIdx]]));
 
     expect(rows["eu-west"]).toBe(2);
     expect(rows["us-east"]).toBe(3);

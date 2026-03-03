@@ -174,9 +174,9 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
               style: (extra?: Record<string, unknown>) => Record<string, unknown>;
             },
           ) => {
-            const startVal = api.value(0) as number;
-            const widthVal = api.value(1) as number;
-            const depthVal = api.value(2) as number;
+            const startVal = api.value(0);
+            const widthVal = api.value(1);
+            const depthVal = api.value(2);
             const name = api.value(3) as unknown as string;
             const frameType = api.value(4) as unknown as FrameType;
             const [x, y] = api.coord([startVal, depthVal]);

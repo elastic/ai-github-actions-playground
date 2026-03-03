@@ -311,9 +311,7 @@ export default function AddDataPage() {
   }, [activeCategory, technologySearch]);
 
   const outcomeSignals: TelemetrySignal[] =
-    foundSignals.size > 0
-      ? (Array.from(foundSignals).sort() as TelemetrySignal[])
-      : selectedSignals;
+    foundSignals.size > 0 ? Array.from(foundSignals).sort() : selectedSignals;
   const outcomeSignalsKey = outcomeSignals.join(",");
 
   const outcomeCtas = useMemo(() => {

@@ -240,7 +240,7 @@ export class ElasticsearchClient {
       if (signal?.aborted) throw signal.reason;
       const ipcPromise = window.electronAPI.fetchES({
         url,
-        method: options?.method as string | undefined,
+        method: options?.method,
         headers: mergedHeaders,
         body: options?.body as string | undefined,
       });

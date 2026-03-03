@@ -69,11 +69,7 @@ export default function OverviewView({ data }: OverviewViewProps) {
       ) : null}
 
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-        <Chip
-          label={status.toUpperCase()}
-          color={statusColor as "success" | "warning" | "error" | "default"}
-          size="small"
-        />
+        <Chip label={status.toUpperCase()} color={statusColor} size="small" />
         <Typography variant="body2" color="text.secondary">
           Active shards: {shardPctStr}
         </Typography>

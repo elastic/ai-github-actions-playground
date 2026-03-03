@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
 import { formatMs, formatRowCount, formatTimeAgo } from "../../src/components/panelBadgeUtils";
 
 describe("formatMs", () => {

@@ -167,7 +167,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   });
 
   // Pass 2: conditional allocation explain
-  const healthData = clusterQueries[0]?.data as ClusterHealthResponse | undefined;
+  const healthData = clusterQueries[0]?.data;
   const hasUnassigned = (healthData?.unassigned_shards ?? 0) > 0;
 
   const allocationExplainQuery = useQuery({
@@ -207,7 +207,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
     clusterQueries.length > 0 &&
     clusterQueries.every((q) => q.isError) &&
     !clusterQueries.some((q) => q.isFetching);
-  const error = allFailed ? String((clusterQueries[0]!.error as Error).message) : null;
+  const error = allFailed ? String((clusterQueries[0].error as Error).message) : null;
 
   const partialErrors: string[] = allFailed
     ? []

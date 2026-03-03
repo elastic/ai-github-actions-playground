@@ -75,7 +75,7 @@ export default function DataTableBody({
                   thresholdColumns.length === 0 ||
                   thresholdColumns.includes(col.name));
               const thresholdColor = applyThreshold
-                ? resolveThresholdColor(Number(cell), thresholds!)
+                ? resolveThresholdColor(Number(cell), thresholds)
                 : undefined;
               const bgColor = thresholdColor ? `${THRESHOLD_PALETTE[thresholdColor]}26` : undefined;
               const isPinned = pinnedColumns.has(colIdx);

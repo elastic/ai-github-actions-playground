@@ -73,7 +73,7 @@ export default function MetricSearch({
             selectedNamespace && namespaces.includes(selectedNamespace) ? selectedNamespace : ""
           }
           label="Namespace"
-          onChange={(e) => onNamespaceChange((e.target.value as string) || null)}
+          onChange={(e) => onNamespaceChange(e.target.value || null)}
         >
           <MenuItem value="">All namespaces</MenuItem>
           {namespaces.map((namespace) => (

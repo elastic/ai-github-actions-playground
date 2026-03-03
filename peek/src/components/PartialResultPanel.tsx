@@ -150,12 +150,7 @@ function ClusterSection({ name, detail }: ClusterSectionProps) {
         <Typography variant="body2" sx={{ flex: 1 }} noWrap title={name}>
           {name}
         </Typography>
-        <Chip
-          label={detail.status ?? "unknown"}
-          size="small"
-          color={statusColor as "error" | "warning" | "success" | "default"}
-          sx={{ ml: 1 }}
-        />
+        <Chip label={detail.status ?? "unknown"} size="small" color={statusColor} sx={{ ml: 1 }} />
         {detail.timed_out && (
           <Chip label="timed out" size="small" color="warning" sx={{ ml: 0.5 }} />
         )}

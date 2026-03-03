@@ -114,7 +114,7 @@ describe("AppHeader profile health badges", () => {
     const id = useConnectionStore
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
-    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setActiveProfileId(id);
 
     renderHeader();
 
@@ -130,7 +130,7 @@ describe("AppHeader profile health badges", () => {
     const id = useConnectionStore
       .getState()
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
-    useConnectionStore.getState().setActiveProfileId(id!);
+    useConnectionStore.getState().setActiveProfileId(id);
     useConnectionStore.getState().setProfileHealth(id!, {
       status: "healthy",
       checkedAt: new Date().toISOString(),

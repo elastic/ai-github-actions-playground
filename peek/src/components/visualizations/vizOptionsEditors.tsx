@@ -69,7 +69,7 @@ function ThresholdColorSelect({
         onChange={(e) => onChange(e.target.value as ThresholdColor)}
         renderValue={(v) => (
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <ThresholdColorSwatch color={v as ThresholdColor} />
+            <ThresholdColorSwatch color={v} />
             {THRESHOLD_COLOR_OPTIONS.find((o) => o.value === v)?.label}
           </Box>
         )}
