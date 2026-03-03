@@ -170,7 +170,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
         queryFn: async ({ signal }: { signal: AbortSignal }) => {
           try {
             return await new ElasticsearchClient(connection!).getClusterSettings(signal);
-          } catch (err) {
+          } catch (err: unknown) {
             if (isElasticsearchError(err) && err.status === 403)
               return null as ClusterSettingsResponse | null;
             throw err;

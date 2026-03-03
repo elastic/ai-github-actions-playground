@@ -149,7 +149,7 @@ export default function ApiConsolePage() {
             executionTimeMs: Date.now() - start,
           },
         });
-      } catch (err) {
+      } catch (err: unknown) {
         if (controller.signal.aborted) return;
         const message = isElasticsearchError(err) ? err.message : String(err);
         updateEntry(id, { response: { status: "error", message } });

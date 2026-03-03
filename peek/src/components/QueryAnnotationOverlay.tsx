@@ -137,7 +137,7 @@ export default function QueryAnnotationOverlay({
           cacheSet(cacheKey, text);
           setAsyncResult({ query, text });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if ((err as Error).name !== "AbortError") {
           console.error("Query annotation failed:", err);
         }

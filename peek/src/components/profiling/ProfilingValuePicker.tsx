@@ -71,7 +71,7 @@ export default function ProfilingValuePicker({
         }))
         .filter((r) => r.value.length > 0);
       setRows(parsed);
-    } catch (err) {
+    } catch (err: unknown) {
       if (controller.signal.aborted) return;
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {

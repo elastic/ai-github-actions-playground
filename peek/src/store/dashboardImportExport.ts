@@ -67,7 +67,7 @@ export function importDashboard(json: string): {
       importedDashboard = result.data;
     }
     return { success: true, dashboard: importedDashboard };
-  } catch (errorLike) {
+  } catch (errorLike: unknown) {
     const error = errorLike instanceof Error ? errorLike.message : String(errorLike);
     console.error("Import failed: invalid JSON", error);
     return { success: false, error };
@@ -119,7 +119,7 @@ export function importWorkspace(json: string): {
       return { success: false, error };
     }
     return { success: true, dashboards, activeDashboardId };
-  } catch (errorLike) {
+  } catch (errorLike: unknown) {
     const error = errorLike instanceof Error ? errorLike.message : String(errorLike);
     console.error("Workspace import failed: invalid JSON", error);
     return { success: false, error };

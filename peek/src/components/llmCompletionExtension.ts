@@ -340,7 +340,7 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
       });
 
       return result.text.trim();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("LLM completion failed:", err);
       return "";
     }

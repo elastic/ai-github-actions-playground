@@ -132,7 +132,7 @@ export function useEsqlQuery({
           }
           onSuccessRef.current(data, trimmedQuery, stepIndex);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (
           requestId === requestIdRef.current &&
           !controller.signal.aborted &&
