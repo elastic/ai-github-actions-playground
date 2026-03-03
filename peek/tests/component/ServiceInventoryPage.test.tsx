@@ -147,7 +147,7 @@ describe("ServiceInventoryPage", () => {
     expect(within(inventoryTable).getByText("800")).toBeInTheDocument();
   });
 
-  it("displays error rate chips with error color for high rates", async () => {
+  it("displays error rate chips for high error rates", async () => {
     const user = userEvent.setup();
     renderPage();
 

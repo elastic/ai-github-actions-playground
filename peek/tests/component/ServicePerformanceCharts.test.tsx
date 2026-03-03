@@ -50,9 +50,9 @@ const MOCK_ROWS: ServiceRow[] = [
 ];
 
 describe("ServicePerformanceCharts", () => {
-  it("renders nothing when no service rows provided", () => {
-    const { container } = render(<ServicePerformanceCharts serviceRows={[]} />);
-    expect(container.innerHTML).toBe("");
+  it("shows empty state placeholders when no service rows provided", () => {
+    render(<ServicePerformanceCharts serviceRows={[]} />);
+    expect(screen.getAllByText("No data available").length).toBeGreaterThan(0);
   });
 
   it("renders all dashboard panels", () => {
