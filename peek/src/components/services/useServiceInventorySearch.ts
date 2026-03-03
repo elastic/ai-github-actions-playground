@@ -55,7 +55,6 @@ export function useServiceInventorySearch() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
-  const latestSparklineRequestRef = useRef(0);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -69,12 +68,32 @@ export function useServiceInventorySearch() {
     [sortField],
   );
 
+  const handleSparklineSuccess = useCallback((data: EsqlResponse, executedQuery: string) => {
+    if (executedQuery !== latestSparklineQueryRef.current) return;
+    setSparklineData(parseServiceSparklineData(data));
+  }, []);
+  const handleSparklineFailure = useCallback((failedQuery: string) => {
+    if (failedQuery !== latestSparklineQueryRef.current) return;
+    setSparklineData({});
+  }, []);
+  const { runQuery: runSparklineQuery } = useEsqlQuery({
+    connection,
+    onSuccess: handleSparklineSuccess,
+    onFailure: handleSparklineFailure,
+  });
+
   const handleSuccess = useCallback(
     (data: EsqlResponse, executedQuery: string) => {
       if (executedQuery !== latestQueryRef.current) return;
       setSearchResult(data);
+      const serviceNames = parseServiceRows(data).map((r) => r.serviceName);
+      if (serviceNames.length === 0) return;
+      const sparklineQuery = buildServiceSparklineQuery(filters, undefined, serviceNames);
+      latestSparklineQueryRef.current = sparklineQuery.trim();
+      setSparklineData({});
+      runSparklineQuery(sparklineQuery);
     },
-    [setSearchResult],
+    [setSearchResult, filters, runSparklineQuery],
   );
   const handleFailure = useCallback(
     (failedQuery: string) => {
@@ -88,45 +107,20 @@ export function useServiceInventorySearch() {
     onSuccess: handleSuccess,
     onFailure: handleFailure,
   });
-  const handleSparklineSuccess = useCallback(
-    (data: EsqlResponse, executedQuery: string, requestId: number | null) => {
-      if (
-        executedQuery !== latestSparklineQueryRef.current ||
-        requestId !== latestSparklineRequestRef.current
-      ) {
-        return;
-      }
-      setSparklineData(parseServiceSparklineData(data));
-    },
-    [],
-  );
-  const handleSparklineFailure = useCallback((failedQuery: string) => {
-    if (failedQuery !== latestSparklineQueryRef.current) return;
-    setSparklineData({});
-  }, []);
-  const { runQuery: runSparklineQuery } = useEsqlQuery({
-    connection,
-    onSuccess: handleSparklineSuccess,
-    onFailure: handleSparklineFailure,
-  });
 
   const handleSearch = useCallback(() => {
     const query = buildServiceInventoryQuery(filters);
-    const sparklineQuery = buildServiceSparklineQuery(filters);
     latestQueryRef.current = query.trim();
-    latestSparklineQueryRef.current = sparklineQuery.trim();
-    latestSparklineRequestRef.current += 1;
-    const sparklineRequestId = latestSparklineRequestRef.current;
+    latestSparklineQueryRef.current = null;
     setSparklineData({});
     runQuery(query);
-    runSparklineQuery(sparklineQuery, sparklineRequestId);
-  }, [filters, runQuery, runSparklineQuery]);
+    // Sparkline runs from handleSuccess once inventory results arrive, scoped to displayed services
+  }, [filters, runQuery]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
     latestQueryRef.current = null;
     latestSparklineQueryRef.current = null;
-    latestSparklineRequestRef.current += 1;
     clearError();
     setSearchResult(null);
     setSparklineData({});
