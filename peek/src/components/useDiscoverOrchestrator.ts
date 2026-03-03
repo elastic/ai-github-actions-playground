@@ -1,4 +1,5 @@
 import { useState, useCallback, useDeferredValue, useMemo, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { EditorView } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
@@ -37,7 +38,17 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const discoverEditorHeight = useUIStore((s) => s.discoverEditorHeight);
   const setDiscoverEditorHeight = useUIStore((s) => s.setDiscoverEditorHeight);
   const [editorFocused, setEditorFocused] = useState(false);
-  const [result, setResult] = useState<EsqlResponse | null>(null);
+  const queryClient = useQueryClient();
+  const { data: result = null } = useQuery<EsqlResponse | null>({
+    queryKey: ["discover-result"],
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setResult = useCallback(
+    (data: EsqlResponse | null) => queryClient.setQueryData(["discover-result"], data),
+    [queryClient],
+  );
   const {
     discoverQueryDraft,
     setDiscoverQueryDraft,
