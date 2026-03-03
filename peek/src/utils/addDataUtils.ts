@@ -340,7 +340,7 @@ ${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 
 # 3. Start the EDOT Collector
-sudo -E ./otelcol --config otel.yml`;
+sudo -E ./elastic-agent otel --config otel.yml`;
     },
   },
   macos: {
@@ -367,7 +367,7 @@ ${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 
 # 3. Start the EDOT Collector
-sudo -E ./otelcol --config otel.yml`;
+sudo -E ./elastic-agent otel --config otel.yml`;
     },
   },
   windows: {
@@ -393,7 +393,7 @@ ${credentialLines}
 $env:STORAGE_DIR = "$PWD\\data\\otel"
 
 # 3. Start the EDOT Collector
-.\\otelcol.exe --config otel.yml`;
+.\\elastic-agent.exe otel --config otel.yml`;
     },
   },
 };
