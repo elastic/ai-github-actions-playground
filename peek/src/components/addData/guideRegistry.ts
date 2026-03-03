@@ -1,41 +1,41 @@
 import type { AddDataGuideType } from "../../services/addData/catalog";
 
 /**
- * Metadata for each guide type. Used by the step wrapper components to
- * display appropriate labels and descriptions.
+ * Metadata for each guide type. Used by AddDataStepSetup to display
+ * appropriate section labels for the configure and install sections.
  *
  * Adding a new guide type:
  *  1. Add the type literal to AddDataGuideType in catalog.ts
  *  2. Add an entry here
  *  3. Create Configure + Install components under guides/
- *  4. Wire them into AddDataStepConfigure and AddDataStepInstall switches
+ *  4. Wire them into AddDataStepSetup's switch statements
  */
 export interface GuideTypeDefinition {
-  /** Label shown in the Step 2 heading (e.g. "Select your environment"). */
-  step2Label: string;
-  /** Label shown in the Step 3 heading (e.g. "Install and configure"). */
-  step3Label: string;
+  /** Label for the Configure section (e.g. "Select your environment"). */
+  configureLabel: string;
+  /** Label for the Install section (e.g. "Install and configure"). */
+  installLabel: string;
 }
 
 export const GUIDE_TYPE_DEFINITIONS: Record<AddDataGuideType, GuideTypeDefinition> = {
   edot_collector: {
-    step2Label: "Select your environment",
-    step3Label: "Install and configure",
+    configureLabel: "Select your environment",
+    installLabel: "Install and configure",
   },
   aws_cloud_deploy: {
-    step2Label: "Select AWS services",
-    step3Label: "Deploy stack",
+    configureLabel: "Select AWS services",
+    installLabel: "Deploy stack",
   },
   otel_receiver: {
-    step2Label: "Configure receiver",
-    step3Label: "Install and configure",
+    configureLabel: "Configure receiver",
+    installLabel: "Install and configure",
   },
   fluent_bit: {
-    step2Label: "Configure output",
-    step3Label: "Install Fluent Bit",
+    configureLabel: "Configure output",
+    installLabel: "Install Fluent Bit",
   },
   apm: {
-    step2Label: "Select language",
-    step3Label: "Instrument your app",
+    configureLabel: "Select language",
+    installLabel: "Instrument your app",
   },
 };

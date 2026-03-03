@@ -15,12 +15,14 @@ import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const mockGetDataStreams = vi.fn().mockResolvedValue({ data_streams: [] });
+const mockRawRequest = vi.fn().mockResolvedValue({ status: 200, body: {} });
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getClusterInfo: vi.fn().mockResolvedValue({ version: { number: "8.17.0" } }),
     createApiKey: vi.fn().mockResolvedValue({ id: "1", name: "k", encodedApiKey: "abc123" }),
     getDataStreams: mockGetDataStreams,
+    rawRequest: mockRawRequest,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -54,12 +56,6 @@ async function goToStep2(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
 }
 
-async function goToStep4(user: ReturnType<typeof userEvent.setup>) {
-  await goToStep2(user);
-  await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
-  await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
-}
-
 const defaultCapabilities: UserCapabilities = {
   canManageDataStreams: false,
   canCreateApiKeys: true,
@@ -72,6 +68,7 @@ describe("AddDataPage", () => {
     vi.clearAllMocks();
     resetAllStores();
     mockGetDataStreams.mockResolvedValue({ data_streams: [] });
+    mockRawRequest.mockResolvedValue({ status: 200, body: {} });
     vi.mocked(probeOtlpEndpoint).mockResolvedValue(true);
     fetchSpy.mockResolvedValue(new Response(null, { status: 200 }));
     useConnectionStore.getState().setConnection({
@@ -107,109 +104,101 @@ describe("AddDataPage", () => {
     expect(screen.queryByText("Linux Host")).not.toBeInTheDocument();
   }, 15_000);
 
-  it("transitions through explicit 5-step flow", async () => {
+  it("transitions through 3-step flow", async () => {
     const user = userEvent.setup();
     renderPage();
 
+    // Step 1 → Step 2
     await goToStep2(user);
-    expect(
-      screen.getByRole("heading", { name: /Step 2: Select your environment/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Step 2: Set up and verify/i })).toBeInTheDocument();
 
+    // Step 2 shows collapsible configure and install sections
+    expect(screen.getByText("Select your environment")).toBeInTheDocument();
+    expect(screen.getByText("Install and configure")).toBeInTheDocument();
+
+    // Step 2 → Step 3
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     expect(
-      screen.getByRole("heading", { name: /Step 3: Install and configure/i }),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
-    expect(
-      screen.getByRole("heading", { name: /Step 4: Validate data receipt/i }),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
-    expect(
-      screen.getByRole("heading", { name: /Step 5: Explore your data \+ next steps/i }),
+      screen.getByRole("heading", { name: /Step 3: Explore your data \+ next steps/i }),
     ).toBeInTheDocument();
   }, 30_000);
 
-  it("reuses endpoint type and platform controls in Step 2/3", async () => {
+  it("shows configure and install sections with credentials in merged Step 2", async () => {
     const user = userEvent.setup();
     renderPage();
 
     await goToStep2(user);
+
+    // Configure section shows endpoint type controls
     expect(screen.getByRole("button", { name: "Elasticsearch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Managed OTLP" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Linux" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    // Install section shows copy and credentials controls
     expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
+
+    // Verify section shows check button
+    expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
   }, 30_000);
 
-  it("shows contextual verification expectations in Step 4", async () => {
+  it("shows contextual verification expectations in Step 2", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await goToStep4(user);
+    await goToStep2(user);
     expect(
       screen.getByText(/For Kubernetes, we expect to receive metrics, logs and traces\./),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
   }, 30_000);
 
-  it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
+  it("shows Step 3 outcomes with dashboard/alerting/additional source CTAs", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await goToStep4(user);
+    await goToStep2(user);
 
     // The mount-time detectTelemetrySignals effect should have already fired.
     expect(mockGetDataStreams).toHaveBeenCalled();
 
-    // Set up mock AFTER navigation so the mount-time detectTelemetrySignals
-    // call has already resolved with the default (empty) mock.  The next
-    // getDataStreams invocation — triggered by "Check now" — will return
-    // partial data immediately, avoiding a 5 s polling wait.
-    mockGetDataStreams.mockResolvedValueOnce({
+    // Baseline capture will see empty data streams; subsequent poll calls
+    // will see the new metrics data stream, triggering dataStreamAppeared.
+    mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
       data_streams: [{ name: "metrics-host.otel-default" }],
     });
 
     await user.click(screen.getByRole("button", { name: /Check now/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText(/Telemetry data detected!/)).toBeInTheDocument();
-    });
-    expect(screen.getByText(/Partial success/i)).toBeInTheDocument();
+    // Wait for detection (rich verification shows per-signal cards and summary alert)
+    await waitFor(
+      () => {
+        expect(screen.getByText(/data stream/i)).toBeInTheDocument();
+      },
+      { timeout: 10_000 },
+    );
 
-    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
+    // Navigate to Step 3
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
 
     expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   }, 30_000);
 
-  it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
-    // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
-    mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] })
-      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
+  it("resets state when clicking 'Add another source'", async () => {
+    mockGetDataStreams.mockResolvedValue({
+      data_streams: [{ name: "metrics-host.otel-default" }],
+    });
 
     const user = userEvent.setup();
     renderPage();
 
-    // Search and select a technology
+    // Search and select a technology, navigate through
     await user.type(screen.getByPlaceholderText("Search integrations..."), "kub");
     await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
-    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
-    await user.click(screen.getByRole("button", { name: /Check now/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/Telemetry data detected!/)).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
     await user.click(screen.getByRole("button", { name: "Add another source" }));
 
     // Should return to Step 1 with a clean slate
@@ -220,13 +209,6 @@ describe("AddDataPage", () => {
     });
     expect(screen.getByPlaceholderText("Search integrations...")).toHaveValue("");
     expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
-
-    // Progress again and ensure Step 4 does not auto-show stale verification success.
-    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
-    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
-    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
-    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
-    expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
   }, 30_000);
 
   it("shows OTLP alert when no ingest endpoint can be derived", async () => {

@@ -8,7 +8,7 @@ import Stack from "@mui/material/Stack";
 import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
-import { useIngestionVerification } from "../hooks/useIngestionVerification";
+import { useRichIngestionVerification } from "../hooks/useRichIngestionVerification";
 import {
   deriveIngestCandidates,
   detectTelemetrySignals,
@@ -25,19 +25,15 @@ import type { FluentBitOutputMode } from "../services/addData/fluentBitConfig";
 import PageHeader from "./PageHeader";
 import AddDataStepTechnology from "./addData/AddDataStepTechnology";
 import type { TechnologyCategoryFilter } from "./addData/AddDataStepTechnology";
-import AddDataStepConfigure from "./addData/AddDataStepConfigure";
-import AddDataStepInstall from "./addData/AddDataStepInstall";
-import AddDataStepVerify from "./addData/AddDataStepVerify";
+import AddDataStepSetup from "./addData/AddDataStepSetup";
 import AddDataStepSuccess from "./addData/AddDataStepSuccess";
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardStep = 1 | 2 | 3;
 
 const STEP_TITLES: Record<WizardStep, string> = {
   1: "What are you monitoring?",
-  2: "Select your environment",
-  3: "Install and configure",
-  4: "Validate data receipt",
-  5: "Explore your data + next steps",
+  2: "Set up and verify",
+  3: "Explore your data + next steps",
 };
 
 export default function AddDataPage() {
@@ -95,7 +91,6 @@ export default function AddDataPage() {
   const ingestCandidatesKey = ingestCandidates.join(",");
   const [derivedOtlpUrl, setDerivedOtlpUrl] = useState<string | null>(null);
   const [prevIngestCandidatesKey, setPrevIngestCandidatesKey] = useState(ingestCandidatesKey);
-  // Adjust derived state when ingest candidates change (during render, not in an effect)
   if (ingestCandidatesKey !== prevIngestCandidatesKey) {
     setPrevIngestCandidatesKey(ingestCandidatesKey);
     setDerivedOtlpUrl(null);
@@ -135,6 +130,7 @@ export default function AddDataPage() {
     endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connection?.url);
   const prefilledCount = [apiKeyValue, hasEndpoint, clusterVersion].filter(Boolean).length;
 
+  // Lightweight data-stream detection for the "existing signals" banner
   const [existingSignals, setExistingSignals] = useState<Set<TelemetrySignal> | null>(null);
   useEffect(() => {
     if (!connection) return;
@@ -152,15 +148,15 @@ export default function AddDataPage() {
     };
   }, [connection]);
 
-  // ---- Ingestion verification with auto-polling (via React Query) ----
-  const {
-    verifyStatus,
-    foundSignals,
-    verifyError,
-    handleVerifyIngestion,
-    startPolling,
-    resetVerification,
-  } = useIngestionVerification();
+  const selectedSignals = (selectedTechnology?.expectedSignals ?? []) as readonly TelemetrySignal[];
+  const signalExpectation =
+    selectedSignals.length > 1
+      ? `${selectedSignals.slice(0, -1).join(", ")} and ${selectedSignals[selectedSignals.length - 1]}`
+      : (selectedSignals[0] ?? "telemetry");
+
+  // ---- Rich ingestion verification (two-tier: data stream + cardinality) ----
+  const verification = useRichIngestionVerification(selectedSignals);
+  const { status: verifyStatus, startPolling } = verification;
   const lastAutoStartedApiKeyRef = useRef<string | null>(null);
 
   // Auto-start polling when API key is generated
@@ -175,12 +171,6 @@ export default function AddDataPage() {
       startPolling();
     }
   }, [connection, apiKeyValue, verifyStatus, startPolling]);
-
-  const selectedSignals = (selectedTechnology?.expectedSignals ?? []) as readonly TelemetrySignal[];
-  const signalExpectation =
-    selectedSignals.length > 1
-      ? `${selectedSignals.slice(0, -1).join(", ")} and ${selectedSignals[selectedSignals.length - 1]}`
-      : (selectedSignals[0] ?? "telemetry");
 
   const receiver = useMemo(
     () =>
@@ -209,7 +199,7 @@ export default function AddDataPage() {
     setSelectedAwsTarget(null);
     setSelectedApmLanguage(null);
     setFluentBitOutputMode("elasticsearch");
-    resetVerification();
+    verification.resetVerification();
     lastAutoStartedApiKeyRef.current = null;
     setWizardStep(1);
   };
@@ -235,7 +225,7 @@ export default function AddDataPage() {
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Add Data"
-          description="Onboard a new telemetry source in five guided steps: choose technology, configure environment, install collector, verify ingestion, and explore next actions."
+          description="Onboard a new telemetry source in three guided steps: choose technology, set up and verify, then explore your data."
           actions={
             clusterVersion ? (
               <Chip label={`EDOT Collector v${clusterVersion}`} size="small" variant="outlined" />
@@ -274,9 +264,10 @@ export default function AddDataPage() {
       )}
 
       {wizardStep === 2 && (
-        <AddDataStepConfigure
+        <AddDataStepSetup
           selectedTechnology={selectedTechnology}
           signalExpectation={signalExpectation}
+          selectedSignals={selectedSignals}
           endpointType={endpointType}
           onEndpointTypeChange={setEndpointType}
           onEndpointTypeManuallySet={() => {
@@ -295,19 +286,9 @@ export default function AddDataPage() {
           onSelectApmLanguage={setSelectedApmLanguage}
           fluentBitOutputMode={fluentBitOutputMode}
           onFluentBitOutputModeChange={setFluentBitOutputMode}
-          onBack={() => setWizardStep(1)}
-          onContinue={() => setWizardStep(3)}
-        />
-      )}
-
-      {wizardStep === 3 && (
-        <AddDataStepInstall
-          selectedTechnology={selectedTechnology}
-          platform={platform}
           esUrl={esUrl}
           version={version}
           apiKey={apiKey}
-          endpointType={endpointType}
           otlpUrl={otlpUrl}
           apiKeyValue={apiKeyValue}
           apiKeyError={apiKeyError}
@@ -319,38 +300,20 @@ export default function AddDataPage() {
           derivedOtlpUrl={derivedOtlpUrl}
           clusterVersion={clusterVersion}
           connectionUrl={connection?.url ?? null}
-          receiver={receiver}
-          receiverFieldValues={receiverFieldValues}
-          selectedAwsTarget={selectedAwsTarget}
-          selectedApmLanguage={selectedApmLanguage}
-          fluentBitOutputMode={fluentBitOutputMode}
-          onBack={() => setWizardStep(2)}
-          onContinue={() => setWizardStep(4)}
+          connectionAvailable={Boolean(connection)}
+          verification={verification}
+          onBack={() => setWizardStep(1)}
+          onContinue={() => setWizardStep(3)}
         />
       )}
 
-      {wizardStep === 4 && (
-        <AddDataStepVerify
-          selectedTechnology={selectedTechnology}
-          signalExpectation={signalExpectation}
-          connection={connection}
-          verifyStatus={verifyStatus}
-          foundSignals={foundSignals}
-          verifyError={verifyError}
-          handleVerifyIngestion={handleVerifyIngestion}
-          selectedSignals={selectedSignals}
-          onBack={() => setWizardStep(3)}
-          onContinue={() => setWizardStep(5)}
-        />
-      )}
-
-      {wizardStep === 5 && (
+      {wizardStep === 3 && (
         <AddDataStepSuccess
           selectedTechnology={selectedTechnology}
-          foundSignals={foundSignals}
+          foundSignals={verification.dataStreamSignals}
           selectedSignals={selectedSignals}
           onAddAnotherSource={handleAddAnotherSource}
-          onBack={() => setWizardStep(4)}
+          onBack={() => setWizardStep(2)}
         />
       )}
     </Box>

@@ -51,7 +51,7 @@ export default function AddDataStepSuccess({
 
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
-      <Typography variant="h6">Step 5: Explore your data + next steps</Typography>
+      <Typography variant="h6">Step 3: Explore your data + next steps</Typography>
       <Typography variant="body2" color="text.secondary">
         {selectedTechnology?.technology ?? "Your source"} is configured. Choose a next action to
         explore dashboards, set up alerting, or onboard another source.
