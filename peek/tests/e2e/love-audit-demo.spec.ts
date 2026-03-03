@@ -35,10 +35,28 @@ let demoCreds: DemoCredentials | null = null;
 
 async function loadDemoCredentials(): Promise<DemoCredentials> {
   if (demoCreds) return demoCreds;
-  const res = await fetch(DEMO_JSON_URL);
-  if (!res.ok) throw new Error(`Failed to fetch demo credentials: ${res.status}`);
-  demoCreds = (await res.json()) as DemoCredentials;
-  return demoCreds;
+
+  // Allow credential injection via environment variables as a fallback when
+  // the HTTPS fetch is unavailable (e.g. TLS issues in CI sandboxes).
+  const envUrl = process.env.DEMO_ES_URL;
+  const envUser = process.env.DEMO_ES_USERNAME;
+  const envPass = process.env.DEMO_ES_PASSWORD;
+  if (envUrl && envUser && envPass) {
+    demoCreds = { url: envUrl, username: envUser, password: envPass };
+    return demoCreds;
+  }
+
+  try {
+    const res = await fetch(DEMO_JSON_URL);
+    if (!res.ok) throw new Error(`Failed to fetch demo credentials: ${res.status}`);
+    demoCreds = (await res.json()) as DemoCredentials;
+    return demoCreds;
+  } catch (err) {
+    throw new Error(
+      `Failed to fetch demo credentials from ${DEMO_JSON_URL}: ${err instanceof Error ? err.message : err}. ` +
+        "Set DEMO_ES_URL, DEMO_ES_USERNAME, and DEMO_ES_PASSWORD environment variables as a fallback.",
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
