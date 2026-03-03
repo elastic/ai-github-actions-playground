@@ -54,6 +54,7 @@ const ServiceInventoryPage = lazy(() => import("../components/services/ServiceIn
 const SettingsPage = lazy(() => import("../components/SettingsPage"));
 const TracesPage = lazy(() => import("../components/traces/TracesPage"));
 const ProfilingPage = lazy(() => import("../components/profiling/ProfilingPage"));
+const ProfilingGuidedPage = lazy(() => import("../components/profiling/ProfilingGuidedPage"));
 const InvestigatePage = lazy(() => import("../components/InvestigatePage"));
 const UsersPage = lazy(() => import("../components/UsersPage"));
 
@@ -150,7 +151,7 @@ export const PAGE_MANIFEST = {
   },
   profiling: {
     path: "/profiling",
-    component: ProfilingPage,
+    component: ProfilingGuidedPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "chart",
@@ -159,6 +160,20 @@ export const PAGE_MANIFEST = {
       group: "Data",
       order: 60,
       showInSidebar: true,
+      icon: createElement(SpeedIcon, { fontSize: "small" }),
+    },
+  },
+  profilingAdvanced: {
+    path: "/profiling/advanced",
+    component: ProfilingPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "chart",
+    nav: {
+      label: "Profiling (Advanced)",
+      group: "Data",
+      order: 61,
+      showInSidebar: false,
       icon: createElement(SpeedIcon, { fontSize: "small" }),
     },
   },

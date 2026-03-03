@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildDistinctValuesQuery,
   buildProfilingEventsQuery,
   buildProfilingFlamescopeQuery,
   buildProfilingTimelineQuery,
@@ -8,6 +9,7 @@ import {
   buildStacktraceLookupQuery,
   buildTopFunctionsRequest,
   EMPTY_FILTERS,
+  PROFILING_DIMENSION_LABELS,
 } from "../../src/components/profiling/profilingQueryBuilder";
 
 describe("profilingQueryBuilder", () => {
@@ -124,5 +126,58 @@ describe("profilingQueryBuilder", () => {
     expect(timeline).toContain(
       'BUCKET(@timestamp, 50, "2026-02-24T03:00:00.000Z", "2026-02-24T04:00:00.000Z")',
     );
+  });
+
+  describe("buildDistinctValuesQuery", () => {
+    it("queries profiling-events-all with a STATS BY clause for the chosen dimension", () => {
+      const query = buildDistinctValuesQuery("service.name", "NOW() - 1 hour", "NOW()");
+      expect(query).toContain("FROM profiling-events-all");
+      expect(query).toContain("STATS samples = SUM(Stacktrace.count) BY `service.name`");
+      expect(query).toContain("SORT samples DESC");
+      expect(query).toContain("LIMIT 50");
+    });
+
+    it("applies the time range filter", () => {
+      const query = buildDistinctValuesQuery("host.name", "NOW() - 30 minutes", "NOW()");
+      expect(query).toContain("@timestamp >= NOW() - 30 minutes");
+      expect(query).toContain("@timestamp <= NOW()");
+    });
+
+    it("produces distinct queries for each supported dimension", () => {
+      const dimensions = [
+        "service.name",
+        "host.name",
+        "process.executable.name",
+        "process.thread.name",
+      ] as const;
+      const queries = dimensions.map((d) => buildDistinctValuesQuery(d, "NOW() - 1 hour", "NOW()"));
+      // Each dimension produces a unique STATS BY clause
+      const unique = new Set(queries);
+      expect(unique.size).toBe(dimensions.length);
+    });
+
+    it("handles absolute ISO timestamps", () => {
+      const query = buildDistinctValuesQuery(
+        "process.executable.name",
+        "2026-02-24T03:00:00.000Z",
+        "2026-02-24T04:00:00.000Z",
+      );
+      expect(query).toContain('@timestamp >= "2026-02-24T03:00:00.000Z"');
+      expect(query).toContain('@timestamp <= "2026-02-24T04:00:00.000Z"');
+    });
+  });
+
+  describe("PROFILING_DIMENSION_LABELS", () => {
+    it("has a label for every supported dimension", () => {
+      const dimensions = [
+        "service.name",
+        "host.name",
+        "process.executable.name",
+        "process.thread.name",
+      ] as const;
+      for (const d of dimensions) {
+        expect(PROFILING_DIMENSION_LABELS[d]).toBeTruthy();
+      }
+    });
   });
 });
