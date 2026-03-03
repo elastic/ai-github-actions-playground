@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useShallow } from "zustand/react/shallow";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -23,7 +24,9 @@ import type { EsqlResponse } from "../../types";
 
 import { buildServiceInventoryQuery } from "./serviceInventoryQueryBuilder";
 import { type SortField, type SortDirection, parseServiceRows } from "./serviceInventoryHelpers";
-import ServiceSummaryPanel from "./ServiceSummaryPanel";
+import ServiceOverviewCards from "./ServiceOverviewCards";
+import ServicePerformanceCharts from "./ServicePerformanceCharts";
+import ServiceBusiestPanel from "./ServiceBusiestPanel";
 import ServiceInventoryTable from "./ServiceInventoryTable";
 
 export default function ServiceInventoryPage() {
@@ -37,7 +40,6 @@ export default function ServiceInventoryPage() {
       resetFilters: s.resetFilters,
     })),
   );
-
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
     queryKey: ["services-search"],
     queryFn: () => null,
@@ -48,11 +50,9 @@ export default function ServiceInventoryPage() {
     (result: EsqlResponse | null) => queryClient.setQueryData(["services-search"], result),
     [queryClient],
   );
-
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
-
   const handleSort = useCallback(
     (field: SortField) => {
       if (field === sortField) {
@@ -64,7 +64,6 @@ export default function ServiceInventoryPage() {
     },
     [sortField],
   );
-
   const handleSuccess = useCallback(
     (data: EsqlResponse, executedQuery: string) => {
       if (executedQuery !== latestQueryRef.current) return;
@@ -79,13 +78,11 @@ export default function ServiceInventoryPage() {
     },
     [setSearchResult],
   );
-
   const { runQuery, loading, error, clearError } = useEsqlQuery({
     connection,
     onSuccess: handleSuccess,
     onFailure: handleFailure,
   });
-
   const handleSearch = useCallback(() => {
     const query = buildServiceInventoryQuery(filters);
     latestQueryRef.current = query.trim();
@@ -97,7 +94,6 @@ export default function ServiceInventoryPage() {
     clearError();
     resetFilters();
   }, [clearError, resetFilters, loading]);
-
   const handleViewTraces = useCallback(
     (serviceName: string) => {
       useTracesStore.getState().setFilters({
@@ -110,7 +106,6 @@ export default function ServiceInventoryPage() {
     },
     [navigate, filters.timeFrom, filters.timeTo],
   );
-
   const serviceRows = useMemo(() => {
     if (!searchResult) return [];
     const rows = parseServiceRows(searchResult);
@@ -127,12 +122,11 @@ export default function ServiceInventoryPage() {
   }, [searchResult, sortField, sortDirection]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
       <PageHeader
-        title="Services"
-        description="Service inventory showing key performance metrics from OpenTelemetry trace data."
+        title="Service Performance"
+        description="APM dashboard showing key performance metrics across your services from OpenTelemetry trace data."
       />
-
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <DateRangePicker
@@ -159,35 +153,47 @@ export default function ServiceInventoryPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <ServiceSummaryPanel serviceRows={serviceRows} />
-
-      <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-        {!loading && !searchResult && (
+      {!loading && !searchResult && (
+        <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No service data loaded"
             description="Click Search to discover services from your OpenTelemetry trace data."
             addDataHref={PAGE_MANIFEST.addData.path}
           />
-        )}
+        </Paper>
+      )}
 
-        {!loading && searchResult && serviceRows.length === 0 && (
+      {!loading && searchResult && serviceRows.length === 0 && (
+        <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No services found"
             description="No services were found in the selected time range. Try expanding the time range or check your data ingestion."
             addDataHref={PAGE_MANIFEST.addData.path}
           />
-        )}
+        </Paper>
+      )}
 
-        {serviceRows.length > 0 && (
-          <ServiceInventoryTable
-            serviceRows={serviceRows}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            handleSort={handleSort}
-            handleViewTraces={handleViewTraces}
-          />
-        )}
-      </Paper>
+      {serviceRows.length > 0 && (
+        <Stack spacing={2}>
+          <ServiceOverviewCards serviceRows={serviceRows} />
+          <ServicePerformanceCharts serviceRows={serviceRows} />
+          <ServiceBusiestPanel serviceRows={serviceRows} onViewTraces={handleViewTraces} />
+          <Paper variant="outlined" sx={{ overflow: "auto" }}>
+            <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                All Services
+              </Typography>
+            </Box>
+            <ServiceInventoryTable
+              serviceRows={serviceRows}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              handleSort={handleSort}
+              handleViewTraces={handleViewTraces}
+            />
+          </Paper>
+        </Stack>
+      )}
     </Box>
   );
 }

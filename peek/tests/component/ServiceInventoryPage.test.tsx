@@ -116,7 +116,7 @@ describe("ServiceInventoryPage", () => {
 
   it("renders page header and empty state initially", () => {
     renderPage();
-    expect(screen.getByText("Services")).toBeInTheDocument();
+    expect(screen.getByText("Service Performance")).toBeInTheDocument();
     expect(screen.getByText("No service data loaded")).toBeInTheDocument();
     expect(
       screen.getByText("Click Search to discover services from your OpenTelemetry trace data."),
@@ -132,9 +132,9 @@ describe("ServiceInventoryPage", () => {
     await waitFor(() => {
       expect(screen.getByRole("table", { name: "Service inventory" })).toBeInTheDocument();
     });
-    expect(screen.getByText("frontend")).toBeInTheDocument();
-    expect(screen.getByText("backend-api")).toBeInTheDocument();
-    expect(screen.getByText("payment-service")).toBeInTheDocument();
+    expect(screen.getAllByText("frontend").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("backend-api").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("payment-service").length).toBeGreaterThan(0);
   });
 
   it("shows request counts for services", async () => {
@@ -144,10 +144,10 @@ describe("ServiceInventoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() => {
-      expect(screen.getByText("3,200")).toBeInTheDocument();
+      expect(screen.getAllByText("3,200").length).toBeGreaterThan(0);
     });
-    expect(screen.getByText("1,500")).toBeInTheDocument();
-    expect(screen.getByText("800")).toBeInTheDocument();
+    expect(screen.getAllByText("1,500").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("800").length).toBeGreaterThan(0);
   });
 
   it("displays error rate chips with error color for high rates", async () => {
@@ -157,12 +157,15 @@ describe("ServiceInventoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() => {
-      expect(screen.getByText("10.0%")).toBeInTheDocument();
+      expect(screen.getAllByText("10.0%").length).toBeGreaterThan(0);
     });
-    // 10% error rate should have error color (> 5%)
-    const highErrorChip = screen.getByText("10.0%");
-    // eslint-disable-next-line testing-library/no-node-access -- MUI Chip root
-    expect(highErrorChip.closest(".MuiChip-root")).toHaveClass("MuiChip-colorError");
+    // 10% error rate should have error color (> 5%) on at least one chip
+    const highErrorChips = screen.getAllByText("10.0%");
+    const errorChip = highErrorChips.find(
+      // eslint-disable-next-line testing-library/no-node-access -- MUI Chip root
+      (el) => el.closest(".MuiChip-root")?.classList.contains("MuiChip-colorError"),
+    );
+    expect(errorChip).toBeDefined();
   });
 
   it("shows service count after search", async () => {
@@ -195,12 +198,12 @@ describe("ServiceInventoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Busiest Services:")).toBeInTheDocument();
+      expect(screen.getByText("Busiest Services")).toBeInTheDocument();
     });
-    expect(screen.getByText("/checkout")).toBeInTheDocument();
-    expect(screen.getByText("POST /checkout")).toBeInTheDocument();
-    expect(screen.getByText("Database timeout")).toBeInTheDocument();
-    expect(screen.getByText("java")).toBeInTheDocument();
+    expect(screen.getAllByText("/checkout").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("POST /checkout").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Database timeout").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("java").length).toBeGreaterThan(0);
     expect(screen.getAllByText("prod").length).toBeGreaterThan(0);
   });
 
