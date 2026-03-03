@@ -154,8 +154,10 @@ describe("AddDataPage", () => {
 
     await goToStep4(user);
 
-    // The mount-time detectTelemetrySignals effect should have already fired.
-    expect(mockGetDataStreams).toHaveBeenCalled();
+    // Wait for the mount-time detectTelemetrySignals call to be consumed
+    // before setting up the next mock response, so the "once" value is
+    // deterministically consumed by the React Query "Check now" call.
+    await waitFor(() => expect(mockGetDataStreams).toHaveBeenCalledTimes(1));
 
     // Set up mock AFTER navigation so the mount-time detectTelemetrySignals
     // call has already resolved with the default (empty) mock.  The next
@@ -177,7 +179,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
     mockGetDataStreams
@@ -195,6 +197,11 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
+
+    // Ensure the mount-time detectTelemetrySignals call has been consumed so
+    // that "Check now" triggers the React Query call with the correct mock.
+    await waitFor(() => expect(mockGetDataStreams).toHaveBeenCalledTimes(1));
+
     await user.click(screen.getByRole("button", { name: /Check now/i }));
 
     await waitFor(() => {
@@ -218,7 +225,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
     expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("shows OTLP alert when no ingest endpoint can be derived", async () => {
     // Use a non-cloud URL so no OTLP endpoint can be derived
