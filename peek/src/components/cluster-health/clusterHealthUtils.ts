@@ -87,7 +87,6 @@ export function getThreadPoolRejections(
 }
 
 /** Sum total rejections across all nodes and pools. */
-/** Sum total rejections across all nodes. */
 export function totalThreadPoolRejections(
   nodes: Record<string, NodeStatsNode> | undefined,
   pools: string[] = MONITORED_THREAD_POOLS,
