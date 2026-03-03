@@ -14,8 +14,12 @@ const descriptor: VizRegistryDescriptor = {
     supportsOptions: true,
     supportsQuery: true,
     defaultOptions: () => ({ bins: 10 }) satisfies HistogramChartOptions,
-    renderComponent: ({ data, options }) => (
-      <HistogramChart data={data} options={options as HistogramChartOptions | undefined} />
+    renderComponent: ({ data, options, onExportReady }) => (
+      <HistogramChart
+        data={data}
+        options={options as HistogramChartOptions | undefined}
+        onExportReady={onExportReady}
+      />
     ),
     OptionsEditor: HistogramOptionsEditor,
   },
