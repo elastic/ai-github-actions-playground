@@ -148,11 +148,6 @@ export interface ElasticsearchError {
   cause?: string;
 }
 
-/**
- * @deprecated Use `ElasticsearchError` instead. Kept for backward compatibility.
- */
-export type EsqlError = ElasticsearchError;
-
 /** Shape of the `POST /_security/user/_has_privileges` response (subset we use). */
 interface HasPrivilegesResponse {
   cluster?: Record<string, boolean>;
