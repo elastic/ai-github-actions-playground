@@ -76,7 +76,7 @@ export function useRichIngestionVerification(
       if (!connection) throw new Error("No active Elasticsearch connection");
       const client = new ElasticsearchClient(connection);
       const result = await captureFullSnapshot(client, expectedSignalsRef.current, signal);
-      setBaseline(result.snapshot);
+      if (!signal.aborted) setBaseline(result.snapshot);
       return result;
     },
     enabled: Boolean(connection && pollingEnabled && !baseline),

@@ -28,12 +28,7 @@ import AwsDeployInstall from "./guides/AwsDeployInstall";
 import ApmInstall from "./guides/ApmInstall";
 import FluentBitInstall from "./guides/FluentBitInstall";
 
-interface AddDataStepSetupProps {
-  selectedTechnology: AddDataTechnologyCatalogEntry | null;
-  signalExpectation: string;
-  selectedSignals: readonly TelemetrySignal[];
-
-  // Configure props
+interface ConfigureProps {
   endpointType: EndpointType;
   onEndpointTypeChange: (type: EndpointType) => void;
   onEndpointTypeManuallySet: () => void;
@@ -50,8 +45,9 @@ interface AddDataStepSetupProps {
   onSelectApmLanguage: (lang: ApmLanguageDefinition) => void;
   fluentBitOutputMode: FluentBitOutputMode;
   onFluentBitOutputModeChange: (mode: FluentBitOutputMode) => void;
+}
 
-  // Install props
+interface InstallProps {
   esUrl: string;
   version: string;
   apiKey: string;
@@ -66,14 +62,23 @@ interface AddDataStepSetupProps {
   derivedOtlpUrl: string | null;
   clusterVersion: string | null;
   connectionUrl: string | null;
+}
 
-  // Verification
+interface VerificationProps {
   connectionAvailable: boolean;
   verification: IngestionVerificationState;
+}
 
-  // Navigation
+interface NavigationProps {
   onBack: () => void;
   onContinue: () => void;
+}
+
+interface AddDataStepSetupProps
+  extends ConfigureProps, InstallProps, VerificationProps, NavigationProps {
+  selectedTechnology: AddDataTechnologyCatalogEntry | null;
+  signalExpectation: string;
+  selectedSignals: readonly TelemetrySignal[];
 }
 
 export default function AddDataStepSetup(p: AddDataStepSetupProps) {

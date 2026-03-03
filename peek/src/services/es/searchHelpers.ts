@@ -48,12 +48,14 @@ export async function gracefulSearch(
   client: ElasticsearchClient,
   index: string,
   body: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<SearchResponse | null> {
   try {
     const response = await client.rawRequest(
       "POST",
       `/${index}/_search?ignore_unavailable=true&allow_no_indices=true`,
       JSON.stringify(body),
+      signal,
     );
     if (response.status >= 400) {
       const error = {
