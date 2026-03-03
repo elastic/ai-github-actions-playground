@@ -1,13 +1,13 @@
 import { useMemo, useCallback, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import { EChart } from "@perses-dev/components";
 import type { ECharts } from "echarts/core";
 
 import type { Span, ServiceMapEdge } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
 import { STATUS_COLORS } from "../../types/tokens";
 import EmptyState from "../EmptyState";
+import { EChart } from "../perses/PersesEChartWrapper";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { buildServiceGraphOption } from "./serviceGraphOptions";

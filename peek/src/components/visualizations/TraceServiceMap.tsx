@@ -1,10 +1,10 @@
 import { useMemo, useCallback, useRef, useEffect } from "react";
-import { EChart } from "@perses-dev/components";
 import type { ECharts } from "echarts/core";
 
 import type { Span } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
 import EmptyState from "../EmptyState";
+import { EChart } from "../perses/PersesEChartWrapper";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { buildServiceGraphOption } from "./serviceGraphOptions";

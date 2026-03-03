@@ -172,13 +172,13 @@ export default function TraceSearchPanel({
           gap: 1,
           alignItems: "center",
           mb: 1,
-          "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root": {
+          "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root.MuiInputBase-root": {
             height: "auto",
             minHeight: TOOLBAR_CONTROL_HEIGHT,
+            paddingBlock: "4px",
           },
           "& .MuiOutlinedInput-notchedOutline": { top: 0 },
-          "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
-          "& .MuiSelect-select.MuiInputBase-inputSizeSmall": { paddingBlock: "4.5px" },
+          "& .MuiOutlinedInput-root.MuiInputBase-root": { height: TOOLBAR_CONTROL_HEIGHT },
         }}
       >
         <Autocomplete
@@ -211,7 +211,11 @@ export default function TraceSearchPanel({
           )}
           sx={{
             minWidth: 160,
-            "& .MuiInputBase-root": { height: "auto", minHeight: TOOLBAR_CONTROL_HEIGHT },
+            "& .MuiInputBase-root.MuiOutlinedInput-root": {
+              height: "auto",
+              minHeight: TOOLBAR_CONTROL_HEIGHT,
+              paddingBlock: "4px",
+            },
           }}
         />
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -220,10 +224,7 @@ export default function TraceSearchPanel({
             placeholder="Min (ms)"
             value={minDurationInput}
             onChange={(e) => setMinDurationInput(e.target.value)}
-            sx={{
-              width: 100,
-              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
-            }}
+            sx={{ width: 100 }}
           />
           <Typography variant="body1" sx={{ px: 0.5 }}>
             —
@@ -233,10 +234,7 @@ export default function TraceSearchPanel({
             placeholder="Max (ms)"
             value={maxDurationInput}
             onChange={(e) => setMaxDurationInput(e.target.value)}
-            sx={{
-              width: 100,
-              "& .MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
-            }}
+            sx={{ width: 100 }}
           />
           <Button
             size="small"
@@ -261,7 +259,7 @@ export default function TraceSearchPanel({
           }}
           sx={{
             minWidth: 150,
-            "&.MuiOutlinedInput-root": { height: TOOLBAR_CONTROL_HEIGHT },
+            "&.MuiInputBase-root": { height: TOOLBAR_CONTROL_HEIGHT },
           }}
         >
           {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
