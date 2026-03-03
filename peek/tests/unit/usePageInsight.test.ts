@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 
+import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { generateText } from "ai";
 
 import { clearInsightCache, usePageInsight } from "../../src/hooks/usePageInsight";
@@ -16,7 +18,15 @@ vi.mock("@ai-sdk/openai", () => ({
   createOpenAI: vi.fn(() => vi.fn(() => ({ id: "test-model" }))),
 }));
 
-describe("usePageInsight – insightCache", () => {
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+}
+
+describe("usePageInsight – React Query", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -26,28 +36,38 @@ describe("usePageInsight – insightCache", () => {
     vi.mocked(generateText).mockReset();
   });
 
-  it("clearInsightCache invalidates cached entries", async () => {
-    vi.mocked(generateText)
-      .mockResolvedValueOnce({ text: "Cached insight." })
-      .mockResolvedValueOnce({ text: "Fresh insight." });
+  it("fetches an insight and caches it with staleTime: Infinity", async () => {
+    vi.mocked(generateText).mockResolvedValueOnce({ text: "Cached insight." });
 
-    const { result, unmount } = renderHook(() =>
-      usePageInsight({ context: "ctx", systemPrompt: "sys", cacheKey: "cache-key" }),
+    const { result } = renderHook(
+      () => usePageInsight({ context: "ctx", systemPrompt: "sys", cacheKey: "cache-key" }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
       expect(result.current.insight).toBe("Cached insight.");
     });
-    unmount();
+    expect(vi.mocked(generateText)).toHaveBeenCalledTimes(1);
+  });
 
-    clearInsightCache();
+  it("refresh re-fetches the insight", async () => {
+    vi.mocked(generateText)
+      .mockResolvedValueOnce({ text: "First insight." })
+      .mockResolvedValueOnce({ text: "Refreshed insight." });
 
-    const { result: secondResult } = renderHook(() =>
-      usePageInsight({ context: "ctx", systemPrompt: "sys", cacheKey: "cache-key" }),
+    const { result } = renderHook(
+      () => usePageInsight({ context: "ctx", systemPrompt: "sys", cacheKey: "cache-key" }),
+      { wrapper: createWrapper() },
     );
 
     await waitFor(() => {
-      expect(secondResult.current.insight).toBe("Fresh insight.");
+      expect(result.current.insight).toBe("First insight.");
+    });
+
+    result.current.refresh();
+
+    await waitFor(() => {
+      expect(result.current.insight).toBe("Refreshed insight.");
     });
     expect(vi.mocked(generateText)).toHaveBeenCalledTimes(2);
   });

@@ -4,11 +4,13 @@
 // response content-type parsing) lives in its own module.
 // ---------------------------------------------------------------------------
 
+import { RETRY_STATUSES, RETRY_DELAYS_MS, addJitter } from "./retryUtils";
+
 /** Timeout applied to every raw request issued from the API console. */
 export const RAW_REQUEST_TIMEOUT_MS = 30_000;
 
-/** Back-off delays for automatic retries on transient (network / 5xx) failures. */
-export const RETRY_DELAYS_MS: readonly number[] = [500, 1_000];
+// Re-export so existing `import { RETRY_DELAYS_MS } from "./rawRequest"` keeps working.
+export { RETRY_DELAYS_MS } from "./retryUtils";
 
 /** Function signature matching `ElasticsearchClient._doFetch`. */
 export type DoFetch = (
@@ -26,18 +28,7 @@ function isAbortError(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
 }
 
-/** Status codes that should trigger an automatic retry. */
-const RETRY_STATUSES = new Set([429, 503, 504]);
 const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-
-/**
- * Adds a small amount of random jitter (±10%) to a delay to prevent multiple
- * clients from retrying at the exact same moment.
- */
-function addJitter(ms: number): number {
-  const jitter = ms * 0.1;
-  return ms + (Math.random() * jitter * 2 - jitter);
-}
 
 /** Signal-aware delay that rejects immediately when the signal fires. */
 function delay(ms: number, signal: AbortSignal): Promise<void> {

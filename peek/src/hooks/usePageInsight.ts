@@ -1,26 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useShallow } from "zustand/react/shallow";
 
 import { useLLMStore } from "../store/useLLMStore";
 
-const MAX_CACHE_SIZE = 50;
-
-/** LRU-bounded cache of cacheKey → insight text. */
-const insightCache = new Map<string, string>();
-
 export function clearInsightCache() {
-  insightCache.clear();
-}
-
-function cacheSet(key: string, value: string) {
-  insightCache.delete(key);
-  insightCache.set(key, value);
-  if (insightCache.size > MAX_CACHE_SIZE) {
-    const oldest = insightCache.keys().next().value;
-    if (oldest !== undefined) insightCache.delete(oldest);
-  }
+  // No-op: cache is now managed by React Query. Callers that relied on this
+  // to force re-fetch should use the `refresh` callback returned by the hook.
+  // Kept as export so existing call sites (e.g. tests) continue to compile.
 }
 
 interface UsePageInsightOptions {
@@ -52,79 +41,43 @@ export function usePageInsight({
     })),
   );
   const hasApiKey = Boolean(apiKey?.trim());
+  const queryClient = useQueryClient();
 
-  const cachedInsight = insightCache.get(cacheKey) ?? null;
+  const {
+    data: insight = null,
+    isFetching: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["page-insight", cacheKey, apiKey, provider, llmModel] as const,
+    queryFn: async ({ signal }) => {
+      const openai = createOpenAI({
+        apiKey,
+        ...(provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+      });
+      const model = provider === "openrouter" ? openai.chat(llmModel) : openai(llmModel);
 
-  const [asyncResult, setAsyncResult] = useState<{ key: string; text: string } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshCounter, setRefreshCounter] = useState(0);
+      const result = await generateText({
+        model,
+        system: systemPrompt,
+        messages: [{ role: "user", content: context }],
+        abortSignal: signal,
+      });
 
-  const insight = cachedInsight ?? (asyncResult?.key === cacheKey ? asyncResult.text : null);
+      const text = result.text.trim();
+      return text || null;
+    },
+    enabled: enabled && hasApiKey && Boolean(context.trim()),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
-  useEffect(() => {
-    if (!enabled || !hasApiKey || !context.trim() || cachedInsight) {
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    setLoading(true);
-    setError(null);
-
-    void (async () => {
-      try {
-        const openai = createOpenAI({
-          apiKey,
-          ...(provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
-        });
-        const model = provider === "openrouter" ? openai.chat(llmModel) : openai(llmModel);
-
-        const result = await generateText({
-          model,
-          system: systemPrompt,
-          messages: [{ role: "user", content: context }],
-          abortSignal: controller.signal,
-        });
-
-        const text = result.text.trim();
-        if (text) {
-          cacheSet(cacheKey, text);
-          setAsyncResult({ key: cacheKey, text });
-        }
-      } catch (err) {
-        if ((err as Error).name !== "AbortError" && !controller.signal.aborted) {
-          setError((err as Error).message ?? "Failed to generate insight");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [
-    enabled,
-    hasApiKey,
-    apiKey,
-    provider,
-    llmModel,
-    context,
-    systemPrompt,
-    cacheKey,
-    cachedInsight,
-    refreshCounter,
-  ]);
+  const error = queryError ? ((queryError as Error).message ?? "Failed to generate insight") : null;
 
   const refresh = useCallback(() => {
-    insightCache.delete(cacheKey);
-    setAsyncResult(null);
-    setRefreshCounter((c) => c + 1);
-  }, [cacheKey]);
+    void queryClient.invalidateQueries({ queryKey: ["page-insight", cacheKey] });
+  }, [queryClient, cacheKey]);
 
   return { insight, loading, error, refresh };
 }

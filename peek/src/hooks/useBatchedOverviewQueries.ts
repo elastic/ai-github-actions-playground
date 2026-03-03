@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 
 import type { ElasticsearchClient } from "../services/es";
@@ -120,23 +120,26 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
   });
 
   // Build the results record from query states.
-  const results: Record<string, OverviewQueryResult> = {};
-  for (let i = 0; i < items.length; i++) {
-    const q = queries[i]!;
-    const item = items[i]!;
-    if (q.isFetching) {
-      results[item.name] = { status: "loading", data: q.data };
-    } else if (q.isError) {
-      results[item.name] = {
-        status: "error",
-        errorReason: q.error instanceof Error ? q.error.message : "Unknown error",
-      };
-    } else if (q.isSuccess) {
-      results[item.name] = { status: "success", data: q.data };
-    } else {
-      results[item.name] = { status: "idle" };
+  const results: Record<string, OverviewQueryResult> = useMemo(() => {
+    const out: Record<string, OverviewQueryResult> = {};
+    for (let i = 0; i < items.length; i++) {
+      const q = queries[i]!;
+      const item = items[i]!;
+      if (q.isFetching) {
+        out[item.name] = { status: "loading", data: q.data };
+      } else if (q.isError) {
+        out[item.name] = {
+          status: "error",
+          errorReason: q.error instanceof Error ? q.error.message : "Unknown error",
+        };
+      } else if (q.isSuccess) {
+        out[item.name] = { status: "success", data: q.data };
+      } else {
+        out[item.name] = { status: "idle" };
+      }
     }
-  }
+    return out;
+  }, [items, queries]);
 
   // Once all queries have settled, (re-)compute the known-with-data set.
   // This runs both after the initial discovery pass and after retryFailed
@@ -166,10 +169,14 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSettled]);
 
+  const queriesRef = useRef(queries);
+  queriesRef.current = queries;
+
   const retryFailed = useCallback(() => {
+    const currentQueries = queriesRef.current;
     const failedNames: string[] = [];
     for (let i = 0; i < items.length; i++) {
-      if (queries[i]?.isError) {
+      if (currentQueries[i]?.isError) {
         failedNames.push(items[i]!.name);
       }
     }
@@ -187,11 +194,11 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
     });
 
     for (let i = 0; i < items.length; i++) {
-      if (queries[i]?.isError) {
-        void queries[i]!.refetch();
+      if (currentQueries[i]?.isError) {
+        void currentQueries[i]!.refetch();
       }
     }
-  }, [items, queries]);
+  }, [items]);
 
   return { results, retryFailed };
 }
