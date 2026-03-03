@@ -17,9 +17,12 @@ describe("timePresets conversions", () => {
     });
   });
 
-  it("passes through custom absolute ranges", () => {
+  it("converts custom absolute ranges to ES|QL TO_DATETIME expressions for traces", () => {
     const custom = { from: "2026-02-24T03:00:00.000Z", to: "2026-02-24T04:00:00.000Z" };
     expect(toDashboardTimeRange(custom)).toEqual(custom);
-    expect(toTraceTimeRange(custom)).toEqual(custom);
+    expect(toTraceTimeRange(custom)).toEqual({
+      from: 'TO_DATETIME("2026-02-24T03:00:00.000Z")',
+      to: 'TO_DATETIME("2026-02-24T04:00:00.000Z")',
+    });
   });
 });
