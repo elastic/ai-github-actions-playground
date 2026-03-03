@@ -1,5 +1,7 @@
+import { Link as RouterLink } from "react-router-dom";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Link from "@mui/material/Link";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -93,9 +95,14 @@ export default function ServiceInventoryTable({
           return (
             <TableRow key={row.serviceName} hover>
               <TableCell>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                <Link
+                  component={RouterLink}
+                  to={`/services/${encodeURIComponent(row.serviceName)}`}
+                  underline="hover"
+                  sx={{ fontWeight: 500 }}
+                >
                   {row.serviceName}
-                </Typography>
+                </Link>
               </TableCell>
               <TableCell align="right">
                 <Typography variant="body2">{row.requestCount.toLocaleString()}</Typography>

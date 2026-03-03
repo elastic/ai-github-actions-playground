@@ -49,6 +49,7 @@ const FleetPage = lazy(() => import("../components/FleetPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const RolesPage = lazy(() => import("../components/RolesPage"));
+const ServiceDashboardPage = lazy(() => import("../components/services/ServiceDashboardPage"));
 const ServiceInventoryPage = lazy(() => import("../components/services/ServiceInventoryPage"));
 const SettingsPage = lazy(() => import("../components/SettingsPage"));
 const TracesPage = lazy(() => import("../components/traces/TracesPage"));
@@ -172,6 +173,20 @@ export const PAGE_MANIFEST = {
       group: "Workspace",
       order: 20,
       showInSidebar: true,
+      icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
+    },
+  },
+  serviceDashboard: {
+    path: "/services/:serviceName",
+    component: ServiceDashboardPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Service Dashboard",
+      group: "Workspace",
+      order: 21,
+      showInSidebar: false,
       icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
     },
   },

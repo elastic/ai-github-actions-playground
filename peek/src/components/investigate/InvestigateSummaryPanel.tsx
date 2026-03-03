@@ -20,6 +20,7 @@ import insightMarkdownSx from "../insightMarkdownSx";
 
 import {
   type InvestigateTab,
+  INVESTIGATE_TAB_LABEL,
   type TimelineEvent,
   buildTimelineContext,
   TIMELINE_SYSTEM_PROMPT,
@@ -78,8 +79,8 @@ export default function InvestigateSummaryPanel({
     <>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }} gutterBottom>
-          {events.length} event{events.length !== 1 ? "s" : ""} found for {activeTab} &ldquo;
-          {searchedEntity}&rdquo;
+          {events.length} event{events.length !== 1 ? "s" : ""} found for{" "}
+          {INVESTIGATE_TAB_LABEL[activeTab]} &ldquo;{searchedEntity}&rdquo;
         </Typography>
         {eventCategoryCounts.length > 0 && (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>

@@ -1,13 +1,15 @@
 import type { EsqlResponse } from "../../types";
 
 import type { InvestigateTab, TimelineEvent } from "./investigateUtils";
+import { investigateField } from "./investigateQueryBuilder";
+import { INVESTIGATE_TIMELINE_FIELDS } from "./investigateSchema";
 
 /** Parse ES|QL response into a list of recent entity suggestions. */
 export function parseRecentEntities(
   data: EsqlResponse,
   tab: InvestigateTab,
 ): Array<{ name: string; eventCount: number; lastSeen: string }> {
-  const fieldName = tab === "user" ? "user.name" : "host.name";
+  const fieldName = investigateField(tab);
   const colIndex = new Map<string, number>();
   for (let i = 0; i < data.columns.length; i++) {
     colIndex.set(data.columns[i]!.name, i);
@@ -32,6 +34,17 @@ export function parseRecentEntities(
 
 /** Parse ES|QL response columns/values into structured timeline events. */
 export function parseTimelineEvents(data: EsqlResponse): TimelineEvent[] {
+  const [
+    timestampField,
+    categoryField,
+    actionField,
+    outcomeField,
+    userNameField,
+    hostNameField,
+    sourceIpField,
+    messageField,
+    dataSourceField,
+  ] = INVESTIGATE_TIMELINE_FIELDS;
   const colIndex = new Map<string, number>();
   for (let i = 0; i < data.columns.length; i++) {
     colIndex.set(data.columns[i]!.name, i);
@@ -46,14 +59,14 @@ export function parseTimelineEvents(data: EsqlResponse): TimelineEvent[] {
   };
 
   return data.values.map((row) => ({
-    timestamp: get(row, "@timestamp"),
-    category: get(row, "event.category"),
-    action: get(row, "event.action"),
-    outcome: get(row, "event.outcome"),
-    userName: get(row, "user.name"),
-    hostName: get(row, "host.name"),
-    sourceIp: get(row, "source.ip"),
-    message: get(row, "message"),
-    dataSource: get(row, "_index"),
+    timestamp: get(row, timestampField),
+    category: get(row, categoryField),
+    action: get(row, actionField),
+    outcome: get(row, outcomeField),
+    userName: get(row, userNameField),
+    hostName: get(row, hostNameField),
+    sourceIp: get(row, sourceIpField),
+    message: get(row, messageField),
+    dataSource: get(row, dataSourceField),
   }));
 }

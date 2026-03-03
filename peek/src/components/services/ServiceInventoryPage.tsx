@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,13 +11,22 @@ import { PAGE_MANIFEST } from "../../routes/manifest";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
+import PageInsightBanner from "../PageInsightBanner";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 
+import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
 import ServiceOverviewCards from "./ServiceOverviewCards";
 import ServicePerformanceCharts from "./ServicePerformanceCharts";
 import ServiceBusiestPanel from "./ServiceBusiestPanel";
+import ServiceInsightsPanel from "./ServiceInsightsPanel";
 import ServiceInventoryTable from "./ServiceInventoryTable";
 import { useServiceInventorySearch } from "./useServiceInventorySearch";
+
+const MAX_CONTEXT_SERVICES = 50;
+
+function sanitizeTopError(value: string): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, 200);
+}
 
 export default function ServiceInventoryPage() {
   const {
@@ -35,6 +45,38 @@ export default function ServiceInventoryPage() {
     handleViewTraces,
     latestQueryRef,
   } = useServiceInventorySearch();
+
+  const insightContext = useMemo(() => {
+    if (serviceRows.length === 0) return "";
+    const slowest = serviceRows.reduce((a, b) => (b.avgLatencyMs > a.avgLatencyMs ? b : a));
+    const highestError = serviceRows.reduce((a, b) => (b.errorRate > a.errorRate ? b : a));
+    const mostActive = serviceRows.reduce((a, b) => (b.requestCount > a.requestCount ? b : a));
+    const contextRows = serviceRows
+      .slice()
+      .sort((a, b) => b.requestCount - a.requestCount)
+      .slice(0, MAX_CONTEXT_SERVICES);
+    return JSON.stringify({
+      totalServices: serviceRows.length,
+      omittedServices: Math.max(0, serviceRows.length - MAX_CONTEXT_SERVICES),
+      services: contextRows.map((r) => ({
+        name: r.serviceName,
+        requests: r.requestCount,
+        avgLatencyMs: r.avgLatencyMs,
+        errorRate: r.errorRate,
+        topError: sanitizeTopError(r.topError),
+        language: r.language,
+        environment: r.environment,
+      })),
+      slowestService: { name: slowest.serviceName, latency: formatLatency(slowest.avgLatencyMs) },
+      highestErrorRate: {
+        name: highestError.serviceName,
+        rate: formatErrorRate(highestError.errorRate),
+      },
+      mostActiveService: { name: mostActive.serviceName, requests: mostActive.requestCount },
+    });
+  }, [serviceRows]);
+
+  const insightCacheKey = insightContext;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -90,6 +132,12 @@ export default function ServiceInventoryPage() {
 
       {serviceRows.length > 0 && (
         <Stack spacing={2}>
+          <PageInsightBanner
+            context={insightContext}
+            systemPrompt="You are an APM performance advisor analyzing OpenTelemetry service data. Provide 2-3 concise, actionable insights about service health, latency outliers, error patterns, or resource concerns. Focus on what an SRE should investigate first. Keep it brief."
+            cacheKey={insightCacheKey}
+          />
+          <ServiceInsightsPanel serviceRows={serviceRows} />
           <ServiceOverviewCards serviceRows={serviceRows} />
           <ServicePerformanceCharts serviceRows={serviceRows} />
           <ServiceBusiestPanel serviceRows={serviceRows} onViewTraces={handleViewTraces} />
