@@ -66,6 +66,7 @@ export function interpolateReceiverTemplate(
 export function buildFullOtelConfig(
   receiverBlock: string,
   opts: {
+    receiverType: string;
     esUrl: string;
     apiKey: string;
     signals: readonly AddDataExpectedSignal[];
@@ -79,7 +80,7 @@ export function buildFullOtelConfig(
   const pipelines = uniqueSignals
     .map(
       (signal) => `    ${signal}:
-      receivers: [configured_receiver]
+      receivers: [${opts.receiverType}]
       processors: [batch]
       exporters: [elasticsearch]`,
     )
@@ -121,8 +122,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         helpText: "URL of the nginx stub_status module endpoint.",
       },
     ],
-    yamlTemplate: `  configured_receiver:
-    nginx:
+    yamlTemplate: `  nginx:
       endpoint: "{{endpoint}}"
       collection_interval: 10s`,
     signals: ["metrics"],
@@ -155,8 +155,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         defaultValue: "postgres",
       },
     ],
-    yamlTemplate: `  configured_receiver:
-    postgresql:
+    yamlTemplate: `  postgresql:
       endpoint: "{{endpoint}}"
       username: "{{username}}"
       password: "{{password}}"
@@ -183,8 +182,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         placeholder: "Leave empty if no auth",
       },
     ],
-    yamlTemplate: `  configured_receiver:
-    redis:
+    yamlTemplate: `  redis:
       endpoint: "{{endpoint}}"
       password: "{{password}}"
       collection_interval: 10s`,
@@ -219,8 +217,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         placeholder: "Leave empty for all databases",
       },
     ],
-    yamlTemplate: `  configured_receiver:
-    mysql:
+    yamlTemplate: `  mysql:
       endpoint: "{{endpoint}}"
       username: "{{username}}"
       password: "{{password}}"
@@ -240,8 +237,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         helpText: "Full MongoDB connection URI.",
       },
     ],
-    yamlTemplate: `  configured_receiver:
-    mongodb:
+    yamlTemplate: `  mongodb:
       hosts:
         - endpoint: "{{endpoint}}"
       collection_interval: 10s`,

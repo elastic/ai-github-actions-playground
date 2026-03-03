@@ -44,11 +44,12 @@ export default function OtelReceiverInstall({
   const fullConfig = useMemo(
     () =>
       buildFullOtelConfig(receiverBlock, {
+        receiverType: receiver.receiverType,
         esUrl,
         apiKey,
         signals: receiver.signals,
       }),
-    [receiverBlock, esUrl, apiKey, receiver.signals],
+    [receiverBlock, receiver.receiverType, esUrl, apiKey, receiver.signals],
   );
 
   const handleCopy = useCallback(async () => {
