@@ -46,7 +46,7 @@ export default function FleetPage() {
   const setActiveTab = usePageFiltersStore((s) => s.setFleetActiveTab);
   const setAutoRefreshEnabled = usePageFiltersStore((s) => s.setFleetAutoRefreshEnabled);
   const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
-  const resetFilters = usePageFiltersStore((s) => s.resetFleetFilters);
+  const resetFilters = usePageFiltersStore((s) => s.resetFleetAgentFilter);
 
   const {
     data: {
