@@ -71,65 +71,61 @@ export default function ServiceTracesTable({
         </TableRow>
       </TableHead>
       <TableBody>
-        {traces.map((trace) => (
-          <TableRow
-            key={trace.spanId || `${trace.traceId}-${trace.timestamp}-${trace.spanName}`}
-            hover
-          >
-            <TableCell>
-              <Typography
-                variant="body2"
-                sx={{
-                  maxWidth: 140,
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                  fontSize: "0.75rem",
-                  fontFamily: "monospace",
-                }}
-              >
-                {trace.traceId}
-              </Typography>
-            </TableCell>
-            <TableCell>
-              <Typography variant="body2">{trace.spanName}</Typography>
-            </TableCell>
-            <TableCell align="right">
-              <Typography variant="body2">{formatLatency(trace.durationMs)}</Typography>
-            </TableCell>
-            <TableCell>
-              <Chip
-                size="small"
-                label={trace.statusCode || "OK"}
-                color={
-                  trace.statusCode === "Error" || trace.statusCode === "STATUS_CODE_ERROR"
-                    ? "error"
-                    : "default"
-                }
-                variant={
-                  trace.statusCode === "Error" || trace.statusCode === "STATUS_CODE_ERROR"
-                    ? "filled"
-                    : "outlined"
-                }
-              />
-            </TableCell>
-            <TableCell>
-              <Typography variant="body2" color="text.secondary">
-                {trace.timestamp}
-              </Typography>
-            </TableCell>
-            <TableCell align="right">
-              <Button
-                size="small"
-                variant="text"
-                aria-label={`View trace ${trace.traceId}`}
-                onClick={() => onViewTrace(trace.traceId)}
-              >
-                View
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
+        {traces.map((trace) => {
+          const isErrorStatus =
+            trace.statusCode === "Error" || trace.statusCode === "STATUS_CODE_ERROR";
+          return (
+            <TableRow
+              key={trace.spanId || `${trace.traceId}-${trace.timestamp}-${trace.spanName}`}
+              hover
+            >
+              <TableCell>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    maxWidth: 140,
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    fontSize: "0.75rem",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {trace.traceId}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">{trace.spanName}</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="body2">{formatLatency(trace.durationMs)}</Typography>
+              </TableCell>
+              <TableCell>
+                <Chip
+                  size="small"
+                  label={trace.statusCode || "OK"}
+                  color={isErrorStatus ? "error" : "default"}
+                  variant={isErrorStatus ? "filled" : "outlined"}
+                />
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2" color="text.secondary">
+                  {trace.timestamp}
+                </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Button
+                  size="small"
+                  variant="text"
+                  aria-label={`View trace ${trace.traceId}`}
+                  onClick={() => onViewTrace(trace.traceId)}
+                >
+                  View
+                </Button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

@@ -93,5 +93,24 @@ describe("serviceDashboardQueryBuilder", () => {
       });
       expect(query).toContain('service.name == "my \\"special\\" service"');
     });
+
+    it("supports absolute ISO timestamps", () => {
+      const query = buildServiceRecentTracesQuery({
+        serviceName: "test-svc",
+        timeFrom: "2026-01-01T00:00:00.000Z",
+        timeTo: "2026-01-01T01:00:00.000Z",
+      });
+      expect(query).toContain('@timestamp >= "2026-01-01T00:00:00.000Z"');
+      expect(query).toContain('@timestamp <= "2026-01-01T01:00:00.000Z"');
+    });
+
+    it("throws for unsupported time expressions", () => {
+      expect(() =>
+        buildServiceRecentTracesQuery({
+          ...defaultFilters,
+          timeTo: "NOW(); DROP TABLE traces",
+        }),
+      ).toThrow("Unsupported time expression");
+    });
   });
 });

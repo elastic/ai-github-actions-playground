@@ -30,11 +30,29 @@ import {
   type RouteSortField,
   type TraceSortField,
   type SortDirection,
+  type RouteRow,
+  type RecentTrace,
   parseRouteRows,
   parseRecentTraces,
 } from "./serviceDashboardHelpers";
 import ServiceRoutesTable from "./ServiceRoutesTable";
 import ServiceTracesTable from "./ServiceTracesTable";
+
+function compareByField<T extends RouteRow | RecentTrace, K extends keyof T>(
+  a: T,
+  b: T,
+  field: K,
+  direction: SortDirection,
+): number {
+  const aVal = a[field];
+  const bVal = b[field];
+  if (typeof aVal === "string" && typeof bVal === "string") {
+    return direction === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+  }
+  return direction === "asc"
+    ? (aVal as number) - (bVal as number)
+    : (bVal as number) - (aVal as number);
+}
 
 export default function ServiceDashboardPage() {
   const navigate = useNavigate();
@@ -217,31 +235,13 @@ export default function ServiceDashboardPage() {
   const routeRows = useMemo(() => {
     if (!routesResult) return [];
     const rows = parseRouteRows(routesResult);
-    return rows.sort((a, b) => {
-      const aVal = a[routeSortField];
-      const bVal = b[routeSortField];
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return routeSortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      return routeSortDirection === "asc"
-        ? (aVal as number) - (bVal as number)
-        : (bVal as number) - (aVal as number);
-    });
+    return rows.sort((a, b) => compareByField(a, b, routeSortField, routeSortDirection));
   }, [routesResult, routeSortField, routeSortDirection]);
 
   const recentTraces = useMemo(() => {
     if (!tracesResult) return [];
     const traces = parseRecentTraces(tracesResult);
-    return traces.sort((a, b) => {
-      const aVal = a[traceSortField];
-      const bVal = b[traceSortField];
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return traceSortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      return traceSortDirection === "asc"
-        ? (aVal as number) - (bVal as number)
-        : (bVal as number) - (aVal as number);
-    });
+    return traces.sort((a, b) => compareByField(a, b, traceSortField, traceSortDirection));
   }, [tracesResult, traceSortField, traceSortDirection]);
 
   // Summary metrics from route rows
