@@ -6,26 +6,10 @@ import {
   buildWherePipe,
   normalizeTimeExpression,
 } from "../../services/es/queryParts";
+import { EMPTY_PROFILING_FILTERS, type ProfilingFilters } from "../../types/pageFilters";
 
-export interface ProfilingFilters {
-  executableName: string | null;
-  threadName: string | null;
-  serviceName: string | null;
-  hostName: string | null;
-  timeFrom: string;
-  timeTo: string;
-  limit: number;
-}
-
-export const EMPTY_FILTERS: ProfilingFilters = {
-  executableName: null,
-  threadName: null,
-  serviceName: null,
-  hostName: null,
-  timeFrom: "NOW() - 1 hour",
-  timeTo: "NOW()",
-  limit: 100,
-};
+export type { ProfilingFilters };
+export const EMPTY_FILTERS = EMPTY_PROFILING_FILTERS;
 
 function normalizeEsqlDateTimeExpression(expr: string): string {
   return normalizeTimeExpression(expr) ?? expr;

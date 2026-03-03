@@ -11,9 +11,12 @@ import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { useLLMStore } from "../../store/useLLMStore";
 import { usePageInsight } from "../../hooks/usePageInsight";
+import insightMarkdownSx from "../insightMarkdownSx";
 
 import {
   type InvestigateTab,
@@ -152,9 +155,11 @@ export default function InvestigateSummaryPanel({
                 </IconButton>
               </>
             }
-            sx={{ "& .MuiAlert-message": { fontStyle: "italic" } }}
+            sx={insightMarkdownSx}
           >
-            {insight}
+            <Box component="span">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{insight}</ReactMarkdown>
+            </Box>
           </Alert>
         </Fade>
       )}

@@ -5,11 +5,9 @@ import { storeResetters } from "../../src/store/storeResetters";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
-import { useFleetStore } from "../../src/store/useFleetStore";
+import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
-import { useProfilingStore } from "../../src/store/useProfilingStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
-import { useServicesStore } from "../../src/store/useServicesStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
@@ -25,11 +23,19 @@ const STORES_WITH_RESET_API = [
   { name: "useConnectionStore", store: useConnectionStore, method: "resetConnectionState" },
   { name: "useDashboardStore", store: useDashboardStore, method: "resetDashboardState" },
   { name: "useExplorerStore", store: useExplorerStore, method: "reset" },
-  { name: "useFleetStore", store: useFleetStore, method: "resetFilters" },
+  { name: "usePageFiltersStore (fleet)", store: usePageFiltersStore, method: "resetFleetFilters" },
   { name: "useLLMStore", store: useLLMStore, method: "resetLLMState" },
-  { name: "useProfilingStore", store: useProfilingStore, method: "resetFilters" },
+  {
+    name: "usePageFiltersStore (profiling)",
+    store: usePageFiltersStore,
+    method: "resetProfilingFilters",
+  },
   { name: "useQueryStore", store: useQueryStore, method: "resetQueryState" },
-  { name: "useServicesStore", store: useServicesStore, method: "resetFilters" },
+  {
+    name: "usePageFiltersStore (services)",
+    store: usePageFiltersStore,
+    method: "resetServiceFilters",
+  },
   { name: "useTracesStore", store: useTracesStore, method: "resetFilters" },
   { name: "useUIStore", store: useUIStore, method: "resetUIState" },
   { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },

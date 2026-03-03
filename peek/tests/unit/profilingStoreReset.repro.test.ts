@@ -2,29 +2,29 @@
 import { describe, it, expect } from "vitest";
 
 import { resetAllStores } from "../fixtures/test-utils";
-import { useProfilingStore } from "../../src/store/useProfilingStore";
+import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
 
 describe("profiling store reset reproduction", () => {
-  it("global reset should reset profiling store", () => {
-    useProfilingStore.setState({
-      filters: {
+  it("global reset should reset profiling filters", () => {
+    usePageFiltersStore.setState({
+      profilingFilters: {
         serviceName: "svc-a",
         environment: "prod",
         kuery: "labels.team:platform",
         start: "2026-01-01T00:00:00.000Z",
         end: "2026-01-01T01:00:00.000Z",
       },
-      rawQuery: "FROM profiling-*",
-      viewMode: "flamescope",
+      profilingRawQuery: "FROM profiling-*",
+      profilingViewMode: "flamescope",
       expandedStacktraceIds: new Set(["st-1"]),
     });
 
     resetAllStores();
 
-    const state = useProfilingStore.getState();
-    expect(state.filters.serviceName).toBeNull();
-    expect(state.rawQuery).toBeNull();
+    const state = usePageFiltersStore.getState();
+    expect(state.profilingFilters.serviceName).toBeNull();
+    expect(state.profilingRawQuery).toBeNull();
     expect(state.expandedStacktraceIds.size).toBe(0);
-    expect(state.viewMode).toBe("topFunctions");
+    expect(state.profilingViewMode).toBe("topFunctions");
   });
 });
