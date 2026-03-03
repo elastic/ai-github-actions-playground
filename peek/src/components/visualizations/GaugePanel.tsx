@@ -1,8 +1,8 @@
 import { useMemo, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
 import type { ECharts } from "echarts/core";
 
-import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, GaugePanelOptions, ThresholdColor, ThresholdStep } from "../../types";
 import { toGaugeData } from "../../services/perses/dataTransformers";
 

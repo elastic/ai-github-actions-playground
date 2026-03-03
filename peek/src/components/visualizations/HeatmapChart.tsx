@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
 import type { ECharts } from "echarts/core";
 
-import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse } from "../../types";
 import { HEATMAP_GRADIENT } from "../../types/tokens";
 
