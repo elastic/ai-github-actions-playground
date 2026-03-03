@@ -15,6 +15,7 @@ import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const mockGetDataStreams = vi.fn().mockResolvedValue({ data_streams: [] });
+// Required because ingestion verification now uses rawRequest via gracefulSearch.
 const mockRawRequest = vi.fn().mockResolvedValue({ status: 200, body: {} });
 
 vi.mock("../../src/services/es", () => ({
@@ -173,7 +174,7 @@ describe("AddDataPage", () => {
     // Wait for detection (rich verification shows per-signal cards and summary alert)
     await waitFor(
       () => {
-        expect(screen.getByText(/data stream/i)).toBeInTheDocument();
+        expect(screen.getByText(/data stream.*appeared/i)).toBeInTheDocument();
       },
       { timeout: 10_000 },
     );

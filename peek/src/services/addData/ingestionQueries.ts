@@ -152,9 +152,9 @@ export function computeIngestionDelta(
     const baseDocs = base?.docCount ?? 0;
     const baseDataStream = base?.dataStreamExists ?? false;
 
-    const latestTimestampIsRecent = curr.maxTimestamp
-      ? Date.now() - Date.parse(curr.maxTimestamp) < RECENCY_THRESHOLD_MS
-      : false;
+    const latestTimestampMs = curr.maxTimestamp ? Date.parse(curr.maxTimestamp) : NaN;
+    const ageMs = Number.isNaN(latestTimestampMs) ? Infinity : Date.now() - latestTimestampMs;
+    const latestTimestampIsRecent = ageMs >= 0 && ageMs < RECENCY_THRESHOLD_MS;
 
     return {
       signal: curr.signal,

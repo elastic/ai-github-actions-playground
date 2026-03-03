@@ -111,7 +111,8 @@ export function useRichIngestionVerification(
   const deltas = baseline && current ? computeIngestionDelta(baseline, current) : [];
 
   const overallDetected = deltas.some(
-    (d) => d.dataStreamAppeared || d.isDataFlowing || d.newHostsDetected > 0,
+    (d) =>
+      d.dataStreamAppeared || d.isDataFlowing || d.newHostsDetected > 0 || d.newAgentsDetected > 0,
   );
 
   // Status derivation

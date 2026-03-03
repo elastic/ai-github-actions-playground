@@ -77,11 +77,27 @@ interface AddDataStepSetupProps {
 }
 
 export default function AddDataStepSetup(p: AddDataStepSetupProps) {
-  const guideType = p.selectedTechnology?.guideType ?? "edot_collector";
-  const guideDef = GUIDE_TYPE_DEFINITIONS[guideType];
-
   const [configureExpanded, setConfigureExpanded] = useState(true);
   const [installExpanded, setInstallExpanded] = useState(true);
+
+  if (!p.selectedTechnology) {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Typography variant="h6">Step 2: Set up and verify</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Select a technology in step 1 before continuing.
+        </Typography>
+        <Stack direction="row" justifyContent="space-between">
+          <Button variant="outlined" onClick={p.onBack}>
+            Back
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
+
+  const guideType = p.selectedTechnology.guideType;
+  const guideDef = GUIDE_TYPE_DEFINITIONS[guideType];
 
   // ---------------------------------------------------------------------------
   // Configure section content (guide-specific)
@@ -108,7 +124,11 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           fieldValues={p.receiverFieldValues}
           onFieldValuesChange={p.onReceiverFieldValuesChange}
         />
-      ) : null;
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          Receiver details are unavailable for this selection.
+        </Typography>
+      );
       break;
     case "aws_cloud_deploy":
       configureContent = (
@@ -148,7 +168,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
     case "edot_collector":
       installContent = (
         <EdotCollectorInstall
-          technologyLabel={p.selectedTechnology?.technology ?? "your source"}
+          technologyLabel={p.selectedTechnology.technology}
           platform={p.platform}
           esUrl={p.esUrl}
           version={p.version}
@@ -172,17 +192,29 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           esUrl={p.esUrl}
           apiKey={p.apiKey}
         />
-      ) : null;
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          Receiver details are unavailable for this selection.
+        </Typography>
+      );
       break;
     case "aws_cloud_deploy":
       installContent = p.selectedAwsTarget ? (
         <AwsDeployInstall target={p.selectedAwsTarget} esUrl={p.esUrl} apiKey={p.apiKey} />
-      ) : null;
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          Select a deployment target to show install steps.
+        </Typography>
+      );
       break;
     case "apm":
       installContent = p.selectedApmLanguage ? (
         <ApmInstall language={p.selectedApmLanguage} endpoint={p.esUrl} apiKey={p.apiKey} />
-      ) : null;
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          Select a language to show install steps.
+        </Typography>
+      );
       break;
     case "fluent_bit":
       installContent = (
@@ -233,7 +265,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
 
       {/* Section 3: Verify (always visible, not collapsible) */}
       <IngestionVerificationPanel
-        technologyName={p.selectedTechnology?.technology ?? "this integration"}
+        technologyName={p.selectedTechnology.technology}
         signalExpectation={p.signalExpectation}
         expectedSignals={p.selectedSignals}
         verification={p.verification}

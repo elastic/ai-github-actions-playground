@@ -35,7 +35,7 @@ export function extractSearchErrorMessage(body: unknown, status: number): string
 export function isMissingIndexError(
   error: Pick<ElasticsearchError, "status" | "message" | "cause">,
 ): boolean {
-  if (error.status === 404) return true;
+  if (error.status !== 404) return false;
   const normalized = `${error.message} ${error.cause ?? ""}`.toLowerCase();
   return (
     normalized.includes("index_not_found_exception") ||

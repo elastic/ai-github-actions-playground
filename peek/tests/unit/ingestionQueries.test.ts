@@ -162,6 +162,16 @@ describe("computeIngestionDelta", () => {
     expect(deltas[0].latestTimestampIsRecent).toBe(false);
   });
 
+  it("marks future timestamps as not recent", () => {
+    const futureTimestamp = new Date(Date.now() + 60_000).toISOString();
+    const baseline = makeSnapshot([makeSignal({ signal: "logs" })]);
+    const current = makeSnapshot([makeSignal({ signal: "logs", maxTimestamp: futureTimestamp })]);
+
+    const deltas = computeIngestionDelta(baseline, current);
+    expect(deltas[0].latestTimestampIsRecent).toBe(false);
+    expect(deltas[0].latestTimestamp).toBe(futureTimestamp);
+  });
+
   it("handles missing baseline signal gracefully", () => {
     const baseline = makeSnapshot([]);
     const current = makeSnapshot([

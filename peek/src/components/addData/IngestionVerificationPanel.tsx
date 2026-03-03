@@ -15,6 +15,15 @@ import AskAiButton from "../AskAiButton";
 
 import SignalVerificationCard from "./SignalVerificationCard";
 
+const PULSE_ICON_SX = {
+  animation: "ingestionPulse 1.5s ease-in-out infinite",
+  fontSize: 16,
+  "@keyframes ingestionPulse": {
+    "0%, 100%": { opacity: 1 },
+    "50%": { opacity: 0.3 },
+  },
+} as const;
+
 interface IngestionVerificationPanelProps {
   technologyName: string;
   signalExpectation: string;
@@ -75,17 +84,7 @@ export default function IngestionVerificationPanel({
         </Button>
         {isPolling && (
           <Stack direction="row" spacing={0.5} alignItems="center">
-            <RadioButtonCheckedIcon
-              color="info"
-              sx={{
-                animation: "pulse 1.5s ease-in-out infinite",
-                fontSize: 16,
-                "@keyframes pulse": {
-                  "0%, 100%": { opacity: 1 },
-                  "50%": { opacity: 0.3 },
-                },
-              }}
-            />
+            <RadioButtonCheckedIcon color="info" sx={PULSE_ICON_SX} />
             <Typography variant="body2" color="info.main">
               Listening for data...
             </Typography>
@@ -158,7 +157,7 @@ function DetectionSummaryAlert({ deltas }: { deltas: PerSignalDelta[] }) {
   }
 
   const flowing = deltas.filter((d) => d.isDataFlowing && !d.dataStreamAppeared);
-  if (flowing.length > 0 && parts.length === 0) {
+  if (flowing.length > 0) {
     parts.push("data is flowing — document counts are increasing");
   }
 

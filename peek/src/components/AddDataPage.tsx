@@ -149,10 +149,17 @@ export default function AddDataPage() {
   }, [connection]);
 
   const selectedSignals = (selectedTechnology?.expectedSignals ?? []) as readonly TelemetrySignal[];
+  useEffect(() => {
+    if (selectedTechnology && selectedTechnology.expectedSignals.length === 0) {
+      console.warn(
+        `[AddDataPage] Technology "${selectedTechnology.id}" has no expected telemetry signals configured`,
+      );
+    }
+  }, [selectedTechnology]);
   const signalExpectation =
     selectedSignals.length > 1
       ? `${selectedSignals.slice(0, -1).join(", ")} and ${selectedSignals[selectedSignals.length - 1]}`
-      : (selectedSignals[0] ?? "telemetry");
+      : (selectedSignals[0] ?? "no expected signals");
 
   // ---- Rich ingestion verification (two-tier: data stream + cardinality) ----
   const verification = useRichIngestionVerification(selectedSignals);

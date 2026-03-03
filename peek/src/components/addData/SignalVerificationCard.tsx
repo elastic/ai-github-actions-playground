@@ -4,7 +4,6 @@ import Typography from "@mui/material/Typography";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import type { PerSignalDelta } from "../../services/addData/ingestionQueries";
 
@@ -26,7 +25,11 @@ interface SignalVerificationCardProps {
 }
 
 export default function SignalVerificationCard({ delta, isPolling }: SignalVerificationCardProps) {
-  const detected = delta.dataStreamAppeared || delta.isDataFlowing || delta.newHostsDetected > 0;
+  const detected =
+    delta.dataStreamAppeared ||
+    delta.isDataFlowing ||
+    delta.newHostsDetected > 0 ||
+    delta.newAgentsDetected > 0;
   const label = SIGNAL_LABELS[delta.signal] ?? delta.signal;
   const color = SIGNAL_COLORS[delta.signal] ?? "info";
 
@@ -114,9 +117,6 @@ function StatusIcon({ detected, isPolling }: { detected: boolean; isPolling: boo
   }
   return <RadioButtonUncheckedIcon color="disabled" fontSize="small" />;
 }
-
-// Suppress unused variable warning — WarningAmberIcon reserved for future "expected but missing" state
-void WarningAmberIcon;
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
