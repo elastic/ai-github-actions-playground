@@ -50,7 +50,6 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetUi,
   resetApiConsole,
   resetPageContext,
-  resetLogs,
 ];
 
 export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = [

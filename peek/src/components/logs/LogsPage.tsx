@@ -12,6 +12,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
+import ListSubheader from "@mui/material/ListSubheader";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
@@ -288,58 +289,57 @@ export default function LogsPage() {
           )}
           {!fieldValuesLoading && !fieldValuesError && (
             <List dense disablePadding>
-              {SIDEBAR_FIELDS.map((field) => (
-                <Box key={field}>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary={<Typography variant="caption">{field}</Typography>}
-                      primaryTypographyProps={{ component: "div" }}
-                    />
-                  </ListItem>
-                  {(fieldValues[field] ?? []).map((entry) => (
-                    <ListItem key={`${field}-${entry.value}`} disablePadding>
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ alignItems: "center", width: "100%", pl: 2, py: 0.5 }}
-                      >
-                        <ListItemText
-                          primary={
-                            <Typography variant="caption" noWrap title={entry.value}>
-                              {entry.value}
-                            </Typography>
-                          }
-                          secondary={`${entry.count.toLocaleString()} docs`}
-                        />
-                        <Stack direction="row" spacing={0.5}>
-                          <Button
-                            size="small"
-                            variant="text"
-                            aria-label={`Include ${field} ${entry.value}`}
-                            onClick={() => handleCellFilter(field, entry.value, false)}
-                          >
-                            <AddIcon fontSize="inherit" />
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="text"
-                            aria-label={`Exclude ${field} ${entry.value}`}
-                            onClick={() => handleCellFilter(field, entry.value, true)}
-                          >
-                            <RemoveIcon fontSize="inherit" />
-                          </Button>
-                        </Stack>
+              {SIDEBAR_FIELDS.map((field) => [
+                <ListSubheader
+                  key={`${field}-header`}
+                  disableSticky
+                  sx={{ py: 0.5, lineHeight: "normal" }}
+                >
+                  <Typography variant="caption">{field}</Typography>
+                </ListSubheader>,
+                ...(fieldValues[field] ?? []).map((entry) => (
+                  <ListItem key={`${field}-${entry.value}`} disablePadding>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ alignItems: "center", width: "100%", pl: 2, py: 0.5 }}
+                    >
+                      <ListItemText
+                        primary={
+                          <Typography variant="caption" noWrap title={entry.value}>
+                            {entry.value}
+                          </Typography>
+                        }
+                        secondary={`${entry.count.toLocaleString()} docs`}
+                      />
+                      <Stack direction="row" spacing={0.5}>
+                        <Button
+                          size="small"
+                          variant="text"
+                          aria-label={`Include ${field} ${entry.value}`}
+                          onClick={() => handleCellFilter(field, entry.value, false)}
+                        >
+                          <AddIcon fontSize="inherit" />
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="text"
+                          aria-label={`Exclude ${field} ${entry.value}`}
+                          onClick={() => handleCellFilter(field, entry.value, true)}
+                        >
+                          <RemoveIcon fontSize="inherit" />
+                        </Button>
                       </Stack>
-                    </ListItem>
-                  ))}
-                  <Divider />
-                </Box>
-              ))}
+                    </Stack>
+                  </ListItem>
+                )),
+                <Divider key={`${field}-divider`} component="li" />,
+              ])}
             </List>
           )}
         </Paper>
 
-        <Paper variant="outlined" sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
+        <Paper variant="outlined" tabIndex={0} sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
           {!result && !loading && (
             <EmptyState
               heading="No logs loaded"
