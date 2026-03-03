@@ -33,6 +33,7 @@ const PRIMARY_EXPERIENCES: readonly AddDataGuidedExperience[] = [
 interface AddDataStepTechnologyProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   onSelectTechnology: (tech: AddDataTechnologyCatalogEntry) => void;
+  onClearTechnology: () => void;
   technologySearch: string;
   onTechnologySearchChange: (search: string) => void;
   onContinue: () => void;
@@ -41,6 +42,7 @@ interface AddDataStepTechnologyProps {
 export default function AddDataStepTechnology({
   selectedTechnology,
   onSelectTechnology,
+  onClearTechnology,
   technologySearch,
   onTechnologySearchChange,
   onContinue,
@@ -122,7 +124,12 @@ export default function AddDataStepTechnology({
               <ExperienceTile
                 key={exp}
                 experience={exp}
-                onClick={() => setSelectedExperience(exp)}
+                onClick={() => {
+                  setSelectedExperience(exp);
+                  if (selectedTechnology && selectedTechnology.experience !== exp) {
+                    onClearTechnology();
+                  }
+                }}
               />
             ))}
           </Box>
@@ -131,6 +138,8 @@ export default function AddDataStepTechnology({
           <Box>
             <ButtonBase
               onClick={() => setAdvancedOpen((prev) => !prev)}
+              aria-expanded={advancedOpen}
+              aria-controls="advanced-technologies-panel"
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -160,7 +169,7 @@ export default function AddDataStepTechnology({
               />
             </ButtonBase>
             <Collapse in={advancedOpen}>
-              <Box sx={{ pt: 1 }}>
+              <Box id="advanced-technologies-panel" role="region" sx={{ pt: 1 }}>
                 <AddDataTechnologyResults
                   filteredTechnologies={advancedTechnologies}
                   selectedTechnology={selectedTechnology}

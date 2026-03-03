@@ -52,6 +52,8 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
       {/* Collapsed header — always visible */}
       <ButtonBase
         onClick={() => setExpanded((prev) => !prev)}
+        aria-expanded={expanded}
+        aria-controls={`signal-detail-${delta.signal}`}
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -84,7 +86,11 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
 
       {/* Expandable detail */}
       <Collapse in={expanded}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, pb: 1.5, px: 1.5 }}>
+        <Box
+          id={`signal-detail-${delta.signal}`}
+          role="region"
+          sx={{ display: "flex", flexDirection: "column", gap: 0.5, pb: 1.5, px: 1.5 }}
+        >
           {/* Data stream */}
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
             {delta.dataStreamAppeared ? (

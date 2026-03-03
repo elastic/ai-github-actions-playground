@@ -186,6 +186,7 @@ export default function AddDataPage() {
         <AddDataStepTechnology
           selectedTechnology={selectedTechnology}
           onSelectTechnology={handleSelectTechnology}
+          onClearTechnology={() => setSelectedTechnology(null)}
           technologySearch={technologySearch}
           onTechnologySearchChange={setTechnologySearch}
           onContinue={() => setWizardStep(2)}

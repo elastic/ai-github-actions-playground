@@ -220,10 +220,7 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // Click Kubernetes experience, then Kubernetes technology
-    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
-    await user.click(screen.getAllByRole("button", { name: /Kubernetes/, pressed: false })[0]);
-    await user.click(screen.getByRole("button", { name: /^Continue$/i }));
+    await goToStep2(user);
 
     // Switch to Managed OTLP
     await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
