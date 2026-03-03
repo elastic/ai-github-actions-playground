@@ -157,7 +157,9 @@ export default function ClusterOverviewPage() {
               ? "success"
               : clusterHealth?.status === "yellow"
                 ? "warning"
-                : "info"
+                : clusterHealth?.status === "red"
+                  ? "error"
+                  : "info"
           }
         />
       )}
