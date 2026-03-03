@@ -438,3 +438,17 @@ export function getTraceTimeBounds(spans: Span[]): { startUs: number; endUs: num
   }
   return { startUs: minStart, endUs: maxEnd };
 }
+
+/** User-facing summary for raw ES|QL / Elasticsearch parser errors. */
+export function summarizeError(raw: string): string {
+  if (/second argument of \[.*\] must be \[.*\]/i.test(raw) || /type mismatch/i.test(raw)) {
+    return "A query type mismatch occurred. Results may still be usable.";
+  }
+  if (/verification_exception/i.test(raw) || /Found \d+ problem/i.test(raw)) {
+    return "The query encountered a validation issue.";
+  }
+  if (/parsing_exception/i.test(raw)) {
+    return "The query could not be parsed.";
+  }
+  return "A query error occurred.";
+}
