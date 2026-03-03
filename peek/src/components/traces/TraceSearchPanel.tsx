@@ -3,8 +3,6 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -250,29 +248,6 @@ export default function TraceSearchPanel({
               Apply
             </Button>
           </Stack>
-          <Select
-            size="small"
-            displayEmpty
-            aria-label="Time range"
-            value={filters.timeFrom ?? ""}
-            onChange={(e) => {
-              const selectedFrom = e.target.value === "" ? null : e.target.value;
-              const opt = TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === selectedFrom);
-              if (opt) {
-                applyFiltersAndRun({ timeFrom: opt.from, timeTo: opt.to });
-              }
-            }}
-            sx={{
-              minWidth: 150,
-              "&.MuiInputBase-root": { height: TOOLBAR_CONTROL_HEIGHT },
-            }}
-          >
-            {TRACE_TIME_RANGE_OPTIONS.map((opt) => (
-              <MenuItem key={opt.label} value={opt.from ?? ""}>
-                {opt.label}
-              </MenuItem>
-            ))}
-          </Select>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", ml: "auto" }}>
             {(
               [

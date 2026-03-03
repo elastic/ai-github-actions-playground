@@ -1,3 +1,5 @@
+import { resolveDateTime } from "../services/datemath";
+import { escapeEsqlString } from "../services/es/esqlUtils";
 import type { TimeRange } from "../types";
 
 const RELATIVE_TIME_PRESETS: Array<{
@@ -65,14 +67,28 @@ export function toDashboardTimeRange(traceRange: { from: string; to: string }): 
 }
 
 export function toTraceTimeRange(range: TimeRange): { from: string; to: string } {
+  // Try known preset match first (relative presets get clean ES|QL syntax)
   const dashboardPreset = DASHBOARD_TIME_PRESETS.find(
     (preset) => preset.range.from === range.from && preset.range.to === range.to,
   );
-  if (!dashboardPreset) return range;
-  const tracePreset = TRACE_TIME_RANGE_OPTIONS.find(
-    (option) =>
-      option.label === dashboardPreset.label && option.from !== null && option.to !== null,
-  );
-  if (!tracePreset?.from || !tracePreset.to) return range;
-  return { from: tracePreset.from, to: tracePreset.to };
+  if (dashboardPreset) {
+    const tracePreset = TRACE_TIME_RANGE_OPTIONS.find(
+      (option) =>
+        option.label === dashboardPreset.label && option.from !== null && option.to !== null,
+    );
+    if (tracePreset?.from && tracePreset.to) {
+      return { from: tracePreset.from, to: tracePreset.to };
+    }
+  }
+
+  // Custom / absolute range: resolve date-math and wrap in TO_DATETIME() for ES|QL
+  const now = new Date();
+  const fromResolved = resolveDateTime(range.from, now);
+  const toResolved = resolveDateTime(range.to, now);
+  const fromIso = fromResolved ? fromResolved.toISOString() : range.from;
+  const toIso = toResolved ? toResolved.toISOString() : range.to;
+  return {
+    from: `TO_DATETIME("${escapeEsqlString(fromIso)}")`,
+    to: `TO_DATETIME("${escapeEsqlString(toIso)}")`,
+  };
 }
