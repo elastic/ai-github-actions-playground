@@ -7,6 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useShallow } from "zustand/react/shallow";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
@@ -27,6 +28,7 @@ import ServiceInventoryTable from "./ServiceInventoryTable";
 
 export default function ServiceInventoryPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
   const { filters, updateFilters, resetFilters } = usePageFiltersStore(
     useShallow((s) => ({
@@ -36,7 +38,17 @@ export default function ServiceInventoryPage() {
     })),
   );
 
-  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
+  const { data: searchResult = null } = useQuery<EsqlResponse | null>({
+    queryKey: ["services-search"],
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setSearchResult = useCallback(
+    (result: EsqlResponse | null) => queryClient.setQueryData(["services-search"], result),
+    [queryClient],
+  );
+
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
@@ -85,7 +97,7 @@ export default function ServiceInventoryPage() {
     clearError();
     setSearchResult(null);
     resetFilters();
-  }, [clearError, resetFilters, loading]);
+  }, [clearError, resetFilters, loading, setSearchResult]);
 
   const handleViewTraces = useCallback(
     (serviceName: string) => {

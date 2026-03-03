@@ -1,4 +1,5 @@
 import TableBody from "@mui/material/TableBody";
+import ButtonBase from "@mui/material/ButtonBase";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
@@ -22,6 +23,7 @@ interface DataTableBodyProps {
   rowsPerPage: number;
   onRowClick: (row: unknown[]) => void;
   selectedRowIndex?: number | null;
+  onCellClick?: (params: { columnName: string; value: string }) => void;
 }
 
 export default function DataTableBody({
@@ -35,6 +37,7 @@ export default function DataTableBody({
   rowsPerPage,
   onRowClick,
   selectedRowIndex,
+  onCellClick,
 }: DataTableBodyProps) {
   return (
     <TableBody>
@@ -112,6 +115,35 @@ export default function DataTableBody({
                     <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
                       null
                     </Typography>
+                  ) : onCellClick ? (
+                    <ButtonBase
+                      component="span"
+                      disableRipple
+                      tabIndex={0}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onCellClick({ columnName: col.name, value: String(cell) });
+                      }}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" ||
+                          event.key === " " ||
+                          event.key === "Spacebar"
+                        ) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onCellClick({ columnName: col.name, value: String(cell) });
+                        }
+                      }}
+                      sx={{
+                        display: "inline",
+                        p: 0,
+                        cursor: "pointer",
+                        textAlign: "inherit",
+                      }}
+                    >
+                      <TruncatedCell value={String(cell)} />
+                    </ButtonBase>
                   ) : (
                     <TruncatedCell value={String(cell)} />
                   )}

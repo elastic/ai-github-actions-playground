@@ -1,14 +1,11 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import type { EsqlResponse } from "../types";
-
 const DEFAULT_DISCOVER_QUERY = "FROM logs-* | SORT @timestamp | LIMIT 50";
 
 interface QueryState {
   discoverQueryDraft: string | null;
   discoverSessionQuery: string;
-  discoverSessionResult: EsqlResponse | null;
   queryHistory: string[];
 
   /** The set of field names selected for display in the results table. */
@@ -16,7 +13,6 @@ interface QueryState {
 
   setDiscoverQueryDraft: (query: string | null) => void;
   setDiscoverSessionQuery: (query: string) => void;
-  setDiscoverSessionResult: (result: EsqlResponse | null) => void;
   appendQueryToHistory: (query: string) => void;
   setDiscoverSelectedFields: (fields: Set<string>) => void;
   resetQueryState: () => void;
@@ -33,13 +29,11 @@ export const useQueryStore = create<QueryState>()(
       (set) => ({
         discoverQueryDraft: null,
         discoverSessionQuery: DEFAULT_DISCOVER_QUERY,
-        discoverSessionResult: null,
         queryHistory: [],
         discoverSelectedFields: new Set<string>(),
 
         setDiscoverQueryDraft: (query) => set({ discoverQueryDraft: query }),
         setDiscoverSessionQuery: (query) => set({ discoverSessionQuery: query }),
-        setDiscoverSessionResult: (result) => set({ discoverSessionResult: result }),
         appendQueryToHistory: (query) =>
           set((s) => {
             const trimmedQuery = query.trim();
@@ -57,7 +51,6 @@ export const useQueryStore = create<QueryState>()(
           set({
             discoverQueryDraft: null,
             discoverSessionQuery: DEFAULT_DISCOVER_QUERY,
-            discoverSessionResult: null,
             queryHistory: [],
             discoverSelectedFields: new Set<string>(),
           });

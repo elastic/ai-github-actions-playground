@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import ServiceInventoryPage from "../../src/components/services/ServiceInventoryPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -87,14 +88,19 @@ vi.mock("../../src/hooks/useEsqlQuery", () => ({
   }),
 }));
 
+let queryClient: QueryClient;
+
 function renderPage() {
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={["/services"]}>
-      <Routes>
-        <Route path="/services" element={<ServiceInventoryPage />} />
-        <Route path="/traces" element={<div>Traces Route</div>} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={["/services"]}>
+        <Routes>
+          <Route path="/services" element={<ServiceInventoryPage />} />
+          <Route path="/traces" element={<div>Traces Route</div>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

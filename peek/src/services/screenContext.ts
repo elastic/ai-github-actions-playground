@@ -1,4 +1,5 @@
 import { matchPath } from "react-router-dom";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
@@ -7,6 +8,7 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useTracesStore } from "../store/useTracesStore";
 import { useExplorerStore } from "../store/useExplorerStore";
+import type { EsqlResponse } from "../types";
 
 const SECURITY_ROUTES = ["/users", "/roles", "/api-keys"];
 
@@ -102,6 +104,7 @@ export interface ScreenContextSnapshot extends PageContextSections {
 export function buildDetailedScreenContext(
   pathname: string,
   includeData?: boolean,
+  queryClient?: QueryClient,
 ): ScreenContextSnapshot {
   const pageConfig = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, pathname) !== null);
   const pageLabel = pageConfig?.nav.label ?? pathname;
@@ -130,14 +133,15 @@ export function buildDetailedScreenContext(
   // Query Lab context
   const queryState = useQueryStore.getState();
   if (queryState.discoverQueryDraft || queryState.discoverSessionQuery) {
+    const discoverResult = queryClient?.getQueryData<EsqlResponse>(["discover-result"]) ?? null;
     snapshot.queryLab = {
       draftQuery: queryState.discoverQueryDraft,
       lastQuery: queryState.discoverSessionQuery,
-      ...(includeData && queryState.discoverSessionResult
+      ...(includeData && discoverResult
         ? {
             lastResultSummary: {
-              rowCount: queryState.discoverSessionResult.values.length,
-              columnCount: queryState.discoverSessionResult.columns.length,
+              rowCount: discoverResult.values.length,
+              columnCount: discoverResult.columns.length,
             },
           }
         : {}),
