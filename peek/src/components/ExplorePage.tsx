@@ -1,16 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
+import CodeIcon from "@mui/icons-material/Code";
+import SaveIcon from "@mui/icons-material/Save";
+import SearchIcon from "@mui/icons-material/Search";
 import { useShallow } from "zustand/react/shallow";
 import { parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { EditorView } from "@codemirror/view";
 
+import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
+import { useQueryStore } from "../store/useQueryStore";
+import { PAGE_MANIFEST } from "../routes/manifest";
 import { useExplorerStore } from "../store/useExplorerStore";
 import { ElasticsearchClient } from "../services/es";
 import type { FieldInfo, ExplorerFilter } from "../services/es";
@@ -31,18 +42,24 @@ import {
 } from "./explore/exploreUtils";
 
 export default function ExplorePage() {
+  const navigate = useNavigate();
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const { dashboard, setTimeRange } = useDashboardEditorStore(
+  const [showEsql, setShowEsql] = useState(false);
+  const { dashboard, addPanel, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
       dashboard: s.dashboard,
+      addPanel: s.addPanel,
       setTimeRange: s.setTimeRange,
     })),
   );
+  const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const metricsSearchCollapsed = useUIStore((s) => s.metricsSearchCollapsed);
   const setMetricsSearchCollapsed = useUIStore((s) => s.setMetricsSearchCollapsed);
+  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
+  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
 
   const location = useLocation();
   const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
@@ -261,6 +278,27 @@ export default function ExplorePage() {
     [addFilter],
   );
 
+  const handleEditInDiscover = useCallback(() => {
+    if (queryResult.esql) {
+      setDiscoverQueryDraft(queryResult.esql);
+      navigate(PAGE_MANIFEST.discover.path);
+    }
+  }, [queryResult.esql, setDiscoverQueryDraft, navigate]);
+
+  const handleSaveToDashboard = useCallback(() => {
+    if (!queryResult.esql) return;
+    const newPanel = {
+      id: crypto.randomUUID(),
+      title: selectedMetric ?? "Metrics Panel",
+      query: queryResult.esql,
+      visualization: "timeseries" as const,
+      layout: { x: 0, y: Infinity, w: 6, h: 4 },
+    };
+    addPanel(newPanel);
+    setEditingPanelId(newPanel.id);
+    navigate(`/dashboards/${activeDashboardId}`);
+  }, [queryResult.esql, selectedMetric, addPanel, setEditingPanelId, navigate, activeDashboardId]);
+
   const chartData: EsqlResponse | null = useMemo(() => {
     if (queryResult.status !== "success" || !queryResult.data) return null;
     return queryResult.data as EsqlResponse;
@@ -307,6 +345,72 @@ export default function ExplorePage() {
         collapsed={metricsSearchCollapsed}
         onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
       />
+
+      {/* Action buttons and ES|QL display — full detail mode only */}
+      {selectedMetric && !showDimensionOverview && (
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <Tooltip title="View generated ES|QL query">
+            <IconButton
+              size="small"
+              aria-label="View generated ES|QL query"
+              onClick={() => setShowEsql(!showEsql)}
+              color={showEsql ? "primary" : "default"}
+            >
+              <CodeIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          {queryResult.esql && (
+            <>
+              <Tooltip title="Edit this query in Query Lab">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<SearchIcon />}
+                  onClick={handleEditInDiscover}
+                >
+                  Edit in Query Lab
+                </Button>
+              </Tooltip>
+              <Tooltip title="Save as dashboard panel">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<SaveIcon />}
+                  onClick={handleSaveToDashboard}
+                >
+                  Save to Dashboard
+                </Button>
+              </Tooltip>
+            </>
+          )}
+
+          <Box sx={{ flex: 1 }} />
+
+          {queryResult.status === "success" && queryResult.executionTimeMs !== undefined && (
+            <Typography variant="caption" color="text.secondary">
+              Query took {queryResult.executionTimeMs}ms
+            </Typography>
+          )}
+        </Box>
+      )}
+      <Collapse
+        in={selectedMetric !== null && !showDimensionOverview && showEsql && !!queryResult.esql}
+      >
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "action.hover",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+            fontSize: "0.8rem",
+            fontFamily: "monospace",
+          }}
+        >
+          {queryResult.esql}
+        </Paper>
+      </Collapse>
 
       {/* AI anomaly insight */}
       {selectedMetric && chartData && (

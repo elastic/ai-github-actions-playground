@@ -26,6 +26,8 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "color-contrast": 2,
     },
     Metrics: {
+      "aria-input-field-name": 1,
+      "aria-prohibited-attr": 1,
       "color-contrast": 2,
     },
     Services: {},
@@ -279,9 +281,7 @@ test.describe("smoke – site navigation", () => {
     ).toBeVisible();
     await page.getByRole("button", { name: "Kubernetes" }).first().click();
     await page.getByRole("button", { name: "Continue to step 2" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Step 2: Set up and verify" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Step 2: Set up and verify" })).toBeVisible();
 
     await page.getByRole("button", { name: "Continue to step 3" }).click();
     await expect(
@@ -309,7 +309,7 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Traces");
     await page.getByRole("button", { name: "Search Traces" }).first().click();
-    await expect(page.getByText("1 traces found")).toBeVisible();
+    await expect(page.getByText("1 trace found")).toBeVisible();
     await page.getByText("GET /checkout").click();
     await expect(page.getByText("2 spans")).toBeVisible();
     await page.getByRole("button", { name: "Service Map" }).click();

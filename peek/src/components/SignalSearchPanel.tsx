@@ -183,7 +183,7 @@ export default function SignalSearchPanel({
               theme={themeMode}
               height={`${editorHeight}px`}
               basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-              aria-label={`${title} query editor`}
+              aria-label="ES|QL query editor"
             />
             <QueryAnnotationOverlay
               query={effectiveQuery}
