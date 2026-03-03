@@ -1,10 +1,68 @@
+import { matchPath } from "react-router-dom";
+
 import { PAGE_MANIFEST } from "../routes/manifest";
+import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useTracesStore } from "../store/useTracesStore";
 import { useExplorerStore } from "../store/useExplorerStore";
 
-export interface ScreenContextSnapshot {
+/* ------------------------------------------------------------------ */
+/*  Per-page context section types                                     */
+/* ------------------------------------------------------------------ */
+
+export interface PageContextSections {
+  clusterOverview?: {
+    status: string;
+    nodeCount: number;
+    indexCount: number;
+    storeSize: string;
+  };
+  clusterHealth?: {
+    status: string;
+    unassignedShards: number;
+    pendingTasks: number;
+    activeTab: string;
+  };
+  indices?: {
+    selectedIndex: string | null;
+    totalIndices: number;
+    healthBreakdown: { green: number; yellow: number; red: number };
+  };
+  dataStreams?: {
+    selectedStream: string | null;
+    totalStreams: number;
+  };
+  ingestPipelines?: {
+    selectedPipeline: string | null;
+    totalPipelines: number;
+    processorCount: number;
+  };
+  fleet?: {
+    totalAgents: number;
+    healthyCount: number;
+    unhealthyCount: number;
+  };
+  fleetAgent?: {
+    agentId: string;
+    hostname: string;
+    version: string;
+    errorCount: number;
+  };
+  security?: {
+    pageType: "users" | "roles" | "apiKeys";
+    selectedItem: string | null;
+    totalItems: number;
+  };
+  console?: {
+    requestCount: number;
+    lastMethod: string;
+    lastPath: string;
+  };
+}
+
+export interface ScreenContextSnapshot extends PageContextSections {
   page: { label: string; path: string };
   dashboard?: {
     title: string;
@@ -43,7 +101,7 @@ export function buildDetailedScreenContext(
   pathname: string,
   includeData?: boolean,
 ): ScreenContextSnapshot {
-  const pageConfig = Object.values(PAGE_MANIFEST).find((p) => p.path === pathname);
+  const pageConfig = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, pathname) !== null);
   const pageLabel = pageConfig?.nav.label ?? pathname;
 
   const snapshot: ScreenContextSnapshot = {
@@ -120,6 +178,29 @@ export function buildDetailedScreenContext(
       filterCount: explorerState.filters.length,
     };
   }
+
+  // Console context (read directly from ApiConsoleStore)
+  const consoleState = useApiConsoleStore.getState();
+  if (consoleState.entries.length > 0 || consoleState.consoleDraft) {
+    const lastEntry = consoleState.entries[consoleState.entries.length - 1];
+    const draft = consoleState.consoleDraft;
+    snapshot.console = {
+      requestCount: consoleState.entries.length,
+      lastMethod: draft?.method ?? lastEntry?.method ?? "",
+      lastPath: draft?.path ?? lastEntry?.path ?? "",
+    };
+  }
+
+  // Page-published context sections from usePageContextStore
+  const pageCtx = usePageContextStore.getState();
+  if (pageCtx.clusterOverview) snapshot.clusterOverview = pageCtx.clusterOverview;
+  if (pageCtx.clusterHealth) snapshot.clusterHealth = pageCtx.clusterHealth;
+  if (pageCtx.indices) snapshot.indices = pageCtx.indices;
+  if (pageCtx.dataStreams) snapshot.dataStreams = pageCtx.dataStreams;
+  if (pageCtx.ingestPipelines) snapshot.ingestPipelines = pageCtx.ingestPipelines;
+  if (pageCtx.fleet) snapshot.fleet = pageCtx.fleet;
+  if (pageCtx.fleetAgent) snapshot.fleetAgent = pageCtx.fleetAgent;
+  if (pageCtx.security) snapshot.security = pageCtx.security;
 
   return snapshot;
 }

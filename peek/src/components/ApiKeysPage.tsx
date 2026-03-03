@@ -17,6 +17,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { useApiKeys } from "../hooks/useApiKeys";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { formatTimestamp } from "../utils/formatDate";
 
@@ -74,6 +75,16 @@ export default function ApiKeysPage() {
   // restores when the search is cleared.
   const displayedKey = filteredKeys.some((k) => k.id === effectiveKeyId) ? selectedKey : null;
   const displayedKeyRisk = displayedKey !== null ? selectedKeyRisk : null;
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    setPageSection("security", {
+      pageType: "apiKeys",
+      selectedItem: effectiveKeyId,
+      totalItems: keys.length,
+    });
+  }, [keys, effectiveKeyId, setPageSection]);
 
   const copyQuery = useCallback(async () => {
     const copied = await copyToClipboard("GET /_security/api_key");

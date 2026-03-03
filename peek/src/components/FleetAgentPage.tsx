@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -22,6 +22,7 @@ import {
 import { STATUS_COLORS } from "../types/tokens";
 import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
+import { usePageContextStore } from "../store/usePageContextStore";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
@@ -66,6 +67,18 @@ export default function FleetAgentPage() {
   const agentInfo = agentResult.status === "success" ? agentResult.data.agentInfo : null;
   const logs = agentResult.status === "success" ? agentResult.data.logs : [];
   const metrics = agentResult.status === "success" ? agentResult.data.metrics : [];
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (!agentInfo) return;
+    setPageSection("fleetAgent", {
+      agentId: agentInfo.agentId,
+      hostname: agentInfo.hostname,
+      version: agentInfo.version,
+      errorCount: agentInfo.errorCount,
+    });
+  }, [agentInfo, setPageSection]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>

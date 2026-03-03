@@ -2,7 +2,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { buildDetailedScreenContext } from "../../src/services/screenContext";
+import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { usePageContextStore } from "../../src/store/usePageContextStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
@@ -141,5 +143,176 @@ describe("buildDetailedScreenContext", () => {
     });
     const ctx = buildDetailedScreenContext("/discover", true);
     expect(ctx.queryLab!.lastResultSummary).toEqual({ rowCount: 2, columnCount: 2 });
+  });
+
+  // ----------------------------------------------------------------
+  // matchPath: dynamic route resolution
+  // ----------------------------------------------------------------
+
+  it("resolves fleet agent detail page via matchPath", () => {
+    const ctx = buildDetailedScreenContext("/fleet/agents/agent-xyz");
+    expect(ctx.page.label).toBe("Fleet Agent Detail");
+    expect(ctx.page.path).toBe("/fleet/agents/agent-xyz");
+  });
+
+  // ----------------------------------------------------------------
+  // Console context (read directly from ApiConsoleStore)
+  // ----------------------------------------------------------------
+
+  it("includes console context when entries exist", () => {
+    useApiConsoleStore.getState().setEntries([
+      { id: "1", method: "GET", path: "/_cluster/health", body: "" },
+      { id: "2", method: "POST", path: "/_search", body: "{}" },
+    ]);
+    const ctx = buildDetailedScreenContext("/console");
+    expect(ctx.console).toBeDefined();
+    expect(ctx.console!.requestCount).toBe(2);
+    expect(ctx.console!.lastMethod).toBe("POST");
+    expect(ctx.console!.lastPath).toBe("/_search");
+  });
+
+  it("includes console context when only consoleDraft exists", () => {
+    useApiConsoleStore.getState().setConsoleDraft({ method: "PUT", path: "/_bulk" });
+    const ctx = buildDetailedScreenContext("/console");
+    expect(ctx.console).toBeDefined();
+    expect(ctx.console!.requestCount).toBe(0);
+    expect(ctx.console!.lastMethod).toBe("PUT");
+    expect(ctx.console!.lastPath).toBe("/_bulk");
+  });
+
+  it("prefers consoleDraft method/path over last entry", () => {
+    useApiConsoleStore
+      .getState()
+      .setEntries([{ id: "1", method: "GET", path: "/_cat/indices", body: "" }]);
+    useApiConsoleStore.getState().setConsoleDraft({ method: "DELETE", path: "/my-index" });
+    const ctx = buildDetailedScreenContext("/console");
+    expect(ctx.console!.lastMethod).toBe("DELETE");
+    expect(ctx.console!.lastPath).toBe("/my-index");
+  });
+
+  it("omits console context when store is empty", () => {
+    const ctx = buildDetailedScreenContext("/console");
+    expect(ctx.console).toBeUndefined();
+  });
+
+  // ----------------------------------------------------------------
+  // Page-published context sections (usePageContextStore)
+  // ----------------------------------------------------------------
+
+  it("includes clusterOverview when published", () => {
+    usePageContextStore.getState().setPageSection("clusterOverview", {
+      status: "green",
+      nodeCount: 3,
+      indexCount: 42,
+      storeSize: "1.2 GB",
+    });
+    const ctx = buildDetailedScreenContext("/cluster-overview");
+    expect(ctx.clusterOverview).toEqual({
+      status: "green",
+      nodeCount: 3,
+      indexCount: 42,
+      storeSize: "1.2 GB",
+    });
+  });
+
+  it("includes clusterHealth when published", () => {
+    usePageContextStore.getState().setPageSection("clusterHealth", {
+      status: "yellow",
+      unassignedShards: 5,
+      pendingTasks: 2,
+      activeTab: "nodes",
+    });
+    const ctx = buildDetailedScreenContext("/cluster-health");
+    expect(ctx.clusterHealth).toEqual({
+      status: "yellow",
+      unassignedShards: 5,
+      pendingTasks: 2,
+      activeTab: "nodes",
+    });
+  });
+
+  it("includes indices when published", () => {
+    usePageContextStore.getState().setPageSection("indices", {
+      selectedIndex: "logs-2024.01",
+      totalIndices: 100,
+      healthBreakdown: { green: 80, yellow: 15, red: 5 },
+    });
+    const ctx = buildDetailedScreenContext("/indices");
+    expect(ctx.indices).toEqual({
+      selectedIndex: "logs-2024.01",
+      totalIndices: 100,
+      healthBreakdown: { green: 80, yellow: 15, red: 5 },
+    });
+  });
+
+  it("includes dataStreams when published", () => {
+    usePageContextStore.getState().setPageSection("dataStreams", {
+      selectedStream: "logs-nginx",
+      totalStreams: 10,
+    });
+    const ctx = buildDetailedScreenContext("/data-streams");
+    expect(ctx.dataStreams).toEqual({ selectedStream: "logs-nginx", totalStreams: 10 });
+  });
+
+  it("includes ingestPipelines when published", () => {
+    usePageContextStore.getState().setPageSection("ingestPipelines", {
+      selectedPipeline: "my-pipeline",
+      totalPipelines: 5,
+      processorCount: 3,
+    });
+    const ctx = buildDetailedScreenContext("/ingest-pipelines");
+    expect(ctx.ingestPipelines).toEqual({
+      selectedPipeline: "my-pipeline",
+      totalPipelines: 5,
+      processorCount: 3,
+    });
+  });
+
+  it("includes fleet when published", () => {
+    usePageContextStore.getState().setPageSection("fleet", {
+      totalAgents: 50,
+      healthyCount: 45,
+      unhealthyCount: 5,
+    });
+    const ctx = buildDetailedScreenContext("/fleet");
+    expect(ctx.fleet).toEqual({ totalAgents: 50, healthyCount: 45, unhealthyCount: 5 });
+  });
+
+  it("includes fleetAgent when published", () => {
+    usePageContextStore.getState().setPageSection("fleetAgent", {
+      agentId: "agent-001",
+      hostname: "web-server-1",
+      version: "8.12.0",
+      errorCount: 2,
+    });
+    const ctx = buildDetailedScreenContext("/fleet/agents/agent-001");
+    expect(ctx.fleetAgent).toEqual({
+      agentId: "agent-001",
+      hostname: "web-server-1",
+      version: "8.12.0",
+      errorCount: 2,
+    });
+  });
+
+  it("includes security context when published", () => {
+    usePageContextStore.getState().setPageSection("security", {
+      pageType: "users",
+      selectedItem: "elastic",
+      totalItems: 5,
+    });
+    const ctx = buildDetailedScreenContext("/users");
+    expect(ctx.security).toEqual({ pageType: "users", selectedItem: "elastic", totalItems: 5 });
+  });
+
+  it("omits page context sections when nothing is published", () => {
+    const ctx = buildDetailedScreenContext("/cluster-overview");
+    expect(ctx.clusterOverview).toBeUndefined();
+    expect(ctx.clusterHealth).toBeUndefined();
+    expect(ctx.indices).toBeUndefined();
+    expect(ctx.dataStreams).toBeUndefined();
+    expect(ctx.ingestPipelines).toBeUndefined();
+    expect(ctx.fleet).toBeUndefined();
+    expect(ctx.fleetAgent).toBeUndefined();
+    expect(ctx.security).toBeUndefined();
   });
 });

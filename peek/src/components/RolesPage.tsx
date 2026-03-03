@@ -19,6 +19,7 @@ import { parseAsString, useQueryState } from "nuqs";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useSecurityRoles } from "../hooks/useSecurityRoles";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageHeader from "./PageHeader";
@@ -78,6 +79,16 @@ export default function RolesPage() {
     setCopied(true);
     scheduleCopyFeedbackReset();
   }, [scheduleCopyFeedbackReset]);
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    setPageSection("security", {
+      pageType: "roles",
+      selectedItem: selectedRoleName ?? null,
+      totalItems: roles.length,
+    });
+  }, [roles, selectedRoleName, setPageSection]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
