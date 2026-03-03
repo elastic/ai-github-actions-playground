@@ -61,4 +61,61 @@ describe("AiAssistantDrawer", () => {
 
     expect(screen.getByText("AI Assistant")).toBeInTheDocument();
   });
+
+  it("renders explain mode toggle and toggles explain mode state", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setAiPanelOpen(true);
+    renderDrawer();
+
+    const toggle = screen.getByRole("button", { name: /toggle explain mode/i });
+    expect(toggle).toBeInTheDocument();
+    expect(useUIStore.getState().explainModeActive).toBe(false);
+
+    await user.click(toggle);
+    expect(useUIStore.getState().explainModeActive).toBe(true);
+
+    await user.click(toggle);
+    expect(useUIStore.getState().explainModeActive).toBe(false);
+  });
+
+  it("deactivates explain mode when drawer closes", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setAiPanelOpen(true);
+    useUIStore.getState().setExplainModeActive(true);
+    renderDrawer();
+
+    await user.click(screen.getByRole("button", { name: /close ai assistant panel/i }));
+
+    expect(useUIStore.getState().aiPanelOpen).toBe(false);
+    expect(useUIStore.getState().explainModeActive).toBe(false);
+  });
+
+  it("disables clear button when there are no messages", () => {
+    useUIStore.getState().setAiPanelOpen(true);
+    renderDrawer();
+
+    expect(screen.getByRole("button", { name: /clear/i })).toBeDisabled();
+  });
+
+  it("enables clear button when messages exist and clears messages", async () => {
+    const user = userEvent.setup();
+    useUIStore.getState().setAiPanelOpen(true);
+    useLLMStore.getState().addMessage({ id: "msg-1", role: "user", content: "hello" });
+    renderDrawer();
+
+    const clearButton = screen.getByRole("button", { name: /clear/i });
+    expect(clearButton).toBeEnabled();
+
+    await user.click(clearButton);
+
+    expect(useLLMStore.getState().messages).toEqual([]);
+    expect(screen.getByRole("button", { name: /clear/i })).toBeDisabled();
+  });
+
+  it("renders drawer paper with complementary role when open", () => {
+    useUIStore.getState().setAiPanelOpen(true);
+    renderDrawer();
+
+    expect(screen.getByRole("complementary")).toBeInTheDocument();
+  });
 });

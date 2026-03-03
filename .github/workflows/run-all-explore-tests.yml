@@ -9,6 +9,22 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
+      - name: Dispatch explore-cluster-overview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-cluster-overview.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-security
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-security.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
       - name: Dispatch explore-connection
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,6 +77,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run explore-traces.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-dashboards
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-dashboards.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-fleet-add-data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-fleet-add-data.yml --repo ${{ github.repository }}
 
       - name: Wait 2 minutes
         run: sleep 120

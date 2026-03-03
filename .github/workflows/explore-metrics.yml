@@ -31,6 +31,9 @@ jobs:
           Does the chart update? Does the old data clear?
         - Type partial metric names and see if autocomplete suggestions
           are relevant. Try typos. Try pasting.
+        - Select a metric, then use the **time range picker** to change to
+          a shorter range (last 15 minutes) and then a longer one (last 7
+          days). Does the chart re-render each time? Do axis labels adjust?
         - Select a metric, then rapidly switch to a different page and
           back. Is the chart still there? Did it reload?
         - Look at chart axes — are labels readable? Do they make sense
@@ -43,6 +46,8 @@ jobs:
           Does the previously selected metric persist or reset?
         - Search for a metric that doesn't exist. Is the empty state
           helpful? Does it suggest anything?
+        - Try `system.cpu.total.norm.pct` — is the chart a line chart
+          showing time series? Are the values between 0 and 1 (normalized)?
         - Check if there are any console errors while interacting with
           charts.
 

@@ -221,10 +221,14 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 | Agent | Domain | Workflow |
 | --- | --- | --- |
 | Connection & Onboarding | Connection dialog, auth tabs, disconnect/reconnect | `explore-connection.yml` |
+| Cluster Overview | All 6 cluster health tabs (Overview, Nodes, Tasks, Capacity, Shards, Resilience) | `explore-cluster-overview.yml` |
+| Security | Users, Roles, API Keys, Investigate User/Host | `explore-security.yml` |
 | Metrics & Charts | Metric search, chart rendering, time ranges | `explore-metrics.yml` |
-| Traces & Service Map | Span trees, service map, trace-to-query pivot | `explore-traces.yml` |
+| Traces & Service Map | Span trees, service map, trace filters, service inventory, trace-to-query pivot | `explore-traces.yml` |
 | Query Lab & Console | ES\|QL queries, result tables, API Console | `explore-query-lab.yml` |
 | Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `explore-data-management.yml` |
+| Dashboards | Dashboard list, panel rendering, time range, drill-down | `explore-dashboards.yml` |
+| Fleet & Add Data | Fleet agent list, Add Data 5-step EDOT wizard | `explore-fleet-add-data.yml` |
 | Mobile Responsiveness | Mobile viewport layout, tap targets, responsive breakpoints | `explore-mobile.yml` |
 | Live Elasticsearch | All pages with real OTel data and a real cluster | `explore-live-es.yml` |
 | Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `explore-customer-feedback.yml` |
