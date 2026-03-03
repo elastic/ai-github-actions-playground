@@ -83,20 +83,21 @@ export default function AddDataPage() {
   }, [connection]);
 
   const esUrl = connection?.url ?? "<YOUR_ELASTICSEARCH_ENDPOINT>";
+  const ingestUrl = connection?.ingestUrl?.trim();
   const ingestCandidates = useMemo(
-    () =>
-      connection?.ingestUrl?.trim() ? [connection.ingestUrl.trim()] : deriveIngestCandidates(esUrl),
-    [connection, esUrl],
+    () => (ingestUrl ? [ingestUrl] : deriveIngestCandidates(esUrl)),
+    [ingestUrl, esUrl],
   );
+  const ingestCandidatesKey = useMemo(() => ingestCandidates.join("|"), [ingestCandidates]);
   const [derivedOtlpUrl, setDerivedOtlpUrl] = useState<string | null>(null);
   const probeTargetOtlpUrl = derivedOtlpUrl ?? ingestCandidates[0] ?? null;
   const otlpUrl = derivedOtlpUrl ?? "<YOUR_OTLP_ENDPOINT>";
 
   // Reset derived OTLP state when ingest candidates change — use a derived
   // key comparison to avoid calling setState inside an effect synchronously.
-  const [prevCandidatesKey, setPrevCandidatesKey] = useState(ingestCandidates);
-  if (ingestCandidates !== prevCandidatesKey) {
-    setPrevCandidatesKey(ingestCandidates);
+  const [prevCandidatesKey, setPrevCandidatesKey] = useState(ingestCandidatesKey);
+  if (ingestCandidatesKey !== prevCandidatesKey) {
+    setPrevCandidatesKey(ingestCandidatesKey);
     setDerivedOtlpUrl(null);
     setIngestAvailable(null);
   }
@@ -192,10 +193,10 @@ export default function AddDataPage() {
 
   // Auto-start polling when API key is generated
   useEffect(() => {
-    if (apiKeyValue && verifyStatus === "idle") {
+    if (connection && apiKeyValue && verifyStatus === "idle") {
       startPolling();
     }
-  }, [apiKeyValue, verifyStatus, startPolling]);
+  }, [connection, apiKeyValue, verifyStatus, startPolling]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>

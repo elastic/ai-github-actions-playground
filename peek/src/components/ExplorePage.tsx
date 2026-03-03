@@ -171,6 +171,13 @@ export default function ExplorePage() {
     ),
   });
 
+  if (
+    dismissedError !== null &&
+    (queryResult.status === "loading" || queryResult.status === "success")
+  ) {
+    setDismissedError(null);
+  }
+
   const handleMetricSelect = useCallback(
     (field: FieldInfo | null) => {
       if (field) {

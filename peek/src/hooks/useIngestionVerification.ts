@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
@@ -38,15 +38,20 @@ export function useIngestionVerification(): IngestionVerificationResult {
     setConnectionKey(connection?.url);
     setPollingEnabled(false);
     setHasTriggered(false);
-    queryClient.removeQueries({ queryKey: ["ingestion-verify"] });
   }
+
+  useEffect(() => {
+    if (connection?.url !== connectionKey && connectionKey !== undefined) {
+      queryClient.removeQueries({ queryKey: ["ingestion-verify"] });
+    }
+  }, [connection?.url, connectionKey, queryClient]);
 
   const query = useQuery({
     queryKey: ["ingestion-verify", connection?.url],
-    queryFn: async (): Promise<Set<TelemetrySignal>> => {
+    queryFn: async ({ signal }): Promise<Set<TelemetrySignal>> => {
       if (!connection) throw new Error("No connection");
       const client = new ElasticsearchClient(connection);
-      return detectTelemetrySignals(client);
+      return detectTelemetrySignals(client, signal);
     },
     enabled: Boolean(connection && pollingEnabled),
     retry: false,
@@ -76,8 +81,7 @@ export function useIngestionVerification(): IngestionVerificationResult {
   // Auto-start polling — called externally by AddDataPage when API key is generated
   const startPolling = useCallback(() => {
     setPollingEnabled((prev) => {
-      if (prev) return prev;
-      setHasTriggered(true);
+      if (!prev) setHasTriggered(true);
       return true;
     });
   }, []);
