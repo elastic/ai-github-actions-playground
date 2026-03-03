@@ -58,7 +58,7 @@ describe("ChartOptionsEditor", () => {
     render(<ChartOptionsEditor vizType="timeseries" options={{}} onChange={onChange} />);
 
     expect(screen.getByTestId("format-controls")).toBeInTheDocument();
-    expect(screen.getByText("Options")).toBeInTheDocument();
+    expect(screen.getByText("Format")).toBeInTheDocument();
   });
 
   it("does not render format controls for table visualization type", () => {
