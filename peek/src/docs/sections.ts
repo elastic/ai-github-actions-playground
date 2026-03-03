@@ -7,6 +7,7 @@ import discoverWorkflowRaw from "./discover-workflow.md?raw";
 import metricsWorkflowRaw from "./metrics-workflow.md?raw";
 import logsWorkflowRaw from "./logs-workflow.md?raw";
 import tracesWorkflowRaw from "./traces-workflow.md?raw";
+import servicePerformanceRaw from "./service-performance.md?raw";
 import profilingWorkflowRaw from "./profiling-workflow.md?raw";
 import visualizationsRaw from "./visualizations.md?raw";
 import keyboardShortcutsRaw from "./keyboard-shortcuts.md?raw";
@@ -63,6 +64,7 @@ const sections: DocSection[] = [
   parseDocSection("metrics-workflow", metricsWorkflowRaw),
   parseDocSection("logs-workflow", logsWorkflowRaw),
   parseDocSection("traces-workflow", tracesWorkflowRaw),
+  parseDocSection("service-performance", servicePerformanceRaw),
   parseDocSection("profiling-workflow", profilingWorkflowRaw),
   parseDocSection("visualizations", visualizationsRaw),
   parseDocSection("keyboard-shortcuts", keyboardShortcutsRaw),
