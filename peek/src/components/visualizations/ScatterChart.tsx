@@ -1,8 +1,8 @@
 import { useMemo, useRef, useEffect } from "react";
+import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
 import type { ECharts } from "echarts/core";
 
-import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, ScatterChartOptions } from "../../types";
 import { CHART_COLORS } from "../../theme";
 
