@@ -19,6 +19,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useSecurityRoles } from "../hooks/useSecurityRoles";
 import { usePageContextStore } from "../store/usePageContextStore";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageInsightBanner from "./PageInsightBanner";
@@ -100,7 +101,7 @@ export default function RolesPage() {
             indexPrivileges: displayedRole.role.indices ?? [],
             assignedUserCount: assignedUsers.length,
           })}
-          systemPrompt="You are an Elasticsearch authorization analyst. Explain this role's effective privilege scope in one concise sentence and include one least-privilege recommendation."
+          systemPrompt={`You are an Elasticsearch authorization analyst. Explain this role's effective privilege scope in one concise sentence and include one least-privilege recommendation.${INSIGHT_GUARDRAIL}`}
           cacheKey={`role-security::${displayedRole.name}::${assignedUsers.length}::${JSON.stringify(displayedRole.role.cluster ?? [])}::${JSON.stringify(displayedRole.role.indices ?? [])}`}
         />
       )}

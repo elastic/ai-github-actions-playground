@@ -28,11 +28,13 @@ export function runQueryShortcutExtension(runQuery: () => void): Extension {
 }
 
 const ESQL_COMPLETION_PROMPT =
-  "You are an ES|QL expert. Complete the ES|QL query at the cursor. " +
-  "If a recent query error is shown, suggest a fix. " +
-  "If the user writes plain language (e.g. 'count events by host'), " +
-  "complete with the valid ES|QL implementation of their intent. " +
-  "Return only the completion text.";
+  "You are an ES|QL inline completion engine. " +
+  "Complete or correct the ES|QL query the user is editing. Rules:\n" +
+  "- ES|QL is a piped language (FROM … | WHERE … | STATS …), NOT SQL.\n" +
+  "- If a query error is shown, fix the error.\n" +
+  "- If the user writes natural language mid-query, replace it with valid ES|QL.\n" +
+  "- Field names with dots must use backticks: `service.name`.\n" +
+  "- Return ONLY query text. No explanations, no markdown fences.";
 
 // ---------------------------------------------------------------------------
 // Local ES|QL keyword & function autocompletion (<1 ms, complements LLM)

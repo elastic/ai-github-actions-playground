@@ -7,6 +7,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
@@ -136,7 +137,7 @@ export default function ServiceInventoryPage() {
         <Stack spacing={2}>
           <PageInsightBanner
             context={insightContext}
-            systemPrompt="You are an APM performance advisor analyzing OpenTelemetry service data. Provide 2-3 concise, actionable insights about service health, latency outliers, error patterns, or resource concerns. Focus on what an SRE should investigate first. Keep it brief."
+            systemPrompt={`You are an APM performance advisor analyzing OpenTelemetry service data. Provide 2-3 concise, actionable insights about service health, latency outliers, error patterns, or resource concerns. Focus on what an SRE should investigate first. Keep it brief.${INSIGHT_GUARDRAIL}`}
             cacheKey={insightCacheKey}
           />
           <ServiceInsightsPanel serviceRows={serviceRows} />
