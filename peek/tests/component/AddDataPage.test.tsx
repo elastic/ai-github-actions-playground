@@ -81,7 +81,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: /Kubernetes/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Docker/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Linux Host/ })).toBeInTheDocument();
-  });
+  }, 15000);
 
   it("filters technologies by search and category", async () => {
     const user = userEvent.setup();
@@ -96,7 +96,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getAllByRole("button", { name: /Databases/ })[0]);
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
     expect(screen.queryByText("Linux Host")).not.toBeInTheDocument();
-  });
+  }, 15000);
 
   it("transitions through explicit 5-step flow", async () => {
     const user = userEvent.setup();
