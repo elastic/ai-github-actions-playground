@@ -76,6 +76,7 @@ export default function SignalSearchPanel({
   editorHeight = DEFAULT_EDITOR_HEIGHT,
 }: SignalSearchPanelProps) {
   const [editorFocused, setEditorFocused] = useState(false);
+  const resultLabel = (count: number) => (count === 1 ? resultNoun.replace(/s$/, "") : resultNoun);
 
   const editorExtensions = useMemo(
     () => [
@@ -152,7 +153,7 @@ export default function SignalSearchPanel({
 
             {searchResultCount !== null && (
               <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 0 }}>
-                {searchResultCount} {resultNoun}
+                {searchResultCount} {resultLabel(searchResultCount)}
               </Typography>
             )}
           </>
@@ -168,50 +169,56 @@ export default function SignalSearchPanel({
       </Box>
 
       {/* Collapsible body */}
-      <Collapse in={!collapsed}>
-        {/* Signal-specific filter controls */}
-        {renderFilterControls()}
+      <Collapse in={!collapsed} unmountOnExit>
+        {!collapsed && (
+          <>
+            {/* Signal-specific filter controls */}
+            {renderFilterControls()}
 
-        {/* ES|QL editor */}
-        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-          <Box sx={{ position: "relative" }}>
-            <CodeMirror
-              value={effectiveQuery}
-              onChange={onRawQueryChange}
-              onCreateEditor={onCreateEditor}
-              extensions={editorExtensions}
-              theme={themeMode}
-              height={`${editorHeight}px`}
-              basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-              aria-label={`${title} query editor`}
-            />
-            <QueryAnnotationOverlay
-              query={effectiveQuery}
-              editorFocused={editorFocused}
-              height={editorHeight}
-            />
-          </Box>
-        </Box>
+            {/* ES|QL editor */}
+            <Box
+              sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
+            >
+              <Box sx={{ position: "relative" }}>
+                <CodeMirror
+                  value={effectiveQuery}
+                  onChange={onRawQueryChange}
+                  onCreateEditor={onCreateEditor}
+                  extensions={editorExtensions}
+                  theme={themeMode}
+                  height={`${editorHeight}px`}
+                  basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
+                  aria-label={`${title} query editor`}
+                />
+                <QueryAnnotationOverlay
+                  query={effectiveQuery}
+                  editorFocused={editorFocused}
+                  height={editorHeight}
+                />
+              </Box>
+            </Box>
 
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
-            startIcon={
-              searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
-            }
-            onClick={onSearch}
-            disabled={searchLoading || !effectiveQuery.trim()}
-          >
-            Search {resultNoun.charAt(0).toUpperCase() + resultNoun.slice(1)}
-          </Button>
-          {searchResultCount !== null && (
-            <Typography variant="caption" color="text.secondary">
-              {searchResultCount} {resultNoun} found
-            </Typography>
-          )}
-        </Stack>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <Button
+                variant="contained"
+                size="small"
+                sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
+                startIcon={
+                  searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
+                }
+                onClick={onSearch}
+                disabled={searchLoading || !effectiveQuery.trim()}
+              >
+                Search {resultNoun.charAt(0).toUpperCase() + resultNoun.slice(1)}
+              </Button>
+              {searchResultCount !== null && (
+                <Typography variant="caption" color="text.secondary">
+                  {searchResultCount} {resultLabel(searchResultCount)} found
+                </Typography>
+              )}
+            </Stack>
+          </>
+        )}
       </Collapse>
     </Paper>
   );

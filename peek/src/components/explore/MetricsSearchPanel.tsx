@@ -236,7 +236,6 @@ export default function MetricsSearchPanel({
       fieldsLoading,
       selectedMetric,
       selectedNamespace,
-      metricType,
       aggregation,
       filters,
       groupBy,

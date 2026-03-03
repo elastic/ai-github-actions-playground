@@ -67,6 +67,8 @@ export function useExploreQuery({
 
   // Use override query if provided, otherwise use the generated query
   const effectiveEsql = queryOverride ?? queryDef?.esql ?? null;
+  const trimmedOverride = queryOverride?.trim() ?? null;
+  const trimmedEffectiveEsql = effectiveEsql?.trim() ?? null;
 
   const query = useQuery({
     queryKey: [
@@ -84,21 +86,23 @@ export function useExploreQuery({
       timeRange.to,
     ],
     queryFn: async ({ signal }) => {
-      if (!connection || !effectiveEsql) throw new Error("Missing connection or query definition");
+      if (!connection || !trimmedEffectiveEsql) {
+        throw new Error("Missing connection or query definition");
+      }
       const client = new ElasticsearchClient(connection);
       // Skip time params for override queries — user-edited queries contain concrete time expressions
-      if (queryOverride) {
-        return client.query({ query: queryOverride }, signal);
+      if (trimmedOverride) {
+        return client.query({ query: trimmedOverride }, signal);
       }
-      const params = buildTimeParams(effectiveEsql, timeRange);
+      const params = buildTimeParams(trimmedEffectiveEsql, timeRange);
       return client.query(
         Object.keys(params).length > 0
-          ? { query: effectiveEsql, params }
-          : { query: effectiveEsql },
+          ? { query: trimmedEffectiveEsql, params }
+          : { query: trimmedEffectiveEsql },
         signal,
       );
     },
-    enabled: Boolean(connection && effectiveEsql && enabled),
+    enabled: Boolean(connection && trimmedEffectiveEsql && enabled),
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

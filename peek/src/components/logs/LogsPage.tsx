@@ -265,6 +265,15 @@ export default function LogsPage() {
   // Cmd/Ctrl+[ toggles the search panel collapse
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
+          target.getAttribute("role") === "textbox" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
         e.preventDefault();
         setLogsSearchCollapsed(!useUIStore.getState().logsSearchCollapsed);

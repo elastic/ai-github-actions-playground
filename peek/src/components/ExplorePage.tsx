@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
 import IconButton from "@mui/material/IconButton";
@@ -31,6 +32,7 @@ import {
 } from "./explore/exploreUtils";
 
 export default function ExplorePage() {
+  const queryClient = useQueryClient();
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
   const { dashboard, setTimeRange } = useDashboardEditorStore(
@@ -173,15 +175,8 @@ export default function ExplorePage() {
   });
 
   const handleSearch = useCallback(() => {
-    // When rawQuery is null, React Query handles execution automatically.
-    // When rawQuery is set, we trigger React Query to refetch by using its key.
-    // The queryOverride in useExploreQuery handles this — no manual execution needed.
-    // However we can force a refetch by toggling rawQuery:
-    if (rawQuery) {
-      // Re-set the same rawQuery to trigger a React Query key change
-      setRawQuery(rawQuery);
-    }
-  }, [rawQuery, setRawQuery]);
+    void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
+  }, [queryClient, connection?.url]);
 
   // Query editor extensions for the CodeMirror editor — ref keeps the
   // closure fresh without recreating the extension array on every render.
@@ -201,6 +196,15 @@ export default function ExplorePage() {
   // Cmd/Ctrl+[ toggles the search panel collapse
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
+          target.getAttribute("role") === "textbox" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
         e.preventDefault();
         setMetricsSearchCollapsed(!useUIStore.getState().metricsSearchCollapsed);
