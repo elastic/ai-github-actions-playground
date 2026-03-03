@@ -59,7 +59,7 @@ export default function ServiceInventoryPage() {
   );
   const handleFailure = useCallback(() => setSearchResult(null), [setSearchResult]);
 
-  const { runQuery, loading, error } = useEsqlQuery({
+  const { runQuery, loading, error, clearError } = useEsqlQuery({
     connection,
     onSuccess: handleSuccess,
     onFailure: handleFailure,
@@ -69,6 +69,10 @@ export default function ServiceInventoryPage() {
     const query = buildServiceInventoryQuery(filters);
     runQuery(query);
   }, [filters, runQuery]);
+  const handleReset = useCallback(() => {
+    clearError();
+    resetFilters();
+  }, [clearError, resetFilters]);
 
   const handleViewTraces = useCallback(
     (serviceName: string) => {
@@ -112,7 +116,7 @@ export default function ServiceInventoryPage() {
           <Button variant="contained" size="small" onClick={handleSearch} disabled={loading}>
             {loading ? <CircularProgress size={14} color="inherit" /> : "Search"}
           </Button>
-          <Button variant="text" size="small" onClick={resetFilters}>
+          <Button variant="text" size="small" onClick={handleReset}>
             Reset
           </Button>
           {searchResult && (

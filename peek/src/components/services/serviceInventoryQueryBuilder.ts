@@ -18,6 +18,16 @@ export const DEFAULT_SERVICE_INVENTORY_FILTERS: ServiceInventoryFilters = {
   timeTo: "NOW()",
 };
 
+function toSafeRelativeTimeExpression(value: string): string {
+  const normalized = value.trim();
+  const match = normalized.match(/^NOW\(\)(?:\s*-\s*(\d+)\s+(minutes?|hours?|days?))?$/i);
+  if (!match) {
+    throw new Error(`Unsupported time expression: ${value}`);
+  }
+  if (!match[1]) return "NOW()";
+  return `NOW() - ${match[1]} ${match[2]!.toLowerCase()}`;
+}
+
 /**
  * Builds an ES|QL query that aggregates per-service metrics from root spans.
  * Returns: service name, throughput/latency/error metrics plus investigative context.
@@ -26,10 +36,12 @@ export function buildServiceInventoryQuery(
   filters: ServiceInventoryFilters,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
+  const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
+  const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
   const whereClauses: string[] = [
     `${fields.parentSpanId} IS NULL`,
-    `${fields.timestamp} >= ${filters.timeFrom}`,
-    `${fields.timestamp} <= ${filters.timeTo}`,
+    `${fields.timestamp} >= ${safeTimeFrom}`,
+    `${fields.timestamp} <= ${safeTimeTo}`,
   ];
 
   const durationExpr = `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000)`;
