@@ -24,6 +24,7 @@ import ShieldIcon from "@mui/icons-material/Shield";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import PolicyIcon from "@mui/icons-material/Policy";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import SubjectIcon from "@mui/icons-material/Subject";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -40,6 +41,7 @@ const DashboardsLandingPage = lazy(() => import("../components/DashboardsLanding
 const DataStreamsPage = lazy(() => import("../components/DataStreamsPage"));
 const AddDataPage = lazy(() => import("../components/AddDataPage"));
 const DiscoverPage = lazy(() => import("../components/DiscoverPage"));
+const LogsPage = lazy(() => import("../components/logs/LogsPage"));
 const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
@@ -101,6 +103,20 @@ export const PAGE_MANIFEST = {
       order: 20,
       showInSidebar: true,
       icon: createElement(SearchIcon, { fontSize: "small" }),
+    },
+  },
+  logs: {
+    path: "/logs",
+    component: LogsPage,
+    requiresConnection: true,
+    showTimeControls: true,
+    skeletonVariant: "table",
+    nav: {
+      label: "Logs",
+      group: "Workspace",
+      order: 25,
+      showInSidebar: true,
+      icon: createElement(SubjectIcon, { fontSize: "small" }),
     },
   },
   explore: {

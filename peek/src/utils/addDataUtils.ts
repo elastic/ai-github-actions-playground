@@ -143,10 +143,10 @@ export const SIGNAL_NAV: Record<
     ],
   },
   logs: {
-    label: "Query Lab",
-    path: "/discover",
+    label: "Logs",
+    path: "/logs",
     successCtas: [
-      { id: "signal", label: "Open Query Lab", path: "/discover" },
+      { id: "signal", label: "Open Logs", path: "/logs" },
       { id: "dashboard", label: "Open Dashboards", path: "/dashboards" },
       { id: "alerting", label: "Set up alerting", path: "/docs" },
       { id: "additional_source", label: "Add another source", path: "/add-data" },
