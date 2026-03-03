@@ -63,7 +63,7 @@ export function useExploreQuery({
       timeRange.from,
       timeRange.to,
     ],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!connection || !queryDef) throw new Error("Missing connection or query definition");
       const client = new ElasticsearchClient(connection);
       const params = buildTimeParams(queryDef.esql, timeRange);
@@ -71,6 +71,7 @@ export function useExploreQuery({
         Object.keys(params).length > 0
           ? { query: queryDef.esql, params }
           : { query: queryDef.esql },
+        signal,
       );
     },
     enabled: Boolean(connection && queryDef && enabled),
