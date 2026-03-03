@@ -52,7 +52,7 @@ describe("ServiceOverviewCards", () => {
     expect(screen.getByText("Error Rate")).toBeInTheDocument();
   });
 
-  it("shows error color for high overall error rate", () => {
+  it("shows high overall error rate value", () => {
     const highErrorRows: ServiceRow[] = [
       {
         ...MOCK_ROWS[0]!,

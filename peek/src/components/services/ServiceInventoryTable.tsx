@@ -101,6 +101,7 @@ export default function ServiceInventoryTable({
                 label={formatErrorRate(row.errorRate)}
                 color={row.errorRate > 0.05 ? "error" : "default"}
                 variant={row.errorRate > 0.05 ? "filled" : "outlined"}
+                data-testid={row.errorRate > 0.05 ? "error-rate-chip" : undefined}
               />
             </TableCell>
             <TableCell>

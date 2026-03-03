@@ -39,7 +39,7 @@ export default function ServiceOverviewCards({ serviceRows }: ServiceOverviewCar
   if (!summary) return null;
 
   return (
-    <Stack direction="row" spacing={2}>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
       <Box sx={{ flex: 1 }}>
         <OverviewInfoCard title="Total Services">
           <Typography variant="h5" component="p">

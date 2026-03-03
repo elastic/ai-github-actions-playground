@@ -150,11 +150,9 @@ export default function ServicePerformanceCharts({ serviceRows }: ServicePerform
     [serviceRows],
   );
 
-  if (serviceRows.length === 0) return null;
-
   return (
     <Stack spacing={2}>
-      <Stack direction="row" spacing={2}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
         <Box sx={{ flex: 1 }}>
           <OverviewInfoCard title="Slowest Services">
             <RankedList items={topByLatency} />
@@ -166,7 +164,7 @@ export default function ServicePerformanceCharts({ serviceRows }: ServicePerform
           </OverviewInfoCard>
         </Box>
       </Stack>
-      <Stack direction="row" spacing={2}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
         <Box sx={{ flex: 1 }}>
           <OverviewInfoCard title="Services by Language">
             <DistributionPanel entries={languageDistribution} />

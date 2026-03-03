@@ -39,7 +39,7 @@ export default function ServiceBusiestPanel({
             <TableCell align="right">Latency</TableCell>
             <TableCell align="right">Error Rate</TableCell>
             <TableCell>Top Error</TableCell>
-            <TableCell />
+            <TableCell align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
