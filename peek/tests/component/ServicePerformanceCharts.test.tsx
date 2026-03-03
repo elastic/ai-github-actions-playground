@@ -50,9 +50,16 @@ const MOCK_ROWS: ServiceRow[] = [
 ];
 
 describe("ServicePerformanceCharts", () => {
-  it("renders nothing when no service rows provided", () => {
-    const { container } = render(<ServicePerformanceCharts serviceRows={[]} />);
-    expect(container.innerHTML).toBe("");
+  it("renders empty-state placeholders when no service rows provided", () => {
+    render(<ServicePerformanceCharts serviceRows={[]} />);
+
+    expect(screen.getByText("Slowest Services")).toBeInTheDocument();
+    expect(screen.getByText("Highest Error Rate")).toBeInTheDocument();
+    expect(screen.getByText("Services by Language")).toBeInTheDocument();
+    expect(screen.getByText("Services by Environment")).toBeInTheDocument();
+
+    const placeholders = screen.getAllByText("No data available");
+    expect(placeholders).toHaveLength(4);
   });
 
   it("renders all dashboard panels", () => {
