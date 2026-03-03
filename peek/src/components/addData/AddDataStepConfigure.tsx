@@ -71,6 +71,13 @@ export default function AddDataStepConfigure({
   const guideType = selectedTechnology?.guideType ?? "edot_collector";
   const guideDef = GUIDE_TYPE_DEFINITIONS[guideType];
 
+  const canContinue =
+    guideType === "edot_collector" ||
+    guideType === "fluent_bit" ||
+    (guideType === "otel_receiver" && Boolean(receiver)) ||
+    (guideType === "aws_cloud_deploy" && Boolean(selectedAwsTarget)) ||
+    (guideType === "apm" && Boolean(selectedApmLanguage));
+
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
       <Typography variant="h6">Step 2: {guideDef.step2Label}</Typography>
@@ -122,7 +129,7 @@ export default function AddDataStepConfigure({
         <Button variant="outlined" onClick={onBack}>
           Back
         </Button>
-        <Button variant="contained" onClick={onContinue}>
+        <Button variant="contained" onClick={onContinue} disabled={!canContinue}>
           Continue to step 3
         </Button>
       </Stack>

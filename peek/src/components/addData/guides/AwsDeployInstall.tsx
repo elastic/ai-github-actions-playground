@@ -27,7 +27,8 @@ export default function AwsDeployInstall({ target, esUrl, apiKey }: AwsDeployIns
     <>
       <Typography variant="body2" color="text.secondary">
         Click the button below to open the CloudFormation Quick Create page in AWS. The stack name
-        and Elasticsearch credentials will be pre-filled.
+        and Elasticsearch endpoint will be pre-filled. You will need to enter the API key manually
+        in the AWS console.
       </Typography>
 
       <Stack spacing={1.5}>

@@ -27,6 +27,8 @@ export function buildCloudFormationQuickCreateUrl(
   params.set("templateURL", target.cloudFormationTemplateUrl);
   params.set("stackName", `elastic-${target.targetId}-forwarder`);
   for (const [key, value] of Object.entries(values)) {
+    // Never serialize secrets into the URL — users enter these in the AWS console
+    if (key === "ApiKey") continue;
     if (value) params.set(`param_${key}`, value);
   }
   return `https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?${params.toString()}`;

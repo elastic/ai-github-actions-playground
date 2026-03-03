@@ -1,3 +1,4 @@
+import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -20,26 +21,32 @@ export default function FluentBitConfigure({
         Select output mode
       </Typography>
       <Stack spacing={1}>
-        {FLUENT_BIT_OUTPUT_CONFIGS.map((config) => (
-          <Paper
-            key={config.mode}
-            variant="outlined"
-            onClick={() => onOutputModeChange(config.mode)}
-            sx={{
-              p: 1.5,
-              borderWidth: outputMode === config.mode ? 2 : 1,
-              borderColor: outputMode === config.mode ? "primary.main" : undefined,
-              cursor: "pointer",
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {config.label}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {config.description}
-            </Typography>
-          </Paper>
-        ))}
+        {FLUENT_BIT_OUTPUT_CONFIGS.map((config) => {
+          const isSelected = outputMode === config.mode;
+          return (
+            <ButtonBase
+              key={config.mode}
+              onClick={() => onOutputModeChange(config.mode)}
+              sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  borderWidth: isSelected ? 2 : 1,
+                  borderColor: isSelected ? "primary.main" : undefined,
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {config.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {config.description}
+                </Typography>
+              </Paper>
+            </ButtonBase>
+          );
+        })}
       </Stack>
     </>
   );

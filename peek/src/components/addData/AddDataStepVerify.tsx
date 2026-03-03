@@ -86,7 +86,11 @@ export default function AddDataStepVerify({
         )}
       </Stack>
 
-      {verifyStatus === "error" && <Alert severity="error">{verifyError}</Alert>}
+      {verifyStatus === "error" && (
+        <Alert severity="error">
+          {verifyError ?? "An error occurred while verifying data ingestion."}
+        </Alert>
+      )}
 
       {(verifyStatus === "not_found" ||
         (verifyStatus === "polling" && foundSignals.size === 0)) && (

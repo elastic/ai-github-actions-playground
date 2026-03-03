@@ -26,8 +26,16 @@ export interface OtelReceiverDefinition {
 }
 
 /**
+ * Escape a value for safe inclusion in a YAML double-quoted scalar.
+ * Handles backslashes, double quotes, and newlines.
+ */
+function escapeYamlValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+}
+
+/**
  * Interpolate field values into a YAML template.
- * Replaces `{{key}}` placeholders with the corresponding value.
+ * Replaces `{{key}}` placeholders with the corresponding escaped value.
  */
 export function interpolateReceiverTemplate(
   template: string,
@@ -35,7 +43,7 @@ export function interpolateReceiverTemplate(
 ): string {
   let result = template;
   for (const [key, value] of Object.entries(values)) {
-    result = result.replaceAll(`{{${key}}}`, value);
+    result = result.replaceAll(`{{${key}}}`, escapeYamlValue(value));
   }
   return result;
 }

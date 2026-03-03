@@ -38,15 +38,21 @@ export function generateFluentBitConfig(opts: {
     Refresh_Interval  5
     Read_from_Head    True`;
 
+  const parsed = new URL(opts.esUrl);
+  const isHttps = parsed.protocol === "https:";
+  const host = parsed.hostname;
+  const port = parsed.port || (isHttps ? "443" : "80");
+  const tls = isHttps ? "On" : "Off";
+
   if (opts.outputMode === "otlp") {
     return `${input}
 
 [OUTPUT]
     Name              opentelemetry
     Match             *
-    Host              ${new URL(opts.esUrl).hostname}
-    Port              443
-    Tls               On
+    Host              ${host}
+    Port              ${port}
+    Tls               ${tls}
     Header            Authorization Bearer ${opts.apiKey}
 `;
   }
@@ -56,11 +62,10 @@ export function generateFluentBitConfig(opts: {
 [OUTPUT]
     Name              es
     Match             *
-    Host              ${new URL(opts.esUrl).hostname}
-    Port              443
-    Tls               On
-    HTTP_User         elastic
-    HTTP_Passwd       ${opts.apiKey}
+    Host              ${host}
+    Port              ${port}
+    Tls               ${tls}
+    HTTP_API_Key      ${opts.apiKey}
     Index             fluent-bit-logs
     Suppress_Type_Name On
 `;

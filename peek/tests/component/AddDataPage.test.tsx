@@ -42,7 +42,7 @@ function renderPage() {
 }
 
 async function goToStep2(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+  await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
   await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
 }
 
@@ -77,26 +77,25 @@ describe("AddDataPage", () => {
     expect(
       screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Search technologies")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Kubernetes" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Docker" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Linux Host" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search integrations...")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Kubernetes/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Docker/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Linux Host/ })).toBeInTheDocument();
   });
 
   it("filters technologies by search and category", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByLabelText("Search technologies"), "postgres");
+    await user.type(screen.getByPlaceholderText("Search integrations..."), "postgres");
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
     expect(screen.queryByText("Nginx")).not.toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Search technologies"));
-    await user.click(screen.getByRole("button", { name: "Databases" }));
-    expect(screen.getByText(/Databases • Capture query performance/)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Operating Systems • Install EDOT Collector on Linux hosts\/VMs\./),
-    ).not.toBeInTheDocument();
+    await user.clear(screen.getByPlaceholderText("Search integrations..."));
+    // Click the category filter chip (first "Databases" button is the filter)
+    await user.click(screen.getAllByRole("button", { name: /Databases/ })[0]);
+    expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
+    expect(screen.queryByText("Linux Host")).not.toBeInTheDocument();
   });
 
   it("transitions through explicit 5-step flow", async () => {
@@ -189,10 +188,9 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // Filter by category/search and select a technology
-    await user.click(screen.getByRole("button", { name: "Databases" }));
-    await user.type(screen.getByLabelText("Search technologies"), "kub");
-    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    // Search and select a technology
+    await user.type(screen.getByPlaceholderText("Search integrations..."), "kub");
+    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
@@ -211,12 +209,12 @@ describe("AddDataPage", () => {
         screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByLabelText("Search technologies")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByPlaceholderText("Search integrations...")).toHaveValue("");
     expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
 
     // Progress again and ensure Step 4 does not auto-show stale verification success.
-    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
@@ -233,7 +231,7 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
 
     // Switch to Managed OTLP

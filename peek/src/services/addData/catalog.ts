@@ -158,10 +158,10 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     defaultPlatform: "linux",
     recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
-    expectedSignals: ["logs", "metrics", "traces"],
+    expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
       { id: "inspect-nginx-traffic", label: "Open Query Lab", path: "/discover" },
-      { id: "check-http-latency", label: "Open traces", path: "/traces" },
+      { id: "check-http-latency", label: "Explore metrics", path: "/explore" },
     ],
   },
   {

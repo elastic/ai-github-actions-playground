@@ -203,6 +203,12 @@ export default function AddDataPage() {
     setSelectedTechnology(null);
     setTechnologySearch("");
     setActiveCategory("all");
+    setEndpointType("elasticsearch");
+    endpointTypeManuallySetRef.current = false;
+    setReceiverFieldValues({});
+    setSelectedAwsTarget(null);
+    setSelectedApmLanguage(null);
+    setFluentBitOutputMode("elasticsearch");
     resetVerification();
     lastAutoStartedApiKeyRef.current = null;
     setWizardStep(1);
