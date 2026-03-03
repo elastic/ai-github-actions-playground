@@ -16,6 +16,11 @@ export interface LogsQueryState {
   searchText: string;
   filters: LogsFilterChip[];
   selectedColumns: string[];
+  timeRange?: {
+    amount: number;
+    unit: "minute" | "hour" | "day";
+  };
+  limit?: number;
 }
 
 export const DEFAULT_LOGS_QUERY_STATE: LogsQueryState = {
@@ -38,7 +43,18 @@ function buildSearchClause(searchText: string): string | null {
 
 export function buildLogsQuery(state: LogsQueryState): string {
   const safeIndexPattern = validateEsqlIndexPattern(state.indexPattern);
-  const whereClauses: string[] = ["@timestamp >= NOW() - 1 hour"];
+  const configuredAmount = state.timeRange?.amount;
+  const timeRangeAmount =
+    typeof configuredAmount === "number" &&
+    Number.isInteger(configuredAmount) &&
+    configuredAmount > 0
+      ? configuredAmount
+      : 1;
+  const timeRangeUnit = state.timeRange?.unit ?? "hour";
+  const timeRangeSuffix = timeRangeAmount === 1 ? "" : "s";
+  const whereClauses: string[] = [
+    `@timestamp >= NOW() - ${timeRangeAmount} ${timeRangeUnit}${timeRangeSuffix}`,
+  ];
 
   for (const filter of state.filters) {
     const trimmedValue = filter.value.trim();
@@ -60,12 +76,18 @@ export function buildLogsQuery(state: LogsQueryState): string {
       ? state.selectedColumns.map((name) => validateEsqlIdentifier(name)).join(", ")
       : "@timestamp, message";
 
+  const configuredLimit = state.limit;
+  const limit =
+    typeof configuredLimit === "number" && Number.isInteger(configuredLimit) && configuredLimit > 0
+      ? configuredLimit
+      : 500;
+
   return [
     `FROM ${safeIndexPattern}`,
     buildWherePipe(whereClauses),
     "SORT @timestamp DESC",
     `KEEP ${keepColumns}`,
-    "LIMIT 500",
+    `LIMIT ${limit}`,
   ]
     .filter(Boolean)
     .join(" | ");

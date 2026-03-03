@@ -167,6 +167,7 @@ export default function LogsPage() {
 
   const handleCellFilter = useCallback(
     (field: string, value: string, exclude = false) => {
+      // ES|QL table cells can render missing values as the literal "null" string.
       if (!value || value === "null") return;
       addFilter({ field, value, exclude });
     },

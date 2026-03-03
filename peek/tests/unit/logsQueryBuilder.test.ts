@@ -54,4 +54,18 @@ describe("buildLogsQuery", () => {
 
     expect(query).toContain('message : "connection reset"');
   });
+
+  it("supports configurable time range and limit", () => {
+    const query = buildLogsQuery({
+      indexPattern: "logs-*",
+      searchText: "",
+      filters: [],
+      selectedColumns: ["@timestamp", "message"],
+      timeRange: { amount: 2, unit: "day" },
+      limit: 1000,
+    });
+
+    expect(query).toContain("@timestamp >= NOW() - 2 days");
+    expect(query).toContain("LIMIT 1000");
+  });
 });
