@@ -88,6 +88,21 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
     [connection, refreshIntervalMs],
   );
 
+  // Named indices into the clusterQueries array — avoids fragile positional indexing.
+  const Q = {
+    health: 0,
+    pendingTasks: 1,
+    allocation: 2,
+    clusterStats: 3,
+    nodeStats: 4,
+    shards: 5,
+    recovery: 6,
+    ilm: 7,
+    slm: 8,
+    snapshots: 9,
+    clusterSettings: 10,
+  } as const;
+
   const clusterQueries = useQueries({
     queries: [
       {
@@ -167,7 +182,7 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
   });
 
   // Pass 2: conditional allocation explain
-  const healthData = clusterQueries[0]?.data as ClusterHealthResponse | undefined;
+  const healthData = clusterQueries[Q.health]?.data as ClusterHealthResponse | undefined;
   const hasUnassigned = (healthData?.unassigned_shards ?? 0) > 0;
 
   const allocationExplainQuery = useQuery({
@@ -186,20 +201,50 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
 
   // -- Derived state --------------------------------------------------------
 
-  const data: ClusterHealthData = {
-    clusterHealth: (clusterQueries[0]?.data as ClusterHealthResponse) ?? null,
-    pendingTasks: (clusterQueries[1]?.data as ClusterPendingTasksResponse) ?? null,
-    allocation: (clusterQueries[2]?.data as CatAllocationRecord[]) ?? null,
-    clusterStats: (clusterQueries[3]?.data as ClusterStatsResponse) ?? null,
-    nodeStats: (clusterQueries[4]?.data as NodesStatsResponse) ?? null,
-    shards: (clusterQueries[5]?.data as CatShardRecord[]) ?? null,
-    recovery: (clusterQueries[6]?.data as RecoveryResponse) ?? null,
-    ilm: (clusterQueries[7]?.data as IlmExplainResponse) ?? null,
-    slm: (clusterQueries[8]?.data as SlmStatsResponse) ?? null,
-    snapshots: (clusterQueries[9]?.data as SnapshotStatusResponse) ?? null,
-    clusterSettings: (clusterQueries[10]?.data as ClusterSettingsResponse) ?? null,
-    allocationExplain: (allocationExplainQuery.data as ClusterAllocationExplainResponse) ?? null,
-  };
+  // Extract query data references for stable memoization dependencies.
+  const healthResult = clusterQueries[Q.health]?.data;
+  const pendingTasksResult = clusterQueries[Q.pendingTasks]?.data;
+  const allocationResult = clusterQueries[Q.allocation]?.data;
+  const clusterStatsResult = clusterQueries[Q.clusterStats]?.data;
+  const nodeStatsResult = clusterQueries[Q.nodeStats]?.data;
+  const shardsResult = clusterQueries[Q.shards]?.data;
+  const recoveryResult = clusterQueries[Q.recovery]?.data;
+  const ilmResult = clusterQueries[Q.ilm]?.data;
+  const slmResult = clusterQueries[Q.slm]?.data;
+  const snapshotsResult = clusterQueries[Q.snapshots]?.data;
+  const clusterSettingsResult = clusterQueries[Q.clusterSettings]?.data;
+  const allocationExplainResult = allocationExplainQuery.data;
+
+  const data: ClusterHealthData = useMemo(
+    () => ({
+      clusterHealth: (healthResult as ClusterHealthResponse) ?? null,
+      pendingTasks: (pendingTasksResult as ClusterPendingTasksResponse) ?? null,
+      allocation: (allocationResult as CatAllocationRecord[]) ?? null,
+      clusterStats: (clusterStatsResult as ClusterStatsResponse) ?? null,
+      nodeStats: (nodeStatsResult as NodesStatsResponse) ?? null,
+      shards: (shardsResult as CatShardRecord[]) ?? null,
+      recovery: (recoveryResult as RecoveryResponse) ?? null,
+      ilm: (ilmResult as IlmExplainResponse) ?? null,
+      slm: (slmResult as SlmStatsResponse) ?? null,
+      snapshots: (snapshotsResult as SnapshotStatusResponse) ?? null,
+      clusterSettings: (clusterSettingsResult as ClusterSettingsResponse) ?? null,
+      allocationExplain: (allocationExplainResult as ClusterAllocationExplainResponse) ?? null,
+    }),
+    [
+      healthResult,
+      pendingTasksResult,
+      allocationResult,
+      clusterStatsResult,
+      nodeStatsResult,
+      shardsResult,
+      recoveryResult,
+      ilmResult,
+      slmResult,
+      snapshotsResult,
+      clusterSettingsResult,
+      allocationExplainResult,
+    ],
+  );
 
   const loading = clusterQueries.some((q) => q.isFetching) || allocationExplainQuery.isFetching;
 
@@ -207,20 +252,31 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
     clusterQueries.length > 0 &&
     clusterQueries.every((q) => q.isError) &&
     !clusterQueries.some((q) => q.isFetching);
-  const error = allFailed ? String((clusterQueries[0]!.error as Error).message) : null;
+  const error = allFailed ? String((clusterQueries[Q.health]!.error as Error).message) : null;
 
-  const partialErrors: string[] = allFailed
-    ? []
-    : clusterQueries.reduce<string[]>((acc, q, i) => {
-        if (q.isError) acc.push(QUERY_NAMES[i]!);
-        return acc;
-      }, []);
-
-  const maxUpdatedAt = Math.max(
-    ...clusterQueries.map((q) => q.dataUpdatedAt || 0),
-    allocationExplainQuery.dataUpdatedAt || 0,
+  const errorStates = clusterQueries.map((q) => q.isError);
+  const partialErrors: string[] = useMemo(
+    () =>
+      allFailed
+        ? []
+        : errorStates.reduce<string[]>((acc, isError, i) => {
+            if (isError) acc.push(QUERY_NAMES[i]!);
+            return acc;
+          }, []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allFailed, ...errorStates],
   );
-  const lastUpdatedAt = maxUpdatedAt > 0 ? new Date(maxUpdatedAt).toISOString() : null;
+
+  const dataUpdatedTimes = clusterQueries.map((q) => q.dataUpdatedAt);
+  const allocExplainUpdatedAt = allocationExplainQuery.dataUpdatedAt;
+  const lastUpdatedAt = useMemo(() => {
+    const maxUpdatedAt = Math.max(
+      ...dataUpdatedTimes.map((t) => t || 0),
+      allocExplainUpdatedAt || 0,
+    );
+    return maxUpdatedAt > 0 ? new Date(maxUpdatedAt).toISOString() : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...dataUpdatedTimes, allocExplainUpdatedAt]);
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ["cluster-health"] });

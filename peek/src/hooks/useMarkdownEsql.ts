@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useMemo } from "react";
+import { useQueries } from "@tanstack/react-query";
 
 import type {
   ElasticsearchConnection,
@@ -29,7 +30,7 @@ interface UseMarkdownEsqlOptions {
  *
  * 1. First applies `{{param}}` interpolation.
  * 2. Extracts every `${esql_query}` block.
- * 3. Executes each unique query against Elasticsearch.
+ * 3. Executes each unique query against Elasticsearch via React Query.
  * 4. Returns the final markdown with results inlined.
  *
  * While queries are in-flight, the original `${...}` tokens remain.
@@ -45,65 +46,44 @@ export function useMarkdownEsql({
 
   // Step 2 — extract ES|QL blocks (memoized since interpolated is a string)
   const blocks = useMemo(() => extractEsqlBlocks(interpolated), [interpolated]);
-  const blocksKey = blocks.map((b) => b.raw).join("\0");
 
-  const [results, setResults] = useState<{
-    key: string;
-    values: ReadonlyMap<string, EsqlResponse>;
-  }>({ key: "", values: new Map() });
-  const abortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    if (blocks.length === 0) return;
-
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-
-    const uniqueBlocks = new Map<string, string>();
+  // Deduplicate blocks by raw token — multiple identical tokens share a query.
+  const uniqueBlocks = useMemo(() => {
+    const map = new Map<string, string>();
     for (const b of blocks) {
-      if (!uniqueBlocks.has(b.raw)) uniqueBlocks.set(b.raw, b.query);
+      if (!map.has(b.raw)) map.set(b.raw, b.query);
     }
+    return [...map];
+  }, [blocks]);
 
-    void (async () => {
-      if (!connection) {
-        setResults({ key: blocksKey, values: new Map() });
-        return;
-      }
-
-      const datasource = createPersesEsqlDatasource(connection);
-      const tasks = [...uniqueBlocks].map(
-        ([raw, query]) =>
-          async (): Promise<readonly [string, EsqlResponse]> => {
-            const request = buildPersesEsqlRequest(query, { timeRange, parameters });
-            const data = await datasource.execute(request, ctrl.signal);
-            return [raw, data] as const;
-          },
-      );
-      const MAX_CONCURRENCY = 6;
-      const entries: Array<PromiseSettledResult<readonly [string, EsqlResponse]>> = [];
-      for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
-        if (ctrl.signal.aborted) return;
-        const batch = tasks.slice(i, i + MAX_CONCURRENCY);
-        entries.push(...(await Promise.allSettled(batch.map((task) => task()))));
-      }
-
-      if (ctrl.signal.aborted) return;
-
-      const next = new Map<string, EsqlResponse>();
-      for (const entry of entries) {
-        if (entry.status === "fulfilled") next.set(...entry.value);
-      }
-      setResults({ key: blocksKey, values: next });
-    })();
-
-    return () => {
-      ctrl.abort();
-    };
-  }, [blocks, blocksKey, connection, timeRange, parameters]);
+  // Step 3 — one React Query per unique ES|QL block
+  const queryResults = useQueries({
+    queries: uniqueBlocks.map(([raw, query]) => ({
+      queryKey: ["markdown-esql", raw, connection?.url, timeRange] as const,
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const datasource = createPersesEsqlDatasource(connection!);
+        const request = buildPersesEsqlRequest(query, { timeRange, parameters });
+        const data = await datasource.execute(request, signal);
+        return { raw, data } as { raw: string; data: EsqlResponse };
+      },
+      enabled: Boolean(connection) && Boolean(query),
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    })),
+  });
 
   // Step 4 — replace resolved blocks
+  const resultsMap = useMemo(() => {
+    const map = new Map<string, EsqlResponse>();
+    for (const q of queryResults) {
+      if (q.isSuccess && q.data) {
+        map.set(q.data.raw, q.data.data);
+      }
+    }
+    return map;
+  }, [queryResults]);
+
   if (blocks.length === 0) return interpolated;
-  const currentResults = results.key === blocksKey ? results.values : new Map();
-  return replaceEsqlBlocks(interpolated, currentResults);
+  return replaceEsqlBlocks(interpolated, resultsMap);
 }
