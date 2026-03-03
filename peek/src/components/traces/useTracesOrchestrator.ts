@@ -373,8 +373,5 @@ export function useTracesOrchestrator() {
     handleDrawerFilterBy,
     handleDrawerExclude,
     handleDrawerOpenInQueryLab,
-
-    // Theme
-    themeMode: useConnectionStore.getState, // We'll read this separately in the page
   };
 }
