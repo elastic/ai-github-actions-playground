@@ -112,10 +112,46 @@ export async function detectTelemetrySignals(
   return found;
 }
 
-export const SIGNAL_NAV: Record<TelemetrySignal, { label: string; path: string }> = {
-  metrics: { label: "Metrics", path: "/explore" },
-  traces: { label: "Traces", path: "/traces" },
-  logs: { label: "Query Lab", path: "/discover" },
+export interface AddDataSuccessCta {
+  id: "signal" | "dashboard" | "alerting" | "additional_source";
+  label: string;
+  path: string;
+}
+
+export const SIGNAL_NAV: Record<
+  TelemetrySignal,
+  { label: string; path: string; successCtas: AddDataSuccessCta[] }
+> = {
+  metrics: {
+    label: "Metrics",
+    path: "/explore",
+    successCtas: [
+      { id: "signal", label: "Open Metrics", path: "/explore" },
+      { id: "dashboard", label: "Open Dashboards", path: "/dashboards" },
+      { id: "alerting", label: "Set up alerting", path: "/docs" },
+      { id: "additional_source", label: "Add another source", path: "/add-data" },
+    ],
+  },
+  traces: {
+    label: "Traces",
+    path: "/traces",
+    successCtas: [
+      { id: "signal", label: "Open Traces", path: "/traces" },
+      { id: "dashboard", label: "Open Dashboards", path: "/dashboards" },
+      { id: "alerting", label: "Set up alerting", path: "/docs" },
+      { id: "additional_source", label: "Add another source", path: "/add-data" },
+    ],
+  },
+  logs: {
+    label: "Query Lab",
+    path: "/discover",
+    successCtas: [
+      { id: "signal", label: "Open Query Lab", path: "/discover" },
+      { id: "dashboard", label: "Open Dashboards", path: "/dashboards" },
+      { id: "alerting", label: "Set up alerting", path: "/docs" },
+      { id: "additional_source", label: "Add another source", path: "/add-data" },
+    ],
+  },
 };
 
 // ---------------------------------------------------------------------------

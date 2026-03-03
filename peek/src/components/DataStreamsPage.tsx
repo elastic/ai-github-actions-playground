@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -19,12 +19,13 @@ import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, useQueryState } from "nuqs";
 
-import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
+import type { FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
-import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import { useDataStreams } from "../hooks/useDataStreams";
+import { useFieldCaps } from "../hooks/useFieldCaps";
 import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
@@ -60,102 +61,62 @@ export default function DataStreamsPage() {
   const deferredSearch = useDeferredValue(search);
   const deferredFieldSearch = useDeferredValue(fieldSearch);
   const [showSystemStreams, setShowSystemStreams] = useState(false);
-  const [loadingStreams, setLoadingStreams] = useState(false);
-  const [loadingFields, setLoadingFields] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [dataStreams, setDataStreams] = useState<DataStreamInfo[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
-  const [fieldCaps, setFieldCaps] = useState<FieldCapsResponse | null>(null);
   const [selectedField, setSelectedField] = useState<{ name: string; type: string } | null>(null);
-  const fieldRequestIdRef = useRef(0);
+
+  const streamsResult = useDataStreams();
+  const fieldCapsResult = useFieldCaps(selectedName);
+
+  const loadingStreams = streamsResult.status === "loading";
+  const streamsData = streamsResult.status === "success" ? streamsResult.data : undefined;
+  const dataStreams = useMemo(() => streamsData ?? [], [streamsData]);
+  const fieldCaps = fieldCapsResult.status === "success" ? fieldCapsResult.data : null;
+  const loadingFields = fieldCapsResult.status === "loading";
+  const error =
+    streamsResult.status === "error"
+      ? streamsResult.error
+      : fieldCapsResult.status === "error"
+        ? fieldCapsResult.error
+        : null;
 
   const selectedDataStream = useMemo(
     () => dataStreams.find((stream) => stream.name === selectedName) ?? null,
     [dataStreams, selectedName],
   );
 
-  const loadDataStreams = useCallback(async () => {
-    if (!connection) return;
-    setLoadingStreams(true);
-    setError(null);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.getDataStreams(),
-      });
-      if (error !== null) {
-        setError(error);
-      } else if (data !== null) {
-        const nextStreams = data.data_streams ?? [];
-        setDataStreams(nextStreams);
-        setSelectedName((current) => {
-          if (
-            current &&
-            nextStreams.some((stream) => stream.name === current) &&
-            (showSystemStreams || !current.startsWith("."))
-          ) {
-            return current;
-          }
-          const firstVisible = showSystemStreams
-            ? nextStreams[0]
-            : nextStreams.find((stream) => !stream.name.startsWith("."));
-          return firstVisible?.name ?? null;
-        });
-      }
-    } finally {
-      setLoadingStreams(false);
-    }
-  }, [connection, showSystemStreams]);
-
-  const loadFields = useCallback(
-    async (dataStreamName: string) => {
-      if (!connection) return;
-      const requestId = fieldRequestIdRef.current + 1;
-      fieldRequestIdRef.current = requestId;
-      setLoadingFields(true);
-      setError(null);
-      try {
-        const { data, error } = await runConnectionRequest({
-          connection,
-          run: (client) => client.getFieldCaps(dataStreamName),
-        });
-        if (requestId !== fieldRequestIdRef.current) return;
-        if (error !== null) {
-          setError(error);
-        } else if (data !== null) {
-          setFieldCaps(data);
-        }
-      } finally {
-        if (requestId === fieldRequestIdRef.current) {
-          setLoadingFields(false);
-        }
-      }
-    },
-    [connection],
-  );
-
+  // Auto-select the first visible stream when data loads.
+  // Runs on every fetch cycle via the hook's stable data identity.
   useEffect(() => {
-    void loadDataStreams();
-  }, [loadDataStreams]);
-
-  useEffect(() => {
-    if (!selectedName) {
-      setFieldCaps(null);
-      return;
-    }
-    void loadFields(selectedName);
-  }, [selectedName, loadFields]);
+    if (!streamsData) return;
+    const nextStreams = streamsData;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- conditional update: only fires when current selection is invalid or missing after a data fetch
+    setSelectedName((current) => {
+      if (
+        current &&
+        nextStreams.some((stream) => stream.name === current) &&
+        (showSystemStreams || !current.startsWith("."))
+      ) {
+        return current;
+      }
+      const firstVisible = showSystemStreams
+        ? nextStreams[0]
+        : nextStreams.find((stream) => !stream.name.startsWith("."));
+      return firstVisible?.name ?? null;
+    });
+  }, [streamsData, showSystemStreams]);
 
   // When system streams are hidden, ensure the selected stream is not a hidden system stream.
   useEffect(() => {
     if (showSystemStreams) return;
     if (!selectedName?.startsWith(".")) return;
     const firstVisible = dataStreams.find((s) => !s.name.startsWith("."));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- guarded: only updates when a system stream is selected while system streams are hidden
     setSelectedName(firstVisible?.name ?? null);
   }, [showSystemStreams, selectedName, dataStreams]);
 
   // Clear selected field when the active stream changes.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing field selection when stream changes to prevent stale field data
     setSelectedField(null);
   }, [selectedName]);
 
@@ -211,7 +172,7 @@ export default function DataStreamsPage() {
               <Button
                 size="small"
                 variant="outlined"
-                onClick={loadDataStreams}
+                onClick={streamsResult.refresh}
                 disabled={loadingStreams}
               >
                 {loadingStreams ? <CircularProgress size={16} /> : "Refresh"}

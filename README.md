@@ -84,7 +84,7 @@ If `make` is unavailable, run the equivalent npm commands directly:
 
 ```bash
 cd peek
-npm install   # install dependencies
+npm ci        # install dependencies
 npm run dev   # start dev server at http://localhost:3000
 ```
 

@@ -34,7 +34,13 @@ export default function RefreshToolbar({
         options={refreshOptions}
         onChange={onIntervalChange}
       />
-      <Button size="small" variant="outlined" onClick={onRefresh} disabled={loading}>
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={onRefresh}
+        disabled={loading}
+        aria-label="Refresh"
+      >
         {loading ? <CircularProgress size={16} /> : "Refresh"}
       </Button>
     </Stack>

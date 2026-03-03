@@ -49,13 +49,15 @@ class StorageMock implements Storage {
   }
 }
 
-vi.stubGlobal("localStorage", new StorageMock());
-vi.stubGlobal("sessionStorage", new StorageMock());
+const localStorageMock = new StorageMock();
+const sessionStorageMock = new StorageMock();
+vi.stubGlobal("localStorage", localStorageMock);
+vi.stubGlobal("sessionStorage", sessionStorageMock);
 
 afterEach(() => {
   cleanup();
-  localStorage.clear();
-  sessionStorage.clear();
+  localStorageMock.clear();
+  sessionStorageMock.clear();
 });
 
 vi.mock("echarts/core", () => ({

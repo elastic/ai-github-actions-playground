@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -12,8 +12,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
-import type { SimulateIngestPipelineResponse, ElasticsearchConnection } from "../../services/es";
-import { runConnectionRequest } from "../../hooks/useConnectionRequest";
+import type { ElasticsearchConnection } from "../../services/es";
+import { usePipelineSimulate } from "../../hooks/usePipelineSimulate";
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import EmptyState from "../EmptyState";
 
@@ -23,54 +23,41 @@ import SimulateResults from "./SimulateResults";
 interface PipelineDetailPanelProps {
   selectedPipeline: PipelineEntry | null;
   connection: ElasticsearchConnection | null;
+  pipelinesExist: boolean;
 }
 
 export default function PipelineDetailPanel({
   selectedPipeline,
   connection,
+  pipelinesExist,
 }: PipelineDetailPanelProps) {
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
   const [verbose, setVerbose] = useState(false);
-  const [simulating, setSimulating] = useState(false);
-  const [simulateError, setSimulateError] = useState<string | null>(null);
-  const [simulateResult, setSimulateResult] = useState<SimulateIngestPipelineResponse | null>(null);
-  const requestSeqRef = useRef(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  useEffect(() => {
-    requestSeqRef.current += 1;
-    setSimulating(false);
-    setSimulateResult(null);
-    setSimulateError(null);
-  }, [selectedPipeline?.name]);
+  const {
+    simulating,
+    error: simulateApiError,
+    result: simulateResult,
+    simulate,
+    reset,
+  } = usePipelineSimulate(connection, selectedPipeline?.name);
 
-  const handleSimulate = useCallback(async () => {
-    if (!connection || !selectedPipeline) return;
-    const requestId = ++requestSeqRef.current;
-    setSimulating(true);
-    setSimulateError(null);
-    setSimulateResult(null);
-    try {
-      const docs = parseSimulateInput(simulateInput);
-      if (!docs) {
-        setSimulateError(
-          "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
-        );
-        return;
-      }
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs, { verbose }),
-      });
-      if (requestId !== requestSeqRef.current) return;
-      if (error !== null) {
-        setSimulateError(error);
-      } else if (data !== null) {
-        setSimulateResult(data);
-      }
-    } finally {
-      if (requestId === requestSeqRef.current) setSimulating(false);
+  const simulateError = validationError ?? simulateApiError;
+
+  const handleSimulate = useCallback(() => {
+    if (!selectedPipeline) return;
+    const docs = parseSimulateInput(simulateInput);
+    if (!docs) {
+      setValidationError(
+        "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
+      );
+      reset();
+      return;
     }
-  }, [connection, selectedPipeline, simulateInput, verbose]);
+    setValidationError(null);
+    simulate(docs, verbose);
+  }, [selectedPipeline, simulateInput, verbose, simulate, reset]);
 
   if (!selectedPipeline) {
     return (
@@ -78,11 +65,20 @@ export default function PipelineDetailPanel({
         variant="outlined"
         sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "auto" }}
       >
-        <EmptyState
-          icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
-          heading="Select a pipeline"
-          description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
-        />
+        {pipelinesExist ? (
+          <EmptyState
+            icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+            heading="Select a pipeline"
+            description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
+          />
+        ) : (
+          <EmptyState
+            icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+            heading="No ingest pipelines"
+            description="This cluster has no ingest pipelines yet. Create one via Console or add data to get started."
+            addDataHref="/add-data"
+          />
+        )}
       </Paper>
     );
   }
@@ -164,7 +160,11 @@ export default function PipelineDetailPanel({
                       borderRadius: 1,
                     }}
                   >
-                    <Typography component="legend" variant="caption" sx={{ px: 0.5 }}>
+                    <Typography
+                      component="legend"
+                      variant="caption"
+                      sx={{ px: 0.5, bgcolor: "background.paper" }}
+                    >
                       {type}
                     </Typography>
                     <Typography
@@ -210,8 +210,8 @@ export default function PipelineDetailPanel({
             <Button
               size="small"
               variant="contained"
-              onClick={() => void handleSimulate()}
-              disabled={simulating || !selectedPipeline.name}
+              onClick={handleSimulate}
+              disabled={simulating || !selectedPipeline.name || !connection}
               startIcon={simulating ? <CircularProgress size={14} /> : null}
             >
               {simulating ? "Simulating…" : "Simulate"}

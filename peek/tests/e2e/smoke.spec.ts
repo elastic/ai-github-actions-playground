@@ -251,6 +251,35 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("button", { name: "Connect to Elasticsearch" })).toBeVisible();
   });
 
+  test("add data entrypoint exposes the full five-step happy path", async ({ page }) => {
+    await connectToMockCluster(page);
+    await navigateViaSidebar(page, "Add Data");
+
+    await expect(
+      page.getByRole("heading", { name: "Step 1: What are you monitoring?" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Kubernetes" }).first().click();
+    await page.getByRole("button", { name: "Continue to step 2" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Step 2: Select your environment" }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Continue to step 3" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Step 3: Install and configure" }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Continue to step 4" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Step 4: Validate data receipt" }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Continue to step 5" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Step 5: Explore your data + next steps" }),
+    ).toBeVisible();
+  });
+
   test("metrics user connects, picks a metric, and gets a line chart-ready result", async ({
     page,
   }) => {
@@ -270,7 +299,7 @@ test.describe("smoke – site navigation", () => {
   }) => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Traces");
-    await page.getByRole("button", { name: "Search Traces" }).click();
+    await page.getByRole("button", { name: "Search Traces" }).first().click();
     await expect(page.getByText("1 traces found")).toBeVisible();
     await page.getByText("GET /checkout").click();
     await expect(page.getByText("2 spans")).toBeVisible();

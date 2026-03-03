@@ -224,6 +224,18 @@ export default function AppHeader({
               />
             </ButtonBase>
           </Box>
+        ) : connected && isNarrow ? (
+          <Box sx={{ display: "flex", flex: 1, justifyContent: "center" }}>
+            <Tooltip title="Search commands">
+              <IconButton
+                onClick={() => setCommandPaletteOpen(true)}
+                aria-label="Open command palette"
+                size="small"
+              >
+                <SearchIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         ) : (
           <Box sx={{ flex: 1 }} />
         )}

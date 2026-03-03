@@ -1,8 +1,4 @@
-import {
-  isElasticsearchError,
-  type ElasticsearchClient,
-  type UserCapabilities,
-} from "../services/es";
+import { isElasticsearchError, type ElasticsearchClient, type UserCapabilities } from "./es";
 
 export interface SecurityResourceResult<T> {
   data: T | null;

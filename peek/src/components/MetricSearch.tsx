@@ -13,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import type { FieldInfo, MetricTypeClassification } from "../services/es";
 
 import { getTypeColor } from "./fieldTypeColor";
+import { metricNamespaceOf } from "./explore/exploreUtils";
 
 function getMetricBadge(metricType: MetricTypeClassification): {
   label: string;
@@ -37,13 +38,6 @@ interface Props {
   onSelect: (field: FieldInfo | null) => void;
 }
 
-function namespaceOf(fieldName: string): string {
-  const dot = fieldName.indexOf(".");
-  if (dot > 0) return fieldName.slice(0, dot);
-  const underscore = fieldName.indexOf("_");
-  return underscore > 0 ? fieldName.slice(0, underscore) : fieldName;
-}
-
 export default function MetricSearch({
   fields,
   loading,
@@ -56,12 +50,12 @@ export default function MetricSearch({
   const metricFields = useMemo(() => fields.filter((f) => f.metricType !== "unknown"), [fields]);
   const namespaceLabelId = useId();
   const namespaces = useMemo(
-    () => Array.from(new Set(metricFields.map((f) => namespaceOf(f.name)))).sort(),
+    () => Array.from(new Set(metricFields.map((f) => metricNamespaceOf(f.name)))).sort(),
     [metricFields],
   );
   const scopedMetricFields = useMemo(() => {
     if (!selectedNamespace) return metricFields;
-    return metricFields.filter((f) => namespaceOf(f.name) === selectedNamespace);
+    return metricFields.filter((f) => metricNamespaceOf(f.name) === selectedNamespace);
   }, [metricFields, selectedNamespace]);
 
   const selectedField = useMemo(
@@ -92,6 +86,7 @@ export default function MetricSearch({
       <Autocomplete
         size="small"
         openText="Browse metrics"
+        noOptionsText="No matching metrics found"
         options={scopedMetricFields}
         value={selectedField}
         onChange={(_, value) => onSelect(value)}
