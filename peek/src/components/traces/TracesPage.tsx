@@ -21,7 +21,7 @@ import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 import ResizableSplitPane from "../ResizableSplitPane";
 import type { EsqlResponse } from "../../types";
 
-import { parseSpansFromEsql } from "./traceUtils";
+import { parseSpansFromEsql, formatStatusLabel } from "./traceUtils";
 import type { Span } from "./traceUtils";
 import {
   buildTraceSearchQuery,
@@ -375,7 +375,7 @@ export default function TracesPage() {
         serviceName: String(get(row, DEFAULT_FIELD_MAPPING.serviceName) ?? "unknown"),
         name: String(get(row, DEFAULT_FIELD_MAPPING.spanName) ?? ""),
         durationUs,
-        status: String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK"),
+        status: formatStatusLabel(String(get(row, DEFAULT_FIELD_MAPPING.statusCode) ?? "OK")),
         timestamp: String(get(row, DEFAULT_FIELD_MAPPING.timestamp) ?? ""),
       };
     });
