@@ -115,4 +115,20 @@ describe("ExplorePage", () => {
     expect(listFieldsMock).toHaveBeenCalled();
     expect(queryMock).not.toHaveBeenCalled();
   });
+
+  it("does not query when metric is invalid and field loading fails", async () => {
+    listFieldsMock.mockRejectedValueOnce(new Error("boom"));
+    render(
+      <MemoryRouter initialEntries={[NOT_FOUND_URL]}>
+        <NuqsTestingAdapter searchParams={NOT_FOUND_QS} hasMemory>
+          <ExplorePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Metric not found")).toBeInTheDocument();
+    });
+    expect(queryMock).not.toHaveBeenCalled();
+  });
 });

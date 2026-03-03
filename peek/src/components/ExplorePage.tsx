@@ -150,8 +150,7 @@ export default function ExplorePage() {
   const [skipDimensionOverview, setSkipDimensionOverview] = useState(false);
 
   // True when a metric is set (e.g. via URL) but does not exist in the loaded field list.
-  const metricNotFound =
-    selectedMetric !== null && !fieldsLoading && fields.length > 0 && selectedMetricField === null;
+  const metricNotFound = selectedMetric !== null && !fieldsLoading && selectedMetricField === null;
 
   // Show namespace overview when a namespace is picked but no single metric is selected.
   const showOverview = selectedNamespace !== null && !selectedMetric;
