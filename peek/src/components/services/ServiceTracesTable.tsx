@@ -71,8 +71,8 @@ export default function ServiceTracesTable({
         </TableRow>
       </TableHead>
       <TableBody>
-        {traces.map((trace) => (
-          <TableRow key={`${trace.traceId}-${trace.timestamp}`} hover>
+        {traces.map((trace, idx) => (
+          <TableRow key={`${trace.traceId}-${idx}`} hover>
             <TableCell>
               <Typography
                 variant="body2"
