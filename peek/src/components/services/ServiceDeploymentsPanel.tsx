@@ -13,9 +13,11 @@ import type { DeploymentRow } from "./serviceDashboardHelpers";
 function formatTimestamp(ts: string): string {
   if (!ts) return "—";
   try {
-    return new Date(ts).toLocaleString();
+    const date = new Date(ts);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleString();
   } catch {
-    return ts;
+    return "—";
   }
 }
 
