@@ -6,17 +6,14 @@ import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 
 import type { PerSignalDelta } from "../../services/addData/ingestionQueries";
+import { formatNumber } from "../visualizations/chartUtils";
+
+import { SIGNAL_COLORS } from "./addDataTechnologyConstants";
 
 const SIGNAL_LABELS: Record<string, string> = {
   logs: "Logs",
   metrics: "Metrics",
   traces: "Traces",
-};
-
-const SIGNAL_COLORS: Record<string, "info" | "success" | "warning"> = {
-  logs: "info",
-  metrics: "success",
-  traces: "warning",
 };
 
 interface SignalVerificationCardProps {
@@ -118,14 +115,10 @@ function StatusIcon({ detected, isPolling }: { detected: boolean; isPolling: boo
   return <RadioButtonUncheckedIcon color="disabled" fontSize="small" />;
 }
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
 function formatRelativeTime(isoTimestamp: string): string {
-  const deltaMs = Date.now() - Date.parse(isoTimestamp);
+  const parsed = Date.parse(isoTimestamp);
+  if (Number.isNaN(parsed)) return "just now";
+  const deltaMs = Date.now() - parsed;
   if (deltaMs < 0) return "just now";
   const seconds = Math.floor(deltaMs / 1000);
   if (seconds < 5) return "just now";

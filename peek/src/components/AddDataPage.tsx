@@ -309,7 +309,11 @@ export default function AddDataPage() {
           connectionUrl={connection?.url ?? null}
           connectionAvailable={Boolean(connection)}
           verification={verification}
-          onBack={() => setWizardStep(1)}
+          onBack={() => {
+            verification.resetVerification();
+            lastAutoStartedApiKeyRef.current = null;
+            setWizardStep(1);
+          }}
           onContinue={() => setWizardStep(3)}
         />
       )}

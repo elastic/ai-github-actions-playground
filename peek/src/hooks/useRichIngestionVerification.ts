@@ -24,7 +24,7 @@ export interface IngestionVerificationState {
   baseline: IngestionSnapshot | null;
   current: IngestionSnapshot | null;
   deltas: PerSignalDelta[];
-  /** True if any signal shows a new data stream, new hosts, or growing doc count. */
+  /** True if any signal shows a new data stream, new hosts/agents, or growing doc count. */
   overallDetected: boolean;
   /** Tier 1 data stream signals (from the latest poll). */
   dataStreamSignals: Set<TelemetrySignal>;
@@ -50,7 +50,7 @@ export function useRichIngestionVerification(
   const [pollingEnabled, setPollingEnabled] = useState(false);
   const [baseline, setBaseline] = useState<IngestionSnapshot | null>(null);
 
-  // Reset when connection URL changes (render-time state adjustment)
+  // Reset when connection URL changes (render-time state adjustment).
   const [connectionKey, setConnectionKey] = useState(connection?.url);
   if (connection?.url !== connectionKey) {
     setConnectionKey(connection?.url);
@@ -62,7 +62,7 @@ export function useRichIngestionVerification(
   const expectedSignalsRef = useRef(expectedSignals);
   useEffect(() => {
     expectedSignalsRef.current = expectedSignals;
-  });
+  }, [expectedSignals]);
 
   // -----------------------------------------------------------------------
   // Baseline query — runs once when polling is enabled and baseline is null
@@ -120,7 +120,7 @@ export function useRichIngestionVerification(
   let status: RichVerifyStatus = "idle";
   if (anyError) {
     status = "error";
-  } else if (pollingEnabled && !baseline) {
+  } else if (connection && pollingEnabled && !baseline) {
     status = "capturing_baseline";
   } else if (overallDetected) {
     status = "detected";

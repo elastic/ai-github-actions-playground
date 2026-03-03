@@ -72,9 +72,18 @@ export default function IngestionVerificationPanel({
         <Button
           size="small"
           variant="contained"
-          onClick={() =>
-            status === "idle" ? verification.startPolling() : verification.checkNow()
-          }
+          onClick={() => {
+            if (status === "idle") {
+              verification.startPolling();
+              return;
+            }
+            if (status === "error" && !verification.baseline) {
+              verification.resetVerification();
+              verification.startPolling();
+              return;
+            }
+            verification.checkNow();
+          }}
           disabled={!connectionAvailable || status === "capturing_baseline"}
           startIcon={
             isPolling ? <CircularProgress size={16} /> : <CheckCircleOutlineIcon fontSize="small" />
@@ -154,6 +163,11 @@ function DetectionSummaryAlert({ deltas }: { deltas: PerSignalDelta[] }) {
   const hostsAdded = deltas.reduce((sum, d) => sum + d.newHostsDetected, 0);
   if (hostsAdded > 0) {
     parts.push(`${hostsAdded} new host${hostsAdded > 1 ? "s" : ""} detected`);
+  }
+
+  const agentsAdded = deltas.reduce((sum, d) => sum + d.newAgentsDetected, 0);
+  if (agentsAdded > 0) {
+    parts.push(`${agentsAdded} new agent${agentsAdded > 1 ? "s" : ""} detected`);
   }
 
   const flowing = deltas.filter((d) => d.isDataFlowing && !d.dataStreamAppeared);

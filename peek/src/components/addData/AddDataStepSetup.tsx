@@ -231,9 +231,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Typography variant="h6">Step 2: Set up and verify</Typography>
       <Typography variant="body2" color="text.secondary">
-        {p.selectedTechnology
-          ? `${p.selectedTechnology.technology} can emit ${p.signalExpectation}.`
-          : "Configure, install, and verify your data source."}
+        {`${p.selectedTechnology.technology} can emit ${p.signalExpectation}.`}
       </Typography>
 
       {/* Section 1: Configure */}
