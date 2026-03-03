@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import DevicesIcon from "@mui/icons-material/Devices";
 
 import type { FleetServerStatusMetrics, FleetAgentVersionCount } from "../../services/fleet";
-import type { AgentFilter } from "../../store/useFleetStore";
+import type { AgentFilter } from "../../store/usePageFiltersStore";
 import EmptyState from "../EmptyState";
 
 import FleetStatCard from "./FleetStatCard";

@@ -9,18 +9,13 @@ import {
   buildWherePipe,
   normalizeTimeExpression,
 } from "../../services/es/queryParts";
+import {
+  DEFAULT_SERVICE_INVENTORY_FILTERS,
+  type ServiceInventoryFilters,
+} from "../../types/pageFilters";
 
-export interface ServiceInventoryFilters {
-  /** ES|QL date expression for the lower time bound, e.g. "NOW() - 1 hour" */
-  timeFrom: string;
-  /** ES|QL date expression for the upper time bound, e.g. "NOW()" */
-  timeTo: string;
-}
-
-export const DEFAULT_SERVICE_INVENTORY_FILTERS: ServiceInventoryFilters = {
-  timeFrom: "NOW() - 1 hour",
-  timeTo: "NOW()",
-};
+export type { ServiceInventoryFilters };
+export { DEFAULT_SERVICE_INVENTORY_FILTERS };
 
 function toSafeRelativeTimeExpression(value: string): string {
   const normalized = normalizeTimeExpression(value);
