@@ -19,6 +19,7 @@ import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useServicesStore } from "../../store/useServicesStore";
 import { useTracesStore } from "../../store/useTracesStore";
+import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
@@ -140,7 +141,7 @@ export default function ServiceInventoryPage() {
 
   const handleViewTraces = useCallback(
     (serviceName: string) => {
-      useTracesStore.getState().updateFilters({ services: [serviceName] });
+      useTracesStore.getState().setFilters({ ...EMPTY_FILTERS, services: [serviceName] });
       navigate(PAGE_MANIFEST.traces.path);
     },
     [navigate],

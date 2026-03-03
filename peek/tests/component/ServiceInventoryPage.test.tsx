@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ServiceInventoryPage from "../../src/components/services/ServiceInventoryPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useServicesStore } from "../../src/store/useServicesStore";
+import { useTracesStore } from "../../src/store/useTracesStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const mockRunQuery = vi.fn();
@@ -184,5 +185,25 @@ describe("ServiceInventoryPage", () => {
     expect(screen.getByText("Database timeout")).toBeInTheDocument();
     expect(screen.getByText("java")).toBeInTheDocument();
     expect(screen.getAllByText("prod").length).toBeGreaterThan(0);
+  });
+
+  it("navigates to Traces with a clean service filter when View Traces is clicked", async () => {
+    const user = userEvent.setup();
+    // Pre-seed stale filters that should be wiped by the drilldown
+    useTracesStore.getState().updateFilters({ statusCodes: ["ERROR"], services: ["old-service"] });
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    await waitFor(() => {
+      expect(screen.getAllByText("View Traces")).toHaveLength(3);
+    });
+
+    await user.click(screen.getAllByRole("button", { name: /View traces for frontend/i })[0]);
+
+    const tracesFilters = useTracesStore.getState().filters;
+    expect(tracesFilters.services).toEqual(["frontend"]);
+    // Stale filters must be cleared
+    expect(tracesFilters.statusCodes).toEqual([]);
   });
 });
