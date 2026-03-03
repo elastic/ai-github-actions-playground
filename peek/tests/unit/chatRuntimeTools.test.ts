@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { buildChatRuntime } from "../../src/services/chatRuntime";
+import { ElasticsearchClient } from "../../src/services/es";
+import type { IndexStatsResponse } from "../../src/services/es";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
@@ -249,6 +251,59 @@ describe("buildChatRuntime — ES-dependent tools", () => {
     expect(tools).not.toHaveProperty("run_raw_es_request");
     expect(tools).not.toHaveProperty("explain_ingest_pipeline");
     expect(tools).not.toHaveProperty("run_esql_query");
+  });
+
+  it("get_index_info returns mappings, settings, stats, and health", async () => {
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexMappings").mockResolvedValue({ mappings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexSettings").mockResolvedValue({ settings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexStats").mockResolvedValue({
+      _all: {},
+    } satisfies IndexStatsResponse);
+    const rawRequestSpy = vi
+      .spyOn(ElasticsearchClient.prototype, "rawRequest")
+      .mockResolvedValue({ status: 200, body: { status: "green" } });
+
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const indexInfoTool = tools.get_index_info as {
+      execute: (args: { index: string }) => Promise<unknown>;
+    };
+
+    const result = await indexInfoTool.execute({ index: "logs-*" });
+    expect(rawRequestSpy).toHaveBeenCalledWith(
+      "GET",
+      "/_cluster/health/logs-*",
+      undefined,
+      expect.any(AbortSignal),
+    );
+    expect(result).toEqual({
+      index: "logs-*",
+      mappings: { mappings: {} },
+      settings: { settings: {} },
+      stats: { _all: {} },
+      health: { status: "green" },
+    });
+  });
+
+  it("run_raw_es_request handles undefined response body", async () => {
+    vi.spyOn(ElasticsearchClient.prototype, "rawRequest").mockResolvedValue({
+      status: 200,
+      body: undefined,
+    });
+
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const rawTool = tools.run_raw_es_request as {
+      execute: (args: { method: "GET"; path: string; body?: string }) => Promise<unknown>;
+    };
+    const result = await rawTool.execute({ method: "GET", path: "/_cluster/health" });
+    expect(result).toEqual({ status: 200, body: undefined });
   });
 });
 

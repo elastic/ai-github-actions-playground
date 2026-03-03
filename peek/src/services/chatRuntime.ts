@@ -194,12 +194,18 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
         try {
-          const [mappings, settings, stats] = await Promise.all([
+          const [mappings, settings, stats, health] = await Promise.all([
             client.getIndexMappings(index, controller.signal),
             client.getIndexSettings(index, controller.signal),
             client.getIndexStats(index, controller.signal),
+            client.rawRequest(
+              "GET",
+              `/_cluster/health/${encodeURIComponent(index)}`,
+              undefined,
+              controller.signal,
+            ),
           ]);
-          return { index, mappings, settings, stats };
+          return { index, mappings, settings, stats, health: health.body };
         } finally {
           clearTimeout(timeoutId);
         }
@@ -221,7 +227,16 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
         try {
           const result = await client.rawRequest(method, normalizedPath, body, controller.signal);
-          const serialized = JSON.stringify(result.body);
+          let serialized: string;
+          if (typeof result.body === "string") {
+            serialized = result.body;
+          } else {
+            try {
+              serialized = JSON.stringify(result.body ?? null);
+            } catch {
+              serialized = String(result.body);
+            }
+          }
           if (serialized.length > MAX_RAW_RESPONSE_LENGTH) {
             return {
               status: result.status,
