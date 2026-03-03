@@ -19,12 +19,8 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain('top_route = TOP(route_key, 1, "desc")');
       expect(query).toContain('top_span_name = TOP(span_name_key, 1, "desc")');
       expect(query).toContain('language = TOP(language_key, 1, "desc")');
-      expect(query).toContain(
-        'route_key = COALESCE(attributes.url.path, attributes.http.route, url.path, "/")',
-      );
-      expect(query).toContain(
-        'language_key = COALESCE(service.language.name, attributes.service.language, "unknown")',
-      );
+      expect(query).toContain('route_key = COALESCE(attributes.http.route, "/")');
+      expect(query).toContain('language_key = COALESCE(service.language.name, "unknown")');
       expect(query).toContain(
         'environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
       );
