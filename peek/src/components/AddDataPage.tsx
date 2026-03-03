@@ -823,6 +823,8 @@ export default function AddDataPage() {
                 variant={cta.id === "signal" ? "contained" : "outlined"}
                 onClick={() => {
                   if (cta.id === "additional_source") {
+                    setSelectedTechnology(null);
+                    setTechnologySearch("");
                     setWizardStep(1);
                     return;
                   }

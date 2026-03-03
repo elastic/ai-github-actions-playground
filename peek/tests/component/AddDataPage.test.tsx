@@ -170,6 +170,37 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   });
+
+  it("resets selected technology and search input when clicking 'Add another source'", async () => {
+    mockGetDataStreams
+      .mockResolvedValueOnce({ data_streams: [] })
+      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    // Type a search query and select a technology
+    await user.type(screen.getByLabelText("Search technologies"), "kub");
+    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Telemetry data detected!/)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
+    await user.click(screen.getByRole("button", { name: "Add another source" }));
+
+    // Should return to Step 1 with a clean slate
+    expect(
+      screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Search technologies")).toHaveValue("");
+    expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
+  });
 });
 
 describe("probeOtlpEndpoint", () => {
