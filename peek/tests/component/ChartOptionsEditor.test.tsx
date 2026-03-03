@@ -5,9 +5,12 @@ import ChartOptionsEditor from "../../src/components/ChartOptionsEditor";
 import type { VisualizationOptions, FormatOptions } from "../../src/types";
 
 vi.mock("../../src/components/perses/panelRegistry", () => ({
-  getPersesPanelEntry: (type: string) => {
+  getPersesPanelCapabilities: (type: string) => {
     if (type === "stat") {
       return {
+        supportsOptions: true,
+        supportsQuery: true,
+        supportsImageExport: false,
         OptionsEditor: ({
           options,
           onChange,
@@ -27,10 +30,18 @@ vi.mock("../../src/components/perses/panelRegistry", () => ({
     }
     if (type === "table") {
       return {
+        supportsOptions: false,
+        supportsQuery: true,
+        supportsImageExport: false,
         OptionsEditor: () => <div data-testid="table-options-editor">Table opts</div>,
       };
     }
-    return undefined;
+    return {
+      supportsOptions: false,
+      supportsQuery: true,
+      supportsImageExport: false,
+      OptionsEditor: undefined,
+    };
   },
 }));
 
