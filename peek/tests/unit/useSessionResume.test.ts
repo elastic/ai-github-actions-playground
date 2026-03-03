@@ -79,7 +79,9 @@ describe("useSessionResume", () => {
   });
 
   it("does not apply stale capabilities after a manual reconnect", async () => {
-    useConnectionStore.setState({ connection: CONN, connected: false });
+    act(() => {
+      useConnectionStore.setState({ connection: CONN, connected: false });
+    });
     const deferred = createDeferred<typeof CAPS>();
     mockFetch.mockReturnValue(deferred.promise);
 
@@ -137,5 +139,18 @@ describe("useSessionResume", () => {
     });
 
     expect(result.current.resumeError).toBeNull();
+  });
+
+  it("resumes when connection appears after mount (late hydration)", async () => {
+    mockFetch.mockResolvedValue(CAPS);
+
+    renderHook(() => useSessionResume());
+
+    // Simulate async persist hydration delivering the connection after mount.
+    useConnectionStore.setState({ connection: CONN, connected: false });
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(useConnectionStore.getState().connected).toBe(true));
+    expect(useConnectionStore.getState().capabilities).toEqual(CAPS);
   });
 });

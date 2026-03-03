@@ -51,7 +51,7 @@ describe("TraceErrorAlerts", () => {
 
   it("deduplicates identical errors", () => {
     render(<TraceErrorAlerts errors={["parsing_exception: bad", "parsing_exception: bad"]} />);
-    expect(screen.getByText("The query could not be parsed.")).toBeInTheDocument();
+    expect(screen.queryAllByText("The query could not be parsed.")).toHaveLength(1);
   });
 
   it("shows details when expanded", async () => {

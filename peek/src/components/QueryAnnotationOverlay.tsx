@@ -41,6 +41,21 @@ function cacheSet(key: string, value: string) {
   }
 }
 
+/**
+ * Synchronously reads a cached explanation for the given query.
+ * Returns null when no explanation has been generated yet.
+ */
+export function useQueryExplanation(query: string): string | null {
+  const { provider, model } = useLLMStore(
+    useShallow((s) => ({
+      provider: s.config.provider,
+      model: s.config.model,
+    })),
+  );
+  const cacheKey = getCacheKey(query, provider, model);
+  return useMemo(() => explanationCache.get(cacheKey) ?? null, [cacheKey]);
+}
+
 interface QueryAnnotationOverlayProps {
   query: string;
   editorFocused: boolean;

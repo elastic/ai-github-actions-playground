@@ -75,6 +75,102 @@ describe("DiscoverPage", () => {
     ]);
   });
 
+  it("selects only preferred fields when result has many columns", async () => {
+    const manyColumns = [
+      "@timestamp",
+      "message",
+      "host.name",
+      "service.name",
+      "log.level",
+      "event.dataset",
+      "agent.name",
+      "field1",
+      "field2",
+      "field3",
+      "field4",
+      "field5",
+    ].map((name) => ({ name, type: "keyword" }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => {
+      const selected = useQueryStore.getState().discoverSelectedFields;
+      // Should select the full preferred subset, not all 12 fields
+      expect(selected.size).toBe(7);
+      expect(selected.has("@timestamp")).toBe(true);
+      expect(selected.has("message")).toBe(true);
+      expect(selected.has("host.name")).toBe(true);
+      expect(selected.has("service.name")).toBe(true);
+      expect(selected.has("log.level")).toBe(true);
+      expect(selected.has("event.dataset")).toBe(true);
+      expect(selected.has("agent.name")).toBe(true);
+      expect(selected.has("field1")).toBe(false);
+    });
+  });
+
+  it("falls back to first 10 fields when no preferred fields exist", async () => {
+    const manyColumns = Array.from({ length: 12 }, (_, i) => ({
+      name: `col_${i + 1}`,
+      type: "keyword",
+    }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    await waitFor(() => {
+      const selected = useQueryStore.getState().discoverSelectedFields;
+      expect(selected.size).toBe(10);
+      expect(selected.has("col_1")).toBe(true);
+      expect(selected.has("col_10")).toBe(true);
+      expect(selected.has("col_11")).toBe(false);
+      expect(selected.has("col_12")).toBe(false);
+    });
+  });
+
+  it("selects all fields when result has few columns", async () => {
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "message", type: "keyword" },
+        { name: "count", type: "long" },
+      ],
+      values: [["2025-06-15T12:00:00.000Z", "hello", 1]],
+      executionTimeMs: 1,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => {
+      const selected = useQueryStore.getState().discoverSelectedFields;
+      expect(selected.size).toBe(3);
+    });
+  });
+
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
     useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");

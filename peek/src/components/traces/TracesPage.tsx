@@ -63,7 +63,7 @@ export default function TracesPage() {
       driftRadarSpans={o.driftRadarSpans}
       driftRadarBaselineSpans={o.driftRadarBaselineSpans}
       driftRadarBaselineEnabled={o.driftRadarBaselineEnabled}
-      onDriftRadarBaselineChange={o.setDriftRadarBaselineEnabled}
+      onDriftRadarBaselineChange={o.handleDriftRadarBaselineChange}
       filters={o.filters}
       onSearch={o.handleSearch}
     />
@@ -83,6 +83,8 @@ export default function TracesPage() {
         searchLoading={o.searchLoading}
         onSearch={o.handleSearch}
         searchResultCount={o.searchResult ? o.searchResult.values.length : null}
+        collapsed={o.traceSearchCollapsed}
+        onToggleCollapsed={() => o.setTraceSearchCollapsed(!o.traceSearchCollapsed)}
       />
 
       <TraceErrorAlerts

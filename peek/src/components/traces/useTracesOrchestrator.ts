@@ -8,6 +8,7 @@ import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
+import { useUIStore } from "../../store/useUIStore";
 import type { EsqlResponse } from "../../types";
 
 import { parseSpansFromEsql, formatStatusLabel } from "./traceUtils";
@@ -60,6 +61,9 @@ export function useTracesOrchestrator() {
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
 
+  const traceSearchCollapsed = useUIStore((s) => s.traceSearchCollapsed);
+  const setTraceSearchCollapsed = useUIStore((s) => s.setTraceSearchCollapsed);
+
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
 
@@ -67,6 +71,18 @@ export function useTracesOrchestrator() {
   useEffect(() => {
     setRawQuery(null);
   }, [filters, setRawQuery]);
+
+  // Cmd/Ctrl+[ toggles the search panel collapse
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
+        e.preventDefault();
+        setTraceSearchCollapsed(!useUIStore.getState().traceSearchCollapsed);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setTraceSearchCollapsed]);
 
   // Main search query
   const handleSearchSuccess = useCallback(
@@ -100,6 +116,11 @@ export function useTracesOrchestrator() {
   } = useEsqlQuery({
     connection,
     onSuccess: handleDetailSuccess,
+    onFailure: () => {
+      setSelectedTraceSpans([]);
+      setSelectedSpanId(null);
+      setDrawerOpen(false);
+    },
   });
 
   // URL → store: restore trace selection on initial load and browser back/forward.
@@ -166,13 +187,13 @@ export function useTracesOrchestrator() {
   );
 
   const runDriftRadarQueries = useCallback(
-    (updatedFilters: TraceFilters) => {
+    (updatedFilters: TraceFilters, baselineEnabled = driftRadarBaselineEnabled) => {
       if (viewMode !== "driftRadar" || rawQuery != null) return;
 
       setDriftRadarSpans([]);
       setDriftRadarBaselineSpans(null);
       runDriftRadarQuery(buildDriftRadarQuery(updatedFilters));
-      if (driftRadarBaselineEnabled && updatedFilters.timeFrom) {
+      if (baselineEnabled && updatedFilters.timeFrom) {
         const shifted = shiftTimeRangeBack(
           updatedFilters.timeFrom,
           updatedFilters.timeTo ?? "NOW()",
@@ -189,6 +210,15 @@ export function useTracesOrchestrator() {
       }
     },
     [viewMode, rawQuery, driftRadarBaselineEnabled, runDriftRadarQuery, runDriftRadarBaselineQuery],
+  );
+
+  const handleDriftRadarBaselineChange = useCallback(
+    (enabled: boolean) => {
+      setDriftRadarBaselineEnabled(enabled);
+      const updatedFilters = useTracesStore.getState().filters;
+      runDriftRadarQueries(updatedFilters, enabled);
+    },
+    [runDriftRadarQueries],
   );
 
   /** Apply a quick-filter update and immediately re-run queries so searchResults stay in sync. */
@@ -358,7 +388,7 @@ export function useTracesOrchestrator() {
     driftRadarSpans,
     driftRadarBaselineSpans,
     driftRadarBaselineEnabled,
-    setDriftRadarBaselineEnabled,
+    handleDriftRadarBaselineChange,
 
     // Handlers
     handleSearch,
@@ -368,6 +398,10 @@ export function useTracesOrchestrator() {
     handleServiceMapNodeClick,
     selectedRootSpanId,
     selectedTraceTimestamp,
+
+    // Search panel collapse
+    traceSearchCollapsed,
+    setTraceSearchCollapsed,
 
     // Drawer handlers
     handleDrawerFilterBy,

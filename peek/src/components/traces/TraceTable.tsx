@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -18,6 +19,10 @@ type TraceRow = Pick<
   Span,
   "traceId" | "spanId" | "serviceName" | "name" | "durationUs" | "status" | "timestamp"
 >;
+
+function isErrorStatus(status: string): boolean {
+  return status === "Error" || status === "STATUS_CODE_ERROR";
+}
 
 interface TraceTableProps {
   traceRows: TraceRow[];
@@ -127,16 +132,12 @@ export function TraceTable({
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      bgcolor:
-                        row.status === "Error" || row.status === "STATUS_CODE_ERROR"
-                          ? "error.main"
-                          : "success.main",
-                    }}
+                  <Chip
+                    size="small"
+                    label={isErrorStatus(row.status) ? "Error" : "OK"}
+                    color={isErrorStatus(row.status) ? "error" : "success"}
+                    variant="outlined"
+                    aria-label={`Status: ${isErrorStatus(row.status) ? "Error" : "OK"}`}
                   />
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.75rem" }}>
