@@ -96,6 +96,23 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ["echarts", "@perses-dev/components", "@perses-dev/core"],
+      esbuildOptions: {
+        plugins: [
+          {
+            // @perses-dev/plugin-system/dist/remote/PluginRuntime.js lazily
+            // requires @perses-dev/explore and @perses-dev/dashboards for
+            // remote plugin loading, which this app doesn't use. Mark them
+            // as external so esbuild doesn't fail during dep optimization.
+            name: "externalize-unused-perses-deps",
+            setup(build) {
+              build.onResolve({ filter: /^@perses-dev\/(explore|dashboards)$/ }, (args) => ({
+                path: args.path,
+                external: true,
+              }));
+            },
+          },
+        ],
+      },
     },
   };
 });
