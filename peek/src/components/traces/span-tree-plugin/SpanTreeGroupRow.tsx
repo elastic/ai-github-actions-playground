@@ -42,7 +42,7 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
 
   return (
     <ButtonBase
-      role="row"
+      role="listitem"
       onClick={() => onToggle(groupKey)}
       sx={{
         display: "flex",

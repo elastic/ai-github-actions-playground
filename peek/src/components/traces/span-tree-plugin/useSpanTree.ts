@@ -43,6 +43,13 @@ function findGroupRun(runs: GroupRun[] | undefined, index: number): GroupRun | n
   return null;
 }
 
+/** Expansion state, keyed to a fingerprint so resets are atomic */
+interface ExpansionState {
+  fingerprint: string;
+  expandedSet: Set<string>;
+  expandedGroups: Set<string>;
+}
+
 export function useSpanTree(
   spans: Span[],
   options: {
@@ -64,19 +71,29 @@ export function useSpanTree(
     [roots, searchMode, autoCollapseThreshold],
   );
 
-  const [expandedSet, setExpandedSet] = useState<Set<string>>(() =>
-    searchMode ? new Set() : buildInitialExpandedSet(roots, defaultExpandDepth),
-  );
-
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set());
-
-  // Reset expansion state when spans identity changes
   const spanFingerprint = useMemo(() => spans.map((s) => s.spanId).join(","), [spans]);
-  const [lastFingerprint, setLastFingerprint] = useState(spanFingerprint);
-  if (spanFingerprint !== lastFingerprint) {
-    setLastFingerprint(spanFingerprint);
-    setExpandedSet(searchMode ? new Set() : buildInitialExpandedSet(roots, defaultExpandDepth));
-    setExpandedGroups(new Set());
+
+  const [expansion, setExpansion] = useState<ExpansionState>(() => ({
+    fingerprint: spanFingerprint,
+    expandedSet: searchMode ? new Set() : buildInitialExpandedSet(roots, defaultExpandDepth),
+    expandedGroups: new Set(),
+  }));
+
+  // When the span set changes, reset expansion atomically in a single setState call.
+  // React re-renders immediately when setState is called during rendering (approved pattern).
+  let expandedSet = expansion.expandedSet;
+  let expandedGroups = expansion.expandedGroups;
+  if (expansion.fingerprint !== spanFingerprint) {
+    const reset: ExpansionState = {
+      fingerprint: spanFingerprint,
+      expandedSet: searchMode
+        ? new Set<string>()
+        : buildInitialExpandedSet(roots, defaultExpandDepth),
+      expandedGroups: new Set<string>(),
+    };
+    setExpansion(reset);
+    expandedSet = reset.expandedSet;
+    expandedGroups = reset.expandedGroups;
   }
 
   const flatRows = useMemo((): SpanTreeRowItem[] => {
@@ -146,26 +163,26 @@ export function useSpanTree(
   }, [roots, expandedSet, expandedGroups, groupMap, searchMode]);
 
   const toggleExpand = useCallback((spanId: string) => {
-    setExpandedSet((prev) => {
-      const next = new Set(prev);
+    setExpansion((prev) => {
+      const next = new Set(prev.expandedSet);
       if (next.has(spanId)) {
         next.delete(spanId);
       } else {
         next.add(spanId);
       }
-      return next;
+      return { ...prev, expandedSet: next };
     });
   }, []);
 
   const toggleGroup = useCallback((groupKey: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
+    setExpansion((prev) => {
+      const next = new Set(prev.expandedGroups);
       if (next.has(groupKey)) {
         next.delete(groupKey);
       } else {
         next.add(groupKey);
       }
-      return next;
+      return { ...prev, expandedGroups: next };
     });
   }, []);
 
@@ -182,21 +199,22 @@ export function useSpanTree(
     for (const root of roots) {
       walk(root);
     }
-    setExpandedSet(all);
 
-    // Also expand all groups
     const allGroups = new Set<string>();
     for (const runs of groupMap.values()) {
       for (const run of runs) {
         allGroups.add(run.key);
       }
     }
-    setExpandedGroups(allGroups);
+    setExpansion((prev) => ({ ...prev, expandedSet: all, expandedGroups: allGroups }));
   }, [roots, groupMap]);
 
   const collapseAll = useCallback(() => {
-    setExpandedSet(new Set());
-    setExpandedGroups(new Set());
+    setExpansion((prev) => ({
+      ...prev,
+      expandedSet: new Set(),
+      expandedGroups: new Set(),
+    }));
   }, []);
 
   return {

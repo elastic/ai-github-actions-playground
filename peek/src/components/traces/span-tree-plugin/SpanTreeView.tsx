@@ -45,7 +45,7 @@ export default function SpanTreeView({
   );
   const traceDuration = traceBounds ? traceBounds.endUs - traceBounds.startUs : 0;
 
-  const effectiveMaxDuration = maxDuration ?? Math.max(1, ...spans.map((s) => s.durationUs));
+  const effectiveMaxDuration = maxDuration ?? spans.reduce((m, s) => Math.max(m, s.durationUs), 1);
 
   const showTimestamp = visual?.showTimestamp ?? searchMode;
 

@@ -119,12 +119,15 @@ export default function TracesPage() {
             selectedSpanId={orchestrator.selectedSpanId}
             onSelectSpan={orchestrator.handleSelectSpan}
             onClearTraceSelection={orchestrator.clearTraceSelection}
-            onOpenInQueryLab={() =>
-              orchestrator.handleOpenInDiscover(
-                orchestrator.selectedTraceId!,
-                orchestrator.selectedRootSpanId,
-                orchestrator.selectedTraceTimestamp,
-              )
+            onOpenInQueryLab={
+              orchestrator.selectedTraceId
+                ? () =>
+                    orchestrator.handleOpenInDiscover(
+                      orchestrator.selectedTraceId!,
+                      orchestrator.selectedRootSpanId,
+                      orchestrator.selectedTraceTimestamp,
+                    )
+                : undefined
             }
           />
         </Box>

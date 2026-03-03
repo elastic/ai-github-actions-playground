@@ -47,7 +47,7 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
 
   return (
     <ButtonBase
-      role="row"
+      role="listitem"
       data-spanid={span.spanId}
       onClick={() => onClick(span.spanId)}
       sx={{
