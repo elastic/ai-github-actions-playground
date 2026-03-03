@@ -1,27 +1,9 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { useMemo } from "react";
 
 import type { SlotInsight } from "../types/insightSlots";
 
-interface InsightSlotContextValue {
-  /** High-level page summary from the LLM. */
-  summary: string | null;
-  /** Map of slotId → SlotInsight for O(1) lookup. */
-  insightsBySlot: ReadonlyMap<string, SlotInsight>;
-  /** Whether the LLM call is in progress. */
-  loading: boolean;
-  /** Error message if the call failed. */
-  error: string | null;
-  /** Trigger a refresh of all slot insights. */
-  refresh: () => void;
-}
-
-const InsightSlotCtx = createContext<InsightSlotContextValue>({
-  summary: null,
-  insightsBySlot: new Map(),
-  loading: false,
-  error: null,
-  refresh: () => {},
-});
+import { InsightSlotCtx } from "./InsightSlotContextStore";
+import type { InsightSlotContextValue } from "./InsightSlotContextStore";
 
 export interface InsightSlotProviderProps {
   summary: string | null;
@@ -61,21 +43,4 @@ export function InsightSlotProvider({
   );
 
   return React.createElement(InsightSlotCtx.Provider, { value }, children);
-}
-
-/**
- * Returns the insight for a specific slot, or `null` if no insight has been
- * generated for that slot yet.
- */
-export function useSlotInsight(slotId: string): SlotInsight | null {
-  const { insightsBySlot } = useContext(InsightSlotCtx);
-  return insightsBySlot.get(slotId) ?? null;
-}
-
-/**
- * Returns the full context value for advanced consumers that need loading /
- * error / summary information in addition to individual slot insights.
- */
-export function useInsightSlotContext(): InsightSlotContextValue {
-  return useContext(InsightSlotCtx);
 }

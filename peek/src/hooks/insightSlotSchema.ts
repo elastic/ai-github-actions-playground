@@ -5,11 +5,15 @@ import { z } from "zod";
  * page slot insights.  Used with `generateObject` from the AI SDK.
  */
 export const pageInsightsSchema = z.object({
-  summary: z.string().describe("High-level page summary"),
+  summary: z.string().trim().min(1).describe("High-level page summary"),
   insights: z.array(
     z.object({
-      slotId: z.string().describe("Slot identifier matching InsightSlotDefinition.slotId"),
-      text: z.string().describe("Concise insight text for the slot"),
+      slotId: z
+        .string()
+        .trim()
+        .min(1)
+        .describe("Slot identifier matching InsightSlotDefinition.slotId"),
+      text: z.string().trim().min(1).describe("Concise insight text for the slot"),
       severity: z
         .enum(["info", "warning", "critical"])
         .optional()

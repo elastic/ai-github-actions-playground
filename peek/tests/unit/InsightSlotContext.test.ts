@@ -4,11 +4,8 @@ import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
-import {
-  InsightSlotProvider,
-  useSlotInsight,
-  useInsightSlotContext,
-} from "../../src/components/InsightSlotContext";
+import { InsightSlotProvider } from "../../src/components/InsightSlotContext";
+import { useInsightSlotContext, useSlotInsight } from "../../src/components/InsightSlotHooks";
 import type { SlotInsight } from "../../src/types/insightSlots";
 
 const SAMPLE_INSIGHTS: SlotInsight[] = [

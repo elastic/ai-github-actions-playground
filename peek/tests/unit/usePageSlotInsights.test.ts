@@ -4,6 +4,7 @@ import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 
 import { usePageSlotInsights } from "../../src/hooks/usePageSlotInsights";
@@ -16,7 +17,14 @@ vi.mock("ai", () => ({
 }));
 
 vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI: vi.fn(() => vi.fn(() => ({ id: "test-model" }))),
+  createOpenAI: vi.fn(() =>
+    Object.assign(
+      vi.fn((model: string) => ({ id: model })),
+      {
+        chat: vi.fn((model: string) => ({ id: model })),
+      },
+    ),
+  ),
 }));
 
 const SAMPLE_SLOTS: InsightSlotDefinition[] = [
@@ -162,5 +170,62 @@ describe("usePageSlotInsights", () => {
 
     expect(result.current.summary).toBeNull();
     expect(result.current.insights).toEqual([]);
+  });
+
+  it("filters out insights for unknown slot ids", async () => {
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: {
+        summary: "Cluster summary",
+        insights: [
+          { slotId: "health-card", text: "All nodes green", severity: "info" },
+          { slotId: "unknown-slot", text: "Should be ignored", severity: "warning" },
+        ],
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "cluster data here",
+          systemPrompt: "You are an Elasticsearch expert.",
+          cacheKey: "cluster-overview-slots::abc",
+          slots: SAMPLE_SLOTS,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.summary).toBe("Cluster summary");
+    });
+
+    expect(result.current.insights).toEqual([
+      { slotId: "health-card", text: "All nodes green", severity: "info" },
+    ]);
+  });
+
+  it("uses openrouter base URL when provider is openrouter", async () => {
+    useLLMStore.getState().setProvider("openrouter");
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: { summary: "OpenRouter summary", insights: [] },
+    });
+
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "ctx",
+          systemPrompt: "sys",
+          cacheKey: "openrouter",
+          slots: SAMPLE_SLOTS,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.summary).toBe("OpenRouter summary");
+    });
+
+    expect(vi.mocked(createOpenAI)).toHaveBeenCalledWith(
+      expect.objectContaining({ baseURL: "https://openrouter.ai/api/v1" }),
+    );
   });
 });

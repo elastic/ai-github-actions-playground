@@ -48,7 +48,7 @@ export function usePageInsight({
     isFetching: loading,
     error: queryError,
   } = useQuery({
-    queryKey: ["page-insight", cacheKey, apiKey, provider, llmModel] as const,
+    queryKey: ["page-insight", cacheKey, provider, llmModel] as const,
     queryFn: async ({ signal }) => {
       const openai = createOpenAI({
         apiKey,

@@ -56,7 +56,7 @@ export function usePageSlotInsights({
     isFetching: loading,
     error: queryError,
   } = useQuery({
-    queryKey: [QUERY_KEY_PREFIX, cacheKey, apiKey, provider, llmModel] as const,
+    queryKey: [QUERY_KEY_PREFIX, cacheKey, provider, llmModel] as const,
     queryFn: async ({ signal }) => {
       const slotList = slots.map((s) => `- ${s.slotId}: ${s.label}`).join("\n");
       const augmentedSystem = `${systemPrompt}\n\nTarget insight slots:\n${slotList}`;
@@ -75,7 +75,22 @@ export function usePageSlotInsights({
         abortSignal: signal,
       });
 
-      return result.object as PageInsightsResponse;
+      const allowedSlotIds = new Set(slots.map((slot) => slot.slotId));
+      const insightBySlotId = new Map<string, PageInsightsResponse["insights"][number]>();
+      for (const insight of result.object.insights) {
+        if (allowedSlotIds.has(insight.slotId) && !insightBySlotId.has(insight.slotId)) {
+          insightBySlotId.set(insight.slotId, insight);
+        }
+      }
+      const insights = slots.flatMap((slot) => {
+        const insight = insightBySlotId.get(slot.slotId);
+        return insight ? [insight] : [];
+      });
+
+      return {
+        summary: result.object.summary,
+        insights,
+      } satisfies PageInsightsResponse;
     },
     enabled: enabled && hasApiKey && slots.length > 0 && Boolean(context.trim()),
     staleTime: Infinity,
