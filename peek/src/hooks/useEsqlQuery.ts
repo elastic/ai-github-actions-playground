@@ -22,6 +22,18 @@ function getServerDurationMs(data: EsqlResponse): number | null {
   return typeof took === "number" && Number.isFinite(took) ? took : null;
 }
 
+/**
+ * Full-featured ES|QL query hook with imperative `runQuery()` control, per-step
+ * execution tracking, profiling support, and partial-result metadata.
+ *
+ * Use this hook when you need fine-grained control over query execution — for
+ * example, running a query on button click, tracking multi-step pipeline
+ * progress, or capturing profile/partial-result payloads.
+ *
+ * For simpler read-only queries that only need `data` / `loading` / `error`,
+ * prefer {@link useSimpleEsqlQuery} which is backed by React Query and handles
+ * caching, deduplication, and declarative execution automatically.
+ */
 export function useEsqlQuery({
   connection,
   onSuccess,

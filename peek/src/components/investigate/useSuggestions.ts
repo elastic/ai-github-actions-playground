@@ -4,11 +4,9 @@ import type { ElasticsearchConnection, EsqlResponse } from "../../types";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 
 import type { RecentEntity } from "./InvestigateSuggestionsPanel";
-import {
-  type InvestigateTab,
-  buildRecentEntitiesQuery,
-  parseRecentEntities,
-} from "./investigateUtils";
+import type { InvestigateTab } from "./investigateUtils";
+import { buildRecentEntitiesQuery } from "./investigateQueryBuilder";
+import { parseRecentEntities } from "./investigateParser";
 
 interface UseSuggestionsResult {
   visibleRecentEntities: RecentEntity[];

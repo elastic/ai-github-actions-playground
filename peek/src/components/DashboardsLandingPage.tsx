@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
@@ -15,6 +14,7 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import AddIcon from "@mui/icons-material/Add";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -35,6 +35,7 @@ import {
 } from "../utils/dashboardImportExport";
 
 import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 import DashboardCard from "./DashboardCard";
 import DashboardCardMenu from "./DashboardCardMenu";
 import DashboardDetailsDialog from "./DashboardDetailsDialog";
@@ -454,35 +455,30 @@ export default function DashboardsLandingPage() {
         ))}
       </Box>
 
-      {visibleDashboards.length === 0 && (
-        <Box sx={{ py: 8, textAlign: "center" }}>
-          {hasActiveFilters ? (
-            <>
-              <Typography variant="subtitle1" color="text.secondary">
-                No dashboards match your filters
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Try adjusting your search or tag filters.
-              </Typography>
+      {visibleDashboards.length === 0 &&
+        (hasActiveFilters ? (
+          <EmptyState
+            icon={<SearchIcon data-testid="empty-search-icon" sx={{ fontSize: 40 }} />}
+            heading="No dashboards match your filters"
+            description="Try adjusting your search or tag filters."
+            action={
               <Button variant="outlined" startIcon={<ClearIcon />} onClick={resetFilters}>
                 Reset filters
               </Button>
-            </>
-          ) : (
-            <>
-              <Typography variant="subtitle1" color="text.secondary">
-                No dashboards yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Create a new dashboard to get started.
-              </Typography>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={<DashboardIcon sx={{ fontSize: 40 }} />}
+            heading="No dashboards yet"
+            description="Create a new dashboard to get started."
+            action={
               <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
                 New Dashboard
               </Button>
-            </>
-          )}
-        </Box>
-      )}
+            }
+          />
+        ))}
 
       <DashboardCardMenu
         anchorEl={menuAnchor}

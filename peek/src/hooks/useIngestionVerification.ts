@@ -15,6 +15,7 @@ export interface IngestionVerificationResult {
   verifyError: string | null;
   handleVerifyIngestion: () => void;
   startPolling: () => void;
+  resetVerification: () => void;
 }
 
 /**
@@ -86,6 +87,12 @@ export function useIngestionVerification(): IngestionVerificationResult {
     });
   }, []);
 
+  const resetVerification = useCallback(() => {
+    queryClient.removeQueries({ queryKey: ["ingestion-verify"] });
+    setPollingEnabled(false);
+    setHasTriggered(false);
+  }, [queryClient]);
+
   // Derive verifyStatus from React Query state
   let verifyStatus: VerifyStatus = "idle";
   if (effectivelyPolling && query.isFetching && !query.data) {
@@ -110,5 +117,6 @@ export function useIngestionVerification(): IngestionVerificationResult {
       : null,
     handleVerifyIngestion,
     startPolling,
+    resetVerification,
   };
 }

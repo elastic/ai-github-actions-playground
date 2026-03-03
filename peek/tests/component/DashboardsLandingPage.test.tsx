@@ -324,6 +324,7 @@ describe("DashboardsLandingPage", () => {
       await user.type(search, "zzznomatch");
 
       expect(screen.getByText("No dashboards match your filters")).toBeInTheDocument();
+      expect(screen.getByTestId("empty-search-icon")).toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: /reset filters/i }).length).toBeGreaterThan(0);
       expect(screen.queryByText("No dashboards yet")).not.toBeInTheDocument();
     });

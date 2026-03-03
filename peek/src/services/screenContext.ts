@@ -10,6 +10,8 @@ import { useTracesStore } from "../store/useTracesStore";
 import { useExplorerStore } from "../store/useExplorerStore";
 import type { EsqlResponse } from "../types";
 
+const SECURITY_ROUTES = ["/users", "/roles", "/api-keys"];
+
 /* ------------------------------------------------------------------ */
 /*  Per-page context section types                                     */
 /* ------------------------------------------------------------------ */
@@ -204,7 +206,8 @@ export function buildDetailedScreenContext(
   if (pageCtx.ingestPipelines) snapshot.ingestPipelines = pageCtx.ingestPipelines;
   if (pageCtx.fleet) snapshot.fleet = pageCtx.fleet;
   if (pageCtx.fleetAgent) snapshot.fleetAgent = pageCtx.fleetAgent;
-  if (pageCtx.security) snapshot.security = pageCtx.security;
+  const isSecurityPage = SECURITY_ROUTES.some((p) => matchPath(p, pathname) !== null);
+  if (pageCtx.security && isSecurityPage) snapshot.security = pageCtx.security;
 
   return snapshot;
 }

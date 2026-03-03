@@ -37,6 +37,20 @@ describe("buildChatRuntime — new tools", () => {
     expect(tools).toHaveProperty("get_screen_context");
   });
 
+  it("get_screen_context uses router pathname instead of window pathname under hash routing", async () => {
+    window.history.pushState({}, "", "/#/discover");
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+    });
+    const ctx = tools.get_screen_context as {
+      execute: (args: { include_data?: boolean }) => Promise<unknown>;
+    };
+    const result = (await ctx.execute({ include_data: false })) as { page: { path: string } };
+    expect(result.page.path).toBe("/discover");
+  });
+
   it("get_screen_context returns page info", async () => {
     const { tools } = await buildChatRuntime({
       config: defaultConfig,

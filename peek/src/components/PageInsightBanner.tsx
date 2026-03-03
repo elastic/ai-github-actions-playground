@@ -20,7 +20,7 @@ interface PageInsightBannerProps {
   /** Stable cache key (e.g. "cluster-overview::<hash>") */
   cacheKey: string;
   /** Severity hint for Alert color */
-  severity?: "info" | "warning" | "success";
+  severity?: "info" | "warning" | "success" | "error";
 }
 
 export default function PageInsightBanner({

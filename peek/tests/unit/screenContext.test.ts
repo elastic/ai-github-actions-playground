@@ -308,6 +308,16 @@ describe("buildDetailedScreenContext", () => {
     expect(ctx.security).toEqual({ pageType: "users", selectedItem: "elastic", totalItems: 5 });
   });
 
+  it("does not leak security page context into non-security pages", () => {
+    usePageContextStore.getState().setPageSection("security", {
+      pageType: "users",
+      selectedItem: "elastic",
+      totalItems: 5,
+    });
+    const ctx = buildDetailedScreenContext("/cluster-overview");
+    expect(ctx.security).toBeUndefined();
+  });
+
   it("omits page context sections when nothing is published", () => {
     const ctx = buildDetailedScreenContext("/cluster-overview");
     expect(ctx.clusterOverview).toBeUndefined();

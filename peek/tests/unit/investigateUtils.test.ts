@@ -1,12 +1,17 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  buildTimelineContext,
+  TIMELINE_SYSTEM_PROMPT,
+} from "../../src/components/investigate/investigateUtils";
+import {
   buildInvestigateQuery,
   buildRecentEntitiesQuery,
+} from "../../src/components/investigate/investigateQueryBuilder";
+import {
   parseRecentEntities,
   parseTimelineEvents,
-  buildSummaryPrompt,
-} from "../../src/components/investigate/investigateUtils";
+} from "../../src/components/investigate/investigateParser";
 import type { EsqlResponse } from "../../src/types";
 
 describe("buildInvestigateQuery", () => {
@@ -185,7 +190,7 @@ describe("parseTimelineEvents", () => {
   });
 });
 
-describe("buildSummaryPrompt", () => {
+describe("buildTimelineContext", () => {
   it("includes entity label and event count", () => {
     const events = [
       {
@@ -200,8 +205,15 @@ describe("buildSummaryPrompt", () => {
         dataSource: "logs-security",
       },
     ];
-    const prompt = buildSummaryPrompt(events, "user", "alice");
-    expect(prompt).toContain('user "alice"');
-    expect(prompt).toContain("1 security-related events");
+    const context = buildTimelineContext(events, "user", "alice");
+    expect(context).toContain('user "alice"');
+    expect(context).toContain("1 security-related events");
+  });
+});
+
+describe("TIMELINE_SYSTEM_PROMPT", () => {
+  it("is a non-empty string with security analysis instructions", () => {
+    expect(TIMELINE_SYSTEM_PROMPT).toBeTruthy();
+    expect(TIMELINE_SYSTEM_PROMPT).toContain("security");
   });
 });

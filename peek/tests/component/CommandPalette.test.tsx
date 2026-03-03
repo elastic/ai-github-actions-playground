@@ -274,6 +274,57 @@ describe("CommandPalette", () => {
     expect(screen.queryByText("Cluster Tasks")).not.toBeInTheDocument();
   });
 
+  it("hides capability-restricted pages when user lacks required capability", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+      canReadApiKeys: false,
+    });
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // "Users" and "Roles" nav commands should not appear (no docs equivalent)
+    expect(screen.queryByText("Users")).not.toBeInTheDocument();
+    expect(screen.queryByText("Roles")).not.toBeInTheDocument();
+    // "API Keys" still appears once from Docs, but the nav command is hidden
+    expect(screen.queryAllByText("API Keys")).toHaveLength(1); // docs only
+    // Unrestricted pages should still appear
+    expect(screen.getAllByText("Query Lab").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows capability-restricted pages when user has required capabilities", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+      canReadApiKeys: true,
+    });
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // Nav commands should appear alongside any docs entries
+    expect(screen.getAllByText("Users").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Roles").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("API Keys").length).toBeGreaterThanOrEqual(2); // nav + docs
+  });
+
+  it("shows capability-restricted pages when capabilities are null (not yet fetched)", () => {
+    useConnectionStore.getState().setConnected(true);
+    // capabilities default to null
+    useUIStore.getState().setCommandPaletteOpen(true);
+    renderPalette();
+
+    // When capabilities haven't been fetched, restricted pages remain visible
+    expect(screen.getAllByText("Users").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Roles").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("API Keys").length).toBeGreaterThanOrEqual(2); // nav + docs
+  });
+
   it("shows Favorite Dashboards group when a dashboard is favorited", () => {
     useConnectionStore.getState().setConnected(true);
     useUIStore.getState().setCommandPaletteOpen(true);

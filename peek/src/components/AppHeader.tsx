@@ -24,6 +24,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 import { createDefaultPanel } from "../dashboards/panel";
 
 import ConnectionProfileSwitcher from "./ConnectionProfileSwitcher";
@@ -120,7 +121,7 @@ export default function AppHeader({
         sx={{ flexWrap: isNarrow ? "wrap" : "nowrap", gap: 1, px: 0.5 }}
       >
         {showMobileNavToggle && (
-          <IconButton aria-label="Open navigation menu" onClick={onToggleMobileNav}>
+          <IconButton aria-label="Open navigation menu" size="small" onClick={onToggleMobileNav}>
             <MenuIcon />
           </IconButton>
         )}
@@ -200,7 +201,8 @@ export default function AppHeader({
                 alignItems: "center",
                 width: "100%",
                 maxWidth: 360,
-                py: 0.5,
+                height: COMPONENT_HEIGHTS.buttonSmall,
+                py: 0,
                 px: 1.5,
                 border: 1,
                 borderColor: "border.default",

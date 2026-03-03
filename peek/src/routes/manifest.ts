@@ -56,7 +56,7 @@ const ProfilingPage = lazy(() => import("../components/profiling/ProfilingPage")
 const InvestigatePage = lazy(() => import("../components/InvestigatePage"));
 const UsersPage = lazy(() => import("../components/UsersPage"));
 
-export type NavGroup = "Workspace" | "Security" | "System" | "Help" | "Settings";
+export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
 export interface PageConfig {
   path: string;
@@ -99,7 +99,7 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "table",
     nav: {
       label: "Query Lab",
-      group: "Workspace",
+      group: "Data",
       order: 20,
       showInSidebar: true,
       icon: createElement(SearchIcon, { fontSize: "small" }),
@@ -113,8 +113,8 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "table",
     nav: {
       label: "Logs",
-      group: "Workspace",
-      order: 25,
+      group: "Data",
+      order: 30,
       showInSidebar: true,
       icon: createElement(SubjectIcon, { fontSize: "small" }),
     },
@@ -127,8 +127,8 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "chart",
     nav: {
       label: "Metrics",
-      group: "Workspace",
-      order: 30,
+      group: "Data",
+      order: 40,
       showInSidebar: true,
       icon: createElement(ExploreIcon, { fontSize: "small" }),
     },
@@ -141,8 +141,8 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "table",
     nav: {
       label: "Traces",
-      group: "Workspace",
-      order: 40,
+      group: "Data",
+      order: 50,
       showInSidebar: true,
       icon: createElement(TimelineIcon, { fontSize: "small" }),
     },
@@ -155,8 +155,8 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "chart",
     nav: {
       label: "Profiling",
-      group: "Workspace",
-      order: 45,
+      group: "Data",
+      order: 60,
       showInSidebar: true,
       icon: createElement(SpeedIcon, { fontSize: "small" }),
     },
@@ -170,7 +170,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Services",
       group: "Workspace",
-      order: 35,
+      order: 20,
       showInSidebar: true,
       icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
     },
@@ -182,7 +182,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     nav: {
       label: "Console",
-      group: "Workspace",
+      group: "System",
       order: 50,
       showInSidebar: true,
       icon: createElement(TerminalIcon, { fontSize: "small" }),
@@ -208,7 +208,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "cards",
     nav: {
-      label: "Cluster Overview",
+      label: "Overview",
       group: "System",
       order: 10,
       showInSidebar: true,
@@ -222,7 +222,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "cards",
     nav: {
-      label: "Cluster Health",
+      label: "Health",
       group: "System",
       order: 11,
       showInSidebar: true,
@@ -236,7 +236,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "Cluster Tasks",
+      label: "Tasks",
       group: "System",
       order: 12,
       showInSidebar: false,
@@ -250,7 +250,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "cards",
     nav: {
-      label: "Cluster Capacity",
+      label: "Capacity",
       group: "System",
       order: 13,
       showInSidebar: false,
@@ -264,7 +264,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "Cluster Shards",
+      label: "Shards",
       group: "System",
       order: 14,
       showInSidebar: false,
@@ -278,9 +278,9 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "Cluster Resilience",
+      label: "Resilience",
       group: "System",
-      order: 15.5,
+      order: 15,
       showInSidebar: false,
       icon: createElement(ShieldIcon, { fontSize: "small" }),
     },
@@ -293,8 +293,8 @@ export const PAGE_MANIFEST = {
     skeletonVariant: "list",
     nav: {
       label: "Add Data",
-      group: "Workspace",
-      order: 5,
+      group: "Data",
+      order: 10,
       showInSidebar: true,
       icon: createElement(RocketLaunchIcon, { fontSize: "small" }),
     },
@@ -458,5 +458,15 @@ export const PAGE_MANIFEST = {
 
 export type PageId = keyof typeof PAGE_MANIFEST;
 
+/** Returns true when we positively know the user lacks a required capability. */
+export function isHiddenByCapability(
+  requiredCapability: keyof UserCapabilities | undefined,
+  capabilities: UserCapabilities | null,
+): boolean {
+  if (!requiredCapability) return false;
+  if (!capabilities) return false; // not yet fetched — keep visible
+  return !capabilities[requiredCapability];
+}
+
 /** Sidebar section display order. Sections not listed here won't appear. */
-export const NAV_SECTION_ORDER: NavGroup[] = ["Workspace", "Security", "System", "Help"];
+export const NAV_SECTION_ORDER: NavGroup[] = ["Data", "Workspace", "Security", "System", "Help"];
