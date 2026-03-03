@@ -34,7 +34,7 @@ export const TIMELINE_SYSTEM_PROMPT =
 /** System prompt for the structured timeline-markers response. */
 export const TIMELINE_MARKERS_SYSTEM_PROMPT =
   "You are a security analyst. Analyze the security event timeline and identify the most notable events to highlight on a visual timeline. " +
-  "Return 3–8 markers for the most significant events. " +
+  "Return up to 8 markers, and never more markers than available events. " +
   "Choose timestamps that exist in the provided events. " +
   'For severity use "info" for normal activity, "warning" for suspicious patterns, and "critical" for security incidents or failures.';
 

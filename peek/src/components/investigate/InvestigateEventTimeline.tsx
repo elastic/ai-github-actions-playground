@@ -21,6 +21,7 @@ const SEVERITY_COLOR: Record<TimelineMarker["severity"], string> = {
 
 const fmtTime = (iso: string) => {
   const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return "—";
   return d.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -44,7 +45,7 @@ export default function InvestigateEventTimeline({
   markers,
   markersLoading,
 }: InvestigateEventTimelineProps) {
-  const { minMs, range } = useMemo(() => {
+  const { minMs, maxMs, range } = useMemo(() => {
     let min = Infinity;
     let max = -Infinity;
     for (const e of events) {
@@ -54,7 +55,10 @@ export default function InvestigateEventTimeline({
         if (t > max) max = t;
       }
     }
-    return { minMs: min, range: max - min || 1 };
+    if (!Number.isFinite(min) || !Number.isFinite(max)) {
+      return { minMs: NaN, maxMs: NaN, range: 1 };
+    }
+    return { minMs: min, maxMs: max, range: Math.max(1, max - min) };
   }, [events]);
 
   const eventTicks = useMemo(
@@ -112,6 +116,7 @@ export default function InvestigateEventTimeline({
         {positionedMarkers.map((m, i) => (
           <Tooltip
             key={i}
+            describeChild
             title={
               <Box>
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
@@ -129,7 +134,11 @@ export default function InvestigateEventTimeline({
             placement="top"
           >
             <Box
+              component="button"
+              type="button"
+              aria-label={`${m.label}. ${fmtTime(m.timestamp)}. ${m.description}`}
               sx={{
+                all: "unset",
                 position: "absolute",
                 top: 4,
                 left: `${m.pct}%`,
@@ -138,6 +147,11 @@ export default function InvestigateEventTimeline({
                 alignItems: "center",
                 cursor: "default",
                 transform: "translateX(-50%)",
+                "&:focus-visible": {
+                  outline: "2px solid",
+                  outlineColor: "primary.main",
+                  borderRadius: 0.5,
+                },
               }}
             >
               <Box
@@ -175,10 +189,10 @@ export default function InvestigateEventTimeline({
       {/* axis labels */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mx: 1 }}>
         <Typography variant="caption" color="text.secondary">
-          {fmtTime(events[events.length - 1]?.timestamp ?? "")}
+          {Number.isFinite(minMs) ? fmtTime(new Date(minMs).toISOString()) : "—"}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {fmtTime(events[0]?.timestamp ?? "")}
+          {Number.isFinite(maxMs) ? fmtTime(new Date(maxMs).toISOString()) : "—"}
         </Typography>
       </Box>
     </Paper>

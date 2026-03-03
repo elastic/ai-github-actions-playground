@@ -186,6 +186,7 @@ describe("InvestigatePage", () => {
     expect(screen.getByText("auditbeat-2026.03.01")).toBeInTheDocument();
     expect(screen.getByText("User admin logged in")).toBeInTheDocument();
     expect(screen.getByText("Failed login attempt")).toBeInTheDocument();
+    expect(screen.getByText("Event timeline")).toBeInTheDocument();
   });
 
   it("shows empty state when no events are found", async () => {
@@ -345,24 +346,5 @@ describe("InvestigatePage", () => {
     expect(progressBar).toBeInTheDocument();
     expect(progressBar).toHaveClass("MuiCircularProgress-root");
     expect(searchButton).toHaveTextContent(/search/i);
-  });
-
-  it("shows event timeline when search results are displayed", async () => {
-    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
-    const user = userEvent.setup();
-
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <InvestigatePage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
-
-    await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
-    await user.click(screen.getByRole("button", { name: /search/i }));
-
-    await screen.findByText(/2 events found/i);
-    expect(screen.getByText("Event timeline")).toBeInTheDocument();
   });
 });

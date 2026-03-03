@@ -60,10 +60,20 @@ export function useTimelineMarkers({
     [events, activeTab, searchedEntity],
   );
 
-  const cacheKey = useMemo(
+  const eventFingerprint = useMemo(
     () =>
-      `investigate-markers::${activeTab}::${searchedEntity}::${events.length}::${events[0]?.timestamp ?? ""}`,
-    [activeTab, searchedEntity, events],
+      events
+        .map(
+          (e) =>
+            `${e.timestamp}|${e.category}|${e.action}|${e.outcome}|${e.dataSource}|${e.message}`,
+        )
+        .join("||"),
+    [events],
+  );
+
+  const cacheKey = useMemo(
+    () => `investigate-markers::${activeTab}::${searchedEntity}::${eventFingerprint}`,
+    [activeTab, searchedEntity, eventFingerprint],
   );
 
   const {
@@ -71,7 +81,7 @@ export function useTimelineMarkers({
     isFetching: loading,
     error: queryError,
   } = useQuery({
-    queryKey: ["timeline-markers", cacheKey, apiKey, provider, llmModel] as const,
+    queryKey: ["timeline-markers", cacheKey, provider, llmModel, hasApiKey] as const,
     queryFn: async ({ signal }) => {
       const openai = createOpenAI({
         apiKey,
@@ -87,7 +97,11 @@ export function useTimelineMarkers({
         abortSignal: signal,
       });
 
-      return (result.object.markers ?? []) as TimelineMarker[];
+      const eventTimestamps = new Set(events.map((e) => e.timestamp));
+      return ((result.object.markers ?? []) as TimelineMarker[]).filter((m) => {
+        const ms = Date.parse(m.timestamp);
+        return Number.isFinite(ms) && eventTimestamps.has(m.timestamp);
+      });
     },
     enabled: hasApiKey && events.length > 0 && Boolean(context.trim()),
     staleTime: Infinity,
