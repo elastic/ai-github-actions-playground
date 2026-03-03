@@ -198,6 +198,8 @@ interface LLMCompletionOptions {
   delay?: number;
   /** Whether to include the ES|QL syntax guide in the prompt */
   esqlGuide?: boolean;
+  /** Completion contract style used in the user message */
+  mode?: "esql" | "text";
 }
 
 /**
@@ -309,14 +311,20 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
     const contextSection = buildContextSection();
 
     const userMessage =
-      `Here is an ES|QL query the user is editing:\n\n${docText}\n\n` +
-      `Return the COMPLETE corrected/completed query. Rules:\n` +
-      `- If the query contains natural language (e.g. "where agents name is bill"), ` +
-      `replace it with valid ES|QL syntax.\n` +
-      `- If the query looks incomplete, complete it.\n` +
-      `- If the query is already valid ES|QL, return it unchanged.\n` +
-      `- Preserve all valid ES|QL parts exactly as-is.\n` +
-      `- Return ONLY the full query text, no explanation, no markdown fences.` +
+      (options.mode === "text"
+        ? `Here is the text the user is editing:\n\n${docText}\n\n` +
+          `Return the COMPLETE corrected/completed text. Rules:\n` +
+          `- If the text is incomplete, complete it.\n` +
+          `- If the text is already valid, return it unchanged.\n` +
+          `- Return ONLY the full text, no explanation, no markdown fences.`
+        : `Here is an ES|QL query the user is editing:\n\n${docText}\n\n` +
+          `Return the COMPLETE corrected/completed query. Rules:\n` +
+          `- If the query contains natural language (e.g. "where agents name is bill"), ` +
+          `replace it with valid ES|QL syntax.\n` +
+          `- If the query looks incomplete, complete it.\n` +
+          `- If the query is already valid ES|QL, return it unchanged.\n` +
+          `- Preserve all valid ES|QL parts exactly as-is.\n` +
+          `- Return ONLY the full query text, no explanation, no markdown fences.`) +
       contextSection;
 
     try {

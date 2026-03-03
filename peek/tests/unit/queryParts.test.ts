@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  buildPipeline,
   buildTimeRangeClause,
+  buildValueList,
   buildWhereClause,
   buildWherePipe,
+  normalizeTimeExpression,
 } from "../../src/services/es/queryParts";
 
 describe("buildWhereClause", () => {
@@ -45,5 +48,44 @@ describe("buildTimeRangeClause", () => {
     expect(buildTimeRangeClause("event.ingested", "NOW() - 1 hour", "NOW()")).toBe(
       "event.ingested >= NOW() - 1 hour AND event.ingested <= NOW()",
     );
+  });
+});
+
+describe("buildValueList", () => {
+  it("quotes and escapes each value", () => {
+    expect(buildValueList(['a"b', "c\\d"])).toBe('"a\\"b", "c\\\\d"');
+  });
+
+  it("returns empty string for an empty list", () => {
+    expect(buildValueList([])).toBe("");
+  });
+});
+
+describe("buildPipeline", () => {
+  it("joins non-empty parts with pipes", () => {
+    expect(buildPipeline(["FROM foo", "WHERE a == 1", "LIMIT 10"])).toBe(
+      "FROM foo | WHERE a == 1 | LIMIT 10",
+    );
+  });
+
+  it("skips empty parts", () => {
+    expect(buildPipeline(["FROM foo", "", "SORT @timestamp DESC"])).toBe(
+      "FROM foo | SORT @timestamp DESC",
+    );
+  });
+});
+
+describe("normalizeTimeExpression", () => {
+  it("normalizes NOW() expressions", () => {
+    expect(normalizeTimeExpression("now()")).toBe("NOW()");
+    expect(normalizeTimeExpression("NOW()-15 minutes")).toBe("NOW() - 15 minutes");
+  });
+
+  it("normalizes parseable timestamps to escaped ISO strings", () => {
+    expect(normalizeTimeExpression("2026-01-01T00:00:00.000Z")).toBe('"2026-01-01T00:00:00.000Z"');
+  });
+
+  it("returns null for unsupported expressions", () => {
+    expect(normalizeTimeExpression("NOW(); DROP TABLE x")).toBeNull();
   });
 });

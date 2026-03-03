@@ -5,7 +5,6 @@ import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
@@ -58,6 +57,17 @@ export default function RequestCard({
       makeLLMCompletionExtension({
         prompt:
           "You are an Elasticsearch API expert. Complete the JSON request body at the cursor. Return only the completion text.",
+      }),
+    ],
+    [],
+  );
+  const pathEditorExtensions = useMemo(
+    () => [
+      makeLLMCompletionExtension({
+        prompt:
+          "You are an Elasticsearch REST API path expert. Complete the API path at the cursor position. Common paths include _cluster/health, _cat/indices, _search, _bulk, _mapping, _settings, _aliases, _reindex, _analyze, _nodes, _tasks, _ingest/pipeline, _security, etc. Return only the complete path text, no explanation.",
+        mode: "text",
+        delay: 600,
       }),
     ],
     [],
@@ -125,21 +135,43 @@ export default function RequestCard({
           ))}
         </Select>
 
-        <TextField
-          size="small"
-          value={entry.path}
-          onChange={(e) => onUpdate(entry.id, { path: e.target.value, response: null })}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && entry.path.trim()) {
-              e.preventDefault();
-              onSend(entry.id);
-            }
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "hidden",
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+            "& .cm-content": { padding: "6px 8px", fontFamily: "monospace" },
+            "& .cm-editor": { fontSize: "0.875rem" },
+            "& .cm-line": { fontFamily: "monospace" },
           }}
-          label="Path"
-          placeholder="/_cat/indices?v"
-          sx={{ flex: 1, fontFamily: "monospace" }}
-          inputProps={{ style: { fontFamily: "monospace" }, "aria-label": "Request path" }}
-        />
+        >
+          <CodeMirror
+            value={entry.path}
+            onChange={(v) => {
+              const singleLine = v.replace(/[\r\n]+/g, "");
+              onUpdate(entry.id, { path: singleLine, response: null });
+            }}
+            extensions={pathEditorExtensions}
+            theme={themeMode}
+            height="36px"
+            placeholder="/_cat/indices?v"
+            basicSetup={{
+              lineNumbers: false,
+              foldGutter: false,
+              highlightActiveLine: false,
+              highlightActiveLineGutter: false,
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && entry.path.trim()) {
+                e.preventDefault();
+                onSend(entry.id);
+              }
+            }}
+            aria-label="Request path"
+          />
+        </Box>
 
         {entry.response?.status === "loading" ? (
           <Button

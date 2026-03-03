@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
 
+import { buildSummaryPrompt } from "../../src/components/investigate/investigateUtils";
 import {
   buildInvestigateQuery,
   buildRecentEntitiesQuery,
+} from "../../src/components/investigate/investigateQueryBuilder";
+import {
   parseRecentEntities,
   parseTimelineEvents,
-  buildSummaryPrompt,
-} from "../../src/components/investigate/investigateUtils";
+} from "../../src/components/investigate/investigateParser";
 import type { EsqlResponse } from "../../src/types";
 
 describe("buildInvestigateQuery", () => {

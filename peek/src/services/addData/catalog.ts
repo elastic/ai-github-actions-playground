@@ -18,6 +18,7 @@ export type AddDataEnvironment =
   | "on_prem";
 
 export type AddDataExpectedSignal = "logs" | "metrics" | "traces";
+export type AddDataInstallPlatform = "kubernetes" | "docker" | "linux" | "macos" | "windows";
 
 export interface AddDataRecommendedNextStep {
   readonly id: string;
@@ -29,18 +30,33 @@ export interface AddDataTechnologyCatalogEntry {
   readonly id: string;
   readonly technology: string;
   readonly category: AddDataTechnologyCategory;
+  readonly summary: string;
+  readonly defaultPlatform: AddDataInstallPlatform;
+  readonly recommended: boolean;
   supportedEnvironments: readonly AddDataEnvironment[];
   expectedSignals: readonly AddDataExpectedSignal[];
   recommendedNextSteps: readonly AddDataRecommendedNextStep[];
 }
+
+export const ADD_DATA_CATEGORY_LABELS: Readonly<Record<AddDataTechnologyCategory, string>> = {
+  cloud: "Cloud",
+  containers: "Containers",
+  databases: "Databases",
+  applications: "Applications",
+  operating_systems: "Operating Systems",
+  network: "Network",
+};
 
 export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
     id: "aws",
     technology: "AWS",
     category: "cloud",
+    summary: "Collect service metrics, logs, and traces from AWS workloads.",
+    defaultPlatform: "linux",
+    recommended: false,
     supportedEnvironments: ["aws"],
-    expectedSignals: ["logs", "metrics", "traces"],
+    expectedSignals: ["metrics", "logs", "traces"],
     recommendedNextSteps: [
       { id: "inspect-aws-health", label: "Explore metrics", path: "/explore" },
       { id: "inspect-aws-logs", label: "Open Query Lab", path: "/discover" },
@@ -51,6 +67,9 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "vpc-flow-logs",
     technology: "VPC Flow Logs",
     category: "network",
+    summary: "Track network flow telemetry and connection patterns.",
+    defaultPlatform: "linux",
+    recommended: false,
     supportedEnvironments: ["aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -62,8 +81,11 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "kubernetes",
     technology: "Kubernetes",
     category: "containers",
+    summary: "Collect cluster, node, and workload telemetry.",
+    defaultPlatform: "kubernetes",
+    recommended: true,
     supportedEnvironments: ["kubernetes", "aws", "gcp", "azure", "on_prem"],
-    expectedSignals: ["logs", "metrics", "traces"],
+    expectedSignals: ["metrics", "logs", "traces"],
     recommendedNextSteps: [
       { id: "view-cluster-metrics", label: "Explore metrics", path: "/explore" },
       { id: "inspect-pod-logs", label: "Open Query Lab", path: "/discover" },
@@ -74,6 +96,9 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "docker",
     technology: "Docker",
     category: "containers",
+    summary: "Collect container and host telemetry with Docker Compose.",
+    defaultPlatform: "docker",
+    recommended: true,
     supportedEnvironments: ["docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["logs", "metrics", "traces"],
     recommendedNextSteps: [
@@ -84,8 +109,11 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   },
   {
     id: "linux-host",
-    technology: "Linux host",
+    technology: "Linux Host",
     category: "operating_systems",
+    summary: "Install EDOT Collector on Linux hosts/VMs.",
+    defaultPlatform: "linux",
+    recommended: true,
     supportedEnvironments: ["linux", "on_prem", "aws", "gcp", "azure"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -95,8 +123,11 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
   },
   {
     id: "windows-host",
-    technology: "Windows host",
+    technology: "Windows Host",
     category: "operating_systems",
+    summary: "Install EDOT Collector on Windows hosts/VMs.",
+    defaultPlatform: "windows",
+    recommended: false,
     supportedEnvironments: ["windows", "on_prem", "aws", "azure", "gcp"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -108,6 +139,9 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "nginx",
     technology: "Nginx",
     category: "applications",
+    summary: "Capture request logs and latency metrics.",
+    defaultPlatform: "linux",
+    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs", "metrics", "traces"],
     recommendedNextSteps: [
@@ -119,6 +153,9 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     id: "postgresql",
     technology: "PostgreSQL",
     category: "databases",
+    summary: "Capture query performance and resource telemetry.",
+    defaultPlatform: "linux",
+    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [

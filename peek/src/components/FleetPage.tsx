@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -18,6 +18,7 @@ import FleetOverviewTab from "./fleet/FleetOverviewTab";
 import FleetAgentsTable from "./fleet/FleetAgentsTable";
 import FleetOutputsList from "./fleet/FleetOutputsList";
 import FleetActivityList from "./fleet/FleetActivityList";
+import PageInsightBanner from "./PageInsightBanner";
 import RefreshToolbar from "./RefreshToolbar";
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
@@ -96,6 +97,18 @@ export default function FleetPage() {
     [setPageSection],
   );
 
+  const insightContext = useMemo(() => {
+    if (agentInventoryTotal == null) return "";
+    return JSON.stringify({
+      totalAgents: agentInventoryTotal,
+      healthyCount: agentInventoryTotal - (agentInventoryTotalErrorCount ?? 0),
+      unhealthyCount: agentInventoryTotalErrorCount ?? 0,
+      agentVersions,
+    });
+  }, [agentInventoryTotal, agentInventoryTotalErrorCount, agentVersions]);
+
+  const insightCacheKey = `fleet::${agentInventoryTotal ?? ""}::${agentInventoryTotalErrorCount ?? ""}::${JSON.stringify(agentVersions)}`;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       {/* Header */}
@@ -114,6 +127,14 @@ export default function FleetPage() {
           }
         />
       </Paper>
+
+      {insightContext && (
+        <PageInsightBanner
+          context={insightContext}
+          systemPrompt="You are a Fleet management advisor for Elastic Agent. Summarize the fleet health in one concise sentence. Mention total agents, how many are healthy vs offline/unhealthy, and note any version inconsistencies that may need attention."
+          cacheKey={insightCacheKey}
+        />
+      )}
 
       {/* Errors */}
       {error && <Alert severity="error">{error}</Alert>}
