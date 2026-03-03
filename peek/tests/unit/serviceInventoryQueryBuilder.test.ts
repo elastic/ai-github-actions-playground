@@ -55,6 +55,11 @@ describe("serviceInventoryQueryBuilder", () => {
       const query = buildServiceInventoryQuery(DEFAULT_SERVICE_INVENTORY_FILTERS);
       expect(query).toContain("EVAL error_rate = error_count / request_count");
     });
+
+    it("classifies errors using OTel status code values", () => {
+      const query = buildServiceInventoryQuery(DEFAULT_SERVICE_INVENTORY_FILTERS);
+      expect(query).toContain('IN ("Error", "STATUS_CODE_ERROR")');
+    });
   });
 
   describe("buildServiceEnvironmentsQuery", () => {

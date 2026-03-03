@@ -57,7 +57,7 @@ export function buildServiceInventoryQuery(
     buildWherePipe(whereClauses),
     "EVAL duration_ms = " +
       `${durationExpr} / 1000.0, ` +
-      `is_error = CASE(${fields.statusCode} == "ERROR", 1, 0), ` +
+      `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0), ` +
       "route_key = COALESCE(attributes.url.path, attributes.http.route, url.path, '/'), " +
       `span_name_key = COALESCE(${fields.spanName}, "unknown"), ` +
       "error_message_key = CASE(is_error == 1, COALESCE(status.message, attributes.error.message, span_name_key), NULL), " +
