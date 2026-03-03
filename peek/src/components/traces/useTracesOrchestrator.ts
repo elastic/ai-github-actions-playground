@@ -135,6 +135,10 @@ export function useTracesOrchestrator() {
         runDetailQuery(buildTraceDetailQuery(urlTraceId));
       } else {
         setSelectedTraceSpans([]);
+        setSelectedSpanId(null);
+        setDrawerOpen(false);
+        setSelectedRootSpanId(null);
+        setSelectedTraceTimestamp(null);
       }
     }
   }, [
@@ -144,6 +148,8 @@ export function useTracesOrchestrator() {
     setSelectedTraceSpans,
     setSelectedSpanId,
     setDrawerOpen,
+    setSelectedRootSpanId,
+    setSelectedTraceTimestamp,
   ]);
 
   const {
