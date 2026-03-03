@@ -22,6 +22,7 @@ import EmptyState from "./EmptyState";
 import OverviewFailedItemsSection from "./OverviewFailedItemsSection";
 import type { FailedItem } from "./OverviewFailedItemsSection";
 import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
+import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -276,6 +277,7 @@ export default function DimensionOverviewGrid({
       >
         {dimsWithData.map((field) => {
           const result = results[field.name];
+          const fieldVisual = classifyFieldVisual(field.name, field.metricType);
           const displayName =
             metricNamespace && field.name.startsWith(`${metricNamespace}.`)
               ? field.name.slice(metricNamespace.length + 1)
@@ -311,6 +313,7 @@ export default function DimensionOverviewGrid({
               >
                 {/* Card header */}
                 <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mb: 0.5 }}>
+                  {getFieldVisualIcon(fieldVisual, 12)}
                   <Typography
                     variant="caption"
                     noWrap

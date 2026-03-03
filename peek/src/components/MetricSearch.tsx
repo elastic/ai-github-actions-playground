@@ -14,6 +14,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import type { FieldInfo, MetricTypeClassification } from "../services/es";
 
 import { getTypeColor } from "./fieldTypeColor";
+import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
 import { metricNamespaceOf } from "./explore/exploreUtils";
 
 function getMetricBadge(metricType: MetricTypeClassification): {
@@ -131,6 +132,8 @@ export default function MetricSearch({
         )}
         renderOption={(props, option) => {
           const badge = getMetricBadge(option.metricType);
+          const fieldVisual = classifyFieldVisual(option.name, option.metricType);
+          const badgeIcon = getFieldVisualIcon(fieldVisual, 14, "inherit");
           const displayName =
             selectedNamespace && option.name.startsWith(`${selectedNamespace}.`)
               ? option.name.slice(selectedNamespace.length + 1)
@@ -140,7 +143,13 @@ export default function MetricSearch({
               <Box sx={{ display: "flex", gap: 1, alignItems: "center", width: "100%" }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="body2" noWrap>
-                    {displayName}
+                    <Box
+                      component="span"
+                      sx={{ display: "inline-flex", gap: 0.5, alignItems: "center" }}
+                    >
+                      {getFieldVisualIcon(fieldVisual, 12)}
+                      {displayName}
+                    </Box>
                   </Typography>
                   {selectedNamespace && (
                     <Typography variant="caption" color="text.secondary" noWrap>
@@ -159,6 +168,7 @@ export default function MetricSearch({
                 />
                 <Chip
                   label={badge.label}
+                  icon={badgeIcon}
                   size="small"
                   color={badge.color}
                   variant="outlined"
