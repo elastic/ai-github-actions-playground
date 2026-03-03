@@ -458,7 +458,8 @@ test.describe("smoke – site navigation", () => {
     // so results are deterministic across fast (local) and slow (CI) machines.
     const pageReadyLocators: Record<string, () => Promise<void>> = {
       Metrics: () => expect(page.getByText("Explore your metrics")).toBeVisible(),
-      Services: () => expect(page.getByRole("heading", { name: "Services" })).toBeVisible(),
+      Services: () =>
+        expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Logs: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
