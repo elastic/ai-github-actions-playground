@@ -97,6 +97,14 @@ jobs:
       - name: Wait 2 minutes
         run: sleep 120
 
+      - name: Dispatch explore-add-data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
       - name: Dispatch ui-designer-review
         env:
           GH_TOKEN: ${{ github.token }}
