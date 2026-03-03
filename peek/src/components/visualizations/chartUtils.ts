@@ -1,22 +1,11 @@
-import type { EsqlColumn, EsqlResponse } from "../../types";
+import type { EsqlResponse } from "../../types";
 import { DATE_TYPES, NUMERIC_TYPES } from "../../services/es/esFieldTypes";
-export { findNumericColumnIndices } from "../../services/es/columnUtils";
-
-const TIMESTAMP_FIELD = "@timestamp";
-
-export function isDateColumn(column: EsqlColumn): boolean {
-  return DATE_TYPES.has(column.type) || column.name === TIMESTAMP_FIELD;
-}
-
-export function findDateColumnIndex(data: EsqlResponse): number {
-  return data.columns.findIndex(isDateColumn);
-}
-
-export function findStringColumnIndices(data: EsqlResponse): number[] {
-  return data.columns
-    .map((c, i) => (c.type === "keyword" || c.type === "text" ? i : -1))
-    .filter((i) => i >= 0);
-}
+export {
+  isDateColumn,
+  findDateColumnIndex,
+  findStringColumnIndices,
+  findNumericColumnIndices,
+} from "../../services/es/columnUtils";
 
 export function getColumnValues(data: EsqlResponse, colIndex: number): unknown[] {
   return data.values.map((row) => row[colIndex]);

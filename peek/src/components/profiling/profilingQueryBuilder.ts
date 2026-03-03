@@ -72,18 +72,20 @@ export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string
   ].join(" | ");
 }
 
-export function buildStacktraceLookupQuery(ids: string[]): string {
+function buildLookupQuery(index: string, ids: string[]): string {
   if (ids.length === 0) {
-    return 'FROM profiling-stacktraces METADATA _id | WHERE _id IN ("")';
+    // Empty IDs should never return documents.
+    return `FROM ${index} METADATA _id | WHERE 1 == 0`;
   }
-  return `FROM profiling-stacktraces METADATA _id | WHERE _id IN (${quoteList(ids)})`;
+  return `FROM ${index} METADATA _id | WHERE _id IN (${quoteList(ids)})`;
+}
+
+export function buildStacktraceLookupQuery(ids: string[]): string {
+  return buildLookupQuery("profiling-stacktraces", ids);
 }
 
 export function buildStackframeLookupQuery(frameIds: string[]): string {
-  if (frameIds.length === 0) {
-    return 'FROM profiling-stackframes METADATA _id | WHERE _id IN ("")';
-  }
-  return `FROM profiling-stackframes METADATA _id | WHERE _id IN (${quoteList(frameIds)})`;
+  return buildLookupQuery("profiling-stackframes", frameIds);
 }
 
 export function buildProfilingTimelineQuery(filters: ProfilingFilters): string {

@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   getDiskWatermarks,
   getGcSummary,
+  MONITORED_BREAKERS,
+  MONITORED_THREAD_POOLS,
+  nodeCircuitBreakerTrips,
+  nodeThreadPoolRejections,
   getThreadPoolRejections,
   getCircuitBreakerTrips,
   groupPendingTasks,
@@ -245,5 +249,65 @@ describe("parseNumber", () => {
     expect(parseNumber("")).toBeNull();
     expect(parseNumber("   ")).toBeNull();
     expect(parseNumber("abc")).toBeNull();
+  });
+});
+
+describe("MONITORED_THREAD_POOLS", () => {
+  it("contains expected pools", () => {
+    expect(MONITORED_THREAD_POOLS).toEqual(["write", "search", "get"]);
+  });
+});
+
+describe("MONITORED_BREAKERS", () => {
+  it("contains expected breakers", () => {
+    expect(MONITORED_BREAKERS).toEqual(["parent", "fielddata", "request", "in_flight_requests"]);
+  });
+});
+
+describe("nodeThreadPoolRejections", () => {
+  it("sums rejections for a single node", () => {
+    const node = {
+      name: "node-a",
+      thread_pool: { write: { rejected: 5 }, search: { rejected: 3 }, get: { rejected: 1 } },
+    };
+    expect(nodeThreadPoolRejections(node)).toBe(9);
+  });
+
+  it("returns 0 when no rejections", () => {
+    const node = { name: "node-a", thread_pool: { write: { rejected: 0 } } };
+    expect(nodeThreadPoolRejections(node)).toBe(0);
+  });
+
+  it("handles missing thread_pool data", () => {
+    const node = { name: "node-a" };
+    expect(nodeThreadPoolRejections(node)).toBe(0);
+  });
+
+  it("uses custom pools when provided", () => {
+    const node = {
+      name: "node-a",
+      thread_pool: { write: { rejected: 5 }, search: { rejected: 3 }, get: { rejected: 1 } },
+    };
+    expect(nodeThreadPoolRejections(node, ["write"])).toBe(5);
+  });
+});
+
+describe("nodeCircuitBreakerTrips", () => {
+  it("sums trips for a single node", () => {
+    const node = {
+      name: "node-a",
+      breakers: { parent: { tripped: 2 }, fielddata: { tripped: 1 } },
+    };
+    expect(nodeCircuitBreakerTrips(node)).toBe(3);
+  });
+
+  it("returns 0 when no trips", () => {
+    const node = { name: "node-a", breakers: { parent: { tripped: 0 } } };
+    expect(nodeCircuitBreakerTrips(node)).toBe(0);
+  });
+
+  it("handles missing breakers data", () => {
+    const node = { name: "node-a" };
+    expect(nodeCircuitBreakerTrips(node)).toBe(0);
   });
 });
