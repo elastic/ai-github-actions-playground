@@ -79,7 +79,9 @@ describe("useSessionResume", () => {
   });
 
   it("does not apply stale capabilities after a manual reconnect", async () => {
-    useConnectionStore.setState({ connection: CONN, connected: false });
+    act(() => {
+      useConnectionStore.setState({ connection: CONN, connected: false });
+    });
     const deferred = createDeferred<typeof CAPS>();
     mockFetch.mockReturnValue(deferred.promise);
 

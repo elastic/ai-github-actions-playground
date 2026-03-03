@@ -37,7 +37,11 @@ export function useSessionResume() {
     // attempted a resume.  The ref guard preserves the original "run at most
     // once" semantics while allowing the effect to re-run when async persist
     // hydration delivers the connection after the initial mount.
-    if (connected || !connection || attemptedRef.current) return;
+    if (connected) {
+      attemptedRef.current = true;
+      return;
+    }
+    if (!connection || attemptedRef.current) return;
     attemptedRef.current = true;
 
     let cancelled = false;
