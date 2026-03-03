@@ -102,6 +102,34 @@ describe("useSimpleEsqlQuery", () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it("does not evaluate buildRequest when enabled is false", () => {
+    useConnectionStore.setState({ connection: MOCK_CONNECTION });
+    const buildRequest = vi.fn(() => ({ query: "FROM index" }));
+    const { result } = renderHook(
+      () => useSimpleEsqlQuery({ query: "FROM index", enabled: false, buildRequest }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(buildRequest).not.toHaveBeenCalled();
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it("does not evaluate buildRequest when connection is null", () => {
+    const buildRequest = vi.fn(() => ({ query: "FROM index" }));
+    const { result } = renderHook(() => useSimpleEsqlQuery({ query: "FROM index", buildRequest }), {
+      wrapper: createWrapper(),
+    });
+
+    expect(buildRequest).not.toHaveBeenCalled();
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it("does not refetch on same-url connection change when query is whitespace", async () => {
     useConnectionStore.setState({ connection: MOCK_CONNECTION });
     const { result } = renderHook(() => useSimpleEsqlQuery({ query: "   " }), {

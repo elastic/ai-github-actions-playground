@@ -45,10 +45,12 @@ export function useSimpleEsqlQuery({
   enabled = true,
 }: UseSimpleEsqlQueryOptions) {
   const connection = useConnectionStore((s) => s.connection);
+  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
   const trimmedQuery = query?.trim() ?? "";
+  const canBuildRequest = enabled && Boolean(connection) && trimmedQuery.length > 0;
   let requestBuildError: Error | null = null;
   let request: EsqlQueryParams | null = null;
-  if (trimmedQuery.length > 0) {
+  if (canBuildRequest) {
     try {
       request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
     } catch (error) {
@@ -56,11 +58,10 @@ export function useSimpleEsqlQuery({
     }
   }
 
-  const effectiveEnabled =
-    enabled && Boolean(connection) && Boolean(trimmedQuery) && requestBuildError == null;
+  const effectiveEnabled = canBuildRequest && requestBuildError == null;
 
   const result = useQuery<EsqlResponse>({
-    queryKey: queryKey ?? ["esql", connection?.url, trimmedQuery, request],
+    queryKey: queryKey ?? ["esql", activeProfileId, connection?.url, trimmedQuery, request],
     queryFn: async ({ signal }) => {
       if (!connection || !request) {
         throw new Error(
