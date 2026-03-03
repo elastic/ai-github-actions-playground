@@ -16,10 +16,17 @@ export type FieldVisualKind =
 const RESOURCE_ATTRIBUTE_PREFIXES = [
   "service.",
   "host.",
+  "cloud.",
+  "deployment.",
   "k8s.",
   "container.",
   "telemetry.",
   "process.",
+  "os.",
+  "device.",
+  "faas.",
+  "cicd.",
+  "vcs.",
 ];
 
 export function classifyFieldVisual(
@@ -41,8 +48,9 @@ export function classifyFieldVisual(
 export function getFieldVisualIcon(
   kind: FieldVisualKind,
   fontSize: number = 14,
+  color: string = "text.secondary",
 ): ReactElement | undefined {
-  const iconSx = { fontSize, color: "text.secondary" };
+  const iconSx = { fontSize, color };
   switch (kind) {
     case "metric-gauge":
       return <ShowChartIcon sx={iconSx} />;

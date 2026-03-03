@@ -24,9 +24,17 @@ function getMetricBadge(metricType: MetricTypeClassification): {
 } {
   switch (metricType) {
     case "gauge":
-      return { label: "gauge", color: "info", icon: getFieldVisualIcon("metric-gauge") };
+      return {
+        label: "gauge",
+        color: "info",
+        icon: getFieldVisualIcon("metric-gauge", 14, "inherit"),
+      };
     case "counter":
-      return { label: "counter", color: "warning", icon: getFieldVisualIcon("metric-counter") };
+      return {
+        label: "counter",
+        color: "warning",
+        icon: getFieldVisualIcon("metric-counter", 14, "inherit"),
+      };
     default:
       return { label: "field", color: "default", icon: undefined };
   }

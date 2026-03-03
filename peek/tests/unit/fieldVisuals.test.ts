@@ -8,6 +8,11 @@ describe("classifyFieldVisual", () => {
       "resource-attribute",
     );
     expect(classifyFieldVisual("service.name", "unknown")).toBe("resource-attribute");
+    expect(classifyFieldVisual("cloud.region", "unknown")).toBe("resource-attribute");
+    expect(classifyFieldVisual("deployment.environment.name", "unknown")).toBe(
+      "resource-attribute",
+    );
+    expect(classifyFieldVisual("os.type", "unknown")).toBe("resource-attribute");
   });
 
   it("classifies generic attributes", () => {

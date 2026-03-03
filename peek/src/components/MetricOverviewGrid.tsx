@@ -277,7 +277,7 @@ export default function MetricOverviewGrid({
                   </Typography>
                   <Chip
                     label={field.metricType}
-                    icon={getFieldVisualIcon(fieldVisual)}
+                    icon={getFieldVisualIcon(fieldVisual, 14, "inherit")}
                     size="small"
                     color={metricBadgeColor}
                     variant="outlined"
