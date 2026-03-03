@@ -155,6 +155,7 @@ export default function ProfilingGuidedPage() {
       <ProfilingResults
         loading={loading}
         hasRun={hasRun}
+        error={error}
         viewMode={viewMode}
         topFunctionsRows={topFunctionsRows}
         timelineResult={timelineResult}

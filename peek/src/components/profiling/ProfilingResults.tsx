@@ -21,6 +21,7 @@ import type { ViewMode } from "./useProfilingData";
 interface ProfilingResultsProps {
   loading: boolean;
   hasRun: boolean;
+  error: string | null;
   viewMode: ViewMode;
   topFunctionsRows: TopFunctionRow[];
   timelineResult: EsqlResponse | null;
@@ -35,6 +36,7 @@ interface ProfilingResultsProps {
 export default function ProfilingResults({
   loading,
   hasRun,
+  error,
   viewMode,
   topFunctionsRows,
   timelineResult,
@@ -49,13 +51,17 @@ export default function ProfilingResults({
 
   return (
     <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-      {hasRun && topFunctionsRows.length === 0 && stacktraces.length === 0 && !timelineResult && (
-        <EmptyState
-          heading="No profiling data found"
-          description="No samples matched the selected focus and time range."
-          size="small"
-        />
-      )}
+      {hasRun &&
+        !error &&
+        topFunctionsRows.length === 0 &&
+        stacktraces.length === 0 &&
+        !timelineResult && (
+          <EmptyState
+            heading="No profiling data found"
+            description="No samples matched the selected focus and time range."
+            size="small"
+          />
+        )}
       {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
         <Table size="small">
           <TableHead>
