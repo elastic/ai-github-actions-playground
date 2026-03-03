@@ -96,6 +96,17 @@ describe("encodeFilters", () => {
       JSON.stringify([{ field: "host", op: "==", value: "localhost" }]),
     );
   });
+
+  it("skips empty-after-trim fields and invalid ops", () => {
+    const filters = [
+      { field: "   ", op: "==" as const, value: "x" },
+      { field: "host", op: ">" as unknown as "==", value: "x" },
+      { field: "status", op: "!=" as const, value: "ok" },
+    ] as unknown as Parameters<typeof encodeFilters>[0];
+    expect(encodeFilters(filters)).toBe(
+      JSON.stringify([{ field: "status", op: "!=", value: "ok" }]),
+    );
+  });
 });
 
 describe("parseLegacyFilters", () => {
@@ -109,6 +120,12 @@ describe("parseLegacyFilters", () => {
 
   it("skips invalid legacy filter entries", () => {
     const search = "filter.host=>:localhost&filter. =!=:x&filter.status=!=:error";
+    expect(parseLegacyFilters(search)).toEqual([{ field: "status", op: "!=", value: "error" }]);
+  });
+
+  it("skips legacy entries with missing colon or missing op", () => {
+    const search =
+      "filter.hostlocalhost&filter.env=:prod&filter.status=!=:error&filter.space=   :value";
     expect(parseLegacyFilters(search)).toEqual([{ field: "status", op: "!=", value: "error" }]);
   });
 });
