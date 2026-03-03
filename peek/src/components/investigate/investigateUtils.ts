@@ -35,9 +35,11 @@ export interface TimelineMarker {
 /** System prompt instructing the LLM how to analyse the timeline. */
 export const TIMELINE_SYSTEM_PROMPT =
   "You are a security analyst assistant. " +
-  "Provide a concise security-focused summary of the activity timeline provided by the user. " +
-  "Highlight any suspicious patterns, anomalies, or noteworthy sequences. " +
-  "Group related events together and note the data sources involved.";
+  "Analyze the security event timeline and provide a concise summary. " +
+  "Structure: 1) Overview of activity window and volume, " +
+  "2) Suspicious patterns or anomalies (with timestamps), " +
+  "3) Data sources involved. " +
+  "Use short paragraphs, not bullet lists. Base analysis only on the events provided.";
 
 /** System prompt for the structured timeline-markers response. */
 export const TIMELINE_MARKERS_SYSTEM_PROMPT =

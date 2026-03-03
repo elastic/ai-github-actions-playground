@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 
 import { useApiKeys } from "../hooks/useApiKeys";
 import { usePageContextStore } from "../store/usePageContextStore";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { formatTimestamp } from "../utils/formatDate";
 
@@ -129,7 +130,7 @@ export default function ApiKeysPage() {
           {insightContext && (
             <PageInsightBanner
               context={insightContext}
-              systemPrompt="You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, how many lack expiration (security risk), and any keys that are old and should be rotated."
+              systemPrompt={`You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, how many lack expiration (security risk), and any keys that are old and should be rotated.${INSIGHT_GUARDRAIL}`}
               cacheKey={insightCacheKey}
               severity="warning"
             />
