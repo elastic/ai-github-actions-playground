@@ -18,13 +18,11 @@ import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
-import { type DiskUsageIndexEntry } from "../services/es";
-import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
-import { runConnectionRequest } from "../hooks/useConnectionRequest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
+import { useDiskUsage } from "../hooks/useDiskUsage";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
@@ -36,7 +34,6 @@ import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
 // ---------------------------------------------------------------------------
 
 export default function IndicesPage() {
-  const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
@@ -53,12 +50,14 @@ export default function IndicesPage() {
       .withDefault("overview")
       .withOptions({ history: "replace" }),
   );
-  const [diskUsage, setDiskUsage] = useState<DiskUsageIndexEntry | null>(null);
-  const [diskUsageLoading, setDiskUsageLoading] = useState(false);
-  const [diskUsageError, setDiskUsageError] = useState<string | null>(null);
 
   const indicesResult = useIndices();
   const detailResult = useIndexDetail(selectedIndex);
+  const diskUsageResult = useDiskUsage(selectedIndex);
+
+  const diskUsage = diskUsageResult.status === "success" ? diskUsageResult.data : null;
+  const diskUsageLoading = diskUsageResult.status === "loading";
+  const diskUsageError = diskUsageResult.status === "error" ? diskUsageResult.error : null;
 
   const loadingIndices = indicesResult.status === "loading";
   const error = indicesResult.status === "error" ? indicesResult.error : null;
@@ -77,12 +76,6 @@ export default function IndicesPage() {
       : indicesData.find((i) => !i.index.startsWith("."));
     void setSelectedIndex(first?.index ?? null);
   }, [indicesData, showSystemIndices, selectedIndex, setSelectedIndex]);
-
-  // Clear disk usage when selectedIndex changes
-  useEffect(() => {
-    setDiskUsage(null);
-    setDiskUsageError(null);
-  }, [selectedIndex]);
 
   // When system indices are hidden, deselect any active system index.
   useEffect(() => {
@@ -128,27 +121,6 @@ export default function IndicesPage() {
     setConsoleDraft({ method: "GET", path: `/${selectedIndex}/_mapping` });
     navigate(PAGE_MANIFEST.console.path);
   }, [selectedIndex, navigate, setConsoleDraft]);
-
-  const handleAnalyzeDiskUsage = useCallback(async () => {
-    if (!connection || !selectedIndex) return;
-    setDiskUsageLoading(true);
-    setDiskUsageError(null);
-    setDiskUsage(null);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.getIndexDiskUsage(selectedIndex),
-      });
-      if (error !== null) {
-        setDiskUsageError(error);
-      } else if (data !== null) {
-        const entry = data[selectedIndex] as DiskUsageIndexEntry | undefined;
-        setDiskUsage(entry ?? null);
-      }
-    } finally {
-      setDiskUsageLoading(false);
-    }
-  }, [connection, selectedIndex]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -295,7 +267,7 @@ export default function IndicesPage() {
           diskUsage={diskUsage}
           diskUsageLoading={diskUsageLoading}
           diskUsageError={diskUsageError}
-          onAnalyzeDiskUsage={() => void handleAnalyzeDiskUsage()}
+          onAnalyzeDiskUsage={diskUsageResult.analyze}
         />
       </Box>
     </Box>
