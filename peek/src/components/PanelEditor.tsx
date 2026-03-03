@@ -43,7 +43,7 @@ import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
-import { getAllPersesPanelEntries, getPersesPanelEntry } from "./perses/panelRegistry";
+import { getAllPersesPanelEntries, getPersesPanelCapabilities } from "./perses/panelRegistry";
 import ResizableEditorContainer from "./ResizableEditorContainer";
 import QueryAnnotationOverlay from "./QueryAnnotationOverlay";
 
@@ -119,7 +119,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     (newViz: VisualizationType) => {
       setViz(newViz);
       const next = defaultOptions(newViz);
-      const supportsOptions = getPersesPanelEntry(newViz)?.supportsOptions ?? false;
+      const { supportsOptions } = getPersesPanelCapabilities(newViz);
       const currentFormat = (options as { format?: FormatOptions }).format;
       setOptions(supportsOptions && currentFormat ? { ...next, format: currentFormat } : next);
     },
@@ -177,7 +177,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
     setEditingId(null);
   }, [editingId, removePanel, setEditingId]);
 
-  const showOptions = getPersesPanelEntry(viz)?.supportsOptions ?? false;
+  const showOptions = getPersesPanelCapabilities(viz).supportsOptions;
   const isMarkdown = viz === "markdown";
 
   return (
