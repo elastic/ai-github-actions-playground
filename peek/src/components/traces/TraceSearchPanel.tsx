@@ -294,7 +294,19 @@ export default function TraceSearchPanel({
               })
             }
             renderInput={(params) => (
-              <TextField {...params} size="small" placeholder="Service name" />
+              <TextField
+                {...params}
+                size="small"
+                placeholder="Service name"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val && !filters.services.includes(val)) {
+                      applyFiltersAndRun({ services: [...filters.services, val] });
+                    }
+                  }
+                }}
+              />
             )}
             sx={{
               minWidth: 160,
