@@ -300,7 +300,10 @@ export default function TraceSearchPanel({
                 placeholder="Service name"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (e.nativeEvent.isComposing) return;
+                    const target = e.target;
+                    if (!(target instanceof HTMLInputElement)) return;
+                    const val = target.value.trim();
                     if (val && !filters.services.includes(val)) {
                       applyFiltersAndRun({ services: [...filters.services, val] });
                     }
