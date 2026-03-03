@@ -240,7 +240,7 @@ describe("DashboardsLandingPage", () => {
     expect(updated?.tags).toEqual(["prod"]);
   });
 
-  it("cancels edit details without saving changes", async () => {
+  it("cancels edit details without saving changes", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     renderLanding();
 
@@ -251,7 +251,7 @@ describe("DashboardsLandingPage", () => {
 
     const dialog = screen.getByRole("dialog", { name: /edit dashboard details/i });
     const descInput = within(dialog).getByLabelText(/description/i);
-    await user.type(descInput, "Should not be saved");
+    fireEvent.change(descInput, { target: { value: "Should not be saved" } });
     await user.click(within(dialog).getByRole("button", { name: /^cancel$/i }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());

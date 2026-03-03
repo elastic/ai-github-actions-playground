@@ -109,6 +109,7 @@ export default function IngestPipelinesPage() {
           search={search}
           onSearchChange={setSearch}
           filteredPipelines={filteredPipelines}
+          totalPipelineCount={pipelines.length}
           selectedName={effectiveSelectedName}
           onSelect={setSelectedName}
         />
@@ -116,6 +117,7 @@ export default function IngestPipelinesPage() {
           key={effectiveSelectedName ?? "none"}
           selectedPipeline={displayedPipeline}
           connection={connection}
+          pipelinesExist={pipelines.length > 0}
         />
       </Box>
     </Box>

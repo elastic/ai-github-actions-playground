@@ -17,6 +17,7 @@ interface PipelineListPanelProps {
   search: string;
   onSearchChange: (value: string) => void;
   filteredPipelines: PipelineEntry[];
+  totalPipelineCount: number;
   selectedName: string | null;
   onSelect: (name: string) => void;
 }
@@ -26,6 +27,7 @@ export default function PipelineListPanel({
   search,
   onSearchChange,
   filteredPipelines,
+  totalPipelineCount,
   selectedName,
   onSelect,
 }: PipelineListPanelProps) {
@@ -82,10 +84,15 @@ export default function PipelineListPanel({
         })}
         {!loading && filteredPipelines.length === 0 && (
           <ListItem>
-            <EmptyState
-              heading="No pipelines found"
-              description="Try adjusting your search or check that ingest pipelines exist in the cluster"
-            />
+            {totalPipelineCount === 0 ? (
+              <EmptyState
+                heading="No ingest pipelines"
+                description="This cluster has no ingest pipelines. Create one via Console or add data to get started."
+                addDataHref="/add-data"
+              />
+            ) : (
+              <EmptyState heading="No pipelines found" description="Try adjusting your search" />
+            )}
           </ListItem>
         )}
       </List>
