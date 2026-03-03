@@ -20,23 +20,14 @@ import { metricNamespaceOf } from "./explore/exploreUtils";
 function getMetricBadge(metricType: MetricTypeClassification): {
   label: string;
   color: "info" | "warning" | "default";
-  icon: ReturnType<typeof getFieldVisualIcon>;
 } {
   switch (metricType) {
     case "gauge":
-      return {
-        label: "gauge",
-        color: "info",
-        icon: getFieldVisualIcon("metric-gauge", 14, "inherit"),
-      };
+      return { label: "gauge", color: "info" };
     case "counter":
-      return {
-        label: "counter",
-        color: "warning",
-        icon: getFieldVisualIcon("metric-counter", 14, "inherit"),
-      };
+      return { label: "counter", color: "warning" };
     default:
-      return { label: "field", color: "default", icon: undefined };
+      return { label: "field", color: "default" };
   }
 }
 
@@ -142,6 +133,7 @@ export default function MetricSearch({
         renderOption={(props, option) => {
           const badge = getMetricBadge(option.metricType);
           const fieldVisual = classifyFieldVisual(option.name, option.metricType);
+          const badgeIcon = getFieldVisualIcon(fieldVisual, 14, "inherit");
           const displayName =
             selectedNamespace && option.name.startsWith(`${selectedNamespace}.`)
               ? option.name.slice(selectedNamespace.length + 1)
@@ -176,7 +168,7 @@ export default function MetricSearch({
                 />
                 <Chip
                   label={badge.label}
-                  icon={badge.icon}
+                  icon={badgeIcon}
                   size="small"
                   color={badge.color}
                   variant="outlined"

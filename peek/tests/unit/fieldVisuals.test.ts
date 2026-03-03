@@ -3,6 +3,15 @@ import { describe, expect, it } from "vitest";
 import { classifyFieldVisual } from "../../src/components/explore/fieldVisuals";
 
 describe("classifyFieldVisual", () => {
+  it("prefers metric type over field-name prefixes", () => {
+    expect(classifyFieldVisual("resource.attributes.service.name", "gauge")).toBe("metric-gauge");
+    expect(classifyFieldVisual("attributes.http.method", "counter")).toBe("metric-counter");
+  });
+
+  it("returns none for unknown non-matching fields", () => {
+    expect(classifyFieldVisual("custom.dimension", "unknown")).toBe("none");
+  });
+
   it("classifies resource attributes", () => {
     expect(classifyFieldVisual("resource.attributes.service.name", "unknown")).toBe(
       "resource-attribute",
