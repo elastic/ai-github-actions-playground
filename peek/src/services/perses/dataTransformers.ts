@@ -1,10 +1,11 @@
 import type { TimeSeriesData } from "@perses-dev/core";
 
-import { findNumericColumnIndices } from "../es/columnUtils";
-import { DATE_TYPES } from "../es/esFieldTypes";
-import type { EsqlColumn, EsqlResponse } from "../../types";
-
-const TIMESTAMP_FIELD = "@timestamp";
+import {
+  findDateColumnIndex,
+  findNumericColumnIndices,
+  findStringColumnIndices,
+} from "../es/columnUtils";
+import type { EsqlResponse } from "../../types";
 
 export interface StatDataPoint {
   name: string;
@@ -25,14 +26,6 @@ export interface GaugeDataPoint {
   name: string;
   value: number;
   values: number[];
-}
-
-function isTimestampColumn(column: EsqlColumn): boolean {
-  return column.name === TIMESTAMP_FIELD || DATE_TYPES.has(column.type);
-}
-
-function isDimensionColumn(column: EsqlColumn): boolean {
-  return column.type === "keyword" || column.type === "text";
 }
 
 function parseTimestampMs(value: unknown, columnType?: string): number | undefined {
@@ -57,16 +50,6 @@ function normalizeNumericValue(value: unknown): number | null {
   }
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
-}
-
-function findTimestampColumnIndex(data: EsqlResponse): number {
-  return data.columns.findIndex(isTimestampColumn);
-}
-
-function findDimensionColumnIndices(data: EsqlResponse): number[] {
-  return data.columns
-    .map((column, index) => (isDimensionColumn(column) ? index : -1))
-    .filter((index) => index >= 0);
 }
 
 function findLatestRowIndex(data: EsqlResponse, timestampIndex: number): number {
@@ -103,8 +86,8 @@ export function toTimeSeriesData(data: EsqlResponse): TimeSeriesData {
     return { series: [] };
   }
 
-  const timestampIndex = findTimestampColumnIndex(data);
-  const dimensionColumns = findDimensionColumnIndices(data);
+  const timestampIndex = findDateColumnIndex(data);
+  const dimensionColumns = findStringColumnIndices(data);
   const seriesMap = new Map<
     string,
     { name: string; labels?: Record<string, string>; values: Array<[number, number | null]> }
@@ -181,7 +164,7 @@ export function toStatData(data: EsqlResponse): StatDataPoint[] {
     return [];
   }
 
-  const latestRowIndex = findLatestRowIndex(data, findTimestampColumnIndex(data));
+  const latestRowIndex = findLatestRowIndex(data, findDateColumnIndex(data));
   const latestRow = data.values[latestRowIndex];
   if (!latestRow) {
     return [];
@@ -199,7 +182,7 @@ export function toBarChartData(data: EsqlResponse): BarChartData {
     return { categories: [], series: [] };
   }
 
-  const dimensionColumns = findDimensionColumnIndices(data);
+  const dimensionColumns = findStringColumnIndices(data);
   const categoryIndex = dimensionColumns[0] ?? -1;
   const groupIndex = dimensionColumns.length >= 2 ? (dimensionColumns[1] ?? -1) : -1;
 
@@ -267,7 +250,7 @@ export function toGaugeData(data: EsqlResponse): GaugeDataPoint | undefined {
   if (valueColumn === undefined) {
     return undefined;
   }
-  const latestRowIndex = findLatestRowIndex(data, findTimestampColumnIndex(data));
+  const latestRowIndex = findLatestRowIndex(data, findDateColumnIndex(data));
   const latestRow = data.values[latestRowIndex];
   if (!latestRow) {
     return undefined;

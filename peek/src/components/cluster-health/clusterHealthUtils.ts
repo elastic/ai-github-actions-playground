@@ -66,7 +66,7 @@ export interface ThreadPoolRejection {
   rejected: number;
 }
 
-const MONITORED_THREAD_POOLS = ["write", "search", "get"];
+export const MONITORED_THREAD_POOLS = ["write", "search", "get"];
 
 /** Aggregate thread pool rejections across nodes. */
 export function getThreadPoolRejections(
@@ -87,11 +87,20 @@ export function getThreadPoolRejections(
 }
 
 /** Sum total rejections across all nodes and pools. */
+/** Sum total rejections across all nodes. */
 export function totalThreadPoolRejections(
   nodes: Record<string, NodeStatsNode> | undefined,
   pools: string[] = MONITORED_THREAD_POOLS,
 ): number {
   return getThreadPoolRejections(nodes, pools).reduce((sum, r) => sum + r.rejected, 0);
+}
+
+/** Sum rejections for a single node across monitored pools. */
+export function nodeThreadPoolRejections(
+  node: NodeStatsNode,
+  pools: string[] = MONITORED_THREAD_POOLS,
+): number {
+  return pools.reduce((sum, p) => sum + (node.thread_pool?.[p]?.rejected ?? 0), 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +113,7 @@ export interface CircuitBreakerTrip {
   tripped: number;
 }
 
-const MONITORED_BREAKERS = ["parent", "fielddata", "request", "in_flight_requests"];
+export const MONITORED_BREAKERS = ["parent", "fielddata", "request", "in_flight_requests"];
 
 /** Aggregate circuit breaker trips across nodes. */
 export function getCircuitBreakerTrips(
@@ -130,6 +139,14 @@ export function totalCircuitBreakerTrips(
   breakerNames: string[] = MONITORED_BREAKERS,
 ): number {
   return getCircuitBreakerTrips(nodes, breakerNames).reduce((sum, t) => sum + t.tripped, 0);
+}
+
+/** Sum breaker trips for a single node across monitored breakers. */
+export function nodeCircuitBreakerTrips(
+  node: NodeStatsNode,
+  breakerNames: string[] = MONITORED_BREAKERS,
+): number {
+  return breakerNames.reduce((sum, b) => sum + (node.breakers?.[b]?.tripped ?? 0), 0);
 }
 
 // ---------------------------------------------------------------------------
