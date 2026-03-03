@@ -101,16 +101,9 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
           flexDirection: "column",
           height: "100%",
           p: 2,
-          pt: (theme) => {
-            const toolbarMinHeight = theme.mixins.toolbar.minHeight;
-            const toolbarHeight =
-              typeof toolbarMinHeight === "number"
-                ? `${toolbarMinHeight}px`
-                : (toolbarMinHeight ?? "56px");
-            return `calc(${theme.spacing(2)} + ${toolbarHeight})`;
-          },
         }}
       >
+        {!isMobile ? <Box sx={(theme) => ({ ...theme.mixins.toolbar, flexShrink: 0 })} /> : null}
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <Typography id={titleId} variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             AI Assistant
