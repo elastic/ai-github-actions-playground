@@ -327,13 +327,10 @@ describe("InvestigatePage", () => {
     );
 
     await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
-    await user.click(screen.getByRole("button", { name: /search/i }));
+    const searchButton = screen.getByRole("button", { name: /search/i });
+    await user.click(searchButton);
 
-    const spinner = screen.getByRole("progressbar");
-    expect(spinner).toBeInTheDocument();
-    // Verify the spinner is rendered inside a button element
-    const buttons = screen.getAllByRole("button");
-    const buttonWithSpinner = buttons.find((btn) => within(btn).queryByRole("progressbar"));
-    expect(buttonWithSpinner).toBeDefined();
+    expect(await within(searchButton).findByRole("progressbar")).toBeInTheDocument();
+    expect(searchButton).toHaveTextContent(/search/i);
   });
 });

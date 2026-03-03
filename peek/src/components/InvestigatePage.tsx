@@ -135,7 +135,10 @@ export default function InvestigatePage() {
             onClick={handleSearch}
             disabled={loading || !entityInput.trim()}
           >
-            {loading ? <CircularProgress size={14} color="inherit" /> : "Search"}
+            <Box component="span" sx={{ display: "inline-flex", gap: 0.5, alignItems: "center" }}>
+              {loading && <CircularProgress size={14} color="inherit" />}
+              Search
+            </Box>
           </Button>
         </Box>
       </Paper>
