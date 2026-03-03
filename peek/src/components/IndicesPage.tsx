@@ -53,6 +53,22 @@ export default function IndicesPage() {
       .withOptions({ history: "replace" }),
   );
 
+  // Backward-compat: existing bookmarks may use the legacy `?index=` param.
+  // Migrate to `selectedIndex` once then strip the old key from the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const legacyIndex = params.get("index");
+    if (legacyIndex && !selectedIndex) {
+      void setSelectedIndex(legacyIndex);
+      // Remove the stale `index` key so it doesn't linger in the URL.
+      params.delete("index");
+      const qs = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+    }
+    // Only run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const indicesResult = useIndices();
   const detailResult = useIndexDetail(selectedIndex);
   const diskUsageResult = useDiskUsage(selectedIndex);
