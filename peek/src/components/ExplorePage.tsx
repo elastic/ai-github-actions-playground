@@ -134,10 +134,14 @@ export default function ExplorePage() {
 
   const [skipDimensionOverview, setSkipDimensionOverview] = useState(false);
 
+  // True when a metric is set (e.g. via URL) but does not exist in the loaded field list.
+  const metricNotFound = selectedMetric !== null && !fieldsLoading && selectedMetricField === null;
+
   // Show namespace overview when a namespace is picked but no single metric is selected.
   const showOverview = selectedNamespace !== null && !selectedMetric;
   // Show dimension overview when a metric is selected but no groupBy is set yet.
-  const showDimensionOverview = selectedMetric !== null && !groupBy && !skipDimensionOverview;
+  const showDimensionOverview =
+    selectedMetric !== null && !groupBy && !skipDimensionOverview && !metricNotFound;
 
   // Reconcile metric type after field metadata loads (important for URL hydration paths).
   useEffect(() => {
@@ -157,7 +161,14 @@ export default function ExplorePage() {
     filters,
     groupBy,
     timeRange: dashboard.timeRange,
-    enabled: Boolean(connection && selectedMetric && indexPattern && !showDimensionOverview),
+    enabled: Boolean(
+      connection &&
+      selectedMetric &&
+      indexPattern &&
+      !showDimensionOverview &&
+      !metricNotFound &&
+      !fieldsLoading,
+    ),
   });
 
   const handleMetricSelect = useCallback(
@@ -296,6 +307,7 @@ export default function ExplorePage() {
         groupBy={groupBy}
         showOverview={showOverview}
         showDimensionOverview={showDimensionOverview}
+        metricNotFound={metricNotFound}
         chartData={chartData}
         queryStatus={queryResult.status}
         timeRange={dashboard.timeRange}

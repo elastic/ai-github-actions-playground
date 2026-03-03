@@ -5,6 +5,7 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 
 import type { FieldInfo, ExplorerFilter, ElasticsearchClient } from "../../services/es";
 import type { EsqlResponse } from "../../types";
@@ -25,6 +26,7 @@ interface ExploreContentAreaProps {
   groupBy: string | null;
   showOverview: boolean;
   showDimensionOverview: boolean;
+  metricNotFound: boolean;
   chartData: EsqlResponse | null;
   queryStatus: string;
   timeRange: { from: string; to: string };
@@ -48,6 +50,7 @@ export default function ExploreContentArea({
   groupBy,
   showOverview,
   showDimensionOverview,
+  metricNotFound,
   chartData,
   queryStatus,
   timeRange,
@@ -62,7 +65,7 @@ export default function ExploreContentArea({
   return (
     <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0, overflow: "hidden" }}>
       {/* Dimension sidebar — only show in full detail mode */}
-      {selectedMetric && !showOverview && !showDimensionOverview && (
+      {selectedMetric && !showOverview && !showDimensionOverview && !metricNotFound && (
         <DimensionSidebar
           fields={fields}
           client={client}
@@ -72,6 +75,20 @@ export default function ExploreContentArea({
           onAddFilter={onAddFilter}
           onSetGroupBy={onSetGroupBy}
         />
+      )}
+
+      {/* Metric not found — selected via URL but does not exist in loaded fields */}
+      {metricNotFound && (
+        <Paper
+          variant="outlined"
+          sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
+        >
+          <EmptyState
+            icon={<SearchOffIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+            heading="Metric not found"
+            description={`The metric "${selectedMetric}" does not exist in the current index. Choose a valid metric from the search above or check your URL parameters.`}
+          />
+        </Paper>
       )}
 
       {/* Namespace overview grid */}
@@ -113,7 +130,7 @@ export default function ExploreContentArea({
       )}
 
       {/* Full detail chart area */}
-      {!showOverview && !showDimensionOverview && (
+      {!showOverview && !showDimensionOverview && !metricNotFound && (
         <Paper
           variant="outlined"
           sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
