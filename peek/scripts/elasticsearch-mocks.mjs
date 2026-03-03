@@ -209,6 +209,30 @@ const DEFAULT_MOCK_DATA = {
     ],
     values: [["2026-02-26T10:00:00.000Z", "Hello World"]],
   },
+  esqlRecentUsers: {
+    columns: [
+      { name: "event_count", type: "long" },
+      { name: "last_seen", type: "date" },
+      { name: "user.name", type: "keyword" },
+    ],
+    values: [
+      [42, "2026-02-26T09:55:00.000Z", "elastic"],
+      [18, "2026-02-26T09:30:00.000Z", "alice"],
+      [7, "2026-02-26T08:15:00.000Z", "bob"],
+    ],
+  },
+  esqlRecentHosts: {
+    columns: [
+      { name: "event_count", type: "long" },
+      { name: "last_seen", type: "date" },
+      { name: "host.name", type: "keyword" },
+    ],
+    values: [
+      [120, "2026-02-26T09:58:00.000Z", "web-01"],
+      [85, "2026-02-26T09:45:00.000Z", "web-02"],
+      [30, "2026-02-26T08:30:00.000Z", "db-01"],
+    ],
+  },
 };
 
 function isObject(value) {
@@ -300,6 +324,8 @@ export async function registerElasticsearchMocks(
       }
       if (query.includes("LIMIT 0")) return json(resolved.esqlLimit0);
       if (query.includes("FROM metrics-*")) return json(resolved.esqlMetrics);
+      if (query.includes("user.name IS NOT NULL")) return json(resolved.esqlRecentUsers);
+      if (query.includes("host.name IS NOT NULL")) return json(resolved.esqlRecentHosts);
       return json(resolved.esqlDefault);
     }
 

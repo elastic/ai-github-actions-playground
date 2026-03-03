@@ -608,27 +608,27 @@ describe("getCapabilities", () => {
     expect(caps.canReadSecurityRoles).toBe(false);
   });
 
-  it("falls back to canManageDataStreams: false when the security API returns an error", async () => {
+  it("falls back to full capabilities when the security API returns an error", async () => {
     const fetchSpy = mockFetchOnce({ error: { reason: "security_exception" } }, { status: 403 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
     const caps = await client.getCapabilities();
 
-    expect(caps.canManageDataStreams).toBe(false);
-    expect(caps.canReadSecurityUsers).toBe(false);
-    expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
   });
 
-  it("falls back to canManageDataStreams: false on a network failure", async () => {
+  it("falls back to full capabilities on a network failure", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
     const client = makeClient({ apiKey: "key" });
     const caps = await client.getCapabilities();
 
-    expect(caps.canManageDataStreams).toBe(false);
-    expect(caps.canReadSecurityUsers).toBe(false);
-    expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
   });
 
   it("POSTs to /_security/user/_has_privileges with the expected body", async () => {

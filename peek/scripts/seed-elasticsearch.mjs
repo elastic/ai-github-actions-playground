@@ -152,6 +152,59 @@ async function seedOrders(client) {
 }
 
 // ---------------------------------------------------------------------------
+// Seed: security event logs (Investigate page)
+// ---------------------------------------------------------------------------
+
+async function seedSecurityLogs(client) {
+  const now = Date.now();
+  const users = ["elastic", "alice", "bob"];
+  const hosts = ["web-01", "web-02", "db-01"];
+  const categories = ["authentication", "session", "process"];
+  const actions = ["logon", "logout", "exec", "ssh_login", "failed_login"];
+  const outcomes = ["success", "success", "success", "failure"];
+  const ips = ["10.0.0.1", "10.0.0.2", "192.168.1.10", "172.16.0.5"];
+  const docs = [];
+
+  for (let i = 0; i < 30; i++) {
+    docs.push({
+      "@timestamp": new Date(now - i * 5 * 60_000).toISOString(),
+      "user.name": users[i % users.length],
+      "host.name": hosts[i % hosts.length],
+      "event.category": categories[i % categories.length],
+      "event.action": actions[i % actions.length],
+      "event.outcome": outcomes[i % outcomes.length],
+      "source.ip": ips[i % ips.length],
+      message: `Security event ${i + 1}: ${actions[i % actions.length]} by ${users[i % users.length]} on ${hosts[i % hosts.length]}`,
+    });
+  }
+
+  await client.indices.delete({ index: "logs-security" }).catch((e) => {
+    if (e.meta?.statusCode !== 404)
+      console.warn(`  Warning: could not delete logs-security: ${e.message}`);
+  });
+
+  await client.indices.create({
+    index: "logs-security",
+    mappings: {
+      properties: {
+        "@timestamp": { type: "date" },
+        "user.name": { type: "keyword" },
+        "host.name": { type: "keyword" },
+        "event.category": { type: "keyword" },
+        "event.action": { type: "keyword" },
+        "event.outcome": { type: "keyword" },
+        "source.ip": { type: "ip" },
+        message: { type: "text" },
+      },
+    },
+  });
+
+  const operations = docs.flatMap((doc) => [{ index: { _index: "logs-security" } }, doc]);
+  await client.bulk({ operations, refresh: "wait_for" });
+  console.log(`  logs-security: ${docs.length} docs`);
+}
+
+// ---------------------------------------------------------------------------
 // Seed: ingest pipelines (Ingest Pipelines page)
 // ---------------------------------------------------------------------------
 
@@ -201,7 +254,7 @@ async function run() {
     await waitForReady(client);
   }
 
-  await Promise.all([seedWebLogs(client), seedOrders(client)]);
+  await Promise.all([seedWebLogs(client), seedOrders(client), seedSecurityLogs(client)]);
   await seedIngestPipelines(client);
 
   console.log("\nSeeding complete.");

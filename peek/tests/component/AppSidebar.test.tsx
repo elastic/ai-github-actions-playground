@@ -41,6 +41,7 @@ describe("AppSidebar", () => {
 
     expect(screen.getByText("Data")).toBeInTheDocument();
     expect(screen.getByText("Workspace")).toBeInTheDocument();
+    expect(screen.getByText("Security")).toBeInTheDocument();
     expect(screen.getByText("System")).toBeInTheDocument();
     expect(screen.getByText("Help")).toBeInTheDocument();
   });
@@ -253,6 +254,7 @@ describe("AppSidebar", () => {
 
     expect(screen.queryByText("Data")).not.toBeInTheDocument();
     expect(screen.queryByText("Workspace")).not.toBeInTheDocument();
+    expect(screen.queryByText("Security")).not.toBeInTheDocument();
     expect(screen.queryByText("System")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /dashboards/i })).toBeInTheDocument();
 

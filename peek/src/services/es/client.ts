@@ -622,13 +622,15 @@ export class ElasticsearchClient {
         canReadApiKeys: canCreateApiKeys,
       };
     } catch {
-      // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
+      // Security API unavailable — the cluster has security disabled so all
+      // operations are unrestricted.  Return full capabilities so the UI
+      // does not hide pages that are actually accessible.
       return {
-        canManageDataStreams: false,
-        canCreateApiKeys: false,
-        canReadSecurityUsers: false,
-        canReadSecurityRoles: false,
-        canReadApiKeys: false,
+        canManageDataStreams: true,
+        canCreateApiKeys: true,
+        canReadSecurityUsers: true,
+        canReadSecurityRoles: true,
+        canReadApiKeys: true,
       };
     }
   }

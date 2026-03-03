@@ -392,8 +392,8 @@ export const PAGE_MANIFEST = {
     requiredCapability: "canReadSecurityUsers",
     nav: {
       label: "Users",
-      group: "System",
-      order: 30,
+      group: "Security",
+      order: 20,
       showInSidebar: true,
       icon: createElement(PeopleIcon, { fontSize: "small" }),
     },
@@ -407,8 +407,8 @@ export const PAGE_MANIFEST = {
     requiredCapability: "canReadApiKeys",
     nav: {
       label: "API Keys",
-      group: "System",
-      order: 35,
+      group: "Security",
+      order: 30,
       showInSidebar: true,
       icon: createElement(VpnKeyIcon, { fontSize: "small" }),
     },
@@ -422,7 +422,7 @@ export const PAGE_MANIFEST = {
     requiredCapability: "canReadSecurityRoles",
     nav: {
       label: "Roles",
-      group: "System",
+      group: "Security",
       order: 40,
       showInSidebar: true,
       icon: createElement(AdminPanelSettingsIcon, { fontSize: "small" }),
