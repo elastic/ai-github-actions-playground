@@ -92,6 +92,7 @@ export default function MetricSearch({
       <Autocomplete
         size="small"
         openText="Browse metrics"
+        noOptionsText="No matching metrics found"
         options={scopedMetricFields}
         value={selectedField}
         onChange={(_, value) => onSelect(value)}
