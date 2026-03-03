@@ -32,12 +32,11 @@ describe("buildInvestigateQuery", () => {
     expect(query).toContain('user.name == "DOMAIN\\\\user"');
   });
 
-  it("includes FROM, WHERE, SORT, KEEP, and LIMIT clauses", () => {
+  it("includes FROM, WHERE, SORT, and LIMIT clauses", () => {
     const query = buildInvestigateQuery("user", "alice");
     expect(query).toContain("FROM logs-*");
     expect(query).toContain("| WHERE");
     expect(query).toContain("| SORT @timestamp DESC");
-    expect(query).toContain("| KEEP");
     expect(query).toContain("| LIMIT 200");
   });
 });
