@@ -11,22 +11,29 @@ interface InvestigateTimelineTableProps {
   activeTab: InvestigateTab;
 }
 
-/** Return the contextual column header and value for the "related entity" column. */
-function relatedColumn(
-  activeTab: InvestigateTab,
-  event: TimelineEvent,
-): { header: string; value: string } {
-  switch (activeTab) {
+/** Return the column header for the related entity based on active tab. */
+function relatedEntityHeader(tab: InvestigateTab): string {
+  switch (tab) {
     case "user":
-      return { header: "Host", value: event.hostName };
-    case "host":
-      return { header: "User", value: event.userName };
     case "ip":
-      return { header: "Host", value: event.hostName };
     case "domain":
-      return { header: "Host", value: event.hostName };
+      return "Host";
+    case "host":
     case "file":
-      return { header: "User", value: event.userName };
+      return "User";
+  }
+}
+
+/** Return the related entity value from an event based on active tab. */
+function relatedEntityValue(tab: InvestigateTab, event: TimelineEvent): string {
+  switch (tab) {
+    case "user":
+    case "ip":
+    case "domain":
+      return event.hostName;
+    case "host":
+    case "file":
+      return event.userName;
   }
 }
 
@@ -34,7 +41,6 @@ export default function InvestigateTimelineTable({
   events,
   activeTab,
 }: InvestigateTimelineTableProps) {
-  const related = relatedColumn(activeTab, events[0] ?? ({} as TimelineEvent));
   return (
     <Paper variant="outlined" sx={{ p: 0 }}>
       <Box
@@ -67,46 +73,43 @@ export default function InvestigateTimelineTable({
             <Box component="th">Category</Box>
             <Box component="th">Action</Box>
             <Box component="th">Outcome</Box>
-            <Box component="th">{related.header}</Box>
+            <Box component="th">{relatedEntityHeader(activeTab)}</Box>
             <Box component="th">Source IP</Box>
             <Box component="th">Message</Box>
           </tr>
         </thead>
         <tbody>
-          {events.map((event, idx) => {
-            const cell = relatedColumn(activeTab, event);
-            return (
-              <tr key={`${event.timestamp}-${event.dataSource}-${idx}`}>
-                <Box component="td" sx={{ whiteSpace: "nowrap" }}>
-                  {formatTimestamp(event.timestamp)}
-                </Box>
-                <Box component="td">
-                  <Chip
-                    size="small"
-                    label={event.dataSource || "—"}
-                    variant="outlined"
-                    sx={{ maxWidth: 200, fontSize: "0.75rem" }}
-                  />
-                </Box>
-                <Box component="td">{event.category || "—"}</Box>
-                <Box component="td">{event.action || "—"}</Box>
-                <Box component="td">{event.outcome || "—"}</Box>
-                <Box component="td">{cell.value || "—"}</Box>
-                <Box component="td">{event.sourceIp || "—"}</Box>
-                <Box
-                  component="td"
-                  sx={{
-                    maxWidth: 400,
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {event.message || "—"}
-                </Box>
-              </tr>
-            );
-          })}
+          {events.map((event, idx) => (
+            <tr key={`${event.timestamp}-${event.dataSource}-${idx}`}>
+              <Box component="td" sx={{ whiteSpace: "nowrap" }}>
+                {formatTimestamp(event.timestamp)}
+              </Box>
+              <Box component="td">
+                <Chip
+                  size="small"
+                  label={event.dataSource || "—"}
+                  variant="outlined"
+                  sx={{ maxWidth: 200, fontSize: "0.75rem" }}
+                />
+              </Box>
+              <Box component="td">{event.category || "—"}</Box>
+              <Box component="td">{event.action || "—"}</Box>
+              <Box component="td">{event.outcome || "—"}</Box>
+              <Box component="td">{relatedEntityValue(activeTab, event) || "—"}</Box>
+              <Box component="td">{event.sourceIp || "—"}</Box>
+              <Box
+                component="td"
+                sx={{
+                  maxWidth: 400,
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {event.message || "—"}
+              </Box>
+            </tr>
+          ))}
         </tbody>
       </Box>
     </Paper>
