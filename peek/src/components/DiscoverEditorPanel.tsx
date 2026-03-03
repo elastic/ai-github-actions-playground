@@ -54,7 +54,9 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         title={p.isLogsExplorer ? "Logs Explorer Query" : "ES|QL Query"}
         actions={
           <>
-            <Tooltip title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}>
+            <Tooltip
+              title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
+            >
               <span>
                 <Button
                   variant="text"
