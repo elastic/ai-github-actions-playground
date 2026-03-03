@@ -3,14 +3,20 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import ExpandLess from "@mui/icons-material/ExpandLess";
 
 import type { ElasticsearchConnection } from "../../services/es";
 import { usePipelineSimulate } from "../../hooks/usePipelineSimulate";
@@ -34,6 +40,7 @@ export default function PipelineDetailPanel({
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
   const [verbose, setVerbose] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [expandedProcessors, setExpandedProcessors] = useState<Set<string>>(new Set());
 
   const {
     simulating,
@@ -148,6 +155,9 @@ export default function PipelineDetailPanel({
             <Stack spacing={1} data-testid="pipeline-processors-list">
               {(selectedPipeline.pipeline.processors ?? []).map((processor, index) => {
                 const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+                const configJson = JSON.stringify(config, null, 2);
+                const processorKey = `${selectedPipeline.name}:${index}`;
+                const isExpanded = expandedProcessors.has(processorKey);
                 return (
                   <Box
                     key={index}
@@ -167,19 +177,57 @@ export default function PipelineDetailPanel({
                     >
                       {type}
                     </Typography>
-                    <Typography
-                      component="pre"
-                      variant="body2"
+                    <Box
                       sx={{
-                        m: 0,
-                        p: 0.5,
-                        wordBreak: "break-word",
-                        whiteSpace: "pre-wrap",
-                        fontSize: "0.75rem",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                       }}
                     >
-                      {JSON.stringify(config, null, 2)}
-                    </Typography>
+                      <Button
+                        size="small"
+                        onClick={() =>
+                          setExpandedProcessors((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(processorKey)) next.delete(processorKey);
+                            else next.add(processorKey);
+                            return next;
+                          })
+                        }
+                        endIcon={isExpanded ? <ExpandLess /> : <ExpandMore />}
+                        sx={{ textTransform: "none" }}
+                      >
+                        {isExpanded ? "Hide config" : "Show config"}
+                      </Button>
+                      <Tooltip title="Copy JSON">
+                        <IconButton
+                          size="small"
+                          onClick={() => void navigator.clipboard.writeText(configJson)}
+                          aria-label={`Copy ${type} config`}
+                        >
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                    <Collapse in={isExpanded} unmountOnExit>
+                      <Typography
+                        component="pre"
+                        variant="body2"
+                        sx={{
+                          m: 0,
+                          mt: 0.5,
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: "action.hover",
+                          wordBreak: "break-word",
+                          whiteSpace: "pre-wrap",
+                          fontSize: "0.75rem",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {configJson}
+                      </Typography>
+                    </Collapse>
                   </Box>
                 );
               })}

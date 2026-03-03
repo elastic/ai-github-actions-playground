@@ -47,20 +47,27 @@ export interface DiscoverEditorPanelProps {
 }
 
 export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
+  const hasQueryHistory = p.queryHistory.length > 0;
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
         title={p.isLogsExplorer ? "Logs Explorer Query" : "ES|QL Query"}
         actions={
           <>
-            <Button
-              variant="text"
-              size="small"
-              onClick={(e) => p.setHistoryAnchor(e.currentTarget)}
-              disabled={p.queryHistory.length === 0}
+            <Tooltip
+              title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
             >
-              Recent queries
-            </Button>
+              <span>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={(e) => p.setHistoryAnchor(e.currentTarget)}
+                  disabled={!hasQueryHistory}
+                >
+                  Recent queries
+                </Button>
+              </span>
+            </Tooltip>
             <Menu
               anchorEl={p.historyAnchor}
               open={Boolean(p.historyAnchor)}

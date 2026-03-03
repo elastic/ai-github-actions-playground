@@ -329,7 +329,7 @@ export default function ConnectionDialog() {
           >
             Proxy Settings
           </Button>
-          <Collapse in={showProxy}>
+          <Collapse in={showProxy} unmountOnExit>
             <TextField
               label="Proxy URL"
               placeholder="http://localhost:3000/_es"
@@ -350,7 +350,7 @@ export default function ConnectionDialog() {
           >
             Advanced Settings
           </Button>
-          <Collapse in={showAdvanced}>
+          <Collapse in={showAdvanced} unmountOnExit>
             <TextField
               label="Ingest URL"
               placeholder={
@@ -374,7 +374,7 @@ export default function ConnectionDialog() {
           >
             Browser Tracing (Experimental)
           </Button>
-          <Collapse in={showTelemetry}>
+          <Collapse in={showTelemetry} unmountOnExit>
             <OtlpConfigPanel
               otlpEnabled={otlpEnabled}
               onOtlpEnabledChange={(enabled) => {
