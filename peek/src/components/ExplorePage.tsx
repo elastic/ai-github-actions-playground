@@ -19,6 +19,7 @@ import type { FieldInfo, ExplorerFilter } from "../services/es";
 import type { EsqlResponse } from "../types";
 import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import ExploreControlsPanel from "./explore/ExploreControlsPanel";
 import ExploreContentArea from "./explore/ExploreContentArea";
@@ -301,7 +302,7 @@ export default function ExplorePage() {
             columns: chartData.columns.map((c) => c.name),
             sampleValues: chartData.values.slice(0, 10),
           })}
-          systemPrompt="You are a metrics anomaly detector for Elasticsearch. Analyze the current chart data and flag if latest values are significantly different from the mean (e.g. CPU > 90%, disk > 80%). Keep the response to one concise sentence."
+          systemPrompt={`You are a metrics anomaly detector for Elasticsearch. Analyze the current chart data and flag if latest values are significantly different from the mean (e.g. CPU > 90%, disk > 80%). Keep the response to one concise sentence.${INSIGHT_GUARDRAIL}`}
           cacheKey={`explore::${selectedMetric}::${aggregation}::${groupBy ?? ""}::${filters.length}::${JSON.stringify(chartData.values.slice(0, 10))}`}
         />
       )}

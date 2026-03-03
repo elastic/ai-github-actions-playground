@@ -19,6 +19,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useSecurityUsers } from "../hooks/useSecurityUsers";
 import { usePageContextStore } from "../store/usePageContextStore";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageInsightBanner from "./PageInsightBanner";
@@ -96,7 +97,7 @@ export default function UsersPage() {
             totalUsers: users.length,
             disabledUsers: users.filter((u) => u.enabled === false).length,
           })}
-          systemPrompt="You are an Elasticsearch security posture analyst. Provide one concise user security posture insight and one least-privilege recommendation."
+          systemPrompt={`You are an Elasticsearch security posture analyst. Provide one concise user security posture insight and one least-privilege recommendation.${INSIGHT_GUARDRAIL}`}
           cacheKey={`users-security::${users.length}::${users.filter((u) => u.enabled === false).length}`}
         />
       )}

@@ -336,6 +336,7 @@ export function makeLLMCompletionExtension(options: LLMCompletionOptions): Exten
         model,
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
+        maxOutputTokens: 1024,
       });
 
       return result.text.trim();

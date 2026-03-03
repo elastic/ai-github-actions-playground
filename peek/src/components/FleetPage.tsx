@@ -13,6 +13,7 @@ import {
 } from "../store/usePageFiltersStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { useFleetData } from "../hooks/useFleetData";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import FleetOverviewTab from "./fleet/FleetOverviewTab";
@@ -132,7 +133,7 @@ export default function FleetPage() {
       {insightContext && (
         <PageInsightBanner
           context={insightContext}
-          systemPrompt="You are a Fleet management advisor for Elastic Agent. Summarize the fleet health in one concise sentence. Mention total agents, how many are healthy vs offline/unhealthy, and note any version inconsistencies that may need attention."
+          systemPrompt={`You are a Fleet management advisor for Elastic Agent. Summarize the fleet health in one concise sentence. Mention total agents, how many are healthy vs offline/unhealthy, and note any version inconsistencies that may need attention.${INSIGHT_GUARDRAIL}`}
           cacheKey={insightCacheKey}
         />
       )}

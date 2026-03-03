@@ -23,6 +23,7 @@ import { COMPONENT_HEIGHTS, STATUS_COLORS } from "../types/tokens";
 import { formatBytes } from "../utils/formatBytes";
 import { useFleetAgentDetail } from "../hooks/useFleetAgentDetail";
 import { usePageContextStore } from "../store/usePageContextStore";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
@@ -136,7 +137,7 @@ export default function FleetAgentPage() {
       {insightContext && (
         <PageInsightBanner
           context={insightContext}
-          systemPrompt="You are an Elastic Agent health advisor. Summarize this agent's health in one concise sentence. Include hostname, version, OS, and note any error-level logs or concerns."
+          systemPrompt={`You are an Elastic Agent health advisor. Summarize this agent's health in one concise sentence. Include hostname, version, OS, and note any error-level logs or concerns.${INSIGHT_GUARDRAIL}`}
           cacheKey={insightCacheKey}
         />
       )}

@@ -9,13 +9,11 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useLLMStore } from "../store/useLLMStore";
 
-import { ESQL_SYNTAX_GUIDE } from "./esqlSyntaxGuide";
-
 const EXPLAIN_SYSTEM_PROMPT =
-  "You are an ES|QL expert. Respond with a single-sentence TL;DR of what the query is doing — " +
-  "its goal or intent in plain language. " +
-  "No code, no markdown, no quotes.\n\n" +
-  ESQL_SYNTAX_GUIDE;
+  "You are an ES|QL expert. The user will show you an ES|QL query. " +
+  "Respond with a single plain-language sentence describing the query's intent — " +
+  "what data it fetches, filters, or aggregates. " +
+  "No code, no markdown, no quotes, no bullet points.";
 
 const MAX_CACHE_SIZE = 50;
 const OVERLAY_BG_ALPHA = 0.82;

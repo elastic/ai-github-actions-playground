@@ -29,12 +29,14 @@ export default function TracesPage() {
       EditorView.lineWrapping,
       makeLLMCompletionExtension({
         prompt:
-          "You are an ES|QL expert specializing in OpenTelemetry trace queries. " +
-          "Complete the ES|QL query at the cursor. " +
-          "If a recent query error is shown, suggest a fix. " +
-          "If the user writes plain language (e.g. 'count traces by service'), " +
-          "complete with the valid ES|QL implementation of their intent. " +
-          "Return only the completion text.",
+          "You are an ES|QL inline completion engine for OpenTelemetry trace data. " +
+          "The primary index is traces-*-* with OTEL fields: " +
+          "trace.id, span.id, parent_span.id, service.name, span.name, " +
+          "span.kind, span.duration.us, span.status.code, @timestamp.\n" +
+          "- ES|QL is a piped language (FROM … | WHERE … | STATS …), NOT SQL.\n" +
+          "- If a query error is shown, fix the error.\n" +
+          "- If the user writes natural language, replace it with valid ES|QL.\n" +
+          "- Return ONLY query text. No explanations, no markdown fences.",
         esqlGuide: true,
       }),
     ],
