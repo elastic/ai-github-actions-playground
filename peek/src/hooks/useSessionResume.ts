@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
@@ -28,17 +28,21 @@ function isSameConnection(a: ElasticsearchConnection, b: ElasticsearchConnection
  */
 export function useSessionResume() {
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const connection = useConnectionStore((s) => s.connection);
+  const connected = useConnectionStore((s) => s.connected);
+  const attemptedRef = useRef(false);
 
   useEffect(() => {
-    // Read store state once at mount time (startup hydration).  We intentionally
-    // use `getState()` — a point-in-time snapshot — rather than reactive
-    // selectors so the effect never re-fires after the initial run.  The
-    // `cancelled` flag handles React 18 Strict Mode double-invocation: the
-    // cleanup from the first invocation cancels any in-flight request, and the
-    // second invocation reads fresh state from the store.
-    const { connection, connected } = useConnectionStore.getState();
-
-    if (connected || !connection) return;
+    // Skip if already connected, no connection available, or we already
+    // attempted a resume.  The ref guard preserves the original "run at most
+    // once" semantics while allowing the effect to re-run when async persist
+    // hydration delivers the connection after the initial mount.
+    if (connected) {
+      attemptedRef.current = true;
+      return;
+    }
+    if (!connection || attemptedRef.current) return;
+    attemptedRef.current = true;
 
     let cancelled = false;
 
@@ -77,7 +81,7 @@ export function useSessionResume() {
     return () => {
       cancelled = true;
     };
-  }, []); // run once on mount
+  }, [connection, connected]);
 
   return { resumeError, clearResumeError: () => setResumeError(null) };
 }

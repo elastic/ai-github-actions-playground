@@ -4,7 +4,7 @@
  * between EDOT, OTel Collector with Elastic exporter, and APM Server.
  */
 import { escapeEsqlString, validateEsqlIdentifier } from "../../services/es/esqlUtils";
-import { buildWherePipe } from "../../services/es/queryParts";
+import { buildPipeline, buildValueList, buildWherePipe } from "../../services/es/queryParts";
 
 export interface TraceFieldMapping {
   traceId: string;
@@ -94,18 +94,15 @@ export function buildTraceSearchQueryParts(
   }
 
   if (filters.services.length > 0) {
-    const serviceList = filters.services.map((s) => `"${escapeEsqlString(s)}"`).join(", ");
-    whereClauses.push(`${fields.serviceName} IN (${serviceList})`);
+    whereClauses.push(`${fields.serviceName} IN (${buildValueList(filters.services)})`);
   }
 
   if (filters.operations.length > 0) {
-    const opList = filters.operations.map((o) => `"${escapeEsqlString(o)}"`).join(", ");
-    whereClauses.push(`${fields.spanName} IN (${opList})`);
+    whereClauses.push(`${fields.spanName} IN (${buildValueList(filters.operations)})`);
   }
 
   if (filters.statusCodes.length > 0) {
-    const statusList = filters.statusCodes.map((s) => `"${escapeEsqlString(s)}"`).join(", ");
-    whereClauses.push(`${fields.statusCode} IN (${statusList})`);
+    whereClauses.push(`${fields.statusCode} IN (${buildValueList(filters.statusCodes)})`);
   }
 
   if (filters.minDurationMs !== null) {
@@ -138,7 +135,7 @@ export function buildTraceSearchQueryParts(
   }
 
   return {
-    body: parts.join(" | "),
+    body: buildPipeline(parts),
     sort: `SORT ${fields.timestamp} DESC`,
     limit: `LIMIT ${limit}`,
   };
@@ -154,7 +151,7 @@ export function buildTraceSearchQuery(
   options: { limit?: number; rootSpansOnly?: boolean } = {},
 ): string {
   const { body, sort, limit } = buildTraceSearchQueryParts(filters, fields, options);
-  return [body, sort, limit].join(" | ");
+  return buildPipeline([body, sort, limit]);
 }
 
 /**

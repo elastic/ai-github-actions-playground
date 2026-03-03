@@ -22,6 +22,7 @@ import { useExploreQuery } from "../hooks/useExploreQuery";
 
 import ExploreControlsPanel from "./explore/ExploreControlsPanel";
 import ExploreContentArea from "./explore/ExploreContentArea";
+import PageInsightBanner from "./PageInsightBanner";
 import { useExplorerUrlSync } from "./explore/useExplorerUrlSync";
 import {
   explorerSearchParsers,
@@ -286,6 +287,24 @@ export default function ExplorePage() {
         onEditInDiscover={handleEditInDiscover}
         onSaveToDashboard={handleSaveToDashboard}
       />
+
+      {/* AI anomaly insight */}
+      {selectedMetric && chartData && (
+        <PageInsightBanner
+          context={JSON.stringify({
+            indexPattern,
+            selectedMetric,
+            aggregation,
+            groupBy,
+            filterCount: filters.length,
+            rowCount: chartData.values.length,
+            columns: chartData.columns.map((c) => c.name),
+            sampleValues: chartData.values.slice(0, 10),
+          })}
+          systemPrompt="You are a metrics anomaly detector for Elasticsearch. Analyze the current chart data and flag if latest values are significantly different from the mean (e.g. CPU > 90%, disk > 80%). Keep the response to one concise sentence."
+          cacheKey={`explore::${selectedMetric}::${aggregation}::${chartData.values.length}`}
+        />
+      )}
 
       {/* Error display */}
       {queryResult.status === "error" &&
