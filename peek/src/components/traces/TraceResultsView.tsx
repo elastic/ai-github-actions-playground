@@ -17,7 +17,7 @@ import TraceServiceMap from "../visualizations/TraceServiceMap";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import DriftRadarMap from "../visualizations/DriftRadarMap";
 
-import { TraceTable } from "./TraceTable";
+import { SpanTreeView } from "./span-tree-plugin";
 import type { Span } from "./traceUtils";
 import type { TraceFilters } from "./traceQueryBuilder";
 
@@ -62,6 +62,11 @@ interface TraceResultsViewProps {
   onDriftRadarBaselineChange: (enabled: boolean) => void;
   filters: TraceFilters;
   onSearch?: () => void;
+  searchSpans: Span[];
+  selectedSpanId?: string | null;
+  onSelectSpan?: (spanId: string) => void;
+  onClearTraceSelection?: () => void;
+  onOpenInQueryLab?: () => void;
 }
 
 export default function TraceResultsView({
@@ -87,7 +92,15 @@ export default function TraceResultsView({
   onDriftRadarBaselineChange,
   filters,
   onSearch,
+  searchSpans,
+  selectedSpanId,
+  onSelectSpan,
+  onClearTraceSelection,
+  onOpenInQueryLab,
 }: TraceResultsViewProps) {
+  // In list mode with a trace selected, show the trace detail tree
+  const showTraceDetail = viewMode === "list" && selectedTraceId != null;
+
   return (
     <Box
       sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "hidden" }}
@@ -150,20 +163,34 @@ export default function TraceResultsView({
             <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
           </Box>
         )}
-        {searchResult && viewMode === "list" && traceRows.length === 0 && (
+
+        {/* List mode: SpanTreeView in search or trace detail mode */}
+        {searchResult && viewMode === "list" && !showTraceDetail && searchSpans.length === 0 && (
           <EmptyState
             heading="No traces matched the current filters."
             description="Adjust filters or widen the time range."
           />
         )}
-        {searchResult && viewMode === "list" && traceRows.length > 0 && (
-          <TraceTable
-            traceRows={traceRows}
+        {searchResult && viewMode === "list" && !showTraceDetail && searchSpans.length > 0 && (
+          <SpanTreeView
+            spans={searchSpans}
             selectedTraceId={selectedTraceId}
             onSelectTrace={onSelectTrace}
             maxDuration={maxDuration}
           />
         )}
+        {viewMode === "list" && showTraceDetail && (
+          <SpanTreeView
+            spans={selectedTraceSpans}
+            selectedTraceId={selectedTraceId}
+            selectedSpanId={selectedSpanId}
+            onSelectSpan={onSelectSpan}
+            onBack={onClearTraceSelection}
+            onOpenInQueryLab={onOpenInQueryLab}
+            loading={detailLoading}
+          />
+        )}
+
         {searchResult && viewMode === "scatter" && (
           <TraceScatterChart
             data={traceRows.map((r) => ({

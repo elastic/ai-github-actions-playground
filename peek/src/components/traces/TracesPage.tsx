@@ -6,12 +6,11 @@ import { SQLDialect } from "@codemirror/lang-sql";
 
 import { useUIStore } from "../../store/useUIStore";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
-import ResizableSplitPane from "../ResizableSplitPane";
 
 import TraceSearchPanel from "./TraceSearchPanel";
-import TraceDetailPanel from "./TraceDetailPanel";
 import TraceResultsView from "./TraceResultsView";
 import TraceErrorAlerts from "./TraceErrorAlerts";
+import SpanDetailDrawer from "./SpanDetailDrawer";
 import { useTracesOrchestrator } from "./useTracesOrchestrator";
 
 export default function TracesPage() {
@@ -41,33 +40,6 @@ export default function TracesPage() {
       }),
     ],
     [],
-  );
-
-  const resultsView = (
-    <TraceResultsView
-      viewMode={orchestrator.viewMode}
-      onViewModeChange={orchestrator.setViewMode}
-      searchResult={orchestrator.searchResult}
-      searchLoading={orchestrator.searchLoading}
-      traceRows={orchestrator.traceRows}
-      selectedTraceId={orchestrator.selectedTraceId}
-      onSelectTrace={orchestrator.handleSelectTrace}
-      maxDuration={orchestrator.maxDuration}
-      rawQuery={orchestrator.rawQuery}
-      timeseriesLoading={orchestrator.timeseriesLoading}
-      timeseriesResult={orchestrator.timeseriesResult}
-      detailLoading={orchestrator.detailLoading}
-      selectedTraceSpans={orchestrator.selectedTraceSpans}
-      onServiceMapNodeClick={orchestrator.handleServiceMapNodeClick}
-      driftRadarLoading={orchestrator.driftRadarLoading}
-      driftRadarBaselineLoading={orchestrator.driftRadarBaselineLoading}
-      driftRadarSpans={orchestrator.driftRadarSpans}
-      driftRadarBaselineSpans={orchestrator.driftRadarBaselineSpans}
-      driftRadarBaselineEnabled={orchestrator.driftRadarBaselineEnabled}
-      onDriftRadarBaselineChange={orchestrator.handleDriftRadarBaselineChange}
-      filters={orchestrator.filters}
-      onSearch={orchestrator.handleSearch}
-    />
   );
 
   return (
@@ -122,33 +94,55 @@ export default function TracesPage() {
             minHeight: 0,
           }}
         >
-          {orchestrator.selectedTraceId ? (
-            <ResizableSplitPane
-              /* 45 % top / 55 % bottom keeps the waterfall chart majority-visible on load */
-              initialTopFraction={0.45}
-              minPaneHeight={140}
-              top={resultsView}
-              bottom={
-                <TraceDetailPanel
-                  selectedTraceId={orchestrator.selectedTraceId}
-                  selectedTraceSpans={orchestrator.selectedTraceSpans}
-                  detailLoading={orchestrator.detailLoading}
-                  onOpenInQueryLab={() =>
+          <TraceResultsView
+            viewMode={orchestrator.viewMode}
+            onViewModeChange={orchestrator.setViewMode}
+            searchResult={orchestrator.searchResult}
+            searchLoading={orchestrator.searchLoading}
+            traceRows={orchestrator.traceRows}
+            selectedTraceId={orchestrator.selectedTraceId}
+            onSelectTrace={orchestrator.handleSelectTrace}
+            maxDuration={orchestrator.maxDuration}
+            rawQuery={orchestrator.rawQuery}
+            timeseriesLoading={orchestrator.timeseriesLoading}
+            timeseriesResult={orchestrator.timeseriesResult}
+            detailLoading={orchestrator.detailLoading}
+            selectedTraceSpans={orchestrator.selectedTraceSpans}
+            onServiceMapNodeClick={orchestrator.handleServiceMapNodeClick}
+            driftRadarLoading={orchestrator.driftRadarLoading}
+            driftRadarBaselineLoading={orchestrator.driftRadarBaselineLoading}
+            driftRadarSpans={orchestrator.driftRadarSpans}
+            driftRadarBaselineSpans={orchestrator.driftRadarBaselineSpans}
+            driftRadarBaselineEnabled={orchestrator.driftRadarBaselineEnabled}
+            onDriftRadarBaselineChange={orchestrator.handleDriftRadarBaselineChange}
+            filters={orchestrator.filters}
+            onSearch={orchestrator.handleSearch}
+            searchSpans={orchestrator.searchSpans}
+            selectedSpanId={orchestrator.selectedSpanId}
+            onSelectSpan={orchestrator.handleSelectSpan}
+            onClearTraceSelection={orchestrator.clearTraceSelection}
+            onOpenInQueryLab={
+              orchestrator.selectedTraceId
+                ? () =>
                     orchestrator.handleOpenInDiscover(
                       orchestrator.selectedTraceId!,
                       orchestrator.selectedRootSpanId,
                       orchestrator.selectedTraceTimestamp,
                     )
-                  }
-                  onClose={orchestrator.clearTraceSelection}
-                />
-              }
-            />
-          ) : (
-            resultsView
-          )}
+                : undefined
+            }
+          />
         </Box>
       </Box>
+
+      <SpanDetailDrawer
+        span={orchestrator.selectedSpan}
+        open={orchestrator.drawerOpen}
+        onClose={() => orchestrator.setDrawerOpen(false)}
+        onFilterBy={orchestrator.handleDrawerFilterBy}
+        onExclude={orchestrator.handleDrawerExclude}
+        onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}
+      />
     </Box>
   );
 }

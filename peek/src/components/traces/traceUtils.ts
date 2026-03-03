@@ -185,7 +185,7 @@ export function flattenSpanTree(roots: SpanTreeNode[]): SpanTreeNode[] {
   return result;
 }
 
-function isErrorStatus(status: string): boolean {
+export function isErrorStatus(status: string): boolean {
   return status === "Error" || status === "STATUS_CODE_ERROR";
 }
 
@@ -409,6 +409,7 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
 /** Map a raw span status code to a user-facing display label. */
 export function formatStatusLabel(status: string): string {
   if (status === "OK" || status === "STATUS_CODE_OK") return "Success";
+  if (status === "STATUS_CODE_UNSET") return "Unset";
   return status;
 }
 
