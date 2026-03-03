@@ -288,6 +288,35 @@ describe("buildChatRuntime — ES-dependent tools", () => {
     });
   });
 
+  it("get_index_info trims index and rejects whitespace-only values", async () => {
+    const mappingsSpy = vi
+      .spyOn(ElasticsearchClient.prototype, "getIndexMappings")
+      .mockResolvedValue({ mappings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexSettings").mockResolvedValue({ settings: {} });
+    vi.spyOn(ElasticsearchClient.prototype, "getIndexStats").mockResolvedValue({
+      _all: {},
+    } satisfies IndexStatsResponse);
+    vi.spyOn(ElasticsearchClient.prototype, "rawRequest").mockResolvedValue({
+      status: 200,
+      body: { status: "green" },
+    });
+
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const indexInfoTool = tools.get_index_info as {
+      execute: (args: { index: string }) => Promise<unknown>;
+    };
+
+    await expect(indexInfoTool.execute({ index: "   " })).rejects.toThrow(
+      "Index must not be empty",
+    );
+    await indexInfoTool.execute({ index: "  logs-*  " });
+    expect(mappingsSpy).toHaveBeenCalledWith("logs-*", expect.any(AbortSignal));
+  });
+
   it("run_raw_es_request handles undefined response body", async () => {
     vi.spyOn(ElasticsearchClient.prototype, "rawRequest").mockResolvedValue({
       status: 200,
@@ -321,6 +350,35 @@ describe("buildChatRuntime — ES-dependent tools", () => {
       "Path must not be empty",
     );
     expect(rawRequestSpy).not.toHaveBeenCalled();
+  });
+
+  it("explain_ingest_pipeline trims name and rejects whitespace-only values", async () => {
+    const getPipelinesSpy = vi
+      .spyOn(ElasticsearchClient.prototype, "getIngestPipelines")
+      .mockResolvedValue({
+        "pipeline-a": { processors: [] },
+      });
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const pipelineTool = tools.explain_ingest_pipeline as {
+      execute: (args: {
+        pipeline_name: string;
+        sample_doc?: Record<string, unknown>;
+      }) => Promise<unknown>;
+    };
+
+    await expect(pipelineTool.execute({ pipeline_name: "   " })).rejects.toThrow(
+      "pipeline_name must not be empty",
+    );
+    const result = await pipelineTool.execute({ pipeline_name: "  pipeline-a " });
+    expect(getPipelinesSpy).toHaveBeenCalledWith(expect.any(AbortSignal));
+    expect(result).toEqual({
+      pipeline_name: "pipeline-a",
+      definition: { processors: [] },
+    });
   });
 });
 
@@ -390,5 +448,25 @@ describe("buildChatRuntime — generate_esql_query tool", () => {
     expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM metrics-* | LIMIT 5");
     expect(navigate).toHaveBeenCalledWith("/discover");
     expect(result).toEqual({ set: true, navigatedTo: "discover" });
+  });
+
+  it("generate_esql_query trims query and rejects whitespace-only values", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/traces",
+      navigate,
+    });
+    const genTool = tools.generate_esql_query as {
+      execute: (args: { query: string; navigate_to_query_lab?: boolean }) => Promise<unknown>;
+    };
+
+    await expect(genTool.execute({ query: "   " })).rejects.toThrow("Query must not be empty");
+    await genTool.execute({
+      query: "  FROM metrics-* | LIMIT 5  ",
+      navigate_to_query_lab: true,
+    });
+    expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM metrics-* | LIMIT 5");
   });
 });

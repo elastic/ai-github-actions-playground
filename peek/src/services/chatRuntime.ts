@@ -99,6 +99,16 @@ function truncateCellValue(value: unknown): { value: unknown; truncated: boolean
   };
 }
 
+async function runWithToolTimeout<T>(operation: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
+  try {
+    return await operation(controller.signal);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet {
   if (!connection) return {};
 
@@ -121,15 +131,8 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         const client = new ElasticsearchClient(connection);
         const request: EsqlQueryParams = { query: boundedQuery };
         if (profile) request.profile = true;
-
-        const queryController = new AbortController();
-        const queryTimeoutId = window.setTimeout(
-          () => queryController.abort(),
-          CHAT_TOOL_TIMEOUT_MS,
-        );
-
-        try {
-          const response = await client.query(request, queryController.signal);
+        return runWithToolTimeout(async (signal) => {
+          const response = await client.query(request, signal);
           let truncated =
             response.values.length > MAX_TOOL_ROWS_RETURNED ||
             response.columns.length > MAX_TOOL_COLUMNS_RETURNED ||
@@ -152,9 +155,7 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
             executionTimeMs: response.executionTimeMs,
             truncated,
           };
-        } finally {
-          clearTimeout(queryTimeoutId);
-        }
+        });
       },
     }),
 
@@ -169,18 +170,14 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
       }),
       execute: async ({ include_node_stats }) => {
         const client = new ElasticsearchClient(connection);
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
-        try {
-          const health = await client.getClusterHealth("cluster", controller.signal);
+        return runWithToolTimeout(async (signal) => {
+          const health = await client.getClusterHealth("cluster", signal);
           if (include_node_stats) {
-            const stats = await client.getClusterStats(controller.signal);
+            const stats = await client.getClusterStats(signal);
             return { health, stats };
           }
           return { health };
-        } finally {
-          clearTimeout(timeoutId);
-        }
+        });
       },
     }),
 
@@ -190,25 +187,25 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         index: z.string().min(1).describe("Name of the index to inspect."),
       }),
       execute: async ({ index }) => {
+        const normalizedIndex = index.trim();
+        if (!normalizedIndex) {
+          throw new Error("Index must not be empty");
+        }
         const client = new ElasticsearchClient(connection);
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
-        try {
+        return runWithToolTimeout(async (signal) => {
           const [mappings, settings, stats, health] = await Promise.all([
-            client.getIndexMappings(index, controller.signal),
-            client.getIndexSettings(index, controller.signal),
-            client.getIndexStats(index, controller.signal),
+            client.getIndexMappings(normalizedIndex, signal),
+            client.getIndexSettings(normalizedIndex, signal),
+            client.getIndexStats(normalizedIndex, signal),
             client.rawRequest(
               "GET",
-              `/_cluster/health/${encodeURIComponent(index)}`,
+              `/_cluster/health/${encodeURIComponent(normalizedIndex)}`,
               undefined,
-              controller.signal,
+              signal,
             ),
           ]);
-          return { index, mappings, settings, stats, health: health.body };
-        } finally {
-          clearTimeout(timeoutId);
-        }
+          return { index: normalizedIndex, mappings, settings, stats, health: health.body };
+        });
       },
     }),
 
@@ -227,10 +224,8 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         }
         const normalizedPath = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
         const client = new ElasticsearchClient(connection);
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
-        try {
-          const result = await client.rawRequest(method, normalizedPath, body, controller.signal);
+        return runWithToolTimeout(async (signal) => {
+          const result = await client.rawRequest(method, normalizedPath, body, signal);
           let serialized: string;
           if (typeof result.body === "string") {
             serialized = result.body;
@@ -249,9 +244,7 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
             };
           }
           return result;
-        } finally {
-          clearTimeout(timeoutId);
-        }
+        });
       },
     }),
 
@@ -266,28 +259,28 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
           .describe("Optional sample document to simulate through the pipeline."),
       }),
       execute: async ({ pipeline_name, sample_doc }) => {
+        const normalizedPipelineName = pipeline_name.trim();
+        if (!normalizedPipelineName) {
+          throw new Error("pipeline_name must not be empty");
+        }
         const client = new ElasticsearchClient(connection);
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
-        try {
-          const pipelines = await client.getIngestPipelines(controller.signal);
-          const definition = pipelines[pipeline_name];
+        return runWithToolTimeout(async (signal) => {
+          const pipelines = await client.getIngestPipelines(signal);
+          const definition = pipelines[normalizedPipelineName];
           if (!definition) {
-            return { error: `Pipeline '${pipeline_name}' not found` };
+            return { error: `Pipeline '${normalizedPipelineName}' not found` };
           }
           if (sample_doc) {
             const simulation = await client.simulateIngestPipeline(
-              pipeline_name,
+              normalizedPipelineName,
               [{ _source: sample_doc }],
               { verbose: true },
-              controller.signal,
+              signal,
             );
-            return { pipeline_name, definition, simulation };
+            return { pipeline_name: normalizedPipelineName, definition, simulation };
           }
-          return { pipeline_name, definition };
-        } finally {
-          clearTimeout(timeoutId);
-        }
+          return { pipeline_name: normalizedPipelineName, definition };
+        });
       },
     }),
   };
@@ -380,7 +373,11 @@ function getBrowserControlTools(navigate?: (path: string) => void): ToolSet {
           .describe("When true, navigate to the Query Lab page after setting the query."),
       }),
       execute: async ({ query, navigate_to_query_lab }) => {
-        useQueryStore.getState().setDiscoverQueryDraft(query);
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) {
+          throw new Error("Query must not be empty");
+        }
+        useQueryStore.getState().setDiscoverQueryDraft(trimmedQuery);
         if (navigate_to_query_lab) {
           navigate(PAGE_MANIFEST.discover.path);
         }
