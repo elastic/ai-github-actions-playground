@@ -363,6 +363,8 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
     setTableVersion((prev) => prev + 1);
   }, [selectedFields, setSelectedFields, visibleColumns]);
 
+  const hasQueryHistory = queryHistory.length > 0;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -370,14 +372,20 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
           title={isLogsExplorer ? "Logs Explorer Query" : "Query Lab"}
           actions={
             <>
-              <Button
-                variant="text"
-                size="small"
-                onClick={(e) => setHistoryAnchor(e.currentTarget)}
-                disabled={queryHistory.length === 0}
+              <Tooltip
+                title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
               >
-                Recent queries
-              </Button>
+                <span>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={(e) => setHistoryAnchor(e.currentTarget)}
+                    disabled={!hasQueryHistory}
+                  >
+                    Recent queries
+                  </Button>
+                </span>
+              </Tooltip>
               <Menu
                 anchorEl={historyAnchor}
                 open={Boolean(historyAnchor)}
