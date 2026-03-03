@@ -825,6 +825,7 @@ export default function AddDataPage() {
                   if (cta.id === "additional_source") {
                     setSelectedTechnology(null);
                     setTechnologySearch("");
+                    setActiveCategory("All");
                     setWizardStep(1);
                     return;
                   }

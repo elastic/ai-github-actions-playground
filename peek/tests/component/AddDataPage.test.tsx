@@ -171,7 +171,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   });
 
-  it("resets selected technology and search input when clicking 'Add another source'", async () => {
+  it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
     mockGetDataStreams
       .mockResolvedValueOnce({ data_streams: [] })
       .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
@@ -179,7 +179,8 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // Type a search query and select a technology
+    // Filter by category/search and select a technology
+    await user.click(screen.getByRole("button", { name: "Databases" }));
     await user.type(screen.getByLabelText("Search technologies"), "kub");
     await user.click(screen.getByRole("button", { name: "Kubernetes" }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
@@ -198,6 +199,7 @@ describe("AddDataPage", () => {
     expect(
       screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByLabelText("Search technologies")).toHaveValue("");
     expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
   });
