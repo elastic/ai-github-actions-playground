@@ -182,6 +182,7 @@ describe("AddDataPage", () => {
   }, 15_000);
 
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
+    // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
     mockGetDataStreams
       .mockResolvedValue({ data_streams: [{ name: "metrics-host.otel-default" }] })
       .mockResolvedValueOnce({ data_streams: [] })

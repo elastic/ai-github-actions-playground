@@ -22,6 +22,7 @@ import {
   createPersesEsqlDatasource,
 } from "../services/perses/esqlDatasource";
 import type { PanelDefinition, EsqlResponse } from "../types";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import { toCsv } from "./discoverUtils";
 import ContentSkeleton from "./ContentSkeleton";
@@ -178,7 +179,7 @@ export default memo(function PanelContainer({ panel }: Props) {
         sx={{
           display: "flex",
           alignItems: "center",
-          minHeight: 36,
+          minHeight: COMPONENT_HEIGHTS.button,
           py: 1,
           px: 1.5,
           borderBottom: 1,
