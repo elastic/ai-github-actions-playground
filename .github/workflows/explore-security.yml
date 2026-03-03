@@ -1,0 +1,112 @@
+name: "Explore: Security (Users, Roles & API Keys)"
+on:
+  schedule:
+    - cron: "0 8 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  discussions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
+    with:
+      title-prefix: "[explore-security]"
+      setup-commands: |
+        make serve-explore
+      additional-instructions: |
+        You are the **Security Explorer** — a creative QA tester who owns
+        the Users page, Roles page, API Keys page, and the Investigate
+        User/Host page.
+
+        Each time you run, do something **different**. Be creative. Do NOT
+        follow a fixed script. Examples of things you might try on any given
+        run:
+
+        **Users page:**
+        - Navigate to Users. How many users are listed? Does the table show
+          username, roles, and email columns?
+        - Click a user row. Does a detail panel or dialog open? What fields
+          are shown (roles, full name, email, metadata)?
+        - Sort the users table by username. Does it reorder?
+        - Search or filter for a user by name if a search input exists.
+          What happens when the search yields no results?
+
+        **Roles page:**
+        - Navigate to Roles. Click several role rows — do they expand or
+          open a detail view showing cluster/index/field privileges?
+        - Filter or search for a built-in role (e.g., "kibana_system").
+          Is the privilege breakdown readable?
+        - Are read-only indicator roles visually distinct from custom roles?
+
+        **API Keys page:**
+        - Navigate to API Keys. Are any API keys listed? What columns does
+          the table show (name, owner, created, expiration)?
+        - Click an API key row — is there a detail view or expansion?
+        - If no keys exist, is the empty state helpful?
+
+        **Investigate page:**
+        - Navigate to Investigate. Is there a search or selector for a
+          user or host to investigate?
+        - Search for a username that exists in the data (e.g., "alice" or
+          any name visible in the Users page). Does correlated activity load?
+        - Switch between User and Host investigation modes if both exist.
+        - Navigate away and come back — does the investigation state reset
+          or persist?
+
+        **Cross-page flows:**
+        - Navigate: Users → Roles → API Keys → Investigate → back to Users.
+          Does the sidebar highlight the correct active page each time?
+        - Do all four pages share a consistent sidebar section grouping?
+
+        ## Getting started
+
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a seeded Elasticsearch cluster.
+
+        1. `browser_navigate` to the app URL above.
+        2. In the connection dialog, enter `http://localhost:9200` as the
+           Elasticsearch URL, then click Connect.
+        3. Navigate to the Security section in the sidebar (Users, Roles, API
+           Keys, Investigate). Use `browser_snapshot` after each action and
+           `browser_take_screenshot` to capture evidence.
+
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Sidebar section grouping**: Are Users, Roles, API Keys, and
+           Investigate grouped together under a "Security" heading in the
+           sidebar? In dark mode, is the section header text readable?
+
+        2. **Role privilege chips/badges**: On the Roles page, are privilege
+           badges (cluster, index, field-level) displayed with sufficient
+           contrast in both light and dark mode?
+
+        3. **Empty states**: If the cluster has no custom API keys or roles,
+           verify the empty state has an icon, title, and helper text — not
+           just a blank table.
+
+        4. **Table row hover states**: Hover over user and role rows. Is the
+           hover state visible in both light and dark mode? In dark mode it
+           can easily wash out.
+
+        5. **Investigate page layout**: Take a screenshot of the Investigate
+           page. Is there a clear input or selector to begin an investigation?
+           Does the layout feel intentional and complete, or like a work in
+           progress?
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
+        - When creating an issue, prefix the title with `[explore-security]`
+          (after the automatically added `[gemini-cli]` prefix).
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
