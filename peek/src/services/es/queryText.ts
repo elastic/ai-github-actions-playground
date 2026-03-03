@@ -9,9 +9,9 @@
 
 /**
  * Splits an ES|QL query on top-level pipe characters, respecting single-quoted
- * strings (`'...'` with `''` escaping), double-quoted strings (`"..."` with
- * `""` escaping), triple-quoted strings (`"""..."""`), backtick-quoted
- * identifiers (`` `...` ``), and line/block comments.
+ * strings (`'...'` with `''` and `\'` escaping), double-quoted strings
+ * (`"..."` with `""` and `\"` escaping), triple-quoted strings (`"""..."""`),
+ * backtick-quoted identifiers (`` `...` ``), and line/block comments.
  *
  * Returns an array of trimmed pipeline stage strings.  Returns an empty array
  * for a blank query, and a single-element array when no pipes are present.
@@ -29,13 +29,19 @@ export function splitEsqlPipeline(query: string): string[] {
 
     if (ch === "'") {
       // Single-quoted string — '' is the escape sequence for a literal '
+      // Backslash also escapes the next character (e.g. \' does not close).
       current += ch;
       i++;
       while (i < trimmed.length) {
         const c = trimmed[i]!;
         current += c;
         i++;
-        if (c === "'") {
+        if (c === "\\") {
+          if (i < trimmed.length) {
+            current += trimmed[i]!;
+            i++;
+          }
+        } else if (c === "'") {
           if (trimmed[i] === "'") {
             current += "'";
             i++;
@@ -58,14 +64,20 @@ export function splitEsqlPipeline(query: string): string[] {
           current += trimmed[i++]!;
         }
       } else {
-        // Regular double-quoted string — "" is the escape sequence for a literal "
+        // Regular double-quoted string — "" or \" are escape sequences for "
+        // Backslash also escapes the next character (e.g. \\ is a literal \).
         current += ch;
         i++;
         while (i < trimmed.length) {
           const c = trimmed[i]!;
           current += c;
           i++;
-          if (c === '"') {
+          if (c === "\\") {
+            if (i < trimmed.length) {
+              current += trimmed[i]!;
+              i++;
+            }
+          } else if (c === '"') {
             if (trimmed[i] === '"') {
               current += '"';
               i++;

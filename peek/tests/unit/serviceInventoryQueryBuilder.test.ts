@@ -3,8 +3,10 @@ import { describe, it, expect } from "vitest";
 import {
   buildServiceInventoryQuery,
   buildServiceEnvironmentsQuery,
+  buildServiceSparklineQuery,
   DEFAULT_SERVICE_INVENTORY_FILTERS,
 } from "../../src/components/services/serviceInventoryQueryBuilder";
+import { parseServiceSparklineData } from "../../src/components/services/serviceInventoryHelpers";
 
 describe("serviceInventoryQueryBuilder", () => {
   describe("buildServiceInventoryQuery", () => {
@@ -27,6 +29,13 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain(
         'environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
       );
+      expect(query).toContain(
+        "version_key = CASE(service.version IS NULL OR TRIM(service.version)",
+      );
+      expect(query).toContain('version = TOP(version_key, 1, "desc")');
+      expect(query).toContain("unique_versions = COUNT_DISTINCT(version_key)");
+      // version_key normalization handles blank/whitespace strings before aggregation
+      expect(query).toMatch(/CASE\(.*TRIM\(.*service\.version.*"unknown"/s);
       expect(query).toContain("BY service.name");
       expect(query).toContain("SORT request_count DESC");
       expect(query).toContain("LIMIT 200");
@@ -84,6 +93,83 @@ describe("serviceInventoryQueryBuilder", () => {
     it("escapes special characters in service name", () => {
       const query = buildServiceEnvironmentsQuery('my "special" service');
       expect(query).toContain('service.name == "my \\"special\\" service"');
+    });
+  });
+
+  describe("buildServiceSparklineQuery", () => {
+    it("generates a time-bucketed ES|QL query with default filters", () => {
+      const query = buildServiceSparklineQuery(DEFAULT_SERVICE_INVENTORY_FILTERS);
+      expect(query).toContain("FROM traces-*");
+      expect(query).toContain("parent.id IS NULL");
+      expect(query).toContain("request_count = COUNT(*)");
+      expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
+      expect(query).toContain("error_rate = SUM(is_error) / COUNT(*)");
+      expect(query).toContain("BY service.name");
+      expect(query).toContain("BUCKET(@timestamp");
+      expect(query).toContain("SORT bucket");
+    });
+
+    it("includes time range in BUCKET and WHERE", () => {
+      const query = buildServiceSparklineQuery({
+        timeFrom: "NOW() - 30 minutes",
+        timeTo: "NOW()",
+      });
+      expect(query).toContain("@timestamp >= NOW() - 30 minutes");
+      expect(query).toContain("@timestamp <= NOW()");
+      expect(query).toContain("BUCKET(@timestamp, 20, NOW() - 30 minutes, NOW())");
+    });
+
+    it("throws for unsupported time expressions", () => {
+      expect(() =>
+        buildServiceSparklineQuery({
+          timeFrom: "NOW() - 1 hour",
+          timeTo: "INVALID_EXPR",
+        }),
+      ).toThrow("Unsupported time expression");
+    });
+  });
+
+  describe("parseServiceSparklineData", () => {
+    it("parses time-bucketed response into per-service sparkline data", () => {
+      const result = parseServiceSparklineData({
+        columns: [
+          { name: "service.name", type: "keyword" },
+          { name: "bucket", type: "date" },
+          { name: "request_count", type: "long" },
+          { name: "avg_latency_ms", type: "double" },
+          { name: "error_rate", type: "double" },
+        ],
+        values: [
+          ["frontend", "2026-01-01T00:00:00.000Z", 100, 45.2, 0.02],
+          ["frontend", "2026-01-01T00:03:00.000Z", 120, 50.1, 0.01],
+          ["backend", "2026-01-01T00:00:00.000Z", 200, 120.5, 0.1],
+        ],
+      });
+
+      expect(Object.keys(result)).toEqual(["frontend", "backend"]);
+      expect(result["frontend"]!.requests).toHaveLength(2);
+      expect(result["frontend"]!.latency).toHaveLength(2);
+      expect(result["frontend"]!.errorRate).toHaveLength(2);
+      expect(result["backend"]!.requests).toHaveLength(1);
+
+      expect(result["frontend"]!.requests[0]![1]).toBe(100);
+      expect(result["frontend"]!.requests[1]![1]).toBe(120);
+      expect(result["frontend"]!.latency[0]![1]).toBe(45.2);
+      expect(result["backend"]!.errorRate[0]![1]).toBe(0.1);
+    });
+
+    it("returns empty object for empty response", () => {
+      const result = parseServiceSparklineData({
+        columns: [
+          { name: "service.name", type: "keyword" },
+          { name: "bucket", type: "date" },
+          { name: "request_count", type: "long" },
+          { name: "avg_latency_ms", type: "double" },
+          { name: "error_rate", type: "double" },
+        ],
+        values: [],
+      });
+      expect(result).toEqual({});
     });
   });
 });

@@ -2,12 +2,15 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import ChartOptionsEditor from "../../src/components/ChartOptionsEditor";
-import type { VisualizationOptions, FormatOptions } from "../../src/types";
+import type { VisualizationOptions, FormatOptions, VisualizationType } from "../../src/types";
 
 vi.mock("../../src/components/perses/panelRegistry", () => ({
-  getPersesPanelEntry: (type: string) => {
+  getPersesPanelCapabilities: (type: string) => {
     if (type === "stat") {
       return {
+        supportsOptions: true,
+        supportsQuery: true,
+        supportsImageExport: false,
         OptionsEditor: ({
           options,
           onChange,
@@ -27,10 +30,26 @@ vi.mock("../../src/components/perses/panelRegistry", () => ({
     }
     if (type === "table") {
       return {
+        supportsOptions: true,
+        supportsQuery: true,
+        supportsImageExport: false,
         OptionsEditor: () => <div data-testid="table-options-editor">Table opts</div>,
       };
     }
-    return undefined;
+    if (type === "timeseries") {
+      return {
+        supportsOptions: true,
+        supportsQuery: true,
+        supportsImageExport: false,
+        OptionsEditor: () => <div data-testid="timeseries-options-editor">Timeseries opts</div>,
+      };
+    }
+    return {
+      supportsOptions: false,
+      supportsQuery: true,
+      supportsImageExport: false,
+      OptionsEditor: undefined,
+    };
   },
 }));
 
@@ -102,9 +121,16 @@ describe("ChartOptionsEditor", () => {
 
   it("does not render an OptionsEditor when the registry has no entry", () => {
     const onChange = vi.fn();
-    render(<ChartOptionsEditor vizType="timeseries" options={{}} onChange={onChange} />);
+    render(
+      <ChartOptionsEditor
+        vizType={"unknown-viz-type" as VisualizationType}
+        options={{}}
+        onChange={onChange}
+      />,
+    );
 
     expect(screen.queryByTestId("stat-options-editor")).not.toBeInTheDocument();
     expect(screen.queryByTestId("table-options-editor")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("timeseries-options-editor")).not.toBeInTheDocument();
   });
 });

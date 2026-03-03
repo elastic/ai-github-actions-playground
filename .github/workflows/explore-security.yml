@@ -28,12 +28,13 @@ jobs:
         run:
 
         **Users page:**
-        - Navigate to Users. How many users are listed? Does the table show
-          username, roles, and email columns?
-        - Click a user row. Does a detail panel or dialog open? What fields
-          are shown (roles, full name, email, metadata)?
-        - Sort the users table by username. Does it reorder?
-        - Search or filter for a user by name if a search input exists.
+        - Navigate to Users. The page uses a list-detail layout: a searchable
+          list on the left and a detail panel on the right. How many users are
+          listed? Does the detail panel show username, enabled/disabled status,
+          assigned roles, and metadata?
+        - Click a user in the list. Does the detail panel update? What fields
+          are shown (roles, metadata)?
+        - Use the search field to filter users by name.
           What happens when the search yields no results?
 
         **Roles page:**

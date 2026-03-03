@@ -189,3 +189,40 @@ Artifacts (screenshots, JSON diagnostics, Playwright traces) are uploaded to the
 workflow run for deeper inspection.
 
 Use the workflow specs under `.github/workflows/`.
+
+## Git Branch Discipline
+
+**Always check your current branch before committing.** Use `git branch --show-current`. The main worktree defaults to `main` — committing fixes there instead of the PR branch is a hard-to-recover mistake.
+
+When you need to work on a PR branch while `main` is checked out, create a worktree:
+
+```bash
+git worktree add .claude/worktrees/<branch-slug> <branch-name>
+cd .claude/worktrees/<branch-slug>
+```
+
+Clean up worktrees when done: `git worktree remove .claude/worktrees/<branch-slug>`.
+
+If you accidentally commit to `main`, recover with:
+
+```bash
+git reset --hard HEAD^   # undo the commit (do NOT force-push main)
+git checkout <pr-branch> && git cherry-pick <sha>
+```
+
+## A11Y Baseline Updates
+
+`peek/tests/e2e/smoke.spec.ts` contains an `A11Y_BASELINE` constant mapping page names to expected axe violation counts. When a refactor **intentionally** adds or removes axe-audited components (e.g. adding CodeMirror to a page that previously had a plain `<input>`), the baseline counts must be updated to match.
+
+This is an expected maintenance task, not a regression. Update the counts deliberately and document why in the commit message.
+
+## SignalSearchPanel Smoke Test Contracts
+
+Two properties of `SignalSearchPanel` directly affect smoke test expectations:
+
+- **`aria-label` on the CodeMirror editor** must always be the static string `"ES|QL query editor"`. Never make it dynamic (e.g. `` `${title} query editor` ``) — the smoke test checks for this exact label.
+- **`resultNoun` prop** controls the Search button text: `Search ${resultNoun}` (capitalised). The smoke test regex matches the exact noun (e.g. `Search Logs`, not `Search Rows`). When adding a new `SignalSearchPanel` consumer, set `resultNoun` to match the expected button label.
+
+## Known Mobile E2E Flakiness
+
+The test `"logs explorer keeps search and click-to-filter in visible query"` has pre-existing timing failures on `mobile-chrome` and `mobile-safari`. This is **not a regression** from component changes. Do not spend time investigating it unless the test also fails on `chromium`.

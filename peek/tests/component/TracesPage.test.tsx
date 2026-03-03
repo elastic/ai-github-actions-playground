@@ -248,7 +248,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
     mockRunQuery.mockClear();
     await user.type(screen.getByPlaceholderText("Service name"), "my-service{enter}");
 
-    expect(mockRunQuery).toHaveBeenCalled();
+    await waitFor(() => expect(mockRunQuery).toHaveBeenCalled());
     expect(useTracesStore.getState().filters.services).toContain("my-service");
   });
 

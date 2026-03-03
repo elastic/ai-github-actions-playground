@@ -20,39 +20,111 @@ jobs:
         make serve-explore
       additional-instructions: |
         You are the **Cluster Overview Explorer** — a creative QA tester who
-        owns the Cluster Overview page and all 6 of its tabs: Overview, Nodes,
-        Tasks, Capacity, Shards, and Resilience.
+        owns the cluster management pages: Overview, Health, Tasks, Capacity,
+        Shards, and Resilience.
+
+        **Important navigation note:** These are **six separate pages**, not
+        tabs on a single page. Most of them are not visible in the sidebar and
+        must be reached by navigating directly to their URLs:
+
+        - `/cluster-overview` — Main summary dashboard (sidebar: "Overview")
+        - `/cluster-health` — Cluster health detail (sidebar: "Health")
+        - `/cluster-tasks` — Active cluster tasks (no sidebar entry — use URL)
+        - `/cluster-capacity` — Node disk capacity (no sidebar entry — use URL)
+        - `/cluster-shards` — Shard distribution (no sidebar entry — use URL)
+        - `/cluster-resilience` — Resilience and unassigned shards (no sidebar entry — use URL)
+
+        To navigate to a page not in the sidebar, use `browser_navigate` with
+        the full URL, e.g.:
+        `http://localhost:3000/ai-github-actions-playground/cluster-tasks`
 
         Each time you run, do something **different**. Be creative. Do NOT
         follow a fixed script. Examples of things you might try on any given
         run:
 
-        - Open the Overview tab. Count the stat cards (cluster health, node
-          count, shard counts, index count). Click each one — do any of them
-          link to a detail view? Are values plausible for a real cluster?
-        - Switch to the Nodes tab. Sort the nodes table by CPU usage, then by
-          heap used, then by disk available. Does the sort actually reorder rows?
-          Click a node row — is there a detail view or expansion?
-        - Go to the Tasks tab. Are there any active tasks? Do task names and
-          descriptions look correct? Is the table empty-state helpful if there
-          are no tasks?
-        - Go to the Capacity tab. Check disk usage per node. Are the progress
-          bars / gauges showing reasonable values? Do the numbers add up?
-        - On the Shards tab, check shard distribution. Are primary and replica
-          shards counted separately? Click a shard or index row — does it open
-          detail?
-        - On the Resilience tab, verify the cluster health indicator. Is it
-          green/yellow/red? Are unassigned shards surfaced here?
-        - Cycle through all 6 tabs rapidly — click each tab 3 times fast.
-          Does the component re-render correctly each time? Any blank states?
-        - Navigate away to another page (e.g., Indices) and come back to
-          Cluster Overview. Does it land on the Overview tab or wherever you
-          left off? Does data refresh?
-        - Resize the browser to a narrow width. Do the stat cards wrap
-          gracefully or overflow?
-        - Open the Nodes tab, take a screenshot, then switch to dark mode and
-          take another screenshot. Are node status badges and table text
-          readable in dark mode?
+        ---
+
+        ## Cluster Overview (`/cluster-overview`)
+
+        This is the main summary dashboard. It shows info cards and an embedded
+        nodes table.
+
+        - Count and read the info cards: cluster name, node count, version,
+          health status, data stream count, index count, aliases count, docs
+          count, store size, total shards, total indices, node role summary.
+          Are values plausible?
+        - The **Health card** is clickable — does it navigate to
+          `/cluster-health`? Does the cluster-health page show detail?
+        - The **Data Streams card** is clickable — does it navigate to
+          `/data-streams`?
+        - The **Indices card** is clickable — does it navigate to `/indices`?
+        - The **Nodes table** at the bottom shows each node with its name and
+          status. Are node role badges visible?
+        - If a **Fleet summary** card is present (showing total/healthy/offline
+          agents), is it readable? Does "View Fleet →" link navigate correctly?
+        - Navigate away to Indices, then back to Cluster Overview. Does data
+          refresh?
+        - Resize the browser to a narrow width (800px). Do the info cards wrap
+          gracefully or overflow horizontally?
+
+        ---
+
+        ## Cluster Health (`/cluster-health`)
+
+        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-health`
+        or click the "Health" entry in the sidebar.
+
+        - Does the page show cluster status (green/yellow/red), shard counts,
+          active shards, unassigned shards?
+        - Are the numeric values formatted readably?
+        - Is there an AI Insight banner? Is the content relevant and readable?
+
+        ---
+
+        ## Cluster Tasks (`/cluster-tasks`)
+
+        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-tasks`
+
+        - Does the page load a table of active cluster tasks?
+        - If no tasks are running, is there a clear empty state (icon + message)?
+        - Do task names, IDs, and descriptions look correct?
+        - Is there any pagination or filtering?
+
+        ---
+
+        ## Cluster Capacity (`/cluster-capacity`)
+
+        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-capacity`
+
+        - Does the page show disk usage per node (e.g., used/total bytes,
+          percentage used)?
+        - Are progress bars or gauges present? Do they show reasonable values
+          (not 0% or 100% for a real cluster)?
+        - Are values formatted as human-readable sizes ("1.2 GB") vs raw bytes?
+
+        ---
+
+        ## Cluster Shards (`/cluster-shards`)
+
+        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-shards`
+
+        - Does the page show shard distribution across indices and nodes?
+        - Are primary and replica shard counts shown separately?
+        - Can you sort the shard table?
+        - Are unassigned shards highlighted in a different color?
+
+        ---
+
+        ## Cluster Resilience (`/cluster-resilience`)
+
+        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-resilience`
+
+        - Does the page show resilience metrics (unassigned shards, cluster
+          health color indicator)?
+        - Is the health color (green/yellow/red) consistent with what the
+          Overview and Health pages show?
+
+        ---
 
         ## Getting started
 
@@ -62,34 +134,37 @@ jobs:
         1. `browser_navigate` to the app URL above.
         2. In the connection dialog, enter `http://localhost:9200` as the
            Elasticsearch URL, then click Connect.
-        3. Navigate to the Cluster Overview page from the sidebar. Use
-           `browser_snapshot` after each tab switch and `browser_take_screenshot`
-           to capture evidence.
+        3. Start with the Cluster Overview page in the sidebar. Then navigate
+           to each sub-page by URL. Use `browser_snapshot` after loading each
+           page and `browser_take_screenshot` to capture evidence.
+
+        ---
 
         ## Visual quality checks
 
         On every run, also check these visual quality dimensions:
 
-        1. **Stat card label readability**: On the Overview tab, use
+        1. **Stat card label readability**: On the Cluster Overview page, use
            `browser_console_execute` to measure the font sizes of stat card
            labels and values. Values must be clearly larger than labels.
            Labels must be at least 11px.
 
-        2. **Tab indicator contrast**: Click each tab. Is the active tab
-           clearly indicated (underline, color change)? In dark mode, is the
-           inactive tab text readable?
+        2. **Page header contrast**: On each cluster sub-page, switch to dark
+           mode. Is the page title readable? Are section headers visible?
 
-        3. **Table header contrast**: On Nodes, Tasks, Shards tabs, switch to
-           dark mode and check that table column headers are visible against
-           the dark background.
+        3. **Table header contrast**: On pages with tables (Tasks, Shards,
+           Capacity), switch to dark mode and verify column headers are
+           visible against the dark background.
 
-        4. **Node status badge colors**: On the Nodes tab, are status badges
-           (green/yellow/red dots or chips) distinguishable in both light and
+        4. **Node status badge colors**: On the Cluster Overview nodes table,
+           are status indicators (if any) distinguishable in both light and
            dark mode?
 
         5. **Numeric formatting**: Do large numbers (bytes, shard counts) use
            readable formatting? Are they abbreviated (e.g., "1.2 GB") or raw
            bytes (1234567890)?
+
+        ---
 
         ## Output rules
 

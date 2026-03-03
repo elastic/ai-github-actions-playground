@@ -28,7 +28,7 @@ import { toCsv } from "./discoverUtils";
 import ContentSkeleton from "./ContentSkeleton";
 import ErrorBoundary from "./ErrorBoundary";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
-import { getPersesPanelEntry } from "./perses/panelRegistry";
+import { getPersesPanelCapabilities } from "./perses/panelRegistry";
 import { formatMs, formatRowCount, formatTimeAgo } from "./panelBadgeUtils";
 
 interface Props {
@@ -47,8 +47,7 @@ export default memo(function PanelContainer({ panel }: Props) {
   );
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
 
-  const vizEntry = getPersesPanelEntry(panel.visualization);
-  const supportsQuery = vizEntry?.supportsQuery ?? true;
+  const { supportsQuery, supportsImageExport } = getPersesPanelCapabilities(panel.visualization);
 
   const [data, setData] = useState<EsqlResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,12 +57,6 @@ export default memo(function PanelContainer({ panel }: Props) {
   const [exportImage, setExportImage] = useState<(() => string) | null>(null);
   const [, setTick] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
-  const supportsImageExport =
-    panel.visualization === "timeseries" ||
-    panel.visualization === "bar" ||
-    panel.visualization === "gauge" ||
-    panel.visualization === "pie";
-
   const supportsCSVExport = panel.visualization === "table";
 
   useEffect(() => {

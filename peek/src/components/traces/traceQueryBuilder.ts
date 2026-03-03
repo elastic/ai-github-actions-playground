@@ -18,6 +18,7 @@ export interface TraceFieldMapping {
   statusCode: string;
   timestamp: string;
   timestampUs: string;
+  serviceVersion: string;
   events: string;
   index: string;
 }
@@ -36,6 +37,7 @@ export const DEFAULT_FIELD_MAPPING: TraceFieldMapping = {
   statusCode: "status.code",
   timestamp: "@timestamp",
   timestampUs: "attributes.timestamp.us",
+  serviceVersion: "service.version",
   events: "events",
   index: "traces-*",
 };

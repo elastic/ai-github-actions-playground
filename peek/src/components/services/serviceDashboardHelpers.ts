@@ -1,4 +1,5 @@
 import type { EsqlResponse } from "../../types";
+import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
 
 export interface RouteRow {
   route: string;
@@ -21,20 +22,9 @@ export type RouteSortField = "route" | "requestCount" | "avgLatencyMs" | "errorR
 export type TraceSortField = "spanName" | "durationMs" | "statusCode" | "timestamp";
 export type SortDirection = "asc" | "desc";
 
-function buildColumnAccessor(columns: EsqlResponse["columns"]) {
-  const colIndex = new Map<string, number>();
-  for (let i = 0; i < columns.length; i++) {
-    colIndex.set(columns[i]!.name, i);
-  }
-  return (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
-}
-
-function toFiniteNumber(value: unknown, fallback = 0): number {
-  const parsed = Number(value ?? fallback);
-  return Number.isFinite(parsed) ? parsed : fallback;
+function toNonEmptyString(value: unknown, fallback: string): string {
+  const parsed = String(value ?? "").trim();
+  return parsed.length > 0 ? parsed : fallback;
 }
 
 export function parseRouteRows(result: EsqlResponse): RouteRow[] {
@@ -59,5 +49,23 @@ export function parseRecentTraces(result: EsqlResponse): RecentTrace[] {
     durationMs: toFiniteNumber(get(row, "duration_ms")),
     statusCode: String(get(row, "status.code") ?? ""),
     timestamp: String(get(row, "@timestamp") ?? ""),
+  }));
+}
+
+export interface DeploymentRow {
+  version: string;
+  firstSeen: string;
+  lastSeen: string;
+  requestCount: number;
+}
+
+export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
+  const get = buildColumnAccessor(result.columns);
+
+  return result.values.map((row) => ({
+    version: toNonEmptyString(get(row, "version_key"), "unknown"),
+    firstSeen: String(get(row, "first_seen") ?? ""),
+    lastSeen: String(get(row, "last_seen") ?? ""),
+    requestCount: toFiniteNumber(get(row, "request_count")),
   }));
 }

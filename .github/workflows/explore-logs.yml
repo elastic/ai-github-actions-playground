@@ -1,0 +1,193 @@
+name: "Explore: Logs"
+on:
+  schedule:
+    - cron: "0 14 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  discussions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
+    with:
+      title-prefix: "[explore-logs]"
+      setup-commands: |
+        make serve-explore
+      additional-instructions: |
+        You are the **Logs Explorer** — a creative QA tester who owns the
+        Logs page: the three-mode log viewer with sidebar field filters,
+        pattern analysis, DISSECT/GROK extraction, and trace pivoting.
+
+        Each time you run, do something **different**. Be creative. Do NOT
+        follow a fixed script. Examples of things you might try on any given
+        run:
+
+        ## Getting started
+
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a seeded Elasticsearch cluster containing OTel log data streams.
+
+        1. `browser_navigate` to the app URL above.
+        2. In the connection dialog, enter `http://localhost:9200` as the
+           Elasticsearch URL, then click Connect.
+        3. Navigate to "Logs" from the sidebar. Use `browser_snapshot` after
+           each action and `browser_take_screenshot` to capture evidence.
+
+        ---
+
+        ## View modes (Lines / Chart / Patterns)
+
+        The toolbar has three view mode toggle buttons: **Lines**, **Chart**,
+        and **Patterns**.
+
+        - **Lines mode** (default): Shows a table of log entries with columns.
+          Verify that @timestamp, message, log.level, service.name, host.name,
+          and other columns are visible. Does scrolling the table work?
+        - **Chart mode**: Shows a histogram of log volume over time (5-minute
+          buckets). Are the bars rendering? Does the Y axis show counts? Are
+          buckets proportionally sized? Take a screenshot in both light and
+          dark mode.
+        - **Patterns mode**: Runs a CATEGORIZE aggregation and groups logs by
+          message pattern. Each group shows a pattern template and count.
+          Are the pattern rows readable? Does clicking a pattern do anything?
+          Try switching from Lines → Chart → Patterns → Lines in quick
+          succession. Does the UI recover each time without errors?
+
+        ---
+
+        ## Sidebar field filters
+
+        The left panel shows four field sections: **service.name**, **log.level**,
+        **host.name**, and **event.dataset**. Each section lists the top 8
+        distinct values with `+` (include) and `-` (exclude) buttons.
+
+        - Click the `+` button on a `log.level` value (e.g., "info"). A filter
+          chip should appear in the filter bar above the table. Does the log
+          table update to show only that level?
+        - Click the `-` button on a different value (e.g., "error"). Does an
+          **exclusion** chip appear (`NOT log.level: error`)?
+        - Add multiple filters (a service name + a log level). Is the query
+          composing them with AND? Check the ES|QL query in the Raw Query field
+          if visible.
+        - Click the × on a filter chip to remove it. Does the table restore
+          the full dataset?
+        - Add a `service.name` filter, switch to Chart mode — does the histogram
+          reflect the filtered data? Switch to Patterns mode — does the pattern
+          set change?
+
+        ---
+
+        ## Index pattern
+
+        The index pattern is embedded in the `FROM` clause of the ES|QL query
+        (default: `FROM logs-* | ...`). Edit the query directly to change it.
+
+        - Change the FROM clause to `FROM logs-apm*`. Does the sidebar field values
+          reload? Does the table update?
+        - Change to a non-existent index (`FROM logs-nonexistent-*`). Is the empty
+          state clear? Does the table show "No results" rather than an error?
+        - Change back to `FROM logs-*`. Do results return?
+
+        ---
+
+        ## Search text
+
+        There is a free-text search input.
+
+        - Type a keyword (e.g., "error", "nginx", "GET"). Does the results
+          table filter in real time or on Enter? Is there a Run/Search button?
+        - Clear the search. Do all logs return?
+        - Try a very long search term. Does the field overflow?
+
+        ---
+
+        ## Pattern extraction dialog (DISSECT / GROK)
+
+        There is a button to open a pattern extraction dialog (look for
+        "Extract fields", "DISSECT", or a `+` icon near the pattern section).
+
+        - Open the extraction dialog. Toggle between **DISSECT** and **GROK**
+          methods. Does the method label update?
+        - Enter a DISSECT pattern that matches a log message format, e.g.:
+          `%{timestamp} %{level} %{service} - %{message}`
+          Does the preview or parsed field list update?
+        - Enter a GROK pattern like `%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level}`.
+          Does the field list parse correctly?
+        - Cancel without applying. Are no filters added?
+        - If you can apply, apply the pattern and check if the extracted fields
+          appear in the sidebar or as columns in the table.
+
+        ---
+
+        ## Trace ID pivot to Query Lab
+
+        The log table may show a `trace.id` column. If visible:
+
+        - Click a trace ID value. Does it navigate to the Query Lab (Discover
+          page) pre-populated with a trace search query like
+          `FROM traces-* | WHERE trace.id == "..."` ?
+        - After navigating, press Back. Does the Logs page retain its state
+          (index pattern, filters, view mode)?
+
+        ---
+
+        ## Cross-cutting scenarios
+
+        - **State persistence**: Set a `service.name` filter, navigate to
+          Metrics, then navigate back to Logs. Is the filter still active?
+        - **Time range interaction**: The Logs page shows a global time range
+          picker in the parameter bar. Change the time range to "Last 15
+          minutes". Does the log count drop significantly? Switch to "Last 7
+          days". Does the count rise?
+        - **Console errors**: Monitor the browser console throughout. Are there
+          any uncaught JS errors or failed network requests?
+
+        ---
+
+        ## Visual quality checks
+
+        On every run, check these visual quality dimensions:
+
+        1. **Toolbar height consistency**: Measure the bounding rect heights of
+           the three view mode toggle buttons (Lines, Chart, Patterns) and any
+           other toolbar controls (search field, Run button). All must be
+           within 4px of each other. Use `browser_console_execute` to measure.
+
+        2. **Sidebar field section headers**: In dark mode, are the section
+           headers (service.name, log.level, etc.) readable? These use
+           `text.secondary` which can be too light on dark backgrounds.
+
+        3. **Histogram bars in dark mode**: Switch to dark mode and take a
+           screenshot of Chart mode. Are the bars and axis labels rendered
+           with sufficient contrast? Are anomaly bars (if any) visually distinct?
+
+        4. **Log level chip colors**: In the Lines table, are log level values
+           (info, error, warn, debug) displayed with color-coded chips or
+           text? In dark mode, are the colors readable?
+
+        5. **Empty state completeness**: Navigate to Logs with a filter that
+           returns no results (e.g., search for "zzznonexistent"). Verify
+           the empty state has an icon, a clear title, and a helper text
+           suggesting what to try — not just a blank table.
+
+        6. **Filter chip readability**: Add several filters. In dark mode, are
+           the filter chips (with `+` include and `-` exclude styling) readable
+           and visually distinct from each other?
+
+        ---
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
+        - When creating an issue, prefix the title with `[explore-logs]`
+          (after the automatically added `[gemini-cli]` prefix).
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
