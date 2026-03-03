@@ -41,20 +41,52 @@ export default function TraceDetailPanel({
     if (selectedTraceSpans.length === 0) return null;
     const byId = new Map(selectedTraceSpans.map((span) => [span.spanId, span]));
     const memo = new Map<string, number>();
-    const visiting = new Set<string>();
 
     const computeDepth = (spanId: string): number => {
       const cached = memo.get(spanId);
       if (cached != null) return cached;
-      if (visiting.has(spanId)) return 0;
 
-      visiting.add(spanId);
-      const span = byId.get(spanId);
-      const parentId = span?.parentSpanId;
-      const depth = parentId && byId.has(parentId) ? computeDepth(parentId) + 1 : 0;
-      visiting.delete(spanId);
-      memo.set(spanId, depth);
-      return depth;
+      const path: string[] = [];
+      const pathIndex = new Map<string, number>();
+      let currentId: string | null = spanId;
+      while (
+        currentId != null &&
+        byId.has(currentId) &&
+        !memo.has(currentId) &&
+        !pathIndex.has(currentId)
+      ) {
+        pathIndex.set(currentId, path.length);
+        path.push(currentId);
+        const parentId: string | null = byId.get(currentId)?.parentSpanId ?? null;
+        currentId = parentId && byId.has(parentId) ? parentId : null;
+      }
+
+      let runningDepth = 0;
+      let backfillIndex = path.length - 1;
+      if (currentId != null && memo.has(currentId)) {
+        runningDepth = (memo.get(currentId) ?? 0) + 1;
+      } else if (currentId != null && pathIndex.has(currentId)) {
+        const cycleStart = pathIndex.get(currentId) ?? 0;
+        const cycleDepth = path.length - cycleStart - 1;
+        for (let i = path.length - 1; i >= cycleStart; i -= 1) {
+          const nodeId = path[i];
+          if (nodeId != null) {
+            memo.set(nodeId, cycleDepth);
+          }
+        }
+        runningDepth = cycleDepth + 1;
+        backfillIndex = cycleStart - 1;
+      }
+
+      for (let i = backfillIndex; i >= 0; i -= 1) {
+        const nodeId = path[i];
+        if (nodeId != null) {
+          memo.set(nodeId, runningDepth);
+        }
+        runningDepth += 1;
+      }
+
+      return memo.get(spanId) ?? 0;
     };
 
     let maxDepth = 0;
