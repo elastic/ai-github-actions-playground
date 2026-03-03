@@ -2,22 +2,16 @@ import { useMemo } from "react";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import type { TimelineEvent, TimelineMarker } from "./investigateUtils";
+import TimelineMarkersLayer from "./TimelineMarkersLayer";
 
 interface InvestigateEventTimelineProps {
   events: TimelineEvent[];
   markers: TimelineMarker[];
   markersLoading: boolean;
 }
-
-const SEVERITY_COLOR: Record<TimelineMarker["severity"], string> = {
-  info: "#0065FF",
-  warning: "#FFAB00",
-  critical: "#DE350B",
-};
 
 const fmtTime = (iso: string) => {
   const d = new Date(iso);
@@ -61,15 +55,21 @@ export default function InvestigateEventTimeline({
     return { minMs: min, maxMs: max, range: Math.max(1, max - min) };
   }, [events]);
 
-  const eventTicks = useMemo(
-    () => events.map((e) => toPercent(e.timestamp, minMs, range)),
-    [events, minMs, range],
-  );
+  const eventTicks = useMemo(() => {
+    if (!Number.isFinite(minMs)) return [];
+    return events.flatMap((e) => {
+      const ms = Date.parse(e.timestamp);
+      return Number.isFinite(ms) ? [toPercent(e.timestamp, minMs, range)] : [];
+    });
+  }, [events, minMs, range]);
 
-  const positionedMarkers = useMemo(
-    () => markers.map((m) => ({ ...m, pct: toPercent(m.timestamp, minMs, range) })),
-    [markers, minMs, range],
-  );
+  const positionedMarkers = useMemo(() => {
+    if (!Number.isFinite(minMs)) return [];
+    return markers.flatMap((m) => {
+      const ms = Date.parse(m.timestamp);
+      return Number.isFinite(ms) ? [{ ...m, pct: toPercent(m.timestamp, minMs, range) }] : [];
+    });
+  }, [markers, minMs, range]);
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }} aria-label="Event timeline">
@@ -112,78 +112,7 @@ export default function InvestigateEventTimeline({
           />
         ))}
 
-        {/* LLM markers */}
-        {positionedMarkers.map((m, i) => (
-          <Tooltip
-            key={i}
-            describeChild
-            title={
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                  {m.label}
-                </Typography>
-                <Typography variant="caption" display="block">
-                  {fmtTime(m.timestamp)}
-                </Typography>
-                <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                  {m.description}
-                </Typography>
-              </Box>
-            }
-            arrow
-            placement="top"
-          >
-            <Box
-              component="button"
-              type="button"
-              aria-label={`${m.label}. ${fmtTime(m.timestamp)}. ${m.description}`}
-              sx={{
-                all: "unset",
-                position: "absolute",
-                top: 4,
-                left: `${m.pct}%`,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                cursor: "default",
-                transform: "translateX(-50%)",
-                "&:focus-visible": {
-                  outline: "2px solid",
-                  outlineColor: "primary.main",
-                  borderRadius: 0.5,
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  zIndex: 1,
-                  width: 12,
-                  height: 12,
-                  boxShadow: 1,
-                  border: "2px solid",
-                  borderColor: "background.paper",
-                  borderRadius: "50%",
-                  bgcolor: SEVERITY_COLOR[m.severity],
-                }}
-              />
-              <Box sx={{ width: 2, height: 12, bgcolor: SEVERITY_COLOR[m.severity] }} />
-              <Typography
-                variant="caption"
-                sx={{
-                  maxWidth: 80,
-                  overflow: "hidden",
-                  color: "text.secondary",
-                  lineHeight: 1.2,
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                  fontSize: "0.625rem",
-                }}
-              >
-                {m.label}
-              </Typography>
-            </Box>
-          </Tooltip>
-        ))}
+        <TimelineMarkersLayer markers={positionedMarkers} fmtTime={fmtTime} />
       </Box>
 
       {/* axis labels */}

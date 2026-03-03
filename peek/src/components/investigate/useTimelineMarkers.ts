@@ -32,6 +32,15 @@ interface UseTimelineMarkersOptions {
   searchedEntity: string;
 }
 
+function fnv1a32(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
 /**
  * Ask the LLM to identify notable events and return structured timeline
  * markers.  Falls back gracefully when no API key is configured.
@@ -60,20 +69,19 @@ export function useTimelineMarkers({
     [events, activeTab, searchedEntity],
   );
 
-  const eventFingerprint = useMemo(
-    () =>
-      events
-        .map(
-          (e) =>
-            `${e.timestamp}|${e.category}|${e.action}|${e.outcome}|${e.dataSource}|${e.message}`,
-        )
-        .join("||"),
-    [events],
-  );
+  const eventFingerprint = useMemo(() => {
+    const raw = events
+      .map(
+        (e) => `${e.timestamp}|${e.category}|${e.action}|${e.outcome}|${e.dataSource}|${e.message}`,
+      )
+      .join("||");
+    return fnv1a32(raw);
+  }, [events]);
+  const hashedSearchedEntity = useMemo(() => fnv1a32(searchedEntity), [searchedEntity]);
 
   const cacheKey = useMemo(
-    () => `investigate-markers::${activeTab}::${searchedEntity}::${eventFingerprint}`,
-    [activeTab, searchedEntity, eventFingerprint],
+    () => `investigate-markers::${activeTab}::${hashedSearchedEntity}::${eventFingerprint}`,
+    [activeTab, hashedSearchedEntity, eventFingerprint],
   );
 
   const {
@@ -97,10 +105,12 @@ export function useTimelineMarkers({
         abortSignal: signal,
       });
 
-      const eventTimestamps = new Set(events.map((e) => e.timestamp));
+      const eventTimestampMs = new Set(
+        events.map((e) => Date.parse(e.timestamp)).filter((t) => Number.isFinite(t)),
+      );
       return ((result.object.markers ?? []) as TimelineMarker[]).filter((m) => {
         const ms = Date.parse(m.timestamp);
-        return Number.isFinite(ms) && eventTimestamps.has(m.timestamp);
+        return Number.isFinite(ms) && eventTimestampMs.has(ms);
       });
     },
     enabled: hasApiKey && events.length > 0 && Boolean(context.trim()),
