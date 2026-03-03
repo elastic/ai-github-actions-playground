@@ -14,7 +14,11 @@ import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
 import EmptyState from "../EmptyState";
 
 import type { InfoCardSeverity } from "./InfoCard";
-import { percentSeverity } from "./clusterHealthUtils";
+import {
+  nodeCircuitBreakerTrips,
+  nodeThreadPoolRejections,
+  percentSeverity,
+} from "./clusterHealthUtils";
 
 interface NodeRow {
   id: string;
@@ -61,10 +65,8 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
     }
 
     return Object.entries(nodes).map(([id, node]) => {
-      const pools = ["write", "search", "get"];
-      const rejections = pools.reduce((sum, p) => sum + (node.thread_pool?.[p]?.rejected ?? 0), 0);
-      const breakers = ["parent", "fielddata", "request", "in_flight_requests"];
-      const trips = breakers.reduce((sum, b) => sum + (node.breakers?.[b]?.tripped ?? 0), 0);
+      const rejections = nodeThreadPoolRejections(node);
+      const trips = nodeCircuitBreakerTrips(node);
       const openFd = node.process?.open_file_descriptors;
       const maxFd = node.process?.max_file_descriptors;
       const fdPct =

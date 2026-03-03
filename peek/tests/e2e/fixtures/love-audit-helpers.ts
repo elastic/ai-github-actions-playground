@@ -5,7 +5,7 @@
  * their own `connect` callback and page list, keeping all navigation,
  * screenshot, accessibility, and diagnostics logic in one place.
  */
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 
@@ -233,7 +233,7 @@ export const COMMON_PAGES: PageAuditConfig[] = [
       await captureAriaSnapshot(page, "metrics-pre-search", prefix);
       const metricSearch = page.getByLabel("Search metrics");
       await metricSearch.fill("system.cpu");
-      await page.waitForLoadState("networkidle");
+      await page.getByRole("listbox").waitFor({ state: "visible", timeout: 5_000 });
       await page.screenshot({
         path: `test-results/${prefix}-metrics-search.png`,
         fullPage: true,
@@ -259,8 +259,11 @@ async function profilingAfterNav(viewMode: string) {
     await page.getByRole("button", { name: viewMode, exact: true }).click();
     await page.getByLabel("Time range").click();
     await page.getByRole("option", { name: "Last 7d" }).click();
-    await page.getByRole("button", { name: "Run" }).click();
-    await page.waitForLoadState("networkidle");
+    const runButton = page.getByRole("button", { name: "Run", exact: true });
+    await runButton.click();
+    // Wait for loading to complete via disabled -> enabled transition.
+    await expect(runButton).toBeDisabled({ timeout: 5_000 });
+    await expect(runButton).toBeEnabled({ timeout: 30_000 });
   };
 }
 
@@ -297,7 +300,11 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
       // Expand the first stacktrace
       const firstRow = page.locator("table tbody tr").first();
       await firstRow.click();
-      await page.waitForLoadState("networkidle");
+      const expandedRow = page.locator("table tbody tr").nth(1);
+      // Wait for the Collapse row to finish expanding before checking frame content
+      await expect(expandedRow).toBeVisible({ timeout: 5_000 });
+      await expect(expandedRow).not.toHaveCSS("height", "0px", { timeout: 5_000 });
+      await expandedRow.locator("span").first().waitFor({ state: "visible", timeout: 5_000 });
       await page.screenshot({
         path: `test-results/${prefix}-profiling-stacktraces-expanded.png`,
         fullPage: true,
@@ -389,7 +396,6 @@ export function registerLoveAuditTests(
 
         // Navigate
         await page.getByRole("button", { name: pageConfig.navButton, exact: true }).click();
-        await page.waitForLoadState("networkidle");
 
         // Wait for the expected page heading to confirm navigation completed
         if (pageConfig.expectedHeading !== null) {

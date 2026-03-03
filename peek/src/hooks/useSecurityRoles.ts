@@ -15,7 +15,7 @@ export function useSecurityRoles() {
     queryKey: ["security-roles", connection?.url],
     queryFn: async () => {
       if (!connection) {
-        throw new Error("No active connection");
+        throw new Error("No active Elasticsearch connection");
       }
       const client = new ElasticsearchClient(connection);
       return loadSecurityResource({
@@ -35,7 +35,7 @@ export function useSecurityRoles() {
     queryKey: ["security-role-users", connection?.url],
     queryFn: async () => {
       if (!connection) {
-        throw new Error("No active connection");
+        throw new Error("No active Elasticsearch connection");
       }
       const client = new ElasticsearchClient(connection);
       return client.getSecurityUsers();

@@ -23,7 +23,6 @@ export function buildInvestigateQuery(tab: InvestigateTab, entity: string): stri
     `FROM logs-*, .ds-logs-*, filebeat-*, auditbeat-*, winlogbeat-*`,
     `| WHERE ${field} == "${escaped}"`,
     `| SORT @timestamp DESC`,
-    `| KEEP @timestamp, event.category, event.action, event.outcome, ${field}, host.name, user.name, source.ip, message, _index`,
     `| LIMIT 200`,
   ].join("\n");
 }
@@ -94,23 +93,6 @@ export function parseTimelineEvents(data: EsqlResponse): TimelineEvent[] {
     message: get(row, "message"),
     dataSource: get(row, "_index"),
   }));
-}
-
-/** Format an ISO timestamp to a compact locale string. */
-export function formatTimestamp(iso: string): string {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
 }
 
 /** Build an LLM-ready text prompt summarising the timeline events. */

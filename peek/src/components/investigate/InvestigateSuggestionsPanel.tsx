@@ -4,8 +4,9 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
+import { formatTimestamp } from "../../utils/formatDate";
+
 import type { InvestigateTab } from "./investigateUtils";
-import { formatTimestamp } from "./investigateUtils";
 
 export interface RecentEntity {
   name: string;

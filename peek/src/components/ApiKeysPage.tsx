@@ -10,7 +10,6 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
@@ -22,8 +21,8 @@ import { copyToClipboard } from "../utils/copyToClipboard";
 import { formatTimestamp } from "../utils/formatDate";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
-import PageHeader from "./PageHeader";
 import PageInsightBanner from "./PageInsightBanner";
+import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
 
 export default function ApiKeysPage() {
   const { keys, loading, error, accessNotice, refresh } = useApiKeys();
@@ -113,40 +112,35 @@ export default function ApiKeysPage() {
   }, []);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="API Keys"
-          actions={
-            <>
-              <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-                {loading ? <CircularProgress size={16} /> : "Refresh"}
-              </Button>
-              <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-                {copied ? "Copied" : "Copy API call"}
-              </Button>
-            </>
-          }
-        />
-      </Paper>
-
-      {insightContext && (
-        <PageInsightBanner
-          context={insightContext}
-          systemPrompt="You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, how many lack expiration (security risk), and any keys that are old and should be rotated."
-          cacheKey={insightCacheKey}
-          severity="warning"
-        />
-      )}
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
-
-      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
-        <Paper
-          variant="outlined"
-          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 320, minHeight: 0 }}
-        >
+    <SecurityMasterDetailPage
+      title="API Keys"
+      actions={
+        <>
+          <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
+            {loading ? <CircularProgress size={16} /> : "Refresh"}
+          </Button>
+          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+            {copied ? "Copied" : "Copy API call"}
+          </Button>
+        </>
+      }
+      alerts={
+        <>
+          {insightContext && (
+            <PageInsightBanner
+              context={insightContext}
+              systemPrompt="You are an API key security advisor for Elasticsearch. Summarize API key hygiene in one concise sentence. Mention total active keys, how many lack expiration (security risk), and any keys that are old and should be rotated."
+              cacheKey={insightCacheKey}
+              severity="warning"
+            />
+          )}
+          {error && <Alert severity="error">{error}</Alert>}
+          {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
+        </>
+      }
+      showLoadingSkeleton={loading && keys.length === 0}
+      masterPane={
+        <>
           <Box sx={{ p: 1 }}>
             <TextField
               size="small"
@@ -178,86 +172,76 @@ export default function ApiKeysPage() {
               </Typography>
             )}
           </List>
-        </Paper>
+        </>
+      }
+      detailPane={
+        displayedKey ? (
+          <>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              <Typography variant="subtitle1">{displayedKey.name}</Typography>
+              {displayedKeyRisk !== null && displayedKeyRisk.label !== "" && (
+                <Chip size="small" label={displayedKeyRisk.label} color={displayedKeyRisk.level} />
+              )}
+            </Stack>
 
-        <Paper
-          variant="outlined"
-          sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
-        >
-          {displayedKey ? (
-            <>
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Typography variant="subtitle1">{displayedKey.name}</Typography>
-                {displayedKeyRisk !== null && displayedKeyRisk.label !== "" && (
+            <Typography variant="caption" color="text.secondary">
+              Owner
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              {displayedKey.username ? (
+                <Tooltip title={`View user: ${displayedKey.username}`}>
                   <Chip
                     size="small"
-                    label={displayedKeyRisk.label}
-                    color={displayedKeyRisk.level}
+                    label={displayedKey.username}
+                    clickable
+                    aria-label={`View user: ${displayedKey.username}`}
+                    onClick={() =>
+                      navigate(`/users?username=${encodeURIComponent(displayedKey.username)}`)
+                    }
                   />
-                )}
-              </Stack>
-
-              <Typography variant="caption" color="text.secondary">
-                Owner
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                {displayedKey.username ? (
-                  <Tooltip title={`View user: ${displayedKey.username}`}>
-                    <Chip
-                      size="small"
-                      label={displayedKey.username}
-                      clickable
-                      aria-label={`View user: ${displayedKey.username}`}
-                      onClick={() =>
-                        navigate(`/users?username=${encodeURIComponent(displayedKey.username)}`)
-                      }
-                    />
-                  </Tooltip>
-                ) : (
-                  <Chip size="small" label="No owner" aria-label="No owner" />
-                )}
-              </Stack>
-
-              <Typography variant="caption" color="text.secondary">
-                Details
-              </Typography>
-              <Typography variant="body2">
-                <strong>ID:</strong> {displayedKey.id}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Created:</strong> {formatTimestamp(displayedKey.creation)} (
-                {ageLabel(displayedKey.creation)} ago)
-              </Typography>
-              <Typography variant="body2">
-                <strong>Expires:</strong>{" "}
-                {displayedKey.expiration != null
-                  ? formatTimestamp(displayedKey.expiration)
-                  : "Never"}
-              </Typography>
-              {displayedKey.realm && (
-                <Typography variant="body2">
-                  <strong>Realm:</strong> {displayedKey.realm}
-                </Typography>
+                </Tooltip>
+              ) : (
+                <Chip size="small" label="No owner" aria-label="No owner" />
               )}
+            </Stack>
 
-              <Typography variant="caption" color="text.secondary">
-                Metadata
-              </Typography>
-              <Typography
-                component="pre"
-                variant="body2"
-                sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
-              >
-                {JSON.stringify(displayedKey.metadata ?? {}, null, 2)}
-              </Typography>
-            </>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Select an API key.
+            <Typography variant="caption" color="text.secondary">
+              Details
             </Typography>
-          )}
-        </Paper>
-      </Box>
-    </Box>
+            <Typography variant="body2">
+              <strong>ID:</strong> {displayedKey.id}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Created:</strong> {formatTimestamp(displayedKey.creation)} (
+              {ageLabel(displayedKey.creation)} ago)
+            </Typography>
+            <Typography variant="body2">
+              <strong>Expires:</strong>{" "}
+              {displayedKey.expiration != null ? formatTimestamp(displayedKey.expiration) : "Never"}
+            </Typography>
+            {displayedKey.realm && (
+              <Typography variant="body2">
+                <strong>Realm:</strong> {displayedKey.realm}
+              </Typography>
+            )}
+
+            <Typography variant="caption" color="text.secondary">
+              Metadata
+            </Typography>
+            <Typography
+              component="pre"
+              variant="body2"
+              sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
+            >
+              {JSON.stringify(displayedKey.metadata ?? {}, null, 2)}
+            </Typography>
+          </>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            Select an API key.
+          </Typography>
+        )
+      }
+    />
   );
 }
