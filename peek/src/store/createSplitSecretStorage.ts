@@ -1,4 +1,4 @@
-import { createSplitStorage, type SplitStorageCallbacks } from "./splitStorageCore";
+import { createSplitStorage } from "./splitStorageCore";
 
 export interface SplitSecretStorageCallbacks<S> {
   /** Read secrets from sessionStorage and inject them into the restored state. */
@@ -26,5 +26,5 @@ export interface SplitSecretStorageCallbacks<S> {
  * keeping this helper free of domain knowledge.
  */
 export function createSplitSecretStorage<S>(callbacks: SplitSecretStorageCallbacks<S>) {
-  return createSplitStorage(callbacks as SplitStorageCallbacks<S>);
+  return createSplitStorage<S>(callbacks);
 }

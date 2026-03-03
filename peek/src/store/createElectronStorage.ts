@@ -1,4 +1,4 @@
-import { createSplitStorage, type SplitStorageCallbacks } from "./splitStorageCore";
+import { createSplitStorage } from "./splitStorageCore";
 
 export interface ElectronSplitStorageCallbacks<S> {
   /** Read credentials from safeStorage (via IPC) and merge into state. */
@@ -24,5 +24,5 @@ export function isElectronAvailable(): boolean {
 }
 
 export function createElectronStorage<S>(callbacks: ElectronSplitStorageCallbacks<S>) {
-  return createSplitStorage(callbacks as SplitStorageCallbacks<S>);
+  return createSplitStorage<S>(callbacks);
 }
