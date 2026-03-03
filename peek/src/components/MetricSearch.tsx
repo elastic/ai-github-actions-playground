@@ -9,6 +9,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 import type { FieldInfo, MetricTypeClassification } from "../services/es";
 
@@ -86,6 +87,18 @@ export default function MetricSearch({
       <Autocomplete
         size="small"
         openText="Browse metrics"
+        popupIcon={
+          <Box component="span" sx={{ display: "inline-flex", gap: 0.5, alignItems: "center" }}>
+            <Typography
+              variant="caption"
+              component="span"
+              sx={{ whiteSpace: "nowrap", fontSize: "0.7rem" }}
+            >
+              Browse
+            </Typography>
+            <ArrowDropDownIcon fontSize="small" />
+          </Box>
+        }
         noOptionsText="No matching metrics found"
         options={scopedMetricFields}
         value={selectedField}

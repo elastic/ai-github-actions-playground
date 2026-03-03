@@ -251,6 +251,13 @@ export default memo(function DataTable({
             onCellClick={onCellClick}
           />
         </Table>
+        {data.values.length === 0 && (
+          <EmptyState
+            size="small"
+            heading="No results match your query"
+            description="Try adjusting your filters or time range."
+          />
+        )}
       </TableContainer>
       <Box
         sx={{

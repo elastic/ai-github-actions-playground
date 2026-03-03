@@ -39,7 +39,7 @@ export async function buildChatRuntime({
 }> {
   const localTools: ToolSet = {
     ...getLocalChatTools(connection),
-    ...getScreenContextTool(() => window.location.pathname),
+    ...getScreenContextTool(() => pathname),
     ...getBrowserControlTools(navigate),
   };
 

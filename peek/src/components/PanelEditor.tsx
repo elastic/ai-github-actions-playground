@@ -35,13 +35,13 @@ import type {
 } from "../types";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { buildPersesEsqlRequest } from "../services/perses/esqlDatasource";
+import { formatEsqlQuery } from "../services/es/queryText";
 
 import MarkdownPanel from "./visualizations/MarkdownPanel";
 import ChartOptionsEditor from "./ChartOptionsEditor";
 import { defaultOptions } from "./chartDefaults";
 import QueryPipelineSteps from "./QueryPipelineSteps";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
-import { formatEsqlQuery } from "./discoverUtils";
 import PersesPanelRenderer from "./perses/PersesPanelRenderer";
 import { getAllPersesPanelEntries, getPersesPanelEntry } from "./perses/panelRegistry";
 import ResizableEditorContainer from "./ResizableEditorContainer";

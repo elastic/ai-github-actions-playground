@@ -149,14 +149,22 @@ describe("AddDataPage", () => {
   });
 
   it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
-    mockGetDataStreams
-      .mockResolvedValueOnce({ data_streams: [] })
-      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
-
     const user = userEvent.setup();
     renderPage();
 
     await goToStep4(user);
+
+    // The mount-time detectTelemetrySignals effect should have already fired.
+    expect(mockGetDataStreams).toHaveBeenCalled();
+
+    // Set up mock AFTER navigation so the mount-time detectTelemetrySignals
+    // call has already resolved with the default (empty) mock.  The next
+    // getDataStreams invocation — triggered by "Check now" — will return
+    // partial data immediately, avoiding a 5 s polling wait.
+    mockGetDataStreams.mockResolvedValueOnce({
+      data_streams: [{ name: "metrics-host.otel-default" }],
+    });
+
     await user.click(screen.getByRole("button", { name: /Check now/i }));
 
     await waitFor(() => {
@@ -169,6 +177,67 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
+  });
+
+  it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
+    mockGetDataStreams
+      .mockResolvedValue({ data_streams: [{ name: "metrics-host.otel-default" }] })
+      .mockResolvedValueOnce({ data_streams: [] })
+      .mockResolvedValueOnce({ data_streams: [{ name: "metrics-host.otel-default" }] });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    // Filter by category/search and select a technology
+    await user.click(screen.getByRole("button", { name: "Databases" }));
+    await user.type(screen.getByLabelText("Search technologies"), "kub");
+    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
+    await user.click(screen.getByRole("button", { name: /Check now/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Telemetry data detected!/)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /Continue to step 5/i }));
+    await user.click(screen.getByRole("button", { name: "Add another source" }));
+
+    // Should return to Step 1 with a clean slate
+    expect(
+      screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Search technologies")).toHaveValue("");
+    expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
+
+    // Progress again and ensure Step 4 does not auto-show stale verification success.
+    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
+    expect(screen.queryByText(/Telemetry data detected!/)).not.toBeInTheDocument();
+  });
+
+  it("shows OTLP alert when no ingest endpoint can be derived", async () => {
+    // Use a non-cloud URL so no OTLP endpoint can be derived
+    useConnectionStore.getState().setConnection({
+      url: "http://localhost:9200",
+      apiKey: "testkey",
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
+
+    // Switch to Managed OTLP
+    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+
+    // The alert should appear even though no endpoint was derived
+    expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
   });
 });
 

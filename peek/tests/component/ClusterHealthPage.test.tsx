@@ -215,6 +215,22 @@ describe("ClusterHealthPage", () => {
     });
   });
 
+  it("shows empty state on Tasks tab when there are no pending tasks", async () => {
+    getPendingTasksMock.mockResolvedValue({ tasks: [] });
+    const user = userEvent.setup();
+    renderHealth();
+
+    await waitFor(() => {
+      expect(screen.getByText("YELLOW")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("tab", { name: /tasks/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("No pending tasks")).toBeInTheDocument();
+    });
+  });
+
   it("handles partial API failures gracefully", async () => {
     getNodeStatsMock.mockRejectedValue(new Error("timeout"));
     getSlmStatsMock.mockRejectedValue(new Error("forbidden"));

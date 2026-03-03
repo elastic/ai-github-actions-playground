@@ -269,6 +269,39 @@ describe("Fleet pages", () => {
     expect(screen.getByText("host-2")).toBeInTheDocument();
   });
 
+  it("shows polished empty state in agents tab when no agents are found", async () => {
+    rawRequestMock.mockImplementation((_method: string, url: string) => {
+      if (url.includes("logs-elastic_agent")) {
+        return Promise.resolve({
+          status: 200,
+          body: { aggregations: { agents: { buckets: [] } } },
+        });
+      }
+      return Promise.resolve({ status: 200, body: { hits: { hits: [] } } });
+    });
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Agents" })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("tab", { name: "Agents" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("No agents found")).toBeInTheDocument();
+    expect(screen.getByText(/Enroll Elastic Agent/)).toBeInTheDocument();
+  });
+
   it("navigates to agent detail when clicking agent row", async () => {
     mockFleetResponses();
     const user = userEvent.setup();

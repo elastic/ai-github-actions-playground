@@ -19,7 +19,13 @@ import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
-import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId, type PageConfig } from "../routes/manifest";
+import {
+  PAGE_MANIFEST,
+  NAV_SECTION_ORDER,
+  isHiddenByCapability,
+  type PageId,
+  type PageConfig,
+} from "../routes/manifest";
 import type { UserCapabilities } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
@@ -71,13 +77,6 @@ function buildNavSections(): NavSection[] {
 
 const NAV_SECTIONS: NavSection[] = buildNavSections();
 
-/** Returns true when we positively know the user lacks a required capability. */
-function isHiddenByCapability(item: NavItem, capabilities: UserCapabilities | null): boolean {
-  if (!item.requiredCapability) return false;
-  if (!capabilities) return false; // not yet fetched — keep visible
-  return !capabilities[item.requiredCapability];
-}
-
 export default function AppSidebar({
   collapsed = false,
   onToggleCollapse,
@@ -107,7 +106,7 @@ export default function AppSidebar({
   const hiddenItems = useMemo(
     () =>
       NAV_SECTIONS.flatMap((section) =>
-        section.items.filter((item) => isHiddenByCapability(item, capabilities)),
+        section.items.filter((item) => isHiddenByCapability(item.requiredCapability, capabilities)),
       ),
     [capabilities],
   );
@@ -160,7 +159,7 @@ export default function AppSidebar({
       )}
       {NAV_SECTIONS.map((section) => {
         const visibleItems = section.items.filter(
-          (item) => !isHiddenByCapability(item, capabilities),
+          (item) => !isHiddenByCapability(item.requiredCapability, capabilities),
         );
         if (visibleItems.length === 0) return null;
         return (
