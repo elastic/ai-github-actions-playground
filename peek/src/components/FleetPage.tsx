@@ -85,6 +85,13 @@ export default function FleetPage() {
     });
   }, [agentInventoryTotal, agentInventoryTotalErrorCount, setPageSection]);
 
+  useEffect(
+    () => () => {
+      setPageSection("fleet", undefined);
+    },
+    [setPageSection],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       {/* Header */}
