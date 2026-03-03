@@ -14,8 +14,10 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import { formatBytes } from "../utils/formatBytes";
 import { formatCompactNumber, toNodeRows } from "../utils/clusterOverviewUtils";
 
+import AskAiButton from "./AskAiButton";
 import ContentSkeleton from "./ContentSkeleton";
 import PageHeader from "./PageHeader";
+import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import { OverviewNodesTable } from "./OverviewNodesTable";
 
@@ -94,27 +96,71 @@ export default function ClusterOverviewPage() {
     });
   }, [data, clusterHealth, clusterStats, setPageSection]);
 
+  const insightContext = useMemo(() => {
+    if (!data) return "";
+    return JSON.stringify({
+      clusterName: clusterInfo?.cluster_name ?? "unknown",
+      status: clusterHealth?.status ?? "unknown",
+      nodeCount: clusterHealth?.number_of_nodes ?? 0,
+      docsCount: clusterDocsCount,
+      shardCount: clusterShardCount,
+      storeSize: formatBytes(clusterStoreBytes, "unknown"),
+      indexCount: clusterIndexCount,
+    });
+  }, [
+    data,
+    clusterInfo,
+    clusterHealth,
+    clusterDocsCount,
+    clusterShardCount,
+    clusterStoreBytes,
+    clusterIndexCount,
+  ]);
+
+  const insightCacheKey = `cluster-overview::${clusterHealth?.status ?? ""}::${clusterHealth?.number_of_nodes ?? ""}`;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Cluster Overview"
           actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => {
-                setDismissedPartialErrorsKey(null);
-                refresh();
-              }}
-              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
-              aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
-            >
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
+            <>
+              <AskAiButton
+                prompt="Based on the current cluster state, what are the top 3 things I should investigate or optimize?"
+                label="What should I look at?"
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  setDismissedPartialErrorsKey(null);
+                  refresh();
+                }}
+                startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+                aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
+              >
+                {loading ? "Refreshing..." : "Refresh"}
+              </Button>
+            </>
           }
         />
       </Paper>
+
+      {insightContext && (
+        <PageInsightBanner
+          context={insightContext}
+          systemPrompt="You are an Elasticsearch cluster health advisor. Summarize the cluster state in one concise sentence including cluster name, health status, node count, doc count, shard count, and store size. Keep it factual and brief."
+          cacheKey={insightCacheKey}
+          severity={
+            clusterHealth?.status === "green"
+              ? "success"
+              : clusterHealth?.status === "yellow"
+                ? "warning"
+                : "info"
+          }
+        />
+      )}
 
       {error && <Alert severity="error">{error}</Alert>}
       {!error && partialErrors.length > 0 && dismissedPartialErrorsKey !== partialErrorsKey && (
