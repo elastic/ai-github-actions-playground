@@ -58,6 +58,7 @@ interface DiscoverPageProps {
 
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const isLogsExplorer = mode === "logs";
+  const panelTitle = isLogsExplorer ? "Logs Panel" : "Query Lab Panel";
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const addPanel = useDashboardEditorStore((s) => s.addPanel);
@@ -293,7 +294,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
   const handleCreatePanel = useCallback(() => {
     const newPanel = {
       id: crypto.randomUUID(),
-      title: "Query Lab Panel",
+      title: panelTitle,
       query: effectiveQuery.trim(),
       visualization: "table" as const,
       layout: { x: 0, y: Infinity, w: 12, h: 5 },
@@ -301,7 +302,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
     addPanel(newPanel);
     setEditingPanelId(newPanel.id);
     navigate(`/dashboards/${activeDashboardId}`);
-  }, [effectiveQuery, addPanel, setEditingPanelId, navigate, activeDashboardId]);
+  }, [effectiveQuery, panelTitle, addPanel, setEditingPanelId, navigate, activeDashboardId]);
   const filteredResult: EsqlResponse | null = useMemo(
     () => filterEsqlResult(result, selectedFields),
     [result, selectedFields],

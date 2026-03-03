@@ -412,7 +412,12 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
-    await expect(page.getByLabel("ES|QL query editor")).toBeVisible();
+    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryInput = queryEditor.getByRole("textbox");
+    await expect(queryEditor).toBeVisible();
+    await queryInput.click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.type("FROM logs-* | LIMIT 1");
     await page.getByRole("button", { name: /^Run Query\b/ }).click();
     await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
