@@ -44,10 +44,8 @@ export function useTracesOrchestrator() {
   const viewMode = useTracesStore((s) => s.viewMode);
   const setViewMode = useTracesStore((s) => s.setViewMode);
   const resetFilters = useTracesStore((s) => s.resetFilters);
-  const searchResult = useTracesStore((s) => s.searchResult);
-  const setSearchResult = useTracesStore((s) => s.setSearchResult);
-  const timeseriesResult = useTracesStore((s) => s.timeseriesResult);
-  const setTimeseriesResult = useTracesStore((s) => s.setTimeseriesResult);
+  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
+  const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
 
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);

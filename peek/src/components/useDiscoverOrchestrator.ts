@@ -37,6 +37,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const discoverEditorHeight = useUIStore((s) => s.discoverEditorHeight);
   const setDiscoverEditorHeight = useUIStore((s) => s.setDiscoverEditorHeight);
   const [editorFocused, setEditorFocused] = useState(false);
+  const [result, setResult] = useState<EsqlResponse | null>(null);
   const {
     discoverQueryDraft,
     setDiscoverQueryDraft,
@@ -44,8 +45,6 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     appendQueryToHistory,
     query,
     setQuery,
-    result,
-    setResult,
     selectedFields,
     setSelectedFields,
   } = useQueryStore(
@@ -56,8 +55,6 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
       appendQueryToHistory: s.appendQueryToHistory,
       query: s.discoverSessionQuery,
       setQuery: s.setDiscoverSessionQuery,
-      result: s.discoverSessionResult,
-      setResult: s.setDiscoverSessionResult,
       selectedFields: s.discoverSelectedFields,
       setSelectedFields: s.setDiscoverSelectedFields,
     })),
