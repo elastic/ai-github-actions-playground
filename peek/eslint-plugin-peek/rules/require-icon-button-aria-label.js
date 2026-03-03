@@ -17,9 +17,20 @@ export default {
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value !== "@mui/material/IconButton") return;
+        const source = node.source.value;
+        if (source !== "@mui/material/IconButton" && source !== "@mui/material") return;
         for (const specifier of node.specifiers) {
-          localNames.add(specifier.local.name);
+          if (source === "@mui/material/IconButton") {
+            localNames.add(specifier.local.name);
+            continue;
+          }
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.type === "Identifier" &&
+            specifier.imported.name === "IconButton"
+          ) {
+            localNames.add(specifier.local.name);
+          }
         }
       },
       JSXOpeningElement(node) {

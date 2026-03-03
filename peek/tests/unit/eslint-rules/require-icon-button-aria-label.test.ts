@@ -57,6 +57,16 @@ describe("peek/require-icon-button-aria-label", () => {
           `,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // Barrel import style — with aria-label should pass
+        {
+          code: `
+            import { IconButton } from "@mui/material";
+            function Component() {
+              return <IconButton aria-label="Close"><CloseIcon /></IconButton>;
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
         // aria-label as expression (variable) — conservatively accepted
         {
           code: `
@@ -110,6 +120,17 @@ describe("peek/require-icon-button-aria-label", () => {
         {
           code: `
             import { IconButton } from "@mui/material/IconButton";
+            function Component() {
+              return <IconButton onClick={onClose}><CloseIcon /></IconButton>;
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "missingAriaLabel" }],
+        },
+        // Barrel import style — without aria-label should fail
+        {
+          code: `
+            import { IconButton } from "@mui/material";
             function Component() {
               return <IconButton onClick={onClose}><CloseIcon /></IconButton>;
             }
