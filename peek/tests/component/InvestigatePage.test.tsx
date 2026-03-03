@@ -330,7 +330,9 @@ describe("InvestigatePage", () => {
     const searchButton = screen.getByRole("button", { name: /search/i });
     await user.click(searchButton);
 
-    expect(await within(searchButton).findByRole("progressbar")).toBeInTheDocument();
+    const progressBar = await within(searchButton).findByRole("progressbar");
+    expect(progressBar).toBeInTheDocument();
+    expect(progressBar).toHaveClass("MuiCircularProgress-root");
     expect(searchButton).toHaveTextContent(/search/i);
   });
 });
