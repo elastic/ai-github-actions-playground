@@ -58,11 +58,11 @@ export function buildServiceInventoryQuery(
     "EVAL duration_ms = " +
       `${durationExpr} / 1000.0, ` +
       `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0), ` +
-      "route_key = COALESCE(attributes.url.path, attributes.http.route, url.path, '/'), " +
+      'route_key = COALESCE(attributes.url.path, attributes.http.route, url.path, "/"), ' +
       `span_name_key = COALESCE(${fields.spanName}, "unknown"), ` +
       "error_message_key = CASE(is_error == 1, COALESCE(status.message, attributes.error.message, span_name_key), NULL), " +
-      "language_key = COALESCE(service.language.name, attributes.service.language, 'unknown'), " +
-      "environment_key = COALESCE(service.environment, deployment.environment, 'unknown')",
+      'language_key = COALESCE(service.language.name, attributes.service.language, "unknown"), ' +
+      'environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error), unique_routes = COUNT_DISTINCT(route_key), unique_span_names = COUNT_DISTINCT(span_name_key), top_route = TOP(route_key, 1, "desc"), top_span_name = TOP(span_name_key, 1, "desc"), top_error = TOP(error_message_key, 1, "desc"), language = TOP(language_key, 1, "desc"), environment = TOP(environment_key, 1, "desc") BY ${fields.serviceName}`,
     `EVAL error_rate = error_count / request_count`,
     `SORT request_count DESC`,
@@ -78,5 +78,5 @@ export function buildServiceEnvironmentsQuery(
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
 ): string {
   const where = buildWherePipe([`${fields.serviceName} == "${escapeEsqlString(serviceName)}"`]);
-  return `FROM ${fields.index} | ${where} | EVAL environment_key = COALESCE(service.environment, deployment.environment, 'unknown') | STATS count = COUNT(*) BY environment_key | SORT count DESC | LIMIT 20`;
+  return `FROM ${fields.index} | ${where} | EVAL environment_key = COALESCE(service.environment, deployment.environment, "unknown") | STATS count = COUNT(*) BY environment_key | SORT count DESC | LIMIT 20`;
 }
