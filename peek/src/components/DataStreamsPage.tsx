@@ -33,6 +33,8 @@ import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
 import FieldStatsPanel from "./FieldStatsPanel";
 import PageHeader from "./PageHeader";
+import AskAiButton from "./AskAiButton";
+import PageInsightBanner from "./PageInsightBanner";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -205,12 +207,31 @@ export default function DataStreamsPage() {
               >
                 Inspect in Console
               </Button>
+              {displayedName && (
+                <AskAiButton
+                  label="Summarize schema"
+                  prompt={`Summarize the schema of data stream "${displayedName}" and suggest one ES|QL query to explore it.`}
+                />
+              )}
             </>
           }
         />
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
+      {displayedDataStream && (
+        <PageInsightBanner
+          context={JSON.stringify({
+            name: displayedDataStream.name,
+            status: displayedDataStream.status,
+            generation: displayedDataStream.generation,
+            backingIndexCount: displayedDataStream.indices.length,
+            ilmPolicy: displayedDataStream.ilm_policy ?? null,
+          })}
+          systemPrompt="You are an Elasticsearch data stream analyst. Give one concise operational insight and one action for this selected stream."
+          cacheKey={`data-stream::${displayedDataStream.name}::${displayedDataStream.status}::${displayedDataStream.generation}::${displayedDataStream.indices.length}::${displayedDataStream.ilm_policy ?? ""}`}
+        />
+      )}
 
       <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         <Paper

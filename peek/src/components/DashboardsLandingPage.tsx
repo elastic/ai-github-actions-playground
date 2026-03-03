@@ -40,6 +40,7 @@ import DashboardCard from "./DashboardCard";
 import DashboardCardMenu from "./DashboardCardMenu";
 import DashboardDetailsDialog from "./DashboardDetailsDialog";
 import DashboardNameDialog from "./DashboardNameDialog";
+import AskAiButton from "./AskAiButton";
 
 export default function DashboardsLandingPage() {
   const navigate = useNavigate();
@@ -332,6 +333,10 @@ export default function DashboardsLandingPage() {
               >
                 New Dashboard
               </Button>
+              <AskAiButton
+                label="Create with AI"
+                prompt="Create a dashboard from a plain-language description. Include panel ideas, the metric or log signal each panel should track, and suggested ES|QL queries."
+              />
             </Stack>
           }
         />
