@@ -1,5 +1,7 @@
+import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 
@@ -28,6 +30,25 @@ export default function TraceDetailPanel({
   onOpenInQueryLab,
   onClose,
 }: TraceDetailPanelProps) {
+  const [maxNestedLevels, setMaxNestedLevels] = useState<number | null>(8);
+  const depthSummary = useMemo(() => {
+    if (selectedTraceSpans.length === 0) return null;
+    let maxDepth = 0;
+    const byId = new Map(selectedTraceSpans.map((span) => [span.spanId, span]));
+    for (const span of selectedTraceSpans) {
+      let depth = 0;
+      let currentParent = span.parentSpanId;
+      const seen = new Set<string>([span.spanId]);
+      while (currentParent && byId.has(currentParent) && !seen.has(currentParent)) {
+        seen.add(currentParent);
+        depth += 1;
+        currentParent = byId.get(currentParent)?.parentSpanId ?? null;
+      }
+      if (depth > maxDepth) maxDepth = depth;
+    }
+    return maxDepth;
+  }, [selectedTraceSpans]);
+
   return (
     <Paper
       variant="outlined"
@@ -54,7 +75,27 @@ export default function TraceDetailPanel({
         <Typography variant="caption" color="text.secondary">
           {selectedTraceSpans.length} spans
         </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Max depth: {depthSummary ?? 0}
+        </Typography>
         <Box sx={{ flex: 1 }} />
+        {[4, 8].map((level) => (
+          <Chip
+            key={level}
+            size="small"
+            label={`Depth ${level}`}
+            color={maxNestedLevels === level ? "primary" : "default"}
+            variant={maxNestedLevels === level ? "filled" : "outlined"}
+            onClick={() => setMaxNestedLevels(level)}
+          />
+        ))}
+        <Chip
+          size="small"
+          label="All levels"
+          color={maxNestedLevels == null ? "primary" : "default"}
+          variant={maxNestedLevels == null ? "filled" : "outlined"}
+          onClick={() => setMaxNestedLevels(null)}
+        />
         <Button size="small" variant="outlined" onClick={onOpenInQueryLab}>
           Open in Query Lab
         </Button>
@@ -72,6 +113,7 @@ export default function TraceDetailPanel({
             spans={selectedTraceSpans}
             onSpanClick={onSpanClick}
             selectedSpanId={selectedSpanId}
+            maxDepth={maxNestedLevels}
           />
         </Box>
       ) : (

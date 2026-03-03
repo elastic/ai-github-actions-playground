@@ -127,6 +127,29 @@ describe("WaterfallChart", () => {
     expect(offsetSeries.data[1]).toBeCloseTo(10); // child offset 10ms
   });
 
+  it("limits rendered nodes when maxDepth is set", () => {
+    const spans = [
+      makeSpan({ spanId: "root", parentSpanId: null, name: "root" }),
+      makeSpan({
+        spanId: "child",
+        parentSpanId: "root",
+        startTimeUs: BASE_TIME_US + 1_000,
+        name: "child",
+      }),
+      makeSpan({
+        spanId: "grandchild",
+        parentSpanId: "child",
+        startTimeUs: BASE_TIME_US + 2_000,
+        name: "grandchild",
+      }),
+    ];
+    render(<WaterfallChart spans={spans} maxDepth={1} />);
+    const option = getLastSetOptionCall();
+    const yAxis = option.yAxis as { data: string[] };
+    expect(yAxis.data).toHaveLength(2);
+    expect(yAxis.data.some((label) => label.includes("grandchild"))).toBe(false);
+  });
+
   it("marks error spans with a red border", () => {
     const spans = [
       makeSpan({ spanId: "ok-span", status: "OK" }),

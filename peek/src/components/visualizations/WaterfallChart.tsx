@@ -13,12 +13,14 @@ interface WaterfallChartProps {
   spans: Span[];
   onSpanClick?: (spanId: string) => void;
   selectedSpanId?: string | null;
+  maxDepth?: number | null;
 }
 
 export default function WaterfallChart({
   spans,
   onSpanClick,
   selectedSpanId,
+  maxDepth = null,
 }: WaterfallChartProps) {
   const theme = useEChartTheme();
   const instanceRef = useRef<ECharts | undefined>(undefined);
@@ -32,10 +34,12 @@ export default function WaterfallChart({
 
   const chartNodes = useMemo(
     () =>
-      flatNodes.filter(
-        (node) => Number.isFinite(node.span.startTimeUs) && Number.isFinite(node.span.durationUs),
-      ),
-    [flatNodes],
+      flatNodes
+        .filter((node) => maxDepth == null || node.depth <= maxDepth)
+        .filter(
+          (node) => Number.isFinite(node.span.startTimeUs) && Number.isFinite(node.span.durationUs),
+        ),
+    [flatNodes, maxDepth],
   );
 
   const option = useMemo(() => {
