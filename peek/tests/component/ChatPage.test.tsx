@@ -60,10 +60,10 @@ describe("ChatPage", () => {
     });
   });
 
-  function renderChat() {
+  function renderChat(hideHeader = false) {
     return render(
       <MemoryRouter>
-        <ChatPage />
+        <ChatPage hideHeader={hideHeader} />
       </MemoryRouter>,
     );
   }
@@ -83,6 +83,15 @@ describe("ChatPage", () => {
     renderChat();
     expect(screen.getByText("Chat")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Type a message…")).toBeInTheDocument();
+  });
+
+  it("hides header when hideHeader is true and still shows input controls", () => {
+    useLLMStore.getState().setApiKey("sk-test-key");
+    renderChat(true);
+
+    expect(screen.queryByText("Chat")).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Type a message…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send message/i })).toBeInTheDocument();
   });
 
   it("shows empty state message when no messages", () => {
@@ -108,6 +117,13 @@ describe("ChatPage", () => {
     expect(screen.getByRole("button", { name: /send message/i })).toBeInTheDocument();
   });
 
+  it("disables send button when input is empty", () => {
+    useLLMStore.getState().setApiKey("sk-test-key");
+    renderChat();
+
+    expect(screen.getByRole("button", { name: /send message/i })).toBeDisabled();
+  });
+
   it("has a clear button that is disabled when no messages", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     renderChat();
@@ -128,6 +144,52 @@ describe("ChatPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Help me")).toBeInTheDocument();
       expect(screen.getByText("Assistant response")).toBeInTheDocument();
+    });
+  });
+
+  it("disables send button while loading", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    let continueStream!: () => void;
+    const continueAfterLoading = new Promise<void>((resolve) => {
+      continueStream = resolve;
+    });
+    vi.mocked(streamText).mockReturnValue({
+      fullStream: (async function* () {
+        await continueAfterLoading;
+        yield { type: "text-delta" as const, text: "done" };
+      })(),
+    } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Loading");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send message/i })).toBeDisabled();
+    });
+
+    continueStream();
+    await waitFor(() => {
+      expect(screen.getByText("done")).toBeInTheDocument();
+    });
+  });
+
+  it("sends on Enter but not on Shift+Enter", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("ok") as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.keyboard("{Shift>}{Enter}{/Shift}");
+    expect(vi.mocked(streamText)).not.toHaveBeenCalled();
+
+    await user.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(vi.mocked(streamText)).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -227,6 +289,84 @@ describe("ChatPage", () => {
       expect(screen.getByText("API down")).toBeInTheDocument();
     });
     expect(screen.queryByText("Error: API down")).not.toBeInTheDocument();
+  });
+
+  it("allows dismissing the error alert", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    vi.mocked(streamText).mockReturnValue({
+      fullStream: {
+        [Symbol.asyncIterator]() {
+          return { next: () => Promise.reject(new Error("API down")) };
+        },
+      },
+    } as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "Hello");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    const errorAlert = await screen.findByText("API down");
+    expect(errorAlert).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("API down")).not.toBeInTheDocument();
+    });
+  });
+
+  it("consumes pendingPrompt when configured and not loading", async () => {
+    useLLMStore.getState().setApiKey("sk-test-key");
+    useLLMStore.getState().setPendingPrompt("Explain this");
+    vi.mocked(streamText).mockReturnValue(mockStreamResult("Assistant response") as never);
+
+    renderChat();
+
+    await waitFor(() => {
+      expect(vi.mocked(streamText)).toHaveBeenCalledTimes(1);
+      expect(useLLMStore.getState().pendingPrompt).toBeNull();
+    });
+    expect(screen.getByText("Explain this")).toBeInTheDocument();
+  });
+
+  it("retains pendingPrompt while loading, then consumes it after loading clears", async () => {
+    const user = userEvent.setup();
+    useLLMStore.getState().setApiKey("sk-test-key");
+    let continueFirstStream!: () => void;
+    const continueAfterFirst = new Promise<void>((resolve) => {
+      continueFirstStream = resolve;
+    });
+    vi.mocked(streamText)
+      .mockReturnValueOnce({
+        fullStream: (async function* () {
+          await continueAfterFirst;
+          yield { type: "text-delta" as const, text: "First done" };
+        })(),
+      } as never)
+      .mockReturnValueOnce(mockStreamResult("Second done") as never);
+
+    renderChat();
+
+    await user.type(screen.getByPlaceholderText("Type a message…"), "First");
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send message/i })).toBeDisabled();
+    });
+
+    useLLMStore.getState().setPendingPrompt("Second");
+    expect(useLLMStore.getState().pendingPrompt).toBe("Second");
+    expect(vi.mocked(streamText)).toHaveBeenCalledTimes(1);
+
+    continueFirstStream();
+
+    await waitFor(() => {
+      expect(vi.mocked(streamText)).toHaveBeenCalledTimes(2);
+      expect(useLLMStore.getState().pendingPrompt).toBeNull();
+    });
+    expect(screen.getByText("Second")).toBeInTheDocument();
   });
 
   it("uses chat-completions adapter for OpenRouter", async () => {
