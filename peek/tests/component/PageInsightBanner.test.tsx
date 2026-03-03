@@ -76,6 +76,27 @@ describe("PageInsightBanner", () => {
     });
   });
 
+  it("renders markdown insight as formatted HTML", async () => {
+    useLLMStore.getState().setApiKey("sk-test-key");
+    vi.mocked(generateText).mockResolvedValue({
+      text: "**Bold text** and a [link](https://example.com)",
+    });
+
+    render(
+      <PageInsightBanner context="test context" systemPrompt="test prompt" cacheKey="md-key" />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Bold text")).toBeInTheDocument();
+    });
+
+    const bold = screen.getByText("Bold text");
+    expect(bold.tagName).toBe("STRONG");
+
+    const link = screen.getByRole("link", { name: "link" });
+    expect(link).toHaveAttribute("href", "https://example.com");
+  });
+
   it("refreshes insight after clicking refresh button", async () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     const user = userEvent.setup();

@@ -12,7 +12,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { useServicesStore } from "../../store/useServicesStore";
+import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -33,22 +33,28 @@ export default function ServiceInventoryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
-  const { filters, updateFilters, resetFilters } = useServicesStore(
+  const { filters, serviceSearchSession, updateFilters, resetFilters } = usePageFiltersStore(
     useShallow((s) => ({
-      filters: s.filters,
-      updateFilters: s.updateFilters,
-      resetFilters: s.resetFilters,
+      filters: s.serviceFilters,
+      serviceSearchSession: s.serviceSearchSession,
+      updateFilters: s.updateServiceFilters,
+      resetFilters: s.resetServiceFilters,
     })),
   );
+  const serviceSearchQueryKey = useMemo(
+    () => ["services-search", serviceSearchSession] as const,
+    [serviceSearchSession],
+  );
+
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: ["services-search"],
+    queryKey: serviceSearchQueryKey,
     queryFn: () => null,
     enabled: false,
     initialData: null,
   });
   const setSearchResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(["services-search"], result),
-    [queryClient],
+    (result: EsqlResponse | null) => queryClient.setQueryData(serviceSearchQueryKey, result),
+    [queryClient, serviceSearchQueryKey],
   );
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -92,8 +98,10 @@ export default function ServiceInventoryPage() {
     if (loading) return;
     latestQueryRef.current = null;
     clearError();
+    setSearchResult(null);
     resetFilters();
-  }, [clearError, resetFilters, loading]);
+  }, [clearError, resetFilters, loading, setSearchResult]);
+
   const handleViewTraces = useCallback(
     (serviceName: string) => {
       useTracesStore.getState().setFilters({

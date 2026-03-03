@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Fade from "@mui/material/Fade";
@@ -8,9 +9,13 @@ import Tooltip from "@mui/material/Tooltip";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { useLLMStore } from "../store/useLLMStore";
 import { usePageInsight } from "../hooks/usePageInsight";
+
+import insightMarkdownSx from "./insightMarkdownSx";
 
 interface PageInsightBannerProps {
   /** Serialized page context passed as the user message to the LLM */
@@ -101,9 +106,11 @@ export default function PageInsightBanner({
             </IconButton>
           </>
         }
-        sx={{ "& .MuiAlert-message": { fontStyle: "italic" } }}
+        sx={insightMarkdownSx}
       >
-        {insight}
+        <Box component="span">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{insight}</ReactMarkdown>
+        </Box>
       </Alert>
     </Fade>
   );

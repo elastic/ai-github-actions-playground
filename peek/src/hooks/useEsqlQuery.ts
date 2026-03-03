@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 
 import { isElasticsearchError } from "../services/es";
@@ -52,6 +52,14 @@ export function useEsqlQuery({
   const [lastRunPartialMetadata, setLastRunPartialMetadata] = useState<unknown>(null);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
+  const onSuccessRef = useRef(onSuccess);
+  useLayoutEffect(() => {
+    onSuccessRef.current = onSuccess;
+  });
+  const onFailureRef = useRef(onFailure);
+  useLayoutEffect(() => {
+    onFailureRef.current = onFailure;
+  });
   const clearError = useCallback(() => setError(null), []);
   const clearTimings = useCallback(() => {
     setStepDurationsMs({});
@@ -122,7 +130,7 @@ export function useEsqlQuery({
             setLastQueryError(null, queryContextView);
             setLastQueryResult(trimmedQuery, data, queryContextView);
           }
-          onSuccess(data, trimmedQuery, stepIndex);
+          onSuccessRef.current(data, trimmedQuery, stepIndex);
         }
       } catch (err) {
         if (
@@ -135,7 +143,7 @@ export function useEsqlQuery({
           if (queryContextView) {
             setLastQueryError(errorMessage, queryContextView);
           }
-          onFailure?.(trimmedQuery);
+          onFailureRef.current?.(trimmedQuery);
         }
       }
       if (requestId === requestIdRef.current) {
@@ -143,7 +151,7 @@ export function useEsqlQuery({
         setActiveStep(null);
       }
     },
-    [connection, onSuccess, onFailure, buildRequest, queryContextView, profileMode],
+    [connection, buildRequest, queryContextView, profileMode],
   );
 
   return {

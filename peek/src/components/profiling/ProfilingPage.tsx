@@ -26,7 +26,7 @@ import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
-import { useProfilingStore } from "../../store/useProfilingStore";
+import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import type { EsqlResponse } from "../../types";
 
 import {
@@ -70,17 +70,17 @@ export default function ProfilingPage() {
     setViewMode,
     toggleExpandedStacktraceId,
     resetFilters,
-  } = useProfilingStore(
+  } = usePageFiltersStore(
     useShallow((s) => ({
-      filters: s.filters,
-      rawQuery: s.rawQuery,
-      viewMode: s.viewMode,
+      filters: s.profilingFilters,
+      rawQuery: s.profilingRawQuery,
+      viewMode: s.profilingViewMode,
       expandedStacktraceIds: s.expandedStacktraceIds,
-      updateFilters: s.updateFilters,
-      setRawQuery: s.setRawQuery,
-      setViewMode: s.setViewMode,
+      updateFilters: s.updateProfilingFilters,
+      setRawQuery: s.setProfilingRawQuery,
+      setViewMode: s.setProfilingViewMode,
       toggleExpandedStacktraceId: s.toggleExpandedStacktraceId,
-      resetFilters: s.resetFilters,
+      resetFilters: s.resetProfilingFilters,
     })),
   );
 

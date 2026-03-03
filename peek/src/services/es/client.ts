@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import { executeRawRequest } from "./rawRequest";
+import { RETRY_STATUSES, MAX_RETRIES, INITIAL_BACKOFF_MS, sleepWithJitter } from "./retryUtils";
 import {
   validateResponse,
   esqlQueryResponseSchema,
@@ -168,30 +169,6 @@ interface CreateApiKeyResponse {
 // Client
 // ---------------------------------------------------------------------------
 
-const MAX_RETRIES = 3;
-const RETRY_STATUSES = new Set([429, 503, 504]);
-const INITIAL_BACKOFF_MS = 500;
-
-function sleepAbortable(ms: number, signal?: AbortSignal | null): Promise<void> {
-  const jitter = ms * 0.1;
-  const jitteredMs = ms + (Math.random() * jitter * 2 - jitter);
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(signal.reason);
-      return;
-    }
-    const onAbort = () => {
-      clearTimeout(timer);
-      reject(signal!.reason);
-    };
-    const timer = setTimeout(() => {
-      signal?.removeEventListener("abort", onAbort);
-      resolve();
-    }, jitteredMs);
-    signal?.addEventListener("abort", onAbort, { once: true });
-  });
-}
-
 export class ElasticsearchClient {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
@@ -311,7 +288,7 @@ export class ElasticsearchClient {
 
       lastError = esError;
       const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
-      await sleepAbortable(backoff, signal);
+      await sleepWithJitter(backoff, signal);
     }
 
     // Should never reach here, but satisfy TypeScript
