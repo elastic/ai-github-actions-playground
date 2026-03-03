@@ -297,6 +297,8 @@ export const createConnectionProfileSlice: StateCreator<
       const payload = JSON.parse(raw) as EncryptedPayload;
       const plaintext = await decryptWithPin(pin, payload);
       if (plaintext === null) return false;
+      // Re-check: profile may have been deleted while awaiting decryption.
+      if (!get().connectionProfiles.some((p) => p.id === id)) return false;
       const result = credentialsSchema.safeParse(JSON.parse(plaintext));
       if (!result.success) return false;
       const { apiKey = "", otlpApiKey = "", password = "" } = result.data;

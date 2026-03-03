@@ -23,11 +23,13 @@ import SimulateResults from "./SimulateResults";
 interface PipelineDetailPanelProps {
   selectedPipeline: PipelineEntry | null;
   connection: ElasticsearchConnection | null;
+  pipelinesExist: boolean;
 }
 
 export default function PipelineDetailPanel({
   selectedPipeline,
   connection,
+  pipelinesExist,
 }: PipelineDetailPanelProps) {
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
   const [verbose, setVerbose] = useState(false);
@@ -78,11 +80,20 @@ export default function PipelineDetailPanel({
         variant="outlined"
         sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "auto" }}
       >
-        <EmptyState
-          icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
-          heading="Select a pipeline"
-          description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
-        />
+        {pipelinesExist ? (
+          <EmptyState
+            icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+            heading="Select a pipeline"
+            description="Choose an ingest pipeline from the left panel to view its processors and simulate documents."
+          />
+        ) : (
+          <EmptyState
+            icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+            heading="No ingest pipelines"
+            description="This cluster has no ingest pipelines yet. Create one via Console or add data to get started."
+            addDataHref="/add-data"
+          />
+        )}
       </Paper>
     );
   }
@@ -164,7 +175,11 @@ export default function PipelineDetailPanel({
                       borderRadius: 1,
                     }}
                   >
-                    <Typography component="legend" variant="caption" sx={{ px: 0.5 }}>
+                    <Typography
+                      component="legend"
+                      variant="caption"
+                      sx={{ px: 0.5, bgcolor: "background.paper" }}
+                    >
                       {type}
                     </Typography>
                     <Typography
