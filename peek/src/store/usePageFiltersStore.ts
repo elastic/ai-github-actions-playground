@@ -11,10 +11,12 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-import type { ServiceInventoryFilters } from "../components/services/serviceInventoryQueryBuilder";
-import { DEFAULT_SERVICE_INVENTORY_FILTERS } from "../components/services/serviceInventoryQueryBuilder";
-import type { ProfilingFilters } from "../components/profiling/profilingQueryBuilder";
-import { EMPTY_FILTERS as EMPTY_PROFILING_FILTERS } from "../components/profiling/profilingQueryBuilder";
+import {
+  DEFAULT_SERVICE_INVENTORY_FILTERS,
+  EMPTY_PROFILING_FILTERS,
+  type ProfilingFilters,
+  type ServiceInventoryFilters,
+} from "../types/pageFilters";
 
 // ---------------------------------------------------------------------------
 // Re-exported types that consumers previously imported from individual stores
