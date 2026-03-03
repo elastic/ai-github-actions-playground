@@ -1,12 +1,13 @@
 import { useMemo, useRef, useEffect } from "react";
-import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
 import type { ECharts } from "echarts/core";
 
+import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, ScatterChartOptions } from "../../types";
 import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
+import { createPngExporter } from "./chartExport";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 
 interface Props {
@@ -22,7 +23,7 @@ export default function ScatterChart({ data, options, onExportReady }: Props) {
 
   useEffect(() => {
     if (!onExportReady) return;
-    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    onExportReady(createPngExporter(instanceRef));
     return () => onExportReady(null);
   }, [onExportReady]);
 

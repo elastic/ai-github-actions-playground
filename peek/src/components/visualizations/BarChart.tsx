@@ -1,13 +1,14 @@
 import { useMemo, useRef, useEffect } from "react";
-import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
 import type { ECharts } from "echarts/core";
 
+import { EChart } from "../perses/PersesEChartWrapper";
 import type { EsqlResponse, BarChartOptions } from "../../types";
 import { toBarChartData } from "../../services/perses/dataTransformers";
 import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
+import { createPngExporter } from "./chartExport";
 
 interface Props {
   data: EsqlResponse;
@@ -24,7 +25,7 @@ export default function BarChart({ data, options, onExportReady }: Props) {
 
   useEffect(() => {
     if (!onExportReady) return;
-    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    onExportReady(createPngExporter(instanceRef));
     return () => onExportReady(null);
   }, [onExportReady]);
 
