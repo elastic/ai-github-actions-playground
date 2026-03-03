@@ -106,11 +106,16 @@ describe("DiscoverPage", () => {
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
 
     const selected = useQueryStore.getState().discoverSelectedFields;
-    // Should select the preferred subset, not all 12 fields
-    expect(selected.size).toBeLessThan(manyColumns.length);
+    // Should select the full preferred subset, not all 12 fields
+    expect(selected.size).toBe(7);
     expect(selected.has("@timestamp")).toBe(true);
     expect(selected.has("message")).toBe(true);
     expect(selected.has("host.name")).toBe(true);
+    expect(selected.has("service.name")).toBe(true);
+    expect(selected.has("log.level")).toBe(true);
+    expect(selected.has("event.dataset")).toBe(true);
+    expect(selected.has("agent.name")).toBe(true);
+    expect(selected.has("field1")).toBe(false);
   });
 
   it("selects all fields when result has few columns", async () => {
