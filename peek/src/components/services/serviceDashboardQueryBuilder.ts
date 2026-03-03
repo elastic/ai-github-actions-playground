@@ -61,7 +61,6 @@ export function buildServiceRoutesQuery(
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY route_key`,
     `EVAL error_rate = error_count / request_count`,
     `SORT request_count DESC`,
-    `LIMIT 50`,
   ]);
 }
 

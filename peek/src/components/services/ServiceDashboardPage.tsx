@@ -1,118 +1,61 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
 
-import { useEsqlQuery } from "../../hooks/useEsqlQuery";
+import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useTracesStore } from "../../store/useTracesStore";
-import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
-import { PAGE_MANIFEST } from "../../routes/manifest";
-import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
-import { OverviewInfoCard } from "../OverviewInfoCard";
-import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
-import type { EsqlResponse } from "../../types";
+import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 
-import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
-import {
-  buildServiceRoutesQuery,
-  buildServiceRecentTracesQuery,
-} from "./serviceDashboardQueryBuilder";
+import ServiceDashboardControls from "./ServiceDashboardControls";
 import {
   type RouteSortField,
   type TraceSortField,
   type SortDirection,
-  type RouteRow,
-  type RecentTrace,
   parseRouteRows,
   parseRecentTraces,
 } from "./serviceDashboardHelpers";
-import ServiceRoutesTable from "./ServiceRoutesTable";
-import ServiceTracesTable from "./ServiceTracesTable";
-
-function compareByField<T extends RouteRow | RecentTrace, K extends keyof T>(
-  a: T,
-  b: T,
-  field: K,
-  direction: SortDirection,
-): number {
-  const aVal = a[field];
-  const bVal = b[field];
-  if (typeof aVal === "string" && typeof bVal === "string") {
-    return direction === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-  }
-  return direction === "asc"
-    ? (aVal as number) - (bVal as number)
-    : (bVal as number) - (aVal as number);
-}
+import ServiceDashboardSummaryCards from "./ServiceDashboardSummaryCards";
+import ServiceRoutesPanel from "./ServiceRoutesPanel";
+import ServiceTracesPanel from "./ServiceTracesPanel";
+import {
+  buildDashboardSummary,
+  compareByField,
+  decodeServiceName,
+} from "./serviceDashboardPageUtils";
+import { useServiceDashboardQueries } from "./useServiceDashboardQueries";
 
 export default function ServiceDashboardPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { serviceName: rawServiceName = "" } = useParams<{ serviceName: string }>();
-  const serviceName = (() => {
-    try {
-      return decodeURIComponent(rawServiceName);
-    } catch {
-      return rawServiceName;
-    }
-  })();
-
+  const serviceName = decodeServiceName(rawServiceName);
   const connection = useConnectionStore((s) => s.connection);
 
   const [timeFrom, setTimeFrom] = useState("NOW() - 1 hour");
   const [timeTo, setTimeTo] = useState("NOW()");
-
-  // Routes query state
-  const [routesSession] = useState(0);
-  const routesQueryKey = useMemo(
-    () => ["service-dashboard-routes", serviceName, routesSession] as const,
-    [serviceName, routesSession],
-  );
-  const { data: routesResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: routesQueryKey,
-    queryFn: () => null,
-    enabled: false,
-    initialData: null,
+  const {
+    clearLatestQueries,
+    error,
+    handleReset,
+    handleSearch,
+    loading,
+    routesResult,
+    tracesResult,
+  } = useServiceDashboardQueries({
+    connection,
+    serviceName,
+    timeFrom,
+    timeTo,
   });
-  const setRoutesResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(routesQueryKey, result),
-    [queryClient, routesQueryKey],
-  );
-
-  // Traces query state
-  const [tracesSession] = useState(0);
-  const tracesQueryKey = useMemo(
-    () => ["service-dashboard-traces", serviceName, tracesSession] as const,
-    [serviceName, tracesSession],
-  );
-  const { data: tracesResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: tracesQueryKey,
-    queryFn: () => null,
-    enabled: false,
-    initialData: null,
-  });
-  const setTracesResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(tracesQueryKey, result),
-    [queryClient, tracesQueryKey],
-  );
-
-  // Sort state
   const [routeSortField, setRouteSortField] = useState<RouteSortField>("requestCount");
   const [routeSortDirection, setRouteSortDirection] = useState<SortDirection>("desc");
   const [traceSortField, setTraceSortField] = useState<TraceSortField>("timestamp");
   const [traceSortDirection, setTraceSortDirection] = useState<SortDirection>("desc");
-
-  const latestRoutesQueryRef = useRef<string | null>(null);
-  const latestTracesQueryRef = useRef<string | null>(null);
 
   const handleRouteSort = useCallback(
     (field: RouteSortField) => {
@@ -137,74 +80,6 @@ export default function ServiceDashboardPage() {
     },
     [traceSortField],
   );
-
-  const {
-    runQuery: runRoutesQuery,
-    loading: routesLoading,
-    error: routesError,
-    clearError: clearRoutesError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback(
-      (data: EsqlResponse, executedQuery: string) => {
-        if (executedQuery !== latestRoutesQueryRef.current) return;
-        setRoutesResult(data);
-      },
-      [setRoutesResult],
-    ),
-    onFailure: useCallback(
-      (failedQuery: string) => {
-        if (failedQuery !== latestRoutesQueryRef.current) return;
-        setRoutesResult(null);
-      },
-      [setRoutesResult],
-    ),
-  });
-
-  const {
-    runQuery: runTracesQuery,
-    loading: tracesLoading,
-    error: tracesError,
-    clearError: clearTracesError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback(
-      (data: EsqlResponse, executedQuery: string) => {
-        if (executedQuery !== latestTracesQueryRef.current) return;
-        setTracesResult(data);
-      },
-      [setTracesResult],
-    ),
-    onFailure: useCallback(
-      (failedQuery: string) => {
-        if (failedQuery !== latestTracesQueryRef.current) return;
-        setTracesResult(null);
-      },
-      [setTracesResult],
-    ),
-  });
-
-  const loading = routesLoading || tracesLoading;
-
-  const handleSearch = useCallback(() => {
-    const filters = { serviceName, timeFrom, timeTo };
-    const routesQuery = buildServiceRoutesQuery(filters);
-    latestRoutesQueryRef.current = routesQuery.trim();
-    runRoutesQuery(routesQuery);
-    const tracesQuery = buildServiceRecentTracesQuery(filters);
-    latestTracesQueryRef.current = tracesQuery.trim();
-    runTracesQuery(tracesQuery);
-  }, [serviceName, timeFrom, timeTo, runRoutesQuery, runTracesQuery]);
-
-  const handleReset = useCallback(() => {
-    if (loading) return;
-    latestRoutesQueryRef.current = null;
-    latestTracesQueryRef.current = null;
-    clearRoutesError();
-    clearTracesError();
-    setRoutesResult(null);
-    setTracesResult(null);
-  }, [clearRoutesError, clearTracesError, loading, setRoutesResult, setTracesResult]);
 
   const handleViewTrace = useCallback(
     (traceId: string) => {
@@ -231,45 +106,19 @@ export default function ServiceDashboardPage() {
     navigate(PAGE_MANIFEST.traces.path);
   }, [navigate, serviceName, timeFrom, timeTo]);
 
-  // Parsed data
   const routeRows = useMemo(() => {
     if (!routesResult) return [];
     const rows = parseRouteRows(routesResult);
     return rows.sort((a, b) => compareByField(a, b, routeSortField, routeSortDirection));
   }, [routesResult, routeSortField, routeSortDirection]);
+  const topRouteRows = useMemo(() => routeRows.slice(0, 50), [routeRows]);
 
   const recentTraces = useMemo(() => {
     if (!tracesResult) return [];
     const traces = parseRecentTraces(tracesResult);
     return traces.sort((a, b) => compareByField(a, b, traceSortField, traceSortDirection));
   }, [tracesResult, traceSortField, traceSortDirection]);
-
-  // Summary metrics from route rows
-  const summary = useMemo(() => {
-    if (routeRows.length === 0) return null;
-    const totals = routeRows.reduce(
-      (acc, row) => {
-        acc.requests += row.requestCount;
-        acc.errors += row.errorCount;
-        return acc;
-      },
-      { requests: 0, errors: 0 },
-    );
-    const avgLatencyMs =
-      totals.requests > 0
-        ? routeRows.reduce((acc, row) => acc + row.avgLatencyMs * row.requestCount, 0) /
-          totals.requests
-        : 0;
-    return {
-      totalRequests: totals.requests,
-      totalErrors: totals.errors,
-      overallErrorRate: totals.requests > 0 ? totals.errors / totals.requests : 0,
-      avgLatencyMs,
-      uniqueRoutes: routeRows.length,
-    };
-  }, [routeRows]);
-
-  const error = routesError || tracesError;
+  const summary = useMemo(() => buildDashboardSummary(routeRows), [routeRows]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -289,26 +138,18 @@ export default function ServiceDashboardPage() {
         />
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-          <DateRangePicker
-            value={toDashboardTimeRange({ from: timeFrom, to: timeTo })}
-            onChange={(range) => {
-              const traceRange = toTraceTimeRange(range);
-              latestRoutesQueryRef.current = null;
-              latestTracesQueryRef.current = null;
-              setTimeFrom(traceRange.from);
-              setTimeTo(traceRange.to);
-            }}
-          />
-          <Button variant="contained" size="small" onClick={handleSearch} disabled={loading}>
-            {loading ? <CircularProgress size={14} color="inherit" /> : "Search"}
-          </Button>
-          <Button variant="text" size="small" onClick={handleReset} disabled={loading}>
-            Reset
-          </Button>
-        </Box>
-      </Paper>
+      <ServiceDashboardControls
+        loading={loading}
+        timeFrom={timeFrom}
+        timeTo={timeTo}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        onTimeRangeChange={(from, to) => {
+          clearLatestQueries();
+          setTimeFrom(from);
+          setTimeTo(to);
+        }}
+      />
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -322,86 +163,26 @@ export default function ServiceDashboardPage() {
         </Paper>
       )}
 
-      {summary && (
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-          <Box sx={{ flex: 1 }}>
-            <OverviewInfoCard title="Total Requests">
-              <Typography variant="h5" component="p">
-                {summary.totalRequests.toLocaleString()}
-              </Typography>
-            </OverviewInfoCard>
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <OverviewInfoCard title="Avg Latency">
-              <Typography variant="h5" component="p">
-                {formatLatency(summary.avgLatencyMs)}
-              </Typography>
-            </OverviewInfoCard>
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <OverviewInfoCard title="Error Rate">
-              <Typography
-                variant="h5"
-                component="p"
-                sx={{ color: summary.overallErrorRate > 0.05 ? "error.main" : "text.primary" }}
-              >
-                {formatErrorRate(summary.overallErrorRate)}
-              </Typography>
-            </OverviewInfoCard>
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <OverviewInfoCard title="Unique Routes">
-              <Typography variant="h5" component="p">
-                {summary.uniqueRoutes}
-              </Typography>
-            </OverviewInfoCard>
-          </Box>
-        </Stack>
-      )}
+      {summary && <ServiceDashboardSummaryCards summary={summary} />}
 
-      {routeRows.length > 0 && (
-        <Paper variant="outlined" sx={{ overflow: "auto" }}>
-          <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Top Routes
-            </Typography>
-          </Box>
-          <ServiceRoutesTable
-            routeRows={routeRows}
-            sortField={routeSortField}
-            sortDirection={routeSortDirection}
-            onSort={handleRouteSort}
-          />
-        </Paper>
+      {topRouteRows.length > 0 && (
+        <ServiceRoutesPanel
+          routeRows={topRouteRows}
+          sortField={routeSortField}
+          sortDirection={routeSortDirection}
+          onSort={handleRouteSort}
+        />
       )}
 
       {recentTraces.length > 0 && (
-        <Paper variant="outlined" sx={{ overflow: "auto" }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              p: 1.5,
-              borderBottom: 1,
-              borderColor: "divider",
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Recent Traces
-            </Typography>
-            <Button size="small" variant="text" onClick={handleViewAllTraces}>
-              View All Traces →
-            </Button>
-          </Box>
-          <ServiceTracesTable
-            traces={recentTraces}
-            sortField={traceSortField}
-            sortDirection={traceSortDirection}
-            onSort={handleTraceSort}
-            onViewTrace={handleViewTrace}
-          />
-        </Paper>
+        <ServiceTracesPanel
+          traces={recentTraces}
+          sortField={traceSortField}
+          sortDirection={traceSortDirection}
+          onSort={handleTraceSort}
+          onViewTrace={handleViewTrace}
+          onViewAllTraces={handleViewAllTraces}
+        />
       )}
 
       {!loading && routesResult && routeRows.length === 0 && recentTraces.length === 0 && (

@@ -26,7 +26,7 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("BY route_key");
       expect(query).toContain("EVAL error_rate = error_count / request_count");
       expect(query).toContain("SORT request_count DESC");
-      expect(query).toContain("LIMIT 50");
+      expect(query).not.toContain("LIMIT");
     });
 
     it("includes route_key EVAL with COALESCE", () => {
