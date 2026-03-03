@@ -22,11 +22,11 @@ export default function AskAiButton({
   icon = <AutoAwesomeIcon fontSize="small" />,
   size = "small",
 }: AskAiButtonProps) {
-  const isConfigured = useLLMStore((s) => s.isConfigured);
+  const hasApiKey = useLLMStore((s) => Boolean(s.config.apiKey.trim()));
   const setPendingPrompt = useLLMStore((s) => s.setPendingPrompt);
   const setAiPanelOpen = useUIStore((s) => s.setAiPanelOpen);
 
-  if (!isConfigured()) return null;
+  if (!hasApiKey) return null;
 
   return (
     <Button

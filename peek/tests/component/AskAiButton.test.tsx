@@ -48,6 +48,6 @@ describe("AskAiButton", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     render(<AskAiButton prompt="test" size="medium" />);
 
-    expect(screen.getByRole("button", { name: /ask ai/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ask ai/i })).toHaveClass("MuiButton-sizeMedium");
   });
 });

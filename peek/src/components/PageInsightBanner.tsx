@@ -29,17 +29,17 @@ export default function PageInsightBanner({
   cacheKey,
   severity = "info",
 }: PageInsightBannerProps) {
-  const isConfigured = useLLMStore((s) => s.isConfigured);
+  const hasApiKey = useLLMStore((s) => Boolean(s.config.apiKey.trim()));
   const [dismissed, setDismissed] = useState(false);
 
-  const { insight, loading, refresh } = usePageInsight({
+  const { insight, loading, error, refresh } = usePageInsight({
     context,
     systemPrompt,
     cacheKey,
-    enabled: !dismissed && isConfigured(),
+    enabled: !dismissed && hasApiKey,
   });
 
-  if (!isConfigured()) return null;
+  if (!hasApiKey) return null;
 
   if (dismissed) {
     return (
@@ -57,6 +57,23 @@ export default function PageInsightBanner({
     return (
       <Alert severity={severity} icon={<CircularProgress size={16} />}>
         Generating insight…
+      </Alert>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        severity="warning"
+        action={
+          <Tooltip title="Refresh insight">
+            <IconButton size="small" aria-label="Refresh insight" onClick={refresh}>
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        }
+      >
+        Failed to generate insight. Try again.
       </Alert>
     );
   }

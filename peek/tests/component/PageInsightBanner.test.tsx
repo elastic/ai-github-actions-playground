@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { generateText } from "ai";
 
 import PageInsightBanner from "../../src/components/PageInsightBanner";
 import { useLLMStore } from "../../src/store/useLLMStore";
@@ -21,6 +22,8 @@ describe("PageInsightBanner", () => {
     sessionStorage.clear();
     resetAllStores();
     clearInsightCache();
+    vi.mocked(generateText).mockReset();
+    vi.mocked(generateText).mockResolvedValue({ text: "This is a test insight." });
   });
 
   it("renders nothing when no API key is configured", () => {
@@ -73,8 +76,12 @@ describe("PageInsightBanner", () => {
     });
   });
 
-  it("renders refresh insight button", async () => {
+  it("refreshes insight after clicking refresh button", async () => {
     useLLMStore.getState().setApiKey("sk-test-key");
+    const user = userEvent.setup();
+    vi.mocked(generateText)
+      .mockResolvedValueOnce({ text: "Initial insight." })
+      .mockResolvedValueOnce({ text: "Refreshed insight." });
 
     render(
       <PageInsightBanner
@@ -85,7 +92,14 @@ describe("PageInsightBanner", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /refresh insight/i })).toBeInTheDocument();
+      expect(screen.getByText("Initial insight.")).toBeInTheDocument();
     });
+
+    await user.click(screen.getByRole("button", { name: /refresh insight/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Refreshed insight.")).toBeInTheDocument();
+    });
+    expect(vi.mocked(generateText)).toHaveBeenCalledTimes(2);
   });
 });

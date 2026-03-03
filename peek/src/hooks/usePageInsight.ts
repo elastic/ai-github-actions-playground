@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { useShallow } from "zustand/react/shallow";
@@ -53,7 +53,7 @@ export function usePageInsight({
   );
   const hasApiKey = Boolean(apiKey?.trim());
 
-  const cachedInsight = useMemo(() => insightCache.get(cacheKey) ?? null, [cacheKey]);
+  const cachedInsight = insightCache.get(cacheKey) ?? null;
 
   const [asyncResult, setAsyncResult] = useState<{ key: string; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,7 +96,9 @@ export function usePageInsight({
           setError((err as Error).message ?? "Failed to generate insight");
         }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     })();
 
