@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -44,6 +45,19 @@ vi.mock("../../src/components/QueryPipelineSteps", () => ({
   ),
 }));
 
+let testQueryClient: QueryClient;
+
+function renderDiscoverPage() {
+  testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={testQueryClient}>
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 describe("DiscoverPage", () => {
   beforeEach(() => {
     queryMock.mockReset();
@@ -61,11 +75,7 @@ describe("DiscoverPage", () => {
 
   it("adds successful queries to history", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
 
@@ -78,11 +88,7 @@ describe("DiscoverPage", () => {
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
     useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /recent queries/i }));
     await user.click(screen.getByRole("menuitem", { name: "FROM metrics-* | LIMIT 5" }));
@@ -98,11 +104,7 @@ describe("DiscoverPage", () => {
 
   it("stores the executed step query in history", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run step 1/i }));
 
@@ -135,11 +137,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
@@ -178,11 +176,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
@@ -221,11 +215,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
@@ -265,11 +255,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
@@ -306,11 +292,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
@@ -341,11 +323,7 @@ describe("DiscoverPage", () => {
         "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | LIMIT 10",
       );
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
 
@@ -364,11 +342,7 @@ describe("DiscoverPage", () => {
 
   it("creates a panel from the current query using Convert to Visualization", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     const convertButton = screen.getByRole("button", { name: /convert to visualization/i });
     await user.click(convertButton);
@@ -384,11 +358,7 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     useQueryStore.getState().setDiscoverQueryDraft("FROM metrics-* | LIMIT 100");
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     await user.click(screen.getByRole("button", { name: /convert to visualization/i }));
 
@@ -398,11 +368,7 @@ describe("DiscoverPage", () => {
   });
 
   it("shows the empty state before a query is run", () => {
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     expect(screen.getByText("No results yet")).toBeInTheDocument();
     expect(
@@ -411,11 +377,7 @@ describe("DiscoverPage", () => {
   });
 
   it("disables Export CSV button when there is no result data", () => {
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     // The DataTable mock is rendered only when there are results,
     // so the export CSV button within DataTable should not be present
@@ -438,11 +400,7 @@ describe("DiscoverPage", () => {
       }),
     );
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     // Run the first (successful) query
     await user.click(screen.getByRole("button", { name: /run query/i }));
@@ -463,11 +421,7 @@ describe("DiscoverPage", () => {
   it("disables the Run Query button when query is empty", () => {
     useQueryStore.getState().setDiscoverSessionQuery("   ");
 
-    render(
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>,
-    );
+    renderDiscoverPage();
 
     expect(screen.getByRole("button", { name: /run query/i })).toBeDisabled();
   });

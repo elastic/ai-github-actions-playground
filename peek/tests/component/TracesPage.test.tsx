@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import TracesPage from "../../src/components/traces/TracesPage";
 import { useTracesStore } from "../../src/store/useTracesStore";
@@ -46,6 +47,26 @@ beforeEach(() => {
   mockErrorsByHook = [];
 });
 
+let queryClient: QueryClient;
+
+function createQueryClient() {
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+}
+
+function renderTracesPage() {
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <TracesPage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 function isDriftRadarQuery(query: string): boolean {
   return (
     query.includes("FROM traces-*") &&
@@ -57,6 +78,7 @@ function isDriftRadarQuery(query: string): boolean {
 describe("TracesPage duration filter", () => {
   beforeEach(() => {
     mockRunQuery.mockClear();
+    createQueryClient();
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
@@ -65,20 +87,12 @@ describe("TracesPage duration filter", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
-      searchResult: null,
-      timeseriesResult: null,
     });
   });
 
   it("applies a minimum duration of 0ms", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     await user.type(screen.getByPlaceholderText("Min (ms)"), "0");
     await user.click(screen.getByRole("button", { name: "Apply" }));
@@ -88,13 +102,7 @@ describe("TracesPage duration filter", () => {
 
   it("applies a non-zero minimum duration", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     await user.type(screen.getByPlaceholderText("Min (ms)"), "100");
     await user.click(screen.getByRole("button", { name: "Apply" }));
@@ -104,13 +112,7 @@ describe("TracesPage duration filter", () => {
 
   it("clears minDurationMs when input is empty", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
@@ -119,13 +121,7 @@ describe("TracesPage duration filter", () => {
 
   it("clears duration input fields on Reset Filters", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     const minInput = screen.getByPlaceholderText("Min (ms)");
     const maxInput = screen.getByPlaceholderText("Max (ms)");
@@ -150,6 +146,7 @@ describe("TracesPage empty states", () => {
   beforeEach(() => {
     capturedCallbacks = [];
     mockRunQuery.mockClear();
+    createQueryClient();
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
@@ -158,20 +155,12 @@ describe("TracesPage empty states", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
-      searchResult: null,
-      timeseriesResult: null,
     });
   });
 
   it("shows only the Drift Radar message (not the generic one) when viewMode is driftRadar and no result exists", () => {
     useTracesStore.setState({ viewMode: "driftRadar" });
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     expect(
       screen.getByText("Search for traces to load the Drift Radar service map."),
@@ -179,20 +168,16 @@ describe("TracesPage empty states", () => {
     expect(screen.queryByText("Search for traces")).not.toBeInTheDocument();
   });
 
-  it("shows no-results guidance in list view when a search returns zero traces", () => {
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+  it("shows no-results guidance in list view when a search returns zero traces", async () => {
+    renderTracesPage();
 
     act(() => {
       capturedCallbacks[0]?.({ columns: [], values: [] }, "FROM traces");
     });
 
-    expect(screen.getByText("No traces matched the current filters.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("No traces matched the current filters.")).toBeInTheDocument();
+    });
     expect(screen.getByText("Adjust filters or widen the time range.")).toBeInTheDocument();
   });
 });
@@ -201,6 +186,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
   beforeEach(() => {
     capturedCallbacks = [];
     mockRunQuery.mockClear();
+    createQueryClient();
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
@@ -209,20 +195,12 @@ describe("TracesPage auto-run on quick filter changes", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
-      searchResult: null,
-      timeseriesResult: null,
     });
   });
 
   it("auto-runs query when duration Apply is clicked", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     mockRunQuery.mockClear();
     await user.type(screen.getByPlaceholderText("Min (ms)"), "50");
@@ -233,13 +211,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
 
   it("uses duration-us fallback expression when applying duration filters", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     mockRunQuery.mockClear();
     await user.type(screen.getByPlaceholderText("Min (ms)"), "2");
@@ -257,13 +229,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
 
   it("auto-runs query when a status chip is toggled", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     mockRunQuery.mockClear();
     await user.click(screen.getByText("Error"));
@@ -274,13 +240,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
 
   it("auto-runs query when a service is added", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     mockRunQuery.mockClear();
     await user.type(screen.getByPlaceholderText("Service name"), "my-service{enter}");
@@ -295,13 +255,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
     });
 
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     mockRunQuery.mockClear();
     const deleteButton = screen.getByTestId("trace-status-chip-delete-error");
@@ -314,13 +268,7 @@ describe("TracesPage auto-run on quick filter changes", () => {
   it("refreshes Drift Radar spans when quick filters change in Drift Radar mode", async () => {
     useTracesStore.setState({ viewMode: "driftRadar" });
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     mockRunQuery.mockClear();
     await user.click(screen.getByText("Error"));
@@ -334,6 +282,7 @@ describe("TracesPage duration parsing", () => {
   beforeEach(() => {
     capturedCallbacks = [];
     mockRunQuery.mockClear();
+    createQueryClient();
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
@@ -345,14 +294,8 @@ describe("TracesPage duration parsing", () => {
     });
   });
 
-  it("falls back to nanosecond duration when microsecond field is missing", () => {
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+  it("falls back to nanosecond duration when microsecond field is missing", async () => {
+    renderTracesPage();
 
     act(() => {
       capturedCallbacks[0]?.(
@@ -382,7 +325,9 @@ describe("TracesPage duration parsing", () => {
       );
     });
 
-    expect(screen.getByText("2.0ms")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("2.0ms")).toBeInTheDocument();
+    });
   });
 });
 
@@ -390,6 +335,7 @@ describe("TracesPage error alerts", () => {
   beforeEach(() => {
     capturedCallbacks = [];
     mockRunQuery.mockClear();
+    createQueryClient();
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
       rawQuery: null,
@@ -398,8 +344,6 @@ describe("TracesPage error alerts", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
-      searchResult: null,
-      timeseriesResult: null,
     });
   });
 
@@ -409,13 +353,7 @@ describe("TracesPage error alerts", () => {
     mockErrorsByHook = Array.from({ length: 20 }, () => typeMismatchError);
 
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     // Should show summarised error, not the raw error
     expect(screen.getByText("Query error")).toBeInTheDocument();
@@ -438,13 +376,7 @@ describe("TracesPage error alerts", () => {
         : "parsing_exception: mismatched input",
     );
 
-    render(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <TracesPage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+    renderTracesPage();
 
     expect(
       screen.getByText(/A query type mismatch occurred\. Results may still be usable\./),

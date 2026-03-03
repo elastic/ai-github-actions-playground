@@ -10,6 +10,7 @@ import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 import { useShallow } from "zustand/react/shallow";
 import { parseAsString, useQueryState } from "nuqs";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -100,6 +101,7 @@ function TraceErrorAlerts({ errors }: { errors: (string | null)[] }) {
 
 export default function TracesPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
@@ -119,10 +121,6 @@ export default function TracesPage() {
     viewMode,
     setViewMode,
     resetFilters,
-    searchResult,
-    setSearchResult,
-    timeseriesResult,
-    setTimeseriesResult,
   } = useTracesStore(
     useShallow((s) => ({
       filters: s.filters,
@@ -140,11 +138,29 @@ export default function TracesPage() {
       viewMode: s.viewMode,
       setViewMode: s.setViewMode,
       resetFilters: s.resetFilters,
-      searchResult: s.searchResult,
-      setSearchResult: s.setSearchResult,
-      timeseriesResult: s.timeseriesResult,
-      setTimeseriesResult: s.setTimeseriesResult,
     })),
+  );
+
+  // React Query cache for search and timeseries results (cached across navigation)
+  const { data: searchResult = null } = useQuery<EsqlResponse | null>({
+    queryKey: ["traces-search"],
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const { data: timeseriesResult = null } = useQuery<EsqlResponse | null>({
+    queryKey: ["traces-timeseries"],
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setSearchResult = useCallback(
+    (result: EsqlResponse | null) => queryClient.setQueryData(["traces-search"], result),
+    [queryClient],
+  );
+  const setTimeseriesResult = useCallback(
+    (result: EsqlResponse | null) => queryClient.setQueryData(["traces-timeseries"], result),
+    [queryClient],
   );
 
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);

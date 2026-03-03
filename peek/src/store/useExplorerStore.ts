@@ -19,14 +19,6 @@ export interface ExplorerState {
   filters: ExplorerFilter[];
   groupBy: string | null;
 
-  queryResult: {
-    status: "idle" | "loading" | "success" | "error";
-    esql?: string;
-    data?: { columns: Array<{ name: string; type: string }>; values: unknown[][] };
-    error?: string;
-    executionTimeMs?: number;
-  };
-
   showEsql: boolean;
 
   // Actions
@@ -39,7 +31,6 @@ export interface ExplorerState {
   removeFilter: (index: number) => void;
   clearFilters: () => void;
   setGroupBy: (field: string | null) => void;
-  setQueryResult: (result: ExplorerState["queryResult"]) => void;
   setShowEsql: (show: boolean) => void;
   reset: () => void;
 }
@@ -59,7 +50,6 @@ const initialState: Omit<
   | "removeFilter"
   | "clearFilters"
   | "setGroupBy"
-  | "setQueryResult"
   | "setShowEsql"
   | "reset"
 > = {
@@ -71,7 +61,6 @@ const initialState: Omit<
   aggregation: "avg",
   filters: [],
   groupBy: null,
-  queryResult: { status: "idle" },
   showEsql: false,
 };
 
@@ -87,7 +76,6 @@ export const useExplorerStore = create<ExplorerState>()(
           selectedMetric: null,
           filters: [],
           groupBy: null,
-          queryResult: { status: "idle" },
         }),
       setFields: (fields) => set({ fields }),
       setFieldsLoading: (loading) => set({ fieldsLoading: loading }),
@@ -103,7 +91,6 @@ export const useExplorerStore = create<ExplorerState>()(
       removeFilter: (index) => set((s) => ({ filters: s.filters.filter((_, i) => i !== index) })),
       clearFilters: () => set({ filters: [] }),
       setGroupBy: (field) => set({ groupBy: field }),
-      setQueryResult: (result) => set({ queryResult: result }),
       setShowEsql: (show) => set({ showEsql: show }),
       reset: () => set(initialState),
     }),

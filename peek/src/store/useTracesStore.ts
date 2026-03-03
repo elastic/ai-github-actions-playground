@@ -4,7 +4,6 @@ import { devtools } from "zustand/middleware";
 import type { Span } from "../components/traces/traceUtils";
 import type { TraceFilters } from "../components/traces/traceQueryBuilder";
 import { EMPTY_FILTERS } from "../components/traces/traceQueryBuilder";
-import type { EsqlResponse } from "../types";
 
 export type TracesViewMode = "list" | "timeseries" | "scatter" | "serviceMap" | "driftRadar";
 
@@ -23,10 +22,6 @@ interface TracesState {
   viewMode: TracesViewMode;
   /** Whether the span detail drawer is open */
   drawerOpen: boolean;
-  /** Cached search results — persisted across navigation */
-  searchResult: EsqlResponse | null;
-  /** Cached timeseries results — persisted across navigation */
-  timeseriesResult: EsqlResponse | null;
 
   setFilters: (filters: TraceFilters) => void;
   updateFilters: (updates: Partial<TraceFilters>) => void;
@@ -36,8 +31,6 @@ interface TracesState {
   setSelectedSpanId: (spanId: string | null) => void;
   setViewMode: (mode: TracesViewMode) => void;
   setDrawerOpen: (open: boolean) => void;
-  setSearchResult: (result: EsqlResponse | null) => void;
-  setTimeseriesResult: (result: EsqlResponse | null) => void;
   addTagFilter: (key: string, value: string, exclude?: boolean) => void;
   removeTagFilter: (index: number) => void;
   resetFilters: () => void;
@@ -51,8 +44,6 @@ const getInitialTracesState = () => ({
   selectedSpanId: null as string | null,
   viewMode: "list" as TracesViewMode,
   drawerOpen: false,
-  searchResult: null as EsqlResponse | null,
-  timeseriesResult: null as EsqlResponse | null,
 });
 
 export const useTracesStore = create<TracesState>()(
@@ -71,8 +62,6 @@ export const useTracesStore = create<TracesState>()(
       setViewMode: (mode) => set({ viewMode: mode }),
       setDrawerOpen: (open) =>
         set(open ? { drawerOpen: true } : { drawerOpen: false, selectedSpanId: null }),
-      setSearchResult: (result) => set({ searchResult: result }),
-      setTimeseriesResult: (result) => set({ timeseriesResult: result }),
       addTagFilter: (key, value, exclude = false) =>
         set((s) => ({
           filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },

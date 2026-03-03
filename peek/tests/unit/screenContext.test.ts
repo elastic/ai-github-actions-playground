@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
+import { QueryClient } from "@tanstack/react-query";
 
 import { buildDetailedScreenContext } from "../../src/services/screenContext";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
@@ -10,9 +11,12 @@ import { useTracesStore } from "../../src/store/useTracesStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
+let queryClient: QueryClient;
+
 describe("buildDetailedScreenContext", () => {
   beforeEach(() => {
     resetAllStores();
+    queryClient = new QueryClient();
   });
 
   it("returns basic page info for a known page", () => {
@@ -131,7 +135,7 @@ describe("buildDetailedScreenContext", () => {
   });
 
   it("includes result summary when include_data is true and result exists", () => {
-    useQueryStore.getState().setDiscoverSessionResult({
+    queryClient.setQueryData(["discover-result"], {
       columns: [
         { name: "col1", type: "keyword" },
         { name: "col2", type: "long" },
@@ -141,7 +145,7 @@ describe("buildDetailedScreenContext", () => {
         ["b", 2],
       ],
     });
-    const ctx = buildDetailedScreenContext("/discover", true);
+    const ctx = buildDetailedScreenContext("/discover", true, queryClient);
     expect(ctx.queryLab!.lastResultSummary).toEqual({ rowCount: 2, columnCount: 2 });
   });
 
