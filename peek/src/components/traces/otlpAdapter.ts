@@ -64,6 +64,9 @@ function convertLinks(links: SpanLink[]): otlptracev1.Link[] {
 
 /** Convert a single app Span to an OTLP Span. */
 function convertSpan(span: Span): otlptracev1.Span {
+  const endTimeUs = Number.isFinite(span.durationUs)
+    ? span.startTimeUs + span.durationUs
+    : span.startTimeUs;
   return {
     traceId: span.traceId,
     spanId: span.spanId,
@@ -71,7 +74,7 @@ function convertSpan(span: Span): otlptracev1.Span {
     name: span.name,
     kind: span.kind || undefined,
     startTimeUnixNano: microsToNanosString(span.startTimeUs),
-    endTimeUnixNano: microsToNanosString(span.startTimeUs + span.durationUs),
+    endTimeUnixNano: microsToNanosString(endTimeUs),
     attributes: toKeyValues(span.attributes),
     events: span.events ? convertEvents(span.events) : undefined,
     links: span.links ? convertLinks(span.links) : undefined,
