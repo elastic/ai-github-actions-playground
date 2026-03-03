@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 
 import type { FieldCapsResponse } from "../services/es";
 import type { DataFetchResult } from "../types/query";
@@ -13,7 +13,7 @@ export function useFieldCaps(dataStreamName: string | null): DataFetchResult<Fie
     : undefined;
   const query = useQuery({
     queryKey: ["field-caps", connection?.url, dataStreamName],
-    queryFn,
+    queryFn: queryFn ?? skipToken,
     enabled: canFetch,
     retry: false,
     refetchOnWindowFocus: false,
