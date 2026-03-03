@@ -4,11 +4,12 @@ import { z } from "zod";
 import type { AggregationType, ExplorerFilter } from "../../services/es";
 import { EXPLORER_AGGREGATIONS } from "../../services/es";
 
-const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(["==", "!=", "LIKE"]);
+const FILTER_OPS = ["==", "!=", "LIKE"] as const;
+const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(FILTER_OPS);
 
 const ExplorerFilterSchema = z.object({
   field: z.string(),
-  op: z.enum(["==", "!=", "LIKE"]),
+  op: z.enum(FILTER_OPS),
   value: z.string(),
 });
 
