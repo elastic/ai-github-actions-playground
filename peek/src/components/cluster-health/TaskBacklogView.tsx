@@ -1,7 +1,9 @@
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
+import EmptyState from "../EmptyState";
 
 import { groupPendingTasks } from "./clusterHealthUtils";
 import InfoCard from "./InfoCard";
@@ -82,7 +84,13 @@ export default function TaskBacklogView({ data }: TaskBacklogViewProps) {
             </div>
           ))}
         </>
-      ) : null}
+      ) : (
+        <EmptyState
+          icon={<CheckCircleOutlineIcon sx={{ fontSize: 48 }} />}
+          heading="No pending tasks"
+          description="The cluster has no pending or active tasks right now. This is a healthy state."
+        />
+      )}
     </>
   );
 }
