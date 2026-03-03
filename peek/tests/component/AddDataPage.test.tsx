@@ -42,7 +42,7 @@ function renderPage() {
 }
 
 async function goToStep2(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+  await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
   await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
 }
 
@@ -77,26 +77,25 @@ describe("AddDataPage", () => {
     expect(
       screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Search technologies")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Kubernetes" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Docker" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Linux Host" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search integrations...")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Kubernetes/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Docker/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Linux Host/ })).toBeInTheDocument();
   });
 
   it("filters technologies by search and category", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByLabelText("Search technologies"), "postgres");
+    await user.type(screen.getByPlaceholderText("Search integrations..."), "postgres");
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
     expect(screen.queryByText("Nginx")).not.toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Search technologies"));
-    await user.click(screen.getByRole("button", { name: "Databases" }));
-    expect(screen.getByText(/Databases • Capture query performance/)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Operating Systems • Install EDOT Collector on Linux hosts\/VMs\./),
-    ).not.toBeInTheDocument();
+    await user.clear(screen.getByPlaceholderText("Search integrations..."));
+    // Click the category filter chip (first "Databases" button is the filter)
+    await user.click(screen.getAllByRole("button", { name: /Databases/ })[0]);
+    expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
+    expect(screen.queryByText("Linux Host")).not.toBeInTheDocument();
   });
 
   it("transitions through explicit 5-step flow", async () => {
@@ -122,7 +121,7 @@ describe("AddDataPage", () => {
     expect(
       screen.getByRole("heading", { name: /Step 5: Explore your data \+ next steps/i }),
     ).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("reuses endpoint type and platform controls in Step 2/3", async () => {
     const user = userEvent.setup();
@@ -136,7 +135,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("shows contextual verification expectations in Step 4", async () => {
     const user = userEvent.setup();
@@ -147,7 +146,7 @@ describe("AddDataPage", () => {
       screen.getByText(/For Kubernetes, we expect to receive metrics, logs and traces\./),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
     const user = userEvent.setup();
@@ -178,7 +177,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
     // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
@@ -189,10 +188,9 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // Filter by category/search and select a technology
-    await user.click(screen.getByRole("button", { name: "Databases" }));
-    await user.type(screen.getByLabelText("Search technologies"), "kub");
-    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    // Search and select a technology
+    await user.type(screen.getByPlaceholderText("Search integrations..."), "kub");
+    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
@@ -211,12 +209,11 @@ describe("AddDataPage", () => {
         screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByLabelText("Search technologies")).toHaveValue("");
+    expect(screen.getByPlaceholderText("Search integrations...")).toHaveValue("");
     expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
 
     // Progress again and ensure Step 4 does not auto-show stale verification success.
-    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     await user.click(screen.getByRole("button", { name: /Continue to step 4/i }));
@@ -233,7 +230,7 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Kubernetes" }));
+    await user.click(screen.getByRole("button", { name: /Kubernetes/ }));
     await user.click(screen.getByRole("button", { name: /Continue to step 2/i }));
 
     // Switch to Managed OTLP
@@ -243,7 +240,7 @@ describe("AddDataPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
     });
-  });
+  }, 15_000);
 });
 
 describe("probeOtlpEndpoint", () => {

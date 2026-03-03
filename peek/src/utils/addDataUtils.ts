@@ -220,7 +220,7 @@ export type Platform = "kubernetes" | "docker" | "linux" | "macos" | "windows";
 
 const ARTIFACTS_BASE = "https://artifacts.elastic.co/downloads/beats/elastic-agent";
 
-interface CommandContext {
+export interface CommandContext {
   esUrl: string;
   version: string;
   apiKey: string;
@@ -228,7 +228,7 @@ interface CommandContext {
   otlpUrl: string;
 }
 
-interface PlatformGuide {
+export interface PlatformGuide {
   label: string;
   quickstartUrl: string;
   command: (ctx: CommandContext) => string;
