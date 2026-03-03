@@ -91,18 +91,24 @@ export function parseServiceSparklineData(
     return idx !== undefined ? row[idx] : null;
   };
 
-  const map: Record<string, ServiceSparklineData> = {};
+  const toFinite = (value: unknown, fallback = 0): number => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  const map = Object.create(null) as Record<string, ServiceSparklineData>;
   for (const row of result.values) {
     const service = String(get(row, "service.name") ?? "unknown");
     const tsRaw = get(row, "bucket");
-    const ts = tsRaw ? new Date(tsRaw as string).getTime() : 0;
+    const ts = tsRaw ? new Date(tsRaw as string).getTime() : null;
+    if (ts === null || !Number.isFinite(ts)) continue;
     if (!map[service]) {
       map[service] = { requests: [], latency: [], errorRate: [] };
     }
     const entry = map[service]!;
-    entry.requests.push([ts, Number(get(row, "request_count") ?? 0)]);
-    entry.latency.push([ts, Number(get(row, "avg_latency_ms") ?? 0)]);
-    entry.errorRate.push([ts, Number(get(row, "error_rate") ?? 0)]);
+    entry.requests.push([ts, toFinite(get(row, "request_count"))]);
+    entry.latency.push([ts, toFinite(get(row, "avg_latency_ms"))]);
+    entry.errorRate.push([ts, toFinite(get(row, "error_rate"))]);
   }
   return map;
 }

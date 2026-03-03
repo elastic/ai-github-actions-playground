@@ -55,6 +55,7 @@ export function useServiceInventorySearch() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
+  const activeFiltersRef = useRef(filters);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -88,12 +89,16 @@ export function useServiceInventorySearch() {
       setSearchResult(data);
       const serviceNames = parseServiceRows(data).map((r) => r.serviceName);
       if (serviceNames.length === 0) return;
-      const sparklineQuery = buildServiceSparklineQuery(filters, undefined, serviceNames);
+      const sparklineQuery = buildServiceSparklineQuery(
+        activeFiltersRef.current,
+        undefined,
+        serviceNames,
+      );
       latestSparklineQueryRef.current = sparklineQuery.trim();
       setSparklineData({});
       runSparklineQuery(sparklineQuery);
     },
-    [setSearchResult, filters, runSparklineQuery],
+    [setSearchResult, runSparklineQuery],
   );
   const handleFailure = useCallback(
     (failedQuery: string) => {
@@ -109,6 +114,7 @@ export function useServiceInventorySearch() {
   });
 
   const handleSearch = useCallback(() => {
+    activeFiltersRef.current = filters;
     const query = buildServiceInventoryQuery(filters);
     latestQueryRef.current = query.trim();
     latestSparklineQueryRef.current = null;

@@ -63,7 +63,7 @@ export default function ServiceInventoryTable({
               Requests
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Trend</TableCell>}
+          {hasSparklines && <TableCell>Requests trend</TableCell>}
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "avgLatencyMs"}
@@ -73,7 +73,7 @@ export default function ServiceInventoryTable({
               Avg Latency
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Trend</TableCell>}
+          {hasSparklines && <TableCell>Latency trend</TableCell>}
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "errorRate"}
@@ -83,7 +83,7 @@ export default function ServiceInventoryTable({
               Error Rate
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Trend</TableCell>}
+          {hasSparklines && <TableCell>Error rate trend</TableCell>}
           <TableCell>Language</TableCell>
           <TableCell>Environment</TableCell>
           <TableCell align="right">Actions</TableCell>
