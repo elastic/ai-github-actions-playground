@@ -30,23 +30,28 @@ export default function ServiceInventoryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
-  const { filters, updateFilters, resetFilters } = usePageFiltersStore(
+  const { filters, serviceSearchSession, updateFilters, resetFilters } = usePageFiltersStore(
     useShallow((s) => ({
       filters: s.serviceFilters,
+      serviceSearchSession: s.serviceSearchSession,
       updateFilters: s.updateServiceFilters,
       resetFilters: s.resetServiceFilters,
     })),
   );
+  const serviceSearchQueryKey = useMemo(
+    () => ["services-search", serviceSearchSession] as const,
+    [serviceSearchSession],
+  );
 
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: ["services-search"],
+    queryKey: serviceSearchQueryKey,
     queryFn: () => null,
     enabled: false,
     initialData: null,
   });
   const setSearchResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(["services-search"], result),
-    [queryClient],
+    (result: EsqlResponse | null) => queryClient.setQueryData(serviceSearchQueryKey, result),
+    [queryClient, serviceSearchQueryKey],
   );
 
   const [sortField, setSortField] = useState<SortField>("requestCount");

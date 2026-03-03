@@ -197,6 +197,7 @@ describe("Fleet pages", () => {
     // Reset fleet store
     usePageFiltersStore.setState({
       fleetActiveTab: "overview",
+      fleetAutoRefreshEnabled: true,
       agentFilter: { search: "", version: null, hasErrors: false, staleness: null },
     });
   });

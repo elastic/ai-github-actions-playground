@@ -54,6 +54,7 @@ const DEFAULT_AGENT_FILTER: AgentFilter = {
 interface PageFiltersState {
   // --- Services ---------------------------------------------------------
   serviceFilters: ServiceInventoryFilters;
+  serviceSearchSession: number;
   updateServiceFilters: (updates: Partial<ServiceInventoryFilters>) => void;
   resetServiceFilters: () => void;
 
@@ -87,9 +88,14 @@ export const usePageFiltersStore = create<PageFiltersState>()(
     (set) => ({
       // --- Services -------------------------------------------------------
       serviceFilters: { ...DEFAULT_SERVICE_INVENTORY_FILTERS },
+      serviceSearchSession: 0,
       updateServiceFilters: (updates) =>
         set((s) => ({ serviceFilters: { ...s.serviceFilters, ...updates } })),
-      resetServiceFilters: () => set({ serviceFilters: { ...DEFAULT_SERVICE_INVENTORY_FILTERS } }),
+      resetServiceFilters: () =>
+        set((s) => ({
+          serviceFilters: { ...DEFAULT_SERVICE_INVENTORY_FILTERS },
+          serviceSearchSession: s.serviceSearchSession + 1,
+        })),
 
       // --- Profiling ------------------------------------------------------
       profilingFilters: { ...EMPTY_PROFILING_FILTERS },
