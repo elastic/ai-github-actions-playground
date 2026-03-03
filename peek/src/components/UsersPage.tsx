@@ -19,6 +19,7 @@ import { parseAsString, useQueryState } from "nuqs";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useSecurityUsers } from "../hooks/useSecurityUsers";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import ContentSkeleton from "./ContentSkeleton";
@@ -73,6 +74,16 @@ export default function UsersPage() {
     },
     [setUrlUsername],
   );
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    setPageSection("security", {
+      pageType: "users",
+      selectedItem: selectedUsername ?? null,
+      totalItems: users.length,
+    });
+  }, [users, selectedUsername, setPageSection]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>

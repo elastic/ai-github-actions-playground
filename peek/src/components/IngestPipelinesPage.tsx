@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -8,6 +8,7 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
 import { useConnectionStore } from "../store/useConnectionStore";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { useIngestPipelines } from "../hooks/useIngestPipelines";
 
 import PageHeader from "./PageHeader";
@@ -57,6 +58,17 @@ export default function IngestPipelinesPage() {
   const displayedPipeline = filteredPipelines.some((p) => p.name === effectiveSelectedName)
     ? selectedPipeline
     : null;
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (!pipelinesData) return;
+    setPageSection("ingestPipelines", {
+      selectedPipeline: effectiveSelectedName,
+      totalPipelines: pipelinesData.length,
+      processorCount: selectedPipeline?.pipeline.processors?.length ?? 0,
+    });
+  }, [pipelinesData, effectiveSelectedName, selectedPipeline, setPageSection]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>

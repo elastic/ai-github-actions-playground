@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -10,6 +10,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { formatBytes } from "../utils/formatBytes";
 import { formatCompactNumber, toNodeRows } from "../utils/clusterOverviewUtils";
 
@@ -80,6 +81,18 @@ export default function ClusterOverviewPage() {
   const fleetTotal = data?.fleetStatus?.total ?? data?.agentInventoryCount ?? null;
 
   const partialErrorsKey = partialErrors.join("|");
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (!data) return;
+    setPageSection("clusterOverview", {
+      status: clusterHealth?.status ?? "unknown",
+      nodeCount: clusterHealth?.number_of_nodes ?? 0,
+      indexCount: clusterStats?.indices?.count ?? 0,
+      storeSize: formatBytes(clusterStats?.indices?.store?.size_in_bytes ?? null, "unknown"),
+    });
+  }, [data, clusterHealth, clusterStats, setPageSection]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>

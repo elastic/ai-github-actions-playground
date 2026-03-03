@@ -19,6 +19,7 @@ import { useServicesStore } from "./useServicesStore";
 import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
+import { usePageContextStore } from "./usePageContextStore";
 
 const resetConnection = () => useConnectionStore.getState().resetConnectionState();
 const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
@@ -31,6 +32,7 @@ const resetServices = () => useServicesStore.getState().resetFilters();
 const resetTraces = () => useTracesStore.getState().resetFilters();
 const resetUi = () => useUIStore.getState().resetUIState();
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
+const resetPageContext = () => usePageContextStore.getState().resetPageContext();
 
 export const storeResetters: ReadonlyArray<() => void> = [
   resetConnection,
@@ -44,6 +46,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetTraces,
   resetUi,
   resetApiConsole,
+  resetPageContext,
 ];
 
 export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = [
