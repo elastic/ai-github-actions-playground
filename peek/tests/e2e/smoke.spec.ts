@@ -184,9 +184,14 @@ async function mockElasticsearch(page: Page) {
         return {
           columns: [
             { name: "@timestamp", type: "date" },
+            { name: "service.name", type: "keyword" },
+            { name: "log.level", type: "keyword" },
             { name: "message", type: "keyword" },
+            { name: "trace.id", type: "keyword" },
           ],
-          values: [["2026-02-23T10:00:00.000Z", "Hello World"]],
+          values: [
+            ["2026-02-23T10:00:00.000Z", "checkout-service", "ERROR", "Hello World", "trace-123"],
+          ],
         };
       }
 
@@ -418,9 +423,26 @@ test.describe("smoke – site navigation", () => {
     await queryInput.click();
     await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type("FROM logs-* | LIMIT 1");
-    await page.getByRole("button", { name: /^Run Query\b/ }).click();
+    await page.getByRole("button", { name: /^Search Logs\b/ }).click();
     await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
+  });
+
+  test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
+    await connectToMockCluster(page);
+    await navigateViaSidebar(page, "Logs");
+    await expect(page).toHaveURL(/\/logs$/);
+
+    const queryEditor = page.getByLabel("ES|QL query editor");
+    const queryInput = queryEditor.getByRole("textbox");
+    await page.getByLabel("Search logs").fill('"Hello World"');
+    await page.getByRole("button", { name: "Apply Search" }).click();
+    await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
+
+    await page.getByRole("button", { name: /^Search Logs\b/ }).click();
+    await page.getByRole("cell", { name: "checkout-service" }).click();
+    await expect(page.getByText("service.name: checkout-service")).toBeVisible();
+    await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {

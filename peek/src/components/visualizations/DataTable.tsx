@@ -29,6 +29,7 @@ interface Props {
   onRemoveColumn?: (name: string) => void;
   currentSort?: SortState | null;
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
+  onCellClick?: (params: { columnName: string; value: string }) => void;
 }
 
 export default memo(function DataTable({
@@ -38,6 +39,7 @@ export default memo(function DataTable({
   onRemoveColumn,
   currentSort,
   onSortChange,
+  onCellClick,
 }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -246,6 +248,7 @@ export default memo(function DataTable({
             rowsPerPage={rowsPerPage}
             onRowClick={handleRowClick}
             selectedRowIndex={selectedRowIndex}
+            onCellClick={onCellClick}
           />
         </Table>
       </TableContainer>

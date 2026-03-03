@@ -1,4 +1,5 @@
 import TableBody from "@mui/material/TableBody";
+import ButtonBase from "@mui/material/ButtonBase";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
@@ -22,6 +23,7 @@ interface DataTableBodyProps {
   rowsPerPage: number;
   onRowClick: (row: unknown[]) => void;
   selectedRowIndex?: number | null;
+  onCellClick?: (params: { columnName: string; value: string }) => void;
 }
 
 export default function DataTableBody({
@@ -35,6 +37,7 @@ export default function DataTableBody({
   rowsPerPage,
   onRowClick,
   selectedRowIndex,
+  onCellClick,
 }: DataTableBodyProps) {
   return (
     <TableBody>
@@ -113,7 +116,23 @@ export default function DataTableBody({
                       null
                     </Typography>
                   ) : (
-                    <TruncatedCell value={String(cell)} />
+                    <ButtonBase
+                      component="span"
+                      disableRipple
+                      onClick={(event) => {
+                        if (!onCellClick) return;
+                        event.stopPropagation();
+                        onCellClick({ columnName: col.name, value: String(cell) });
+                      }}
+                      sx={{
+                        display: "inline",
+                        p: 0,
+                        cursor: onCellClick ? "pointer" : "text",
+                        textAlign: "inherit",
+                      }}
+                    >
+                      <TruncatedCell value={String(cell)} />
+                    </ButtonBase>
                   )}
                 </TableCell>
               );
