@@ -15,7 +15,7 @@ interface Props {
   onChange: (options: VisualizationOptions) => void;
 }
 
-/** Horizontal row of chart customization controls rendered below the preview. */
+/** Sectioned chart customization controls rendered below the preview. */
 export default function ChartOptionsEditor({ vizType, options, onChange }: Props) {
   const format = (options as { format?: FormatOptions }).format ?? DEFAULT_FORMAT;
   const OptionsEditor = getPersesPanelEntry(vizType)?.OptionsEditor;
@@ -27,16 +27,28 @@ export default function ChartOptionsEditor({ vizType, options, onChange }: Props
   };
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "flex-start", p: 1 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, mr: 0.5 }}>
-        Options
-      </Typography>
-
-      {showFormat && <FormatControls value={format} onChange={handleFormatChange} />}
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "flex-start", p: 1.5 }}>
+      {showFormat && (
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+            Format
+          </Typography>
+          <FormatControls value={format} onChange={handleFormatChange} />
+        </Box>
+      )}
 
       {OptionsEditor && showFormat && <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />}
 
-      {OptionsEditor && <OptionsEditor options={options} onChange={onChange} />}
+      {OptionsEditor && (
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+            Options
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
+            <OptionsEditor options={options} onChange={onChange} />
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

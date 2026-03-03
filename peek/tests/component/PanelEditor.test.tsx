@@ -122,7 +122,7 @@ describe("PanelEditor", () => {
       render(<PanelEditor />);
 
       await user.click(screen.getByTitle(vizTitle));
-      expect(screen.getByText("Options")).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: /unit/i })).toBeInTheDocument();
     },
   );
 

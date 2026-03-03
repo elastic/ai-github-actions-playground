@@ -242,37 +242,39 @@ export function BarChartOptionsEditor({ options, onChange }: VizOptionsEditorPro
 export function GaugeOptionsEditor({ options, onChange }: VizOptionsEditorProps) {
   const o = options as GaugePanelOptions;
   return (
-    <>
-      <TextField
-        label="Min"
-        size="small"
-        type="number"
-        value={o.min ?? ""}
-        onChange={(e) => {
-          const n = Number(e.target.value);
-          onChange({
-            ...o,
-            min: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
-          });
-        }}
-        sx={{ width: 90 }}
-      />
-      <TextField
-        label="Max"
-        size="small"
-        type="number"
-        value={o.max ?? ""}
-        onChange={(e) => {
-          const n = Number(e.target.value);
-          onChange({
-            ...o,
-            max: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
-          });
-        }}
-        sx={{ width: 90 }}
-      />
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <TextField
+          label="Min"
+          size="small"
+          type="number"
+          value={o.min ?? ""}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            onChange({
+              ...o,
+              min: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
+            });
+          }}
+          sx={{ width: 90 }}
+        />
+        <TextField
+          label="Max"
+          size="small"
+          type="number"
+          value={o.max ?? ""}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            onChange({
+              ...o,
+              max: e.target.value === "" || !Number.isFinite(n) ? undefined : n,
+            });
+          }}
+          sx={{ width: 90 }}
+        />
+      </Box>
       <ThresholdEditor value={o.thresholds} onChange={(t) => onChange({ ...o, thresholds: t })} />
-    </>
+    </Box>
   );
 }
 
