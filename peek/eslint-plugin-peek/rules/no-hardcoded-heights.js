@@ -1,22 +1,15 @@
-const SPACING_KEYS = new Set([
-  "p",
-  "px",
-  "py",
-  "pt",
-  "pb",
-  "pl",
-  "pr",
-  "m",
-  "mx",
-  "my",
-  "mt",
-  "mb",
-  "ml",
-  "mr",
-  "gap",
+/**
+ * Component heights that have tokens in COMPONENT_HEIGHTS (src/types/tokens.ts).
+ * If a numeric height in sx matches one of these, it should use the token instead.
+ */
+const TOKEN_HEIGHTS = new Map([
+  [28, "COMPONENT_HEIGHTS.buttonSmall"],
+  [32, "COMPONENT_HEIGHTS.sidebarNavItem"],
+  [36, "COMPONENT_HEIGHTS.button / .input / .tableRow / .tab"],
+  [44, "COMPONENT_HEIGHTS.toolbarRow / .touchTarget"],
 ]);
 
-const SPACE_TOKENS = new Set([0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6]);
+const HEIGHT_KEYS = new Set(["height", "minHeight", "maxHeight"]);
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
@@ -24,12 +17,12 @@ export default {
     type: "suggestion",
     docs: {
       description:
-        "Enforce SpaceToken usage for numeric sx spacing values (0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6).",
+        "Disallow hardcoded pixel heights in sx props when a COMPONENT_HEIGHTS token exists. Import from src/types/tokens.ts instead.",
     },
     schema: [],
     messages: {
-      invalidSpacingToken:
-        "Spacing token '{{property}}: {{value}}' is not in SpaceToken. Use one of: 0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6.",
+      useHeightToken:
+        "Hardcoded height {{value}}px matches a design token. Use {{token}} from 'src/types/tokens' instead.",
     },
   },
   create(context) {
@@ -43,14 +36,6 @@ export default {
 
     function getNumericValue(node) {
       if (node.type === "Literal" && typeof node.value === "number") return node.value;
-      if (
-        node.type === "UnaryExpression" &&
-        node.operator === "-" &&
-        node.argument.type === "Literal" &&
-        typeof node.argument.value === "number"
-      ) {
-        return -node.argument.value;
-      }
       return null;
     }
 
@@ -59,18 +44,20 @@ export default {
         if (property.type !== "Property") continue;
         if (property.value.type === "ObjectExpression") {
           validateObjectExpression(property.value);
+          continue;
         }
 
         const propertyName = getPropertyName(property);
-        if (!propertyName || !SPACING_KEYS.has(propertyName)) continue;
+        if (!propertyName || !HEIGHT_KEYS.has(propertyName)) continue;
         const value = getNumericValue(property.value);
         if (value === null) continue;
-        if (SPACE_TOKENS.has(value)) continue;
+        const token = TOKEN_HEIGHTS.get(value);
+        if (!token) continue;
 
         context.report({
           node: property.value,
-          messageId: "invalidSpacingToken",
-          data: { property: propertyName, value: String(value) },
+          messageId: "useHeightToken",
+          data: { value: String(value), token },
         });
       }
     }

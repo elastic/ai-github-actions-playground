@@ -6,7 +6,15 @@ import type { AggregationType, ExplorerFilter, MetricType } from "../services/es
 import { buildTimeParams } from "../services/datemath";
 import type { TimeRange } from "../types/dashboard";
 import { useConnectionStore } from "../store/useConnectionStore";
-import type { ExplorerState } from "../store/useExplorerStore";
+
+/** Shape returned by `useExploreQuery` for downstream UI components. */
+export interface ExploreQueryResult {
+  status: "idle" | "loading" | "success" | "error";
+  esql?: string;
+  data?: { columns: Array<{ name: string; type: string }>; values: unknown[][] };
+  error?: string;
+  executionTimeMs?: number;
+}
 
 /**
  * Runs an ES|QL explorer query via React Query, replacing the manual
@@ -34,7 +42,7 @@ export function useExploreQuery({
   groupBy: string | null;
   timeRange: TimeRange;
   enabled: boolean;
-}): ExplorerState["queryResult"] {
+}): ExploreQueryResult {
   const connection = useConnectionStore((s) => s.connection);
 
   const queryDef = useMemo(() => {

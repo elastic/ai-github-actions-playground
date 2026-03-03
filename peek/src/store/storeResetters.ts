@@ -20,6 +20,7 @@ import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
 import { usePageContextStore } from "./usePageContextStore";
+import { useLogsStore } from "./useLogsStore";
 
 const resetConnection = () => useConnectionStore.getState().resetConnectionState();
 const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
@@ -33,6 +34,7 @@ const resetTraces = () => useTracesStore.getState().resetFilters();
 const resetUi = () => useUIStore.getState().resetUIState();
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
 const resetPageContext = () => usePageContextStore.getState().resetPageContext();
+const resetLogs = () => useLogsStore.getState().reset();
 
 export const storeResetters: ReadonlyArray<() => void> = [
   resetConnection,
@@ -44,6 +46,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetQuery,
   resetServices,
   resetTraces,
+  resetLogs,
   resetUi,
   resetApiConsole,
   resetPageContext,
@@ -63,10 +66,11 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
     reset: resetQuery,
   },
   {
-    label: "Observability filters (traces, metrics, fleet, profiling, services)",
+    label: "Observability filters (traces, metrics, logs, fleet, profiling, services)",
     reset: () => {
       resetTraces();
       resetExplorer();
+      resetLogs();
       resetFleet();
       resetProfiling();
       resetServices();

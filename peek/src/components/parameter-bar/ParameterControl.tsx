@@ -11,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import type { DashboardParameter } from "../../types";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import {
   buildPersesEsqlRequest,
   createPersesEsqlDatasource,
@@ -126,7 +127,7 @@ export default function ParameterControl({
               onChange(parsed.value);
             }}
             displayEmpty
-            sx={{ height: 28, fontSize: "0.75rem" }}
+            sx={{ height: COMPONENT_HEIGHTS.input, fontSize: "0.75rem" }}
           >
             {currentValueInput &&
               !options.some(

@@ -14,7 +14,6 @@ describe("useExplorerStore", () => {
       selectedMetric: "system.cpu.total.pct",
       filters: [{ field: "host.name", op: "==", value: "web-01" }],
       groupBy: "host.name",
-      queryResult: { status: "success", esql: "FROM metrics-* | LIMIT 1" },
     });
 
     useExplorerStore.getState().setIndexPattern("logs-*");
@@ -25,6 +24,5 @@ describe("useExplorerStore", () => {
     expect(next.fields).toEqual([]);
     expect(next.filters).toEqual([]);
     expect(next.groupBy).toBeNull();
-    expect(next.queryResult).toEqual({ status: "idle" });
   });
 });
