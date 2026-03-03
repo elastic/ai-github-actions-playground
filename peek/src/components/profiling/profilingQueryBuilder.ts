@@ -74,7 +74,8 @@ export function buildProfilingFlamescopeQuery(filters: ProfilingFilters): string
 
 function buildLookupQuery(index: string, ids: string[]): string {
   if (ids.length === 0) {
-    return `FROM ${index} METADATA _id | WHERE _id IN ("")`;
+    // Empty IDs should never return documents.
+    return `FROM ${index} METADATA _id | WHERE 1 == 0`;
   }
   return `FROM ${index} METADATA _id | WHERE _id IN (${quoteList(ids)})`;
 }

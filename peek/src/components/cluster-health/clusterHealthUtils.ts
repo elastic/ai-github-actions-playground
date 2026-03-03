@@ -66,12 +66,12 @@ export interface ThreadPoolRejection {
   rejected: number;
 }
 
-export const MONITORED_THREAD_POOLS = ["write", "search", "get"];
+export const MONITORED_THREAD_POOLS = ["write", "search", "get"] as const;
 
 /** Aggregate thread pool rejections across nodes. */
 export function getThreadPoolRejections(
   nodes: Record<string, NodeStatsNode> | undefined,
-  pools: string[] = MONITORED_THREAD_POOLS,
+  pools: readonly string[] = MONITORED_THREAD_POOLS,
 ): ThreadPoolRejection[] {
   if (!nodes) return [];
   const results: ThreadPoolRejection[] = [];
@@ -89,7 +89,7 @@ export function getThreadPoolRejections(
 /** Sum total rejections across all nodes and pools. */
 export function totalThreadPoolRejections(
   nodes: Record<string, NodeStatsNode> | undefined,
-  pools: string[] = MONITORED_THREAD_POOLS,
+  pools: readonly string[] = MONITORED_THREAD_POOLS,
 ): number {
   return getThreadPoolRejections(nodes, pools).reduce((sum, r) => sum + r.rejected, 0);
 }
@@ -97,7 +97,7 @@ export function totalThreadPoolRejections(
 /** Sum rejections for a single node across monitored pools. */
 export function nodeThreadPoolRejections(
   node: NodeStatsNode,
-  pools: string[] = MONITORED_THREAD_POOLS,
+  pools: readonly string[] = MONITORED_THREAD_POOLS,
 ): number {
   return pools.reduce((sum, p) => sum + (node.thread_pool?.[p]?.rejected ?? 0), 0);
 }
@@ -112,12 +112,12 @@ export interface CircuitBreakerTrip {
   tripped: number;
 }
 
-export const MONITORED_BREAKERS = ["parent", "fielddata", "request", "in_flight_requests"];
+export const MONITORED_BREAKERS = ["parent", "fielddata", "request", "in_flight_requests"] as const;
 
 /** Aggregate circuit breaker trips across nodes. */
 export function getCircuitBreakerTrips(
   nodes: Record<string, NodeStatsNode> | undefined,
-  breakerNames: string[] = MONITORED_BREAKERS,
+  breakerNames: readonly string[] = MONITORED_BREAKERS,
 ): CircuitBreakerTrip[] {
   if (!nodes) return [];
   const results: CircuitBreakerTrip[] = [];
@@ -135,7 +135,7 @@ export function getCircuitBreakerTrips(
 /** Sum total breaker trips across all nodes. */
 export function totalCircuitBreakerTrips(
   nodes: Record<string, NodeStatsNode> | undefined,
-  breakerNames: string[] = MONITORED_BREAKERS,
+  breakerNames: readonly string[] = MONITORED_BREAKERS,
 ): number {
   return getCircuitBreakerTrips(nodes, breakerNames).reduce((sum, t) => sum + t.tripped, 0);
 }
@@ -143,7 +143,7 @@ export function totalCircuitBreakerTrips(
 /** Sum breaker trips for a single node across monitored breakers. */
 export function nodeCircuitBreakerTrips(
   node: NodeStatsNode,
-  breakerNames: string[] = MONITORED_BREAKERS,
+  breakerNames: readonly string[] = MONITORED_BREAKERS,
 ): number {
   return breakerNames.reduce((sum, b) => sum + (node.breakers?.[b]?.tripped ?? 0), 0);
 }

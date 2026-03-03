@@ -1,6 +1,6 @@
 import type { EsqlColumn, EsqlResponse } from "../../types";
 
-import { DATE_TYPES, NUMERIC_TYPES } from "./esFieldTypes";
+import { DATE_TYPES, NUMERIC_TYPES, STRING_TYPES } from "./esFieldTypes";
 
 const TIMESTAMP_FIELD = "@timestamp";
 
@@ -14,7 +14,7 @@ export function findDateColumnIndex(data: EsqlResponse): number {
 
 export function findStringColumnIndices(data: EsqlResponse): number[] {
   return data.columns
-    .map((column, index) => (column.type === "keyword" || column.type === "text" ? index : -1))
+    .map((column, index) => (STRING_TYPES.has(column.type) ? index : -1))
     .filter((index) => index >= 0);
 }
 

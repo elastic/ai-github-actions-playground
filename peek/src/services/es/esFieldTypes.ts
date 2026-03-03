@@ -39,3 +39,5 @@ export const KEYWORD_TYPES = new Set([
   "boolean",
   "version",
 ]);
+
+export const STRING_TYPES = new Set(["keyword", "text"]);

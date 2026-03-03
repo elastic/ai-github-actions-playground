@@ -282,6 +282,14 @@ describe("nodeThreadPoolRejections", () => {
     const node = { name: "node-a" };
     expect(nodeThreadPoolRejections(node)).toBe(0);
   });
+
+  it("uses custom pools when provided", () => {
+    const node = {
+      name: "node-a",
+      thread_pool: { write: { rejected: 5 }, search: { rejected: 3 }, get: { rejected: 1 } },
+    };
+    expect(nodeThreadPoolRejections(node, ["write"])).toBe(5);
+  });
 });
 
 describe("nodeCircuitBreakerTrips", () => {

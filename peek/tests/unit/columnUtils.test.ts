@@ -43,6 +43,28 @@ describe("findDateColumnIndex", () => {
     };
     expect(findDateColumnIndex(data)).toBe(-1);
   });
+
+  it("finds @timestamp even when typed as keyword", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "count", type: "long" },
+        { name: "@timestamp", type: "keyword" },
+      ],
+      values: [],
+    };
+    expect(findDateColumnIndex(data)).toBe(1);
+  });
+
+  it("finds @timestamp when typed as date", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "count", type: "long" },
+        { name: "@timestamp", type: "date" },
+      ],
+      values: [],
+    };
+    expect(findDateColumnIndex(data)).toBe(1);
+  });
 });
 
 describe("findStringColumnIndices", () => {
@@ -78,5 +100,16 @@ describe("findNumericColumnIndices", () => {
       values: [],
     };
     expect(findNumericColumnIndices(data)).toEqual([1, 2]);
+  });
+
+  it("returns empty array when no numeric columns", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "ts", type: "date" },
+        { name: "name", type: "keyword" },
+      ],
+      values: [],
+    };
+    expect(findNumericColumnIndices(data)).toEqual([]);
   });
 });
