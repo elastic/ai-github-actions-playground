@@ -6,7 +6,11 @@ import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
-import { useFleetStore, type FleetViewTab, type AgentFilter } from "../store/useFleetStore";
+import {
+  usePageFiltersStore,
+  type FleetViewTab,
+  type AgentFilter,
+} from "../store/usePageFiltersStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { useFleetData } from "../hooks/useFleetData";
 
@@ -35,12 +39,12 @@ type AgentFilterUpdates = Partial<AgentFilter>;
 export default function FleetPage() {
   const navigate = useNavigate();
 
-  const activeTab = useFleetStore((s) => s.activeTab);
-  const autoRefreshEnabled = useFleetStore((s) => s.autoRefreshEnabled);
-  const setActiveTab = useFleetStore((s) => s.setActiveTab);
-  const setAutoRefreshEnabled = useFleetStore((s) => s.setAutoRefreshEnabled);
-  const updateAgentFilter = useFleetStore((s) => s.updateAgentFilter);
-  const resetFilters = useFleetStore((s) => s.resetFilters);
+  const activeTab = usePageFiltersStore((s) => s.fleetActiveTab);
+  const autoRefreshEnabled = usePageFiltersStore((s) => s.fleetAutoRefreshEnabled);
+  const setActiveTab = usePageFiltersStore((s) => s.setFleetActiveTab);
+  const setAutoRefreshEnabled = usePageFiltersStore((s) => s.setFleetAutoRefreshEnabled);
+  const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
+  const resetFilters = usePageFiltersStore((s) => s.resetFleetFilters);
 
   const {
     data: {

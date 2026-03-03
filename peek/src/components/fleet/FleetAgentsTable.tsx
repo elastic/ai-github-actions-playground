@@ -14,7 +14,7 @@ import Stack from "@mui/material/Stack";
 
 import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness } from "../../services/fleet";
-import { useFleetStore } from "../../store/useFleetStore";
+import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 
 import { stalenessSeverityToColor } from "./fleetPresentation";
 
@@ -24,9 +24,9 @@ interface Props {
 }
 
 export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
-  const agentFilter = useFleetStore((s) => s.agentFilter);
-  const updateAgentFilter = useFleetStore((s) => s.updateAgentFilter);
-  const resetFilters = useFleetStore((s) => s.resetFilters);
+  const agentFilter = usePageFiltersStore((s) => s.agentFilter);
+  const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
+  const resetFilters = usePageFiltersStore((s) => s.resetFleetFilters);
 
   const uniqueVersions = useMemo(() => {
     const versions = new Set(agents.map((a) => a.version));

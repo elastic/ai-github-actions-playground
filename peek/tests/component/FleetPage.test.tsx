@@ -7,7 +7,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import FleetAgentPage from "../../src/components/FleetAgentPage";
 import FleetPage from "../../src/components/FleetPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { useFleetStore } from "../../src/store/useFleetStore";
+import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const rawRequestMock = vi.fn();
@@ -195,19 +195,9 @@ describe("Fleet pages", () => {
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
     // Reset fleet store
-    useFleetStore.setState({
-      serverStatus: null,
-      agentVersions: [],
-      outputHealth: [],
-      agentInventory: [],
-      agentInventoryTotal: 0,
-      actions: [],
-      actionResults: [],
-      activeTab: "overview",
+    usePageFiltersStore.setState({
+      fleetActiveTab: "overview",
       agentFilter: { search: "", version: null, hasErrors: false, staleness: null },
-      loading: false,
-      error: null,
-      partialErrors: [],
     });
   });
 
@@ -613,8 +603,8 @@ describe("Fleet pages", () => {
     });
 
     // Set staleness to "stale" via store
-    useFleetStore.setState({
-      activeTab: "agents",
+    usePageFiltersStore.setState({
+      fleetActiveTab: "agents",
       agentFilter: { search: "", version: null, hasErrors: false, staleness: "stale" },
     });
 

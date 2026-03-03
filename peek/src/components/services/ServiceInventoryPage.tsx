@@ -10,7 +10,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { useServicesStore } from "../../store/useServicesStore";
+import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 import { PAGE_MANIFEST } from "../../routes/manifest";
@@ -28,16 +28,15 @@ import ServiceInventoryTable from "./ServiceInventoryTable";
 export default function ServiceInventoryPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((s) => s.connection);
-  const { filters, searchResult, updateFilters, setSearchResult, resetFilters } = useServicesStore(
+  const { filters, updateFilters, resetFilters } = usePageFiltersStore(
     useShallow((s) => ({
-      filters: s.filters,
-      searchResult: s.searchResult,
-      updateFilters: s.updateFilters,
-      setSearchResult: s.setSearchResult,
-      resetFilters: s.resetFilters,
+      filters: s.serviceFilters,
+      updateFilters: s.updateServiceFilters,
+      resetFilters: s.resetServiceFilters,
     })),
   );
 
+  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
@@ -84,6 +83,7 @@ export default function ServiceInventoryPage() {
     if (loading) return;
     latestQueryRef.current = null;
     clearError();
+    setSearchResult(null);
     resetFilters();
   }, [clearError, resetFilters, loading]);
 
