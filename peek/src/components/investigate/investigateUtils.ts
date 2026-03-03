@@ -96,23 +96,6 @@ export function parseTimelineEvents(data: EsqlResponse): TimelineEvent[] {
   }));
 }
 
-/** Format an ISO timestamp to a compact locale string. */
-export function formatTimestamp(iso: string): string {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
 /** Build an LLM-ready text prompt summarising the timeline events. */
 export function buildSummaryPrompt(
   events: TimelineEvent[],

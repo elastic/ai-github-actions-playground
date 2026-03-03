@@ -5,7 +5,6 @@ import {
   buildRecentEntitiesQuery,
   parseRecentEntities,
   parseTimelineEvents,
-  formatTimestamp,
   buildSummaryPrompt,
 } from "../../src/components/investigate/investigateUtils";
 import type { EsqlResponse } from "../../src/types";
@@ -184,24 +183,6 @@ describe("parseTimelineEvents", () => {
     const result = parseTimelineEvents(response);
     expect(result[0]!.category).toBe("");
     expect(result[0]!.userName).toBe("");
-  });
-});
-
-describe("formatTimestamp", () => {
-  it("formats a valid ISO timestamp", () => {
-    const result = formatTimestamp("2024-01-15T10:30:00Z");
-    expect(result).toBeTruthy();
-    expect(result.length).toBeGreaterThan(0);
-  });
-
-  it("returns empty string for empty input", () => {
-    expect(formatTimestamp("")).toBe("");
-  });
-
-  it("returns a fallback for invalid dates", () => {
-    const result = formatTimestamp("not-a-date");
-    expect(typeof result).toBe("string");
-    expect(result.length).toBeGreaterThan(0);
   });
 });
 
