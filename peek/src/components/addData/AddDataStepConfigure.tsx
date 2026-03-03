@@ -2,6 +2,7 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import type { ReactNode } from "react";
 
 import type { AddDataTechnologyCatalogEntry } from "../../services/addData/catalog";
 import type { EndpointType, Platform } from "../../utils/addDataUtils";
@@ -78,16 +79,10 @@ export default function AddDataStepConfigure({
     (guideType === "aws_cloud_deploy" && Boolean(selectedAwsTarget)) ||
     (guideType === "apm" && Boolean(selectedApmLanguage));
 
-  return (
-    <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
-      <Typography variant="h6">Step 2: {guideDef.step2Label}</Typography>
-      <Typography variant="body2" color="text.secondary">
-        {selectedTechnology
-          ? `${selectedTechnology.technology} can emit ${signalExpectation}.`
-          : "Choose endpoint and platform options for your deployment."}
-      </Typography>
-
-      {guideType === "edot_collector" && (
+  let configureContent: ReactNode;
+  switch (guideType) {
+    case "edot_collector":
+      configureContent = (
         <EdotCollectorConfigure
           endpointType={endpointType}
           onEndpointTypeChange={onEndpointTypeChange}
@@ -97,33 +92,54 @@ export default function AddDataStepConfigure({
           platform={platform}
           onPlatformChange={onPlatformChange}
         />
-      )}
-
-      {guideType === "otel_receiver" && receiver && (
+      );
+      break;
+    case "otel_receiver":
+      configureContent = receiver ? (
         <OtelReceiverConfigure
           receiver={receiver}
           fieldValues={receiverFieldValues}
           onFieldValuesChange={onReceiverFieldValuesChange}
         />
-      )}
-
-      {guideType === "aws_cloud_deploy" && (
+      ) : null;
+      break;
+    case "aws_cloud_deploy":
+      configureContent = (
         <AwsDeployConfigure selectedTarget={selectedAwsTarget} onSelectTarget={onSelectAwsTarget} />
-      )}
-
-      {guideType === "apm" && (
+      );
+      break;
+    case "apm":
+      configureContent = (
         <ApmConfigure
           selectedLanguage={selectedApmLanguage}
           onSelectLanguage={onSelectApmLanguage}
         />
-      )}
-
-      {guideType === "fluent_bit" && (
+      );
+      break;
+    case "fluent_bit":
+      configureContent = (
         <FluentBitConfigure
           outputMode={fluentBitOutputMode}
           onOutputModeChange={onFluentBitOutputModeChange}
         />
-      )}
+      );
+      break;
+    default: {
+      const _exhaustiveCheck: never = guideType;
+      configureContent = _exhaustiveCheck;
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
+      <Typography variant="h6">Step 2: {guideDef.step2Label}</Typography>
+      <Typography variant="body2" color="text.secondary">
+        {selectedTechnology
+          ? `${selectedTechnology.technology} can emit ${signalExpectation}.`
+          : "Choose endpoint and platform options for your deployment."}
+      </Typography>
+
+      {configureContent}
 
       <Stack direction="row" justifyContent="space-between">
         <Button variant="outlined" onClick={onBack}>

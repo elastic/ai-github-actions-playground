@@ -27,6 +27,7 @@ export default function FluentBitConfigure({
             <ButtonBase
               key={config.mode}
               onClick={() => onOutputModeChange(config.mode)}
+              aria-pressed={isSelected}
               sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
             >
               <Paper

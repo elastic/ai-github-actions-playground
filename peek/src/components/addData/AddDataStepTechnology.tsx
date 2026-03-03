@@ -69,6 +69,7 @@ function TechnologyCard({
   return (
     <ButtonBase
       onClick={onClick}
+      aria-pressed={selected}
       sx={{ display: "block", width: "100%", borderRadius: 1, textAlign: "left" }}
     >
       <Paper
@@ -224,7 +225,7 @@ export default function AddDataStepTechnology({
             variant={activeCategory === category ? "filled" : "outlined"}
             color={activeCategory === category ? "primary" : "default"}
             onClick={() => onActiveCategoryChange(category)}
-            aria-current={activeCategory === category ? true : undefined}
+            aria-pressed={activeCategory === category}
             sx={{ cursor: "pointer" }}
           />
         ))}

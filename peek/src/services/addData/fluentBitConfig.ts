@@ -53,7 +53,7 @@ export function generateFluentBitConfig(opts: {
     Host              ${host}
     Port              ${port}
     Tls               ${tls}
-    Header            Authorization Bearer ${opts.apiKey}
+    Header            Authorization ApiKey ${opts.apiKey}
 `;
   }
 

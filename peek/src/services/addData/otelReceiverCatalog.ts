@@ -79,8 +79,8 @@ processors:
 
 exporters:
   elasticsearch:
-    endpoints: ["${opts.esUrl}"]
-    api_key: "${opts.apiKey}"
+    endpoints: ["${escapeYamlValue(opts.esUrl)}"]
+    api_key: "${escapeYamlValue(opts.apiKey)}"
 
 service:
   pipelines:
@@ -109,7 +109,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
     nginx:
       endpoint: "{{endpoint}}"
       collection_interval: 10s`,
-    signals: ["metrics", "logs"],
+    signals: ["metrics"],
   },
   {
     receiverId: "postgresql",

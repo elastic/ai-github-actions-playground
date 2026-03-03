@@ -16,8 +16,8 @@ export const APM_LANGUAGE_CATALOG: readonly ApmLanguageDefinition[] = [
     languageId: "java",
     label: "Java",
     installCommand: `# Download the Elastic APM Java agent
-curl -o elastic-apm-agent.jar \\
-  https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/LATEST/elastic-apm-agent-LATEST.jar`,
+curl -L -o elastic-apm-agent.jar \\
+  'https://oss.sonatype.org/service/local/artifact/maven/redirect?r=releases&g=co.elastic.apm&a=elastic-apm-agent&v=LATEST'`,
     initSnippet: `# Add JVM flags to your application startup
 java -javaagent:elastic-apm-agent.jar \\
   -Delastic.apm.service_name=my-service \\

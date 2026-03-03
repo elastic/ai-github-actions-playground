@@ -24,6 +24,7 @@ export default function ApmConfigure({ selectedLanguage, onSelectLanguage }: Apm
             <ButtonBase
               key={lang.languageId}
               onClick={() => onSelectLanguage(lang)}
+              aria-pressed={isSelected}
               sx={{ borderRadius: 1 }}
             >
               <Paper
