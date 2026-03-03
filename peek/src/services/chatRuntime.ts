@@ -261,7 +261,7 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
       execute: async ({ pipeline_name, sample_doc }) => {
         const normalizedPipelineName = pipeline_name.trim();
         if (!normalizedPipelineName) {
-          throw new Error("pipeline_name must not be empty");
+          throw new Error("Pipeline name must not be empty");
         }
         const client = new ElasticsearchClient(connection);
         return runWithToolTimeout(async (signal) => {

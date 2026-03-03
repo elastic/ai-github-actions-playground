@@ -33,6 +33,11 @@ describe("profilingQueryBuilder", () => {
     expect(buildStackframeLookupQuery(["f1"])).toContain('_id IN ("f1")');
   });
 
+  it("builds no-results lookup queries for empty ids", () => {
+    expect(buildStacktraceLookupQuery([])).toContain("WHERE 1 == 0");
+    expect(buildStackframeLookupQuery([])).toContain("WHERE 1 == 0");
+  });
+
   it("builds timeline query and top functions request", () => {
     const timeline = buildProfilingTimelineQuery(EMPTY_FILTERS);
     expect(timeline).toContain("BUCKET(@timestamp, 50, NOW() - 1 hour, NOW())");

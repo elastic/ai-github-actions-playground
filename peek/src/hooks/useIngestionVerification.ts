@@ -49,7 +49,7 @@ export function useIngestionVerification(): IngestionVerificationResult {
   const query = useQuery({
     queryKey: ["ingestion-verify", connection?.url],
     queryFn: async ({ signal }): Promise<Set<TelemetrySignal>> => {
-      if (!connection) throw new Error("No connection");
+      if (!connection) throw new Error("No active Elasticsearch connection");
       const client = new ElasticsearchClient(connection);
       return detectTelemetrySignals(client, signal);
     },
