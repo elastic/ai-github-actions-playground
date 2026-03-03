@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -218,7 +218,7 @@ describe("InvestigatePage", () => {
     await screen.findByText("verification_exception");
   });
 
-  it("shows LLM summary prompt section when events are found", async () => {
+  it("does not show AI insight section when no LLM key is configured", async () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
@@ -233,8 +233,11 @@ describe("InvestigatePage", () => {
     await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
     await user.click(screen.getByRole("button", { name: /search/i }));
 
-    await screen.findByText("LLM Summary");
-    expect(screen.getByRole("button", { name: /copy prompt to clipboard/i })).toBeInTheDocument();
+    await screen.findByText(/2 events found/i);
+    expect(screen.queryByText("LLM Summary")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy prompt to clipboard/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows category and data source breakdowns", async () => {
@@ -312,5 +315,27 @@ describe("InvestigatePage", () => {
     await screen.findByText("Recent users");
     expect(screen.getByText("admin (42)")).toBeInTheDocument();
     expect(screen.getByText("guest (18)")).toBeInTheDocument();
+  });
+
+  it("shows a circular spinner inside the search button while loading", async () => {
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockReturnValueOnce(new Promise(() => {}));
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <InvestigatePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
+    const searchButton = screen.getByRole("button", { name: /search/i });
+    await user.click(searchButton);
+
+    const progressBar = await within(searchButton).findByRole("progressbar");
+    expect(progressBar).toBeInTheDocument();
+    expect(progressBar).toHaveClass("MuiCircularProgress-root");
+    expect(searchButton).toHaveTextContent(/search/i);
   });
 });

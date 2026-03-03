@@ -26,7 +26,12 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import ChatIcon from "@mui/icons-material/Chat";
 import { useShallow } from "zustand/react/shallow";
 
-import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
+import {
+  PAGE_MANIFEST,
+  isHiddenByCapability,
+  type PageId,
+  type PageConfig,
+} from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
@@ -51,6 +56,7 @@ function useCommands(): Command[] {
   const location = useLocation();
   const {
     connected,
+    capabilities,
     connectionProfiles,
     activeProfileId,
     switchConnectionProfile,
@@ -58,6 +64,7 @@ function useCommands(): Command[] {
   } = useConnectionStore(
     useShallow((s) => ({
       connected: s.connected,
+      capabilities: s.capabilities,
       connectionProfiles: s.connectionProfiles,
       activeProfileId: s.activeProfileId,
       switchConnectionProfile: s.switchConnectionProfile,
@@ -94,12 +101,11 @@ function useCommands(): Command[] {
     const commands: Command[] = [];
 
     // Navigation commands from PAGE_MANIFEST
-    for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<
-      [PageId, (typeof PAGE_MANIFEST)[PageId]]
-    >) {
+    for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<[PageId, PageConfig]>) {
       if (!config.nav.showInSidebar) continue;
       if (config.path.includes(":")) continue;
       if (config.requiresConnection && !connected) continue;
+      if (isHiddenByCapability(config.requiredCapability, capabilities)) continue;
       if (config.path === location.pathname) continue;
       commands.push({
         id: `nav:${page}`,
@@ -278,6 +284,7 @@ function useCommands(): Command[] {
     return commands;
   }, [
     connected,
+    capabilities,
     connectionProfiles,
     activeProfileId,
     location.pathname,

@@ -258,7 +258,11 @@ export default function TraceSearchPanel({
             "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root.MuiInputBase-root": {
               height: "auto",
               minHeight: TOOLBAR_CONTROL_HEIGHT,
-              paddingBlock: "4px",
+              paddingBlock: 0,
+            },
+            "& .MuiOutlinedInput-input": {
+              boxSizing: "border-box",
+              height: TOOLBAR_CONTROL_HEIGHT,
             },
             "& .MuiOutlinedInput-notchedOutline": { top: 0 },
             "& .MuiOutlinedInput-root.MuiInputBase-root": { height: TOOLBAR_CONTROL_HEIGHT },
@@ -297,7 +301,7 @@ export default function TraceSearchPanel({
               "& .MuiInputBase-root.MuiOutlinedInput-root": {
                 height: "auto",
                 minHeight: TOOLBAR_CONTROL_HEIGHT,
-                paddingBlock: "4px",
+                paddingBlock: 0,
               },
             }}
           />
