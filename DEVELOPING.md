@@ -228,7 +228,8 @@ They do NOT run pre-written test suites — deterministic E2E tests run in CI.
 | Query Lab & Console | ES\|QL queries, result tables, API Console | `explore-query-lab.yml` |
 | Indices, Data Streams & Pipelines | Table sorting, detail views, data management | `explore-data-management.yml` |
 | Dashboards | Dashboard list, panel rendering, time range, drill-down | `explore-dashboards.yml` |
-| Fleet & Add Data | Fleet agent list, Add Data 5-step EDOT wizard | `explore-fleet-add-data.yml` |
+| Fleet | Fleet agent list, details view, search/sort, status badges, empty state checks | `explore-fleet-add-data.yml` |
+| Add Data Wizard | Comprehensive wizard: all 6 technologies, 5 platforms, 2 endpoint types, all 5 steps | `explore-add-data.yml` |
 | Mobile Responsiveness | Mobile viewport layout, tap targets, responsive breakpoints | `explore-mobile.yml` |
 | Live Elasticsearch | All pages with real OTel data and a real cluster | `explore-live-es.yml` |
 | Customer: Feature Gap Review | Missing features, feature requests, comparison to Kibana/Grafana/Elasticvue | `explore-customer-feedback.yml` |
