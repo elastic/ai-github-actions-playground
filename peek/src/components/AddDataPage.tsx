@@ -19,11 +19,12 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 
-import { ElasticsearchClient, isElasticsearchError } from "../services/es";
+import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
+import { useIngestionVerification } from "../hooks/useIngestionVerification";
 import {
   deriveIngestCandidates,
   detectTelemetrySignals,
@@ -37,7 +38,6 @@ import type { EndpointType, Platform, TelemetrySignal } from "../utils/addDataUt
 import PageHeader from "./PageHeader";
 
 const SIGNAL_PREFIXES: TelemetrySignal[] = ["logs", "metrics", "traces"];
-const AUTO_POLL_INTERVAL_MS = 5_000;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -86,23 +86,26 @@ export default function AddDataPage() {
   const ingestCandidates = useMemo(
     () =>
       connection?.ingestUrl?.trim() ? [connection.ingestUrl.trim()] : deriveIngestCandidates(esUrl),
-    [connection?.ingestUrl, esUrl],
+    [connection, esUrl],
   );
   const [derivedOtlpUrl, setDerivedOtlpUrl] = useState<string | null>(null);
   const probeTargetOtlpUrl = derivedOtlpUrl ?? ingestCandidates[0] ?? null;
   const otlpUrl = derivedOtlpUrl ?? "<YOUR_OTLP_ENDPOINT>";
 
-  // Probe the derived OTLP ingest endpoint; auto-select OTLP when reachable
-  useEffect(() => {
-    if (ingestCandidates.length === 0) {
-      setDerivedOtlpUrl(null);
-      setIngestAvailable(null);
-      return;
-    }
-    let cancelled = false;
-    endpointTypeManuallySetRef.current = false;
+  // Reset derived OTLP state when ingest candidates change — use a derived
+  // key comparison to avoid calling setState inside an effect synchronously.
+  const [prevCandidatesKey, setPrevCandidatesKey] = useState(ingestCandidates);
+  if (ingestCandidates !== prevCandidatesKey) {
+    setPrevCandidatesKey(ingestCandidates);
     setDerivedOtlpUrl(null);
     setIngestAvailable(null);
+  }
+
+  // Probe the derived OTLP ingest endpoint; auto-select OTLP when reachable
+  useEffect(() => {
+    if (ingestCandidates.length === 0) return;
+    let cancelled = false;
+    endpointTypeManuallySetRef.current = false;
     (async () => {
       let firstReachable: string | null = null;
       for (const candidate of ingestCandidates) {
@@ -183,86 +186,13 @@ export default function AddDataPage() {
     };
   }, [connection]);
 
-  // ---- Ingestion verification with auto-polling ----
-  type VerifyStatus = "idle" | "checking" | "polling" | "found" | "not_found" | "error";
-  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>("idle");
-  const [foundSignals, setFoundSignals] = useState<Set<TelemetrySignal>>(new Set());
-  const [verifyError, setVerifyError] = useState<string | null>(null);
-  const verifyAbortControllerRef = useRef<AbortController | null>(null);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // ---- Ingestion verification with auto-polling (via React Query) ----
+  const { verifyStatus, foundSignals, verifyError, handleVerifyIngestion, startPolling } =
+    useIngestionVerification();
 
-  const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current !== null) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  }, []);
-
+  // Auto-start polling when API key is generated
   useEffect(() => {
-    return () => {
-      verifyAbortControllerRef.current?.abort();
-      stopPolling();
-    };
-  }, [stopPolling]);
-
-  useEffect(() => {
-    verifyAbortControllerRef.current?.abort();
-    verifyAbortControllerRef.current = null;
-    stopPolling();
-    setVerifyStatus("idle");
-    setFoundSignals(new Set());
-    setVerifyError(null);
-  }, [connection, stopPolling]);
-
-  const runVerifyOnce = useCallback(async () => {
-    if (!connection) return;
-    verifyAbortControllerRef.current?.abort();
-    const controller = new AbortController();
-    verifyAbortControllerRef.current = controller;
-    try {
-      const client = new ElasticsearchClient(connection);
-      const signals = await detectTelemetrySignals(client, controller.signal);
-      if (controller.signal.aborted) return;
-      setFoundSignals(signals);
-      if (signals.size > 0) {
-        setVerifyStatus("found");
-        stopPolling();
-      } else {
-        setVerifyStatus("polling");
-      }
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      setVerifyError(isElasticsearchError(err) ? err.message : String(err));
-      setVerifyStatus("error");
-      stopPolling();
-    } finally {
-      if (verifyAbortControllerRef.current === controller) {
-        verifyAbortControllerRef.current = null;
-      }
-    }
-  }, [connection, stopPolling]);
-
-  const startPolling = useCallback(() => {
-    stopPolling();
-    setVerifyStatus("polling");
-    setVerifyError(null);
-    void runVerifyOnce();
-    pollIntervalRef.current = setInterval(() => {
-      void runVerifyOnce();
-    }, AUTO_POLL_INTERVAL_MS);
-  }, [stopPolling, runVerifyOnce]);
-
-  const handleVerifyIngestion = useCallback(() => {
-    setVerifyStatus("checking");
-    startPolling();
-  }, [startPolling]);
-
-  // Auto-start polling when API key is generated or command is copied
-  const hasTriggeredPolling = useRef(false);
-  useEffect(() => {
-    if (hasTriggeredPolling.current) return;
     if (apiKeyValue && verifyStatus === "idle") {
-      hasTriggeredPolling.current = true;
       startPolling();
     }
   }, [apiKeyValue, verifyStatus, startPolling]);

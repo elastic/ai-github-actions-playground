@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
@@ -14,15 +14,11 @@ import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useExplorerStore } from "../store/useExplorerStore";
-import {
-  ElasticsearchClient,
-  isElasticsearchError,
-  listFields,
-  buildExplorerQuery,
-} from "../services/es";
+import { ElasticsearchClient } from "../services/es";
 import type { FieldInfo, ExplorerFilter } from "../services/es";
-import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse } from "../types";
+import { useExploreFields } from "../hooks/useExploreFields";
+import { useExploreQuery } from "../hooks/useExploreQuery";
 
 import ExploreControlsPanel from "./explore/ExploreControlsPanel";
 import ExploreContentArea from "./explore/ExploreContentArea";
@@ -35,6 +31,7 @@ import {
 
 export default function ExplorePage() {
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
+  const [dismissedError, setDismissedError] = useState<string | null>(null);
   const { dashboard, addPanel, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
       dashboard: s.dashboard,
@@ -57,62 +54,50 @@ export default function ExplorePage() {
     "filters",
     parseAsString.withOptions({ history: "replace" }),
   );
-  const initialSearchRef = useRef(location.search);
-  const initialUrlStateRef = useRef(urlState);
-  const initialUrlFiltersRef = useRef(urlFilters);
+  const [initialSearch] = useState(() => location.search);
+  const [initialUrlState] = useState(() => urlState);
+  const [initialUrlFilters] = useState(() => urlFilters);
 
   const {
     indexPattern,
-    fields,
-    fieldsLoading,
     selectedMetric,
     metricType,
     aggregation,
     filters,
     groupBy,
-    queryResult,
     showEsql,
     setIndexPattern,
-    setFields,
-    setFieldsLoading,
     setSelectedMetric,
     setAggregation,
     addFilter,
     removeFilter,
     clearFilters,
     setGroupBy,
-    setQueryResult,
     setShowEsql,
   } = useExplorerStore(
     useShallow((s) => ({
       indexPattern: s.indexPattern,
-      fields: s.fields,
-      fieldsLoading: s.fieldsLoading,
       selectedMetric: s.selectedMetric,
       metricType: s.metricType,
       aggregation: s.aggregation,
       filters: s.filters,
       groupBy: s.groupBy,
-      queryResult: s.queryResult,
       showEsql: s.showEsql,
       setIndexPattern: s.setIndexPattern,
-      setFields: s.setFields,
-      setFieldsLoading: s.setFieldsLoading,
       setSelectedMetric: s.setSelectedMetric,
       setAggregation: s.setAggregation,
       addFilter: s.addFilter,
       removeFilter: s.removeFilter,
       clearFilters: s.clearFilters,
       setGroupBy: s.setGroupBy,
-      setQueryResult: s.setQueryResult,
       setShowEsql: s.setShowEsql,
     })),
   );
 
   useExplorerUrlSync({
-    initialSearch: initialSearchRef.current,
-    initialUrlFilters: initialUrlFiltersRef.current,
-    initialUrlState: initialUrlStateRef.current,
+    initialSearch,
+    initialUrlFilters: initialUrlFilters,
+    initialUrlState,
     indexPattern,
     selectedMetric,
     aggregation,
@@ -131,7 +116,7 @@ export default function ExplorePage() {
     setUrlFilters,
   });
 
-  const abortRef = useRef<AbortController | null>(null);
+  const { fields, fieldsLoading } = useExploreFields(indexPattern);
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -154,28 +139,6 @@ export default function ExplorePage() {
   // Show dimension overview when a metric is selected but no groupBy is set yet.
   const showDimensionOverview = selectedMetric !== null && !groupBy && !skipDimensionOverview;
 
-  // Load fields when index pattern changes
-  useEffect(() => {
-    if (!client || !indexPattern) return;
-    let cancelled = false;
-
-    const loadFields = async () => {
-      setFieldsLoading(true);
-      try {
-        const result = await listFields(client, indexPattern);
-        if (!cancelled) setFields(result);
-      } catch {
-        if (!cancelled) setFields([]);
-      } finally {
-        if (!cancelled) setFieldsLoading(false);
-      }
-    };
-    void loadFields();
-    return () => {
-      cancelled = true;
-    };
-  }, [client, indexPattern, setFields, setFieldsLoading]);
-
   // Reconcile metric type after field metadata loads (important for URL hydration paths).
   useEffect(() => {
     if (!selectedMetricField) return;
@@ -185,67 +148,17 @@ export default function ExplorePage() {
     }
   }, [selectedMetricField, metricType, setSelectedMetric]);
 
-  // Run query when metric/aggregation/filters/groupBy/timeRange change
-  useEffect(() => {
-    if (!client || !selectedMetric || !indexPattern || showDimensionOverview) return;
-
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-    const signal = abortRef.current.signal;
-
-    const run = async () => {
-      const queryDef = buildExplorerQuery({
-        indexPattern,
-        metricField: selectedMetric,
-        metricType,
-        aggregation,
-        filters,
-        groupBy: groupBy ?? undefined,
-        timeRange: dashboard.timeRange,
-      });
-
-      setQueryResult({ status: "loading", esql: queryDef.esql });
-
-      try {
-        const params = buildTimeParams(queryDef.esql, dashboard.timeRange);
-        const result = await client.query(
-          Object.keys(params).length > 0
-            ? { query: queryDef.esql, params }
-            : { query: queryDef.esql },
-          signal,
-        );
-        setQueryResult({
-          status: "success",
-          esql: queryDef.esql,
-          data: result,
-          executionTimeMs: result.executionTimeMs,
-        });
-      } catch (err) {
-        if (signal.aborted) return;
-        setQueryResult({
-          status: "error",
-          esql: queryDef.esql,
-          error: isElasticsearchError(err) ? err.message : String(err),
-        });
-      }
-    };
-    void run();
-
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, [
-    client,
+  // Run query via React Query when metric/aggregation/filters/groupBy/timeRange change
+  const queryResult = useExploreQuery({
     indexPattern,
     selectedMetric,
-    showDimensionOverview,
     metricType,
     aggregation,
     filters,
     groupBy,
-    dashboard.timeRange,
-    setQueryResult,
-  ]);
+    timeRange: dashboard.timeRange,
+    enabled: Boolean(connection && selectedMetric && indexPattern && !showDimensionOverview),
+  });
 
   const handleMetricSelect = useCallback(
     (field: FieldInfo | null) => {
@@ -266,8 +179,7 @@ export default function ExplorePage() {
     setSelectedMetric(null);
     setGroupBy(null);
     setSkipDimensionOverview(false);
-    setQueryResult({ status: "idle" });
-  }, [setSelectedMetric, setGroupBy, setQueryResult]);
+  }, [setSelectedMetric, setGroupBy]);
 
   const handleDimensionSelect = useCallback(
     (dimensionField: string) => {
@@ -279,8 +191,7 @@ export default function ExplorePage() {
   const handleBackToDimensionOverview = useCallback(() => {
     setGroupBy(null);
     setSkipDimensionOverview(false);
-    setQueryResult({ status: "idle" });
-  }, [setGroupBy, setQueryResult]);
+  }, [setGroupBy]);
 
   const handleViewUngrouped = useCallback(() => {
     setSkipDimensionOverview(true);
@@ -359,18 +270,20 @@ export default function ExplorePage() {
       />
 
       {/* Error display */}
-      {queryResult.status === "error" && queryResult.error && (
-        <Alert
-          severity="error"
-          action={
-            <IconButton size="small" onClick={() => setQueryResult({ status: "idle" })}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          }
-        >
-          {queryResult.error}
-        </Alert>
-      )}
+      {queryResult.status === "error" &&
+        queryResult.error &&
+        queryResult.error !== dismissedError && (
+          <Alert
+            severity="error"
+            action={
+              <IconButton size="small" onClick={() => setDismissedError(queryResult.error ?? null)}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            }
+          >
+            {queryResult.error}
+          </Alert>
+        )}
 
       <ExploreContentArea
         fields={fields}
