@@ -8,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import type { Extension } from "@codemirror/state";
@@ -76,6 +77,7 @@ export default function SignalSearchPanel({
   editorHeight = DEFAULT_EDITOR_HEIGHT,
 }: SignalSearchPanelProps) {
   const [editorFocused, setEditorFocused] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
   const resultLabel = (count: number) => (count === 1 ? resultNoun.replace(/s$/, "") : resultNoun);
 
   const editorExtensions = useMemo(
@@ -195,7 +197,55 @@ export default function SignalSearchPanel({
                   editorFocused={editorFocused}
                   height={editorHeight}
                 />
+                {/* Explain Query button — bottom-right of the editor box */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    zIndex: 3,
+                    right: 8,
+                    bottom: 6,
+                  }}
+                >
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />}
+                    onClick={() => setExplainOpen((v) => !v)}
+                    sx={{
+                      minHeight: "unset",
+                      py: 0.5,
+                      px: 1,
+                      opacity: 0.75,
+                      lineHeight: 1.4,
+                      fontSize: "0.7rem",
+                      "&:hover": { opacity: 1 },
+                    }}
+                  >
+                    Explain Query
+                  </Button>
+                </Box>
               </Box>
+              <Collapse in={explainOpen}>
+                <Box
+                  sx={{
+                    py: 1,
+                    px: 1.5,
+                    borderTop: 1,
+                    borderColor: "divider",
+                    bgcolor: "action.hover",
+                  }}
+                >
+                  {explanation ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                      {explanation}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic" }}>
+                      Generating explanation… (requires an AI provider configured in Settings)
+                    </Typography>
+                  )}
+                </Box>
+              </Collapse>
             </Box>
 
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

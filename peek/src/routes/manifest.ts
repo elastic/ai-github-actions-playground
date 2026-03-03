@@ -138,7 +138,7 @@ export const PAGE_MANIFEST = {
     path: "/traces",
     component: TracesPage,
     requiresConnection: true,
-    showTimeControls: false,
+    showTimeControls: true,
     skeletonVariant: "table",
     nav: {
       label: "Traces",

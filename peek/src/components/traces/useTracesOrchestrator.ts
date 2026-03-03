@@ -6,10 +6,12 @@ import { parseAsString, useQueryState } from "nuqs";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
+import { useDashboardEditorStore } from "../../store/useDashboardEditorStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useUIStore } from "../../store/useUIStore";
 import type { EsqlResponse } from "../../types";
+import { toTraceTimeRange } from "../timePresets";
 
 import { parseSpansFromEsql, formatStatusLabel } from "./traceUtils";
 import type { Span } from "./traceUtils";
@@ -46,6 +48,14 @@ export function useTracesOrchestrator() {
   const resetFilters = useTracesStore((s) => s.resetFilters);
   const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
   const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
+
+  // Sync the global AppHeader time range into trace filters
+  const dashboardTimeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
+  useEffect(() => {
+    const { from, to } = toTraceTimeRange(dashboardTimeRange);
+    updateFilters({ timeFrom: from, timeTo: to });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardTimeRange]);
 
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
