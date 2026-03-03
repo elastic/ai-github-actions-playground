@@ -25,3 +25,5 @@ Click a span in the waterfall to open the Span Detail drawer. Use Filter By or E
 Click **Open in Query Lab** in the trace detail header to open Query Lab with a draft query scoped to the selected trace, using its trace ID, root span ID, and timestamp as context.
 
 If results are empty, verify that your Elasticsearch index contains OpenTelemetry-compatible span data and that the selected time range and service filters match existing data.
+
+For a high-level overview of service health, latency rankings, and error rates before diving into individual traces, see the Service Performance page in the sidebar.
