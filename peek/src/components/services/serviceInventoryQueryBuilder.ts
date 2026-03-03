@@ -52,7 +52,7 @@ export function buildServiceInventoryQuery(
       "error_message_key = CASE(is_error == 1, COALESCE(status.message, span_name_key), NULL), " +
       'language_key = COALESCE(service.language.name, "unknown"), ' +
       'environment_key = COALESCE(service.environment, deployment.environment, "unknown"), ' +
-      'version_key = COALESCE(service.version, "unknown")',
+      `version_key = CASE(${fields.serviceVersion} IS NULL OR TRIM(${fields.serviceVersion}) == "", "unknown", ${fields.serviceVersion})`,
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error), unique_routes = COUNT_DISTINCT(route_key), unique_span_names = COUNT_DISTINCT(span_name_key), top_route = TOP(route_key, 1, "desc"), top_span_name = TOP(span_name_key, 1, "desc"), top_error = TOP(error_message_key, 1, "desc"), language = TOP(language_key, 1, "desc"), environment = TOP(environment_key, 1, "desc"), version = TOP(version_key, 1, "desc"), unique_versions = COUNT_DISTINCT(version_key) BY ${fields.serviceName}`,
     `EVAL error_rate = error_count / request_count`,
     `SORT request_count DESC`,

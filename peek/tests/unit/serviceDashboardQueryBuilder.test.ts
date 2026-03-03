@@ -123,12 +123,14 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain('service.name == "my-service"');
       expect(query).toContain("@timestamp >= NOW() - 1 hour");
       expect(query).toContain("@timestamp <= NOW()");
-      expect(query).toContain('version_key = COALESCE(service.version, "unknown")');
+      expect(query).toContain(
+        "version_key = CASE(service.version IS NULL OR TRIM(service.version)",
+      );
       expect(query).toContain("STATS first_seen = MIN(@timestamp)");
       expect(query).toContain("last_seen = MAX(@timestamp)");
       expect(query).toContain("request_count = COUNT(*)");
       expect(query).toContain("BY version_key");
-      expect(query).toContain("SORT first_seen DESC");
+      expect(query).toContain("SORT last_seen DESC");
     });
 
     it("escapes special characters in service name", () => {

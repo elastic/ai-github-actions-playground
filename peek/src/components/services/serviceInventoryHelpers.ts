@@ -51,7 +51,7 @@ export function parseServiceRows(result: EsqlResponse): ServiceRow[] {
     language: parseTopValue(get(row, "language"), "unknown"),
     environment: parseTopValue(get(row, "environment"), "unknown"),
     version: parseTopValue(get(row, "version"), "unknown"),
-    uniqueVersions: Number(get(row, "unique_versions") ?? 0),
+    uniqueVersions: toFiniteNumber(get(row, "unique_versions")),
   }));
 }
 

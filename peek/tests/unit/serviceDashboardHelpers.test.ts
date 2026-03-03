@@ -237,5 +237,37 @@ describe("serviceDashboardHelpers", () => {
         requestCount: 0,
       });
     });
+
+    it("treats empty and whitespace-only version as 'unknown'", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "version_key", type: "keyword" },
+          { name: "first_seen", type: "date" },
+          { name: "last_seen", type: "date" },
+          { name: "request_count", type: "long" },
+        ],
+        values: [
+          ["", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 10],
+          ["  ", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 20],
+        ],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows[0]!.version).toBe("unknown");
+      expect(rows[1]!.version).toBe("unknown");
+    });
+
+    it("handles malformed numeric request_count values", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "version_key", type: "keyword" },
+          { name: "first_seen", type: "date" },
+          { name: "last_seen", type: "date" },
+          { name: "request_count", type: "long" },
+        ],
+        values: [["1.0.0", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", "abc"]],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows[0]!.requestCount).toBe(0);
+    });
   });
 });

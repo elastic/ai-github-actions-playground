@@ -29,9 +29,13 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain(
         'environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
       );
-      expect(query).toContain('version_key = COALESCE(service.version, "unknown")');
+      expect(query).toContain(
+        "version_key = CASE(service.version IS NULL OR TRIM(service.version)",
+      );
       expect(query).toContain('version = TOP(version_key, 1, "desc")');
       expect(query).toContain("unique_versions = COUNT_DISTINCT(version_key)");
+      // version_key normalization handles blank/whitespace strings before aggregation
+      expect(query).toMatch(/CASE\(.*TRIM\(.*service\.version.*"unknown"/s);
       expect(query).toContain("BY service.name");
       expect(query).toContain("SORT request_count DESC");
       expect(query).toContain("LIMIT 200");

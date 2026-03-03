@@ -160,7 +160,7 @@ export default function ServiceDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !routesResult && !tracesResult && (
+      {!loading && !routesResult && !tracesResult && !deploymentsResult && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No service data loaded"
@@ -194,15 +194,19 @@ export default function ServiceDashboardPage() {
         />
       )}
 
-      {!loading && routesResult && routeRows.length === 0 && recentTraces.length === 0 && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-          <EmptyState
-            heading="No data found"
-            description={`No routes or traces found for ${serviceName} in the selected time range.`}
-            addDataHref={PAGE_MANIFEST.addData.path}
-          />
-        </Paper>
-      )}
+      {!loading &&
+        routesResult &&
+        deployments.length === 0 &&
+        routeRows.length === 0 &&
+        recentTraces.length === 0 && (
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
+            <EmptyState
+              heading="No data found"
+              description={`No routes or traces found for ${serviceName} in the selected time range.`}
+              addDataHref={PAGE_MANIFEST.addData.path}
+            />
+          </Paper>
+        )}
     </Box>
   );
 }
