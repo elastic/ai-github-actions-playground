@@ -25,12 +25,15 @@ import type { InvestigateTab, TimelineEvent } from "./investigate/investigateUti
 import { buildInvestigateQuery } from "./investigate/investigateQueryBuilder";
 import { parseTimelineEvents } from "./investigate/investigateParser";
 
-const TAB_LABELS: Record<InvestigateTab, { label: string; placeholder: string }> = {
-  user: { label: "User", placeholder: "Enter user name…" },
-  host: { label: "Host", placeholder: "Enter host name…" },
-  ip: { label: "IP Address", placeholder: "Enter IP address…" },
-  domain: { label: "Domain", placeholder: "Enter domain name…" },
-  file: { label: "File", placeholder: "Enter file name or hash…" },
+const TAB_LABELS: Record<
+  InvestigateTab,
+  { label: string; placeholder: string; ariaLabel: string }
+> = {
+  user: { label: "User", placeholder: "Enter user name…", ariaLabel: "User name" },
+  host: { label: "Host", placeholder: "Enter host name…", ariaLabel: "Host name" },
+  ip: { label: "IP Address", placeholder: "Enter IP address…", ariaLabel: "IP address" },
+  domain: { label: "Domain", placeholder: "Enter domain name…", ariaLabel: "Domain name" },
+  file: { label: "File", placeholder: "Enter file name or hash…", ariaLabel: "File name" },
 };
 
 export default function InvestigatePage() {
@@ -128,7 +131,7 @@ export default function InvestigatePage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch();
             }}
-            inputProps={{ "aria-label": tabConfig.label }}
+            inputProps={{ "aria-label": tabConfig.ariaLabel }}
           />
           <Button
             variant="contained"
