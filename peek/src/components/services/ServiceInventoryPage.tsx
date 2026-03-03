@@ -37,6 +37,12 @@ import ServiceBusiestPanel from "./ServiceBusiestPanel";
 import ServiceInsightsPanel from "./ServiceInsightsPanel";
 import ServiceInventoryTable from "./ServiceInventoryTable";
 
+const MAX_CONTEXT_SERVICES = 50;
+
+function sanitizeTopError(value: string): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, 200);
+}
+
 export default function ServiceInventoryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -142,14 +148,19 @@ export default function ServiceInventoryPage() {
     const slowest = serviceRows.reduce((a, b) => (b.avgLatencyMs > a.avgLatencyMs ? b : a));
     const highestError = serviceRows.reduce((a, b) => (b.errorRate > a.errorRate ? b : a));
     const mostActive = serviceRows.reduce((a, b) => (b.requestCount > a.requestCount ? b : a));
+    const contextRows = serviceRows
+      .slice()
+      .sort((a, b) => b.requestCount - a.requestCount)
+      .slice(0, MAX_CONTEXT_SERVICES);
     return JSON.stringify({
       totalServices: serviceRows.length,
-      services: serviceRows.map((r) => ({
+      omittedServices: Math.max(0, serviceRows.length - MAX_CONTEXT_SERVICES),
+      services: contextRows.map((r) => ({
         name: r.serviceName,
         requests: r.requestCount,
         avgLatencyMs: r.avgLatencyMs,
         errorRate: r.errorRate,
-        topError: r.topError,
+        topError: sanitizeTopError(r.topError),
         language: r.language,
         environment: r.environment,
       })),
@@ -163,12 +174,8 @@ export default function ServiceInventoryPage() {
   }, [serviceRows]);
 
   const insightCacheKey = useMemo(() => {
-    if (serviceRows.length === 0) return "";
-    const totalRequests = serviceRows.reduce((sum, r) => sum + r.requestCount, 0);
-    const totalErrors = serviceRows.reduce((sum, r) => sum + r.errorCount, 0);
-    const maxLatency = serviceRows.reduce((max, row) => Math.max(max, row.avgLatencyMs), 0);
-    return `services::${serviceRows.length}::${totalRequests}::${totalErrors}::${maxLatency.toFixed(0)}`;
-  }, [serviceRows]);
+    return insightContext;
+  }, [insightContext]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>

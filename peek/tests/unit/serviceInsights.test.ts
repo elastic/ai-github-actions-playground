@@ -50,6 +50,14 @@ describe("deriveServiceInsights", () => {
     expect(slowest!.description).toContain("1.5s");
   });
 
+  it("marks slowest service as warning at exactly 1000ms", () => {
+    const rows = [makeRow({ serviceName: "edge-svc", avgLatencyMs: 1000 })];
+    const insights = deriveServiceInsights(rows);
+    const slowest = insights.find((i) => i.label === "Slowest Service");
+    expect(slowest!.severity).toBe("warning");
+    expect(slowest!.description).toContain("1.0s");
+  });
+
   it("identifies the service with highest error rate", () => {
     const rows = [
       makeRow({ serviceName: "healthy-svc", errorRate: 0.01 }),
@@ -70,6 +78,14 @@ describe("deriveServiceInsights", () => {
     const insights = deriveServiceInsights(rows);
     const errorInsight = insights.find((i) => i.label === "Highest Error Rate");
     expect(errorInsight!.severity).toBe("warning");
+  });
+
+  it("uses warning severity at exactly 5%", () => {
+    const rows = [makeRow({ serviceName: "svc", errorRate: 0.05 })];
+    const insights = deriveServiceInsights(rows);
+    const errorInsight = insights.find((i) => i.label === "Highest Error Rate");
+    expect(errorInsight!.severity).toBe("warning");
+    expect(errorInsight!.description).toContain("5.0%");
   });
 
   it("omits top error text when it is the dash fallback", () => {
