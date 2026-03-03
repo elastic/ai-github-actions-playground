@@ -201,7 +201,12 @@ export default function LogsPage() {
     const variance =
       counts.reduce((sum, value) => sum + (value - mean) ** 2, 0) / Math.max(1, counts.length);
     const deviation = Math.sqrt(variance);
-    return buckets.map((bucket) => ({ ...bucket, anomaly: bucket.count >= mean + deviation * 2 }));
+    const threshold = mean + deviation * 2;
+    const canDetectAnomaly = buckets.length > 1 && deviation > 0;
+    return buckets.map((bucket) => ({
+      ...bucket,
+      anomaly: canDetectAnomaly && bucket.count > threshold,
+    }));
   }, [result]);
 
   const patternGroups = useMemo(() => {
@@ -359,7 +364,7 @@ export default function LogsPage() {
   const runCategorizeQuery = useCallback(() => {
     const nextQuery = appendPipeClause(
       effectiveQuery,
-      "STATS pattern_count = COUNT(*) BY pattern = CATEGORIZE(message) | SORT pattern_count DESC",
+      `STATS pattern_count = COUNT(*) BY pattern = CATEGORIZE(${MESSAGE_FIELD}) | SORT pattern_count DESC`,
     );
     setRawQuery(nextQuery);
     void runQuery(nextQuery);
