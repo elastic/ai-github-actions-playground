@@ -88,8 +88,6 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
       }}
       sx={{
         "& .MuiDrawer-paper": {
-          top: "auto",
-          bottom: 0,
           boxSizing: "border-box",
           width: isMobile ? `min(100vw, ${AI_DRAWER_WIDTH}px)` : AI_DRAWER_WIDTH,
           maxWidth: "100vw",
@@ -103,6 +101,14 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
           flexDirection: "column",
           height: "100%",
           p: 2,
+          pt: (theme) => {
+            const toolbarMinHeight = theme.mixins.toolbar.minHeight;
+            const toolbarHeight =
+              typeof toolbarMinHeight === "number"
+                ? `${toolbarMinHeight}px`
+                : (toolbarMinHeight ?? "56px");
+            return `calc(${theme.spacing(2)} + ${toolbarHeight})`;
+          },
         }}
       >
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
