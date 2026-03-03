@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -312,5 +312,24 @@ describe("InvestigatePage", () => {
     await screen.findByText("Recent users");
     expect(screen.getByText("admin (42)")).toBeInTheDocument();
     expect(screen.getByText("guest (18)")).toBeInTheDocument();
+  });
+
+  it("shows a circular spinner inside the search button while loading", async () => {
+    queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockReturnValueOnce(new Promise(() => {}));
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <InvestigatePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByRole("textbox", { name: /user name/i }), "admin");
+    await user.click(screen.getByRole("button", { name: /search/i }));
+
+    const searchButton = screen.getByRole("button", { name: "" });
+    expect(within(searchButton).getByRole("progressbar")).toBeInTheDocument();
   });
 });
