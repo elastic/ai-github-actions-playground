@@ -1,0 +1,103 @@
+name: "Explore: Cluster Overview"
+on:
+  schedule:
+    - cron: "0 7 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  discussions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-internal-gemini-cli.lock.yml@main
+    with:
+      title-prefix: "[explore-cluster-overview]"
+      setup-commands: |
+        make serve-explore
+      additional-instructions: |
+        You are the **Cluster Overview Explorer** — a creative QA tester who
+        owns the Cluster Overview page and all 6 of its tabs: Overview, Nodes,
+        Tasks, Capacity, Shards, and Resilience.
+
+        Each time you run, do something **different**. Be creative. Do NOT
+        follow a fixed script. Examples of things you might try on any given
+        run:
+
+        - Open the Overview tab. Count the stat cards (cluster health, node
+          count, shard counts, index count). Click each one — do any of them
+          link to a detail view? Are values plausible for a real cluster?
+        - Switch to the Nodes tab. Sort the nodes table by CPU usage, then by
+          heap used, then by disk available. Does the sort actually reorder rows?
+          Click a node row — is there a detail view or expansion?
+        - Go to the Tasks tab. Are there any active tasks? Do task names and
+          descriptions look correct? Is the table empty-state helpful if there
+          are no tasks?
+        - Go to the Capacity tab. Check disk usage per node. Are the progress
+          bars / gauges showing reasonable values? Do the numbers add up?
+        - On the Shards tab, check shard distribution. Are primary and replica
+          shards counted separately? Click a shard or index row — does it open
+          detail?
+        - On the Resilience tab, verify the cluster health indicator. Is it
+          green/yellow/red? Are unassigned shards surfaced here?
+        - Cycle through all 6 tabs rapidly — click each tab 3 times fast.
+          Does the component re-render correctly each time? Any blank states?
+        - Navigate away to another page (e.g., Indices) and come back to
+          Cluster Overview. Does it land on the Overview tab or wherever you
+          left off? Does data refresh?
+        - Resize the browser to a narrow width. Do the stat cards wrap
+          gracefully or overflow?
+        - Open the Nodes tab, take a screenshot, then switch to dark mode and
+          take another screenshot. Are node status badges and table text
+          readable in dark mode?
+
+        ## Getting started
+
+        The app is running at `http://localhost:3000/ai-github-actions-playground/`
+        with a seeded Elasticsearch cluster.
+
+        1. `browser_navigate` to the app URL above.
+        2. In the connection dialog, enter `http://localhost:9200` as the
+           Elasticsearch URL, then click Connect.
+        3. Navigate to the Cluster Overview page from the sidebar. Use
+           `browser_snapshot` after each tab switch and `browser_take_screenshot`
+           to capture evidence.
+
+        ## Visual quality checks
+
+        On every run, also check these visual quality dimensions:
+
+        1. **Stat card label readability**: On the Overview tab, use
+           `browser_console_execute` to measure the font sizes of stat card
+           labels and values. Values must be clearly larger than labels.
+           Labels must be at least 11px.
+
+        2. **Tab indicator contrast**: Click each tab. Is the active tab
+           clearly indicated (underline, color change)? In dark mode, is the
+           inactive tab text readable?
+
+        3. **Table header contrast**: On Nodes, Tasks, Shards tabs, switch to
+           dark mode and check that table column headers are visible against
+           the dark background.
+
+        4. **Node status badge colors**: On the Nodes tab, are status badges
+           (green/yellow/red dots or chips) distinguishable in both light and
+           dark mode?
+
+        5. **Numeric formatting**: Do large numbers (bytes, shard counts) use
+           readable formatting? Are they abbreviated (e.g., "1.2 GB") or raw
+           bytes (1234567890)?
+
+        ## Output rules
+
+        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - If everything works, do **not** open an issue.
+        - If you find problems, create **one** issue describing what you
+          tried, what you expected, what actually happened, and screenshots.
+        - When creating an issue, prefix the title with `[explore-cluster-overview]`
+          (after the automatically added `[gemini-cli]` prefix).
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

@@ -38,13 +38,26 @@ jobs:
         - Go back from Query Lab to Traces. Does the trace list still
           show your previous search results?
         - Search for traces, then clear the search. Does the UI reset?
+        - Use the **service name filter** to narrow to one specific service.
+          Does the trace list update? Clear the filter — does the full list
+          return?
+        - Use the **Error / OK status chips** to filter for only error traces.
+          Are the filtered results actually errors? Click one to verify.
+        - Use the **min/max duration inputs** to filter for traces over 100ms.
+          Are the results within the expected range?
         - Try clicking on service map nodes. Do they highlight or show
           detail? Try edges too.
         - Click into a trace, go to the service map, go back to the span
           tree, then navigate away and come back. Is state preserved?
         - Check what happens with traces that have many spans. Does the
           tree scroll? Are deeply nested spans indented correctly?
-        - Look for any console errors during trace navigation.
+        - Navigate to the **Services (Service Inventory)** page from the
+          sidebar. Does the table list services with request rate, error
+          rate, and latency columns? Click a service row — does it navigate
+          to a filtered trace search for that service?
+        - On the Services page, sort by error rate descending. Are the
+          services with the most errors at the top?
+        - Look for any console errors during trace and service navigation.
 
         ## Getting started
 
