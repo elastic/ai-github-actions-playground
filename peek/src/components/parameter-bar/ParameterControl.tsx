@@ -127,7 +127,7 @@ export default function ParameterControl({
               onChange(parsed.value);
             }}
             displayEmpty
-            sx={{ height: COMPONENT_HEIGHTS.buttonSmall, fontSize: "0.75rem" }}
+            sx={{ height: COMPONENT_HEIGHTS.input, fontSize: "0.75rem" }}
           >
             {currentValueInput &&
               !options.some(

@@ -47,6 +47,27 @@ describe("peek/require-icon-button-aria-label", () => {
           `,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
         },
+        // Named import style — with aria-label should pass
+        {
+          code: `
+            import { IconButton } from "@mui/material/IconButton";
+            function Component() {
+              return <IconButton aria-label="Close"><CloseIcon /></IconButton>;
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
+        // aria-label as expression (variable) — conservatively accepted
+        {
+          code: `
+            import IconButton from "@mui/material/IconButton";
+            const label = "Close";
+            function Component() {
+              return <IconButton aria-label={label}><CloseIcon /></IconButton>;
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+        },
       ],
       invalid: [
         {
@@ -80,6 +101,39 @@ describe("peek/require-icon-button-aria-label", () => {
                   <IconButton onClick={onClose}><CloseIcon /></IconButton>
                 </>
               );
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "missingAriaLabel" }],
+        },
+        // Named import style — without aria-label should fail
+        {
+          code: `
+            import { IconButton } from "@mui/material/IconButton";
+            function Component() {
+              return <IconButton onClick={onClose}><CloseIcon /></IconButton>;
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "missingAriaLabel" }],
+        },
+        // aria-label="" — empty string should fail
+        {
+          code: `
+            import IconButton from "@mui/material/IconButton";
+            function Component() {
+              return <IconButton aria-label=""><CloseIcon /></IconButton>;
+            }
+          `,
+          languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          errors: [{ messageId: "missingAriaLabel" }],
+        },
+        // aria-label={undefined} — should fail
+        {
+          code: `
+            import IconButton from "@mui/material/IconButton";
+            function Component() {
+              return <IconButton aria-label={undefined}><CloseIcon /></IconButton>;
             }
           `,
           languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
