@@ -39,7 +39,6 @@ export interface AddDataTechnologyCatalogEntry {
   readonly guideType: AddDataGuideType;
   readonly summary: string;
   readonly defaultPlatform: AddDataInstallPlatform;
-  readonly recommended: boolean;
   supportedEnvironments: readonly AddDataEnvironment[];
   expectedSignals: readonly AddDataExpectedSignal[];
   recommendedNextSteps: readonly AddDataRecommendedNextStep[];
@@ -69,7 +68,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "aws_cloud_deploy",
     summary: "Collect service metrics, logs, and traces from AWS workloads.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["aws"],
     expectedSignals: ["metrics", "logs", "traces"],
     recommendedNextSteps: [
@@ -85,7 +83,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "edot_collector",
     summary: "Track network flow telemetry and connection patterns.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -100,7 +97,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "edot_collector",
     summary: "Collect cluster, node, and workload telemetry.",
     defaultPlatform: "kubernetes",
-    recommended: true,
     supportedEnvironments: ["kubernetes", "aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["metrics", "logs", "traces"],
     recommendedNextSteps: [
@@ -116,7 +112,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "edot_collector",
     summary: "Collect container and host telemetry with Docker Compose.",
     defaultPlatform: "docker",
-    recommended: true,
     supportedEnvironments: ["docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["logs", "metrics", "traces"],
     recommendedNextSteps: [
@@ -132,7 +127,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "edot_collector",
     summary: "Install EDOT Collector on Linux hosts/VMs.",
     defaultPlatform: "linux",
-    recommended: true,
     supportedEnvironments: ["linux", "on_prem", "aws", "gcp", "azure"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -147,7 +141,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "edot_collector",
     summary: "Install EDOT Collector on Windows hosts/VMs.",
     defaultPlatform: "windows",
-    recommended: false,
     supportedEnvironments: ["windows", "on_prem", "aws", "azure", "gcp"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -162,7 +155,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "edot_collector",
     summary: "Install EDOT Collector on macOS.",
     defaultPlatform: "macos",
-    recommended: false,
     supportedEnvironments: ["macos", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -177,7 +169,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "otel_receiver",
     summary: "Capture request logs and latency metrics.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -192,7 +183,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "otel_receiver",
     summary: "Capture query performance and resource telemetry.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
@@ -207,7 +197,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "otel_receiver",
     summary: "Monitor Redis performance and memory usage.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["metrics"],
     recommendedNextSteps: [
@@ -221,7 +210,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "otel_receiver",
     summary: "Monitor MySQL query performance and server status.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["metrics"],
     recommendedNextSteps: [
@@ -235,7 +223,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "otel_receiver",
     summary: "Monitor MongoDB performance and replica set status.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["metrics"],
     recommendedNextSteps: [
@@ -249,7 +236,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Auto-instrument Java applications with the Elastic APM agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -264,7 +250,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Auto-instrument Python applications with the Elastic APM agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -279,7 +264,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Auto-instrument Node.js applications with the Elastic APM agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -294,7 +278,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Instrument Go applications with the Elastic APM Go agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -309,7 +292,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Auto-instrument .NET applications with the Elastic APM agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -324,7 +306,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Auto-instrument Ruby applications with the Elastic APM agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -339,7 +320,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "apm",
     summary: "Auto-instrument PHP applications with the Elastic APM agent.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
@@ -354,7 +334,6 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     guideType: "fluent_bit",
     summary: "Forward logs to Elasticsearch or OTLP endpoints using Fluent Bit.",
     defaultPlatform: "linux",
-    recommended: false,
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs"],
     recommendedNextSteps: [
@@ -365,9 +344,3 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
 
 export const ADD_DATA_TECHNOLOGY_BY_ID: ReadonlyMap<string, AddDataTechnologyCatalogEntry> =
   new Map(ADD_DATA_TECHNOLOGY_CATALOG.map((entry) => [entry.id, entry] as const));
-
-export function getAddDataTechnologiesByExperience(
-  experience: AddDataGuidedExperience,
-): readonly AddDataTechnologyCatalogEntry[] {
-  return ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) => entry.experience === experience);
-}
