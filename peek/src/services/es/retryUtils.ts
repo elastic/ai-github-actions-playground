@@ -37,7 +37,8 @@ export function sleepWithJitter(ms: number, signal?: AbortSignal | null): Promis
     }
     const onAbort = () => {
       clearTimeout(timer);
-      reject(signal!.reason);
+      // signal is guaranteed non-null here: onAbort is only registered when signal is truthy
+      reject(signal?.reason);
     };
     const timer = setTimeout(() => {
       signal?.removeEventListener("abort", onAbort);
