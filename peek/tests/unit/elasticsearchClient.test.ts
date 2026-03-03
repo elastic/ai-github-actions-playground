@@ -627,6 +627,8 @@ describe("getCapabilities", () => {
     const client = makeClient({ apiKey: "key" });
     const caps = await client.getCapabilities();
 
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/_security/user/_has_privileges`);
     expect(caps.canManageDataStreams).toBe(true);
     expect(caps.canCreateApiKeys).toBe(true);
     expect(caps.canReadSecurityUsers).toBe(true);
