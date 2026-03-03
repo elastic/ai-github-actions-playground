@@ -50,7 +50,9 @@ export function useRichIngestionVerification(
   const [pollingEnabled, setPollingEnabled] = useState(false);
   const [baseline, setBaseline] = useState<IngestionSnapshot | null>(null);
 
-  // Reset when connection URL changes (render-time state adjustment).
+  // Reset polling and baseline whenever the connected cluster changes.
+  // React 18 pattern: adjusting state during render triggers an immediate
+  // re-render before children are painted, which is exactly what we want here.
   const [connectionKey, setConnectionKey] = useState(connection?.url);
   if (connection?.url !== connectionKey) {
     setConnectionKey(connection?.url);
@@ -58,7 +60,8 @@ export function useRichIngestionVerification(
     setBaseline(null);
   }
 
-  // Stable reference to expectedSignals for query functions
+  // Stable reference to expectedSignals for query functions — kept current without
+  // making queries re-run every time the array reference changes.
   const expectedSignalsRef = useRef(expectedSignals);
   useEffect(() => {
     expectedSignalsRef.current = expectedSignals;
