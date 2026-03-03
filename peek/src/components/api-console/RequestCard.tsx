@@ -20,6 +20,7 @@ import { json } from "@codemirror/lang-json";
 import { buildCurlCommand } from "../../utils/buildCurlCommand";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
+import AskAiButton from "../AskAiButton";
 
 import type { HttpMethod, RequestCardProps } from "./apiConsoleTypes";
 import { METHOD_COLORS, METHODS_WITH_BODY, httpStatusColor } from "./apiConsoleTypes";
@@ -247,6 +248,10 @@ export default function RequestCard({
                 <Typography variant="body2" color="error.main" sx={{ flex: 1 }}>
                   {entry.response.message}
                 </Typography>
+                <AskAiButton
+                  label="Explain error"
+                  prompt={`Explain this Elasticsearch API error and suggest a likely fix.\nMethod: ${entry.method}\nPath: ${entry.path}\nError: ${entry.response.message}`}
+                />
                 <Tooltip title="Dismiss">
                   <IconButton
                     size="small"
@@ -269,6 +274,10 @@ export default function RequestCard({
                   <Typography variant="caption" color="text.secondary">
                     {entry.response.executionTimeMs} ms
                   </Typography>
+                  <AskAiButton
+                    label="Explain response"
+                    prompt={`Explain this Elasticsearch API response in one concise sentence.\nMethod: ${entry.method}\nPath: ${entry.path}\nHTTP status: ${entry.response.httpStatus}\nBody: ${serializeResponse(entry.response.body).slice(0, 4000)}`}
+                  />
                   <Box sx={{ flex: 1 }} />
                   <Tooltip title={copied ? "Copied!" : "Copy response"}>
                     <IconButton

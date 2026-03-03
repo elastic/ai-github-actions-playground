@@ -10,6 +10,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import sections from "../docs/sections";
 
 import EmptyState from "./EmptyState";
+import AskAiButton from "./AskAiButton";
 
 function normalizeText(text: string): string {
   return text.toLowerCase();
@@ -17,6 +18,7 @@ function normalizeText(text: string): string {
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
+  const [question, setQuestion] = useState("");
   const [sectionFromUrl, setSectionFromUrl] = useQueryState(
     "section",
     parseAsString.withOptions({ history: "replace" }),
@@ -32,6 +34,14 @@ export default function DocsPage() {
       normalizeText(`${section.title} ${section.body.join(" ")}`).includes(query),
     );
   }, [search]);
+  const docsContextSnippet = useMemo(
+    () =>
+      filteredSections
+        .slice(0, 8)
+        .map((section) => `${section.title}: ${section.body.join(" ").slice(0, 400)}`)
+        .join("\n\n"),
+    [filteredSections],
+  );
 
   const jumpToSection = useCallback(
     (sectionId: string) => {
@@ -66,6 +76,19 @@ export default function DocsPage() {
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by topic or keyword"
         />
+        <TextField
+          size="small"
+          label="Ask a question"
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          placeholder="How do I..."
+        />
+        {question.trim() && (
+          <AskAiButton
+            label="Answer from docs"
+            prompt={`Answer this question using Elastic Peek docs and cite relevant section titles: "${question.trim()}".\n\nCandidate sections:\n${docsContextSnippet}`}
+          />
+        )}
         <Divider />
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, overflowY: "auto" }}>
           {filteredSections.length === 0 ? (

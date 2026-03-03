@@ -554,6 +554,10 @@ export default function AddDataPage() {
                     >
                       {stepCopiedIndex === index ? "Copied!" : "Copy"}
                     </Button>
+                    <AskAiButton
+                      label="Explain"
+                      prompt={`Explain what this onboarding command step does and why it matters.\nStep ${step.number}: ${step.title}\nCommand:\n${step.command}`}
+                    />
                   </Stack>
                   <Box
                     component="pre"

@@ -21,6 +21,7 @@ import { useSecurityRoles } from "../hooks/useSecurityRoles";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
+import PageInsightBanner from "./PageInsightBanner";
 import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
 
 export default function RolesPage() {
@@ -90,121 +91,137 @@ export default function RolesPage() {
   }, [roles, selectedRoleName, setPageSection]);
 
   return (
-    <SecurityMasterDetailPage
-      title="Roles"
-      actions={
-        <>
-          <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
-            {copied ? "Copied" : "Copy API call"}
-          </Button>
-        </>
-      }
-      alerts={
-        <>
-          {error && <Alert severity="error">{error}</Alert>}
-          {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
-          {usersError && (
-            <Alert severity="warning">
-              Unable to load users for role assignment display: {usersError}
-            </Alert>
-          )}
-        </>
-      }
-      showLoadingSkeleton={loading && roles.length === 0}
-      masterPane={
-        <>
-          <Box sx={{ p: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search roles"
-              value={search}
-              onChange={(event) => void setSearch(event.target.value)}
-            />
-          </Box>
-          <Divider />
-          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-            {filteredRoles.map((entry) => (
-              <ListItem key={entry.name} disablePadding>
-                <ListItemButton
-                  selected={entry.name === selectedRoleName}
-                  onClick={() => void setUrlRole(entry.name)}
-                >
-                  <ListItemText
-                    primary={entry.name}
-                    secondary={`${entry.role.cluster?.length ?? 0} cluster privileges • ${entry.role.indices?.length ?? 0} index rules`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {!loading && filteredRoles.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                No roles found.
-              </Typography>
-            )}
-          </List>
-        </>
-      }
-      detailPane={
-        displayedRole ? (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {displayedRole && (
+        <PageInsightBanner
+          context={JSON.stringify({
+            role: displayedRole.name,
+            clusterPrivileges: displayedRole.role.cluster ?? [],
+            indexPrivileges: displayedRole.role.indices ?? [],
+            assignedUsers: assignedUsers.map((user) => user.username),
+          })}
+          systemPrompt="You are an Elasticsearch authorization analyst. Explain this role's effective privilege scope in one concise sentence and include one least-privilege recommendation."
+          cacheKey={`role-security::${displayedRole.name}::${assignedUsers.length}`}
+        />
+      )}
+      <SecurityMasterDetailPage
+        title="Roles"
+        actions={
           <>
-            <Typography variant="subtitle1">{displayedRole.name}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              Cluster privileges
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {(displayedRole.role.cluster ?? []).map((privilege) => (
-                <Chip key={privilege} size="small" label={privilege} />
-              ))}
-              {(displayedRole.role.cluster ?? []).length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No cluster privileges.
-                </Typography>
-              )}
-            </Stack>
-
-            <Typography variant="caption" color="text.secondary">
-              Index privileges
-            </Typography>
-            <Typography
-              component="pre"
-              variant="body2"
-              sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
-            >
-              {JSON.stringify(displayedRole.role.indices ?? [], null, 2)}
-            </Typography>
-
-            <Typography variant="caption" color="text.secondary">
-              Assigned users
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {assignedUsers.map((user) => (
-                <Tooltip key={user.username} title={`View user: ${user.username}`}>
-                  <Chip
-                    size="small"
-                    label={user.username}
-                    clickable
-                    aria-label={`View user: ${user.username}`}
-                    onClick={() => navigate(`/users?username=${encodeURIComponent(user.username)}`)}
-                  />
-                </Tooltip>
-              ))}
-              {assignedUsers.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No users assigned.
-                </Typography>
-              )}
-            </Stack>
+            <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
+              {loading ? <CircularProgress size={16} /> : "Refresh"}
+            </Button>
+            <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+              {copied ? "Copied" : "Copy API call"}
+            </Button>
           </>
-        ) : (
-          <Typography variant="body2" color="text.secondary">
-            Select a role.
-          </Typography>
-        )
-      }
-    />
+        }
+        alerts={
+          <>
+            {error && <Alert severity="error">{error}</Alert>}
+            {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
+            {usersError && (
+              <Alert severity="warning">
+                Unable to load users for role assignment display: {usersError}
+              </Alert>
+            )}
+          </>
+        }
+        showLoadingSkeleton={loading && roles.length === 0}
+        masterPane={
+          <>
+            <Box sx={{ p: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Search roles"
+                value={search}
+                onChange={(event) => void setSearch(event.target.value)}
+              />
+            </Box>
+            <Divider />
+            <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              {filteredRoles.map((entry) => (
+                <ListItem key={entry.name} disablePadding>
+                  <ListItemButton
+                    selected={entry.name === selectedRoleName}
+                    onClick={() => void setUrlRole(entry.name)}
+                  >
+                    <ListItemText
+                      primary={entry.name}
+                      secondary={`${entry.role.cluster?.length ?? 0} cluster privileges • ${entry.role.indices?.length ?? 0} index rules`}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              {!loading && filteredRoles.length === 0 && (
+                <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                  No roles found.
+                </Typography>
+              )}
+            </List>
+          </>
+        }
+        detailPane={
+          displayedRole ? (
+            <>
+              <Typography variant="subtitle1">{displayedRole.name}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Cluster privileges
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {(displayedRole.role.cluster ?? []).map((privilege) => (
+                  <Chip key={privilege} size="small" label={privilege} />
+                ))}
+                {(displayedRole.role.cluster ?? []).length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    No cluster privileges.
+                  </Typography>
+                )}
+              </Stack>
+
+              <Typography variant="caption" color="text.secondary">
+                Index privileges
+              </Typography>
+              <Typography
+                component="pre"
+                variant="body2"
+                sx={{ overflow: "auto", m: 0, p: 1, borderRadius: 1, bgcolor: "action.hover" }}
+              >
+                {JSON.stringify(displayedRole.role.indices ?? [], null, 2)}
+              </Typography>
+
+              <Typography variant="caption" color="text.secondary">
+                Assigned users
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {assignedUsers.map((user) => (
+                  <Tooltip key={user.username} title={`View user: ${user.username}`}>
+                    <Chip
+                      size="small"
+                      label={user.username}
+                      clickable
+                      aria-label={`View user: ${user.username}`}
+                      onClick={() =>
+                        navigate(`/users?username=${encodeURIComponent(user.username)}`)
+                      }
+                    />
+                  </Tooltip>
+                ))}
+                {assignedUsers.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    No users assigned.
+                  </Typography>
+                )}
+              </Stack>
+            </>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Select a role.
+            </Typography>
+          )
+        }
+      />
+    </Box>
   );
 }

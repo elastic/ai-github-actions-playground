@@ -20,6 +20,7 @@ import type { AggregationType, FieldInfo, ExplorerFilter } from "../../services/
 import { getAggregationOptions } from "../../services/es";
 import MetricSearch from "../MetricSearch";
 import PageHeader from "../PageHeader";
+import AskAiButton from "../AskAiButton";
 
 interface ExploreControlsPanelProps {
   indexPattern: string;
@@ -76,11 +77,30 @@ export default function ExploreControlsPanel({
 }: ExploreControlsPanelProps) {
   const aggOptions = getAggregationOptions(metricType);
   const aggLabelId = useId();
+  const selectedMetricWithNamespace = selectedNamespace
+    ? `${selectedNamespace}.${selectedMetric ?? ""}`
+    : selectedMetric;
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <Box sx={{ mb: 1 }}>
-        <PageHeader title="Metrics" />
+        <PageHeader
+          title="Metrics"
+          actions={
+            selectedMetric ? (
+              <>
+                <AskAiButton
+                  label="Explain metric"
+                  prompt={`Explain metric "${selectedMetricWithNamespace}" in Elasticsearch terms: what it measures, expected normal behavior, and how to interpret high or low values.`}
+                />
+                <AskAiButton
+                  label="Suggest group by"
+                  prompt={`For metric "${selectedMetricWithNamespace}" on index pattern "${indexPattern}", suggest the most useful group-by dimension field and why.`}
+                />
+              </>
+            ) : undefined
+          }
+        />
       </Box>
       <Box
         sx={{
