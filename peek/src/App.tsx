@@ -121,7 +121,6 @@ export default function App() {
                   open={mobileNavOpen}
                   onClose={() => setMobileNavOpen(false)}
                   variant="temporary"
-                  ModalProps={{ keepMounted: true }}
                 >
                   <AppSidebar
                     mobile

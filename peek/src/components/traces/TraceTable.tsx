@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -127,17 +128,19 @@ export function TraceTable({
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      bgcolor:
-                        row.status === "Error" || row.status === "STATUS_CODE_ERROR"
-                          ? "error.main"
-                          : "success.main",
-                    }}
-                  />
+                  {(() => {
+                    const isError = row.status === "Error" || row.status === "STATUS_CODE_ERROR";
+                    const label = isError ? "Error" : "OK";
+                    return (
+                      <Chip
+                        size="small"
+                        label={label}
+                        color={isError ? "error" : "success"}
+                        variant="outlined"
+                        aria-label={`Status: ${label}`}
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.75rem" }}>
                   {row.timestamp ? formatTimestamp(row.timestamp) : "—"}

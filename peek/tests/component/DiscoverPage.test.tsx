@@ -75,6 +75,68 @@ describe("DiscoverPage", () => {
     ]);
   });
 
+  it("selects only preferred fields when result has many columns", async () => {
+    const manyColumns = [
+      "@timestamp",
+      "message",
+      "host.name",
+      "service.name",
+      "log.level",
+      "event.dataset",
+      "agent.name",
+      "field1",
+      "field2",
+      "field3",
+      "field4",
+      "field5",
+    ].map((name) => ({ name, type: "keyword" }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const selected = useQueryStore.getState().discoverSelectedFields;
+    // Should select the preferred subset, not all 12 fields
+    expect(selected.size).toBeLessThan(manyColumns.length);
+    expect(selected.has("@timestamp")).toBe(true);
+    expect(selected.has("message")).toBe(true);
+    expect(selected.has("host.name")).toBe(true);
+  });
+
+  it("selects all fields when result has few columns", async () => {
+    queryMock.mockResolvedValueOnce({
+      columns: [
+        { name: "@timestamp", type: "date" },
+        { name: "message", type: "keyword" },
+        { name: "count", type: "long" },
+      ],
+      values: [["2025-06-15T12:00:00.000Z", "hello", 1]],
+      executionTimeMs: 1,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DiscoverPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+
+    const selected = useQueryStore.getState().discoverSelectedFields;
+    expect(selected.size).toBe(3);
+  });
+
   it("can select a recent query and run it", async () => {
     const user = userEvent.setup();
     useQueryStore.getState().appendQueryToHistory("FROM metrics-* | LIMIT 5");
