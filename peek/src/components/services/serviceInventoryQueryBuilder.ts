@@ -21,11 +21,17 @@ export const DEFAULT_SERVICE_INVENTORY_FILTERS: ServiceInventoryFilters = {
 function toSafeRelativeTimeExpression(value: string): string {
   const normalized = value.trim();
   const match = normalized.match(/^NOW\(\)(?:\s*-\s*(\d+)\s+(minutes?|hours?|days?))?$/i);
-  if (!match) {
-    throw new Error(`Unsupported time expression: ${value}`);
+  if (match) {
+    if (!match[1]) return "NOW()";
+    return `NOW() - ${match[1]} ${match[2]!.toLowerCase()}`;
   }
-  if (!match[1]) return "NOW()";
-  return `NOW() - ${match[1]} ${match[2]!.toLowerCase()}`;
+
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) {
+    return `"${escapeEsqlString(parsed.toISOString())}"`;
+  }
+
+  throw new Error(`Unsupported time expression: ${value}`);
 }
 
 /**

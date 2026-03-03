@@ -33,11 +33,20 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain("@timestamp <= NOW()");
     });
 
+    it("supports absolute ISO timestamps", () => {
+      const query = buildServiceInventoryQuery({
+        timeFrom: "2026-01-01T00:00:00.000Z",
+        timeTo: "2026-01-01T01:00:00.000Z",
+      });
+      expect(query).toContain('@timestamp >= "2026-01-01T00:00:00.000Z"');
+      expect(query).toContain('@timestamp <= "2026-01-01T01:00:00.000Z"');
+    });
+
     it("throws for unsupported time expressions", () => {
       expect(() =>
         buildServiceInventoryQuery({
           timeFrom: "NOW() - 15 minutes",
-          timeTo: "2026-01-01T00:00:00Z",
+          timeTo: "NOW(); DROP TABLE traces",
         }),
       ).toThrow("Unsupported time expression");
     });
