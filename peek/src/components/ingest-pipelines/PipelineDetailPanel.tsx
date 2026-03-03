@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -12,8 +12,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
-import type { SimulateIngestPipelineResponse, ElasticsearchConnection } from "../../services/es";
-import { runConnectionRequest } from "../../hooks/useConnectionRequest";
+import type { ElasticsearchConnection } from "../../services/es";
+import { usePipelineSimulate } from "../../hooks/usePipelineSimulate";
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import EmptyState from "../EmptyState";
 
@@ -33,46 +33,31 @@ export default function PipelineDetailPanel({
 }: PipelineDetailPanelProps) {
   const [simulateInput, setSimulateInput] = useState('{\n  "_source": {}\n}');
   const [verbose, setVerbose] = useState(false);
-  const [simulating, setSimulating] = useState(false);
-  const [simulateError, setSimulateError] = useState<string | null>(null);
-  const [simulateResult, setSimulateResult] = useState<SimulateIngestPipelineResponse | null>(null);
-  const requestSeqRef = useRef(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  useEffect(() => {
-    requestSeqRef.current += 1;
-    setSimulating(false);
-    setSimulateResult(null);
-    setSimulateError(null);
-  }, [selectedPipeline?.name]);
+  const {
+    simulating,
+    error: simulateApiError,
+    result: simulateResult,
+    simulate,
+    reset,
+  } = usePipelineSimulate(connection, selectedPipeline?.name);
 
-  const handleSimulate = useCallback(async () => {
-    if (!connection || !selectedPipeline) return;
-    const requestId = ++requestSeqRef.current;
-    setSimulating(true);
-    setSimulateError(null);
-    setSimulateResult(null);
-    try {
-      const docs = parseSimulateInput(simulateInput);
-      if (!docs) {
-        setSimulateError(
-          "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
-        );
-        return;
-      }
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => client.simulateIngestPipeline(selectedPipeline.name, docs, { verbose }),
-      });
-      if (requestId !== requestSeqRef.current) return;
-      if (error !== null) {
-        setSimulateError(error);
-      } else if (data !== null) {
-        setSimulateResult(data);
-      }
-    } finally {
-      if (requestId === requestSeqRef.current) setSimulating(false);
+  const simulateError = validationError ?? simulateApiError;
+
+  const handleSimulate = useCallback(() => {
+    if (!selectedPipeline) return;
+    const docs = parseSimulateInput(simulateInput);
+    if (!docs) {
+      setValidationError(
+        "Invalid JSON: please enter a valid document object, JSON array, or NDJSON.",
+      );
+      reset();
+      return;
     }
-  }, [connection, selectedPipeline, simulateInput, verbose]);
+    setValidationError(null);
+    simulate(docs, verbose);
+  }, [selectedPipeline, simulateInput, verbose, simulate, reset]);
 
   if (!selectedPipeline) {
     return (
@@ -225,8 +210,8 @@ export default function PipelineDetailPanel({
             <Button
               size="small"
               variant="contained"
-              onClick={() => void handleSimulate()}
-              disabled={simulating || !selectedPipeline.name}
+              onClick={handleSimulate}
+              disabled={simulating || !selectedPipeline.name || !connection}
               startIcon={simulating ? <CircularProgress size={14} /> : null}
             >
               {simulating ? "Simulating…" : "Simulate"}

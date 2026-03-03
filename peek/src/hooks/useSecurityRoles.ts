@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { ElasticsearchClient, type SecurityRole, type SecurityUser } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
-import { loadSecurityResource } from "../components/securityResourceLoader";
+import { loadSecurityResource } from "../services/securityResourceLoader";
 
 import { useRefetchOnConnectionChange } from "./useEsQuery";
 

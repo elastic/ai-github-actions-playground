@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,15 +13,14 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 
 import {
-  fetchFieldStats,
   buildFieldStatsQuery,
   buildTopValuesQuery,
   buildMinMaxQuery,
   isKeywordLikeType,
   isNumericOrDateType,
 } from "../services/es";
-import type { ElasticsearchConnection, FieldStats, ConfidenceLevel } from "../services/es";
-import { runConnectionRequest } from "../hooks/useConnectionRequest";
+import type { ElasticsearchConnection, ConfidenceLevel } from "../services/es";
+import { useFieldStats } from "../hooks/useFieldStats";
 
 import EmptyState from "./EmptyState";
 
@@ -87,38 +86,10 @@ export default function FieldStatsPanel({
   onClose,
   onOpenInQueryLab,
 }: FieldStatsPanelProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<FieldStats | null>(null);
-  const requestIdRef = useRef(0);
-
-  const loadStats = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-    setLoading(true);
-    setError(null);
-    setStats(null);
-    try {
-      const { data, error } = await runConnectionRequest({
-        connection,
-        run: (client) => fetchFieldStats(client, streamName, fieldName, fieldType),
-      });
-      if (requestId !== requestIdRef.current) return;
-      if (error !== null) {
-        setError(error);
-      } else if (data !== null) {
-        setStats(data);
-      }
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [connection, streamName, fieldName, fieldType]);
-
-  useEffect(() => {
-    void loadStats();
-  }, [loadStats]);
+  const result = useFieldStats(connection, streamName, fieldName, fieldType);
+  const loading = result.status === "loading";
+  const error = result.status === "error" ? result.error : null;
+  const stats = result.status === "success" ? result.data : null;
 
   const handleOpenInQueryLab = useCallback(() => {
     onOpenInQueryLab(buildQueryLabQuery(streamName, fieldName, fieldType));

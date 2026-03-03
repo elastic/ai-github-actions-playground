@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import AppHeader from "../../src/components/AppHeader";
 import { PAGE_MANIFEST } from "../../src/routes/manifest";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
+import { useUIStore } from "../../src/store/useUIStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
@@ -144,5 +146,53 @@ describe("AppHeader profile health badges", () => {
       // CheckCircleIcon is rendered by MUI with data-testid="CheckCircleIcon"
       expect(screen.getByTestId("CheckCircleIcon")).toBeInTheDocument();
     });
+  });
+});
+
+describe("AppHeader narrow-layout command palette", () => {
+  let originalMatchMedia: typeof window.matchMedia;
+
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    resetAllStores();
+    useConnectionStore.getState().setConnected(true);
+
+    // Save original and mock matchMedia to simulate narrow viewport
+    originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: true, // all breakpoints match → isNarrow = true
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+  });
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it("shows a compact command palette icon button on narrow screens", () => {
+    renderHeader();
+
+    const btn = screen.getByRole("button", { name: /open command palette/i });
+    expect(btn).toBeInTheDocument();
+    // Should be an IconButton (no text label visible), not the full search bar
+    expect(screen.queryByText("Search commands…")).not.toBeInTheDocument();
+  });
+
+  it("opens the command palette when the narrow-layout icon button is clicked", async () => {
+    const user = userEvent.setup();
+    renderHeader();
+
+    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+
+    await user.click(screen.getByRole("button", { name: /open command palette/i }));
+
+    expect(useUIStore.getState().commandPaletteOpen).toBe(true);
   });
 });

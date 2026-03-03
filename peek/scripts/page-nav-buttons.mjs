@@ -4,6 +4,7 @@ export const PAGE_NAV_BUTTONS = {
   "data-streams": "Data Streams",
   indices: "Indices",
   "ingest-pipelines": "Ingest Pipelines",
+  investigate: "Investigate",
   "query-lab": "Query Lab",
   metrics: "Metrics",
   traces: "Traces",
