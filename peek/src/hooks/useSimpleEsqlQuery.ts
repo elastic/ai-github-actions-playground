@@ -53,7 +53,7 @@ export function useSimpleEsqlQuery({
   if (canBuildRequest) {
     try {
       request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
-    } catch (error) {
+    } catch (error: unknown) {
       requestBuildError = error instanceof Error ? error : new Error(String(error));
     }
   }

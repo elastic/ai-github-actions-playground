@@ -61,7 +61,7 @@ export default function ParameterControl({
         if (!ctrl.signal.aborted) {
           setEsqlOptions(result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? []);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (!ctrl.signal.aborted) {
           setEsqlOptions([]);
           console.error("ES|QL options fetch failed:", err);

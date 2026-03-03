@@ -65,7 +65,7 @@ export async function discoverMcpTools(
       }
       mcpInstructions.push(provider.systemInstruction);
       maxStepCountLimit = Math.max(maxStepCountLimit, provider.stepCountLimit);
-    } catch (error) {
+    } catch (error: unknown) {
       if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
         throw error;
       }

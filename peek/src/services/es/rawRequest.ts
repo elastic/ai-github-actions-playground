@@ -102,7 +102,7 @@ export async function executeRawRequest(
         if (!shouldRetryMethod || !isRetryableStatus || attempt >= RETRY_DELAYS_MS.length) {
           break;
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isAbortError(err) || !shouldRetryMethod || attempt >= RETRY_DELAYS_MS.length) {
           throw err;
         }
@@ -131,7 +131,7 @@ export async function executeRawRequest(
       responseBody = text || null;
     }
     return { status: response.status, body: responseBody };
-  } catch (err) {
+  } catch (err: unknown) {
     throw {
       status: 0,
       message: err instanceof Error ? err.message : String(err),

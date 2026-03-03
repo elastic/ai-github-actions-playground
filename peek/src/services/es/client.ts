@@ -255,7 +255,7 @@ export class ElasticsearchClient {
       let response: Response;
       try {
         response = await this._doFetch(url, mergedHeaders, options);
-      } catch (err) {
+      } catch (err: unknown) {
         throw {
           status: 0,
           message: err instanceof Error ? err.message : String(err),
@@ -593,7 +593,7 @@ export class ElasticsearchClient {
         canReadSecurityRoles: canReadSecurity,
         canReadApiKeys: canCreateApiKeys,
       };
-    } catch (err) {
+    } catch (err: unknown) {
       // A 404 means the _has_privileges endpoint could not be found (e.g. a
       // proxy or middleware stripping the route).  This does NOT indicate that
       // the user lacks privileges, so return an optimistic set and let the

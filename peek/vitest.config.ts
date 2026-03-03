@@ -18,6 +18,12 @@ export default defineConfig({
       reporter: ["text", "lcov"],
       exclude: ["scripts/**"],
       thresholds: {
+        // Branch coverage is set higher because branch-level checks are the
+        // most effective metric for detecting untested conditional logic.
+        // Statement/line/function thresholds are intentionally lower: the
+        // codebase is UI-heavy and many React components are exercised through
+        // integration & E2E tests rather than unit tests, so raw line
+        // coverage under-reports actual test effectiveness.
         statements: 35,
         branches: 70,
         functions: 45,

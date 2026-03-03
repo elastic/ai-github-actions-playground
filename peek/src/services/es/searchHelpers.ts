@@ -66,7 +66,7 @@ export async function gracefulSearch(
       throw error;
     }
     return response.body as SearchResponse;
-  } catch (error) {
+  } catch (error: unknown) {
     if (isElasticsearchError(error) && isMissingIndexError(error)) {
       return null;
     }

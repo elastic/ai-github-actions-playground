@@ -311,7 +311,7 @@ export default function ParameterDialog({
       if (!ctrl.signal.aborted) {
         setEsqlOptions(result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (!ctrl.signal.aborted) {
         setEsqlError(err instanceof Error ? err.message : String(err));
       }

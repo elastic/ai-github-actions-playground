@@ -130,7 +130,7 @@ export default memo(function PanelContainer({ panel }: Props) {
         setExecutionTimeMs(result.executionTimeMs);
         setLastRefreshAt(new Date());
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (!ctrl.signal.aborted) {
         setError(isElasticsearchError(err) ? err.message : String(err));
       }
