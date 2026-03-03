@@ -49,6 +49,11 @@ const DEFAULT_AGENT_FILTER: AgentFilter = {
   staleness: null,
 };
 
+const DEFAULT_FLEET_FILTERS = {
+  fleetAutoRefreshEnabled: true,
+  fleetActiveTab: "overview" as FleetViewTab,
+};
+
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
@@ -127,8 +132,7 @@ export const usePageFiltersStore = create<PageFiltersState>()(
         }),
 
       // --- Fleet ----------------------------------------------------------
-      fleetAutoRefreshEnabled: true,
-      fleetActiveTab: "overview" as FleetViewTab,
+      ...DEFAULT_FLEET_FILTERS,
       agentFilter: { ...DEFAULT_AGENT_FILTER },
       setFleetAutoRefreshEnabled: (enabled) => set({ fleetAutoRefreshEnabled: enabled }),
       setFleetActiveTab: (tab) => set({ fleetActiveTab: tab }),
@@ -136,9 +140,8 @@ export const usePageFiltersStore = create<PageFiltersState>()(
         set((s) => ({ agentFilter: { ...s.agentFilter, ...updates } })),
       resetFleetFilters: () =>
         set({
+          ...DEFAULT_FLEET_FILTERS,
           agentFilter: { ...DEFAULT_AGENT_FILTER },
-          fleetActiveTab: "overview" as FleetViewTab,
-          fleetAutoRefreshEnabled: true,
         }),
     }),
     { name: "PageFiltersStore", enabled: import.meta.env.DEV },
