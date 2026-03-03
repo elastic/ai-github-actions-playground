@@ -11,6 +11,32 @@ interface InvestigateTimelineTableProps {
   activeTab: InvestigateTab;
 }
 
+/** Return the column header for the related entity based on active tab. */
+function relatedEntityHeader(tab: InvestigateTab): string {
+  switch (tab) {
+    case "user":
+    case "ip":
+    case "domain":
+      return "Host";
+    case "host":
+    case "file":
+      return "User";
+  }
+}
+
+/** Return the related entity value from an event based on active tab. */
+function relatedEntityValue(tab: InvestigateTab, event: TimelineEvent): string {
+  switch (tab) {
+    case "user":
+    case "ip":
+    case "domain":
+      return event.hostName;
+    case "host":
+    case "file":
+      return event.userName;
+  }
+}
+
 export default function InvestigateTimelineTable({
   events,
   activeTab,
@@ -47,7 +73,7 @@ export default function InvestigateTimelineTable({
             <Box component="th">Category</Box>
             <Box component="th">Action</Box>
             <Box component="th">Outcome</Box>
-            <Box component="th">{activeTab === "user" ? "Host" : "User"}</Box>
+            <Box component="th">{relatedEntityHeader(activeTab)}</Box>
             <Box component="th">Source IP</Box>
             <Box component="th">Message</Box>
           </tr>
@@ -69,9 +95,7 @@ export default function InvestigateTimelineTable({
               <Box component="td">{event.category || "—"}</Box>
               <Box component="td">{event.action || "—"}</Box>
               <Box component="td">{event.outcome || "—"}</Box>
-              <Box component="td">
-                {activeTab === "user" ? event.hostName || "—" : event.userName || "—"}
-              </Box>
+              <Box component="td">{relatedEntityValue(activeTab, event) || "—"}</Box>
               <Box component="td">{event.sourceIp || "—"}</Box>
               <Box
                 component="td"
