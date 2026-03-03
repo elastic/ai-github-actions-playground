@@ -221,7 +221,11 @@ function getLocalChatTools(connection: ElasticsearchConnection | null): ToolSet 
         body: z.string().optional().describe("Optional JSON request body."),
       }),
       execute: async ({ method, path, body }) => {
-        const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+        const trimmedPath = path.trim();
+        if (!trimmedPath) {
+          throw new Error("Path must not be empty");
+        }
+        const normalizedPath = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
         const client = new ElasticsearchClient(connection);
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);

@@ -305,6 +305,23 @@ describe("buildChatRuntime — ES-dependent tools", () => {
     const result = await rawTool.execute({ method: "GET", path: "/_cluster/health" });
     expect(result).toEqual({ status: 200, body: undefined });
   });
+
+  it("run_raw_es_request rejects whitespace-only paths", async () => {
+    const rawRequestSpy = vi.spyOn(ElasticsearchClient.prototype, "rawRequest");
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: fakeConnection,
+      pathname: "/discover",
+    });
+    const rawTool = tools.run_raw_es_request as {
+      execute: (args: { method: "GET"; path: string; body?: string }) => Promise<unknown>;
+    };
+
+    await expect(rawTool.execute({ method: "GET", path: "   " })).rejects.toThrow(
+      "Path must not be empty",
+    );
+    expect(rawRequestSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe("buildChatRuntime — generate_esql_query tool", () => {
