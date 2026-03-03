@@ -20,6 +20,10 @@ type TraceRow = Pick<
   "traceId" | "spanId" | "serviceName" | "name" | "durationUs" | "status" | "timestamp"
 >;
 
+function isErrorStatus(status: string): boolean {
+  return status === "Error" || status === "STATUS_CODE_ERROR";
+}
+
 interface TraceTableProps {
   traceRows: TraceRow[];
   selectedTraceId: string | null;
@@ -128,19 +132,13 @@ export function TraceTable({
                   </Box>
                 </TableCell>
                 <TableCell>
-                  {(() => {
-                    const isError = row.status === "Error" || row.status === "STATUS_CODE_ERROR";
-                    const label = isError ? "Error" : "OK";
-                    return (
-                      <Chip
-                        size="small"
-                        label={label}
-                        color={isError ? "error" : "success"}
-                        variant="outlined"
-                        aria-label={`Status: ${label}`}
-                      />
-                    );
-                  })()}
+                  <Chip
+                    size="small"
+                    label={isErrorStatus(row.status) ? "Error" : "OK"}
+                    color={isErrorStatus(row.status) ? "error" : "success"}
+                    variant="outlined"
+                    aria-label={`Status: ${isErrorStatus(row.status) ? "Error" : "OK"}`}
+                  />
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.75rem" }}>
                   {row.timestamp ? formatTimestamp(row.timestamp) : "—"}
