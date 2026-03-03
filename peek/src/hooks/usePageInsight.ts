@@ -92,7 +92,7 @@ export function usePageInsight({
           setAsyncResult({ key: cacheKey, text });
         }
       } catch (err) {
-        if ((err as Error).name !== "AbortError") {
+        if ((err as Error).name !== "AbortError" && !controller.signal.aborted) {
           setError((err as Error).message ?? "Failed to generate insight");
         }
       } finally {
