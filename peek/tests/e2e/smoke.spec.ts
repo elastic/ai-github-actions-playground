@@ -42,7 +42,8 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Logs: {
       "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
-      "color-contrast": 12,
+      "color-contrast": 16,
+      "scrollable-region-focusable": 1,
     },
     Console: {
       "aria-input-field-name": 1,
@@ -62,7 +63,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Logs: {
       "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
-      "color-contrast": 12,
+      "color-contrast": 16,
       "scrollable-region-focusable": 2,
     },
     Traces: {

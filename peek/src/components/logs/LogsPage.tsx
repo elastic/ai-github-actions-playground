@@ -333,13 +333,19 @@ export default function LogsPage() {
                     </Stack>
                   </ListItem>
                 )),
-                <Divider key={`${field}-divider`} component="li" />,
+                <Divider key={`${field}-divider`} component="li" aria-hidden />,
               ])}
             </List>
           )}
         </Paper>
 
-        <Paper variant="outlined" tabIndex={0} sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
+        <Paper
+          variant="outlined"
+          tabIndex={0}
+          role="region"
+          aria-label="Log results"
+          sx={{ flex: 1, minWidth: 0, overflow: "auto" }}
+        >
           {!result && !loading && (
             <EmptyState
               heading="No logs loaded"
