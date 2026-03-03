@@ -114,10 +114,6 @@ Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, 
 - Chart components receive data via `VizRendererProps`. They do not fetch data — the panel container handles queries.
 - New chart types must be registered as a `VizRegistryDescriptor` in `visualizations/registry/`. One file per chart type.
 
-**Legacy dashboard format support:**
-
-`schemas.ts` and `dashboardImportExport.ts` accept both the canonical Perses format (`plugin` + `queries`) and the legacy format (`query` + `visualization`). The import pipeline in `hydrateWorkspaceFromPersistedState` tries four formats in order: nested Perses workspace, flat Perses workspace, legacy workspace snapshot, and legacy single dashboard. This is required for backward-compatible imports of dashboards persisted before the Perses migration. Legacy format support can be removed after one full release cycle in which all persisted dashboards have been migrated to the canonical Perses format on load.
-
 ## Adding a New Elasticsearch Endpoint
 
 The Elasticsearch service layer in `peek/src/services/es/` is organized into **domain-specific type modules** so that contributors working on unrelated ES capabilities (e.g. security vs. ingest) do not need to edit the same files.
