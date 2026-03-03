@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useSimpleEsqlQuery } from "../../src/hooks/useSimpleEsqlQuery";
@@ -63,6 +63,22 @@ describe("useSimpleEsqlQuery", () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it("does not refetch on same-url connection change when query is null", async () => {
+    useConnectionStore.setState({ connection: MOCK_CONNECTION });
+    const { result } = renderHook(() => useSimpleEsqlQuery({ query: null }), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      useConnectionStore.setState({ connection: { ...MOCK_CONNECTION } });
+    });
+    await Promise.resolve();
+
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
   it("stays idle when connection is null", () => {
     const { result } = renderHook(() => useSimpleEsqlQuery({ query: "FROM index | LIMIT 10" }), {
       wrapper: createWrapper(),
@@ -80,6 +96,39 @@ describe("useSimpleEsqlQuery", () => {
       () => useSimpleEsqlQuery({ query: "FROM index | LIMIT 10", enabled: false }),
       { wrapper: createWrapper() },
     );
+
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it("does not refetch on same-url connection change when query is whitespace", async () => {
+    useConnectionStore.setState({ connection: MOCK_CONNECTION });
+    const { result } = renderHook(() => useSimpleEsqlQuery({ query: "   " }), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      useConnectionStore.setState({ connection: { ...MOCK_CONNECTION } });
+    });
+    await Promise.resolve();
+
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it("does not refetch on same-url connection change when enabled is false", async () => {
+    useConnectionStore.setState({ connection: MOCK_CONNECTION });
+    const { result } = renderHook(
+      () => useSimpleEsqlQuery({ query: "FROM index | LIMIT 10", enabled: false }),
+      { wrapper: createWrapper() },
+    );
+
+    act(() => {
+      useConnectionStore.setState({ connection: { ...MOCK_CONNECTION } });
+    });
+    await Promise.resolve();
 
     expect(result.current.data).toBeNull();
     expect(result.current.loading).toBe(false);

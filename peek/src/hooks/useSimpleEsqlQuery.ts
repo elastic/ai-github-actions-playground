@@ -45,15 +45,20 @@ export function useSimpleEsqlQuery({
   enabled = true,
 }: UseSimpleEsqlQueryOptions) {
   const connection = useConnectionStore((s) => s.connection);
+  const trimmedQuery = query?.trim() ?? "";
 
-  const effectiveEnabled = enabled && Boolean(connection) && Boolean(query?.trim());
+  const effectiveEnabled = enabled && Boolean(connection) && Boolean(trimmedQuery);
 
   const result = useQuery<EsqlResponse>({
-    queryKey: queryKey ?? ["esql", connection?.url, query],
+    queryKey: queryKey ?? ["esql", connection?.url, trimmedQuery],
     queryFn: async ({ signal }) => {
-      const datasource = createPersesEsqlDatasource(connection!);
-      const trimmed = query!.trim();
-      const request = buildRequest ? buildRequest(trimmed) : { query: trimmed };
+      if (!connection || !trimmedQuery) {
+        throw new Error(
+          "Cannot execute ES|QL query without an active connection and non-empty query.",
+        );
+      }
+      const datasource = createPersesEsqlDatasource(connection);
+      const request = buildRequest ? buildRequest(trimmedQuery) : { query: trimmedQuery };
       return datasource.execute(request, signal);
     },
     enabled: effectiveEnabled,
@@ -62,12 +67,21 @@ export function useSimpleEsqlQuery({
     refetchOnReconnect: false,
   });
 
-  useRefetchOnConnectionChange(connection, result.refetch);
+  useRefetchOnConnectionChange(connection, () => {
+    if (effectiveEnabled) {
+      void result.refetch();
+    }
+  });
 
   return {
     data: result.data ?? null,
     loading: result.isFetching,
-    error: result.error ? (result.error as Error).message : null,
+    error:
+      result.error == null
+        ? null
+        : result.error instanceof Error
+          ? result.error.message
+          : String(result.error),
     refetch: result.refetch,
   };
 }
