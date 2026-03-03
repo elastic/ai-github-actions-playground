@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import LinearProgress from "@mui/material/LinearProgress";
+import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -111,7 +111,10 @@ export default function InvestigatePage() {
             onClick={handleSearch}
             disabled={loading || !entityInput.trim()}
           >
-            {loading ? <LinearProgress sx={{ width: 48 }} /> : "Search"}
+            <Box component="span" sx={{ display: "inline-flex", gap: 0.5, alignItems: "center" }}>
+              {loading && <CircularProgress size={14} color="inherit" />}
+              Search
+            </Box>
           </Button>
         </Box>
       </Paper>
