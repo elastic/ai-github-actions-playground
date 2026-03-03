@@ -1,4 +1,5 @@
 import type { EsqlResponse } from "../../types";
+import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
 
 export interface RouteRow {
   route: string;
@@ -20,22 +21,6 @@ export interface RecentTrace {
 export type RouteSortField = "route" | "requestCount" | "avgLatencyMs" | "errorRate";
 export type TraceSortField = "spanName" | "durationMs" | "statusCode" | "timestamp";
 export type SortDirection = "asc" | "desc";
-
-function buildColumnAccessor(columns: EsqlResponse["columns"]) {
-  const colIndex = new Map<string, number>();
-  for (let i = 0; i < columns.length; i++) {
-    colIndex.set(columns[i]!.name, i);
-  }
-  return (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
-}
-
-function toFiniteNumber(value: unknown, fallback = 0): number {
-  const parsed = Number(value ?? fallback);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
 
 export function parseRouteRows(result: EsqlResponse): RouteRow[] {
   const get = buildColumnAccessor(result.columns);

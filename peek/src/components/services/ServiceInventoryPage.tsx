@@ -43,7 +43,7 @@ export default function ServiceInventoryPage() {
     handleSearch,
     handleReset,
     handleViewTraces,
-    latestQueryRef,
+    cancelSearch,
   } = useServiceInventorySearch();
 
   const insightContext = useMemo(() => {
@@ -90,7 +90,7 @@ export default function ServiceInventoryPage() {
             value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
             onChange={(range) => {
               const traceRange = toTraceTimeRange(range);
-              latestQueryRef.current = null;
+              cancelSearch();
               updateFilters({ timeFrom: traceRange.from, timeTo: traceRange.to });
             }}
           />

@@ -113,6 +113,11 @@ export function useServiceInventorySearch() {
     onFailure: handleFailure,
   });
 
+  const cancelSearch = useCallback(() => {
+    latestQueryRef.current = null;
+    latestSparklineQueryRef.current = null;
+  }, []);
+
   const handleSearch = useCallback(() => {
     activeFiltersRef.current = filters;
     const query = buildServiceInventoryQuery(filters);
@@ -175,6 +180,6 @@ export function useServiceInventorySearch() {
     handleSearch,
     handleReset,
     handleViewTraces,
-    latestQueryRef,
+    cancelSearch,
   };
 }
