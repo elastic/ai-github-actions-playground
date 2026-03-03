@@ -1,4 +1,4 @@
-import type { ProfilingTopFunctionsRequest } from "../../services/es/client";
+import type { ProfilingTopFunctionsRequest } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import {
   buildPipeline,
