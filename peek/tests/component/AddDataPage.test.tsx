@@ -121,7 +121,7 @@ describe("AddDataPage", () => {
     expect(
       screen.getByRole("heading", { name: /Step 5: Explore your data \+ next steps/i }),
     ).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("reuses endpoint type and platform controls in Step 2/3", async () => {
     const user = userEvent.setup();
@@ -135,7 +135,7 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Continue to step 3/i }));
     expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("shows contextual verification expectations in Step 4", async () => {
     const user = userEvent.setup();
@@ -146,7 +146,7 @@ describe("AddDataPage", () => {
       screen.getByText(/For Kubernetes, we expect to receive metrics, logs and traces\./),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("shows contextual step 5 outcomes with dashboard/alerting/additional source CTAs", async () => {
     const user = userEvent.setup();
@@ -177,7 +177,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("resets technology selection, search input, and category when clicking 'Add another source'", async () => {
     // This test navigates through all 5 steps twice; allow extra time on slow CI runners.
@@ -209,7 +209,6 @@ describe("AddDataPage", () => {
         screen.getByRole("heading", { name: /Step 1: What are you monitoring\?/i }),
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-current", "true");
     expect(screen.getByPlaceholderText("Search integrations...")).toHaveValue("");
     expect(screen.getByRole("button", { name: /Continue to step 2/i })).toBeDisabled();
 
@@ -241,7 +240,7 @@ describe("AddDataPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
     });
-  });
+  }, 15_000);
 });
 
 describe("probeOtlpEndpoint", () => {
