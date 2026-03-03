@@ -78,7 +78,7 @@ function columnIndex(columns: EsqlColumn[], name: string): number {
 
 export function parseClusterInventory(response: EsqlResponse): ClusterRow[] {
   const cols = response.columns;
-  const iCluster = columnIndex(cols, "k8s.cluster.name");
+  const iCluster = columnIndex(cols, "cluster_name");
   const iPodCount = columnIndex(cols, "pod_count");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
@@ -97,7 +97,7 @@ export function parseClusterInventory(response: EsqlResponse): ClusterRow[] {
 
 export function parseNamespaceInventory(response: EsqlResponse): NamespaceRow[] {
   const cols = response.columns;
-  const iNamespace = columnIndex(cols, "k8s.namespace.name");
+  const iNamespace = columnIndex(cols, "namespace_name");
   const iPodCount = columnIndex(cols, "pod_count");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
@@ -112,14 +112,13 @@ export function parseNamespaceInventory(response: EsqlResponse): NamespaceRow[] 
 
 export function parseWorkloadInventory(response: EsqlResponse): WorkloadRow[] {
   const cols = response.columns;
-  // The workload name column varies by kind; it's always the last column in the STATS BY clause.
-  const nameColIndex = cols.length - 1;
+  const iWorkloadName = columnIndex(cols, "workload_name");
   const iPodCount = columnIndex(cols, "pod_count");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
 
   return response.values.map((row) => ({
-    workloadName: String(row[nameColIndex] ?? ""),
+    workloadName: String(row[iWorkloadName] ?? ""),
     podCount: Number(row[iPodCount] ?? 0),
     avgCpu: row[iAvgCpu] != null ? Number(row[iAvgCpu]) : null,
     avgMemory: row[iAvgMemory] != null ? Number(row[iAvgMemory]) : null,
@@ -128,9 +127,9 @@ export function parseWorkloadInventory(response: EsqlResponse): WorkloadRow[] {
 
 export function parsePodInventory(response: EsqlResponse): PodRow[] {
   const cols = response.columns;
-  const iPodName = columnIndex(cols, "k8s.pod.name");
-  const iNamespace = columnIndex(cols, "k8s.namespace.name");
-  const iNodeName = columnIndex(cols, "k8s.node.name");
+  const iPodName = columnIndex(cols, "pod_name");
+  const iNamespace = columnIndex(cols, "namespace_name");
+  const iNodeName = columnIndex(cols, "node_name");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
   const iRestarts = columnIndex(cols, "restarts");
@@ -147,10 +146,10 @@ export function parsePodInventory(response: EsqlResponse): PodRow[] {
 
 export function parsePodDetail(response: EsqlResponse): PodDetailRow[] {
   const cols = response.columns;
-  const iPodName = columnIndex(cols, "k8s.pod.name");
-  const iNamespace = columnIndex(cols, "k8s.namespace.name");
-  const iNodeName = columnIndex(cols, "k8s.node.name");
-  const iContainerName = columnIndex(cols, "k8s.container.name");
+  const iPodName = columnIndex(cols, "pod_name");
+  const iNamespace = columnIndex(cols, "namespace_name");
+  const iNodeName = columnIndex(cols, "node_name");
+  const iContainerName = columnIndex(cols, "container_name");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
   const iRestarts = columnIndex(cols, "restarts");

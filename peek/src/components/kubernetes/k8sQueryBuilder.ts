@@ -113,7 +113,7 @@ export function buildClusterInventoryQuery(
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}), namespace_count = COUNT_DISTINCT(${fields.namespace}), node_count = COUNT_DISTINCT(${fields.nodeName}) BY ${fields.clusterName}`,
+    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}), namespace_count = COUNT_DISTINCT(${fields.namespace}), node_count = COUNT_DISTINCT(${fields.nodeName}) BY cluster_name = ${fields.clusterName}`,
     `SORT pod_count DESC`,
     `LIMIT 100`,
   ]);
@@ -136,7 +136,7 @@ export function buildNamespaceInventoryQuery(
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY ${fields.namespace}`,
+    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY namespace_name = ${fields.namespace}`,
     `SORT pod_count DESC`,
     `LIMIT 200`,
   ]);
@@ -181,7 +181,7 @@ export function buildWorkloadInventoryQuery(
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY ${nameField}`,
+    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY workload_name = ${nameField}`,
     `SORT pod_count DESC`,
     `LIMIT 200`,
   ]);
@@ -204,7 +204,7 @@ export function buildPodInventoryQuery(
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}), restarts = SUM(${fields.restartCount}) BY ${fields.podName}, ${fields.namespace}, ${fields.nodeName}`,
+    `STATS avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}), restarts = SUM(${fields.restartCount}) BY pod_name = ${fields.podName}, namespace_name = ${fields.namespace}, node_name = ${fields.nodeName}`,
     `SORT avg_cpu DESC`,
     `LIMIT 500`,
   ]);
@@ -228,8 +228,8 @@ export function buildPodDetailQuery(
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}), restarts = SUM(${fields.restartCount}) BY ${fields.podName}, ${fields.namespace}, ${fields.nodeName}, ${fields.containerName}`,
-    `SORT ${fields.containerName}`,
+    `STATS avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}), restarts = SUM(${fields.restartCount}) BY pod_name = ${fields.podName}, namespace_name = ${fields.namespace}, node_name = ${fields.nodeName}, container_name = ${fields.containerName}`,
+    `SORT container_name`,
     `LIMIT 100`,
   ]);
 }
