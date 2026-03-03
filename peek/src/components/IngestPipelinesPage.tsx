@@ -81,7 +81,10 @@ export default function IngestPipelinesPage() {
     });
   }, [selectedPipeline]);
 
-  const insightCacheKey = `ingest-pipelines::${effectiveSelectedName ?? ""}::${selectedPipeline?.pipeline.processors?.length ?? 0}`;
+  const processorSignature = (selectedPipeline?.pipeline.processors ?? [])
+    .map((processor) => Object.keys(processor)[0] ?? "unknown")
+    .join(",");
+  const insightCacheKey = `ingest-pipelines::${effectiveSelectedName ?? ""}::${processorSignature}`;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
