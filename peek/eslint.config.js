@@ -60,6 +60,30 @@ export default tseslint.config(
       ],
     },
   },
+  // Prevent components from importing directly from services/es/client.
+  // Components should import from hooks/ or from services/es (barrel) instead.
+  {
+    files: ["src/components/**/*.ts", "src/components/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^@mui/(material|icons-material|lab)$",
+              message:
+                "Import from the specific module path (e.g. '@mui/material/Button') instead of the barrel export.",
+            },
+            {
+              regex: "services/es/client$",
+              message:
+                "Import from the services/es barrel (services/es) or from hooks/ instead of services/es/client directly.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // eslint-plugin-mui — sort sx keys for consistent ordering
   {
     files: ["src/**/*.tsx"],

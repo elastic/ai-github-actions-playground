@@ -67,6 +67,7 @@ export default function RequestCard({
       makeLLMCompletionExtension({
         prompt:
           "You are an Elasticsearch REST API path expert. Complete the API path at the cursor position. Common paths include _cluster/health, _cat/indices, _search, _bulk, _mapping, _settings, _aliases, _reindex, _analyze, _nodes, _tasks, _ingest/pipeline, _security, etc. Return only the complete path text, no explanation.",
+        mode: "text",
         delay: 600,
       }),
     ],
@@ -150,7 +151,7 @@ export default function RequestCard({
           <CodeMirror
             value={entry.path}
             onChange={(v) => {
-              const singleLine = v.replace(/\n/g, "");
+              const singleLine = v.replace(/[\r\n]+/g, "");
               onUpdate(entry.id, { path: singleLine, response: null });
             }}
             extensions={pathEditorExtensions}
