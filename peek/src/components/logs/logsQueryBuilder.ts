@@ -92,3 +92,11 @@ export function buildLogsQuery(state: LogsQueryState): string {
     .filter(Boolean)
     .join(" | ");
 }
+
+export function appendPipeClause(query: string, clause: string): string {
+  const trimmedQuery = query.trim();
+  const trimmedClause = clause.trim();
+  if (!trimmedQuery) return trimmedClause;
+  if (!trimmedClause) return trimmedQuery;
+  return `${trimmedQuery} | ${trimmedClause}`;
+}

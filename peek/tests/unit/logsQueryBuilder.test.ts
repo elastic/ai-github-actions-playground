@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildLogsQuery } from "../../src/components/logs/logsQueryBuilder";
+import { appendPipeClause, buildLogsQuery } from "../../src/components/logs/logsQueryBuilder";
 
 describe("buildLogsQuery", () => {
   it("builds query with structured filters and keep columns", () => {
@@ -67,5 +67,15 @@ describe("buildLogsQuery", () => {
 
     expect(query).toContain("@timestamp >= NOW() - 2 days");
     expect(query).toContain("LIMIT 1000");
+  });
+});
+
+describe("appendPipeClause", () => {
+  it("appends a clause using pipe separators", () => {
+    expect(appendPipeClause("FROM logs-*", "LIMIT 10")).toBe("FROM logs-* | LIMIT 10");
+  });
+
+  it("returns query when clause is blank", () => {
+    expect(appendPipeClause("FROM logs-*", "  ")).toBe("FROM logs-*");
   });
 });

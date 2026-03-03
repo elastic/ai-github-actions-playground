@@ -15,6 +15,17 @@ import ListItemText from "@mui/material/ListItemText";
 import ListSubheader from "@mui/material/ListSubheader";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
+import ListItemButton from "@mui/material/ListItemButton";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -36,10 +47,43 @@ import PageHeader from "../PageHeader";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
-import { buildLogsQuery } from "./logsQueryBuilder";
+import { appendPipeClause, buildLogsQuery } from "./logsQueryBuilder";
 
 const SIDEBAR_FIELDS = ["service.name", "log.level", "host.name", "event.dataset"];
 const TRACE_ID_FIELD = "trace.id";
+const MESSAGE_FIELD = "message";
+const TIMESTAMP_FIELD = "@timestamp";
+const HISTOGRAM_INTERVAL_MS = 5 * 60 * 1000;
+
+type LogsViewMode = "lines" | "chart" | "patterns";
+type ExtractMethod = "DISSECT" | "GROK";
+interface HistogramBucket {
+  start: number;
+  end: number;
+  count: number;
+  anomaly: boolean;
+}
+
+function normalizePattern(message: string): string {
+  return message
+    .replace(/\b\d+\b/g, "{n}")
+    .replace(/\b[0-9a-f]{8,}\b/gi, "{hex}")
+    .replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, "{ip}")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractFieldNames(method: ExtractMethod, pattern: string): string[] {
+  if (method === "DISSECT") {
+    return Array.from(pattern.matchAll(/%\{([a-zA-Z0-9_.-]+)\}/g), (m) => m[1] ?? "").filter(
+      Boolean,
+    );
+  }
+  return Array.from(
+    pattern.matchAll(/%\{[A-Z0-9_]+(?::([a-zA-Z0-9_.-]+)(?::[a-zA-Z0-9_]+)?)?\}/g),
+    (m) => m[1] ?? "",
+  ).filter(Boolean);
+}
 
 export default function LogsPage() {
   const navigate = useNavigate();
@@ -80,9 +124,15 @@ export default function LogsPage() {
   const [fieldValues, setFieldValues] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});
+  const [extractedSidebarFields, setExtractedSidebarFields] = useState<string[]>([]);
   const [fieldValuesError, setFieldValuesError] = useState<string | null>(null);
   const [fieldValuesLoading, setFieldValuesLoading] = useState(false);
   const [searchInput, setSearchInput] = useState(searchText);
+  const [viewMode, setViewMode] = useState<LogsViewMode>("lines");
+  const [extractDialogOpen, setExtractDialogOpen] = useState(false);
+  const [extractMethod, setExtractMethod] = useState<ExtractMethod>("DISSECT");
+  const [extractPattern, setExtractPattern] = useState("%{extracted.value}");
+  const [extractSource, setExtractSource] = useState("");
   useEffect(() => {
     setSearchInput(searchText);
   }, [searchText]);
@@ -98,6 +148,55 @@ export default function LogsPage() {
     [indexPattern, searchText, filters, selectedColumns],
   );
   const effectiveQuery = rawQuery ?? generatedQuery;
+  const sidebarFields = useMemo(
+    () => Array.from(new Set([...SIDEBAR_FIELDS, ...extractedSidebarFields])),
+    [extractedSidebarFields],
+  );
+
+  const histogramBuckets = useMemo<HistogramBucket[]>(() => {
+    if (!result) return [];
+    const timestampIndex = result.columns.findIndex((column) => column.name === TIMESTAMP_FIELD);
+    if (timestampIndex < 0) return [];
+    const bucketCounts = new Map<number, number>();
+    for (const row of result.values) {
+      const rawValue = row[timestampIndex];
+      if (!rawValue) continue;
+      const parsed = Date.parse(String(rawValue));
+      if (Number.isNaN(parsed)) continue;
+      const start = Math.floor(parsed / HISTOGRAM_INTERVAL_MS) * HISTOGRAM_INTERVAL_MS;
+      bucketCounts.set(start, (bucketCounts.get(start) ?? 0) + 1);
+    }
+    const buckets = Array.from(bucketCounts.entries())
+      .map(([start, count]) => ({ start, end: start + HISTOGRAM_INTERVAL_MS, count }))
+      .sort((a, b) => a.start - b.start);
+    if (buckets.length === 0) return [];
+    const counts = buckets.map((b) => b.count);
+    const mean = counts.reduce((sum, value) => sum + value, 0) / counts.length;
+    const variance =
+      counts.reduce((sum, value) => sum + (value - mean) ** 2, 0) / Math.max(1, counts.length);
+    const deviation = Math.sqrt(variance);
+    return buckets.map((bucket) => ({ ...bucket, anomaly: bucket.count >= mean + deviation * 2 }));
+  }, [result]);
+
+  const patternGroups = useMemo(() => {
+    if (!result) return [];
+    const messageIndex = result.columns.findIndex((column) => column.name === MESSAGE_FIELD);
+    if (messageIndex < 0) return [];
+    const groups = new Map<string, { pattern: string; sample: string; count: number }>();
+    for (const row of result.values) {
+      const raw = row[messageIndex];
+      if (!raw) continue;
+      const sample = String(raw);
+      const pattern = normalizePattern(sample);
+      const existing = groups.get(pattern);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        groups.set(pattern, { pattern, sample, count: 1 });
+      }
+    }
+    return Array.from(groups.values()).sort((a, b) => b.count - a.count);
+  }, [result]);
 
   useEffect(() => {
     setRawQuery(null);
@@ -143,7 +242,7 @@ export default function LogsPage() {
       setFieldValuesError(null);
       try {
         const entries = await Promise.all(
-          SIDEBAR_FIELDS.map(async (field) => [
+          sidebarFields.map(async (field) => [
             field,
             await getFieldValues(client, indexPattern, field, 8, controller.signal),
           ]),
@@ -164,7 +263,7 @@ export default function LogsPage() {
       mounted = false;
       controller.abort();
     };
-  }, [connection, indexPattern]);
+  }, [connection, indexPattern, sidebarFields]);
 
   const handleCellFilter = useCallback(
     (field: string, value: string, exclude = false) => {
@@ -187,6 +286,45 @@ export default function LogsPage() {
     },
     [navigate, setDiscoverQueryDraft],
   );
+
+  const handleAnomalyDrillIn = useCallback(
+    (start: number, end: number) => {
+      const clause = [
+        "STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, 5 minutes)",
+        "EVAL anomaly = CHANGE_POINT(log_count)",
+        `WHERE anomaly IS NOT NULL AND bucket >= TO_DATETIME("${new Date(start).toISOString()}") AND bucket < TO_DATETIME("${new Date(end).toISOString()}")`,
+      ].join(" | ");
+      const nextQuery = appendPipeClause(generatedQuery, clause);
+      setRawQuery(nextQuery);
+      void runQuery(nextQuery);
+      setViewMode("chart");
+    },
+    [generatedQuery, runQuery, setRawQuery],
+  );
+
+  const handleApplyExtraction = useCallback(() => {
+    const trimmedPattern = extractPattern.trim();
+    if (!trimmedPattern) return;
+    const clause = `${extractMethod} ${MESSAGE_FIELD} "${escapeEsqlString(trimmedPattern)}"`;
+    const nextQuery = appendPipeClause(effectiveQuery, clause);
+    const extractedFields = extractFieldNames(extractMethod, trimmedPattern);
+    if (extractedFields.length > 0) {
+      setExtractedSidebarFields((prev) => Array.from(new Set([...prev, ...extractedFields])));
+    }
+    setRawQuery(nextQuery);
+    void runQuery(nextQuery);
+    setExtractDialogOpen(false);
+  }, [effectiveQuery, extractMethod, extractPattern, runQuery, setRawQuery]);
+
+  const runCategorizeQuery = useCallback(() => {
+    const nextQuery = appendPipeClause(
+      generatedQuery,
+      "STATS pattern_count = COUNT(*) BY pattern = CATEGORIZE(message) | SORT pattern_count DESC",
+    );
+    setRawQuery(nextQuery);
+    void runQuery(nextQuery);
+    setViewMode("patterns");
+  }, [generatedQuery, runQuery, setRawQuery]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
@@ -251,15 +389,31 @@ export default function LogsPage() {
           </Box>
         </Box>
 
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<PlayArrowIcon />}
-          onClick={runLogsQuery}
-          disabled={loading || !effectiveQuery.trim()}
-        >
-          {loading ? "Searching..." : "Search Logs"}
-        </Button>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", alignItems: "center" }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PlayArrowIcon />}
+            onClick={runLogsQuery}
+            disabled={loading || !effectiveQuery.trim()}
+          >
+            {loading ? "Searching..." : "Search Logs"}
+          </Button>
+          <ToggleButtonGroup
+            size="small"
+            color="primary"
+            value={viewMode}
+            exclusive
+            onChange={(_, next: LogsViewMode | null) => {
+              if (next) setViewMode(next);
+            }}
+            aria-label="Logs view mode"
+          >
+            <ToggleButton value="lines">Lines</ToggleButton>
+            <ToggleButton value="chart">Chart</ToggleButton>
+            <ToggleButton value="patterns">Patterns</ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -289,7 +443,7 @@ export default function LogsPage() {
           )}
           {!fieldValuesLoading && !fieldValuesError && (
             <List dense disablePadding>
-              {SIDEBAR_FIELDS.map((field) => [
+              {sidebarFields.map((field) => [
                 <ListSubheader
                   key={`${field}-header`}
                   disableSticky
@@ -346,25 +500,73 @@ export default function LogsPage() {
           aria-label="Log results"
           sx={{ flex: 1, minWidth: 0, overflow: "auto" }}
         >
+          <Box sx={{ p: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Typography variant="caption" color="text.secondary">
+              {result
+                ? `${result.values.length.toLocaleString()} rows returned`
+                : "Run a query to populate results"}{" "}
+              — timeline and views share the visible ES|QL query above.
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 0.5,
+                alignItems: "end",
+                minHeight: 64,
+                overflowX: "auto",
+                mt: 1,
+              }}
+            >
+              {histogramBuckets.length === 0 && (
+                <Typography variant="caption" color="text.secondary">
+                  No histogram buckets yet.
+                </Typography>
+              )}
+              {histogramBuckets.map((bucket) => (
+                <Button
+                  key={bucket.start}
+                  size="small"
+                  variant={bucket.anomaly ? "contained" : "outlined"}
+                  color={bucket.anomaly ? "warning" : "inherit"}
+                  onClick={() => handleAnomalyDrillIn(bucket.start, bucket.end)}
+                  sx={{
+                    minWidth: 12,
+                    height: Math.max(12, Math.min(52, bucket.count * 2)),
+                    py: 0,
+                    px: 0.5,
+                  }}
+                  title={`${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`}
+                />
+              ))}
+            </Box>
+            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+              <Button size="small" variant="text" onClick={runCategorizeQuery}>
+                Run CATEGORIZE patterns
+              </Button>
+            </Stack>
+          </Box>
+
           {!result && !loading && (
             <EmptyState
               heading="No logs loaded"
               description="Run the current query to explore logs and click values to add filters."
             />
           )}
-          {result && (
+
+          {result && viewMode === "lines" && (
             <>
-              <Box sx={{ p: 1, borderBottom: 1, borderColor: "divider" }}>
-                <Typography variant="caption" color="text.secondary">
-                  {result.values.length.toLocaleString()} rows returned — click a cell to add a
-                  filter
-                </Typography>
-              </Box>
               <DataTable
                 data={result}
                 onCellClick={({ columnName, value }) => {
                   if (columnName === TRACE_ID_FIELD) {
                     handleTracePivot(value);
+                    return;
+                  }
+                  if (columnName === MESSAGE_FIELD) {
+                    setExtractSource(value);
+                    setExtractMethod("DISSECT");
+                    setExtractPattern("%{extracted.value}");
+                    setExtractDialogOpen(true);
                     return;
                   }
                   handleCellFilter(columnName, value, false);
@@ -394,8 +596,92 @@ export default function LogsPage() {
                 )}
             </>
           )}
+
+          {result && viewMode === "chart" && (
+            <Box sx={{ p: 2 }}>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Chart view uses the shared query and highlights anomaly buckets from the timeline.
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Click a timeline anomaly marker to append a `CHANGE_POINT` drill-in query.
+              </Typography>
+            </Box>
+          )}
+
+          {result && viewMode === "patterns" && (
+            <List dense disablePadding>
+              {patternGroups.slice(0, 50).map((group) => (
+                <ListItem key={group.pattern} disablePadding>
+                  <ListItemButton
+                    onClick={() => {
+                      setSearchText(`"${group.sample}"`);
+                      setViewMode("lines");
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Typography variant="caption" noWrap title={group.pattern}>
+                          {group.pattern}
+                        </Typography>
+                      }
+                      secondary={`${group.count.toLocaleString()} matching rows`}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              {patternGroups.length === 0 && (
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    No message patterns available for clustering.
+                  </Typography>
+                </Box>
+              )}
+            </List>
+          )}
         </Paper>
       </Box>
+      <Dialog open={extractDialogOpen} onClose={() => setExtractDialogOpen(false)} fullWidth>
+        <DialogTitle>Extract fields from message</DialogTitle>
+        <DialogContent>
+          <Typography variant="caption" color="text.secondary">
+            Selected message: {extractSource.slice(0, 240)}
+          </Typography>
+          <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+            <InputLabel id="logs-extract-method-label">Method</InputLabel>
+            <Select
+              labelId="logs-extract-method-label"
+              label="Method"
+              value={extractMethod}
+              onChange={(event) => {
+                const method = event.target.value as ExtractMethod;
+                setExtractMethod(method);
+                setExtractPattern(
+                  method === "DISSECT" ? "%{extracted.value}" : "%{GREEDYDATA:extracted.value}",
+                );
+              }}
+            >
+              <MenuItem value="DISSECT">DISSECT</MenuItem>
+              <MenuItem value="GROK">GROK</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            size="small"
+            fullWidth
+            label="Extraction pattern"
+            sx={{ mt: 1 }}
+            value={extractPattern}
+            onChange={(event) => setExtractPattern(event.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => setExtractDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button size="small" variant="contained" onClick={handleApplyExtraction}>
+            Apply {extractMethod}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
