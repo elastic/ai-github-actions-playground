@@ -23,6 +23,10 @@ export interface ExploreQueryResult {
  *
  * The returned `queryResult` matches the shape expected by the explorer
  * store so that downstream UI components need no changes.
+ *
+ * When `queryOverride` is provided (non-null), it is used as the ES|QL
+ * query instead of the generated one — this supports direct editing of
+ * the query in the CodeMirror editor.
  */
 export function useExploreQuery({
   indexPattern,
@@ -33,6 +37,7 @@ export function useExploreQuery({
   groupBy,
   timeRange,
   enabled,
+  queryOverride,
 }: {
   indexPattern: string;
   selectedMetric: string | null;
@@ -42,6 +47,8 @@ export function useExploreQuery({
   groupBy: string | null;
   timeRange: TimeRange;
   enabled: boolean;
+  /** When non-null, use this ES|QL instead of the generated query. */
+  queryOverride?: string | null;
 }): ExploreQueryResult {
   const connection = useConnectionStore((s) => s.connection);
 
@@ -58,10 +65,17 @@ export function useExploreQuery({
     });
   }, [indexPattern, selectedMetric, metricType, aggregation, filters, groupBy, timeRange, enabled]);
 
+  // Use override query if provided, otherwise use the generated query
+  const effectiveEsql = queryOverride ?? queryDef?.esql ?? null;
+  const trimmedOverride = queryOverride?.trim() ?? null;
+  const trimmedEffectiveEsql = effectiveEsql?.trim() ?? null;
+
   const query = useQuery({
     queryKey: [
       "explore-query",
       connection?.url,
+      // When override is active, key on the override text; otherwise use structured params
+      trimmedOverride ?? null,
       indexPattern,
       selectedMetric,
       metricType,
@@ -72,17 +86,23 @@ export function useExploreQuery({
       timeRange.to,
     ],
     queryFn: async ({ signal }) => {
-      if (!connection || !queryDef) throw new Error("Missing connection or query definition");
+      if (!connection || !trimmedEffectiveEsql) {
+        throw new Error("Missing connection or query definition");
+      }
       const client = new ElasticsearchClient(connection);
-      const params = buildTimeParams(queryDef.esql, timeRange);
+      // Skip time params for override queries — user-edited queries contain concrete time expressions
+      if (trimmedOverride) {
+        return client.query({ query: trimmedOverride }, signal);
+      }
+      const params = buildTimeParams(trimmedEffectiveEsql, timeRange);
       return client.query(
         Object.keys(params).length > 0
-          ? { query: queryDef.esql, params }
-          : { query: queryDef.esql },
+          ? { query: trimmedEffectiveEsql, params }
+          : { query: trimmedEffectiveEsql },
         signal,
       );
     },
-    enabled: Boolean(connection && queryDef && enabled),
+    enabled: Boolean(connection && trimmedEffectiveEsql && enabled),
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -92,22 +112,22 @@ export function useExploreQuery({
     return { status: "idle" };
   }
   if (query.isFetching) {
-    return { status: "loading", esql: queryDef?.esql };
+    return { status: "loading", esql: effectiveEsql ?? undefined };
   }
   if (query.isError) {
     return {
       status: "error",
-      esql: queryDef?.esql,
+      esql: effectiveEsql ?? undefined,
       error: isElasticsearchError(query.error) ? query.error.message : String(query.error),
     };
   }
   if (query.data) {
     return {
       status: "success",
-      esql: queryDef?.esql,
+      esql: effectiveEsql ?? undefined,
       data: query.data,
       executionTimeMs: query.data.executionTimeMs,
     };
   }
-  return { status: "idle", esql: queryDef?.esql };
+  return { status: "idle", esql: effectiveEsql ?? undefined };
 }
