@@ -55,6 +55,7 @@ export function useServiceInventorySearch() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
+  const latestSparklineRequestRef = useRef(0);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -87,10 +88,18 @@ export function useServiceInventorySearch() {
     onSuccess: handleSuccess,
     onFailure: handleFailure,
   });
-  const handleSparklineSuccess = useCallback((data: EsqlResponse, executedQuery: string) => {
-    if (executedQuery !== latestSparklineQueryRef.current) return;
-    setSparklineData(parseServiceSparklineData(data));
-  }, []);
+  const handleSparklineSuccess = useCallback(
+    (data: EsqlResponse, executedQuery: string, requestId: number | null) => {
+      if (
+        executedQuery !== latestSparklineQueryRef.current ||
+        requestId !== latestSparklineRequestRef.current
+      ) {
+        return;
+      }
+      setSparklineData(parseServiceSparklineData(data));
+    },
+    [],
+  );
   const handleSparklineFailure = useCallback((failedQuery: string) => {
     if (failedQuery !== latestSparklineQueryRef.current) return;
     setSparklineData({});
@@ -103,21 +112,21 @@ export function useServiceInventorySearch() {
 
   const handleSearch = useCallback(() => {
     const query = buildServiceInventoryQuery(filters);
-    const visibleServiceNames = searchResult
-      ? parseServiceRows(searchResult).map((row) => row.serviceName)
-      : [];
-    const sparklineQuery = buildServiceSparklineQuery(filters, undefined, visibleServiceNames);
+    const sparklineQuery = buildServiceSparklineQuery(filters);
     latestQueryRef.current = query.trim();
     latestSparklineQueryRef.current = sparklineQuery.trim();
+    latestSparklineRequestRef.current += 1;
+    const sparklineRequestId = latestSparklineRequestRef.current;
     setSparklineData({});
     runQuery(query);
-    runSparklineQuery(sparklineQuery);
-  }, [filters, runQuery, runSparklineQuery, searchResult]);
+    runSparklineQuery(sparklineQuery, sparklineRequestId);
+  }, [filters, runQuery, runSparklineQuery]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
     latestQueryRef.current = null;
     latestSparklineQueryRef.current = null;
+    latestSparklineRequestRef.current += 1;
     clearError();
     setSearchResult(null);
     setSparklineData({});
