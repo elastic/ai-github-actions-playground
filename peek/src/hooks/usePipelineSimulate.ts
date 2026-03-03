@@ -21,19 +21,18 @@ export function usePipelineSimulate(
   const [result, setResult] = useState<SimulateIngestPipelineResponse | null>(null);
   const requestSeqRef = useRef(0);
 
-  useEffect(() => {
-    requestSeqRef.current += 1;
-    setSimulating(false);
-    setResult(null);
-    setError(null);
-  }, [pipelineName, connection]);
-
-  const reset = useCallback(() => {
+  const clearState = useCallback(() => {
     requestSeqRef.current += 1;
     setSimulating(false);
     setResult(null);
     setError(null);
   }, []);
+
+  useEffect(() => {
+    clearState();
+  }, [pipelineName, connection, clearState]);
+
+  const reset = clearState;
 
   const simulate = useCallback(
     (docs: Record<string, unknown>[], verbose: boolean) => {

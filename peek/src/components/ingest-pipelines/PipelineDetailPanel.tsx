@@ -211,7 +211,7 @@ export default function PipelineDetailPanel({
               size="small"
               variant="contained"
               onClick={handleSimulate}
-              disabled={simulating || !selectedPipeline.name}
+              disabled={simulating || !selectedPipeline.name || !connection}
               startIcon={simulating ? <CircularProgress size={14} /> : null}
             >
               {simulating ? "Simulating…" : "Simulate"}

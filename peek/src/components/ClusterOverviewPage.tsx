@@ -90,7 +90,10 @@ export default function ClusterOverviewPage() {
             <Button
               size="small"
               variant="outlined"
-              onClick={refresh}
+              onClick={() => {
+                setDismissedPartialErrorsKey(null);
+                refresh();
+              }}
               startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
               aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
             >
