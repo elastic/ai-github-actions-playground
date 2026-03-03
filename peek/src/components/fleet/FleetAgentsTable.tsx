@@ -11,10 +11,12 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import DevicesIcon from "@mui/icons-material/Devices";
 
 import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness } from "../../services/fleet";
 import { useFleetStore } from "../../store/useFleetStore";
+import EmptyState from "../EmptyState";
 
 import { stalenessSeverityToColor } from "./fleetPresentation";
 
@@ -167,9 +169,12 @@ export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6}>
-                  <Typography variant="body2" color="text.primary">
-                    No agents found in logs-elastic_agent-* for the last hour.
-                  </Typography>
+                  <EmptyState
+                    size="small"
+                    icon={<DevicesIcon sx={{ fontSize: 28 }} />}
+                    heading="No agents found"
+                    description="No agents found in logs-elastic_agent-* for the last hour. Enroll Elastic Agent on your hosts to start collecting data."
+                  />
                 </TableCell>
               </TableRow>
             )}
