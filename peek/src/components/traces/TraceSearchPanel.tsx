@@ -3,25 +3,18 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Collapse from "@mui/material/Collapse";
-import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import CancelIcon from "@mui/icons-material/Cancel";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import type { Extension } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
-import CodeMirror from "@uiw/react-codemirror";
+import type { EditorView } from "@codemirror/view";
 
 import { TRACE_TIME_RANGE_OPTIONS } from "../timePresets";
-import QueryAnnotationOverlay, { useQueryExplanation } from "../QueryAnnotationOverlay";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
+import SignalSearchPanel from "../SignalSearchPanel";
 
 import { getServiceColor } from "./traceColors";
 import { formatStatusLabel } from "./traceUtils";
@@ -62,20 +55,6 @@ export default function TraceSearchPanel({
 }: TraceSearchPanelProps) {
   const [minDurationInput, setMinDurationInput] = useState("");
   const [maxDurationInput, setMaxDurationInput] = useState("");
-  const [editorFocused, setEditorFocused] = useState(false);
-
-  const editorExtensions = useMemo(
-    () => [
-      ...queryEditorExtensions,
-      EditorView.focusChangeEffect.of((_state, focusing) => {
-        setEditorFocused(focusing);
-        return null;
-      }),
-    ],
-    // queryEditorExtensions is stable (useMemo([], []) in TracesPage); setEditorFocused is stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
 
   const handleApplyDuration = useCallback(() => {
     const minMs = minDurationInput !== "" ? Number(minDurationInput) : null;
@@ -89,8 +68,6 @@ export default function TraceSearchPanel({
     });
   }, [minDurationInput, maxDurationInput, applyFiltersAndRun]);
 
-  const explanation = useQueryExplanation(effectiveQuery);
-
   const activeFilterCount = useMemo(() => {
     let count = 0;
     count += filters.services.length;
@@ -102,91 +79,15 @@ export default function TraceSearchPanel({
     return count;
   }, [filters]);
 
-  return (
-    <Paper variant="outlined" sx={{ p: collapsed ? 1 : 1.5 }}>
-      {/* Always-visible header bar */}
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-        <IconButton
-          size="small"
-          onClick={onToggleCollapsed}
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Expand search panel" : "Collapse search panel"}
-        >
-          <ExpandMoreIcon
-            sx={{
-              transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
-              fontSize: 20,
-            }}
-          />
-        </IconButton>
+  const handleResetFilters = useCallback(() => {
+    resetFilters();
+    setMinDurationInput("");
+    setMaxDurationInput("");
+  }, [resetFilters]);
 
-        <Typography
-          variant={collapsed ? "body2" : "h5"}
-          component="h1"
-          sx={{ whiteSpace: "nowrap", fontWeight: 600 }}
-        >
-          Trace Search
-        </Typography>
-
-        {collapsed && (
-          <>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              noWrap
-              sx={{ flex: 1, minWidth: 0, fontStyle: "italic" }}
-            >
-              {explanation ?? effectiveQuery}
-            </Typography>
-
-            {activeFilterCount > 0 && (
-              <Chip
-                size="small"
-                label={`${activeFilterCount} filter${activeFilterCount !== 1 ? "s" : ""}`}
-              />
-            )}
-
-            <Button
-              variant="contained"
-              size="small"
-              sx={{ flexShrink: 0, minHeight: TOOLBAR_CONTROL_HEIGHT }}
-              startIcon={
-                searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
-              }
-              onClick={onSearch}
-              disabled={searchLoading || !effectiveQuery.trim()}
-            >
-              Search
-            </Button>
-
-            {searchResultCount !== null && (
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 0 }}>
-                {searchResultCount} traces
-              </Typography>
-            )}
-          </>
-        )}
-
-        {!collapsed && (
-          <Box sx={{ display: "flex", flex: 1, justifyContent: "flex-end" }}>
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => {
-                resetFilters();
-                setMinDurationInput("");
-                setMaxDurationInput("");
-              }}
-            >
-              Reset Filters
-            </Button>
-          </Box>
-        )}
-      </Box>
-
-      {/* Collapsible body */}
-      <Collapse in={!collapsed}>
+  const renderFilterControls = useCallback(
+    () => (
+      <>
         {/* Filter pills */}
         <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: "wrap", mt: 0.5, mb: 1 }}>
           {filters.statusCodes.map((status) => (
@@ -384,48 +285,28 @@ export default function TraceSearchPanel({
             ))}
           </Stack>
         </Box>
+      </>
+    ),
+    [filters, applyFiltersAndRun, handleApplyDuration, minDurationInput, maxDurationInput],
+  );
 
-        {/* ES|QL editor */}
-        <Box sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-          <Box sx={{ position: "relative" }}>
-            <CodeMirror
-              value={effectiveQuery}
-              onChange={onRawQueryChange}
-              onCreateEditor={onCreateEditor}
-              extensions={editorExtensions}
-              theme={themeMode}
-              height="120px"
-              basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-              aria-label="Trace search query editor"
-            />
-            <QueryAnnotationOverlay
-              query={effectiveQuery}
-              editorFocused={editorFocused}
-              height={120}
-            />
-          </Box>
-        </Box>
-
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
-            startIcon={
-              searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
-            }
-            onClick={onSearch}
-            disabled={searchLoading || !effectiveQuery.trim()}
-          >
-            Search Traces
-          </Button>
-          {searchResultCount !== null && (
-            <Typography variant="caption" color="text.secondary">
-              {searchResultCount} traces found
-            </Typography>
-          )}
-        </Stack>
-      </Collapse>
-    </Paper>
+  return (
+    <SignalSearchPanel
+      title="Trace Search"
+      resultNoun="traces"
+      effectiveQuery={effectiveQuery}
+      onRawQueryChange={onRawQueryChange}
+      onCreateEditor={onCreateEditor}
+      queryEditorExtensions={queryEditorExtensions}
+      themeMode={themeMode}
+      searchLoading={searchLoading}
+      onSearch={onSearch}
+      searchResultCount={searchResultCount}
+      collapsed={collapsed}
+      onToggleCollapsed={onToggleCollapsed}
+      activeFilterCount={activeFilterCount}
+      onResetFilters={handleResetFilters}
+      renderFilterControls={renderFilterControls}
+    />
   );
 }

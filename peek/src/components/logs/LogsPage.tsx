@@ -4,7 +4,6 @@ import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
-import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
@@ -28,9 +27,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 
 import { ElasticsearchClient, getFieldValues } from "../../services/es";
@@ -41,12 +38,11 @@ import { useQueryStore } from "../../store/useQueryStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { createEsqlQueryEditorExtensions } from "../queryEditorExtensions";
 import DataTable from "../visualizations/DataTable";
-import QueryAnnotationOverlay from "../QueryAnnotationOverlay";
 import EmptyState from "../EmptyState";
-import PageHeader from "../PageHeader";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
+import LogsSearchPanel from "./LogsSearchPanel";
 import { appendPipeClause, buildLogsQuery } from "./logsQueryBuilder";
 
 const SIDEBAR_FIELDS = ["service.name", "log.level", "host.name", "event.dataset"];
@@ -89,6 +85,8 @@ export default function LogsPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
+  const logsSearchCollapsed = useUIStore((s) => s.logsSearchCollapsed);
+  const setLogsSearchCollapsed = useUIStore((s) => s.setLogsSearchCollapsed);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
   const {
     indexPattern,
@@ -120,22 +118,18 @@ export default function LogsPage() {
     })),
   );
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
-  const [editorFocused, setEditorFocused] = useState(false);
   const [fieldValues, setFieldValues] = useState<
     Record<string, Array<{ value: string; count: number }>>
   >({});
   const [extractedSidebarFields, setExtractedSidebarFields] = useState<string[]>([]);
   const [fieldValuesError, setFieldValuesError] = useState<string | null>(null);
   const [fieldValuesLoading, setFieldValuesLoading] = useState(false);
-  const [searchInput, setSearchInput] = useState(searchText);
   const [viewMode, setViewMode] = useState<LogsViewMode>("lines");
   const [extractDialogOpen, setExtractDialogOpen] = useState(false);
   const [extractMethod, setExtractMethod] = useState<ExtractMethod>("DISSECT");
   const [extractPattern, setExtractPattern] = useState("%{extracted.value}");
   const [extractSource, setExtractSource] = useState("");
-  useEffect(() => {
-    setSearchInput(searchText);
-  }, [searchText]);
+
   const handleRunQueryRef = useRef<() => void>(() => undefined);
   const generatedQuery = useMemo(
     () =>
@@ -264,13 +258,21 @@ export default function LogsPage() {
     () => [
       EditorView.lineWrapping,
       ...createEsqlQueryEditorExtensions(() => handleRunQueryRef.current()),
-      EditorView.focusChangeEffect.of((_state, focusing) => {
-        setEditorFocused(focusing);
-        return null;
-      }),
     ],
     [],
   );
+
+  // Cmd/Ctrl+[ toggles the search panel collapse
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
+        e.preventDefault();
+        setLogsSearchCollapsed(!useUIStore.getState().logsSearchCollapsed);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setLogsSearchCollapsed]);
 
   useEffect(() => {
     if (!connection) {
@@ -373,93 +375,41 @@ export default function LogsPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader title="Logs Explorer" />
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ mb: 1 }}>
-          <TextField
-            size="small"
-            fullWidth
-            label="Search logs"
-            placeholder='Use quotes for phrase match, e.g. "connection reset by peer"'
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setSearchText(searchInput);
-              }
-            }}
-          />
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => setSearchText(searchInput)}
-            sx={{ minWidth: 112 }}
-          >
-            Apply Search
-          </Button>
-          <Button size="small" variant="text" onClick={() => clearFilters()}>
-            Clear Filters
-          </Button>
-        </Stack>
+      <LogsSearchPanel
+        searchText={searchText}
+        onSearchTextChange={setSearchText}
+        filters={filters}
+        onRemoveFilter={removeFilter}
+        onClearFilters={clearFilters}
+        effectiveQuery={effectiveQuery}
+        onRawQueryChange={setRawQuery}
+        onCreateEditor={setQueryContextView}
+        queryEditorExtensions={queryEditorExtensions}
+        themeMode={themeMode}
+        searchLoading={loading}
+        onSearch={runLogsQuery}
+        searchResultCount={result ? result.values.length : null}
+        collapsed={logsSearchCollapsed}
+        onToggleCollapsed={() => setLogsSearchCollapsed(!logsSearchCollapsed)}
+      />
 
-        <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: "wrap", mb: 1 }}>
-          {filters.map((filter, index) => (
-            <Chip
-              key={`${filter.field}-${filter.value}-${String(filter.exclude)}-${index}`}
-              size="small"
-              color={filter.exclude ? "warning" : "default"}
-              label={`${filter.exclude ? "NOT " : ""}${filter.field}: ${filter.value}`}
-              onDelete={() => removeFilter(index)}
-            />
-          ))}
-        </Stack>
-
-        <Box sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}>
-          <Box sx={{ position: "relative", minHeight: editorFocused ? 132 : 52 }}>
-            <CodeMirror
-              value={effectiveQuery}
-              onChange={(value) => setRawQuery(value)}
-              onCreateEditor={(view) => setQueryContextView(view)}
-              extensions={queryEditorExtensions}
-              theme={themeMode}
-              height={editorFocused ? "132px" : "52px"}
-              basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-              aria-label="ES|QL query editor"
-            />
-            <QueryAnnotationOverlay
-              query={effectiveQuery}
-              editorFocused={editorFocused}
-              height={editorFocused ? 132 : 52}
-            />
-          </Box>
-        </Box>
-
-        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", alignItems: "center" }}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<PlayArrowIcon />}
-            onClick={runLogsQuery}
-            disabled={loading || !effectiveQuery.trim()}
-          >
-            {loading ? "Searching..." : "Search Logs"}
-          </Button>
-          <ToggleButtonGroup
-            size="small"
-            color="primary"
-            value={viewMode}
-            exclusive
-            onChange={(_, next: LogsViewMode | null) => {
-              if (next) setViewMode(next);
-            }}
-            aria-label="Logs view mode"
-          >
-            <ToggleButton value="lines">Lines</ToggleButton>
-            <ToggleButton value="chart">Chart</ToggleButton>
-            <ToggleButton value="patterns">Patterns</ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-      </Paper>
+      {/* View mode toggle */}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <ToggleButtonGroup
+          size="small"
+          color="primary"
+          value={viewMode}
+          exclusive
+          onChange={(_, next: LogsViewMode | null) => {
+            if (next) setViewMode(next);
+          }}
+          aria-label="Logs view mode"
+        >
+          <ToggleButton value="lines">Lines</ToggleButton>
+          <ToggleButton value="chart">Chart</ToggleButton>
+          <ToggleButton value="patterns">Patterns</ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
 
       {error && <Alert severity="error">{error}</Alert>}
 

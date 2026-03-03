@@ -1,18 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import { useShallow } from "zustand/react/shallow";
 import { parseAsString, useQueryState, useQueryStates } from "nuqs";
+import { EditorView } from "@codemirror/view";
 
-import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
-import { useQueryStore } from "../store/useQueryStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
 import { useExplorerStore } from "../store/useExplorerStore";
 import { ElasticsearchClient } from "../services/es";
 import type { FieldInfo, ExplorerFilter } from "../services/es";
@@ -21,7 +19,8 @@ import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
-import ExploreControlsPanel from "./explore/ExploreControlsPanel";
+import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
+import MetricsSearchPanel from "./explore/MetricsSearchPanel";
 import ExploreContentArea from "./explore/ExploreContentArea";
 import PageInsightBanner from "./PageInsightBanner";
 import { useExplorerUrlSync } from "./explore/useExplorerUrlSync";
@@ -34,20 +33,18 @@ import {
 export default function ExplorePage() {
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const { dashboard, addPanel, setTimeRange } = useDashboardEditorStore(
+  const { dashboard, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
       dashboard: s.dashboard,
-      addPanel: s.addPanel,
       setTimeRange: s.setTimeRange,
     })),
   );
-  const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const connection = useConnectionStore((s) => s.connection);
-  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const themeMode = useUIStore((s) => s.themeMode);
+  const metricsSearchCollapsed = useUIStore((s) => s.metricsSearchCollapsed);
+  const setMetricsSearchCollapsed = useUIStore((s) => s.setMetricsSearchCollapsed);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
     urlKeys: exploreSearchUrlKeys,
     history: "replace",
@@ -67,7 +64,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    showEsql,
+    rawQuery,
     setIndexPattern,
     setSelectedMetric,
     setAggregation,
@@ -75,7 +72,7 @@ export default function ExplorePage() {
     removeFilter,
     clearFilters,
     setGroupBy,
-    setShowEsql,
+    setRawQuery,
   } = useExplorerStore(
     useShallow((s) => ({
       indexPattern: s.indexPattern,
@@ -84,7 +81,7 @@ export default function ExplorePage() {
       aggregation: s.aggregation,
       filters: s.filters,
       groupBy: s.groupBy,
-      showEsql: s.showEsql,
+      rawQuery: s.rawQuery,
       setIndexPattern: s.setIndexPattern,
       setSelectedMetric: s.setSelectedMetric,
       setAggregation: s.setAggregation,
@@ -92,7 +89,7 @@ export default function ExplorePage() {
       removeFilter: s.removeFilter,
       clearFilters: s.clearFilters,
       setGroupBy: s.setGroupBy,
-      setShowEsql: s.setShowEsql,
+      setRawQuery: s.setRawQuery,
     })),
   );
 
@@ -119,6 +116,7 @@ export default function ExplorePage() {
   });
 
   const { fields, fieldsLoading } = useExploreFields(indexPattern);
+  const [, setQueryContextView] = useState<EditorView | null>(null);
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -171,7 +169,46 @@ export default function ExplorePage() {
       !metricNotFound &&
       !fieldsLoading,
     ),
+    queryOverride: rawQuery,
   });
+
+  const handleSearch = useCallback(() => {
+    // When rawQuery is null, React Query handles execution automatically.
+    // When rawQuery is set, we trigger React Query to refetch by using its key.
+    // The queryOverride in useExploreQuery handles this — no manual execution needed.
+    // However we can force a refetch by toggling rawQuery:
+    if (rawQuery) {
+      // Re-set the same rawQuery to trigger a React Query key change
+      setRawQuery(rawQuery);
+    }
+  }, [rawQuery, setRawQuery]);
+
+  // Query editor extensions for the CodeMirror editor — ref keeps the
+  // closure fresh without recreating the extension array on every render.
+  const handleRunQueryRef = useRef<() => void>(() => undefined);
+  // eslint-disable-next-line react-hooks/refs
+  handleRunQueryRef.current = handleSearch;
+
+  const queryEditorExtensions = useMemo(
+    () => [
+      EditorView.lineWrapping,
+      // eslint-disable-next-line react-hooks/refs
+      ...createEsqlQueryEditorExtensions(() => handleRunQueryRef.current()),
+    ],
+    [],
+  );
+
+  // Cmd/Ctrl+[ toggles the search panel collapse
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
+        e.preventDefault();
+        setMetricsSearchCollapsed(!useUIStore.getState().metricsSearchCollapsed);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setMetricsSearchCollapsed]);
 
   if (
     dismissedError !== null &&
@@ -217,27 +254,6 @@ export default function ExplorePage() {
     setSkipDimensionOverview(true);
   }, []);
 
-  const handleEditInDiscover = useCallback(() => {
-    if (queryResult.esql) {
-      setDiscoverQueryDraft(queryResult.esql);
-      navigate(PAGE_MANIFEST.discover.path);
-    }
-  }, [queryResult.esql, setDiscoverQueryDraft, navigate]);
-
-  const handleSaveToDashboard = useCallback(() => {
-    if (!queryResult.esql) return;
-    const newPanel = {
-      id: crypto.randomUUID(),
-      title: selectedMetric ?? "Metrics Panel",
-      query: queryResult.esql,
-      visualization: "timeseries" as const,
-      layout: { x: 0, y: Infinity, w: 6, h: 4 },
-    };
-    addPanel(newPanel);
-    setEditingPanelId(newPanel.id);
-    navigate(`/dashboards/${activeDashboardId}`);
-  }, [queryResult.esql, selectedMetric, addPanel, setEditingPanelId, navigate, activeDashboardId]);
-
   const handleAddFilter = useCallback(
     (filter: ExplorerFilter) => {
       addFilter(filter);
@@ -252,7 +268,7 @@ export default function ExplorePage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
-      <ExploreControlsPanel
+      <MetricsSearchPanel
         indexPattern={indexPattern}
         fields={fields}
         fieldsLoading={fieldsLoading}
@@ -262,11 +278,8 @@ export default function ExplorePage() {
         aggregation={aggregation}
         filters={filters}
         groupBy={groupBy}
-        showEsql={showEsql}
-        showDimensionOverview={showDimensionOverview}
-        esql={queryResult.esql ?? null}
-        queryStatus={queryResult.status}
-        executionTimeMs={queryResult.status === "success" ? queryResult.executionTimeMs : undefined}
+        rawQuery={rawQuery}
+        timeRange={dashboard.timeRange}
         onIndexPatternChange={setIndexPattern}
         onNamespaceChange={(namespace) => {
           setSelectedNamespace(namespace);
@@ -284,9 +297,15 @@ export default function ExplorePage() {
         onRemoveFilter={removeFilter}
         onClearFilters={clearFilters}
         onGroupByDelete={() => setGroupBy(null)}
-        onToggleEsql={() => setShowEsql(!showEsql)}
-        onEditInDiscover={handleEditInDiscover}
-        onSaveToDashboard={handleSaveToDashboard}
+        onRawQueryChange={setRawQuery}
+        onCreateEditor={setQueryContextView}
+        queryEditorExtensions={queryEditorExtensions}
+        themeMode={themeMode}
+        searchLoading={queryResult.status === "loading"}
+        onSearch={handleSearch}
+        searchResultCount={chartData ? chartData.values.length : null}
+        collapsed={metricsSearchCollapsed}
+        onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
       />
 
       {/* AI anomaly insight */}
