@@ -54,15 +54,15 @@ jobs:
           "Recent hosts" panel with clickable suggestions?
         - If recent entities appear as chips, how many are shown? Are event
           counts displayed next to each name?
-        - Hover over a chip — does a tooltip show the last-seen timestamp?
+        - Optionally hover over a chip. If a tooltip exists, verify timestamp formatting/readability.
         - Click a suggested user/host chip. Does the search field populate
           and does the timeline immediately load?
         - Switch to the Host tab. Do recent hosts load automatically? Are
           they different from the User tab suggestions?
         - If no suggestions appear, is there a helpful empty state with
           an icon, heading, and description?
-        - If the suggestions query fails silently, is the empty state
-          still shown?
+        - If suggestions cannot be loaded, verify fallback UX remains helpful
+          (empty/help state instead of broken layout).
 
         **Investigate page — search and results:**
         - Type a user name visible in the suggestions (or from the Users
@@ -84,7 +84,8 @@ jobs:
         **Investigate page — LLM summary:**
         - After a successful search with results, look for the LLM Summary
           section. Is there a "Copy prompt to clipboard" button?
-        - Click the Copy button — does it work without errors?
+        - Click the Copy button — does it complete without errors, and is
+          non-empty prompt text copied to the clipboard?
 
         **Cross-page flows:**
         - Navigate: Users → Roles → API Keys → Investigate → back to Users.
