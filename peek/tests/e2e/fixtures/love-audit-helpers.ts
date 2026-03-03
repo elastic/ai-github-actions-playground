@@ -259,9 +259,11 @@ async function profilingAfterNav(viewMode: string) {
     await page.getByRole("button", { name: viewMode, exact: true }).click();
     await page.getByLabel("Time range").click();
     await page.getByRole("option", { name: "Last 7d" }).click();
-    await page.getByRole("button", { name: "Run" }).click();
-    // Wait for loading to complete — button text reverts from spinner to "Run"
-    await page.getByRole("button", { name: "Run" }).waitFor({ state: "visible", timeout: 30_000 });
+    const runButton = page.getByRole("button", { name: "Run", exact: true });
+    await runButton.click();
+    // Wait for loading to complete via disabled -> enabled transition.
+    await expect(runButton).toBeDisabled({ timeout: 5_000 });
+    await expect(runButton).toBeEnabled({ timeout: 30_000 });
   };
 }
 
