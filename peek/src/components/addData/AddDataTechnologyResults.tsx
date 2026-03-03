@@ -7,24 +7,23 @@ import Typography from "@mui/material/Typography";
 
 import EmptyState from "../EmptyState";
 import {
-  ADD_DATA_CATEGORY_LABELS,
+  ADD_DATA_EXPERIENCE_LABELS,
   type AddDataTechnologyCatalogEntry,
 } from "../../services/addData/catalog";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
-import { CATEGORY_ICONS, SIGNAL_COLORS } from "./addDataTechnologyConstants";
+import { EXPERIENCE_ICONS, SIGNAL_COLORS, TECHNOLOGY_ICONS } from "./addDataTechnologyConstants";
 
 function TechnologyCard({
   tech,
   selected,
   onClick,
-  variant = "standard",
 }: {
   tech: AddDataTechnologyCatalogEntry;
   selected: boolean;
   onClick: () => void;
-  variant?: "standard" | "hero";
 }) {
-  const isHero = variant === "hero";
+  const icon = TECHNOLOGY_ICONS[tech.id] ?? EXPERIENCE_ICONS[tech.experience];
 
   return (
     <ButtonBase
@@ -39,7 +38,7 @@ function TechnologyCard({
           flexDirection: "column",
           gap: 1,
           height: "100%",
-          p: isHero ? 2 : 1.5,
+          p: 1.5,
           boxShadow: selected ? 2 : 0,
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? "primary.main" : "divider",
@@ -58,19 +57,19 @@ function TechnologyCard({
               flexShrink: 0,
               justifyContent: "center",
               alignItems: "center",
-              width: isHero ? 44 : 36,
-              height: isHero ? 44 : 36,
+              width: COMPONENT_HEIGHTS.button,
+              height: COMPONENT_HEIGHTS.button,
               borderRadius: 1,
               bgcolor: selected ? "primary.main" : "action.selected",
               color: selected ? "primary.contrastText" : "text.secondary",
               transition: "background-color 0.15s, color 0.15s",
             }}
           >
-            {CATEGORY_ICONS[tech.category]}
+            {icon}
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <Typography variant={isHero ? "subtitle1" : "body2"} sx={{ fontWeight: 600 }} noWrap>
+              <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                 {tech.technology}
               </Typography>
               {selected && <Chip label="Selected" size="small" color="primary" />}
@@ -83,7 +82,7 @@ function TechnologyCard({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 WebkitBoxOrient: "vertical",
-                WebkitLineClamp: isHero ? 2 : 1,
+                WebkitLineClamp: 1,
               }}
             >
               {tech.summary}
@@ -103,7 +102,7 @@ function TechnologyCard({
             />
           ))}
           <Chip
-            label={ADD_DATA_CATEGORY_LABELS[tech.category]}
+            label={ADD_DATA_EXPERIENCE_LABELS[tech.experience]}
             size="small"
             variant="outlined"
             sx={{ height: 20, ml: "auto", fontSize: "0.7rem" }}
@@ -115,56 +114,22 @@ function TechnologyCard({
 }
 
 interface AddDataTechnologyResultsProps {
-  showRecommended: boolean;
-  recommendedTechnologies: readonly AddDataTechnologyCatalogEntry[];
   filteredTechnologies: readonly AddDataTechnologyCatalogEntry[];
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   onSelectTechnology: (tech: AddDataTechnologyCatalogEntry) => void;
 }
 
 export default function AddDataTechnologyResults({
-  showRecommended,
-  recommendedTechnologies,
   filteredTechnologies,
   selectedTechnology,
   onSelectTechnology,
 }: AddDataTechnologyResultsProps) {
   return (
     <Box>
-      {showRecommended && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-            Recommended
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
-              gap: 1.5,
-            }}
-          >
-            {recommendedTechnologies.map((tech) => (
-              <TechnologyCard
-                key={tech.id}
-                tech={tech}
-                selected={selectedTechnology?.id === tech.id}
-                onClick={() => onSelectTechnology(tech)}
-                variant="hero"
-              />
-            ))}
-          </Box>
-        </Box>
-      )}
-
-      {showRecommended && (
-        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-          All integrations
-        </Typography>
-      )}
       {filteredTechnologies.length === 0 ? (
         <EmptyState
           heading="No integrations found"
-          description="No integrations match your search. Try a different query or category."
+          description="No integrations match your search. Try a different query."
           size="small"
         />
       ) : (
