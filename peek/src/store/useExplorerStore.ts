@@ -19,6 +19,8 @@ export interface ExplorerState {
   filters: ExplorerFilter[];
   groupBy: string | null;
 
+  /** Raw ES|QL query override (when user edits the generated query directly) */
+  rawQuery: string | null;
   showEsql: boolean;
 
   // Actions
@@ -31,6 +33,7 @@ export interface ExplorerState {
   removeFilter: (index: number) => void;
   clearFilters: () => void;
   setGroupBy: (field: string | null) => void;
+  setRawQuery: (query: string | null) => void;
   setShowEsql: (show: boolean) => void;
   reset: () => void;
 }
@@ -50,6 +53,7 @@ const initialState: Omit<
   | "removeFilter"
   | "clearFilters"
   | "setGroupBy"
+  | "setRawQuery"
   | "setShowEsql"
   | "reset"
 > = {
@@ -61,6 +65,7 @@ const initialState: Omit<
   aggregation: "avg",
   filters: [],
   groupBy: null,
+  rawQuery: null,
   showEsql: false,
 };
 
@@ -76,6 +81,7 @@ export const useExplorerStore = create<ExplorerState>()(
           selectedMetric: null,
           filters: [],
           groupBy: null,
+          rawQuery: null,
         }),
       setFields: (fields) => set({ fields }),
       setFieldsLoading: (loading) => set({ fieldsLoading: loading }),
@@ -85,12 +91,15 @@ export const useExplorerStore = create<ExplorerState>()(
           metricType: metricType ?? s.metricType,
           aggregation:
             metricType === "counter" ? "count" : metricType === "gauge" ? "avg" : s.aggregation,
+          rawQuery: null,
         })),
-      setAggregation: (agg) => set({ aggregation: agg }),
-      addFilter: (filter) => set((s) => ({ filters: [...s.filters, filter] })),
-      removeFilter: (index) => set((s) => ({ filters: s.filters.filter((_, i) => i !== index) })),
-      clearFilters: () => set({ filters: [] }),
-      setGroupBy: (field) => set({ groupBy: field }),
+      setAggregation: (agg) => set({ aggregation: agg, rawQuery: null }),
+      addFilter: (filter) => set((s) => ({ filters: [...s.filters, filter], rawQuery: null })),
+      removeFilter: (index) =>
+        set((s) => ({ filters: s.filters.filter((_, i) => i !== index), rawQuery: null })),
+      clearFilters: () => set({ filters: [], rawQuery: null }),
+      setGroupBy: (field) => set({ groupBy: field, rawQuery: null }),
+      setRawQuery: (rawQuery) => set({ rawQuery }),
       setShowEsql: (show) => set({ showEsql: show }),
       reset: () => set(initialState),
     }),

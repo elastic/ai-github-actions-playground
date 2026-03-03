@@ -26,6 +26,7 @@ import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EmptyState from "./EmptyState";
 import OverviewFailedItemsSection from "./OverviewFailedItemsSection";
 import type { FailedItem } from "./OverviewFailedItemsSection";
+import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -231,6 +232,7 @@ export default function MetricOverviewGrid({
         {metricsWithData.map((field) => {
           const result = results[field.name];
           const metricBadgeColor = field.metricType === "counter" ? "warning" : "info";
+          const fieldVisual = classifyFieldVisual(field.name, field.metricType);
           const displayName = field.name.startsWith(`${namespace}.`)
             ? field.name.slice(namespace.length + 1)
             : field.name;
@@ -275,6 +277,7 @@ export default function MetricOverviewGrid({
                   </Typography>
                   <Chip
                     label={field.metricType}
+                    icon={getFieldVisualIcon(fieldVisual, 14, "inherit")}
                     size="small"
                     color={metricBadgeColor}
                     variant="outlined"

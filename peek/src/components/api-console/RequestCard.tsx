@@ -65,7 +65,8 @@ export default function RequestCard({
       json(),
       makeLLMCompletionExtension({
         prompt:
-          "You are an Elasticsearch API expert. Complete the JSON request body at the cursor. Return only the completion text.",
+          "You are an Elasticsearch REST API expert. Complete the JSON request body the user is editing. " +
+          "Return only valid JSON. No markdown fences, no explanations.",
       }),
     ],
     [],

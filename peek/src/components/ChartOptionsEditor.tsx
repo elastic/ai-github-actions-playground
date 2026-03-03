@@ -5,7 +5,7 @@ import { FormatControls } from "@perses-dev/components";
 
 import type { FormatOptions, VisualizationOptions, VisualizationType } from "../types";
 
-import { getPersesPanelEntry } from "./perses/panelRegistry";
+import { getPersesPanelCapabilities } from "./perses/panelRegistry";
 
 const DEFAULT_FORMAT: FormatOptions = { unit: "decimal" };
 
@@ -18,7 +18,7 @@ interface Props {
 /** Sectioned chart customization controls rendered below the preview. */
 export default function ChartOptionsEditor({ vizType, options, onChange }: Props) {
   const format = (options as { format?: FormatOptions }).format ?? DEFAULT_FORMAT;
-  const OptionsEditor = getPersesPanelEntry(vizType)?.OptionsEditor;
+  const { OptionsEditor } = getPersesPanelCapabilities(vizType);
   // Table uses threshold-only options; format controls don't apply
   const showFormat = vizType !== "table";
 

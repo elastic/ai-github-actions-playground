@@ -11,76 +11,94 @@ import { useTracesStore } from "../../src/store/useTracesStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const mockRunQuery = vi.fn();
+
+const INVENTORY_RESPONSE = {
+  columns: [
+    { name: "service.name", type: "keyword" },
+    { name: "request_count", type: "long" },
+    { name: "avg_latency_ms", type: "double" },
+    { name: "error_count", type: "long" },
+    { name: "error_rate", type: "double" },
+    { name: "unique_routes", type: "long" },
+    { name: "unique_span_names", type: "long" },
+    { name: "top_route", type: "keyword" },
+    { name: "top_span_name", type: "keyword" },
+    { name: "top_error", type: "keyword" },
+    { name: "language", type: "keyword" },
+    { name: "environment", type: "keyword" },
+  ],
+  values: [
+    [
+      "frontend",
+      1500,
+      45.2,
+      30,
+      0.02,
+      24,
+      68,
+      ["/products/:id"],
+      ["GET /products/:id"],
+      ["TimeoutError: upstream inventory"],
+      ["nodejs"],
+      ["prod"],
+    ],
+    [
+      "backend-api",
+      3200,
+      120.5,
+      320,
+      0.1,
+      40,
+      102,
+      ["/checkout"],
+      ["POST /checkout"],
+      ["Database timeout"],
+      ["java"],
+      ["prod"],
+    ],
+    [
+      "payment-service",
+      800,
+      250.0,
+      8,
+      0.01,
+      16,
+      37,
+      ["/payments/:id"],
+      ["GET /payments/:id"],
+      ["Card declined"],
+      ["go"],
+      ["staging"],
+    ],
+  ],
+};
+
+const SPARKLINE_RESPONSE = {
+  columns: [
+    { name: "service.name", type: "keyword" },
+    { name: "bucket", type: "date" },
+    { name: "request_count", type: "long" },
+    { name: "avg_latency_ms", type: "double" },
+    { name: "error_rate", type: "double" },
+  ],
+  values: [
+    ["frontend", "2026-01-01T00:00:00.000Z", 100, 40.0, 0.01],
+    ["frontend", "2026-01-01T00:03:00.000Z", 120, 50.0, 0.02],
+    ["backend-api", "2026-01-01T00:00:00.000Z", 200, 110.0, 0.08],
+    ["backend-api", "2026-01-01T00:03:00.000Z", 220, 130.0, 0.12],
+    ["payment-service", "2026-01-01T00:00:00.000Z", 50, 240.0, 0.01],
+    ["payment-service", "2026-01-01T00:03:00.000Z", 60, 260.0, 0.01],
+  ],
+};
+
 vi.mock("../../src/hooks/useEsqlQuery", () => ({
   useEsqlQuery: (opts: {
     onSuccess: (data: unknown, executedQuery: string, executedStepIndex: number | null) => void;
   }) => ({
     runQuery: (query: string) => {
       mockRunQuery(query);
-      opts.onSuccess(
-        {
-          columns: [
-            { name: "service.name", type: "keyword" },
-            { name: "request_count", type: "long" },
-            { name: "avg_latency_ms", type: "double" },
-            { name: "error_count", type: "long" },
-            { name: "error_rate", type: "double" },
-            { name: "unique_routes", type: "long" },
-            { name: "unique_span_names", type: "long" },
-            { name: "top_route", type: "keyword" },
-            { name: "top_span_name", type: "keyword" },
-            { name: "top_error", type: "keyword" },
-            { name: "language", type: "keyword" },
-            { name: "environment", type: "keyword" },
-          ],
-          values: [
-            [
-              "frontend",
-              1500,
-              45.2,
-              30,
-              0.02,
-              24,
-              68,
-              ["/products/:id"],
-              ["GET /products/:id"],
-              ["TimeoutError: upstream inventory"],
-              ["nodejs"],
-              ["prod"],
-            ],
-            [
-              "backend-api",
-              3200,
-              120.5,
-              320,
-              0.1,
-              40,
-              102,
-              ["/checkout"],
-              ["POST /checkout"],
-              ["Database timeout"],
-              ["java"],
-              ["prod"],
-            ],
-            [
-              "payment-service",
-              800,
-              250.0,
-              8,
-              0.01,
-              16,
-              37,
-              ["/payments/:id"],
-              ["GET /payments/:id"],
-              ["Card declined"],
-              ["go"],
-              ["staging"],
-            ],
-          ],
-        },
-        query,
-        null,
-      );
+      const isSparkline = query.includes("BUCKET");
+      opts.onSuccess(isSparkline ? SPARKLINE_RESPONSE : INVENTORY_RESPONSE, query, null);
     },
     loading: false,
     error: null,
@@ -180,18 +198,45 @@ describe("ServiceInventoryPage", () => {
     expect(viewButtons).toHaveLength(3);
   });
 
-  it("shows investigative metadata columns", async () => {
+  it("shows service metadata columns", async () => {
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     const inventoryTable = await screen.findByRole("table", { name: "Service inventory" });
-    expect(within(inventoryTable).getByText("/checkout")).toBeInTheDocument();
-    expect(within(inventoryTable).getByText("POST /checkout")).toBeInTheDocument();
-    expect(within(inventoryTable).getByText("Database timeout")).toBeInTheDocument();
     expect(within(inventoryTable).getByText("java")).toBeInTheDocument();
     expect(within(inventoryTable).getAllByText("prod").length).toBeGreaterThan(0);
+  });
+
+  it("renders sparkline trend columns after search", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    const inventoryTable = await screen.findByRole("table", { name: "Service inventory" });
+    expect(within(inventoryTable).getByText("Requests trend")).toBeInTheDocument();
+    expect(within(inventoryTable).getByText("Latency trend")).toBeInTheDocument();
+    expect(within(inventoryTable).getByText("Error rate trend")).toBeInTheDocument();
+  });
+
+  it("fires a sparkline query scoped to discovered services after inventory query", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(mockRunQuery.mock.calls.some(([q]: [string]) => q.includes("BUCKET"))).toBe(true);
+    });
+
+    const sparklineQuery = mockRunQuery.mock.calls.find(([q]: [string]) =>
+      q.includes("BUCKET"),
+    )![0] as string;
+    expect(sparklineQuery).toContain("frontend");
+    expect(sparklineQuery).toContain("backend-api");
+    expect(sparklineQuery).toContain("payment-service");
   });
 
   it("navigates to Traces with a clean service filter when View Traces is clicked", async () => {

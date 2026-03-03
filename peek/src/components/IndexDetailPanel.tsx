@@ -19,6 +19,7 @@ import {
 } from "../services/es";
 import { formatBytes } from "../utils/formatBytes";
 import { COMPACT_CHIP_SX } from "../types/tokens";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
@@ -172,7 +173,7 @@ function MappingsContent({
         <Box sx={{ mb: 1 }}>
           <PageInsightBanner
             context={mappingSummaryContext}
-            systemPrompt="You are an Elasticsearch mapping analyst. Summarize what this mapping defines, what kind of data it likely stores, and one practical recommendation. Respond in one concise sentence."
+            systemPrompt={`You are an Elasticsearch mapping analyst. Summarize what this mapping defines, what kind of data it likely stores, and one practical recommendation. Respond in one concise sentence.${INSIGHT_GUARDRAIL}`}
             cacheKey={`indices-mappings::${selectedIndex}::${mappingFields.length}`}
           />
         </Box>

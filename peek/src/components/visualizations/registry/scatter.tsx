@@ -13,8 +13,12 @@ const descriptor: VizRegistryDescriptor = {
     supportsOptions: true,
     supportsQuery: true,
     defaultOptions: () => ({}) satisfies ScatterChartOptions,
-    renderComponent: ({ data, options }) => (
-      <ScatterChart data={data} options={options as ScatterChartOptions | undefined} />
+    renderComponent: ({ data, options, onExportReady }) => (
+      <ScatterChart
+        data={data}
+        options={options as ScatterChartOptions | undefined}
+        onExportReady={onExportReady}
+      />
     ),
   },
 };

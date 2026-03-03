@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
+import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse } from "../../types";
 import { HEATMAP_GRADIENT } from "../../types/tokens";
@@ -9,10 +10,18 @@ import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } fr
 
 interface Props {
   data: EsqlResponse;
+  onExportReady?: (exportFn: (() => string) | null) => void;
 }
 
-export default function HeatmapChart({ data }: Props) {
+export default function HeatmapChart({ data, onExportReady }: Props) {
   const theme = useEChartTheme();
+  const instanceRef = useRef<ECharts | undefined>(undefined);
+
+  useEffect(() => {
+    if (!onExportReady) return;
+    onExportReady(() => instanceRef.current?.getDataURL({ type: "png", pixelRatio: 2 }) ?? "");
+    return () => onExportReady(null);
+  }, [onExportReady]);
 
   const option = useMemo(() => {
     const numericIdxs = findNumericColumnIndices(data);
@@ -94,6 +103,11 @@ export default function HeatmapChart({ data }: Props) {
   }, [data, theme]);
 
   return (
-    <EChart option={option} theme={theme} sx={{ width: "100%", height: "100%", minHeight: 120 }} />
+    <EChart
+      option={option}
+      theme={theme}
+      _instance={instanceRef}
+      sx={{ width: "100%", height: "100%", minHeight: 120 }}
+    />
   );
 }

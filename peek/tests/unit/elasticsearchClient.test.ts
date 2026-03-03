@@ -620,6 +620,22 @@ describe("getCapabilities", () => {
     expect(caps.canReadSecurityRoles).toBe(false);
   });
 
+  it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {
+    const fetchSpy = mockFetchOnce({}, { status: 404 });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toBe(`${BASE_URL}/_security/user/_has_privileges`);
+    expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canCreateApiKeys).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
+    expect(caps.canReadApiKeys).toBe(true);
+  });
+
   it("falls back to canManageDataStreams: false on a network failure", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 

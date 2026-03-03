@@ -13,7 +13,9 @@ const descriptor: VizRegistryDescriptor = {
     supportsOptions: false,
     supportsQuery: true,
     defaultOptions: () => ({}) satisfies HeatmapChartOptions,
-    renderComponent: ({ data }) => <HeatmapChart data={data} />,
+    renderComponent: ({ data, onExportReady }) => (
+      <HeatmapChart data={data} onExportReady={onExportReady} />
+    ),
   },
 };
 

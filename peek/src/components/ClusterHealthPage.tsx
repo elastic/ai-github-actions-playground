@@ -6,6 +6,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
 import { useClusterHealthData } from "../hooks/useClusterHealthData";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageContextStore } from "../store/usePageContextStore";
 
 import CapacityPressureView from "./cluster-health/CapacityPressureView";
@@ -92,17 +93,23 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
   const TAB_SYSTEM_PROMPTS: Record<ClusterHealthView, string> = useMemo(
     () => ({
       overview:
-        "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks. If needed data is unavailable in context, explicitly say it is unavailable.",
+        "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks." +
+        INSIGHT_GUARDRAIL,
       nodes:
-        "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag unusual node roles only when present in context. If needed data is unavailable in context, explicitly say it is unavailable.",
+        "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag unusual node roles only when present in context." +
+        INSIGHT_GUARDRAIL,
       taskBacklog:
-        "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns. If needed data is unavailable in context, explicitly say it is unavailable.",
+        "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns." +
+        INSIGHT_GUARDRAIL,
       capacityPressure:
-        "You are an Elasticsearch capacity analyst. Summarize capacity pressure indicators from the provided context only. If needed data is unavailable in context, explicitly say it is unavailable.",
+        "You are an Elasticsearch capacity analyst. Summarize capacity pressure indicators from the provided context only." +
+        INSIGHT_GUARDRAIL,
       shardDistribution:
-        "You are an Elasticsearch shard analyst. Summarize shard-distribution concerns from the provided context only. If needed data is unavailable in context, explicitly say it is unavailable.",
+        "You are an Elasticsearch shard analyst. Summarize shard-distribution concerns from the provided context only." +
+        INSIGHT_GUARDRAIL,
       resilienceSignals:
-        "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals from the provided context only. If needed data is unavailable in context, explicitly say it is unavailable.",
+        "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals from the provided context only." +
+        INSIGHT_GUARDRAIL,
     }),
     [],
   );

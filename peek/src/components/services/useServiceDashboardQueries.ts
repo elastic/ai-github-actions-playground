@@ -5,6 +5,7 @@ import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import type { EsqlResponse, ElasticsearchConnection } from "../../types";
 
 import {
+  buildServiceDeploymentsQuery,
   buildServiceRecentTracesQuery,
   buildServiceRoutesQuery,
 } from "./serviceDashboardQueryBuilder";
@@ -56,8 +57,25 @@ export function useServiceDashboardQueries({
     [queryClient, tracesQueryKey],
   );
 
+  const [deploymentsSession] = useState(0);
+  const deploymentsQueryKey = useMemo(
+    () => ["service-dashboard-deployments", serviceName, deploymentsSession] as const,
+    [serviceName, deploymentsSession],
+  );
+  const { data: deploymentsResult = null } = useQuery<EsqlResponse | null>({
+    queryKey: deploymentsQueryKey,
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setDeploymentsResult = useCallback(
+    (result: EsqlResponse | null) => queryClient.setQueryData(deploymentsQueryKey, result),
+    [queryClient, deploymentsQueryKey],
+  );
+
   const latestRoutesQueryRef = useRef<string | null>(null);
   const latestTracesQueryRef = useRef<string | null>(null);
+  const latestDeploymentsQueryRef = useRef<string | null>(null);
 
   const {
     runQuery: runRoutesQuery,
@@ -105,12 +123,36 @@ export function useServiceDashboardQueries({
     ),
   });
 
-  const loading = routesLoading || tracesLoading;
-  const error = routesError || tracesError;
+  const {
+    runQuery: runDeploymentsQuery,
+    loading: deploymentsLoading,
+    error: deploymentsError,
+    clearError: clearDeploymentsError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: useCallback(
+      (data: EsqlResponse, executedQuery: string) => {
+        if (executedQuery !== latestDeploymentsQueryRef.current) return;
+        setDeploymentsResult(data);
+      },
+      [setDeploymentsResult],
+    ),
+    onFailure: useCallback(
+      (failedQuery: string) => {
+        if (failedQuery !== latestDeploymentsQueryRef.current) return;
+        setDeploymentsResult(null);
+      },
+      [setDeploymentsResult],
+    ),
+  });
+
+  const loading = routesLoading || tracesLoading || deploymentsLoading;
+  const error = routesError || tracesError || deploymentsError;
 
   const clearLatestQueries = useCallback(() => {
     latestRoutesQueryRef.current = null;
     latestTracesQueryRef.current = null;
+    latestDeploymentsQueryRef.current = null;
   }, []);
 
   const handleSearch = useCallback(() => {
@@ -121,26 +163,34 @@ export function useServiceDashboardQueries({
     const tracesQuery = buildServiceRecentTracesQuery(filters);
     latestTracesQueryRef.current = tracesQuery.trim();
     runTracesQuery(tracesQuery);
-  }, [runRoutesQuery, runTracesQuery, serviceName, timeFrom, timeTo]);
+    const deploymentsQuery = buildServiceDeploymentsQuery(filters);
+    latestDeploymentsQueryRef.current = deploymentsQuery.trim();
+    runDeploymentsQuery(deploymentsQuery);
+  }, [runRoutesQuery, runTracesQuery, runDeploymentsQuery, serviceName, timeFrom, timeTo]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
     clearLatestQueries();
     clearRoutesError();
     clearTracesError();
+    clearDeploymentsError();
     setRoutesResult(null);
     setTracesResult(null);
+    setDeploymentsResult(null);
   }, [
     clearLatestQueries,
     clearRoutesError,
     clearTracesError,
+    clearDeploymentsError,
     loading,
     setRoutesResult,
     setTracesResult,
+    setDeploymentsResult,
   ]);
 
   return {
     clearLatestQueries,
+    deploymentsResult,
     error,
     handleReset,
     handleSearch,

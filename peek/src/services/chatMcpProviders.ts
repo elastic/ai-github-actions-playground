@@ -29,8 +29,8 @@ export const MCP_TOOL_PROVIDERS: McpToolProvider[] = [
     stepCountLimit: 3,
     systemInstruction:
       "You have access to Elastic documentation search tools. " +
-      "Use them to look up relevant Elastic docs when the user asks about " +
-      "Elasticsearch features, APIs, ES|QL syntax, or configuration.",
+      "Use them when the user asks about Elasticsearch features, APIs, ES|QL syntax, or configuration. " +
+      "Do NOT use them for general data questions that can be answered by querying the cluster directly.",
   },
 ];
 

@@ -19,8 +19,10 @@ import {
   type SortDirection,
   parseRouteRows,
   parseRecentTraces,
+  parseDeploymentRows,
 } from "./serviceDashboardHelpers";
 import ServiceDashboardSummaryCards from "./ServiceDashboardSummaryCards";
+import ServiceDeploymentsPanel from "./ServiceDeploymentsPanel";
 import ServiceRoutesPanel from "./ServiceRoutesPanel";
 import ServiceTracesPanel from "./ServiceTracesPanel";
 import {
@@ -40,6 +42,7 @@ export default function ServiceDashboardPage() {
   const [timeTo, setTimeTo] = useState("NOW()");
   const {
     clearLatestQueries,
+    deploymentsResult,
     error,
     handleReset,
     handleSearch,
@@ -119,6 +122,10 @@ export default function ServiceDashboardPage() {
     return traces.sort((a, b) => compareByField(a, b, traceSortField, traceSortDirection));
   }, [tracesResult, traceSortField, traceSortDirection]);
   const summary = useMemo(() => buildDashboardSummary(routeRows), [routeRows]);
+  const deployments = useMemo(() => {
+    if (!deploymentsResult) return [];
+    return parseDeploymentRows(deploymentsResult);
+  }, [deploymentsResult]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -153,7 +160,7 @@ export default function ServiceDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !routesResult && !tracesResult && (
+      {!loading && !routesResult && !tracesResult && !deploymentsResult && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No service data loaded"
@@ -164,6 +171,8 @@ export default function ServiceDashboardPage() {
       )}
 
       {summary && <ServiceDashboardSummaryCards summary={summary} />}
+
+      {deployments.length > 0 && <ServiceDeploymentsPanel deployments={deployments} />}
 
       {topRouteRows.length > 0 && (
         <ServiceRoutesPanel
@@ -185,15 +194,19 @@ export default function ServiceDashboardPage() {
         />
       )}
 
-      {!loading && routesResult && routeRows.length === 0 && recentTraces.length === 0 && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-          <EmptyState
-            heading="No data found"
-            description={`No routes or traces found for ${serviceName} in the selected time range.`}
-            addDataHref={PAGE_MANIFEST.addData.path}
-          />
-        </Paper>
-      )}
+      {!loading &&
+        routesResult &&
+        deployments.length === 0 &&
+        routeRows.length === 0 &&
+        recentTraces.length === 0 && (
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
+            <EmptyState
+              heading="No data found"
+              description={`No routes or traces found for ${serviceName} in the selected time range.`}
+              addDataHref={PAGE_MANIFEST.addData.path}
+            />
+          </Paper>
+        )}
     </Box>
   );
 }

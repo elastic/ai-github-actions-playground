@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseRouteRows,
   parseRecentTraces,
+  parseDeploymentRows,
 } from "../../src/components/services/serviceDashboardHelpers";
 import type { EsqlResponse } from "../../src/types";
 
@@ -170,6 +171,107 @@ describe("serviceDashboardHelpers", () => {
         durationMs: 0,
         statusCode: "OK",
         timestamp: "2026-01-01T00:00:00Z",
+      });
+    });
+  });
+
+  describe("parseDeploymentRows", () => {
+    it("parses deployment rows from ES|QL response", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "version_key", type: "keyword" },
+          { name: "first_seen", type: "date" },
+          { name: "last_seen", type: "date" },
+          { name: "request_count", type: "long" },
+        ],
+        values: [
+          ["2.0.0", "2026-01-01T12:00:00Z", "2026-01-01T18:00:00Z", 500],
+          ["1.0.0", "2026-01-01T00:00:00Z", "2026-01-01T11:59:59Z", 1000],
+        ],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toEqual({
+        version: "2.0.0",
+        firstSeen: "2026-01-01T12:00:00Z",
+        lastSeen: "2026-01-01T18:00:00Z",
+        requestCount: 500,
+      });
+      expect(rows[1]).toEqual({
+        version: "1.0.0",
+        firstSeen: "2026-01-01T00:00:00Z",
+        lastSeen: "2026-01-01T11:59:59Z",
+        requestCount: 1000,
+      });
+    });
+
+    it("handles missing columns with defaults", () => {
+      const response: EsqlResponse = {
+        columns: [{ name: "version_key", type: "keyword" }],
+        values: [["1.0.0"]],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows[0]).toEqual({
+        version: "1.0.0",
+        firstSeen: "",
+        lastSeen: "",
+        requestCount: 0,
+      });
+    });
+
+    it("handles null values with defaults", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "version_key", type: "keyword" },
+          { name: "first_seen", type: "date" },
+          { name: "last_seen", type: "date" },
+          { name: "request_count", type: "long" },
+        ],
+        values: [[null, null, null, null]],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows[0]).toEqual({
+        version: "unknown",
+        firstSeen: "",
+        lastSeen: "",
+        requestCount: 0,
+      });
+    });
+
+    it("normalizes blank and whitespace versions to unknown", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "version_key", type: "keyword" },
+          { name: "first_seen", type: "date" },
+          { name: "last_seen", type: "date" },
+          { name: "request_count", type: "long" },
+        ],
+        values: [
+          ["", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 10],
+          ["  ", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", 5],
+        ],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows[0]?.version).toBe("unknown");
+      expect(rows[1]?.version).toBe("unknown");
+    });
+
+    it("handles malformed request_count values with defaults", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "version_key", type: "keyword" },
+          { name: "first_seen", type: "date" },
+          { name: "last_seen", type: "date" },
+          { name: "request_count", type: "long" },
+        ],
+        values: [["1.0.0", "2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", "bad"]],
+      };
+      const rows = parseDeploymentRows(response);
+      expect(rows[0]).toEqual({
+        version: "1.0.0",
+        firstSeen: "2026-01-01T00:00:00Z",
+        lastSeen: "2026-01-01T01:00:00Z",
+        requestCount: 0,
       });
     });
   });

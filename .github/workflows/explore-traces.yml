@@ -41,7 +41,7 @@ jobs:
         - Use the **service name filter** to narrow to one specific service.
           Does the trace list update? Clear the filter — does the full list
           return?
-        - Use the **Error / OK status chips** to filter for only error traces.
+        - Use the **Error / Success status chips** to filter for only error traces.
           Are the filtered results actually errors? Click one to verify.
         - Use the **min/max duration inputs** to filter for traces over 100ms.
           Are the results within the expected range?

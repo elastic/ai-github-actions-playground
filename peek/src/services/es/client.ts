@@ -598,7 +598,20 @@ export class ElasticsearchClient {
         canReadSecurityRoles: canReadSecurity,
         canReadApiKeys: canCreateApiKeys,
       };
-    } catch {
+    } catch (err) {
+      // A 404 means the _has_privileges endpoint could not be found (e.g. a
+      // proxy or middleware stripping the route).  This does NOT indicate that
+      // the user lacks privileges, so return an optimistic set and let the
+      // actual operation surface a clear error if it also fails.
+      if (isElasticsearchError(err) && err.status === 404) {
+        return {
+          canManageDataStreams: true,
+          canCreateApiKeys: true,
+          canReadSecurityUsers: true,
+          canReadSecurityRoles: true,
+          canReadApiKeys: true,
+        };
+      }
       // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
       return {
         canManageDataStreams: false,

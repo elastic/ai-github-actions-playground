@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { useIngestPipelines } from "../hooks/useIngestPipelines";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import PageHeader from "./PageHeader";
 import PageInsightBanner from "./PageInsightBanner";
@@ -107,7 +108,7 @@ export default function IngestPipelinesPage() {
       {insightContext && (
         <PageInsightBanner
           context={insightContext}
-          systemPrompt="You are an Elasticsearch ingest pipeline expert. Describe this pipeline in one concise sentence. List the processors it has and what each does (e.g., parses log lines with grok, adds geo-IP lookup, sets timestamp)."
+          systemPrompt={`You are an Elasticsearch ingest pipeline expert. Describe this pipeline in one concise sentence. List the processors it has and what each does (e.g., parses log lines with grok, adds geo-IP lookup, sets timestamp).${INSIGHT_GUARDRAIL}`}
           cacheKey={insightCacheKey}
         />
       )}

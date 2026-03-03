@@ -24,6 +24,22 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: isElectron ? "./" : (env.VITE_BASE_PATH ?? "/ai-github-actions-playground/"),
+    resolve: {
+      alias: {
+        // @perses-dev/explore and @perses-dev/dashboards are not installed.
+        // They are referenced only by lazy require() calls inside
+        // @perses-dev/plugin-system/PluginRuntime, which Peek does not use.
+        // These stubs satisfy the import without pulling in the actual packages.
+        "@perses-dev/explore": path.resolve(
+          import.meta.dirname,
+          "src/stubs/perses-explore-stub.ts"
+        ),
+        "@perses-dev/dashboards": path.resolve(
+          import.meta.dirname,
+          "src/stubs/perses-dashboards-stub.ts"
+        ),
+      },
+    },
     plugins: [
       react(),
       // Only active when ELECTRON=true — keeps the web build unaffected
@@ -95,8 +111,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ["echarts", "@perses-dev/components", "@perses-dev/core"],
-      exclude: ["@perses-dev/explore", "@perses-dev/dashboards"],
+      include: ["echarts", "@perses-dev/components", "@perses-dev/core", "@perses-dev/plugin-system"],
+      exclude: [],
     },
   };
 });

@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildServiceRoutesQuery,
   buildServiceRecentTracesQuery,
+  buildServiceDeploymentsQuery,
 } from "../../src/components/services/serviceDashboardQueryBuilder";
 
 describe("serviceDashboardQueryBuilder", () => {
@@ -111,6 +112,57 @@ describe("serviceDashboardQueryBuilder", () => {
           timeTo: "NOW(); DROP TABLE traces",
         }),
       ).toThrow("Unsupported time expression");
+    });
+  });
+
+  describe("buildServiceDeploymentsQuery", () => {
+    it("generates a valid ES|QL query for deployments", () => {
+      const query = buildServiceDeploymentsQuery(defaultFilters);
+      expect(query).toContain("FROM traces-*");
+      expect(query).toContain("parent.id IS NULL");
+      expect(query).toContain('service.name == "my-service"');
+      expect(query).toContain("@timestamp >= NOW() - 1 hour");
+      expect(query).toContain("@timestamp <= NOW()");
+      expect(query).toContain(
+        "version_key = CASE(service.version IS NULL OR TRIM(service.version)",
+      );
+      expect(query).toContain("STATS first_seen = MIN(@timestamp)");
+      expect(query).toContain("last_seen = MAX(@timestamp)");
+      expect(query).toContain("request_count = COUNT(*)");
+      expect(query).toContain("BY version_key");
+      expect(query).toContain("SORT last_seen DESC");
+    });
+
+    it("escapes special characters in service name", () => {
+      const query = buildServiceDeploymentsQuery({
+        ...defaultFilters,
+        serviceName: 'my "special" service',
+      });
+      expect(query).toContain('service.name == "my \\"special\\" service"');
+    });
+
+    it("supports absolute ISO timestamps", () => {
+      const query = buildServiceDeploymentsQuery({
+        serviceName: "test-svc",
+        timeFrom: "2026-01-01T00:00:00.000Z",
+        timeTo: "2026-01-01T01:00:00.000Z",
+      });
+      expect(query).toContain('@timestamp >= "2026-01-01T00:00:00.000Z"');
+      expect(query).toContain('@timestamp <= "2026-01-01T01:00:00.000Z"');
+    });
+
+    it("throws for unsupported time expressions", () => {
+      expect(() =>
+        buildServiceDeploymentsQuery({
+          ...defaultFilters,
+          timeTo: "NOW(); DROP TABLE traces",
+        }),
+      ).toThrow("Unsupported time expression");
+    });
+
+    it("does not contain duration calculations", () => {
+      const query = buildServiceDeploymentsQuery(defaultFilters);
+      expect(query).not.toContain("duration_ms");
     });
   });
 });
