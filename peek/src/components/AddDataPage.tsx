@@ -23,6 +23,7 @@ import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { useIngestionVerification } from "../hooks/useIngestionVerification";
 import {
@@ -455,17 +456,25 @@ export default function AddDataPage() {
             </ToggleButtonGroup>
           </Stack>
 
-          {endpointType === "managed_otlp" && probeTargetOtlpUrl && (
+          {endpointType === "managed_otlp" && (
             <Alert
               severity={
-                ingestAvailable ? "success" : ingestAvailable === false ? "warning" : "info"
+                !probeTargetOtlpUrl
+                  ? "warning"
+                  : ingestAvailable
+                    ? "success"
+                    : ingestAvailable === false
+                      ? "warning"
+                      : "info"
               }
             >
-              {ingestAvailable === null
-                ? `Checking OTLP endpoint availability at ${probeTargetOtlpUrl}…`
-                : ingestAvailable
-                  ? `OTLP endpoint verified at ${probeTargetOtlpUrl}`
-                  : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
+              {!probeTargetOtlpUrl
+                ? "Could not derive an OTLP endpoint from the Elasticsearch URL. Enter an ingest URL in connection settings or use an Elastic Cloud deployment."
+                : ingestAvailable === null
+                  ? `Checking OTLP endpoint availability at ${probeTargetOtlpUrl}…`
+                  : ingestAvailable
+                    ? `OTLP endpoint verified at ${probeTargetOtlpUrl}`
+                    : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
             </Alert>
           )}
 
@@ -474,7 +483,10 @@ export default function AddDataPage() {
             onChange={(_, value: Platform) => setPlatform(value)}
             variant="scrollable"
             scrollButtons="auto"
-            sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}
+            sx={{
+              minHeight: COMPONENT_HEIGHTS.tab,
+              "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
+            }}
           >
             <Tab value="kubernetes" label="Kubernetes" />
             <Tab value="docker" label="Docker" />
@@ -783,6 +795,9 @@ export default function AddDataPage() {
                     resetVerification();
                     lastAutoStartedApiKeyRef.current = null;
                     setWizardStep(1);
+                    setSelectedTechnology(null);
+                    setTechnologySearch("");
+                    setActiveCategory("all");
                     return;
                   }
                   navigate(cta.path);

@@ -168,6 +168,7 @@ export default function ExploreControlsPanel({
           <Tooltip title="View generated ES|QL query">
             <IconButton
               size="small"
+              aria-label="View generated ES|QL query"
               onClick={onToggleEsql}
               color={showEsql ? "primary" : "default"}
             >

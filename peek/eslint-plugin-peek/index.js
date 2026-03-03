@@ -6,6 +6,8 @@ import noDirectEChartsImport from "./rules/no-direct-echarts-import.js";
 import noDivOnClick from "./rules/no-div-onclick.js";
 import noCircularProgress from "./rules/no-circular-progress.js";
 import enforceSpacingTokens from "./rules/enforce-spacing-tokens.js";
+import requireIconButtonAriaLabel from "./rules/require-icon-button-aria-label.js";
+import noHardcodedHeights from "./rules/no-hardcoded-heights.js";
 
 const plugin = {
   meta: { name: "eslint-plugin-peek", version: "1.0.0" },
@@ -18,6 +20,8 @@ const plugin = {
     "no-div-onclick": noDivOnClick,
     "no-circular-progress": noCircularProgress,
     "enforce-spacing-tokens": enforceSpacingTokens,
+    "require-icon-button-aria-label": requireIconButtonAriaLabel,
+    "no-hardcoded-heights": noHardcodedHeights,
   },
 };
 

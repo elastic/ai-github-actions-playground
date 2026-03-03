@@ -14,6 +14,7 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import EmptyState from "../EmptyState";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import type { Span, SpanLink } from "./traceUtils";
 import { formatSpanDuration, formatStatusLabel } from "./traceUtils";
@@ -74,21 +75,21 @@ function KeyValueRow({
       <Box sx={{ display: "flex", flexShrink: 0, gap: 0.5 }}>
         {onFilterBy && (
           <Tooltip title="Filter by this value">
-            <IconButton size="small" onClick={onFilterBy}>
+            <IconButton size="small" aria-label="Filter by this value" onClick={onFilterBy}>
               <FilterAltIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
         )}
         {onExclude && (
           <Tooltip title="Exclude this value">
-            <IconButton size="small" onClick={onExclude}>
+            <IconButton size="small" aria-label="Exclude this value" onClick={onExclude}>
               <FilterAltOffIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
         )}
         {onCopy && (
           <Tooltip title="Copy value">
-            <IconButton size="small" onClick={onCopy}>
+            <IconButton size="small" aria-label="Copy value" onClick={onCopy}>
               <ContentCopyIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
@@ -175,7 +176,7 @@ export default function SpanDetailDrawer({
               {span.serviceName} • {formatSpanDuration(span.durationUs)}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={onClose}>
+          <IconButton size="small" aria-label="Close span detail" onClick={onClose}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -186,13 +187,13 @@ export default function SpanDetailDrawer({
           onChange={(_, v: number) => setTabIndex(v)}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ minHeight: 36, borderBottom: 1, borderColor: "divider" }}
+          sx={{ minHeight: COMPONENT_HEIGHTS.tab, borderBottom: 1, borderColor: "divider" }}
         >
-          <Tab label="Overview" sx={{ minHeight: 36, py: 0 }} />
-          <Tab label="Attributes" sx={{ minHeight: 36, py: 0 }} />
-          <Tab label="Resource" sx={{ minHeight: 36, py: 0 }} />
-          <Tab label="Links" sx={{ minHeight: 36, py: 0 }} />
-          <Tab label="Events" sx={{ minHeight: 36, py: 0 }} />
+          <Tab label="Overview" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+          <Tab label="Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+          <Tab label="Resource" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+          <Tab label="Links" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+          <Tab label="Events" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
         </Tabs>
 
         {/* Tab content */}
