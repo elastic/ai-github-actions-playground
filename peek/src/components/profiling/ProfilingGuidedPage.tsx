@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useShallow } from "zustand/react/shallow";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -87,10 +88,12 @@ export default function ProfilingGuidedPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
   const setDiscoverQueryDraft = useQueryStore((state) => state.setDiscoverQueryDraft);
-  const { expandedStacktraceIds, toggleExpandedStacktraceId } = usePageFiltersStore((s) => ({
-    expandedStacktraceIds: s.expandedStacktraceIds,
-    toggleExpandedStacktraceId: s.toggleExpandedStacktraceId,
-  }));
+  const { expandedStacktraceIds, toggleExpandedStacktraceId } = usePageFiltersStore(
+    useShallow((s) => ({
+      expandedStacktraceIds: s.expandedStacktraceIds,
+      toggleExpandedStacktraceId: s.toggleExpandedStacktraceId,
+    })),
+  );
 
   // URL-persisted focus state
   const [urlDimension, setUrlDimension] = useQueryState("focus", parseAsString);
@@ -110,6 +113,8 @@ export default function ProfilingGuidedPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Prevents EmptyState from flashing before the first query completes.
+  const hasRunRef = useRef(false);
   const [topFunctionsRows, setTopFunctionsRows] = useState<TopFunctionRow[]>([]);
   const [timelineResult, setTimelineResult] = useState<EsqlResponse | null>(null);
   const [stacktraces, setStacktraces] = useState<SymbolizedStacktrace[]>([]);
@@ -227,8 +232,14 @@ export default function ProfilingGuidedPage() {
     const controller = new AbortController();
     abortRef.current = controller;
     const client = new ElasticsearchClient(connection);
+    hasRunRef.current = true;
     setLoading(true);
     setError(null);
+    // Clear stale results from a previous view mode so the empty state
+    // doesn't briefly show while the new query is in flight.
+    setTopFunctionsRows([]);
+    setTimelineResult(null);
+    setStacktraces([]);
     try {
       if (viewMode === "topFunctions") {
         await runTopFunctions(client, controller.signal);
@@ -278,6 +289,7 @@ export default function ProfilingGuidedPage() {
 
   const handleChangeFocus = useCallback(async () => {
     abortRef.current?.abort();
+    hasRunRef.current = false;
     await Promise.all([setUrlDimension(null), setUrlValue(null)]);
     setTopFunctionsRows([]);
     setStacktraces([]);
@@ -402,13 +414,16 @@ export default function ProfilingGuidedPage() {
 
       {!loading && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-          {topFunctionsRows.length === 0 && stacktraces.length === 0 && !timelineResult && (
-            <EmptyState
-              heading="No profiling data found"
-              description="No samples matched the selected focus and time range."
-              size="small"
-            />
-          )}
+          {hasRunRef.current &&
+            topFunctionsRows.length === 0 &&
+            stacktraces.length === 0 &&
+            !timelineResult && (
+              <EmptyState
+                heading="No profiling data found"
+                description="No samples matched the selected focus and time range."
+                size="small"
+              />
+            )}
           {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
             <Table size="small">
               <TableHead>
