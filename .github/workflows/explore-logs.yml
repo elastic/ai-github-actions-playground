@@ -84,13 +84,14 @@ jobs:
 
         ## Index pattern
 
-        The page has an **index pattern** text field (default: `logs-*`).
+        The index pattern is embedded in the `FROM` clause of the ES|QL query
+        (default: `FROM logs-* | ...`). Edit the query directly to change it.
 
-        - Change the index pattern to `logs-apm*`. Does the sidebar field values
+        - Change the FROM clause to `FROM logs-apm*`. Does the sidebar field values
           reload? Does the table update?
-        - Change to a non-existent index (`logs-nonexistent-*`). Is the empty
+        - Change to a non-existent index (`FROM logs-nonexistent-*`). Is the empty
           state clear? Does the table show "No results" rather than an error?
-        - Change back to `logs-*`. Do results return?
+        - Change back to `FROM logs-*`. Do results return?
 
         ---
 

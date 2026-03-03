@@ -1,6 +1,7 @@
 export const PAGE_NAV_BUTTONS = {
   "add-data": "Add Data",
-  "cluster-overview": "Cluster Overview",
+  "cluster-overview": "Overview",
+  profiling: "Profiling",
   "data-streams": "Data Streams",
   indices: "Indices",
   "ingest-pipelines": "Ingest Pipelines",

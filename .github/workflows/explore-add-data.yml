@@ -30,18 +30,29 @@ jobs:
         generates correct, readable, well-formatted commands and that all
         wizard UI states work correctly.
 
-        The wizard has:
-        - **6 technologies**: Kubernetes, Docker, Linux Host, Windows Host,
-          PostgreSQL, Nginx
+        The wizard has **19 technologies** across four guide types:
+
+        - **EDOT Collector** (5 techs — these use the 5-platform-tab flow):
+          VPC Flow Logs, Kubernetes, Docker, Linux Host, Windows Host
+        - **OTel Receiver** (5 techs — receiver-configuration flow):
+          Nginx, PostgreSQL, Redis, MySQL, MongoDB
+        - **APM SDK** (7 techs — instrumentation flow):
+          Java, Python, Node.js, Go, .NET, Ruby, PHP
+        - **AWS** (1 tech — cloud-deploy flow): AWS
+
+        For EDOT Collector technologies the wizard also has:
         - **5 platform tabs**: Kubernetes, Docker, Linux, macOS, Windows
         - **2 endpoint types**: Elasticsearch (direct), Managed OTLP
-        - **5 steps**: What are you monitoring → Select environment →
-          Install and configure → Validate data receipt → Explore your data
+
+        All guide types share the same **5 steps**: What are you monitoring →
+        Select environment → Install and configure → Validate data receipt →
+        Explore your data
 
         Each run, pick a **different technology** as your primary path and
         explore **different interactions** along the way. Do NOT always pick
-        Kubernetes. Rotate through Docker, Linux Host, Windows Host,
-        PostgreSQL, and Nginx across runs.
+        Kubernetes. Rotate through Docker, Linux Host, Windows Host, VPC Flow
+        Logs, Nginx, PostgreSQL, Redis, Java APM, Python APM, and others
+        across runs.
 
         ---
 
