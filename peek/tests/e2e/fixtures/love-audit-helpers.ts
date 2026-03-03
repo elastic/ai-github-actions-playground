@@ -5,7 +5,7 @@
  * their own `connect` callback and page list, keeping all navigation,
  * screenshot, accessibility, and diagnostics logic in one place.
  */
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 
@@ -298,13 +298,11 @@ export const PROFILING_PAGES: PageAuditConfig[] = [
       // Expand the first stacktrace
       const firstRow = page.locator("table tbody tr").first();
       await firstRow.click();
-      // Wait for the expanded frame content to render after the Collapse animation
-      await page
-        .locator("table tbody tr")
-        .nth(1)
-        .locator("span")
-        .first()
-        .waitFor({ state: "visible", timeout: 5_000 });
+      const expandedRow = page.locator("table tbody tr").nth(1);
+      // Wait for the Collapse row to finish expanding before checking frame content
+      await expect(expandedRow).toBeVisible({ timeout: 5_000 });
+      await expect(expandedRow).not.toHaveCSS("height", "0px", { timeout: 5_000 });
+      await expandedRow.locator("span").first().waitFor({ state: "visible", timeout: 5_000 });
       await page.screenshot({
         path: `test-results/${prefix}-profiling-stacktraces-expanded.png`,
         fullPage: true,
