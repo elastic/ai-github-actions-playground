@@ -23,7 +23,6 @@ export function buildInvestigateQuery(tab: InvestigateTab, entity: string): stri
     `FROM logs-*, .ds-logs-*, filebeat-*, auditbeat-*, winlogbeat-*`,
     `| WHERE ${field} == "${escaped}"`,
     `| SORT @timestamp DESC`,
-    `| KEEP @timestamp, event.category, event.action, event.outcome, ${field}, host.name, user.name, source.ip, message, _index`,
     `| LIMIT 200`,
   ].join("\n");
 }
