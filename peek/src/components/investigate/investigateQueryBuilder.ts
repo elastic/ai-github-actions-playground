@@ -17,14 +17,18 @@ const FILE_MATCH_FIELDS = ["file.name", "file.hash.md5", "file.hash.sha1", "file
 export type QueryFlavor = "full" | "otel" | "minimal";
 
 /** Ordered fallback chain: try each flavor in sequence on column errors. */
-export const QUERY_FLAVOR_CHAIN: QueryFlavor[] = ["full", "otel", "minimal"];
+export const QUERY_FLAVOR_CHAIN = [
+  "full",
+  "otel",
+  "minimal",
+] as const satisfies readonly QueryFlavor[];
 
 /** KEEP fields per flavor. */
-const FLAVOR_KEEP_FIELDS: Record<QueryFlavor, string> = {
+const FLAVOR_KEEP_FIELDS: Readonly<Record<QueryFlavor, string>> = {
   full: INVESTIGATE_TIMELINE_FIELDS.join(", "),
   otel: "@timestamp, host.name, message, _index",
   minimal: "@timestamp, message, _index",
-};
+} as const;
 
 /** Map each investigate tab to its primary ECS field. */
 export function investigateField(tab: InvestigateTab): string {
