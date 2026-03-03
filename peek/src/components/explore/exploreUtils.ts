@@ -1,9 +1,18 @@
 import { parseAsString, parseAsStringEnum } from "nuqs";
+import { z } from "zod";
 
 import type { AggregationType, ExplorerFilter } from "../../services/es";
 import { EXPLORER_AGGREGATIONS } from "../../services/es";
 
-const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(["==", "!=", "LIKE"]);
+const FILTER_OPS = ["==", "!=", "LIKE"] as const;
+const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(FILTER_OPS);
+
+const ExplorerFilterSchema = z.object({
+  field: z.string(),
+  op: z.enum(FILTER_OPS),
+  value: z.string(),
+});
+
 const parseAggregation = parseAsStringEnum<AggregationType>([...EXPLORER_AGGREGATIONS]);
 
 export const explorerSearchParsers = {
@@ -47,20 +56,12 @@ export function parseEncodedFilters(encodedFilters: string | null): ExplorerFilt
     const parsed = JSON.parse(encodedFilters);
     if (!Array.isArray(parsed)) return [];
     const validFilters: ExplorerFilter[] = [];
-    for (const filter of parsed) {
-      if (
-        typeof filter !== "object" ||
-        filter === null ||
-        typeof filter.field !== "string" ||
-        typeof filter.op !== "string" ||
-        typeof filter.value !== "string" ||
-        !isExplorerFilterOp(filter.op)
-      ) {
-        continue;
-      }
-      const field = filter.field.trim();
+    for (const item of parsed) {
+      const result = ExplorerFilterSchema.safeParse(item);
+      if (!result.success) continue;
+      const field = result.data.field.trim();
       if (!field) continue;
-      validFilters.push({ field, op: filter.op, value: filter.value });
+      validFilters.push({ field, op: result.data.op, value: result.data.value });
     }
     return validFilters;
   } catch {
