@@ -14,10 +14,16 @@ import { copyToClipboard } from "../../utils/copyToClipboard";
 import { useCopyFeedbackTimeout } from "../../hooks/useCopyFeedbackTimeout";
 import type { EndpointType, Platform } from "../../utils/addDataUtils";
 import type { OtelReceiverDefinition } from "../../services/addData/otelReceiverCatalog";
+import type { AwsDeployTarget } from "../../services/addData/awsDeployCatalog";
+import type { ApmLanguageDefinition } from "../../services/addData/apmCatalog";
+import type { FluentBitOutputMode } from "../../services/addData/fluentBitConfig";
 
 import { GUIDE_TYPE_DEFINITIONS } from "./guideRegistry";
 import EdotCollectorInstall from "./guides/EdotCollectorInstall";
 import OtelReceiverInstall from "./guides/OtelReceiverInstall";
+import AwsDeployInstall from "./guides/AwsDeployInstall";
+import ApmInstall from "./guides/ApmInstall";
+import FluentBitInstall from "./guides/FluentBitInstall";
 
 interface AddDataStepInstallProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
@@ -37,8 +43,16 @@ interface AddDataStepInstallProps {
   derivedOtlpUrl: string | null;
   clusterVersion: string | null;
   connectionUrl: string | null;
+  // OTel Receiver
   receiver: OtelReceiverDefinition | null;
   receiverFieldValues: Record<string, string>;
+  // AWS Cloud Deploy
+  selectedAwsTarget: AwsDeployTarget | null;
+  // APM
+  selectedApmLanguage: ApmLanguageDefinition | null;
+  // Fluent Bit
+  fluentBitOutputMode: FluentBitOutputMode;
+  // Navigation
   onBack: () => void;
   onContinue: () => void;
 }
@@ -63,6 +77,9 @@ export default function AddDataStepInstall({
   connectionUrl,
   receiver,
   receiverFieldValues,
+  selectedAwsTarget,
+  selectedApmLanguage,
+  fluentBitOutputMode,
   onBack,
   onContinue,
 }: AddDataStepInstallProps) {
@@ -109,6 +126,18 @@ export default function AddDataStepInstall({
           esUrl={esUrl}
           apiKey={apiKey}
         />
+      )}
+
+      {guideType === "aws_cloud_deploy" && selectedAwsTarget && (
+        <AwsDeployInstall target={selectedAwsTarget} esUrl={esUrl} apiKey={apiKey} />
+      )}
+
+      {guideType === "apm" && selectedApmLanguage && (
+        <ApmInstall language={selectedApmLanguage} endpoint={esUrl} apiKey={apiKey} />
+      )}
+
+      {guideType === "fluent_bit" && (
+        <FluentBitInstall outputMode={fluentBitOutputMode} esUrl={esUrl} apiKey={apiKey} />
       )}
 
       <Typography variant="body2">Collector credentials</Typography>

@@ -6,14 +6,21 @@ import Typography from "@mui/material/Typography";
 import type { AddDataTechnologyCatalogEntry } from "../../services/addData/catalog";
 import type { EndpointType, Platform } from "../../utils/addDataUtils";
 import type { OtelReceiverDefinition } from "../../services/addData/otelReceiverCatalog";
+import type { AwsDeployTarget } from "../../services/addData/awsDeployCatalog";
+import type { ApmLanguageDefinition } from "../../services/addData/apmCatalog";
+import type { FluentBitOutputMode } from "../../services/addData/fluentBitConfig";
 
 import { GUIDE_TYPE_DEFINITIONS } from "./guideRegistry";
 import EdotCollectorConfigure from "./guides/EdotCollectorConfigure";
 import OtelReceiverConfigure from "./guides/OtelReceiverConfigure";
+import AwsDeployConfigure from "./guides/AwsDeployConfigure";
+import ApmConfigure from "./guides/ApmConfigure";
+import FluentBitConfigure from "./guides/FluentBitConfigure";
 
 interface AddDataStepConfigureProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   signalExpectation: string;
+  // EDOT Collector
   endpointType: EndpointType;
   onEndpointTypeChange: (type: EndpointType) => void;
   onEndpointTypeManuallySet: () => void;
@@ -21,9 +28,20 @@ interface AddDataStepConfigureProps {
   ingestAvailable: boolean | null;
   platform: Platform;
   onPlatformChange: (platform: Platform) => void;
+  // OTel Receiver
   receiver: OtelReceiverDefinition | null;
   receiverFieldValues: Record<string, string>;
   onReceiverFieldValuesChange: (values: Record<string, string>) => void;
+  // AWS Cloud Deploy
+  selectedAwsTarget: AwsDeployTarget | null;
+  onSelectAwsTarget: (target: AwsDeployTarget) => void;
+  // APM
+  selectedApmLanguage: ApmLanguageDefinition | null;
+  onSelectApmLanguage: (lang: ApmLanguageDefinition) => void;
+  // Fluent Bit
+  fluentBitOutputMode: FluentBitOutputMode;
+  onFluentBitOutputModeChange: (mode: FluentBitOutputMode) => void;
+  // Navigation
   onBack: () => void;
   onContinue: () => void;
 }
@@ -41,6 +59,12 @@ export default function AddDataStepConfigure({
   receiver,
   receiverFieldValues,
   onReceiverFieldValuesChange,
+  selectedAwsTarget,
+  onSelectAwsTarget,
+  selectedApmLanguage,
+  onSelectApmLanguage,
+  fluentBitOutputMode,
+  onFluentBitOutputModeChange,
   onBack,
   onContinue,
 }: AddDataStepConfigureProps) {
@@ -73,6 +97,24 @@ export default function AddDataStepConfigure({
           receiver={receiver}
           fieldValues={receiverFieldValues}
           onFieldValuesChange={onReceiverFieldValuesChange}
+        />
+      )}
+
+      {guideType === "aws_cloud_deploy" && (
+        <AwsDeployConfigure selectedTarget={selectedAwsTarget} onSelectTarget={onSelectAwsTarget} />
+      )}
+
+      {guideType === "apm" && (
+        <ApmConfigure
+          selectedLanguage={selectedApmLanguage}
+          onSelectLanguage={onSelectApmLanguage}
+        />
+      )}
+
+      {guideType === "fluent_bit" && (
+        <FluentBitConfigure
+          outputMode={fluentBitOutputMode}
+          onOutputModeChange={onFluentBitOutputModeChange}
         />
       )}
 

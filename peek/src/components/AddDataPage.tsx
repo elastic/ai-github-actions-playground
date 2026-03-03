@@ -18,6 +18,9 @@ import {
 import type { EndpointType, Platform, TelemetrySignal } from "../utils/addDataUtils";
 import type { AddDataTechnologyCatalogEntry } from "../services/addData/catalog";
 import { OTEL_RECEIVER_BY_ID } from "../services/addData/otelReceiverCatalog";
+import type { AwsDeployTarget } from "../services/addData/awsDeployCatalog";
+import type { ApmLanguageDefinition } from "../services/addData/apmCatalog";
+import type { FluentBitOutputMode } from "../services/addData/fluentBitConfig";
 
 import PageHeader from "./PageHeader";
 import AddDataStepTechnology from "./addData/AddDataStepTechnology";
@@ -50,6 +53,12 @@ export default function AddDataPage() {
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
   const [receiverFieldValues, setReceiverFieldValues] = useState<Record<string, string>>({});
+  const [selectedAwsTarget, setSelectedAwsTarget] = useState<AwsDeployTarget | null>(null);
+  const [selectedApmLanguage, setSelectedApmLanguage] = useState<ApmLanguageDefinition | null>(
+    null,
+  );
+  const [fluentBitOutputMode, setFluentBitOutputMode] =
+    useState<FluentBitOutputMode>("elasticsearch");
 
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const endpointTypeManuallySetRef = useRef(false);
@@ -185,6 +194,9 @@ export default function AddDataPage() {
     setSelectedTechnology(tech);
     setPlatform(tech.defaultPlatform);
     setReceiverFieldValues({});
+    setSelectedAwsTarget(null);
+    setSelectedApmLanguage(null);
+    setFluentBitOutputMode("elasticsearch");
   };
 
   const handleAddAnotherSource = () => {
@@ -271,6 +283,12 @@ export default function AddDataPage() {
           receiver={receiver}
           receiverFieldValues={receiverFieldValues}
           onReceiverFieldValuesChange={setReceiverFieldValues}
+          selectedAwsTarget={selectedAwsTarget}
+          onSelectAwsTarget={setSelectedAwsTarget}
+          selectedApmLanguage={selectedApmLanguage}
+          onSelectApmLanguage={setSelectedApmLanguage}
+          fluentBitOutputMode={fluentBitOutputMode}
+          onFluentBitOutputModeChange={setFluentBitOutputMode}
           onBack={() => setWizardStep(1)}
           onContinue={() => setWizardStep(3)}
         />
@@ -297,6 +315,9 @@ export default function AddDataPage() {
           connectionUrl={connection?.url ?? null}
           receiver={receiver}
           receiverFieldValues={receiverFieldValues}
+          selectedAwsTarget={selectedAwsTarget}
+          selectedApmLanguage={selectedApmLanguage}
+          fluentBitOutputMode={fluentBitOutputMode}
           onBack={() => setWizardStep(2)}
           onContinue={() => setWizardStep(4)}
         />
