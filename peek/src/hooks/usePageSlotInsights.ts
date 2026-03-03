@@ -75,7 +75,10 @@ export function usePageSlotInsights({
         abortSignal: signal,
       });
 
-      return result.object as PageInsightsResponse;
+      // Filter out hallucinated slotIds that weren't in the original request
+      const validSlotIds = new Set(slots.map((s) => s.slotId));
+      const filteredInsights = result.object.insights.filter((i) => validSlotIds.has(i.slotId));
+      return { ...result.object, insights: filteredInsights } as PageInsightsResponse;
     },
     enabled: enabled && hasApiKey && slots.length > 0 && Boolean(context.trim()),
     staleTime: Infinity,

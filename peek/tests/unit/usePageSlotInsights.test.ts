@@ -16,7 +16,13 @@ vi.mock("ai", () => ({
 }));
 
 vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI: vi.fn(() => vi.fn(() => ({ id: "test-model" }))),
+  createOpenAI: vi.fn(() => {
+    const client = vi.fn((model: string) => ({ id: model }));
+    (client as typeof client & { chat: (model: string) => { id: string } }).chat = vi.fn(
+      (model: string) => ({ id: model }),
+    );
+    return client;
+  }),
 }));
 
 const SAMPLE_SLOTS: InsightSlotDefinition[] = [
@@ -162,5 +168,66 @@ describe("usePageSlotInsights", () => {
 
     expect(result.current.summary).toBeNull();
     expect(result.current.insights).toEqual([]);
+  });
+
+  it("uses openai.chat() when provider is openrouter", async () => {
+    useLLMStore.getState().setProvider("openrouter");
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: {
+        summary: "Router summary.",
+        insights: [{ slotId: "health-card", text: "Via openrouter", severity: "info" }],
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "ctx",
+          systemPrompt: "sys",
+          cacheKey: "openrouter-test",
+          slots: SAMPLE_SLOTS,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.summary).toBe("Router summary.");
+    });
+
+    expect(vi.mocked(generateObject)).toHaveBeenCalledTimes(1);
+    // Verify the model arg uses the .chat() path (id set by the mock)
+    const callArg = vi.mocked(generateObject).mock.calls[0]![0];
+    expect((callArg.model as { id: string }).id).toMatch(/gpt/);
+  });
+
+  it("filters out hallucinated slotIds not present in the slots input", async () => {
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: {
+        summary: "Cluster looks healthy.",
+        insights: [
+          { slotId: "health-card", text: "All nodes green", severity: "info" },
+          { slotId: "hallucinated-slot", text: "This slot was not requested" },
+        ],
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "cluster data",
+          systemPrompt: "sys",
+          cacheKey: "hallucination-test",
+          slots: SAMPLE_SLOTS,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.summary).toBe("Cluster looks healthy.");
+    });
+
+    // Only "health-card" is in SAMPLE_SLOTS; "hallucinated-slot" must be filtered
+    expect(result.current.insights).toHaveLength(1);
+    expect(result.current.insights[0]!.slotId).toBe("health-card");
   });
 });

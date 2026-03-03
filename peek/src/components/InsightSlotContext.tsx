@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useMemo } from "react";
 
 import type { SlotInsight } from "../types/insightSlots";
 
@@ -15,7 +15,7 @@ interface InsightSlotContextValue {
   refresh: () => void;
 }
 
-const InsightSlotCtx = createContext<InsightSlotContextValue>({
+export const InsightSlotCtx = createContext<InsightSlotContextValue>({
   summary: null,
   insightsBySlot: new Map(),
   loading: false,
@@ -61,21 +61,4 @@ export function InsightSlotProvider({
   );
 
   return React.createElement(InsightSlotCtx.Provider, { value }, children);
-}
-
-/**
- * Returns the insight for a specific slot, or `null` if no insight has been
- * generated for that slot yet.
- */
-export function useSlotInsight(slotId: string): SlotInsight | null {
-  const { insightsBySlot } = useContext(InsightSlotCtx);
-  return insightsBySlot.get(slotId) ?? null;
-}
-
-/**
- * Returns the full context value for advanced consumers that need loading /
- * error / summary information in addition to individual slot insights.
- */
-export function useInsightSlotContext(): InsightSlotContextValue {
-  return useContext(InsightSlotCtx);
 }
