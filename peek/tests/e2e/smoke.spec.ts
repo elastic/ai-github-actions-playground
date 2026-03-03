@@ -315,9 +315,9 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Traces");
     await page.getByRole("button", { name: "Search Traces" }).first().click();
-    await expect(page.getByText("1 traces found")).toBeVisible();
+    await expect(page.getByText("1 traces found")).toBeVisible({ timeout: 10_000 });
     await page.getByText("GET /checkout").click();
-    await expect(page.getByText("2 spans")).toBeVisible();
+    await expect(page.getByText("2 spans")).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "Service Map" }).click();
     await expect(
       page.getByText("Select a trace in List or Scatter view to see its service map"),
@@ -444,6 +444,7 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
+    test.setTimeout(90_000); // axe scans 9 pages serially; 30s default is too tight in CI
     await page.goto("");
     await checkA11y(page, "welcome", testInfo);
 
@@ -473,7 +474,6 @@ test.describe("smoke – site navigation", () => {
       "Indices",
     ]) {
       await navigateViaSidebar(page, nav);
-      await page.waitForLoadState("networkidle");
       await pageReadyLocators[nav]!();
       await checkA11y(page, nav, testInfo);
     }

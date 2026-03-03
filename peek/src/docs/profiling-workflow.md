@@ -20,9 +20,13 @@ Switch between **Flamegraph**, **Top Functions**, **Timeline**, **Flamescope**, 
 
 **Timeline** queries `profiling-events-all` and aggregates `Stacktrace.count` into time buckets so you can see profiling activity over time as a line chart.
 
-**Flamegraph** displays stacktrace data as a hierarchical flame graph visualization. Click any frame to zoom into that subtree and explore deeper call paths. A breadcrumb trail appears above the chart showing the current zoom path — click any segment to jump back. Use the search box to find and highlight specific function names. Click **Open in Query Lab** to pivot to Query Lab with a filtered ES|QL query for that function.
+**Flamegraph** displays stacktrace data as a hierarchical flame graph visualization. Click any frame to zoom into that subtree and explore deeper call paths. A breadcrumb trail appears above the chart showing the current zoom path — click any segment to jump back. Use the search box to find and highlight specific function names.
 
-**Flamescope** visualizes stacktrace density over time as a heatmap (time buckets on X, top stacktrace signatures on Y) with a synchronized flamegraph for the selected bucket. Click any heatmap cell to change the selected time window. **Open in Query Lab** preserves the selected Flamescope window so you can continue investigation with a time-scoped query.
+**Flamescope** visualizes stacktrace density over time as a heatmap (time buckets on X, top stacktrace signatures on Y) with a synchronized flamegraph for the selected bucket. Click any heatmap cell to change the selected time window.
+
+### Open in Query Lab
+
+Available from the results toolbar for **Stacktraces**, **Timeline**, **Flamegraph**, and **Flamescope** views. Click **Open in Query Lab** to pivot to Query Lab with the current ES|QL query pre-populated as a draft. For Flamescope, the selected time window is preserved so you can continue investigation with a time-scoped query.
 
 ## Advanced view
 
@@ -37,8 +41,6 @@ Use the Time range dropdown in the results toolbar to control the window of prof
 ## Query editor (advanced)
 
 The ES|QL query preview in the advanced page shows the generated query for the Stacktraces and Timeline views. You can edit the query directly; manual edits override the filter-driven query until filters change. The Top Functions view shows the JSON request body, which is always generated from the current filters and cannot be edited.
-
-Click **Open in Query Lab** (available for Stacktraces, Timeline, Flamegraph, and Flamescope views) to pivot to Query Lab with the current ES|QL query pre-populated as a draft.
 
 ## Data sources
 
