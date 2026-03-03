@@ -7,12 +7,32 @@ import {
 import {
   buildInvestigateQuery,
   buildRecentEntitiesQuery,
+  investigateField,
 } from "../../src/components/investigate/investigateQueryBuilder";
+import { INVESTIGATE_TIMELINE_FIELDS } from "../../src/components/investigate/investigateSchema";
 import {
   parseRecentEntities,
   parseTimelineEvents,
 } from "../../src/components/investigate/investigateParser";
 import type { EsqlResponse } from "../../src/types";
+
+describe("investigateField", () => {
+  it("maps user to user.name", () => {
+    expect(investigateField("user")).toBe("user.name");
+  });
+  it("maps host to host.name", () => {
+    expect(investigateField("host")).toBe("host.name");
+  });
+  it("maps ip to source.ip", () => {
+    expect(investigateField("ip")).toBe("source.ip");
+  });
+  it("maps domain to url.domain", () => {
+    expect(investigateField("domain")).toBe("url.domain");
+  });
+  it("maps file to file.name", () => {
+    expect(investigateField("file")).toBe("file.name");
+  });
+});
 
 describe("buildInvestigateQuery", () => {
   it("builds a user query with double-quoted string literal", () => {
@@ -36,12 +56,52 @@ describe("buildInvestigateQuery", () => {
     expect(query).toContain('user.name == "DOMAIN\\\\user"');
   });
 
-  it("includes FROM, WHERE, SORT, and LIMIT clauses", () => {
+  it("includes FROM, WHERE, SORT, KEEP, and LIMIT clauses", () => {
     const query = buildInvestigateQuery("user", "alice");
     expect(query).toContain("FROM logs-*");
     expect(query).toContain("| WHERE");
     expect(query).toContain("| SORT @timestamp DESC");
+    expect(query).toContain("| KEEP");
     expect(query).toContain("| LIMIT 200");
+  });
+
+  it("includes METADATA _index in the FROM clause", () => {
+    const query = buildInvestigateQuery("user", "alice");
+    expect(query).toContain("METADATA _index");
+  });
+
+  it("includes KEEP with event.category and _index fields", () => {
+    const query = buildInvestigateQuery("user", "alice");
+    const keepClause = query.split("|").find((pipe) => pipe.trimStart().startsWith("KEEP"));
+    expect(keepClause).toContain("event.category");
+    expect(keepClause).toContain("_index");
+  });
+
+  it("includes all timeline fields in KEEP clause", () => {
+    const query = buildInvestigateQuery("user", "alice");
+    const keepClause = query.split("|").find((pipe) => pipe.trimStart().startsWith("KEEP"));
+    for (const field of INVESTIGATE_TIMELINE_FIELDS) {
+      expect(keepClause).toContain(field);
+    }
+  });
+
+  it("builds an IP address query", () => {
+    const query = buildInvestigateQuery("ip", "10.0.0.1");
+    expect(query).toContain('source.ip == "10.0.0.1"');
+    expect(query).toContain("METADATA _index");
+  });
+
+  it("builds a domain query", () => {
+    const query = buildInvestigateQuery("domain", "example.com");
+    expect(query).toContain('url.domain == "example.com"');
+  });
+
+  it("builds a file query", () => {
+    const query = buildInvestigateQuery("file", "malware.exe");
+    expect(query).toContain('file.name == "malware.exe"');
+    expect(query).toContain('file.hash.md5 == "malware.exe"');
+    expect(query).toContain('file.hash.sha1 == "malware.exe"');
+    expect(query).toContain('file.hash.sha256 == "malware.exe"');
   });
 });
 
@@ -59,6 +119,24 @@ describe("buildRecentEntitiesQuery", () => {
     const query = buildRecentEntitiesQuery("host");
     expect(query).toContain("host.name IS NOT NULL");
     expect(query).toContain("BY host.name");
+  });
+
+  it("builds an IP discovery query", () => {
+    const query = buildRecentEntitiesQuery("ip");
+    expect(query).toContain("source.ip IS NOT NULL");
+    expect(query).toContain("BY source.ip");
+  });
+
+  it("builds a domain discovery query", () => {
+    const query = buildRecentEntitiesQuery("domain");
+    expect(query).toContain("url.domain IS NOT NULL");
+    expect(query).toContain("BY url.domain");
+  });
+
+  it("builds a file discovery query", () => {
+    const query = buildRecentEntitiesQuery("file");
+    expect(query).toContain("file.name IS NOT NULL");
+    expect(query).toContain("BY file.name");
   });
 });
 
@@ -120,6 +198,51 @@ describe("parseRecentEntities", () => {
     };
     const result = parseRecentEntities(response, "user");
     expect(result).toEqual([]);
+  });
+
+  it("parses IP entities from ES|QL response", () => {
+    const response: EsqlResponse = {
+      columns: [
+        { name: "event_count", type: "long" },
+        { name: "last_seen", type: "date" },
+        { name: "source.ip", type: "ip" },
+      ],
+      values: [[50, "2024-01-15T11:00:00Z", "10.0.0.1"]],
+    };
+    const result = parseRecentEntities(response, "ip");
+    expect(result).toEqual([
+      { name: "10.0.0.1", eventCount: 50, lastSeen: "2024-01-15T11:00:00Z" },
+    ]);
+  });
+
+  it("parses domain entities from ES|QL response", () => {
+    const response: EsqlResponse = {
+      columns: [
+        { name: "event_count", type: "long" },
+        { name: "last_seen", type: "date" },
+        { name: "url.domain", type: "keyword" },
+      ],
+      values: [[30, "2024-01-15T11:00:00Z", "example.com"]],
+    };
+    const result = parseRecentEntities(response, "domain");
+    expect(result).toEqual([
+      { name: "example.com", eventCount: 30, lastSeen: "2024-01-15T11:00:00Z" },
+    ]);
+  });
+
+  it("parses file entities from ES|QL response", () => {
+    const response: EsqlResponse = {
+      columns: [
+        { name: "event_count", type: "long" },
+        { name: "last_seen", type: "date" },
+        { name: "file.name", type: "keyword" },
+      ],
+      values: [[15, "2024-01-15T11:00:00Z", "payload.exe"]],
+    };
+    const result = parseRecentEntities(response, "file");
+    expect(result).toEqual([
+      { name: "payload.exe", eventCount: 15, lastSeen: "2024-01-15T11:00:00Z" },
+    ]);
   });
 
   it("handles array-valued name fields", () => {
@@ -191,23 +314,37 @@ describe("parseTimelineEvents", () => {
 });
 
 describe("buildTimelineContext", () => {
+  const sampleEvent = {
+    timestamp: "2024-01-15T10:30:00Z",
+    category: "authentication",
+    action: "logon",
+    outcome: "success",
+    userName: "alice",
+    hostName: "web-01",
+    sourceIp: "10.0.0.1",
+    message: "Login",
+    dataSource: "logs-security",
+  };
+
   it("includes entity label and event count", () => {
-    const events = [
-      {
-        timestamp: "2024-01-15T10:30:00Z",
-        category: "authentication",
-        action: "logon",
-        outcome: "success",
-        userName: "alice",
-        hostName: "web-01",
-        sourceIp: "10.0.0.1",
-        message: "Login",
-        dataSource: "logs-security",
-      },
-    ];
-    const context = buildTimelineContext(events, "user", "alice");
+    const context = buildTimelineContext([sampleEvent], "user", "alice");
     expect(context).toContain('user "alice"');
     expect(context).toContain("1 security-related events");
+  });
+
+  it("uses IP address label for ip tab", () => {
+    const context = buildTimelineContext([sampleEvent], "ip", "10.0.0.1");
+    expect(context).toContain('IP address "10.0.0.1"');
+  });
+
+  it("uses domain label for domain tab", () => {
+    const context = buildTimelineContext([sampleEvent], "domain", "example.com");
+    expect(context).toContain('domain "example.com"');
+  });
+
+  it("uses file label for file tab", () => {
+    const context = buildTimelineContext([sampleEvent], "file", "malware.exe");
+    expect(context).toContain('file "malware.exe"');
   });
 });
 

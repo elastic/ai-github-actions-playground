@@ -96,6 +96,7 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ["echarts", "@perses-dev/components", "@perses-dev/core"],
+      exclude: ["@perses-dev/explore", "@perses-dev/dashboards"],
     },
   };
 });

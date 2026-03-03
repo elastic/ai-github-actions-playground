@@ -1,4 +1,12 @@
-export type InvestigateTab = "user" | "host";
+export type InvestigateTab = "user" | "host" | "ip" | "domain" | "file";
+
+export const INVESTIGATE_TAB_LABEL: Record<InvestigateTab, string> = {
+  user: "user",
+  host: "host",
+  ip: "IP address",
+  domain: "domain",
+  file: "file",
+};
 
 export interface TimelineEvent {
   timestamp: string;
@@ -44,7 +52,7 @@ export function buildTimelineContext(
   tab: InvestigateTab,
   entity: string,
 ): string {
-  const entityLabel = tab === "user" ? `user "${entity}"` : `host "${entity}"`;
+  const entityLabel = `${INVESTIGATE_TAB_LABEL[tab]} "${entity}"`;
   const header = `Below is a chronological timeline of ${events.length} security-related events for ${entityLabel}. Each event includes its timestamp, data source, event category, action, outcome, and relevant context.\n\n`;
   const rows = events
     .slice(0, 100)

@@ -28,7 +28,7 @@ interface Props {
 export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
   const agentFilter = usePageFiltersStore((s) => s.agentFilter);
   const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
-  const resetFilters = usePageFiltersStore((s) => s.resetFleetFilters);
+  const resetFilters = usePageFiltersStore((s) => s.resetFleetAgentFilter);
 
   const uniqueVersions = useMemo(() => {
     const versions = new Set(agents.map((a) => a.version));
