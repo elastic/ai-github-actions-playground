@@ -28,6 +28,7 @@ import { useDiskUsage } from "../hooks/useDiskUsage";
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import IndexDetailPanel from "./IndexDetailPanel";
+import AskAiButton from "./AskAiButton";
 import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
 
 // ---------------------------------------------------------------------------
@@ -183,6 +184,12 @@ export default function IndicesPage() {
               >
                 Inspect in Console
               </Button>
+              {displayedIndex && (
+                <AskAiButton
+                  label="Explain index"
+                  prompt={`Review index "${displayedIndex}" and suggest improvements for mappings, shard/replica counts, and lifecycle policy based on the currently selected index details.`}
+                />
+              )}
             </>
           }
         />

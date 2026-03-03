@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -22,6 +22,7 @@ import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
+import PageInsightBanner from "./PageInsightBanner";
 import {
   type IndexTab,
   parseIntOrNull,
@@ -152,9 +153,30 @@ function MappingsContent({
   selectedIndex: string;
   mappings: Record<string, unknown> | null;
 }) {
-  const mappingFields = mappings ? extractMappingFields(mappings, selectedIndex) : [];
+  const mappingFields = useMemo(
+    () => (mappings ? extractMappingFields(mappings, selectedIndex) : []),
+    [mappings, selectedIndex],
+  );
+  const mappingSummaryContext = useMemo(
+    () =>
+      JSON.stringify({
+        index: selectedIndex,
+        fieldCount: mappingFields.length,
+        fields: mappingFields.slice(0, 80),
+      }),
+    [selectedIndex, mappingFields],
+  );
   return (
     <Box sx={{ height: "100%" }}>
+      {mappingFields.length > 0 && (
+        <Box sx={{ mb: 1 }}>
+          <PageInsightBanner
+            context={mappingSummaryContext}
+            systemPrompt="You are an Elasticsearch mapping analyst. Summarize what this mapping defines, what kind of data it likely stores, and one practical recommendation. Respond in one concise sentence."
+            cacheKey={`indices-mappings::${selectedIndex}::${mappingFields.length}`}
+          />
+        </Box>
+      )}
       {mappingFields.length === 0 ? (
         <EmptyState
           size="small"
