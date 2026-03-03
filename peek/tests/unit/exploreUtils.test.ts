@@ -89,6 +89,13 @@ describe("encodeFilters", () => {
     ];
     expect(encodeFilters(filters)).toBe(JSON.stringify(filters));
   });
+
+  it("trims field before encoding", () => {
+    const filters = [{ field: "  host  ", op: "==" as const, value: "localhost" }];
+    expect(encodeFilters(filters)).toBe(
+      JSON.stringify([{ field: "host", op: "==", value: "localhost" }]),
+    );
+  });
 });
 
 describe("parseLegacyFilters", () => {
@@ -98,5 +105,10 @@ describe("parseLegacyFilters", () => {
       { field: "host", op: "==", value: "localhost" },
       { field: "status", op: "!=", value: "error" },
     ]);
+  });
+
+  it("skips invalid legacy filter entries", () => {
+    const search = "filter.host=>:localhost&filter. =!=:x&filter.status=!=:error";
+    expect(parseLegacyFilters(search)).toEqual([{ field: "status", op: "!=", value: "error" }]);
   });
 });
