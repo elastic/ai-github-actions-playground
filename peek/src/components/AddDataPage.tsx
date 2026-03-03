@@ -805,9 +805,6 @@ export default function AddDataPage() {
                     resetVerification();
                     lastAutoStartedApiKeyRef.current = null;
                     setWizardStep(1);
-                    setSelectedTechnology(null);
-                    setTechnologySearch("");
-                    setActiveCategory("all");
                     return;
                   }
                   navigate(cta.path);
