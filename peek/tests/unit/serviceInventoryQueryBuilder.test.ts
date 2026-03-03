@@ -22,6 +22,9 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain('route_key = COALESCE(attributes.http.route, "/")');
       expect(query).toContain('language_key = COALESCE(service.language.name, "unknown")');
       expect(query).toContain(
+        "error_message_key = CASE(is_error == 1, COALESCE(status.message, span_name_key), NULL)",
+      );
+      expect(query).toContain(
         'environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
       );
       expect(query).toContain("BY service.name");
