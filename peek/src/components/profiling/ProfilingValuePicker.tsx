@@ -75,7 +75,7 @@ export default function ProfilingValuePicker({
       if (controller.signal.aborted) return;
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {
-      if (!abortRef.current?.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted && abortRef.current === controller) setLoading(false);
     }
   }, [connection, dimension, timeFrom, timeTo]);
 

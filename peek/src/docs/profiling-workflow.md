@@ -4,7 +4,7 @@ Open Profiling from the sidebar to explore continuous profiling data stored in E
 
 The guided flow walks you through three steps to get to the right flamegraph quickly:
 
-1. **Choose a focus** — Pick what you are investigating: a service, a host, a process, a thread, or the entire cluster.
+1. **Choose a focus** — Pick what you are investigating: Service, Host, Process, Thread, or Everything.
 2. **Pick a value** — A live list shows the top candidates ranked by sample count in the selected time window. Use the search box to filter by name.
 3. **View results** — The flamegraph (or any other view mode) loads automatically for the selected focus.
 

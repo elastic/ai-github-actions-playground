@@ -37,6 +37,7 @@ import {
   buildProfilingEventsQuery,
   buildProfilingFlamescopeQuery,
   buildProfilingTimelineQuery,
+  PROFILING_DIMENSION_LABELS,
   buildStackframeLookupQuery,
   buildStacktraceLookupQuery,
   buildTopFunctionsRequest,
@@ -84,6 +85,10 @@ function dimensionToFilters(
 
 type ViewMode = "topFunctions" | "stacktraces" | "timeline" | "flamegraph" | "flamescope";
 
+function isProfilingFocusDimension(value: string | null): value is ProfilingFocusDimension {
+  return !!value && value in PROFILING_DIMENSION_LABELS;
+}
+
 export default function ProfilingGuidedPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
@@ -99,7 +104,8 @@ export default function ProfilingGuidedPage() {
   const [urlDimension, setUrlDimension] = useQueryState("focus", parseAsString);
   const [urlValue, setUrlValue] = useQueryState("value", parseAsString);
 
-  const dimension = (urlDimension as ProfilingFocusDimension | null) ?? null;
+  const isEverything = urlDimension === "";
+  const dimension = isProfilingFocusDimension(urlDimension) ? urlDimension : null;
   const value = urlValue ?? null;
 
   // Time range (local state, not shared with advanced page)
@@ -176,6 +182,7 @@ export default function ProfilingGuidedPage() {
         setStacktraces([]);
         setTopFunctionsRows([]);
         setTimelineResult(null);
+        setFlamescopeWindow(null);
         return;
       }
 
@@ -259,7 +266,7 @@ export default function ProfilingGuidedPage() {
   // Auto-run whenever we are in the results view and dependencies change
   // Track "ready to show results": dimension has been chosen (null = "Everything") and if
   // dimension is non-null, a value must also be set.
-  const showResults = urlDimension !== null && (urlDimension === "" || urlValue !== null);
+  const showResults = (isEverything || dimension !== null) && (isEverything || urlValue !== null);
 
   useEffect(() => {
     if (!showResults || !connection) return;
@@ -319,19 +326,18 @@ export default function ProfilingGuidedPage() {
 
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
 
-  const displayDimension =
-    urlDimension === "" ? null : (urlDimension as ProfilingFocusDimension | null);
+  const displayDimension = isEverything ? null : dimension;
 
   // ── Step 1: Focus picker ────────────────────────────────────────────────────
-  if (urlDimension === null) {
+  if (urlDimension === null || (!isEverything && dimension === null)) {
     return <ProfilingFocusPicker onSelect={(dim) => void handleSelectDimension(dim)} />;
   }
 
   // ── Step 2: Value picker (only if a specific dimension was chosen) ──────────
-  if (urlDimension !== "" && urlValue === null && connection) {
+  if (dimension && urlValue === null && connection) {
     return (
       <ProfilingValuePicker
-        dimension={urlDimension as ProfilingFocusDimension}
+        dimension={dimension}
         connection={connection}
         timeFrom={timeFrom}
         timeTo={timeTo}
