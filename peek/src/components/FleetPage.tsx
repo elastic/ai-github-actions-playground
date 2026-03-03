@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -7,6 +7,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
 import { useFleetStore, type FleetViewTab, type AgentFilter } from "../store/useFleetStore";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { useFleetData } from "../hooks/useFleetData";
 
 import FleetOverviewTab from "./fleet/FleetOverviewTab";
@@ -71,6 +72,24 @@ export default function FleetPage() {
       setActiveTab("agents");
     },
     [resetFilters, updateAgentFilter, setActiveTab],
+  );
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (agentInventoryTotal == null || agentInventoryTotalErrorCount == null) return;
+    setPageSection("fleet", {
+      totalAgents: agentInventoryTotal,
+      healthyCount: agentInventoryTotal - agentInventoryTotalErrorCount,
+      unhealthyCount: agentInventoryTotalErrorCount,
+    });
+  }, [agentInventoryTotal, agentInventoryTotalErrorCount, setPageSection]);
+
+  useEffect(
+    () => () => {
+      setPageSection("fleet", undefined);
+    },
+    [setPageSection],
   );
 
   return (

@@ -13,6 +13,7 @@ import { useServicesStore } from "../../src/store/useServicesStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
+import { usePageContextStore } from "../../src/store/usePageContextStore";
 
 /**
  * Each entry pairs a store's display name with the reset method name it exposes.
@@ -31,6 +32,7 @@ const STORES_WITH_RESET_API = [
   { name: "useTracesStore", store: useTracesStore, method: "resetFilters" },
   { name: "useUIStore", store: useUIStore, method: "resetUIState" },
   { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },
+  { name: "usePageContextStore", store: usePageContextStore, method: "resetPageContext" },
 ] as const;
 
 describe("storeResetters registry", () => {

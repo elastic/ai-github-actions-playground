@@ -20,6 +20,7 @@ import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
 import { useDiskUsage } from "../hooks/useDiskUsage";
@@ -93,6 +94,24 @@ export default function IndicesPage() {
       return !term || idx.index.toLowerCase().includes(term);
     });
   }, [indices, showSystemIndices, deferredSearch]);
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (!indicesData) return;
+    const breakdown = { green: 0, yellow: 0, red: 0 };
+    for (const idx of indicesData) {
+      const h = idx.health?.toLowerCase();
+      if (h === "green") breakdown.green++;
+      else if (h === "yellow") breakdown.yellow++;
+      else if (h === "red") breakdown.red++;
+    }
+    setPageSection("indices", {
+      selectedIndex: selectedIndex ?? null,
+      totalIndices: indicesData.length,
+      healthBreakdown: breakdown,
+    });
+  }, [indicesData, selectedIndex, setPageSection]);
 
   // When filtered results don't include the selected index (e.g. search excludes
   // it), hide the detail panel. The persisted selectedIndex is kept so the

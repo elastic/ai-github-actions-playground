@@ -23,6 +23,7 @@ import type { FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
+import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
@@ -134,6 +135,17 @@ export default function DataStreamsPage() {
   // restores when the search is cleared.
   const displayedName = filteredStreams.some((s) => s.name === selectedName) ? selectedName : null;
   const displayedDataStream = displayedName ? selectedDataStream : null;
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (!streamsData) return;
+    setPageSection("dataStreams", {
+      selectedStream: selectedName,
+      totalStreams: streamsData.length,
+    });
+    return () => setPageSection("dataStreams", undefined);
+  }, [streamsData, selectedName, setPageSection]);
 
   const fieldRows = useMemo(() => {
     const rows = fieldCaps ? toFieldRows(fieldCaps) : [];

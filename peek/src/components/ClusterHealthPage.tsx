@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -6,6 +6,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
 import { useClusterHealthData } from "../hooks/useClusterHealthData";
+import { usePageContextStore } from "../store/usePageContextStore";
 
 import CapacityPressureView from "./cluster-health/CapacityPressureView";
 import NodeDetailTable from "./cluster-health/NodeDetailTable";
@@ -64,6 +65,28 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     setPartialDismissed(false);
     rawRefresh();
   }, [rawRefresh]);
+
+  // Publish screen context for AI chat
+  const setPageSection = usePageContextStore((s) => s.setPageSection);
+  useEffect(() => {
+    if (!data) {
+      setPageSection("clusterHealth", undefined);
+      return;
+    }
+    setPageSection("clusterHealth", {
+      status: data.clusterHealth?.status ?? "unknown",
+      unassignedShards: data.clusterHealth?.unassigned_shards ?? 0,
+      pendingTasks: data.pendingTasks?.tasks?.length ?? 0,
+      activeTab,
+    });
+  }, [data, activeTab, setPageSection]);
+
+  useEffect(
+    () => () => {
+      setPageSection("clusterHealth", undefined);
+    },
+    [setPageSection],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
