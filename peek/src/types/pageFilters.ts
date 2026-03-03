@@ -27,3 +27,21 @@ export const EMPTY_PROFILING_FILTERS: ProfilingFilters = {
   timeTo: "NOW()",
   limit: 100,
 };
+
+export type KubernetesActiveTab = "overview" | "pods" | "logs" | "traces";
+
+export interface KubernetesFilters {
+  timeFrom: string;
+  timeTo: string;
+  cluster: string | null;
+  namespace: string | null;
+  activeTab: KubernetesActiveTab;
+}
+
+export const DEFAULT_KUBERNETES_FILTERS: KubernetesFilters = {
+  timeFrom: "NOW() - 1 hour",
+  timeTo: "NOW()",
+  cluster: null,
+  namespace: null,
+  activeTab: "overview",
+};
