@@ -68,6 +68,7 @@ const SPARKLINE_BUCKETS = 20;
 export function buildServiceSparklineQuery(
   filters: ServiceInventoryFilters,
   fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  serviceNames: string[] = [],
 ): string {
   const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
   const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
@@ -76,6 +77,10 @@ export function buildServiceSparklineQuery(
     `${fields.timestamp} >= ${safeTimeFrom}`,
     `${fields.timestamp} <= ${safeTimeTo}`,
   ];
+  if (serviceNames.length > 0) {
+    const serviceInList = serviceNames.map((name) => `"${escapeEsqlString(name)}"`).join(", ");
+    whereClauses.push(`${fields.serviceName} IN (${serviceInList})`);
+  }
 
   const durationExpr = `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000)`;
 

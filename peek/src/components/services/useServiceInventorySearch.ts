@@ -54,6 +54,7 @@ export function useServiceInventorySearch() {
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
+  const latestSparklineQueryRef = useRef<string | null>(null);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -86,24 +87,37 @@ export function useServiceInventorySearch() {
     onSuccess: handleSuccess,
     onFailure: handleFailure,
   });
-  const handleSparklineSuccess = useCallback((data: EsqlResponse) => {
+  const handleSparklineSuccess = useCallback((data: EsqlResponse, executedQuery: string) => {
+    if (executedQuery !== latestSparklineQueryRef.current) return;
     setSparklineData(parseServiceSparklineData(data));
+  }, []);
+  const handleSparklineFailure = useCallback((failedQuery: string) => {
+    if (failedQuery !== latestSparklineQueryRef.current) return;
+    setSparklineData({});
   }, []);
   const { runQuery: runSparklineQuery } = useEsqlQuery({
     connection,
     onSuccess: handleSparklineSuccess,
+    onFailure: handleSparklineFailure,
   });
 
   const handleSearch = useCallback(() => {
     const query = buildServiceInventoryQuery(filters);
+    const visibleServiceNames = searchResult
+      ? parseServiceRows(searchResult).map((row) => row.serviceName)
+      : [];
+    const sparklineQuery = buildServiceSparklineQuery(filters, undefined, visibleServiceNames);
     latestQueryRef.current = query.trim();
+    latestSparklineQueryRef.current = sparklineQuery.trim();
+    setSparklineData({});
     runQuery(query);
-    runSparklineQuery(buildServiceSparklineQuery(filters));
-  }, [filters, runQuery, runSparklineQuery]);
+    runSparklineQuery(sparklineQuery);
+  }, [filters, runQuery, runSparklineQuery, searchResult]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
     latestQueryRef.current = null;
+    latestSparklineQueryRef.current = null;
     clearError();
     setSearchResult(null);
     setSparklineData({});
