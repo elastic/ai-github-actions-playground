@@ -30,22 +30,37 @@ export default function TraceDetailPanel({
   onOpenInQueryLab,
   onClose,
 }: TraceDetailPanelProps) {
-  const [maxNestedLevels, setMaxNestedLevels] = useState<number | null>(8);
+  const [depthSelection, setDepthSelection] = useState<{
+    traceId: string;
+    maxNestedLevels: number | null;
+  }>({ traceId: selectedTraceId, maxNestedLevels: 8 });
+  const maxNestedLevels =
+    depthSelection.traceId === selectedTraceId ? depthSelection.maxNestedLevels : 8;
+
   const depthSummary = useMemo(() => {
     if (selectedTraceSpans.length === 0) return null;
-    let maxDepth = 0;
     const byId = new Map(selectedTraceSpans.map((span) => [span.spanId, span]));
+    const depthById = new Map<string, number>();
+    const visiting = new Set<string>();
+
+    const computeDepth = (spanId: string): number => {
+      const cached = depthById.get(spanId);
+      if (cached != null) return cached;
+      if (visiting.has(spanId)) return 0;
+      visiting.add(spanId);
+      const parentId = byId.get(spanId)?.parentSpanId ?? null;
+      const depth = parentId && byId.has(parentId) ? computeDepth(parentId) + 1 : 0;
+      visiting.delete(spanId);
+      depthById.set(spanId, depth);
+      return depth;
+    };
+
+    let maxDepth = 0;
     for (const span of selectedTraceSpans) {
-      let depth = 0;
-      let currentParent = span.parentSpanId;
-      const seen = new Set<string>([span.spanId]);
-      while (currentParent && byId.has(currentParent) && !seen.has(currentParent)) {
-        seen.add(currentParent);
-        depth += 1;
-        currentParent = byId.get(currentParent)?.parentSpanId ?? null;
-      }
+      const depth = computeDepth(span.spanId);
       if (depth > maxDepth) maxDepth = depth;
     }
+
     return maxDepth;
   }, [selectedTraceSpans]);
 
@@ -86,7 +101,7 @@ export default function TraceDetailPanel({
             label={`Depth ${level}`}
             color={maxNestedLevels === level ? "primary" : "default"}
             variant={maxNestedLevels === level ? "filled" : "outlined"}
-            onClick={() => setMaxNestedLevels(level)}
+            onClick={() => setDepthSelection({ traceId: selectedTraceId, maxNestedLevels: level })}
           />
         ))}
         <Chip
@@ -94,7 +109,7 @@ export default function TraceDetailPanel({
           label="All levels"
           color={maxNestedLevels == null ? "primary" : "default"}
           variant={maxNestedLevels == null ? "filled" : "outlined"}
-          onClick={() => setMaxNestedLevels(null)}
+          onClick={() => setDepthSelection({ traceId: selectedTraceId, maxNestedLevels: null })}
         />
         <Button size="small" variant="outlined" onClick={onOpenInQueryLab}>
           Open in Query Lab
