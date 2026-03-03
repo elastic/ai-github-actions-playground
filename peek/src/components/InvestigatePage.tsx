@@ -10,7 +10,6 @@ import TextField from "@mui/material/TextField";
 import PolicyIcon from "@mui/icons-material/Policy";
 
 import { useConnectionStore } from "../store/useConnectionStore";
-import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import type { EsqlResponse } from "../types";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
@@ -25,6 +24,7 @@ import { useSuggestions } from "./investigate/useSuggestions";
 import { useTimelineMarkers } from "./investigate/useTimelineMarkers";
 import type { InvestigateTab, TimelineEvent } from "./investigate/investigateUtils";
 import { buildInvestigateQuery } from "./investigate/investigateQueryBuilder";
+import { useInvestigateQuery } from "./investigate/useInvestigateQuery";
 import { parseTimelineEvents } from "./investigate/investigateParser";
 
 const TAB_LABELS: Record<
@@ -61,15 +61,18 @@ export default function InvestigatePage() {
     setEvents([]);
   }, []);
 
-  const { runQuery, loading, error } = useEsqlQuery({
+  const { runQuery, loading, error, activeFlavor } = useInvestigateQuery({
     connection,
     onSuccess: handleSuccess,
     onFailure: handleFailure,
   });
 
   const currentQuery = useMemo(
-    () => (searchedEntity ? buildInvestigateQuery(activeTab, searchedEntity) : null),
-    [activeTab, searchedEntity],
+    () =>
+      searchedEntity
+        ? buildInvestigateQuery(activeTab, searchedEntity, activeFlavor ?? "full")
+        : null,
+    [activeTab, searchedEntity, activeFlavor],
   );
 
   const handleSearch = useCallback(() => {
@@ -77,7 +80,7 @@ export default function InvestigatePage() {
     if (!trimmed) return;
     setSearchedEntity(trimmed);
     setEvents([]);
-    runQuery(buildInvestigateQuery(activeTab, trimmed));
+    runQuery(activeTab, trimmed);
   }, [entityInput, activeTab, runQuery]);
 
   const handleEntityClick = useCallback(
@@ -85,7 +88,7 @@ export default function InvestigatePage() {
       setEntityInput(name);
       setSearchedEntity(name);
       setEvents([]);
-      runQuery(buildInvestigateQuery(activeTab, name));
+      runQuery(activeTab, name);
     },
     [activeTab, runQuery],
   );
@@ -155,6 +158,11 @@ export default function InvestigatePage() {
         </Box>
       </Paper>
       {currentQuery && <InvestigateQueryBar query={currentQuery} />}
+      {activeFlavor && activeFlavor !== "full" && (
+        <Alert severity="info">
+          Some fields aren't available in this cluster's indices — showing partial results.
+        </Alert>
+      )}
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {searchedEntity && !loading && events.length === 0 && !error ? (
