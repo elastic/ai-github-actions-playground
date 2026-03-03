@@ -201,7 +201,12 @@ export default function TraceResultsView({
           ))}
         {searchResult && viewMode === "serviceMap" && (
           <Box sx={{ height: "100%" }}>
-            {!selectedTraceId ? (
+            {traceRows.length === 0 ? (
+              <EmptyState
+                heading="No traces matched the current filters."
+                description="Adjust filters or widen the time range."
+              />
+            ) : !selectedTraceId ? (
               <EmptyState
                 heading="Select a trace in List or Scatter view to see its service map"
                 description="Choose a trace from List or Scatter view to render service relationships."
