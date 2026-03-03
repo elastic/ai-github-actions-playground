@@ -122,9 +122,7 @@ describe("PanelEditor", () => {
       render(<PanelEditor />);
 
       await user.click(screen.getByTitle(vizTitle));
-      // The query toolbar already has a "Format" button; the ChartOptionsEditor
-      // section label adds a second one — assert both are present.
-      expect(screen.getAllByText("Format").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByRole("combobox", { name: /unit/i })).toBeInTheDocument();
     },
   );
 
