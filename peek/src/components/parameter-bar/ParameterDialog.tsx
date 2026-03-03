@@ -389,10 +389,11 @@ export default function ParameterDialog({
                 handleTypeChange(event.target.value as DashboardParameter["type"])
               }
             >
-              <MenuItem value="keyword">keyword</MenuItem>
-              <MenuItem value="number">number</MenuItem>
-              <MenuItem value="boolean">boolean</MenuItem>
-              <MenuItem value="date">date</MenuItem>
+              {PARAMETER_TYPES.map((paramType) => (
+                <MenuItem key={paramType} value={paramType}>
+                  {paramType}
+                </MenuItem>
+              ))}
             </TextField>
           )}
         />
