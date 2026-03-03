@@ -1,4 +1,4 @@
-name: "Explore: Security (Users, Roles & API Keys)"
+name: "Explore: Security (Users, Roles, API Keys & Investigate)"
 on:
   schedule:
     - cron: "0 8 * * 1-5"
@@ -49,19 +49,50 @@ jobs:
         - Click an API key row — is there a detail view or expansion?
         - If no keys exist, is the empty state helpful?
 
-        **Investigate page:**
-        - Navigate to Investigate. Is there a search or selector for a
-          user or host to investigate?
-        - Search for a username that exists in the data (e.g., "alice" or
-          any name visible in the Users page). Does correlated activity load?
-        - Switch between User and Host investigation modes if both exist.
-        - Navigate away and come back — does the investigation state reset
-          or persist?
+        **Investigate page — discovery and suggestions:**
+        - Navigate to Investigate. Does the page show a "Recent users" or
+          "Recent hosts" panel with clickable suggestions?
+        - If recent entities appear as chips, how many are shown? Are event
+          counts displayed next to each name?
+        - Optionally hover over a chip. If a tooltip exists, verify timestamp formatting/readability.
+        - Click a suggested user/host chip. Does the search field populate
+          and does the timeline immediately load?
+        - Switch to the Host tab. Do recent hosts load automatically? Are
+          they different from the User tab suggestions?
+        - If no suggestions appear, is there a helpful empty state with
+          an icon, heading, and description?
+        - If suggestions cannot be loaded, verify fallback UX remains helpful
+          (empty/help state instead of broken layout).
+
+        **Investigate page — search and results:**
+        - Type a user name visible in the suggestions (or from the Users
+          page) and press Enter or click Search. Does the timeline load?
+        - Verify the results show a summary panel with event count,
+          category chips, and data source chips.
+        - Verify the timeline table shows timestamps, categories, actions,
+          outcomes, and messages.
+        - Search for a name that does not exist. Is the "No events found"
+          empty state shown with a helpful message?
+        - Try special characters in the search field (e.g., names with
+          quotes, backslashes, or spaces). Does the search execute without
+          errors?
+        - Switch between the User and Host tabs. Does the UI reset the
+          search and results? Does the suggestions panel re-appear?
+        - Navigate away from Investigate and come back — does the page
+          reset cleanly?
+
+        **Investigate page — LLM summary:**
+        - After a successful search with results, look for the LLM Summary
+          section. Is there a "Copy prompt to clipboard" button?
+        - Click the Copy button — does it complete without errors, and is
+          non-empty prompt text copied to the clipboard?
 
         **Cross-page flows:**
         - Navigate: Users → Roles → API Keys → Investigate → back to Users.
           Does the sidebar highlight the correct active page each time?
         - Do all four pages share a consistent sidebar section grouping?
+        - Find a user on the Users page, then navigate to Investigate and
+          search for that same user. Do results appear?
 
         ## Getting started
 
@@ -99,6 +130,13 @@ jobs:
            page. Is there a clear input or selector to begin an investigation?
            Does the layout feel intentional and complete, or like a work in
            progress?
+
+        6. **Recent entity suggestions**: On the Investigate page, do the
+           suggestion chips have consistent sizing and adequate spacing?
+           In dark mode, are the chip labels and borders readable?
+
+        7. **Investigate summary panel**: After a search, are the category
+           and data source chips readable with sufficient contrast?
 
         ## Output rules
 

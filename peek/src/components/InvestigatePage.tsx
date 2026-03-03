@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -16,9 +16,12 @@ import type { EsqlResponse } from "../types";
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
+import InvestigateSuggestionsPanel from "./investigate/InvestigateSuggestionsPanel";
 import InvestigateTimelineTable from "./investigate/InvestigateTimelineTable";
-import type { InvestigateTab, TimelineEvent } from "./investigate/investigateUtils";
+import { useSuggestions } from "./investigate/useSuggestions";
 import {
+  type InvestigateTab,
+  type TimelineEvent,
   buildInvestigateQuery,
   buildSummaryPrompt,
   parseTimelineEvents,
@@ -31,6 +34,13 @@ export default function InvestigatePage() {
   const [searchedEntity, setSearchedEntity] = useState<string | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [summaryPrompt, setSummaryPrompt] = useState<string | null>(null);
+  const connectionKey = connection ? JSON.stringify(connection) : null;
+
+  const { visibleRecentEntities, suggestionsLoading } = useSuggestions(
+    connection,
+    connectionKey,
+    activeTab,
+  );
 
   const handleSuccess = useCallback(
     (data: EsqlResponse) => {
@@ -63,6 +73,17 @@ export default function InvestigatePage() {
     runQuery(buildInvestigateQuery(activeTab, trimmed));
   }, [entityInput, activeTab, runQuery]);
 
+  const handleEntityClick = useCallback(
+    (name: string) => {
+      setEntityInput(name);
+      setSearchedEntity(name);
+      setEvents([]);
+      setSummaryPrompt(null);
+      runQuery(buildInvestigateQuery(activeTab, name));
+    },
+    [activeTab, runQuery],
+  );
+
   const handleTabChange = useCallback((_: React.SyntheticEvent, value: InvestigateTab) => {
     setActiveTab(value);
     setEvents([]);
@@ -87,7 +108,6 @@ export default function InvestigatePage() {
           description="Search for a user or host to view their recent security event timeline."
         />
       </Paper>
-
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -96,7 +116,6 @@ export default function InvestigatePage() {
         <Tab value="user" label="User" />
         <Tab value="host" label="Host" />
       </Tabs>
-
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <TextField
@@ -116,13 +135,11 @@ export default function InvestigatePage() {
             onClick={handleSearch}
             disabled={loading || !entityInput.trim()}
           >
-            {loading ? <CircularProgress size={16} /> : "Search"}
+            {loading ? <LinearProgress sx={{ width: 48 }} /> : "Search"}
           </Button>
         </Box>
       </Paper>
-
       {error && <Alert severity="error">{error}</Alert>}
-
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {searchedEntity && !loading && events.length === 0 && !error ? (
           <EmptyState
@@ -142,11 +159,21 @@ export default function InvestigatePage() {
             <InvestigateTimelineTable events={events} activeTab={activeTab} />
           </Box>
         ) : !searchedEntity && !loading ? (
-          <EmptyState
-            icon={<PolicyIcon sx={{ fontSize: 32 }} />}
-            heading={`Investigate a ${activeTab}`}
-            description={`Enter a ${activeTab} name above and search to see their recent security event timeline.`}
-          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%" }}>
+            <InvestigateSuggestionsPanel
+              activeTab={activeTab}
+              entities={visibleRecentEntities}
+              loading={suggestionsLoading}
+              onEntityClick={handleEntityClick}
+            />
+            {!suggestionsLoading && visibleRecentEntities.length === 0 && (
+              <EmptyState
+                icon={<PolicyIcon sx={{ fontSize: 32 }} />}
+                heading={`Investigate a ${activeTab}`}
+                description={`Enter a ${activeTab} name above and search to see their recent security event timeline.`}
+              />
+            )}
+          </Box>
         ) : null}
       </Box>
     </Box>

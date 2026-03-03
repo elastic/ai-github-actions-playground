@@ -19,6 +19,15 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain('top_route = TOP(route_key, 1, "desc")');
       expect(query).toContain('top_span_name = TOP(span_name_key, 1, "desc")');
       expect(query).toContain('language = TOP(language_key, 1, "desc")');
+      expect(query).toContain(
+        'route_key = COALESCE(attributes.url.path, attributes.http.route, url.path, "/")',
+      );
+      expect(query).toContain(
+        'language_key = COALESCE(service.language.name, attributes.service.language, "unknown")',
+      );
+      expect(query).toContain(
+        'environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
+      );
       expect(query).toContain("BY service.name");
       expect(query).toContain("SORT request_count DESC");
       expect(query).toContain("LIMIT 200");
@@ -68,7 +77,7 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain("FROM traces-*");
       expect(query).toContain('service.name == "my-service"');
       expect(query).toContain(
-        "EVAL environment_key = COALESCE(service.environment, deployment.environment, 'unknown')",
+        'EVAL environment_key = COALESCE(service.environment, deployment.environment, "unknown")',
       );
       expect(query).toContain("BY environment_key");
     });
