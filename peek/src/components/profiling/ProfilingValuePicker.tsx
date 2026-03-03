@@ -84,7 +84,7 @@ export default function ProfilingValuePicker({
     return () => abortRef.current?.abort();
   }, [fetchValues]);
 
-  const maxSamples = rows[0]?.samples ?? 1;
+  const maxSamples = rows[0]?.samples || 1;
   const filtered = search.trim()
     ? rows.filter((r) => r.value.toLowerCase().includes(search.trim().toLowerCase()))
     : rows;
