@@ -12,12 +12,14 @@ export interface ServiceK8sRow {
 export function parseServiceK8sContext(result: EsqlResponse): ServiceK8sRow[] {
   const get = buildColumnAccessor(result.columns);
 
-  return result.values.map((row) => ({
-    namespace: String(get(row, "k8s_namespace") ?? ""),
-    node: String(get(row, "k8s_node") ?? ""),
-    pod: String(get(row, "k8s_pod") ?? ""),
-    podCount: toFiniteNumber(get(row, "pod_count")),
-  }));
+  return result.values
+    .map((row) => ({
+      namespace: String(get(row, "k8s_namespace") ?? "").trim(),
+      node: String(get(row, "k8s_node") ?? "").trim(),
+      pod: String(get(row, "k8s_pod") ?? "").trim(),
+      podCount: toFiniteNumber(get(row, "pod_count")),
+    }))
+    .filter((row) => row.pod.length > 0);
 }
 
 export interface RouteRow {

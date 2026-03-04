@@ -329,6 +329,32 @@ describe("serviceDashboardHelpers", () => {
       });
     });
 
+    it("filters rows with missing or blank pod values", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "pod_count", type: "long" },
+          { name: "k8s_namespace", type: "keyword" },
+          { name: "k8s_node", type: "keyword" },
+          { name: "k8s_pod", type: "keyword" },
+        ],
+        values: [
+          [1, "default", "node-1", null],
+          [1, "default", "node-1", "   "],
+          [1, "default", "node-1", "pod-1"],
+        ],
+      };
+
+      const rows = parseServiceK8sContext(response);
+      expect(rows).toEqual([
+        {
+          namespace: "default",
+          node: "node-1",
+          pod: "pod-1",
+          podCount: 1,
+        },
+      ]);
+    });
+
     it("returns empty array for empty response", () => {
       const response: EsqlResponse = {
         columns: [
