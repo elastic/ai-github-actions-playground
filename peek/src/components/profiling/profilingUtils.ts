@@ -191,6 +191,7 @@ export interface FlamegraphNode {
  */
 export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): FlamegraphNode {
   const root: FlamegraphNode = { name: "root", value: 0, children: [] };
+  const childIndex = new Map<FlamegraphNode, Map<string, FlamegraphNode>>();
   for (const st of stacktraces) {
     // Frames are ordered caller→callee (deepest last); walk from root (first) to leaf (last)
     const frames = st.frames;
@@ -198,7 +199,12 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
     current.value += st.count;
     for (const frame of frames) {
       const name = frame.functionName || "(unknown)";
-      let child = current.children.find((c) => c.name === name);
+      let idx = childIndex.get(current);
+      if (!idx) {
+        idx = new Map<string, FlamegraphNode>();
+        childIndex.set(current, idx);
+      }
+      let child = idx.get(name);
       if (!child) {
         child = {
           name,
@@ -207,6 +213,7 @@ export function buildFlamegraphTree(stacktraces: SymbolizedStacktrace[]): Flameg
           frameType: frame.frameType ?? inferFrameType(frame.functionName, frame.fileName),
         };
         current.children.push(child);
+        idx.set(name, child);
       }
       child.value += st.count;
       current = child;
