@@ -55,7 +55,7 @@ jobs:
 
         - **Cloud Providers** (2 techs): AWS, VPC Flow Logs
         - **Kubernetes** (2 techs): Kubernetes, Docker
-        - **Servers, Desktops & Laptops** (3 techs): Linux Host, Windows
+        - **Servers/Desktops/Laptops** (3 techs): Linux Host, Windows
           Host, macOS Host
         - **SaaS & Databases** (5 techs): Nginx, PostgreSQL, Redis, MySQL,
           MongoDB
@@ -64,7 +64,7 @@ jobs:
 
         Each technology maps to one of five guide types:
 
-        - **EDOT Collector** (7 techs — platform-tab flow with endpoint type):
+        - **EDOT Collector** (6 techs — platform-tab flow with endpoint type):
           VPC Flow Logs, Kubernetes, Docker, Linux Host, Windows Host, macOS
           Host
         - **OTel Receiver** (5 techs — receiver-configuration flow):
@@ -96,7 +96,7 @@ jobs:
           and verification checks."
         - A search box ("Search integrations...")
         - Four large **experience tiles** in a 2×2 grid:
-          "Cloud Providers", "Kubernetes", "Servers, Desktops & Laptops",
+          "Cloud Providers", "Kubernetes", "Servers/Desktops/Laptops",
           "SaaS & Databases"
         - An **Advanced** collapsible accordion below the tiles
         - A "Continue" button (disabled until a technology is selected)
@@ -270,7 +270,7 @@ jobs:
         - **Full run with Docker**: Click "Kubernetes" experience tile →
           select Docker → Continue → verify docker-compose command in install
           section → check verification panel → Continue → verify success CTAs.
-        - **Full run with Linux Host**: Click "Servers, Desktops & Laptops"
+        - **Full run with Linux Host**: Click "Servers/Desktops/Laptops"
           tile → select Linux Host → Continue → verify `curl` + `tar` command
           → try Managed OTLP endpoint → verify env vars change → Continue →
           success.
@@ -278,7 +278,7 @@ jobs:
           select PostgreSQL → Continue → verify "Configure receiver" section
           appears → check signal expectation mentions "logs and metrics" →
           Continue → success.
-        - **Full run with Windows Host**: Click "Servers, Desktops & Laptops"
+        - **Full run with Windows Host**: Click "Servers/Desktops/Laptops"
           tile → select Windows Host → Continue → verify PowerShell
           `Invoke-WebRequest` command → Continue → success.
         - **Full run with Nginx**: Click "SaaS & Databases" tile → select
@@ -338,6 +338,24 @@ jobs:
            step CTA buttons. Are they consistently sized? Is the primary CTA
            (e.g., "Open traces") visually distinct from outlined secondary
            CTAs?
+
+        7. **Element height consistency**: Verify toolbar controls align;
+           any mismatch greater than 4px is a bug.
+
+        8. **text.secondary contrast in dark mode**: Verify secondary labels
+           remain readable and meet contrast expectations.
+
+        9. **Empty state consistency**: Trigger at least one empty result
+           state and verify copy/layout follows product standards.
+
+        10. **Fieldset and legend visibility**: Verify fieldset borders and
+            legend labels are fully visible and readable.
+
+        11. **Metric card label readability**: Verify labels remain legible and
+            clearly subordinate to value text.
+
+        12. **axe-core color-contrast**: Run the color-contrast check and
+            treat every violation as a defect.
 
         ---
 
