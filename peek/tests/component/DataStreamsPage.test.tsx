@@ -147,9 +147,12 @@ describe("DataStreamsPage", () => {
     );
 
     await screen.findAllByText("logs-a");
-    const logsRow = screen.getByRole("button", { name: /logs-a/i });
+    const tableEl = screen.getByRole("table", { name: /data stream list/i });
+    const rows = within(tableEl).getAllByRole("row");
+    // Find the row containing "logs-a" (skip header row)
+    const logsRow = rows.find((r) => within(r).queryByText("logs-a") !== null)!;
     expect(within(logsRow).getByText("YELLOW")).toBeInTheDocument();
-    expect(within(logsRow).getByText("1 Index")).toBeInTheDocument();
+    expect(within(logsRow).getByText("1")).toBeInTheDocument();
     expect(screen.getByTestId("data-stream-meta-backing-indices")).toHaveTextContent("1");
     expect(screen.getByTestId("data-stream-meta-write-index")).toHaveTextContent(
       ".ds-logs-a-000001",
@@ -215,8 +218,8 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    const list = await screen.findByRole("list");
-    const listLabel = await within(list).findByText(longName);
+    const table = await screen.findByRole("table", { name: /data stream list/i });
+    const listLabel = await within(table).findByText(longName);
     expect(listLabel).toHaveAttribute("title", longName);
   });
 
@@ -476,7 +479,7 @@ describe("DataStreamsPage", () => {
     expect(screen.getByRole("button", { name: /close field stats/i })).toBeInTheDocument();
 
     // Switch to a different stream
-    await user.click(screen.getByRole("button", { name: /logs-b/i }));
+    await user.click(screen.getByText("logs-b"));
 
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: /close field stats/i })).not.toBeInTheDocument();
@@ -510,5 +513,74 @@ describe("DataStreamsPage", () => {
       path: "/_data_stream/logs-a",
     });
     expect(screen.getByTestId("location")).toHaveTextContent("/console");
+  });
+
+  it("displays table column headers for Name, Status, and Indices", async () => {
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    const tableEl = await screen.findByRole("table", { name: /data stream list/i });
+
+    expect(within(tableEl).getByText("Name")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Status")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Indices")).toBeInTheDocument();
+  });
+
+  it("sorts data streams by indices count when the Indices column header is clicked", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+        {
+          name: "logs-b",
+          status: "YELLOW",
+          generation: 2,
+          template: "logs",
+          indices: [{}, {}, {}],
+        },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    const tableEl = await screen.findByRole("table", { name: /data stream list/i });
+    await within(tableEl).findByText("logs-a");
+
+    // Click "Indices" column header to sort ascending
+    await user.click(screen.getByRole("button", { name: /^indices$/i }));
+
+    const rows = within(tableEl).getAllByRole("row");
+    const dataRows = rows.slice(1);
+    // ascending: logs-a (1 index) < logs-b (3 indices)
+    expect(within(dataRows[0]).getByText("logs-a")).toBeInTheDocument();
+    expect(within(dataRows[1]).getByText("logs-b")).toBeInTheDocument();
+
+    // Click again to sort descending
+    await user.click(screen.getByRole("button", { name: /^indices$/i }));
+
+    const rowsDesc = within(tableEl).getAllByRole("row");
+    const dataRowsDesc = rowsDesc.slice(1);
+    expect(within(dataRowsDesc[0]).getByText("logs-b")).toBeInTheDocument();
+    expect(within(dataRowsDesc[1]).getByText("logs-a")).toBeInTheDocument();
   });
 });
