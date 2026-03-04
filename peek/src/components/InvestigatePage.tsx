@@ -61,7 +61,7 @@ export default function InvestigatePage() {
     setEvents([]);
   }, []);
 
-  const { runQuery, loading, error, activeFlavor } = useInvestigateQuery({
+  const { runQuery, loading, error, isColumnMappingError, activeFlavor } = useInvestigateQuery({
     connection,
     onSuccess: handleSuccess,
     onFailure: handleFailure,
@@ -158,12 +158,12 @@ export default function InvestigatePage() {
         </Box>
       </Paper>
       {currentQuery && <InvestigateQueryBar query={currentQuery} />}
-      {activeFlavor && activeFlavor !== "full" && (
+      {activeFlavor && activeFlavor !== "full" && !isColumnMappingError && (
         <Alert severity="info">
           Some fields aren't available in this cluster's indices — showing partial results.
         </Alert>
       )}
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity={isColumnMappingError ? "warning" : "error"}>{error}</Alert>}
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {searchedEntity && !loading && events.length === 0 && !error ? (
           <EmptyState
