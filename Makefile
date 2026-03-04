@@ -295,7 +295,7 @@ otel-replay:
 	@echo "Replaying OTLP fixtures + seeding non-OTLP data..."
 	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
-	@cd $(PEEK_DIR) && node scripts/seed-k8s.mjs --url "$${ES_URL:-http://localhost:9200}"
+	@$(MAKE) seed-k8s
 	@sleep 5  # allow collector to flush replayed data to ES
 	@echo "✓ Data replayed and seeded."
 

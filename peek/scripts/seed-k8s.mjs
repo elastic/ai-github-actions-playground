@@ -68,9 +68,9 @@ const NAMESPACES = ["default", "kube-system", "monitoring", "app-prod", "app-sta
 const WORKLOADS = [
   { name: "frontend", kind: "Deployment", namespace: "app-prod", replicas: 3 },
   { name: "api-server", kind: "Deployment", namespace: "app-prod", replicas: 2 },
-  { name: "worker", kind: "Deployment", namespace: "app-prod", replicas: 2 },
+  { name: "worker", kind: "Deployment", namespace: "app-staging", replicas: 2 },
   { name: "postgres", kind: "StatefulSet", namespace: "app-prod", replicas: 1 },
-  { name: "redis", kind: "StatefulSet", namespace: "app-prod", replicas: 1 },
+  { name: "redis", kind: "StatefulSet", namespace: "default", replicas: 1 },
   { name: "grafana", kind: "Deployment", namespace: "monitoring", replicas: 1 },
   { name: "otel-collector", kind: "DaemonSet", namespace: "monitoring", replicas: 2 },
   { name: "coredns", kind: "Deployment", namespace: "kube-system", replicas: 2 },
