@@ -387,7 +387,8 @@ def update_user_profile():
             db_query("postgres", "UPDATE", "users", base_ms=8, jitter_ms=4)
             span.set_attribute("db.retry_count", 1)
 
-        db_query("postgres", "UPDATE", "users", base_ms=8, jitter_ms=4)
+        else:
+            db_query("postgres", "UPDATE", "users", base_ms=8, jitter_ms=4)
         time.sleep(random_latency(10, 5))
         span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, 200)
 
@@ -644,6 +645,8 @@ FLOWS = [
     (flow_recommendation_batch, 5),
     (flow_admin_dashboard, 5),
 ]
+if sum(weight for _, weight in FLOWS) != 100:
+    raise ValueError("FLOWS weights must sum to 100")
 
 
 def pick_flow():
@@ -663,6 +666,8 @@ def main():
         "Services: %s", ", ".join(f"{n} ({m['language'] or 'infra'} v{m['version']})" for n, m in SERVICES.items())
     )
     rate = float(os.environ.get("TRACEGEN_RATE", os.environ.get("RATE", "3")))
+    if rate <= 0:
+        raise ValueError("TRACEGEN_RATE/RATE must be > 0")
     interval = 1.0 / rate
 
     while True:

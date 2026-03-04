@@ -219,14 +219,16 @@ const K8S_SERVICE_META = {
   "api-server": { language: "go", version: "1.8.0" },
   worker: { language: "python", version: "1.2.0" },
 };
+const TRACE_WORKLOADS = new Set(Object.keys(K8S_SERVICE_META));
 
 async function seedK8sTraces(client, pods) {
   const now = Date.now();
   const docs = [];
-  const servicePods = pods.filter((p) => ["frontend", "api-server", "worker"].includes(p.workloadName));
+  const servicePods = pods.filter((p) => TRACE_WORKLOADS.has(p.workloadName));
 
   for (const pod of servicePods) {
-    const meta = K8S_SERVICE_META[pod.workloadName] ?? { language: "unknown", version: "0.0.0" };
+    const meta = K8S_SERVICE_META[pod.workloadName];
+    if (!meta) continue;
     const env = pod.namespace === "app-prod" ? "production" : "staging";
 
     for (let i = 0; i < 15; i++) {
