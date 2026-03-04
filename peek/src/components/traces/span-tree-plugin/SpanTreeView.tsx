@@ -68,18 +68,11 @@ export default function SpanTreeView({
   const showTimeline = visual?.showTimeline ?? true;
 
   const handleRowClick = useCallback(
-    (spanId: string) => {
-      if (searchMode && onSelectTrace) {
-        const span = spans.find((s) => s.spanId === spanId);
-        if (span) {
-          onSelectTrace(span.traceId, span.spanId, span.timestamp);
-          onSelectSpan?.(spanId);
-        }
-      } else if (onSelectSpan) {
-        onSelectSpan(spanId);
-      }
+    (span: { traceId: string; spanId: string; timestamp: string }) => {
+      onSelectTrace?.(span.traceId, span.spanId, span.timestamp);
+      onSelectSpan?.(span.spanId);
     },
-    [searchMode, onSelectTrace, onSelectSpan, spans],
+    [onSelectTrace, onSelectSpan],
   );
 
   const computeTimelineProps = useCallback(
@@ -163,7 +156,10 @@ export default function SpanTreeView({
           stats={item.stats}
           expanded={item.expanded}
           onToggle={toggleGroup}
-          onClick={handleRowClick}
+          onClick={() => {
+            const representative = item.spans[0]?.span;
+            if (representative) handleRowClick(representative);
+          }}
           timelineOffset={timeline.timelineOffset}
           timelineFraction={timeline.timelineFraction}
           showTimeline={showTimeline}
@@ -180,7 +176,7 @@ export default function SpanTreeView({
         hasChildren={item.hasChildren}
         selected={item.node.span.spanId === selectedSpanId}
         onToggle={toggleExpand}
-        onClick={handleRowClick}
+        onClick={() => handleRowClick(item.node.span)}
         timelineOffset={timeline.timelineOffset}
         timelineFraction={timeline.timelineFraction}
         showTimeline={showTimeline}

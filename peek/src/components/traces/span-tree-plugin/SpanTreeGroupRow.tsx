@@ -66,13 +66,6 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
       onClick={() => {
         if (representativeSpanId) onClick(representativeSpanId);
       }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          if (representativeSpanId) onClick(representativeSpanId);
-        }
-      }}
       sx={{
         position: "relative",
         display: "flex",
@@ -170,7 +163,7 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
         </Box>
       </Tooltip>
 
-      {/* Operation name with count */}
+      {/* Operation name */}
       {insightSlotId ? (
         <InsightSlot slotId={insightSlotId}>
           <Typography variant="caption" noWrap sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5 }}>

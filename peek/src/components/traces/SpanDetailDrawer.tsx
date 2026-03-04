@@ -85,10 +85,20 @@ function KeyValueRow({
         alignItems: "center",
         py: 0.5,
         px: 1,
+        "& .kv-actions-trigger": {
+          opacity: 0,
+          pointerEvents: "none",
+        },
         "&:hover": { bgcolor: "action.hover" },
         "&:hover .kv-actions-trigger, &:focus-within .kv-actions-trigger": {
           opacity: 1,
           pointerEvents: "auto",
+        },
+        "@media (hover: none)": {
+          "& .kv-actions-trigger": {
+            opacity: 1,
+            pointerEvents: "auto",
+          },
         },
       }}
     >
@@ -113,7 +123,6 @@ function KeyValueRow({
                 size="small"
                 aria-label="Row actions"
                 onClick={(event) => setActionAnchorEl(event.currentTarget)}
-                sx={{ opacity: 0, pointerEvents: "none" }}
               >
                 <MoreHorizIcon sx={{ fontSize: 16 }} />
               </IconButton>
