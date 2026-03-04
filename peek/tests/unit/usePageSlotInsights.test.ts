@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateObject } from "ai";
+import { generateObject, generateText } from "ai";
 
 import { usePageSlotInsights } from "../../src/hooks/usePageSlotInsights";
 import { useLLMStore } from "../../src/store/useLLMStore";
@@ -14,6 +14,7 @@ import type { InsightSlotDefinition } from "../../src/types/insightSlots";
 
 vi.mock("ai", () => ({
   generateObject: vi.fn(),
+  generateText: vi.fn(),
 }));
 
 vi.mock("@ai-sdk/openai", () => ({
@@ -47,6 +48,7 @@ describe("usePageSlotInsights", () => {
     resetAllStores();
     useLLMStore.getState().setApiKey("sk-test-key");
     vi.mocked(generateObject).mockReset();
+    vi.mocked(generateText).mockReset();
   });
 
   it("returns structured summary and insights from the LLM", async () => {
@@ -152,6 +154,7 @@ describe("usePageSlotInsights", () => {
 
   it("reports error when LLM call fails", async () => {
     vi.mocked(generateObject).mockRejectedValueOnce(new Error("API limit reached"));
+    vi.mocked(generateText).mockRejectedValueOnce(new Error("API limit reached"));
 
     const { result } = renderHook(
       () =>

@@ -16,6 +16,10 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useShallow } from "zustand/react/shallow";
 
 import { useLLMStore, type LLMProvider } from "../store/useLLMStore";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
+import { deriveOtlpEndpoint } from "../utils/addDataUtils";
+import { deriveDefaultOtlpEndpoint } from "../services/telemetry/browserTracing";
 
 const PROVIDERS: Array<{ value: LLMProvider; label: string }> = [
   { value: "openai", label: "OpenAI" },
@@ -79,6 +83,42 @@ export default function SettingsPage() {
   const handleResetLLMSettings = () => {
     resetLLMConfig();
     setUseCustomModel(false);
+  };
+
+  const { connection, setConnection } = useConnectionStore(
+    useShallow((s) => ({
+      connection: s.connection,
+      setConnection: s.setConnection,
+    })),
+  );
+  const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+
+  type TracingMode = "off" | "connected" | "remote";
+  const tracingMode: TracingMode = (() => {
+    if (!connection || !connection.otlpEnabled) return "off";
+    const endpoint = (connection.otlpEndpoint ?? "").trim();
+    const inferredBase =
+      connection.ingestUrl?.trim() || deriveOtlpEndpoint(connection.url) || connection.url;
+    const inferredDefaultEndpoint = deriveDefaultOtlpEndpoint(inferredBase);
+    if (!endpoint || endpoint === inferredDefaultEndpoint) return "connected";
+    return "remote";
+  })();
+  const remoteTracingEndpoint = (connection?.otlpEndpoint ?? "").trim();
+  const applyTracingMode = (mode: TracingMode) => {
+    if (!connection) return;
+    if (mode === "off") {
+      setConnection({ ...connection, otlpEnabled: false });
+      return;
+    }
+    if (mode === "connected") {
+      setConnection({ ...connection, otlpEnabled: true, otlpEndpoint: "" });
+      return;
+    }
+    setConnection({
+      ...connection,
+      otlpEnabled: true,
+      otlpEndpoint: remoteTracingEndpoint || deriveDefaultOtlpEndpoint(connection.url),
+    });
   };
 
   return (
@@ -225,6 +265,58 @@ export default function SettingsPage() {
       <Button variant="text" color="error" onClick={handleResetLLMSettings}>
         Reset LLM Settings
       </Button>
+
+      <Paper variant="outlined" sx={{ mt: 3, p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 1.5 }}>
+          Browser Tracing (Experimental)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Configure where browser spans are exported.
+        </Typography>
+        {!connection ? (
+          <Alert
+            severity="info"
+            action={
+              <Button size="small" onClick={() => setConnectionDialogOpen(true)}>
+                Open Connection
+              </Button>
+            }
+          >
+            Connect to Elasticsearch first to configure browser tracing.
+          </Alert>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              select
+              size="small"
+              label="Tracing mode"
+              value={tracingMode}
+              onChange={(e) => applyTracingMode(e.target.value as TracingMode)}
+              fullWidth
+            >
+              <MenuItem value="off">Off</MenuItem>
+              <MenuItem value="connected">On - send to connected cluster</MenuItem>
+              <MenuItem value="remote">On - send to remote destination</MenuItem>
+            </TextField>
+            {tracingMode === "remote" && (
+              <TextField
+                size="small"
+                label="Remote OTLP endpoint"
+                placeholder="https://collector.example.com/v1/traces"
+                value={remoteTracingEndpoint}
+                onChange={(e) =>
+                  setConnection({
+                    ...connection,
+                    otlpEnabled: true,
+                    otlpEndpoint: e.target.value,
+                  })
+                }
+                fullWidth
+              />
+            )}
+          </Box>
+        )}
+      </Paper>
     </Box>
   );
 }

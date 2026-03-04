@@ -38,7 +38,9 @@ describe("ConnectionDialog", () => {
 
     expect(screen.getByLabelText(/elasticsearch url/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^api key$/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /proxy settings/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /advanced connection settings/i }),
+    ).toBeInTheDocument();
   });
 
   it('disables "Connect" button when URL is empty', () => {
@@ -48,17 +50,16 @@ describe("ConnectionDialog", () => {
     expect(connectButton).toBeDisabled();
   });
 
-  it("keeps Connect/Test/Save Profile disabled when only proxy URL is provided", async () => {
+  it("keeps Connect/Test/Connect & Save disabled when only proxy URL is provided", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
-    await user.click(screen.getByRole("button", { name: /proxy settings/i }));
+    await user.click(screen.getByRole("button", { name: /advanced connection settings/i }));
     await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
-    await user.type(screen.getByLabelText(/profile name/i), "Proxy only");
 
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
   });
 
   it("enables Connect button after entering a URL", async () => {
@@ -98,37 +99,38 @@ describe("ConnectionDialog", () => {
     expect(await screen.findByText("Unauthorized")).toBeInTheDocument();
   });
 
-  it("shows Save Profile button after entering a URL", async () => {
+  it("shows Connect & Save button after entering a URL", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
 
-    expect(screen.getByRole("button", { name: /save profile/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeInTheDocument();
   });
 
-  it(
-    "saves a connection profile from the dialog using form values",
-    { timeout: 15_000 },
-    async () => {
-      const user = userEvent.setup();
-      render(<ConnectionDialog />);
+  it("connects and saves a profile from the prompt", async () => {
+    const user = userEvent.setup();
+    fetchCapabilitiesForConnectionMock.mockResolvedValue({
+      canManageDataStreams: true,
+    });
+    render(<ConnectionDialog />);
 
-      await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
-      await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
-      await user.click(screen.getByRole("button", { name: /proxy settings/i }));
-      await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
-      await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
-      await user.click(screen.getByRole("button", { name: /save profile/i }));
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
+    await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
+    await user.click(screen.getByRole("button", { name: /advanced connection settings/i }));
+    await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
+    await user.click(screen.getByRole("button", { name: /^connect & save$/i }));
+    await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
+    await user.click(screen.getByRole("button", { name: /confirm connect & save/i }));
 
-      const profiles = useConnectionStore.getState().connectionProfiles;
-      expect(profiles).toHaveLength(1);
-      expect(profiles[0].name).toBe("Dev Cluster");
-      expect(profiles[0].connection.url).toBe("https://dev.example.com");
-      expect(profiles[0].connection.apiKey).toBe("dev-key");
-      expect(profiles[0].connection.proxyUrl).toBe("http://localhost:3000/_es");
-    },
-  );
+    const profiles = useConnectionStore.getState().connectionProfiles;
+    expect(profiles).toHaveLength(1);
+    expect(profiles[0].name).toBe("Dev Cluster");
+    expect(profiles[0].connection.url).toBe("https://dev.example.com");
+    expect(profiles[0].connection.apiKey).toBe("dev-key");
+    expect(profiles[0].connection.proxyUrl).toBe("http://localhost:3000/_es");
+    expect(useConnectionStore.getState().connected).toBe(true);
+  });
 
   it("displays saved profiles in the dialog", () => {
     useConnectionStore.setState({

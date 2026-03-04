@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import type { EsqlResponse } from "../../types";
 
 import {
   buildServiceInventoryQuery,
+  buildServiceSparklineIntervalQuery,
   buildServiceSparklineQuery,
 } from "./serviceInventoryQueryBuilder";
 import {
@@ -51,10 +52,12 @@ export function useServiceInventorySearch() {
     [queryClient, serviceSearchQueryKey],
   );
   const [sparklineData, setSparklineData] = useState<Record<string, ServiceSparklineData>>({});
+  const [sparklineRetryMode, setSparklineRetryMode] = useState<"standard" | "interval">("standard");
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
+  const runSparklineQueryRef = useRef<(query: string) => void>(() => undefined);
   const activeFiltersRef = useRef(filters);
 
   const handleSort = useCallback(
@@ -72,16 +75,41 @@ export function useServiceInventorySearch() {
   const handleSparklineSuccess = useCallback((data: EsqlResponse, executedQuery: string) => {
     if (executedQuery !== latestSparklineQueryRef.current) return;
     setSparklineData(parseServiceSparklineData(data));
+    setSparklineRetryMode("standard");
   }, []);
-  const handleSparklineFailure = useCallback((failedQuery: string) => {
-    if (failedQuery !== latestSparklineQueryRef.current) return;
-    setSparklineData({});
-  }, []);
-  const { runQuery: runSparklineQuery } = useEsqlQuery({
+  const handleSparklineFailure = useCallback(
+    (failedQuery: string) => {
+      if (failedQuery !== latestSparklineQueryRef.current) return;
+      const serviceNames = parseServiceRows(
+        searchResult ?? ({ columns: [], values: [] } as EsqlResponse),
+      ).map((r) => r.serviceName);
+      if (sparklineRetryMode === "standard") {
+        const fallbackQuery = buildServiceSparklineIntervalQuery(
+          activeFiltersRef.current,
+          undefined,
+          serviceNames,
+        );
+        latestSparklineQueryRef.current = fallbackQuery.trim();
+        setSparklineRetryMode("interval");
+        runSparklineQueryRef.current(fallbackQuery);
+        return;
+      }
+      setSparklineData({});
+    },
+    [searchResult, sparklineRetryMode],
+  );
+  const {
+    runQuery: runSparklineQuery,
+    loading: sparklineLoading,
+    error: sparklineError,
+  } = useEsqlQuery({
     connection,
     onSuccess: handleSparklineSuccess,
     onFailure: handleSparklineFailure,
   });
+  useEffect(() => {
+    runSparklineQueryRef.current = runSparklineQuery;
+  }, [runSparklineQuery]);
 
   const handleSuccess = useCallback(
     (data: EsqlResponse, executedQuery: string) => {
@@ -95,6 +123,7 @@ export function useServiceInventorySearch() {
         serviceNames,
       );
       latestSparklineQueryRef.current = sparklineQuery.trim();
+      setSparklineRetryMode("standard");
       setSparklineData({});
       runSparklineQuery(sparklineQuery);
     },
@@ -175,7 +204,9 @@ export function useServiceInventorySearch() {
     sortField,
     sortDirection,
     loading,
+    sparklineLoading,
     error,
+    sparklineError,
     handleSort,
     handleSearch,
     handleReset,

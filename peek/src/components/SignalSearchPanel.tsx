@@ -53,6 +53,18 @@ export interface SignalSearchPanelProps {
 
   /** Renders the signal-specific filter controls above the editor */
   renderFilterControls: () => ReactNode;
+  /** Optional label shown above filter controls (e.g. step label) */
+  filterControlsLabel?: string;
+  /** Optional label shown above the ES|QL editor */
+  queryEditorLabel?: string;
+  /** Optional helper text shown below queryEditorLabel */
+  queryEditorDescription?: string;
+  /** Optional section title for the ES|QL editor block */
+  queryEditorSectionTitle?: string;
+  /** Whether ES|QL editor block starts collapsed */
+  queryEditorCollapsedByDefault?: boolean;
+  /** Whether to render the ES|QL editor block in this panel */
+  showQueryEditor?: boolean;
 
   /** Editor height in px (default: 120) */
   editorHeight?: number;
@@ -74,10 +86,21 @@ export default function SignalSearchPanel({
   activeFilterCount,
   onResetFilters,
   renderFilterControls,
+  filterControlsLabel,
+  queryEditorLabel,
+  queryEditorDescription,
+  queryEditorSectionTitle,
+  queryEditorCollapsedByDefault: rawQueryEditorCollapsedByDefault = false,
+  showQueryEditor = true,
   editorHeight = DEFAULT_EDITOR_HEIGHT,
 }: SignalSearchPanelProps) {
+  // Prevent unrecoverable hidden state: only allow collapsed-by-default if there's a
+  // section title that renders the toggle button.
+  const queryEditorCollapsedByDefault =
+    rawQueryEditorCollapsedByDefault && Boolean(queryEditorSectionTitle);
   const [editorFocused, setEditorFocused] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
+  const [queryEditorCollapsed, setQueryEditorCollapsed] = useState(queryEditorCollapsedByDefault);
   const explainPanelId = useId();
   const resultLabel = (count: number) => (count === 1 ? resultNoun.replace(/s$/, "") : resultNoun);
 
@@ -176,81 +199,185 @@ export default function SignalSearchPanel({
         {!collapsed && (
           <>
             {/* Signal-specific filter controls */}
+            {filterControlsLabel && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.5 }}
+              >
+                {filterControlsLabel}
+              </Typography>
+            )}
             {renderFilterControls()}
 
             {/* ES|QL editor */}
-            <Box
-              sx={{ overflow: "hidden", mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
-            >
-              <Box sx={{ position: "relative" }}>
-                <CodeMirror
-                  value={effectiveQuery}
-                  onChange={onRawQueryChange}
-                  onCreateEditor={onCreateEditor}
-                  extensions={editorExtensions}
-                  theme={themeMode}
-                  height={`${editorHeight}px`}
-                  basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-                  aria-label={`${title} query editor`}
-                />
-                <QueryAnnotationOverlay
-                  query={effectiveQuery}
-                  editorFocused={editorFocused}
-                  height={editorHeight}
-                />
-                {/* Explain Query button — bottom-right of the editor box */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    zIndex: 3,
-                    right: 8,
-                    bottom: 6,
-                  }}
-                >
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />}
-                    onClick={() => setExplainOpen((v) => !v)}
-                    aria-expanded={explainOpen}
-                    aria-controls={explainPanelId}
+            {showQueryEditor && (
+              <Box
+                sx={
+                  queryEditorSectionTitle
+                    ? {
+                        overflow: "hidden",
+                        mb: 1,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                      }
+                    : undefined
+                }
+              >
+                {queryEditorSectionTitle && (
+                  <Box
                     sx={{
-                      minHeight: "unset",
+                      display: "flex",
+                      gap: 0.5,
+                      alignItems: "center",
                       py: 0.5,
-                      px: 1,
-                      opacity: 0.75,
-                      lineHeight: 1.4,
-                      fontSize: "0.7rem",
-                      "&:hover": { opacity: 1 },
+                      px: 0.5,
+                      bgcolor: "action.hover",
                     }}
                   >
-                    Explain Query
-                  </Button>
-                </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => setQueryEditorCollapsed((v) => !v)}
+                      aria-expanded={!queryEditorCollapsed}
+                      aria-label={
+                        queryEditorCollapsed
+                          ? "Expand ES|QL query section"
+                          : "Collapse ES|QL query section"
+                      }
+                    >
+                      <ExpandMoreIcon
+                        sx={{
+                          transform: queryEditorCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s",
+                          fontSize: 18,
+                        }}
+                      />
+                    </IconButton>
+                    <Typography variant="caption" color="text.secondary">
+                      {queryEditorSectionTitle}
+                    </Typography>
+                  </Box>
+                )}
+                <Collapse in={!queryEditorCollapsed} unmountOnExit>
+                  <Box sx={queryEditorSectionTitle ? { p: 1, pt: 0.5 } : undefined}>
+                    {(queryEditorLabel || queryEditorDescription) && (
+                      <Box sx={{ mb: 0.5 }}>
+                        {queryEditorLabel && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block" }}
+                          >
+                            {queryEditorLabel}
+                          </Typography>
+                        )}
+                        {queryEditorDescription && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block" }}
+                          >
+                            {queryEditorDescription}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                    <Box
+                      sx={{
+                        overflow: "hidden",
+                        mb: queryEditorSectionTitle ? 0 : 1,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Box sx={{ position: "relative" }}>
+                        <CodeMirror
+                          value={effectiveQuery}
+                          onChange={onRawQueryChange}
+                          onCreateEditor={onCreateEditor}
+                          extensions={editorExtensions}
+                          theme={themeMode}
+                          height={`${editorHeight}px`}
+                          basicSetup={{
+                            lineNumbers: true,
+                            foldGutter: false,
+                            indentOnInput: false,
+                          }}
+                          aria-label={`${title} query editor`}
+                        />
+                        <QueryAnnotationOverlay
+                          query={effectiveQuery}
+                          editorFocused={editorFocused}
+                          height={editorHeight}
+                        />
+                        {/* Explain Query button — bottom-right of the editor box */}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            zIndex: 3,
+                            right: 8,
+                            bottom: 6,
+                          }}
+                        >
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />}
+                            onClick={() => setExplainOpen((v) => !v)}
+                            aria-expanded={explainOpen}
+                            aria-controls={explainPanelId}
+                            sx={{
+                              minHeight: "unset",
+                              py: 0.5,
+                              px: 1,
+                              opacity: 0.75,
+                              lineHeight: 1.4,
+                              fontSize: "0.7rem",
+                              "&:hover": { opacity: 1 },
+                            }}
+                          >
+                            Explain Query
+                          </Button>
+                        </Box>
+                      </Box>
+                      <Collapse in={explainOpen}>
+                        <Box
+                          id={explainPanelId}
+                          sx={{
+                            py: 1,
+                            px: 1.5,
+                            borderTop: 1,
+                            borderColor: "divider",
+                            bgcolor: "action.hover",
+                          }}
+                        >
+                          {explanation ? (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ fontStyle: "italic" }}
+                            >
+                              {explanation}
+                            </Typography>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              color="text.disabled"
+                              sx={{ fontStyle: "italic" }}
+                            >
+                              Generating explanation… (requires an AI provider configured in
+                              Settings)
+                            </Typography>
+                          )}
+                        </Box>
+                      </Collapse>
+                    </Box>
+                  </Box>
+                </Collapse>
               </Box>
-              <Collapse in={explainOpen}>
-                <Box
-                  id={explainPanelId}
-                  sx={{
-                    py: 1,
-                    px: 1.5,
-                    borderTop: 1,
-                    borderColor: "divider",
-                    bgcolor: "action.hover",
-                  }}
-                >
-                  {explanation ? (
-                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                      {explanation}
-                    </Typography>
-                  ) : (
-                    <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic" }}>
-                      Generating explanation… (requires an AI provider configured in Settings)
-                    </Typography>
-                  )}
-                </Box>
-              </Collapse>
-            </Box>
+            )}
 
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Button

@@ -3,17 +3,26 @@ import Typography from "@mui/material/Typography";
 
 interface PageHeaderProps {
   title: string;
+  titleAdornment?: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
 }
 
-export default function PageHeader({ title, description, actions }: PageHeaderProps) {
+export default function PageHeader({
+  title,
+  titleAdornment,
+  description,
+  actions,
+}: PageHeaderProps) {
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="h5" component="h1">
-          {title}
-        </Typography>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <Typography variant="h5" component="h1">
+            {title}
+          </Typography>
+          {titleAdornment}
+        </Box>
         {description && (
           <Typography variant="body2" color="text.secondary">
             {description}
