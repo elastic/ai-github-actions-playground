@@ -40,6 +40,26 @@ function escapeYamlValue(value: string): string {
     .replace(/\t/g, "\\t");
 }
 
+function asMapping(value: unknown, path: string): Record<string, unknown> {
+  if (value == null) {
+    return {};
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Expected "${path}" to be a YAML mapping.`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function asStringArray(value: unknown, path: string): string[] {
+  if (value == null) {
+    return [];
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    throw new Error(`Expected "${path}" to be a string array.`);
+  }
+  return [...value];
+}
+
 /**
  * Interpolate field values into a YAML template.
  * Replaces `{{key}}` placeholders with the corresponding escaped value.
@@ -130,34 +150,24 @@ export function mergeIntoExistingOtelConfig(
   }
 
   // Parse existing config and incoming receiver block as JS objects.
-  const existing = (parseYaml(existingYaml) ?? {}) as Record<string, unknown>;
-  const receiverObj = parseYaml(`receivers:\n${receiverBlock}`) as {
-    receivers: Record<string, unknown>;
-  };
+  const existing = asMapping(parseYaml(existingYaml) ?? {}, "root");
+  const receiverObj = asMapping(parseYaml(`receivers:\n${receiverBlock}`), "receiver block");
+  const newReceivers = asMapping(receiverObj.receivers, "receiver block.receivers");
 
   // --- receivers ---
-  const receivers = ((existing.receivers as Record<string, unknown>) ?? {}) as Record<
-    string,
-    unknown
-  >;
-  Object.assign(receivers, receiverObj.receivers);
+  const receivers = asMapping(existing.receivers, "receivers");
+  Object.assign(receivers, newReceivers);
   existing.receivers = receivers;
 
   // --- processors (add batch if missing) ---
-  const processors = ((existing.processors as Record<string, unknown>) ?? {}) as Record<
-    string,
-    unknown
-  >;
+  const processors = asMapping(existing.processors, "processors");
   if (!processors.batch) {
     processors.batch = { send_batch_size: 1000, timeout: "5s" };
   }
   existing.processors = processors;
 
   // --- exporters (add elasticsearch if missing) ---
-  const exporters = ((existing.exporters as Record<string, unknown>) ?? {}) as Record<
-    string,
-    unknown
-  >;
+  const exporters = asMapping(existing.exporters, "exporters");
   if (!exporters.elasticsearch) {
     exporters.elasticsearch = {
       endpoints: [opts.esUrl],
@@ -167,17 +177,23 @@ export function mergeIntoExistingOtelConfig(
   existing.exporters = exporters;
 
   // --- service.pipelines ---
-  const service = ((existing.service as Record<string, unknown>) ?? {}) as Record<string, unknown>;
-  const pipelines = ((service.pipelines as Record<string, unknown>) ?? {}) as Record<
-    string,
-    unknown
-  >;
+  const service = asMapping(existing.service, "service");
+  const pipelines = asMapping(service.pipelines, "service.pipelines");
 
   for (const signal of uniqueSignals) {
-    const existingPipeline = (pipelines[signal] ?? {}) as Record<string, unknown>;
-    const existingReceivers = (existingPipeline.receivers ?? []) as string[];
-    const existingProcessors = (existingPipeline.processors ?? []) as string[];
-    const existingExporters = (existingPipeline.exporters ?? []) as string[];
+    const existingPipeline = asMapping(pipelines[signal], `service.pipelines.${signal}`);
+    const existingReceivers = asStringArray(
+      existingPipeline.receivers,
+      `service.pipelines.${signal}.receivers`,
+    );
+    const existingProcessors = asStringArray(
+      existingPipeline.processors,
+      `service.pipelines.${signal}.processors`,
+    );
+    const existingExporters = asStringArray(
+      existingPipeline.exporters,
+      `service.pipelines.${signal}.exporters`,
+    );
 
     if (!existingReceivers.includes(opts.receiverType)) {
       existingReceivers.push(opts.receiverType);

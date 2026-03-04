@@ -169,4 +169,15 @@ service:
     expect(result).toContain("metrics:");
     expect(result).toContain("logs:");
   });
+
+  it("throws for structurally invalid but parseable YAML sections", () => {
+    const existing = `receivers: []
+service:
+  pipelines: []
+`;
+
+    expect(() => mergeIntoExistingOtelConfig(existing, receiverBlock, baseOpts)).toThrow(
+      'Expected "receivers" to be a YAML mapping.',
+    );
+  });
 });
