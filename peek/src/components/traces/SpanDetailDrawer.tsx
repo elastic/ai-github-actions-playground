@@ -237,9 +237,12 @@ export default function SpanDetailDrawer({
   const selectedTimelineIndex = timelineSpans.findIndex(
     (timelineSpan) => timelineSpan.spanId === selectedTimelineSpanId,
   );
-  const canSelectPrevTimelineSpan = selectedTimelineIndex > 0;
+  const canSelectTimelineSpan = Boolean(onSelectSpan);
+  const canSelectPrevTimelineSpan = canSelectTimelineSpan && selectedTimelineIndex > 0;
   const canSelectNextTimelineSpan =
-    selectedTimelineIndex >= 0 && selectedTimelineIndex < timelineSpans.length - 1;
+    canSelectTimelineSpan &&
+    selectedTimelineIndex >= 0 &&
+    selectedTimelineIndex < timelineSpans.length - 1;
   const traceStartUs = timelineSpans.reduce(
     (min, traceSpan) => Math.min(min, traceSpan.startTimeUs),
     Number.POSITIVE_INFINITY,
@@ -416,6 +419,7 @@ export default function SpanDetailDrawer({
                           >
                             <ButtonBase
                               component="button"
+                              disabled={!canSelectTimelineSpan}
                               aria-label={`Select span ${traceSpan.name} from service ${traceSpan.serviceName}`}
                               sx={{
                                 position: "absolute",
@@ -430,7 +434,7 @@ export default function SpanDetailDrawer({
                                 borderRadius: 0.5,
                                 bgcolor: getServiceColor(traceSpan.serviceName),
                                 opacity: isSelected ? 0.95 : 0.65,
-                                cursor: "pointer",
+                                cursor: canSelectTimelineSpan ? "pointer" : "default",
                               }}
                               onClick={() => onSelectSpan?.(traceSpan.spanId)}
                             />

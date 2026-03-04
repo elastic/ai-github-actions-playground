@@ -56,13 +56,14 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
   const availablePct = Math.max(0, 100 - leftPct);
   const rawWidthPct = Math.max(timelineFraction * 100, 0);
   const widthPct = Math.min(rawWidthPct > 0 ? Math.max(rawWidthPct, 0.5) : 0, availablePct);
+  const groupLabel = `${stats.operationName} in ${stats.serviceName} (${stats.count} spans)`;
 
   return (
     <ButtonBase
       component="div"
       role="button"
       tabIndex={0}
-      aria-label="Open grouped span details"
+      aria-label={`Open grouped span details for ${groupLabel}`}
       onClick={() => {
         if (representativeSpanId) onClick(representativeSpanId);
       }}
@@ -164,17 +165,19 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
       </Tooltip>
 
       {/* Operation name */}
-      {insightSlotId ? (
-        <InsightSlot slotId={insightSlotId}>
-          <Typography variant="caption" noWrap sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5 }}>
+      <Box sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5, "& > *": { maxWidth: "100%" } }}>
+        {insightSlotId ? (
+          <InsightSlot slotId={insightSlotId}>
+            <Typography variant="caption" noWrap sx={{ display: "block" }}>
+              {stats.operationName}
+            </Typography>
+          </InsightSlot>
+        ) : (
+          <Typography variant="caption" noWrap>
             {stats.operationName}
           </Typography>
-        </InsightSlot>
-      ) : (
-        <Typography variant="caption" noWrap sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5 }}>
-          {stats.operationName}
-        </Typography>
-      )}
+        )}
+      </Box>
 
       {/* Error count badge */}
       {stats.errorCount > 0 && (

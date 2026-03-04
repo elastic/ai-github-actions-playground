@@ -100,8 +100,16 @@ export default function SpanTreeView({
       const bounds = (groupTraceId ? traceBoundsByTraceId.get(groupTraceId) : null) ?? traceBounds;
       const boundsDuration = bounds ? bounds.endUs - bounds.startUs : traceDuration;
       if (bounds && boundsDuration > 0) {
-        const firstStart = Math.min(...item.spans.map((n) => n.span.startTimeUs));
-        const lastEnd = Math.max(...item.spans.map((n) => n.span.startTimeUs + n.span.durationUs));
+        let firstStart = Number.POSITIVE_INFINITY;
+        let lastEnd = Number.NEGATIVE_INFINITY;
+        for (const { span } of item.spans) {
+          const endUs = span.startTimeUs + span.durationUs;
+          firstStart = Math.min(firstStart, span.startTimeUs);
+          lastEnd = Math.max(lastEnd, endUs);
+        }
+        if (!Number.isFinite(firstStart) || !Number.isFinite(lastEnd)) {
+          return { timelineOffset: null as number | null, timelineFraction: 0 };
+        }
         return {
           timelineOffset: (firstStart - bounds.startUs) / boundsDuration,
           timelineFraction: (lastEnd - firstStart) / boundsDuration,
