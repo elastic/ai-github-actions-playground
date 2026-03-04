@@ -1,6 +1,8 @@
 import ButtonBase from "@mui/material/ButtonBase";
+import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 export interface OverviewInfoCardProps {
   title: string;
@@ -26,15 +28,23 @@ export function OverviewInfoCard({ title, children, onClick }: OverviewInfoCardP
         }),
       }}
     >
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}
-        gutterBottom
-        component="div"
-      >
-        {title}
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}
+          gutterBottom
+          component="div"
+        >
+          {title}
+        </Typography>
+        {onClick && (
+          <OpenInNewIcon
+            aria-hidden="true"
+            sx={{ flexShrink: 0, mb: 0.5, color: "text.secondary", fontSize: 14 }}
+          />
+        )}
+      </Box>
       {children}
     </Paper>
   );

@@ -69,3 +69,37 @@ export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
     requestCount: toFiniteNumber(get(row, "request_count")),
   }));
 }
+
+/** Time-bucketed data point for a route sparkline. */
+export type SparklinePoint = [number, number]; // [timestamp, value]
+
+/** Per-route sparkline series for requests, latency, and error rate. */
+export interface RouteSparklineData {
+  requests: SparklinePoint[];
+  latency: SparklinePoint[];
+  errorRate: SparklinePoint[];
+}
+
+/**
+ * Parses an ES|QL response from `buildServiceRouteSparklineQuery` into a map
+ * of route → sparkline data.
+ */
+export function parseRouteSparklineData(result: EsqlResponse): Record<string, RouteSparklineData> {
+  const get = buildColumnAccessor(result.columns);
+
+  const map = Object.create(null) as Record<string, RouteSparklineData>;
+  for (const row of result.values) {
+    const route = String(get(row, "route_key") ?? "/");
+    const tsRaw = get(row, "bucket");
+    const ts = tsRaw == null ? null : new Date(tsRaw as string).getTime();
+    if (ts === null || !Number.isFinite(ts)) continue;
+    if (!map[route]) {
+      map[route] = { requests: [], latency: [], errorRate: [] };
+    }
+    const entry = map[route]!;
+    entry.requests.push([ts, toFiniteNumber(get(row, "request_count"))]);
+    entry.latency.push([ts, toFiniteNumber(get(row, "avg_latency_ms"))]);
+    entry.errorRate.push([ts, toFiniteNumber(get(row, "error_rate"))]);
+  }
+  return map;
+}

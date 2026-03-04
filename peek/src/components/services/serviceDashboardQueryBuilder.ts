@@ -102,3 +102,31 @@ export function buildServiceDeploymentsQuery(
     `SORT last_seen DESC, first_seen DESC`,
   ]);
 }
+
+const SPARKLINE_BUCKETS = 20;
+
+/**
+ * Builds an ES|QL query that returns time-bucketed per-route metrics for sparklines
+ * on the service dashboard. Produces ~SPARKLINE_BUCKETS data points per route.
+ */
+export function buildServiceRouteSparklineQuery(
+  filters: ServiceDashboardFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+): string {
+  const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
+  const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
+  const whereClauses = buildServiceWhereClauses(filters, fields);
+  const durationMsExpr = buildDurationMsExpr(fields);
+
+  return buildPipeline([
+    `FROM ${fields.index}`,
+    buildWherePipe(whereClauses),
+    "EVAL duration_ms = " +
+      `${durationMsExpr}, ` +
+      `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0), ` +
+      'route_key = COALESCE(attributes.http.route, "/")',
+    `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY route_key, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
+    `EVAL error_rate = error_count / request_count`,
+    `SORT bucket`,
+  ]);
+}
