@@ -99,15 +99,15 @@ Static SPA. Three runtimes: direct browser→ES (requires CORS), browser→proxy
 
 ## Perses Architecture
 
-Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, ECharts-based). For visual/theming rules (tooltip style, colors, series behavior), see DESIGN_LANGUAGE.md § Charts. For the full migration roadmap, see PERSES_MIGRATION_PLAN.md.
+Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, ECharts-based). For visual/theming rules (tooltip style, colors, series behavior), see DESIGN_LANGUAGE.md § Charts.
 
 **Architecture layers:**
 
 - **Data model** — dashboards serialize to the Perses resource format (`kind: "Dashboard"`, panels as `kind: "Panel"` with plugin kinds). Adapters in `services/perses/dashboardAdapters.ts` convert between internal `DashboardDefinition` and the Perses wire format.
 - **Panel plugins** — each visualization type maps to a Perses plugin kind via `VISUALIZATION_TO_PLUGIN_KIND` in the adapter layer (`TimeSeriesChart`, `StatChart`, `GaugeChart`, `BarChart`, `TablePanel`, `PieChart`, `ScatterChart`, `HeatMapChart`, `HistogramChart`, `MarkdownPanel`).
 - **Viz registry** — `vizRegistry.tsx` and `components/perses/panelRegistry.ts` use the same `VizRegistryEntry` interface. Registry entries are auto-discovered from `visualizations/registry/*.tsx`.
-- **Rendering** — charts render through `EChartWrapper`, which wraps the ECharts core that Perses itself uses internally. Do not import ECharts directly in new chart components; use `EChartWrapper` or Perses's `@perses-dev/components` `EChart` component.
-- **Theming** — `useEChartTheme()` produces ECharts-compatible options from MUI palette tokens. This hook is modeled on Perses's `generateChartsTheme` and will be replaced by Perses's `ChartsProvider` context once the migration completes. Until then, all chart theming flows through this single hook — charts never set their own colors.
+- **Rendering** — charts render through the Perses `EChart` component from `@perses-dev/components`. Graph-type charts (service maps, drift radar) import `EChart` from `../perses/PersesEChartWrapper`, a thin shim that registers the ECharts `GraphChart` extension before re-exporting `EChart`. This is the permanent pattern for any chart type not registered in Perses's upstream bundle. Do not import ECharts directly in new chart components; use the Perses `EChart` component (or `PersesEChartWrapper` when an additional chart type registration is needed).
+- **Theming** — `useEChartTheme()` produces ECharts-compatible options from MUI palette tokens. When rendered inside `PersesProviders`, the hook delegates to the centrally-managed `ChartsProvider` theme via `PeekChartsThemeContext`; otherwise it falls back to an equivalent inline theme. All chart theming flows through this single hook — charts never set their own colors.
 
 **Code-structure rules for chart components:**
 
@@ -267,7 +267,7 @@ The project has a custom ESLint plugin at `peek/eslint-plugin-peek/` that enforc
 |------|----------|------------------|
 | `peek/no-hardcoded-colors` | error | No inline hex values in `sx` props — use theme tokens (`text.secondary`, `background.paper`, etc.) |
 | `peek/consistent-typography-variants` | error | Only approved Typography variants: `h3` (metrics only), `h5`, `h6`, `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, `overline`. Notably, `h4` is banned. |
-| `peek/no-direct-echarts-import` | error | No `import * as echarts from 'echarts/core'` — use `EChartWrapper` or Perses components |
+| `peek/no-direct-echarts-import` | error | No `import * as echarts from 'echarts/core'` — use Perses `EChart` or `PersesEChartWrapper` |
 | `peek/no-div-onclick` | error | No `<Box onClick>` or `<div onClick>` — use `ButtonBase`, `Button`, `IconButton`, or `ListItemButton` |
 | `peek/enforce-spacing-tokens` | error | MUI spacing values must be in the approved set: `0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6`. Values like `0.75` or `0.125` are rejected. |
 | `peek/no-hardcoded-heights` | error | No hardcoded pixel heights for standard UI elements — use `COMPONENT_HEIGHTS` from `src/types/tokens.ts` |
@@ -332,8 +332,10 @@ import Typography from '@mui/material/Typography';
 
 // ❌ Direct ECharts import in chart components
 import * as echarts from 'echarts/core';
-// ✅ Use the wrapper or Perses component
-import EChartWrapper from './EChartWrapper';
+// ✅ Use Perses EChart or the GraphChart-enabled shim
+import { EChart } from '@perses-dev/components';
+// or
+import { EChart } from '../perses/PersesEChartWrapper';
 
 // ❌ Fetching data inside a chart component
 useEffect(() => { fetchData(query) }, [query]);
