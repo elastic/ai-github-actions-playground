@@ -1,0 +1,102 @@
+name: React Performance Bug Hunter
+on:
+  schedule:
+    - cron: "0 9 * * 1,3"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
+    with:
+      title-prefix: "[react-performance]"
+      additional-instructions: |
+        Focus your investigation on React rendering performance bugs and
+        anti-patterns in this repository (Elastic Peek).
+
+        The app uses:
+        - **React 18** with concurrent features
+        - **Zustand v5** for state (`peek/src/store/`)
+        - **TanStack Query v5** for server state (`useQuery`, `useMutation`)
+        - **MUI v6** for components
+        - **react-virtuoso** for virtualized lists
+        - **React.memo** selectively on expensive list items (e.g. SpanTreeRow, DataTable rows)
+        - **useShallow** from zustand for selector equality
+
+        Components live in `peek/src/components/`. Hooks in `peek/src/hooks/`.
+
+        ## Categories to investigate
+
+        ### 1. Unnecessary re-renders from Zustand selectors
+        The project uses Zustand's `useShallow` for object/array selectors. Look for:
+        - Stores used via `useStore()` with no selector at all — subscribes to the
+          entire store, re-renders on any store change.
+        - Inline selectors that return a new object/array on every call without
+          `useShallow`, e.g. `useStore((s) => ({ a: s.a, b: s.b }))`.
+        - Selectors that call `.map()` or `.filter()` and return a new array every
+          render even when underlying data hasn't changed.
+
+        ### 2. TanStack Query misuse
+        - Queries with `queryKey` arrays containing objects or arrays that aren't
+          stable references — causes cache misses and redundant network calls.
+        - `useQuery` inside a loop instead of a single batched query.
+        - Missing `staleTime` / `gcTime` on queries that fire on every keystroke.
+        - Enabled queries that should be conditional (e.g. `enabled: true` when data
+          isn't ready yet, causing waterfall requests).
+
+        ### 3. useMemo / useCallback overuse or underuse
+        - `useMemo` wrapping trivially cheap computations (e.g. string concatenation)
+          — the memo overhead costs more than it saves.
+        - `useCallback` wrapping a function that isn't passed to a memoized child —
+          overhead with no benefit.
+        - Expensive computations (e.g. flattening a large span tree, reconciling
+          column lists) NOT wrapped in `useMemo`, recomputed on every render.
+
+        ### 4. Large list rendering
+        - Lists of >50 items rendered without virtualization (react-virtuoso is already
+          in the project; look for places it should be used but isn't).
+        - Virtualized lists that invalidate row heights or cause full re-measures on
+          parent state changes unrelated to the list content.
+
+        ### 5. Context value instability
+        - React context values created as inline objects in JSX, e.g.
+          `<Ctx.Provider value={{ theme, setTheme }}>` — new object every render,
+          every consumer re-renders.
+
+        ### 6. useEffect as a derived state synchronizer
+        Look for `useEffect` that watches state A and sets state B — this is always
+        avoidable with `useMemo` or computed values in the store, and creates an
+        extra render cycle.
+
+        ### 7. Concurrent mode pitfalls
+        - State updates inside `useEffect` not wrapped in `startTransition` for
+          non-urgent updates (chart data re-renders, filter changes).
+        - Missing `Suspense` boundaries around lazy-loaded heavy panels, causing the
+          whole page to suspend.
+
+        ## How to work
+
+        Pick 2–3 of the highest-impact issues. For each:
+        1. Read the source file(s) carefully.
+        2. Explain why it causes unnecessary renders or slowness.
+        3. Show the problematic code and the corrected version.
+        4. If measurable, describe how to verify the improvement (React DevTools
+           Profiler, or a Vitest test with render count assertion).
+
+        Install dependencies with `cd peek && npm ci` before running any tests.
+
+        ## Output rules
+        - Only report bugs that cause measurable extra renders, network calls, or
+          user-visible jank. Pure style preferences are not bugs.
+        - If everything looks correct, do **not** open an issue.
+        - When filing an issue, include: what the problem is, where it lives, why it
+          matters, and the fix. Include before/after code snippets.
+        - Prefix issue titles with `[react-performance]`.
+      setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
