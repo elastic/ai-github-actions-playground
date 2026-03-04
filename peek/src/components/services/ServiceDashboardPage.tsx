@@ -20,9 +20,11 @@ import {
   parseRouteRows,
   parseRecentTraces,
   parseDeploymentRows,
+  parseServiceK8sContext,
 } from "./serviceDashboardHelpers";
 import ServiceDashboardSummaryCards from "./ServiceDashboardSummaryCards";
 import ServiceDeploymentsPanel from "./ServiceDeploymentsPanel";
+import ServiceK8sInfoPanel from "./ServiceK8sInfoPanel";
 import ServiceRoutesPanel from "./ServiceRoutesPanel";
 import ServiceTracesPanel from "./ServiceTracesPanel";
 import {
@@ -46,6 +48,7 @@ export default function ServiceDashboardPage() {
     error,
     handleReset,
     handleSearch,
+    k8sContextResult,
     loading,
     routeSparklineData,
     routesResult,
@@ -127,6 +130,10 @@ export default function ServiceDashboardPage() {
     if (!deploymentsResult) return [];
     return parseDeploymentRows(deploymentsResult);
   }, [deploymentsResult]);
+  const k8sRows = useMemo(() => {
+    if (!k8sContextResult) return [];
+    return parseServiceK8sContext(k8sContextResult);
+  }, [k8sContextResult]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -174,6 +181,8 @@ export default function ServiceDashboardPage() {
       {summary && <ServiceDashboardSummaryCards summary={summary} />}
 
       {deployments.length > 0 && <ServiceDeploymentsPanel deployments={deployments} />}
+
+      {k8sRows.length > 0 && <ServiceK8sInfoPanel rows={k8sRows} />}
 
       {topRouteRows.length > 0 && (
         <ServiceRoutesPanel

@@ -103,6 +103,31 @@ export function buildServiceDeploymentsQuery(
   ]);
 }
 
+/**
+ * Builds an ES|QL query that fetches Kubernetes context (pod, namespace, node)
+ * for a given service. Returns distinct k8s metadata values linked to the service.
+ */
+export function buildServiceK8sContextQuery(
+  filters: ServiceDashboardFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+): string {
+  const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
+  const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
+
+  return buildPipeline([
+    `FROM ${fields.index}`,
+    buildWherePipe([
+      `${fields.serviceName} == "${escapeEsqlString(filters.serviceName)}"`,
+      `${fields.timestamp} >= ${safeTimeFrom}`,
+      `${fields.timestamp} <= ${safeTimeTo}`,
+      `k8s.pod.name IS NOT NULL`,
+    ]),
+    `STATS pod_count = COUNT_DISTINCT(k8s.pod.name) BY k8s_namespace = k8s.namespace.name, k8s_node = k8s.node.name, k8s_pod = k8s.pod.name`,
+    `SORT pod_count DESC`,
+    `LIMIT 50`,
+  ]);
+}
+
 const SPARKLINE_BUCKETS = 20;
 
 /**

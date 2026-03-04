@@ -4,6 +4,7 @@ import {
   parseRouteRows,
   parseRecentTraces,
   parseDeploymentRows,
+  parseServiceK8sContext,
 } from "../../src/components/services/serviceDashboardHelpers";
 import type { EsqlResponse } from "../../src/types";
 
@@ -273,6 +274,74 @@ describe("serviceDashboardHelpers", () => {
         lastSeen: "2026-01-01T01:00:00Z",
         requestCount: 0,
       });
+    });
+  });
+
+  describe("parseServiceK8sContext", () => {
+    it("parses K8s context rows from ES|QL response", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "pod_count", type: "long" },
+          { name: "k8s_namespace", type: "keyword" },
+          { name: "k8s_node", type: "keyword" },
+          { name: "k8s_pod", type: "keyword" },
+        ],
+        values: [
+          [1, "default", "node-1", "frontend-abc123"],
+          [1, "production", "node-2", "frontend-def456"],
+        ],
+      };
+
+      const rows = parseServiceK8sContext(response);
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toEqual({
+        namespace: "default",
+        node: "node-1",
+        pod: "frontend-abc123",
+        podCount: 1,
+      });
+      expect(rows[1]).toEqual({
+        namespace: "production",
+        node: "node-2",
+        pod: "frontend-def456",
+        podCount: 1,
+      });
+    });
+
+    it("handles missing values gracefully", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "pod_count", type: "long" },
+          { name: "k8s_namespace", type: "keyword" },
+          { name: "k8s_node", type: "keyword" },
+          { name: "k8s_pod", type: "keyword" },
+        ],
+        values: [[1, null, null, "pod-1"]],
+      };
+
+      const rows = parseServiceK8sContext(response);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toEqual({
+        namespace: "",
+        node: "",
+        pod: "pod-1",
+        podCount: 1,
+      });
+    });
+
+    it("returns empty array for empty response", () => {
+      const response: EsqlResponse = {
+        columns: [
+          { name: "pod_count", type: "long" },
+          { name: "k8s_namespace", type: "keyword" },
+          { name: "k8s_node", type: "keyword" },
+          { name: "k8s_pod", type: "keyword" },
+        ],
+        values: [],
+      };
+
+      const rows = parseServiceK8sContext(response);
+      expect(rows).toEqual([]);
     });
   });
 });

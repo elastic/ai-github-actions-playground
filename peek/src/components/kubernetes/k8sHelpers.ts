@@ -86,6 +86,28 @@ function columnIndex(columns: EsqlColumn[], name: string): number {
 }
 
 // ---------------------------------------------------------------------------
+// Service names extractor (for cross-linking K8s → Services)
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts unique non-empty service names from a K8s traces ES|QL response.
+ * Returns a sorted array of distinct service names, or an empty array when
+ * the column is missing (graceful degradation).
+ */
+export function extractServiceNames(response: EsqlResponse): string[] {
+  const idx = response.columns.findIndex((c) => c.name === "service.name");
+  if (idx === -1) return [];
+  const names = new Set<string>();
+  for (const row of response.values) {
+    const value = row[idx];
+    if (value != null && String(value).trim().length > 0) {
+      names.add(String(value).trim());
+    }
+  }
+  return Array.from(names).sort();
+}
+
+// ---------------------------------------------------------------------------
 // Parsers
 // ---------------------------------------------------------------------------
 
