@@ -15,6 +15,7 @@ import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
 import EmptyState from "../EmptyState";
 
 import { PROFILING_DIMENSION_LABELS, type ProfilingFocusDimension } from "./profilingQueryBuilder";
+import { isMissingProfilingIndex } from "./profilingUtils";
 import ProfilingFocusPicker from "./ProfilingFocusPicker";
 import ProfilingFocusHeader from "./ProfilingFocusHeader";
 import ProfilingValuePicker from "./ProfilingValuePicker";
@@ -24,11 +25,6 @@ import { useProfilingData } from "./useProfilingData";
 
 function isProfilingFocusDimension(value: string | null): value is ProfilingFocusDimension {
   return !!value && Object.prototype.hasOwnProperty.call(PROFILING_DIMENSION_LABELS, value);
-}
-
-/** Detect ES|QL "Unknown index" errors that indicate missing profiling data streams. */
-function isMissingProfilingIndex(error: string): boolean {
-  return /Unknown index \[profiling-/i.test(error);
 }
 
 export default function ProfilingGuidedPage() {

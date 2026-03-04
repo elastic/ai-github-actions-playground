@@ -48,18 +48,11 @@ import type {
 } from "./profilingUtils";
 import {
   buildFlamegraphTree,
+  isMissingProfilingIndex,
   joinStacktraces,
   normalizeTopFunctions,
   parseFrameIds,
 } from "./profilingUtils";
-
-/** Height for toolbar-level interactive controls (chips, text fields). */
-const TOOLBAR_CONTROL_HEIGHT = COMPONENT_HEIGHTS.input;
-
-/** Detect ES|QL "Unknown index" errors that indicate missing profiling data streams. */
-function isMissingProfilingIndex(error: string): boolean {
-  return /Unknown index \[profiling-/i.test(error);
-}
 
 function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
   const index = columns.findIndex((column) => column.name === field);
@@ -299,7 +292,7 @@ export default function ProfilingPage() {
                 variant={viewMode === mode ? "filled" : "outlined"}
                 color={viewMode === mode ? "primary" : "default"}
                 onClick={() => setViewMode(mode)}
-                sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
+                sx={{ height: COMPONENT_HEIGHTS.input }}
               />
             ),
           )}
