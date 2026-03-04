@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -418,6 +418,10 @@ describe("TracesPage slot insight integration", () => {
       viewMode: "list",
       drawerOpen: false,
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("renders InsightSlot indicators when slot insights are provided", async () => {

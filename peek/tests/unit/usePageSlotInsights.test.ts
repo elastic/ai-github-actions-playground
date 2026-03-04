@@ -221,7 +221,7 @@ describe("usePageSlotInsights", () => {
     expect(vi.mocked(generateObject)).not.toHaveBeenCalled();
   });
 
-  it("does not fetch when context is empty or whitespace", () => {
+  it("does not fetch when context is whitespace", () => {
     const { result } = renderHook(
       () =>
         usePageSlotInsights({
