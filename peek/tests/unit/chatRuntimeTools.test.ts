@@ -103,6 +103,27 @@ describe("buildChatRuntime — new tools", () => {
     expect(result).toEqual({ navigated: "traces", path: "/traces", label: "Traces" });
   });
 
+  it("get_screen_context returns updated path after navigate_to_page", async () => {
+    const navigate = vi.fn();
+    const { tools } = await buildChatRuntime({
+      config: defaultConfig,
+      connection: null,
+      pathname: "/discover",
+      navigate,
+    });
+    const navTool = tools.navigate_to_page as {
+      execute: (args: { page: string }) => Promise<unknown>;
+    };
+    const ctxTool = tools.get_screen_context as {
+      execute: (args: { include_data?: boolean }) => Promise<unknown>;
+    };
+    await navTool.execute({ page: "traces" });
+    const result = (await ctxTool.execute({ include_data: false })) as {
+      page: { path: string };
+    };
+    expect(result.page.path).toBe("/traces");
+  });
+
   it("includes set_query_lab_query tool when navigate is provided", async () => {
     const navigate = vi.fn();
     const { tools } = await buildChatRuntime({
