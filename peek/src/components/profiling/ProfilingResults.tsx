@@ -48,20 +48,29 @@ export default function ProfilingResults({
   toggleExpandedStacktraceId,
 }: ProfilingResultsProps) {
   if (loading) return null;
+  const showNoDataState =
+    hasRun &&
+    !error &&
+    topFunctionsRows.length === 0 &&
+    stacktraces.length === 0 &&
+    !timelineResult;
 
-  return (
-    <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-      {hasRun &&
-        !error &&
-        topFunctionsRows.length === 0 &&
-        stacktraces.length === 0 &&
-        !timelineResult && (
+  if (showNoDataState) {
+    return (
+      <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "hidden" }}>
+        <Box sx={{ display: "flex", minHeight: 320 }}>
           <EmptyState
             heading="No profiling data found"
             description="No samples matched the selected focus and time range."
             size="small"
           />
-        )}
+        </Box>
+      </Paper>
+    );
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
       {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
         <Table size="small">
           <TableHead>

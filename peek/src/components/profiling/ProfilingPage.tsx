@@ -254,6 +254,8 @@ export default function ProfilingPage() {
         ? timelineHasData
         : stacktraces.length > 0;
   const hasRunCurrentView = hasRunByMode[viewMode];
+  const showIdleEmptyState = !loading && !error && !hasRunCurrentView && !hasDataForCurrentView;
+  const showNoDataEmptyState = !loading && !error && hasRunCurrentView && !hasDataForCurrentView;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
@@ -381,123 +383,138 @@ export default function ProfilingPage() {
       )}
 
       {!(error && isMissingProfilingIndex(error)) && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-          {!loading && !error && !hasRunCurrentView && !hasDataForCurrentView && (
-            <EmptyState
-              heading="No profiling data"
-              description="Run the selected view to load profiling data."
-              size="small"
-            />
+        <>
+          {showIdleEmptyState && (
+            <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "hidden" }}>
+              <Box sx={{ display: "flex", minHeight: 320 }}>
+                <EmptyState
+                  heading="No profiling data"
+                  description="Run the selected view to load profiling data."
+                  size="small"
+                />
+              </Box>
+            </Paper>
           )}
-          {!loading && !error && hasRunCurrentView && !hasDataForCurrentView && (
-            <EmptyState
-              heading="No profiling data found"
-              description="No samples matched the selected filters and time range."
-              size="small"
-            />
+          {showNoDataEmptyState && (
+            <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "hidden" }}>
+              <Box sx={{ display: "flex", minHeight: 320 }}>
+                <EmptyState
+                  heading="No profiling data found"
+                  description="No samples matched the selected filters and time range."
+                  size="small"
+                />
+              </Box>
+            </Paper>
           )}
-          {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Function</TableCell>
-                  <TableCell align="right">Self count</TableCell>
-                  <TableCell align="right">Total count</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {topFunctionsRows.map((row, index) => (
-                  <TableRow key={`${row.functionName}-${index}`}>
-                    <TableCell>{row.functionName}</TableCell>
-                    <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
-                    <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {viewMode === "timeline" && timelineHasData && timelineResult && (
-            <Box sx={{ height: 360 }}>
-              <TimeSeriesChart data={timelineResult} options={{ smooth: true, showArea: false }} />
-            </Box>
-          )}
-          {viewMode === "stacktraces" && stacktraces.length > 0 && (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Stacktrace ID</TableCell>
-                  <TableCell align="right">Count</TableCell>
-                  <TableCell>Service</TableCell>
-                  <TableCell>Host</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {stacktraces.map((stacktrace) => {
-                  const isExpanded = expandedStacktraceIds.has(stacktrace.stacktraceId);
-                  const detailsId = `stacktrace-details-${encodeURIComponent(stacktrace.stacktraceId)}`;
-                  return (
-                    <Fragment key={stacktrace.stacktraceId}>
-                      <TableRow
-                        hover
-                        role="button"
-                        tabIndex={0}
-                        aria-expanded={isExpanded}
-                        aria-controls={detailsId}
-                        onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            toggleExpandedStacktraceId(stacktrace.stacktraceId);
-                          }
-                        }}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
-                          {stacktrace.stacktraceId}
-                        </TableCell>
-                        <TableCell align="right">{stacktrace.count}</TableCell>
-                        <TableCell>{stacktrace.serviceName || "—"}</TableCell>
-                        <TableCell>{stacktrace.hostName || "—"}</TableCell>
+          {!showIdleEmptyState && !showNoDataEmptyState && (
+            <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+              {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Function</TableCell>
+                      <TableCell align="right">Self count</TableCell>
+                      <TableCell align="right">Total count</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {topFunctionsRows.map((row, index) => (
+                      <TableRow key={`${row.functionName}-${index}`}>
+                        <TableCell>{row.functionName}</TableCell>
+                        <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
+                        <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
                       </TableRow>
-                      <TableRow>
-                        <TableCell colSpan={4} sx={{ py: 0 }}>
-                          <Collapse in={isExpanded}>
-                            <Box id={detailsId} sx={{ p: 1 }}>
-                              {stacktrace.frames.map((frame) => (
-                                <Typography
-                                  key={`${stacktrace.stacktraceId}-${frame.frameId}`}
-                                  variant="caption"
-                                  sx={{ display: "block", fontFamily: "monospace" }}
-                                >
-                                  {frame.functionName}{" "}
-                                  {frame.fileName
-                                    ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
-                                    : ""}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+              {viewMode === "timeline" && timelineHasData && timelineResult && (
+                <Box sx={{ height: 360 }}>
+                  <TimeSeriesChart
+                    data={timelineResult}
+                    options={{ smooth: true, showArea: false }}
+                  />
+                </Box>
+              )}
+              {viewMode === "stacktraces" && stacktraces.length > 0 && (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Stacktrace ID</TableCell>
+                      <TableCell align="right">Count</TableCell>
+                      <TableCell>Service</TableCell>
+                      <TableCell>Host</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {stacktraces.map((stacktrace) => {
+                      const isExpanded = expandedStacktraceIds.has(stacktrace.stacktraceId);
+                      const detailsId = `stacktrace-details-${encodeURIComponent(stacktrace.stacktraceId)}`;
+                      return (
+                        <Fragment key={stacktrace.stacktraceId}>
+                          <TableRow
+                            hover
+                            role="button"
+                            tabIndex={0}
+                            aria-expanded={isExpanded}
+                            aria-controls={detailsId}
+                            onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                toggleExpandedStacktraceId(stacktrace.stacktraceId);
+                              }
+                            }}
+                            sx={{ cursor: "pointer" }}
+                          >
+                            <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
+                              {stacktrace.stacktraceId}
+                            </TableCell>
+                            <TableCell align="right">{stacktrace.count}</TableCell>
+                            <TableCell>{stacktrace.serviceName || "—"}</TableCell>
+                            <TableCell>{stacktrace.hostName || "—"}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell colSpan={4} sx={{ py: 0 }}>
+                              <Collapse in={isExpanded}>
+                                <Box id={detailsId} sx={{ p: 1 }}>
+                                  {stacktrace.frames.map((frame) => (
+                                    <Typography
+                                      key={`${stacktrace.stacktraceId}-${frame.frameId}`}
+                                      variant="caption"
+                                      sx={{ display: "block", fontFamily: "monospace" }}
+                                    >
+                                      {frame.functionName}{" "}
+                                      {frame.fileName
+                                        ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
+                                        : ""}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              </Collapse>
+                            </TableCell>
+                          </TableRow>
+                        </Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+              {viewMode === "flamegraph" && stacktraces.length > 0 && (
+                <Box sx={{ height: 480 }}>
+                  <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
+                </Box>
+              )}
+              {viewMode === "flamescope" && stacktraces.length > 0 && (
+                <ProfilingFlamescope
+                  stacktraces={stacktraces}
+                  onWindowChange={setFlamescopeWindow}
+                  onFrameClick={handleFrameClick}
+                />
+              )}
+            </Paper>
           )}
-          {viewMode === "flamegraph" && stacktraces.length > 0 && (
-            <Box sx={{ height: 480 }}>
-              <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
-            </Box>
-          )}
-          {viewMode === "flamescope" && stacktraces.length > 0 && (
-            <ProfilingFlamescope
-              stacktraces={stacktraces}
-              onWindowChange={setFlamescopeWindow}
-              onFrameClick={handleFrameClick}
-            />
-          )}
-        </Paper>
+        </>
       )}
     </Box>
   );
