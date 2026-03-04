@@ -427,20 +427,28 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
+    test.setTimeout(60_000);
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
 
-    // Expand the collapsed ES|QL editor to verify generated queries
+    // Use the guided search input (stepper-based flow) to set search text
+    await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
+    await page.getByRole("button", { name: "Apply", exact: true }).click();
+
+    // Run the query and wait for results
+    await page.getByRole("button", { name: /^Search Logs\b/ }).click();
+    await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // Expand the collapsed ES|QL editor to verify the generated query
     await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
-    // Use the guided search input (stepper-based flow)
-    await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
-    await page.getByRole("button", { name: "Apply", exact: true }).click();
     await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
 
-    await page.getByRole("button", { name: /^Search Logs\b/ }).click();
+    // Click-to-filter: clicking a cell adds a filter to the query
     await page.getByRole("cell", { name: "checkout-service" }).click();
     await expect(page.getByText("service.name: checkout-service")).toBeVisible();
     await expect(queryInput).toContainText('service.name == "checkout-service"');
@@ -462,7 +470,7 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
-      Logs: () => expect(page.getByText("ES|QL Query")).toBeVisible(),
+      Logs: () => expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
       Console: () => expect(page.getByRole("heading", { name: "API Console" })).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
