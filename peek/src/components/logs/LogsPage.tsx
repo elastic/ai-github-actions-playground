@@ -480,7 +480,7 @@ export default function LogsPage() {
 
         <Box sx={{ flex: 1, width: "100%", minHeight: 0 }}>
           <InsightSlot slotId={LOGS_INSIGHT_SLOT_IDS.logsResults}>
-            <Box sx={{ display: "flex", flex: 1, gap: 1, width: "100%", minHeight: 0 }}>
+            <Box sx={{ display: "flex", gap: 1, width: "100%", height: "100%", minHeight: 0 }}>
               <Paper
                 variant="outlined"
                 sx={{
