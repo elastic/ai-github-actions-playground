@@ -36,28 +36,37 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
   const { loading, refresh } = useInsightSlotContext();
 
   const dismissKey = `insight-slot-dismissed:${slotId}`;
-  const [dismissed, setDismissed] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [dismissedSlotId, setDismissedSlotId] = useState<string | null>(null);
+  const [anchor, setAnchor] = useState<{ slotId: string; el: HTMLElement } | null>(null);
 
+  const anchorEl = anchor?.slotId === slotId ? anchor.el : null;
   const open = Boolean(anchorEl);
   const dismissedInSession =
     typeof window !== "undefined" && window.sessionStorage.getItem(dismissKey) === "1";
 
-  const handleOpen = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  }, []);
+  const handleOpen = useCallback(
+    (event: React.SyntheticEvent<HTMLElement>) => {
+      setAnchor({ slotId, el: event.currentTarget });
+    },
+    [slotId],
+  );
 
   const handleClose = useCallback(() => {
-    setAnchorEl(null);
+    setAnchor(null);
   }, []);
 
   const handleDismiss = useCallback(() => {
-    setAnchorEl(null);
-    setDismissed(true);
+    setAnchor(null);
+    setDismissedSlotId(slotId);
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem(dismissKey, "1");
     }
-  }, [dismissKey]);
+  }, [dismissKey, slotId]);
+
+  const handleRefresh = useCallback(() => {
+    setAnchor(null);
+    refresh();
+  }, [refresh]);
 
   // No insight or loading — render children unchanged.
   if (!insight || loading) {
@@ -65,7 +74,7 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
   }
 
   // Dismissed — render children without decoration.
-  if (dismissed || dismissedInSession) {
+  if (dismissedSlotId === slotId || dismissedInSession) {
     return <>{children}</>;
   }
 
@@ -137,7 +146,7 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
 
         <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", mt: 1 }}>
           <Tooltip title="Refresh insight">
-            <IconButton size="small" aria-label="Refresh insight" onClick={refresh}>
+            <IconButton size="small" aria-label="Refresh insight" onClick={handleRefresh}>
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>

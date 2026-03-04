@@ -120,6 +120,9 @@ describe("InsightSlot", () => {
 
     await user.click(screen.getByRole("button", { name: /refresh insight/i }));
     expect(refresh).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /refresh insight/i })).not.toBeInTheDocument();
+    });
   });
 
   it("opens popover via keyboard (Enter) and closes with Escape", async () => {
