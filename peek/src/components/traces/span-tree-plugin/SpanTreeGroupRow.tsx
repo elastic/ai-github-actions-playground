@@ -8,7 +8,6 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { alpha } from "@mui/material/styles";
 
 import { formatSpanDuration } from "../traceUtils";
@@ -18,34 +17,48 @@ import type { GroupStats } from "./spanTreeTypes";
 
 interface SpanTreeGroupRowProps {
   groupKey: string;
+  representativeSpanId: string;
+  isTraceRootGroup: boolean;
   depth: number;
   stats: GroupStats;
   expanded: boolean;
   onToggle: (groupKey: string) => void;
+  onClick: (spanId: string) => void;
   timelineOffset?: number | null;
   timelineFraction: number;
+  showTimeline?: boolean;
 }
 
 const ROW_HEIGHT = 32;
-const INDENT_PX = 20;
+const INDENT_PX = 24;
+const CONTROL_SLOT_WIDTH = 44;
 
 export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
   groupKey,
+  representativeSpanId,
+  isTraceRootGroup,
   depth,
   stats,
   expanded,
   onToggle,
+  onClick,
   timelineOffset,
   timelineFraction,
+  showTimeline = true,
 }: SpanTreeGroupRowProps) {
   const serviceColor = getServiceColor(stats.serviceName);
+  const showDurationBar = showTimeline && !isTraceRootGroup;
 
   return (
     <ButtonBase
-      aria-expanded={expanded}
+      component="div"
+      role="listitem"
       aria-label={expanded ? "Collapse grouped spans" : "Expand grouped spans"}
-      onClick={() => onToggle(groupKey)}
+      onClick={() => {
+        if (representativeSpanId) onClick(representativeSpanId);
+      }}
       sx={{
+        position: "relative",
         display: "flex",
         justifyContent: "flex-start",
         alignItems: "center",
@@ -55,17 +68,50 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
         borderLeft: stats.errorCount > 0 ? "3px solid" : "3px solid transparent",
         borderLeftColor: stats.errorCount > 0 ? "error.main" : "transparent",
         bgcolor: (theme) => alpha(theme.palette.action.hover, 0.02),
+        "&::before":
+          depth > 0
+            ? {
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: `${depth * INDENT_PX}px`,
+                backgroundImage: (theme) =>
+                  `repeating-linear-gradient(to right, transparent, transparent 23px, ${alpha(theme.palette.divider, 0.8)} 23px, ${alpha(theme.palette.divider, 0.8)} 24px)`,
+                pointerEvents: "none",
+                content: '""',
+              }
+            : undefined,
         "&:hover": { bgcolor: (theme) => alpha(theme.palette.action.hover, 0.06) },
       }}
     >
-      {/* Chevron */}
-      <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", width: 20, height: 20 }}>
-        <ChevronRightIcon
+      {/* Count badge doubles as expand affordance */}
+      <Box
+        sx={{
+          display: "flex",
+          flexShrink: 0,
+          justifyContent: "center",
+          alignItems: "center",
+          width: CONTROL_SLOT_WIDTH,
+          height: 20,
+        }}
+      >
+        <Chip
+          label={`x${stats.count}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle(groupKey);
+          }}
+          size="small"
+          variant="outlined"
           sx={{
-            color: "text.secondary",
-            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
-            transition: "transform 0.15s",
-            fontSize: 16,
+            minWidth: 34,
+            height: 18,
+            fontWeight: 700,
+            fontSize: "0.65rem",
+            "& .MuiChip-label": {
+              px: 1,
+            },
           }}
         />
       </Box>
@@ -112,19 +158,6 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
         {stats.operationName}
       </Typography>
 
-      {/* Count badge */}
-      <Chip
-        label={`x${stats.count}`}
-        size="small"
-        sx={{
-          height: 18,
-          mr: 0.5,
-          fontWeight: 700,
-          fontSize: "0.65rem",
-          "& .MuiChip-label": { px: 0.5 },
-        }}
-      />
-
       {/* Error count badge */}
       {stats.errorCount > 0 && (
         <Chip
@@ -142,36 +175,38 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
         />
       )}
 
-      {/* Duration bar */}
-      <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", width: 120, mr: 1 }}>
-        <Box
-          sx={{
-            position: "relative",
-            width: "100%",
-            height: 6,
-            borderRadius: 0.5,
-            bgcolor: "action.hover",
-          }}
-        >
+      {/* Child groups keep timeline context; root traces stay clean */}
+      {showDurationBar && (
+        <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", width: 120, mr: 1 }}>
           <Box
             sx={{
-              position: "absolute",
-              top: 0,
-              left:
-                timelineOffset != null ? `${Math.min(Math.max(timelineOffset, 0), 1) * 100}%` : 0,
-              width: `${Math.min(Math.max(timelineFraction * 100, 0.5), 100)}%`,
-              height: "100%",
+              position: "relative",
+              width: "100%",
+              height: 6,
               borderRadius: 0.5,
-              bgcolor: alpha(serviceColor, 0.5),
+              bgcolor: "action.hover",
             }}
-          />
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left:
+                  timelineOffset != null ? `${Math.min(Math.max(timelineOffset, 0), 1) * 100}%` : 0,
+                width: `${Math.min(Math.max(timelineFraction * 100, 0.5), 100)}%`,
+                height: "100%",
+                borderRadius: 0.5,
+                bgcolor: alpha(serviceColor, 0.5),
+              }}
+            />
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {/* Total duration text */}
       <Typography
         variant="caption"
-        sx={{ flexShrink: 0, width: 64, mr: 1, textAlign: "right", fontFamily: "monospace" }}
+        sx={{ flexShrink: 0, width: 72, mr: 1, textAlign: "right", fontFamily: "monospace" }}
       >
         {formatSpanDuration(stats.totalDurationUs)}
       </Typography>

@@ -16,6 +16,7 @@ import type { Span } from "./traceUtils";
 import {
   buildTraceSearchQuery,
   buildTraceDetailQuery,
+  buildTraceSpansForTraceIdsQuery,
   buildTraceTimeseriesQuery,
   buildTraceQueryLabDraft,
   buildDriftRadarQuery,
@@ -44,6 +45,7 @@ export function useTracesOrchestrator() {
   const setViewMode = useTracesStore((s) => s.setViewMode);
   const resetFilters = useTracesStore((s) => s.resetFilters);
   const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
+  const [searchTraceSpans, setSearchTraceSpans] = useState<Span[]>([]);
   const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
 
   // Sync the global AppHeader time range into trace filters
@@ -90,12 +92,43 @@ export function useTracesOrchestrator() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setTraceSearchCollapsed]);
 
+  const { runQuery: runSearchSpansQuery, loading: searchSpansLoading } = useEsqlQuery({
+    connection,
+    onSuccess: (data) =>
+      setSearchTraceSpans(parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING)),
+    onFailure: () => setSearchTraceSpans([]),
+  });
+
   // Main search query
   const handleSearchSuccess = useCallback(
-    (data: EsqlResponse) => setSearchResult(data),
-    [setSearchResult],
+    (data: EsqlResponse) => {
+      setSearchResult(data);
+      const traceIdColumnIndex = data.columns.findIndex(
+        (c) => c.name === DEFAULT_FIELD_MAPPING.traceId,
+      );
+      if (traceIdColumnIndex < 0) {
+        setSearchTraceSpans([]);
+        return;
+      }
+      const traceIds = Array.from(
+        new Set(
+          data.values
+            .map((row) => String(row[traceIdColumnIndex] ?? ""))
+            .filter((id) => id.length > 0),
+        ),
+      );
+      if (traceIds.length === 0) {
+        setSearchTraceSpans([]);
+        return;
+      }
+      runSearchSpansQuery(buildTraceSpansForTraceIdsQuery(traceIds));
+    },
+    [setSearchResult, runSearchSpansQuery],
   );
-  const handleSearchFailure = useCallback(() => setSearchResult(null), [setSearchResult]);
+  const handleSearchFailure = useCallback(() => {
+    setSearchResult(null);
+    setSearchTraceSpans([]);
+  }, [setSearchResult]);
   const {
     runQuery: runSearchQuery,
     loading: searchLoading,
@@ -199,13 +232,22 @@ export function useTracesOrchestrator() {
   const runTraceQueries = useCallback(
     (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
       setSearchResult(null);
+      setSearchTraceSpans([]);
       setTimeseriesResult(null);
       runSearchQuery(query);
       if (includeTimeseries) {
         runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
       }
     },
-    [filters, rawQuery, runSearchQuery, runTimeseriesQuery, setSearchResult, setTimeseriesResult],
+    [
+      filters,
+      rawQuery,
+      runSearchQuery,
+      runTimeseriesQuery,
+      setSearchResult,
+      setSearchTraceSpans,
+      setTimeseriesResult,
+    ],
   );
 
   const runDriftRadarQueries = useCallback(
@@ -313,9 +355,8 @@ export function useTracesOrchestrator() {
 
   // Parse search results into full Span[] for SpanTreeView
   const searchSpans = useMemo(() => {
-    if (!searchResult) return [];
-    return parseSpansFromEsql(searchResult.columns, searchResult.values, DEFAULT_FIELD_MAPPING);
-  }, [searchResult]);
+    return searchTraceSpans;
+  }, [searchTraceSpans]);
 
   const handleSelectSpan = useCallback(
     (spanId: string) => {
@@ -364,8 +405,11 @@ export function useTracesOrchestrator() {
   );
 
   const selectedSpan = useMemo(
-    () => selectedTraceSpans.find((s) => s.spanId === selectedSpanId) ?? null,
-    [selectedTraceSpans, selectedSpanId],
+    () =>
+      selectedTraceSpans.find((s) => s.spanId === selectedSpanId) ??
+      searchTraceSpans.find((s) => s.spanId === selectedSpanId) ??
+      null,
+    [selectedTraceSpans, searchTraceSpans, selectedSpanId],
   );
 
   const handleDrawerFilterBy = useCallback(
@@ -418,6 +462,7 @@ export function useTracesOrchestrator() {
 
     // Query loading & errors
     searchLoading,
+    searchSpansLoading,
     searchError,
     detailLoading,
     detailError,

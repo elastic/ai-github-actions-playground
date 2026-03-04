@@ -47,7 +47,6 @@ interface TraceResultsViewProps {
   traceRows: TraceRow[];
   selectedTraceId: string | null;
   onSelectTrace: (traceId: string, spanId?: string, timestamp?: string) => void;
-  maxDuration: number;
   rawQuery: string | null;
   timeseriesLoading: boolean;
   timeseriesResult: EsqlResponse | null;
@@ -63,9 +62,9 @@ interface TraceResultsViewProps {
   filters: TraceFilters;
   onSearch?: () => void;
   searchSpans: Span[];
+  searchSpansLoading: boolean;
   selectedSpanId?: string | null;
   onSelectSpan?: (spanId: string) => void;
-  onClearTraceSelection?: () => void;
   onOpenInQueryLab?: () => void;
 }
 
@@ -77,7 +76,6 @@ export default function TraceResultsView({
   traceRows,
   selectedTraceId,
   onSelectTrace,
-  maxDuration,
   rawQuery,
   timeseriesLoading,
   timeseriesResult,
@@ -93,14 +91,11 @@ export default function TraceResultsView({
   filters,
   onSearch,
   searchSpans,
+  searchSpansLoading,
   selectedSpanId,
   onSelectSpan,
-  onClearTraceSelection,
   onOpenInQueryLab,
 }: TraceResultsViewProps) {
-  // In list mode with a trace selected, show the trace detail tree
-  const showTraceDetail = viewMode === "list" && selectedTraceId != null;
-
   return (
     <Box
       sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "hidden" }}
@@ -164,28 +159,25 @@ export default function TraceResultsView({
           </Box>
         )}
 
-        {/* List mode: SpanTreeView in search or trace detail mode */}
-        {searchResult && viewMode === "list" && !showTraceDetail && searchSpans.length === 0 && (
+        {/* List mode: single hierarchical traces + spans view */}
+        {searchResult && viewMode === "list" && searchSpansLoading && (
+          <Box sx={{ p: 2 }}>
+            <ContentSkeleton variant="table" />
+          </Box>
+        )}
+        {searchResult && viewMode === "list" && !searchSpansLoading && searchSpans.length === 0 && (
           <EmptyState
             heading="No traces matched the current filters."
             description="Adjust filters or widen the time range."
           />
         )}
-        {searchResult && viewMode === "list" && !showTraceDetail && searchSpans.length > 0 && (
+        {searchResult && viewMode === "list" && !searchSpansLoading && searchSpans.length > 0 && (
           <SpanTreeView
             spans={searchSpans}
-            selectedTraceId={selectedTraceId}
-            onSelectTrace={onSelectTrace}
-            maxDuration={maxDuration}
-          />
-        )}
-        {viewMode === "list" && showTraceDetail && (
-          <SpanTreeView
-            spans={selectedTraceSpans}
+            showToolbar={false}
             selectedTraceId={selectedTraceId}
             selectedSpanId={selectedSpanId}
             onSelectSpan={onSelectSpan}
-            onBack={onClearTraceSelection}
             onOpenInQueryLab={onOpenInQueryLab}
             loading={detailLoading}
           />

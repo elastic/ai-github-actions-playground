@@ -146,10 +146,10 @@ export default function TracesPage() {
                 onViewModeChange={orchestrator.setViewMode}
                 searchResult={orchestrator.searchResult}
                 searchLoading={orchestrator.searchLoading}
+                searchSpansLoading={orchestrator.searchSpansLoading}
                 traceRows={orchestrator.traceRows}
                 selectedTraceId={orchestrator.selectedTraceId}
                 onSelectTrace={orchestrator.handleSelectTrace}
-                maxDuration={orchestrator.maxDuration}
                 rawQuery={orchestrator.rawQuery}
                 timeseriesLoading={orchestrator.timeseriesLoading}
                 timeseriesResult={orchestrator.timeseriesResult}
@@ -167,7 +167,6 @@ export default function TracesPage() {
                 searchSpans={orchestrator.searchSpans}
                 selectedSpanId={orchestrator.selectedSpanId}
                 onSelectSpan={orchestrator.handleSelectSpan}
-                onClearTraceSelection={orchestrator.clearTraceSelection}
                 onOpenInQueryLab={
                   orchestrator.selectedTraceId
                     ? () =>
@@ -187,7 +186,11 @@ export default function TracesPage() {
           <SpanDetailDrawer
             span={orchestrator.selectedSpan}
             open={orchestrator.drawerOpen}
+            selectedSpanId={orchestrator.selectedSpanId}
+            traceSpans={orchestrator.selectedTraceSpans}
+            searchSpans={orchestrator.searchSpans}
             onClose={() => orchestrator.setDrawerOpen(false)}
+            onSelectSpan={orchestrator.handleSelectSpan}
             onFilterBy={orchestrator.handleDrawerFilterBy}
             onExclude={orchestrator.handleDrawerExclude}
             onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}

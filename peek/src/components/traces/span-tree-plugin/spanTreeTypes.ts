@@ -61,6 +61,7 @@ export interface TracingSpanTreeOptions {
 export interface SpanTreeViewProps {
   spans: Span[];
   options?: TracingSpanTreeOptions;
+  showToolbar?: boolean;
   selectedTraceId?: string | null;
   selectedSpanId?: string | null;
   onSelectTrace?: (traceId: string, spanId?: string, timestamp?: string) => void;

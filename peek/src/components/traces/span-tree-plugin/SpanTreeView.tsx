@@ -21,6 +21,7 @@ const ROW_HEIGHT = 32;
 export default function SpanTreeView({
   spans,
   options,
+  showToolbar = true,
   selectedTraceId,
   selectedSpanId,
   onSelectTrace,
@@ -44,10 +45,25 @@ export default function SpanTreeView({
     [spans, searchMode],
   );
   const traceDuration = traceBounds ? traceBounds.endUs - traceBounds.startUs : 0;
+  const traceBoundsByTraceId = useMemo(() => {
+    const boundsByTrace = new Map<string, { startUs: number; endUs: number }>();
+    for (const span of spans) {
+      const existing = boundsByTrace.get(span.traceId);
+      const endUs = span.startTimeUs + span.durationUs;
+      if (!existing) {
+        boundsByTrace.set(span.traceId, { startUs: span.startTimeUs, endUs });
+      } else {
+        existing.startUs = Math.min(existing.startUs, span.startTimeUs);
+        existing.endUs = Math.max(existing.endUs, endUs);
+      }
+    }
+    return boundsByTrace;
+  }, [spans]);
 
   const effectiveMaxDuration = maxDuration ?? spans.reduce((m, s) => Math.max(m, s.durationUs), 1);
 
   const showTimestamp = visual?.showTimestamp ?? searchMode;
+  const showTimeline = visual?.showTimeline ?? true;
 
   const handleRowClick = useCallback(
     (spanId: string) => {
@@ -73,21 +89,26 @@ export default function SpanTreeView({
             timelineFraction: effectiveMaxDuration > 0 ? span.durationUs / effectiveMaxDuration : 0,
           };
         }
-        if (traceBounds && traceDuration > 0) {
+        const bounds = traceBoundsByTraceId.get(span.traceId) ?? traceBounds;
+        const boundsDuration = bounds ? bounds.endUs - bounds.startUs : traceDuration;
+        if (bounds && boundsDuration > 0) {
           return {
-            timelineOffset: (span.startTimeUs - traceBounds.startUs) / traceDuration,
-            timelineFraction: span.durationUs / traceDuration,
+            timelineOffset: (span.startTimeUs - bounds.startUs) / boundsDuration,
+            timelineFraction: span.durationUs / boundsDuration,
           };
         }
         return { timelineOffset: null as number | null, timelineFraction: 0 };
       }
       // Group row
-      if (traceBounds && traceDuration > 0) {
+      const groupTraceId = item.spans[0]?.span.traceId;
+      const bounds = (groupTraceId ? traceBoundsByTraceId.get(groupTraceId) : null) ?? traceBounds;
+      const boundsDuration = bounds ? bounds.endUs - bounds.startUs : traceDuration;
+      if (bounds && boundsDuration > 0) {
         const firstStart = Math.min(...item.spans.map((n) => n.span.startTimeUs));
         const lastEnd = Math.max(...item.spans.map((n) => n.span.startTimeUs + n.span.durationUs));
         return {
-          timelineOffset: (firstStart - traceBounds.startUs) / traceDuration,
-          timelineFraction: (lastEnd - firstStart) / traceDuration,
+          timelineOffset: (firstStart - bounds.startUs) / boundsDuration,
+          timelineFraction: (lastEnd - firstStart) / boundsDuration,
         };
       }
       return {
@@ -96,7 +117,7 @@ export default function SpanTreeView({
           effectiveMaxDuration > 0 ? item.stats.totalDurationUs / effectiveMaxDuration : 0,
       };
     },
-    [searchMode, traceBounds, traceDuration, effectiveMaxDuration],
+    [searchMode, traceBoundsByTraceId, traceBounds, traceDuration, effectiveMaxDuration],
   );
 
   if (loading) {
@@ -126,15 +147,22 @@ export default function SpanTreeView({
     const timeline = computeTimelineProps(item);
 
     if (item.type === "group") {
+      const isTraceRootGroup = item.spans.every(
+        (groupNode) => !groupNode.span.parentSpanId || groupNode.span.parentSpanId === "",
+      );
       return (
         <SpanTreeGroupRow
           groupKey={item.groupKey}
+          representativeSpanId={item.spans[0]?.span.spanId ?? ""}
+          isTraceRootGroup={isTraceRootGroup}
           depth={item.depth}
           stats={item.stats}
           expanded={item.expanded}
           onToggle={toggleGroup}
+          onClick={handleRowClick}
           timelineOffset={timeline.timelineOffset}
           timelineFraction={timeline.timelineFraction}
+          showTimeline={showTimeline}
         />
       );
     }
@@ -142,6 +170,7 @@ export default function SpanTreeView({
     return (
       <SpanTreeRow
         node={item.node}
+        isTraceRoot={!item.node.span.parentSpanId || item.node.span.parentSpanId === ""}
         expanded={item.expanded}
         hasChildren={item.hasChildren}
         selected={item.node.span.spanId === selectedSpanId}
@@ -149,6 +178,7 @@ export default function SpanTreeView({
         onClick={handleRowClick}
         timelineOffset={timeline.timelineOffset}
         timelineFraction={timeline.timelineFraction}
+        showTimeline={showTimeline}
         showTimestamp={showTimestamp}
       />
     );
@@ -156,15 +186,17 @@ export default function SpanTreeView({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <SpanTreeToolbar
-        searchMode={searchMode}
-        spanCount={spans.length}
-        traceId={searchMode ? null : selectedTraceId}
-        onBack={searchMode ? undefined : onBack}
-        onExpandAll={searchMode ? undefined : expandAll}
-        onCollapseAll={searchMode ? undefined : collapseAll}
-        onOpenInQueryLab={searchMode ? undefined : onOpenInQueryLab}
-      />
+      {showToolbar && (
+        <SpanTreeToolbar
+          searchMode={searchMode}
+          spanCount={spans.length}
+          traceId={searchMode ? null : selectedTraceId}
+          onBack={searchMode ? undefined : onBack}
+          onExpandAll={searchMode ? undefined : expandAll}
+          onCollapseAll={searchMode ? undefined : collapseAll}
+          onOpenInQueryLab={searchMode ? undefined : onOpenInQueryLab}
+        />
+      )}
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <Virtuoso
           data={flatRows}
