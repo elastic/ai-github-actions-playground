@@ -303,6 +303,12 @@ export async function registerElasticsearchMocks(
       return json(resolved.esqlDefault);
     }
 
+    // Catch-all for _search POST requests on unknown indices.
+    // Mimics Elasticsearch behaviour with ignore_unavailable=true&allow_no_indices=true.
+    if (path.endsWith("/_search") && method === "POST") {
+      return json({ hits: { total: { value: 0, relation: "eq" }, hits: [] } });
+    }
+
     return json(fallback, fallbackStatus);
   });
 }

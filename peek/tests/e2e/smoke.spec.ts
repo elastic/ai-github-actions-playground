@@ -377,8 +377,7 @@ test.describe("smoke – site navigation", () => {
     page,
   }) => {
     await connectToMockCluster(page);
-    const queryEditor = page.getByLabel("ES|QL query editor");
-    const queryInput = queryEditor.getByRole("textbox");
+    const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
     const queryText = "FROM logs-* | SORT @timestamp | LIMIT 1";
 
     // Open Query Lab
@@ -420,9 +419,8 @@ test.describe("smoke – site navigation", () => {
     await expect(page).toHaveURL(/\/logs$/);
     // The ES|QL editor starts collapsed; expand it first
     await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
-    const queryEditor = page.getByLabel("Logs Explorer query editor");
-    const queryInput = queryEditor.getByRole("textbox");
-    await expect(queryEditor).toBeVisible();
+    const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
+    await expect(queryInput).toBeVisible();
     await queryInput.click();
     await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type("FROM logs-* | LIMIT 1");
@@ -453,8 +451,7 @@ test.describe("smoke – site navigation", () => {
 
     // Expand the collapsed ES|QL editor to verify the generated query text
     await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
-    const queryEditor = page.getByLabel("Logs Explorer query editor");
-    const queryInput = queryEditor.getByRole("textbox");
+    const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
     await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
@@ -474,7 +471,8 @@ test.describe("smoke – site navigation", () => {
       Services: () =>
         expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
-      "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      "Query Lab": () =>
+        expect(page.getByRole("textbox", { name: "ES|QL query editor" })).toBeVisible(),
       Logs: () => expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
       Console: () => expect(page.getByRole("heading", { name: "API Console" })).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),

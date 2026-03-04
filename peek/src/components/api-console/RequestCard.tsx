@@ -16,6 +16,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
+import { EditorView } from "@codemirror/view";
 
 import { buildCurlCommand } from "../../utils/buildCurlCommand";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
@@ -63,6 +64,7 @@ export default function RequestCard({
   const bodyEditorExtensions = useMemo(
     () => [
       json(),
+      EditorView.contentAttributes.of({ "aria-label": "Request body editor" }),
       makeLLMCompletionExtension({
         prompt:
           "You are an Elasticsearch REST API expert. Complete the JSON request body the user is editing. " +
@@ -73,6 +75,7 @@ export default function RequestCard({
   );
   const pathEditorExtensions = useMemo(
     () => [
+      EditorView.contentAttributes.of({ "aria-label": "Request path" }),
       makeLLMCompletionExtension({
         prompt:
           "You are an Elasticsearch REST API path expert. Complete the API path at the cursor position. Common paths include _cluster/health, _cat/indices, _search, _bulk, _mapping, _settings, _aliases, _reindex, _analyze, _nodes, _tasks, _ingest/pipeline, _security, etc. Return only the complete path text, no explanation.",
@@ -80,6 +83,10 @@ export default function RequestCard({
         delay: 600,
       }),
     ],
+    [],
+  );
+  const responseExtensions = useMemo(
+    () => [json(), EditorView.contentAttributes.of({ "aria-label": "Response body" })],
     [],
   );
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -179,7 +186,6 @@ export default function RequestCard({
                 onSend(entry.id);
               }
             }}
-            aria-label="Request path"
           />
         </Box>
 
@@ -249,7 +255,6 @@ export default function RequestCard({
               theme={themeMode}
               height="120px"
               basicSetup={{ lineNumbers: true, foldGutter: false }}
-              aria-label="Request body editor"
             />
           </Box>
         </Box>
@@ -327,11 +332,10 @@ export default function RequestCard({
                 >
                   <CodeMirror
                     value={serializeResponse(entry.response.body)}
-                    extensions={[json()]}
+                    extensions={responseExtensions}
                     theme={themeMode}
                     editable={false}
                     basicSetup={{ lineNumbers: true, foldGutter: true }}
-                    aria-label="Response body"
                   />
                 </Box>
               </>
