@@ -44,7 +44,7 @@ The command template pre-fills available endpoint/version/API key values.
 
 Inline (not collapsible) ingestion verification:
 
-- `startPolling` for automatic polling (auto-starts after API key generation)
+- Automatic polling (auto-starts after API key generation)
 - **Check now** for manual trigger
 - Per-signal verification cards showing data stream and host/agent detection
 
