@@ -356,6 +356,13 @@ export default function DataStreamsPage() {
                     hover
                     selected={stream.name === selectedName}
                     onClick={() => setSelectedName(stream.name)}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedName(stream.name);
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>

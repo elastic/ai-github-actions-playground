@@ -334,6 +334,13 @@ export default function IndicesPage() {
                     hover
                     selected={idx.index === selectedIndex}
                     onClick={() => void setSelectedIndex(idx.index)}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        void setSelectedIndex(idx.index);
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
