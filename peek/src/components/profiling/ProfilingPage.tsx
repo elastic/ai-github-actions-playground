@@ -254,7 +254,7 @@ export default function ProfilingPage() {
     viewMode === "topFunctions"
       ? topFunctionsRows.length > 0
       : viewMode === "timeline"
-        ? Boolean(timelineResult)
+        ? (timelineResult?.values.length ?? 0) > 0
         : stacktraces.length > 0;
   const hasRunCurrentView = hasRunByMode[viewMode];
 
