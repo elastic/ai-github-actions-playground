@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import type { Span } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
@@ -31,7 +32,8 @@ export default function ServiceMiniDependencyGraph({
   spans,
   onPeerServiceClick,
 }: ServiceMiniDependencyGraphProps) {
-  const theme = useEChartTheme();
+  const echartTheme = useEChartTheme();
+  const muiTheme = useTheme();
   const instanceRef = useRef<EChartInstance | undefined>(undefined);
 
   const { neighbors, maxCalls } = useMemo(() => {
@@ -52,6 +54,13 @@ export default function ServiceMiniDependencyGraph({
   const option = useMemo(() => {
     const inbound = neighbors.filter((n) => n.direction === "inbound");
     const outbound = neighbors.filter((n) => n.direction === "outbound");
+    const inboundPeerSet = new Set(inbound.map((edge) => edge.peerService));
+    const outboundPeerSet = new Set(outbound.map((edge) => edge.peerService));
+    const bidirectionalPeers = Array.from(inboundPeerSet).filter((peer) =>
+      outboundPeerSet.has(peer),
+    );
+    const inboundOnly = inbound.filter((edge) => !outboundPeerSet.has(edge.peerService));
+    const outboundOnly = outbound.filter((edge) => !inboundPeerSet.has(edge.peerService));
 
     const nodes: Array<Record<string, unknown>> = [
       {
@@ -60,30 +69,59 @@ export default function ServiceMiniDependencyGraph({
         x: 50,
         y: 50,
         symbolSize: 42,
-        itemStyle: { color: "#1976d2", borderColor: "rgba(255,255,255,0.8)", borderWidth: 2 },
+        itemStyle: {
+          color: muiTheme.palette.primary.main,
+          borderColor: alpha(muiTheme.palette.common.white, 0.8),
+          borderWidth: 2,
+        },
         label: { color: "inherit", fontWeight: 700 },
       },
     ];
 
-    inbound.forEach((edge, i) => {
+    inboundOnly.forEach((edge, i) => {
       nodes.push({
         id: edge.peerService,
         name: edge.peerService,
         x: 18,
-        y: distributeY(i, inbound.length),
+        y: distributeY(i, inboundOnly.length),
         symbolSize: 26,
-        itemStyle: { color: "#4c7cd6", borderColor: "rgba(255,255,255,0.5)", borderWidth: 1.5 },
+        itemStyle: {
+          color: muiTheme.palette.primary.dark,
+          borderColor: alpha(muiTheme.palette.common.white, 0.5),
+          borderWidth: 1.5,
+        },
         label: { color: "inherit", fontWeight: 500 },
       });
     });
-    outbound.forEach((edge, i) => {
+
+    bidirectionalPeers.forEach((peerService, i) => {
+      nodes.push({
+        id: peerService,
+        name: peerService,
+        x: 68,
+        y: distributeY(i, bidirectionalPeers.length),
+        symbolSize: 30,
+        itemStyle: {
+          color: muiTheme.palette.secondary.main,
+          borderColor: alpha(muiTheme.palette.common.white, 0.5),
+          borderWidth: 1.5,
+        },
+        label: { color: "inherit", fontWeight: 500 },
+      });
+    });
+
+    outboundOnly.forEach((edge, i) => {
       nodes.push({
         id: edge.peerService,
         name: edge.peerService,
         x: 82,
-        y: distributeY(i, outbound.length),
+        y: distributeY(i, outboundOnly.length),
         symbolSize: 26,
-        itemStyle: { color: "#5b92ff", borderColor: "rgba(255,255,255,0.5)", borderWidth: 1.5 },
+        itemStyle: {
+          color: muiTheme.palette.primary.light,
+          borderColor: alpha(muiTheme.palette.common.white, 0.5),
+          borderWidth: 1.5,
+        },
         label: { color: "inherit", fontWeight: 500 },
       });
     });
@@ -93,7 +131,10 @@ export default function ServiceMiniDependencyGraph({
       target: edge.direction === "inbound" ? serviceName : edge.peerService,
       lineStyle: {
         width: 1.5 + (edge.calls / maxCalls) * 3.5,
-        color: edge.errorRate > 0.05 ? "#d32f2f" : "rgba(120,160,255,0.8)",
+        color:
+          edge.errorRate > 0.05
+            ? muiTheme.palette.error.main
+            : alpha(muiTheme.palette.primary.light, 0.8),
         opacity: 0.85,
         curveness: 0.08,
       },
@@ -120,7 +161,7 @@ export default function ServiceMiniDependencyGraph({
         },
       ],
     };
-  }, [neighbors, maxCalls, serviceName]);
+  }, [maxCalls, muiTheme.palette, neighbors, serviceName]);
 
   const handleClick = useCallback(
     (params: unknown) => {
@@ -157,7 +198,7 @@ export default function ServiceMiniDependencyGraph({
   return (
     <EChart
       option={option}
-      theme={theme}
+      theme={echartTheme}
       _instance={instanceRef}
       sx={{ width: "100%", height: "100%" }}
     />
