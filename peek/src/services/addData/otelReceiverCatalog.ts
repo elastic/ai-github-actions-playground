@@ -161,18 +161,22 @@ export function mergeIntoExistingOtelConfig(
 
   // --- processors (add batch if missing) ---
   const processors = asMapping(existing.processors, "processors");
-  if (!processors.batch) {
+  if (processors.batch == null) {
     processors.batch = { send_batch_size: 1000, timeout: "5s" };
+  } else {
+    asMapping(processors.batch, "processors.batch");
   }
   existing.processors = processors;
 
   // --- exporters (add elasticsearch if missing) ---
   const exporters = asMapping(existing.exporters, "exporters");
-  if (!exporters.elasticsearch) {
+  if (exporters.elasticsearch == null) {
     exporters.elasticsearch = {
       endpoints: [opts.esUrl],
       api_key: opts.apiKey,
     };
+  } else {
+    asMapping(exporters.elasticsearch, "exporters.elasticsearch");
   }
   existing.exporters = exporters;
 

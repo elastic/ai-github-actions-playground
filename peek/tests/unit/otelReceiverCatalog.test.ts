@@ -135,10 +135,18 @@ service:
 
     // Parse the result to check arrays don't have duplicates
     const parsed = parse(result) as {
-      service: { pipelines: { metrics: { receivers: string[] } } };
+      service: {
+        pipelines: {
+          metrics: { receivers: string[]; processors: string[]; exporters: string[] };
+        };
+      };
     };
     const receivers = parsed.service.pipelines.metrics.receivers;
+    const processors = parsed.service.pipelines.metrics.processors;
+    const exporters = parsed.service.pipelines.metrics.exporters;
     expect(receivers.filter((r: string) => r === "nginx")).toHaveLength(1);
+    expect(processors.filter((p: string) => p === "batch")).toHaveLength(1);
+    expect(exporters.filter((e: string) => e === "elasticsearch")).toHaveLength(1);
   });
 
   it("preserves existing exporters when adding elasticsearch", () => {
