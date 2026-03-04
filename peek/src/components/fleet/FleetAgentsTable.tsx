@@ -20,6 +20,7 @@ import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness, fleetStatusColor } from "../../services/fleet";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import EmptyState from "../EmptyState";
+import { compareSemver } from "../../utils/compareSemver";
 
 import { stalenessSeverityToColor } from "./fleetPresentation";
 
@@ -61,7 +62,7 @@ export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
 
   const uniqueVersions = useMemo(() => {
     const versions = new Set(agents.map((a) => a.version));
-    return [...versions].sort();
+    return [...versions].sort(compareSemver);
   }, [agents]);
 
   const filtered = useMemo(() => {
@@ -98,10 +99,10 @@ export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
           aVal = a.status;
           bVal = b.status;
           break;
-        case "version":
-          aVal = a.version;
-          bVal = b.version;
-          break;
+        case "version": {
+          const cmp = compareSemver(a.version, b.version);
+          return sortDirection === "asc" ? cmp : -cmp;
+        }
         case "policyId":
           aVal = a.policyId;
           bVal = b.policyId;
