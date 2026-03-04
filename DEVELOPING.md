@@ -106,7 +106,7 @@ Peek uses [Perses](https://perses.dev) as its charting framework (CNCF project, 
 - **Data model** — dashboards serialize to the Perses resource format (`kind: "Dashboard"`, panels as `kind: "Panel"` with plugin kinds). Adapters in `services/perses/dashboardAdapters.ts` convert between internal `DashboardDefinition` and the Perses wire format.
 - **Panel plugins** — each visualization type maps to a Perses plugin kind via `VISUALIZATION_TO_PLUGIN_KIND` in the adapter layer (`TimeSeriesChart`, `StatChart`, `GaugeChart`, `BarChart`, `TablePanel`, `PieChart`, `ScatterChart`, `HeatMapChart`, `HistogramChart`, `MarkdownPanel`).
 - **Viz registry** — `vizRegistry.tsx` and `components/perses/panelRegistry.ts` use the same `VizRegistryEntry` interface. Registry entries are auto-discovered from `visualizations/registry/*.tsx`.
-- **Rendering** — charts render through the Perses `EChart` component from `@perses-dev/components`. Graph-type charts (service maps, drift radar) import `EChart` from `components/perses/PersesEChartWrapper`, a thin shim that registers the ECharts `GraphChart` extension before re-exporting `EChart`. This is the permanent pattern for any chart type not registered in Perses's upstream bundle. Do not import ECharts directly in new chart components; use the Perses `EChart` component (or `PersesEChartWrapper` when an additional chart type registration is needed).
+- **Rendering** — charts render through the Perses `EChart` component from `@perses-dev/components`. Graph-type charts (service maps, drift radar) import `EChart` from `../perses/PersesEChartWrapper`, a thin shim that registers the ECharts `GraphChart` extension before re-exporting `EChart`. This is the permanent pattern for any chart type not registered in Perses's upstream bundle. Do not import ECharts directly in new chart components; use the Perses `EChart` component (or `PersesEChartWrapper` when an additional chart type registration is needed).
 - **Theming** — `useEChartTheme()` produces ECharts-compatible options from MUI palette tokens. When rendered inside `PersesProviders`, the hook delegates to the centrally-managed `ChartsProvider` theme via `PeekChartsThemeContext`; otherwise it falls back to an equivalent inline theme. All chart theming flows through this single hook — charts never set their own colors.
 
 **Code-structure rules for chart components:**
@@ -335,7 +335,7 @@ import * as echarts from 'echarts/core';
 // ✅ Use Perses EChart or the GraphChart-enabled shim
 import { EChart } from '@perses-dev/components';
 // or
-import { EChart } from 'components/perses/PersesEChartWrapper';
+import { EChart } from '../perses/PersesEChartWrapper';
 
 // ❌ Fetching data inside a chart component
 useEffect(() => { fetchData(query) }, [query]);
