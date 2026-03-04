@@ -358,9 +358,7 @@ export function useTracesOrchestrator() {
   );
 
   // Parse search results into full Span[] for SpanTreeView
-  const searchSpans = useMemo(() => {
-    return searchTraceSpans;
-  }, [searchTraceSpans]);
+  const searchSpans = searchTraceSpans;
 
   const handleSelectSpan = useCallback(
     (spanId: string) => {

@@ -119,6 +119,13 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
             event.stopPropagation();
             onToggle(groupKey);
           }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+              onToggle(groupKey);
+            }
+          }}
           size="small"
           variant="outlined"
           sx={{
