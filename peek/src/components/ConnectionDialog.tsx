@@ -217,7 +217,8 @@ export default function ConnectionDialog() {
     setConnected(false);
     setCapabilities(null);
     setResult(null);
-  }, [setConnected, setCapabilities]);
+    setOpen(false);
+  }, [setConnected, setCapabilities, setOpen]);
 
   const isDuplicateProfileName = profileName.trim()
     ? connectionProfiles.some((p) => p.name === profileName.trim())
