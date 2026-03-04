@@ -16,7 +16,7 @@ import TraceResultsView from "./TraceResultsView";
 import TraceErrorAlerts from "./TraceErrorAlerts";
 import SpanDetailDrawer from "./SpanDetailDrawer";
 import { useTracesOrchestrator } from "./useTracesOrchestrator";
-import { TRACES_INSIGHT_SLOTS } from "./tracesInsightSlots";
+import { TRACES_INSIGHT_SLOT_IDS, TRACES_INSIGHT_SLOTS } from "./tracesInsightSlots";
 
 const TRACES_SYSTEM_PROMPT =
   "You are a distributed-tracing observability assistant." +
@@ -33,12 +33,14 @@ export default function TracesPage() {
         filters: orchestrator.filters,
         resultCount: orchestrator.searchResult?.values.length ?? 0,
         selectedTraceId: orchestrator.selectedTraceId,
+        selectedSpanId: orchestrator.selectedSpanId,
         viewMode: orchestrator.viewMode,
       }),
     [
       orchestrator.filters,
       orchestrator.searchResult?.values.length,
       orchestrator.selectedTraceId,
+      orchestrator.selectedSpanId,
       orchestrator.viewMode,
     ],
   );
@@ -84,7 +86,7 @@ export default function TracesPage() {
       refresh={slotInsights.refresh}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
-        <InsightSlot slotId="trace-search">
+        <InsightSlot slotId={TRACES_INSIGHT_SLOT_IDS.traceSearch}>
           <TraceSearchPanel
             filters={orchestrator.filters}
             resetFilters={orchestrator.resetFilters}
@@ -136,7 +138,7 @@ export default function TracesPage() {
               minHeight: 0,
             }}
           >
-            <InsightSlot slotId="trace-results">
+            <InsightSlot slotId={TRACES_INSIGHT_SLOT_IDS.traceResults}>
               <TraceResultsView
                 viewMode={orchestrator.viewMode}
                 onViewModeChange={orchestrator.setViewMode}
@@ -179,7 +181,7 @@ export default function TracesPage() {
           </Box>
         </Box>
 
-        <InsightSlot slotId="trace-waterfall">
+        <InsightSlot slotId={TRACES_INSIGHT_SLOT_IDS.traceWaterfall}>
           <SpanDetailDrawer
             span={orchestrator.selectedSpan}
             open={orchestrator.drawerOpen}
