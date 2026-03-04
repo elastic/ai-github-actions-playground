@@ -383,9 +383,9 @@ export default function ServiceDashboardPage() {
         )}
 
         <Stack
-          direction={{ xs: "column", lg: "row" }}
+          direction={{ xs: "column", xl: "row" }}
           spacing={1.5}
-          sx={{ alignItems: "flex-start" }}
+          sx={{ alignItems: { xl: "flex-start", xs: "stretch" } }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Stack spacing={1.5}>
