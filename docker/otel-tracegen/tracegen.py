@@ -387,7 +387,8 @@ def update_user_profile():
             db_query("postgres", "UPDATE", "users", base_ms=8, jitter_ms=4)
             span.set_attribute("db.retry_count", 1)
 
-        db_query("postgres", "UPDATE", "users", base_ms=8, jitter_ms=4)
+        else:
+            db_query("postgres", "UPDATE", "users", base_ms=8, jitter_ms=4)
         time.sleep(random_latency(10, 5))
         span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, 200)
 
