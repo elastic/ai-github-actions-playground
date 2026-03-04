@@ -11,6 +11,8 @@ import LayersIcon from "@mui/icons-material/Layers";
 import MemoryIcon from "@mui/icons-material/Memory";
 import TuneIcon from "@mui/icons-material/Tune";
 
+import { interactiveCardSx } from "../interactiveCardSx";
+
 import type { ProfilingFocusDimension } from "./profilingQueryBuilder";
 
 interface FocusOption {
@@ -73,12 +75,7 @@ export default function ProfilingFocusPicker({ onSelect }: ProfilingFocusPickerP
               variant="outlined"
               sx={{
                 height: "100%",
-                transition:
-                  "border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease",
-                "&:hover": {
-                  boxShadow: 2,
-                  borderColor: "primary.main",
-                },
+                ...interactiveCardSx,
               }}
             >
               <CardActionArea
