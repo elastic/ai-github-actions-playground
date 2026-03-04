@@ -100,7 +100,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           ) : undefined
         }
         actions={
-          !p.collapsed ? (
+          p.collapsed ? null : (
             <>
               <Tooltip
                 title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
@@ -142,7 +142,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                 ES|QL documentation
               </Typography>
             </>
-          ) : null
+          )
         }
       />
       <Collapse in={!p.collapsed} unmountOnExit>
