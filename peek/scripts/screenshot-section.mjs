@@ -34,6 +34,7 @@ import { chromium } from "playwright";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
+import { isIgnorableConsoleError } from "./ignorable-console-errors.mjs";
 import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
 
 // ---------------------------------------------------------------------------
@@ -87,17 +88,6 @@ function parseArgs(argv) {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const IGNORABLE_CONSOLE_PATTERNS = [
-  /fonts\.googleapis\.com/,
-  /fonts\.gstatic\.com/,
-  /ERR_NAME_NOT_RESOLVED/,
-  /status of 404/,
-];
-
-function isIgnorableConsoleError(text) {
-  return IGNORABLE_CONSOLE_PATTERNS.some((re) => re.test(text));
-}
 
 /**
  * Seed the Zustand UI store localStorage key so the app starts in the
