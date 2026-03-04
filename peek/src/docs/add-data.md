@@ -11,11 +11,11 @@ Choose a technology using:
 
 Clicking an experience tile drills into that experience's technology list. Clicking a technology selects it and enables the Continue button.
 
-Your selection drives the guide type, expected signals, and contextual guidance for later steps.
+Your selection drives the onboarding guide (EDOT Collector, OTel Receiver, APM, etc.), expected signals, and contextual guidance for later steps.
 
 ## Step 2 — Set up and verify
 
-This step consolidates environment configuration, install commands, credentials, and ingestion verification into a single page. Configure and Install are collapsible accordion sections; Verification is inline (not collapsible):
+This step consolidates environment configuration, install commands, credentials, and ingestion verification into a single page. It consists of three sections: Configure and Install (collapsible accordions) and Verification (inline, not collapsible).
 
 ### Configure section (guide-specific)
 
@@ -36,7 +36,7 @@ The section label varies (e.g., "Install and configure", "Instrument your app", 
 - Progressive command step cards with per-step copy
 - Copy-all support
 - Official quickstart docs link
-- Collector credentials — API key generation when permissions allow; otherwise show a no-permission warning alert (expected behavior) and guide manual credential provisioning
+- Collector credentials — API key generation when permissions allow; otherwise show a no-permission warning alert (expected behavior) and provide guidance for manual credential provisioning
 
 The command template pre-fills available endpoint/version/API key values.
 
