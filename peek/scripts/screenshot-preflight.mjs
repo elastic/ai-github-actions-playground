@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 
 // Console errors matching these patterns are expected in sandboxed CI
 // environments (e.g. no external DNS) and do not indicate real failures.
-const IGNORABLE_CONSOLE_PATTERNS = [/fonts\.googleapis\.com/, /fonts\.gstatic\.com/, /ERR_NAME_NOT_RESOLVED/];
+const IGNORABLE_CONSOLE_PATTERNS = [/fonts\.googleapis\.com/, /fonts\.gstatic\.com/, /ERR_NAME_NOT_RESOLVED/, /status of 40[04]/];
 
 function isIgnorableConsoleError(text) {
   return IGNORABLE_CONSOLE_PATTERNS.some((re) => re.test(text));

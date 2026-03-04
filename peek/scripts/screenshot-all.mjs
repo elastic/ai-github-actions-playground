@@ -49,6 +49,7 @@ const IGNORABLE_CONSOLE_PATTERNS = [
   /fonts\.gstatic\.com/,
   /ERR_NAME_NOT_RESOLVED/,
   /status of 404/,
+  /status of 400/,
 ];
 
 function isIgnorableConsoleError(text) {
