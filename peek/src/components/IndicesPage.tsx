@@ -41,10 +41,10 @@ import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
 
 type SortField = "index" | "health" | "docs.count" | "store.size";
 
-function parseNum(val: string | null): number {
-  if (val == null) return 0;
+function parseNum(val: string | null): number | null {
+  if (val == null) return null;
   const n = Number(val);
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n) ? n : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,7 +135,9 @@ export default function IndicesPage() {
       if (sortField === "index" || sortField === "health") {
         cmp = (a[sortField] ?? "").localeCompare(b[sortField] ?? "");
       } else {
-        cmp = parseNum(a[sortField]) - parseNum(b[sortField]);
+        const aNum = parseNum(a[sortField]);
+        const bNum = parseNum(b[sortField]);
+        cmp = (aNum ?? Number.POSITIVE_INFINITY) - (bNum ?? Number.POSITIVE_INFINITY);
       }
       return sortDirection === "asc" ? cmp : -cmp;
     });
@@ -361,13 +363,13 @@ export default function IndicesPage() {
                       {idx.index}
                     </TableCell>
                     <TableCell align="right" sx={{ px: 1 }}>
-                      {parseNum(idx["docs.count"]).toLocaleString()}
+                      {(() => {
+                        const docsCount = parseNum(idx["docs.count"]);
+                        return docsCount == null ? "—" : docsCount.toLocaleString();
+                      })()}
                     </TableCell>
                     <TableCell align="right" sx={{ px: 1 }}>
-                      {formatBytes(
-                        idx["store.size"] == null ? null : parseNum(idx["store.size"]),
-                        "—",
-                      )}
+                      {formatBytes(parseNum(idx["store.size"]), "—")}
                     </TableCell>
                   </TableRow>
                 ))}
