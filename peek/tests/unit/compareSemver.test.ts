@@ -33,7 +33,10 @@ describe("compareSemver", () => {
   });
 
   it("handles pre-release suffixes gracefully", () => {
-    expect(compareSemver("8.9.0-SNAPSHOT", "8.9.0")).toBe(0);
+    expect(compareSemver("8.9.0-SNAPSHOT", "8.9.0")).toBeLessThan(0);
+    expect(compareSemver("8.9.0-rc.1", "8.9.0")).toBeLessThan(0);
+    expect(compareSemver("8.9.0-rc.1", "8.9.0-rc.2")).toBeLessThan(0);
+    expect(compareSemver("8.9.0-1", "8.9.0-alpha")).toBeLessThan(0);
     expect(compareSemver("8.10.0-alpha", "8.9.0")).toBeGreaterThan(0);
   });
 });

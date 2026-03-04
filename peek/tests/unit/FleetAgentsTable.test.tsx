@@ -57,4 +57,15 @@ describe("FleetAgentsTable version sorting", () => {
 
     expect(versions).toEqual(["8.10.0", "8.9.0", "7.17.0"]);
   });
+
+  it("renders version filter chips in semantic order", () => {
+    render(<FleetAgentsTable agents={agents} onAgentClick={() => {}} />);
+
+    const versionChipButtons = screen
+      .getAllByRole("button")
+      .filter((el) => ["7.17.0", "8.9.0", "8.10.0"].includes(el.textContent ?? ""))
+      .map((el) => el.textContent);
+
+    expect(versionChipButtons).toEqual(["7.17.0", "8.9.0", "8.10.0"]);
+  });
 });
