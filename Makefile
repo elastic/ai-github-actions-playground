@@ -5,7 +5,7 @@ BASE ?= main
 
 .PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e test-e2e-preview docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
-.PHONY: seed-es screenshot-all test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
+.PHONY: seed-es screenshot-all screenshot-section test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -35,6 +35,7 @@ help:
 	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
 	@echo "  seed-es          - Seed Elasticsearch with non-OTLP test data (set ES_URL)"
 	@echo "  screenshot-all   - Capture all page screenshots (mocked data)"
+	@echo "  screenshot-section - Capture screenshots for one section in light+dark (SECTION=metrics|logs|traces|...)"
 	@echo "  otel-capture     - Capture OTLP fixtures from live OTel stack"
 	@echo "  otel-capture-down - Stop the OTel capture stack"
 	@echo "  otel-replay-up   - Start ES + collector in replay mode"
@@ -252,6 +253,16 @@ screenshot-all:
 	@echo "Capturing all page screenshots (mocked)..."
 	@cd $(PEEK_DIR) && node scripts/screenshot-all.mjs --out-dir screenshots
 	@echo "✓ Screenshots saved to $(PEEK_DIR)/screenshots/"
+
+screenshot-section:
+	@if [ -z "$(SECTION)" ]; then \
+		echo "Usage: make screenshot-section SECTION=<section>"; \
+		echo "Sections: cluster-overview data-management fleet logs metrics profiling query-lab security services traces dashboards add-data all"; \
+		exit 1; \
+	fi
+	@echo "Capturing screenshots for section '$(SECTION)' (light + dark, mocked)..."
+	@cd $(PEEK_DIR) && node scripts/screenshot-section.mjs --section $(SECTION) --out-dir screenshots
+	@echo "✓ Screenshots saved to $(PEEK_DIR)/screenshots/$(SECTION)/"
 
 otel-capture:
 	@echo "Starting OTel stack with OTLP file capture..."
