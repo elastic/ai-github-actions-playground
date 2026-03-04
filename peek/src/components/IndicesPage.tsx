@@ -330,8 +330,15 @@ export default function IndicesPage() {
                     hover
                     selected={idx.index === selectedIndex}
                     onClick={() => void setSelectedIndex(idx.index)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        void setSelectedIndex(idx.index);
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                     aria-selected={idx.index === selectedIndex}
+                    tabIndex={0}
                   >
                     <TableCell padding="checkbox" sx={{ px: 1 }}>
                       <Chip
@@ -357,7 +364,10 @@ export default function IndicesPage() {
                       {parseNum(idx["docs.count"]).toLocaleString()}
                     </TableCell>
                     <TableCell align="right" sx={{ px: 1 }}>
-                      {formatBytes(parseNum(idx["store.size"]) || null, "—")}
+                      {formatBytes(
+                        idx["store.size"] == null ? null : parseNum(idx["store.size"]),
+                        "—",
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

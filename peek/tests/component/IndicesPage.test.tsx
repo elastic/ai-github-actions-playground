@@ -378,13 +378,20 @@ describe("IndicesPage", () => {
     const tableEl = await screen.findByRole("table", { name: /index list/i });
     await within(tableEl).findByText("logs-app");
 
-    // Click Docs sort header
-    await user.click(screen.getByRole("button", { name: /docs/i }));
+    const docsHeader = screen.getByRole("button", { name: /docs/i });
+    // First click: ascending
+    await user.click(docsHeader);
 
     const rows = within(tableEl).getAllByRole("row");
     // logs-app has 5000 docs, metrics has 20000 docs
     expect(rows[1]).toHaveTextContent(/logs-app/);
     expect(rows[2]).toHaveTextContent(/metrics-service_destination/);
+
+    // Second click: descending
+    await user.click(docsHeader);
+    const rowsDesc = within(tableEl).getAllByRole("row");
+    expect(rowsDesc[1]).toHaveTextContent(/metrics-service_destination/);
+    expect(rowsDesc[2]).toHaveTextContent(/logs-app/);
   });
 
   it("displays docs count and store size in table cells", async () => {
