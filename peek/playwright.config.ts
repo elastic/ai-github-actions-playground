@@ -6,17 +6,20 @@ const baseURL = `http://localhost:${port}/ai-github-actions-playground/`;
 
 export default defineConfig({
   testDir: "tests/e2e",
-  retries: process.env.CI ? 2 : 0,
+  fullyParallel: true,
+  retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? "50%" : undefined,
   use: {
     baseURL,
     trace: process.env.CI ? "on-first-retry" : "on",
   },
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
-    { name: "mobile-safari", use: { ...devices["iPhone 14"] } },
-  ],
+  projects: process.env.CI
+    ? [
+        { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+        { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
+        { name: "mobile-safari", use: { ...devices["iPhone 14"] } },
+      ]
+    : [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: preview ? `npm run preview -- --port ${port}` : `npm run dev -- --port ${port}`,
     url: baseURL,

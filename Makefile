@@ -164,7 +164,7 @@ lint:
 		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --check) && \
 		echo "" && \
 		echo "Running ESLint on changed files..." && \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx eslint); \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx eslint --cache --cache-location .eslintcache); \
 	else \
 		echo "No changed source files found — skipping Prettier and ESLint."; \
 	fi
@@ -179,7 +179,7 @@ lint-full:
 	@cd $(PEEK_DIR) && npx prettier --check src
 	@echo ""
 	@echo "Running ESLint..."
-	@cd $(PEEK_DIR) && npx eslint src
+	@cd $(PEEK_DIR) && npx eslint src --cache --cache-location .eslintcache
 	@echo ""
 	@echo "Running TypeScript type check..."
 	@cd $(PEEK_DIR) && npx tsc --noEmit
