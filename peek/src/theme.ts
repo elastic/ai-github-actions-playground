@@ -8,11 +8,11 @@ const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
 const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 const LIGHT_PRIMARY = "#0070C5";
-const DARK_PRIMARY = "#3BAAFF";
+const DARK_PRIMARY = "#36A2EF";
 const LIGHT_TEXT = { primary: "#1A1C21", secondary: "#676F7B" };
 const DARK_TEXT = { primary: "#DFE5EF", secondary: "#98A2B3" };
 const LIGHT_BORDER = { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" };
-const DARK_BORDER = { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" };
+const DARK_BORDER = { subtle: "#2B2D35", default: "#343741", strong: "#535966" };
 const REDUCED_MOTION_CSS = `
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -252,8 +252,8 @@ export const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: { main: DARK_PRIMARY },
-    secondary: { main: "#5EECD5" },
-    background: { default: "#0F1118", paper: "#1A1D27", subtle: "#141720", elevated: "#242838" },
+    secondary: { main: "#7DE2D1" },
+    background: { default: "#1D1E24", paper: "#25262E", subtle: "#16171C", elevated: "#2D2E36" },
     text: DARK_TEXT,
     border: DARK_BORDER,
     status: { ...STATUS_COLORS },
@@ -267,21 +267,21 @@ export const darkTheme = createTheme({
 });
 
 /** Tooltip background colors for chart themes */
-export const CHART_TOOLTIP_BG_DARK = "#242838";
+export const CHART_TOOLTIP_BG_DARK = "#2D2E36";
 export const CHART_TOOLTIP_BG_LIGHT = "#FFFFFF";
 
 /** Color palette for chart series — 12 vibrant, perceptually balanced hues */
 export const CHART_COLORS = [
   "#0077CC",
   "#00BFB3",
-  "#E03E36",
+  "#BD271E",
   "#F5A623",
-  "#7B68EE",
-  "#E05A9C",
-  "#A86FDB",
-  "#2ECC71",
-  "#FFD166",
-  "#FF7849",
-  "#45B7D1",
-  "#96CEB4",
+  "#6092C0",
+  "#D36086",
+  "#9170B8",
+  "#CA8EAE",
+  "#54B399",
+  "#DA8B45",
+  "#AA6556",
+  "#E7664C",
 ];
