@@ -6,6 +6,7 @@ import {
   buildClusterInventoryQuery,
   buildNamespaceInventoryQuery,
   buildWorkloadInventoryQuery,
+  buildAllWorkloadsInventoryQuery,
   buildPodInventoryQuery,
   buildPodDetailQuery,
   buildK8sLogsQuery,
@@ -136,6 +137,44 @@ describe("k8sQueryBuilder", () => {
       const query = buildWorkloadInventoryQuery("replicaset", DEFAULT_FILTERS);
       expect(query).toContain("k8s.replicaset.name IS NOT NULL");
       expect(query).toContain("BY workload_name = k8s.replicaset.name");
+    });
+  });
+
+  describe("buildAllWorkloadsInventoryQuery", () => {
+    it("generates a query that includes all supported workload kinds", () => {
+      const query = buildAllWorkloadsInventoryQuery(DEFAULT_FILTERS);
+      expect(query).toContain("k8s.deployment.name IS NOT NULL");
+      expect(query).toContain("k8s.replicaset.name IS NOT NULL");
+      expect(query).toContain("k8s.statefulset.name IS NOT NULL");
+      expect(query).toContain("k8s.daemonset.name IS NOT NULL");
+      expect(query).toContain("k8s.job.name IS NOT NULL");
+      expect(query).toContain("k8s.cronjob.name IS NOT NULL");
+      expect(query).toContain("BY cluster_name = k8s.cluster.name");
+      expect(query).toContain("namespace_name = k8s.namespace.name");
+      expect(query).toContain("workload_kind = CASE");
+      expect(query).toContain('k8s.deployment.name IS NOT NULL, "deployment"');
+      expect(query).toContain('k8s.replicaset.name IS NOT NULL, "replicaset"');
+      expect(query).toContain('k8s.statefulset.name IS NOT NULL, "statefulset"');
+      expect(query).toContain('k8s.daemonset.name IS NOT NULL, "daemonset"');
+      expect(query).toContain('k8s.job.name IS NOT NULL, "job"');
+      expect(query).toContain('k8s.cronjob.name IS NOT NULL, "cronjob"');
+      expect(query).toContain("workload_name = COALESCE(");
+      expect(query).toContain("k8s.deployment.name");
+      expect(query).toContain("k8s.replicaset.name");
+      expect(query).toContain("k8s.statefulset.name");
+      expect(query).toContain("k8s.daemonset.name");
+      expect(query).toContain("k8s.job.name");
+      expect(query).toContain("k8s.cronjob.name");
+    });
+
+    it("includes cluster and namespace filters when provided", () => {
+      const query = buildAllWorkloadsInventoryQuery({
+        ...DEFAULT_FILTERS,
+        cluster: "prod",
+        namespace: "kube-system",
+      });
+      expect(query).toContain('k8s.cluster.name == "prod"');
+      expect(query).toContain('k8s.namespace.name == "kube-system"');
     });
   });
 
@@ -304,17 +343,19 @@ describe("k8sHelpers", () => {
           { name: "pod_count", type: "long" },
           { name: "avg_cpu", type: "double" },
           { name: "avg_memory", type: "long" },
+          { name: "workload_kind", type: "keyword" },
           { name: "workload_name", type: "keyword" },
         ],
         values: [
-          [3, 0.4, 524288000, "nginx-deploy"],
-          [2, 0.2, 262144000, "redis-deploy"],
+          [3, 0.4, 524288000, "deployment", "nginx-deploy"],
+          [2, 0.2, 262144000, "statefulset", "redis-deploy"],
         ],
       });
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         workloadName: "nginx-deploy",
+        workloadKind: "deployment",
         podCount: 3,
         avgCpu: 0.4,
         avgMemory: 524288000,
