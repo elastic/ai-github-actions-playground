@@ -60,9 +60,7 @@ export default function K8sWorkloadDashboardPage() {
     return {
       totalPods,
       avgCpu:
-        cpuPods > 0
-          ? cpuRows.reduce((sum, r) => sum + r.avgCpu! * r.podCount, 0) / cpuPods
-          : null,
+        cpuPods > 0 ? cpuRows.reduce((sum, r) => sum + r.avgCpu! * r.podCount, 0) / cpuPods : null,
       avgMemory:
         memPods > 0
           ? memRows.reduce((sum, r) => sum + r.avgMemory! * r.podCount, 0) / memPods

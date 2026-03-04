@@ -146,8 +146,10 @@ function buildTracesQueryForEntity(params: UseK8sDashboardQueriesParams): string
 export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
   const { connection, entity, entityName } = params;
   const queryClient = useQueryClient();
-  const validatedWorkloadKind = entity === "workload" ? toWorkloadKind(params.workloadKind) : undefined;
-  const invalidWorkloadKind = entity === "workload" && params.workloadKind && !validatedWorkloadKind;
+  const validatedWorkloadKind =
+    entity === "workload" ? toWorkloadKind(params.workloadKind) : undefined;
+  const invalidWorkloadKind =
+    entity === "workload" && params.workloadKind && !validatedWorkloadKind;
   const workloadKeyPart = validatedWorkloadKind ?? "";
 
   // --- Overview query state ---
@@ -372,9 +374,7 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
     logsResult,
     tracesResult,
     loading,
-    error: invalidWorkloadKind
-      ? `Unrecognized workload kind: "${params.workloadKind}"`
-      : error,
+    error: invalidWorkloadKind ? `Unrecognized workload kind: "${params.workloadKind}"` : error,
     handleSearch,
     handleReset,
   };
