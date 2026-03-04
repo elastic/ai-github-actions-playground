@@ -3,6 +3,13 @@ export const interactiveCardSx = {
   "&:hover": {
     boxShadow: 2,
     borderColor: "primary.main",
+  },
+};
+
+export const interactiveCardSxWithBg = {
+  ...interactiveCardSx,
+  "&:hover": {
+    ...interactiveCardSx["&:hover"],
     bgcolor: "action.hover",
   },
 };
