@@ -250,11 +250,12 @@ export default function ProfilingPage() {
     },
     [effectiveQuery, navigate, setDiscoverQueryDraft],
   );
+  const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
   const hasDataForCurrentView =
     viewMode === "topFunctions"
       ? topFunctionsRows.length > 0
       : viewMode === "timeline"
-        ? (timelineResult?.values.length ?? 0) > 0
+        ? timelineHasData
         : stacktraces.length > 0;
   const hasRunCurrentView = hasRunByMode[viewMode];
 
@@ -419,7 +420,7 @@ export default function ProfilingPage() {
               </TableBody>
             </Table>
           )}
-          {viewMode === "timeline" && timelineResult && (
+          {viewMode === "timeline" && timelineHasData && timelineResult && (
             <Box sx={{ height: 360 }}>
               <TimeSeriesChart data={timelineResult} options={{ smooth: true, showArea: false }} />
             </Box>
