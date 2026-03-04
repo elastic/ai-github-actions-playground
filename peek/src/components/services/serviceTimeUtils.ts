@@ -8,15 +8,15 @@ export function parseBucketTimestampMs(value: unknown, columnType?: string): num
     return fromNumeric(value);
   }
   if (typeof value === "string") {
-    if (/^\d+$/.test(value.trim())) {
-      const asNumber = Number(value);
-      if (Number.isFinite(asNumber)) return fromNumeric(asNumber);
+    const trimmed = value.trim();
+    if (/^\d+$/.test(trimmed)) {
       try {
-        const asBigInt = BigInt(value);
+        const asBigInt = BigInt(trimmed);
         const ms = columnType === "date_nanos" ? Number(asBigInt / 1_000_000n) : Number(asBigInt);
         if (Number.isFinite(ms)) return ms;
       } catch {
-        // Fall through to ISO parsing below.
+        const asNumber = Number(trimmed);
+        if (Number.isFinite(asNumber)) return fromNumeric(asNumber);
       }
     }
     const parsed = Date.parse(value);

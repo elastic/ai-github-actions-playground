@@ -9,6 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { alpha, useTheme } from "@mui/material/styles";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 
@@ -24,6 +25,7 @@ function normalizeStatusLabel(statusCode: string): string {
 }
 
 export function ServiceTraceStatusPanel({ traces }: { traces: RecentTrace[] }) {
+  const theme = useTheme();
   const statusBreakdown = useMemo(() => {
     const total = traces.length;
     const counts = new Map<string, number>();
@@ -41,9 +43,9 @@ export function ServiceTraceStatusPanel({ traces }: { traces: RecentTrace[] }) {
   }, [traces]);
   const statusColor = (status: string) => {
     const normalized = status.toLowerCase();
-    if (normalized === "ok") return "#4caf50";
-    if (normalized.includes("error")) return "#f44336";
-    return "#90caf9";
+    if (normalized === "ok") return theme.palette.success.main;
+    if (normalized.includes("error")) return theme.palette.error.main;
+    return alpha(theme.palette.info.main, 0.7);
   };
 
   return (

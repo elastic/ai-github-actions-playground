@@ -205,7 +205,7 @@ describe("ServiceInventoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     const inventoryTable = await screen.findByRole("table", { name: "Service inventory" });
-    expect(within(inventoryTable).getByText(/java/i)).toBeInTheDocument();
+    expect(within(inventoryTable).getByText(/^java$/i)).toBeInTheDocument();
     expect(within(inventoryTable).getAllByText("prod").length).toBeGreaterThan(0);
   });
 

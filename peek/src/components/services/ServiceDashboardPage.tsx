@@ -393,7 +393,7 @@ export default function ServiceDashboardPage() {
             <EmptyState
               heading="No service data loaded"
               description={`No trace data was loaded for ${serviceName} in the selected time range.`}
-              verticalAlign="start"
+              verticalAlign="center"
               addDataHref={PAGE_MANIFEST.addData.path}
             />
           </Paper>
@@ -496,7 +496,7 @@ export default function ServiceDashboardPage() {
               <EmptyState
                 heading="No data found"
                 description={`No routes or traces found for ${serviceName} in the selected time range.`}
-                verticalAlign="start"
+                verticalAlign="center"
                 addDataHref={PAGE_MANIFEST.addData.path}
               />
             </Paper>
