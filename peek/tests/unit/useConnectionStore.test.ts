@@ -23,6 +23,27 @@ describe("useConnectionStore", () => {
     expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
   });
 
+  it("deleteConnectionProfile removes stale profileHealthMap entry", () => {
+    const id = useConnectionStore
+      .getState()
+      .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "dev-key" });
+
+    expect(id).toBeTruthy();
+
+    useConnectionStore.getState().setProfileHealth(id!, {
+      status: "healthy",
+      checkedAt: "2026-03-03T00:00:00.000Z",
+      errorSummary: null,
+    });
+
+    expect(useConnectionStore.getState().profileHealthMap[id!]).toBeDefined();
+
+    useConnectionStore.getState().deleteConnectionProfile(id!);
+
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
+    expect(useConnectionStore.getState().profileHealthMap[id!]).toBeUndefined();
+  });
+
   it("resetConnectionState clears connection and profiles", () => {
     useConnectionStore.setState({
       connection: { url: "https://example.com", apiKey: "key" },
