@@ -69,6 +69,7 @@ export async function executeRawRequest(
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const trimmedPath = path.trim();
   const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
+  // Keep manual timer wiring for fake-timer tests while using AbortSignal.any for composition.
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => {
     timeoutController.abort(new DOMException("Request timed out", "AbortError"));
