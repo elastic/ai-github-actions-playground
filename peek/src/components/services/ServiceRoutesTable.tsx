@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -7,6 +9,8 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
+
+import InsightSlot from "../InsightSlot";
 
 import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
 import type {
@@ -23,6 +27,7 @@ interface ServiceRoutesTableProps {
   sortDirection: SortDirection;
   onSort: (field: RouteSortField) => void;
   sparklineData?: Record<string, RouteSparklineData>;
+  routeInsightSlotIds?: Record<string, string>;
 }
 
 export default function ServiceRoutesTable({
@@ -31,25 +36,31 @@ export default function ServiceRoutesTable({
   sortDirection,
   onSort,
   sparklineData,
+  routeInsightSlotIds,
 }: ServiceRoutesTableProps) {
   const theme = useTheme();
-  const hasSparklines = routeRows.some((row) => {
-    const sparkline = sparklineData?.[row.route];
-    return Boolean(
-      sparkline &&
-      (sparkline.requests.length > 0 ||
-        sparkline.latency.length > 0 ||
-        sparkline.errorRate.length > 0),
-    );
-  });
-  const renderSparklineCell = (data: RouteSparklineData["requests"], color?: string) => (
-    <TableCell>
-      <ServiceSparklineCell data={data} color={color} />
-    </TableCell>
+  const renderMetricWithSparkline = (
+    value: ReactNode,
+    data: RouteSparklineData["requests"],
+    color?: string,
+  ) => (
+    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end", alignItems: "center" }}>
+      <Typography variant="body2">{value}</Typography>
+      <Box sx={{ width: 88, minWidth: 88 }}>
+        <ServiceSparklineCell data={data} color={color} />
+      </Box>
+    </Box>
   );
 
   return (
-    <Table size="small" aria-label="Top routes">
+    <Table
+      size="small"
+      aria-label="Top routes"
+      sx={{
+        minWidth: 520,
+        "& td, & th": { py: 1, px: 1.5 },
+      }}
+    >
       <TableHead>
         <TableRow>
           <TableCell>
@@ -70,7 +81,6 @@ export default function ServiceRoutesTable({
               Requests
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Requests trend</TableCell>}
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "avgLatencyMs"}
@@ -80,7 +90,6 @@ export default function ServiceRoutesTable({
               Avg Latency
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Latency trend</TableCell>}
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "errorRate"}
@@ -90,38 +99,57 @@ export default function ServiceRoutesTable({
               Error Rate
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Error rate trend</TableCell>}
         </TableRow>
       </TableHead>
       <TableBody>
         {routeRows.map((row) => {
           const sparkline = sparklineData?.[row.route];
+          const routeLink = (
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {row.route}
+            </Typography>
+          );
+          const routeSlotId = routeInsightSlotIds?.[row.route];
           return (
             <TableRow key={row.route} hover>
               <TableCell>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {row.route}
-                </Typography>
+                {routeSlotId ? (
+                  <InsightSlot slotId={routeSlotId}>{routeLink}</InsightSlot>
+                ) : (
+                  routeLink
+                )}
               </TableCell>
               <TableCell align="right">
-                <Typography variant="body2">{row.requestCount.toLocaleString()}</Typography>
+                {renderMetricWithSparkline(
+                  row.requestCount.toLocaleString(),
+                  sparkline?.requests ?? [],
+                )}
               </TableCell>
-              {hasSparklines && renderSparklineCell(sparkline?.requests ?? [])}
               <TableCell align="right">
-                <Typography variant="body2">{formatLatency(row.avgLatencyMs)}</Typography>
+                {renderMetricWithSparkline(
+                  formatLatency(row.avgLatencyMs),
+                  sparkline?.latency ?? [],
+                  theme.palette.warning.main,
+                )}
               </TableCell>
-              {hasSparklines &&
-                renderSparklineCell(sparkline?.latency ?? [], theme.palette.warning.main)}
               <TableCell align="right">
-                <Chip
-                  size="small"
-                  label={formatErrorRate(row.errorRate)}
-                  color={row.errorRate > 0.05 ? "error" : "default"}
-                  variant={row.errorRate > 0.05 ? "filled" : "outlined"}
-                />
+                <Box
+                  sx={{ display: "flex", gap: 1, justifyContent: "flex-end", alignItems: "center" }}
+                >
+                  <Chip
+                    size="small"
+                    label={formatErrorRate(row.errorRate)}
+                    color={row.errorRate > 0.05 ? "error" : "default"}
+                    variant={row.errorRate > 0.05 ? "filled" : "outlined"}
+                  />
+                  <Box sx={{ width: 88, minWidth: 88 }}>
+                    <ServiceSparklineCell
+                      data={sparkline?.errorRate ?? []}
+                      color={theme.palette.error.main}
+                    />
+                  </Box>
+                </Box>
               </TableCell>
-              {hasSparklines &&
-                renderSparklineCell(sparkline?.errorRate ?? [], theme.palette.error.main)}
             </TableRow>
           );
         })}

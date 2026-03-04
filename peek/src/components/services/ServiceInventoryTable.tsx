@@ -1,4 +1,5 @@
 import { Link as RouterLink } from "react-router-dom";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Link from "@mui/material/Link";
@@ -10,6 +11,7 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
+import { visuallyHidden } from "@mui/utils";
 
 import InsightSlot from "../InsightSlot";
 
@@ -21,6 +23,7 @@ import {
   formatLatency,
   formatErrorRate,
 } from "./serviceInventoryHelpers";
+import ServiceLanguageBadge from "./ServiceLanguageBadge";
 import ServiceSparklineCell from "./ServiceSparklineCell";
 
 interface ServiceInventoryTableProps {
@@ -43,6 +46,13 @@ export default function ServiceInventoryTable({
   rowInsightSlotIds,
 }: ServiceInventoryTableProps) {
   const theme = useTheme();
+  const renderSparklineHeaderCell = (label: string) => (
+    <TableCell sx={{ width: 88, px: 0.5 }}>
+      <Box component="span" sx={visuallyHidden}>
+        {label}
+      </Box>
+    </TableCell>
+  );
 
   return (
     <Table size="medium" aria-label="Service inventory">
@@ -66,7 +76,7 @@ export default function ServiceInventoryTable({
               Requests
             </TableSortLabel>
           </TableCell>
-          <TableCell>Requests trend</TableCell>
+          {renderSparklineHeaderCell("Requests trend")}
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "avgLatencyMs"}
@@ -76,7 +86,7 @@ export default function ServiceInventoryTable({
               Avg Latency
             </TableSortLabel>
           </TableCell>
-          <TableCell>Latency trend</TableCell>
+          {renderSparklineHeaderCell("Latency trend")}
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "errorRate"}
@@ -86,7 +96,7 @@ export default function ServiceInventoryTable({
               Error Rate
             </TableSortLabel>
           </TableCell>
-          <TableCell>Error rate trend</TableCell>
+          {renderSparklineHeaderCell("Error rate trend")}
           <TableCell>Language</TableCell>
           <TableCell>Environment</TableCell>
           <TableCell>Version</TableCell>
@@ -124,13 +134,13 @@ export default function ServiceInventoryTable({
               <TableCell align="right">
                 <Typography variant="body2">{row.requestCount.toLocaleString()}</Typography>
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ width: 88, px: 0.5 }}>
                 <ServiceSparklineCell data={sparkline?.requests ?? []} />
               </TableCell>
               <TableCell align="right">
                 <Typography variant="body2">{formatLatency(row.avgLatencyMs)}</Typography>
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ width: 88, px: 0.5 }}>
                 <ServiceSparklineCell
                   data={sparkline?.latency ?? []}
                   color={theme.palette.warning.main}
@@ -145,14 +155,14 @@ export default function ServiceInventoryTable({
                   data-testid={row.errorRate > 0.05 ? "error-rate-chip" : undefined}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ width: 88, px: 0.5 }}>
                 <ServiceSparklineCell
                   data={sparkline?.errorRate ?? []}
                   color={theme.palette.error.main}
                 />
               </TableCell>
               <TableCell>
-                <Typography variant="body2">{row.language}</Typography>
+                <ServiceLanguageBadge language={row.language} />
               </TableCell>
               <TableCell>
                 <Typography variant="body2">{row.environment}</Typography>

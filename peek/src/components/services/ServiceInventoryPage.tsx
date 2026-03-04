@@ -7,7 +7,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
+import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import DateRangePicker from "../DateRangePicker";
@@ -169,6 +169,9 @@ export default function ServiceInventoryPage() {
       "Use only facts from provided context; do not invent data. " +
       "For each slot, explain why that slot matters to triage decisions. " +
       "When relevant, reference concrete service names and metric values from context. " +
+      "Do not produce summary-style statements that only repeat totals or healthy-looking numbers. " +
+      "If nothing is risky or unusual, explicitly say there is no strong signal and suggest what to monitor next. " +
+      INSIGHT_SPECIFICITY_POLICY +
       "Keep each slot insight under 2 sentences." +
       INSIGHT_GUARDRAIL,
     cacheKey: `service-performance-slots::${insightCacheKey}`,
@@ -255,7 +258,7 @@ export default function ServiceInventoryPage() {
           <Stack spacing={2} sx={{ minHeight: 0 }}>
             <Stack spacing={2}>
               <ServiceOverviewCards serviceRows={serviceRows} />
-              <ServicePerformanceCharts serviceRows={serviceRows} />
+              <ServicePerformanceCharts serviceRows={serviceRows} sparklineData={sparklineData} />
             </Stack>
             <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.serviceInventory}>
               <Paper

@@ -57,10 +57,11 @@ export default function ServiceSparklineCell({ data, color }: ServiceSparklineCe
   const height = 24;
   const sorted = sortByTimestamp(data);
   const hasData = sorted.length > 0;
-  const linePath = hasData
+  const hasMultiPointSeries = sorted.length > 1;
+  const linePath = hasMultiPointSeries
     ? buildSparklinePath(sorted, width, height)
     : `M0,${(height / 2).toFixed(2)} L${width},${(height / 2).toFixed(2)}`;
-  const areaPath = hasData ? buildAreaPath(sorted, width, height, linePath) : "";
+  const areaPath = hasMultiPointSeries ? buildAreaPath(sorted, width, height, linePath) : "";
 
   return (
     <Box sx={{ flexShrink: 0, width: 80, height: COMPONENT_HEIGHTS.buttonSmall }}>
@@ -71,7 +72,7 @@ export default function ServiceSparklineCell({ data, color }: ServiceSparklineCe
         aria-label={hasData ? "Trend sparkline" : "Trend unavailable"}
         sx={{ display: "block", width: "100%", height: "100%" }}
       >
-        {hasData && (
+        {hasMultiPointSeries && (
           <Box
             component="path"
             d={areaPath}

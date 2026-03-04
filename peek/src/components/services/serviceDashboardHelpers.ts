@@ -78,6 +78,8 @@ export interface DeploymentRow {
   firstSeen: string;
   lastSeen: string;
   requestCount: number;
+  errorCount: number;
+  errorRate: number;
 }
 
 export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
@@ -88,6 +90,8 @@ export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
     firstSeen: String(get(row, "first_seen") ?? ""),
     lastSeen: String(get(row, "last_seen") ?? ""),
     requestCount: toFiniteNumber(get(row, "request_count")),
+    errorCount: toFiniteNumber(get(row, "error_count")),
+    errorRate: toFiniteNumber(get(row, "error_rate")),
   }));
 }
 
@@ -101,18 +105,50 @@ export interface RouteSparklineData {
   errorRate: SparklinePoint[];
 }
 
+function parseBucketTimestampMs(value: unknown, columnType?: string): number | null {
+  const fromNumeric = (numeric: number): number => {
+    if (columnType === "date_nanos") return numeric / 1_000_000;
+    return numeric;
+  };
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return fromNumeric(value);
+  }
+  if (typeof value === "string") {
+    if (/^\d+$/.test(value.trim())) {
+      const asNumber = Number(value);
+      if (Number.isFinite(asNumber)) return fromNumeric(asNumber);
+      try {
+        const asBigInt = BigInt(value);
+        const ms = columnType === "date_nanos" ? Number(asBigInt / 1_000_000n) : Number(asBigInt);
+        if (Number.isFinite(ms)) return ms;
+      } catch {
+        // Fall through to ISO parsing below.
+      }
+    }
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isNaN(ms) ? null : ms;
+  }
+  return null;
+}
+
 /**
  * Parses an ES|QL response from `buildServiceRouteSparklineQuery` into a map
  * of route → sparkline data.
  */
 export function parseRouteSparklineData(result: EsqlResponse): Record<string, RouteSparklineData> {
   const get = buildColumnAccessor(result.columns);
+  const bucketColumnType = result.columns.find((column) => column.name === "bucket")?.type;
 
   const map = Object.create(null) as Record<string, RouteSparklineData>;
   for (const row of result.values) {
     const route = String(get(row, "route_key") ?? "/");
     const tsRaw = get(row, "bucket");
-    const ts = tsRaw == null ? null : new Date(tsRaw as string).getTime();
+    const ts = parseBucketTimestampMs(tsRaw, bucketColumnType);
     if (ts === null || !Number.isFinite(ts)) continue;
     if (!map[route]) {
       map[route] = { requests: [], latency: [], errorRate: [] };

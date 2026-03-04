@@ -76,6 +76,40 @@ export interface ServiceSparklineData {
   errorRate: SparklinePoint[];
 }
 
+function parseBucketTimestampMs(value: unknown, columnType?: string): number | null {
+  const fromNumeric = (numeric: number): number => {
+    // date_nanos values are emitted as epoch nanoseconds.
+    if (columnType === "date_nanos") return numeric / 1_000_000;
+    return numeric;
+  };
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return fromNumeric(value);
+  }
+  if (typeof value === "string") {
+    // Some clusters serialize date/date_nanos buckets as epoch strings.
+    if (/^\d+$/.test(value.trim())) {
+      const asNumber = Number(value);
+      if (Number.isFinite(asNumber)) return fromNumeric(asNumber);
+      try {
+        const asBigInt = BigInt(value);
+        // Avoid unsafe Number conversion by scaling first when needed.
+        const ms = columnType === "date_nanos" ? Number(asBigInt / 1_000_000n) : Number(asBigInt);
+        if (Number.isFinite(ms)) return ms;
+      } catch {
+        // Fall through to Date.parse below.
+      }
+    }
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isNaN(ms) ? null : ms;
+  }
+  return null;
+}
+
 /**
  * Parses an ES|QL response from `buildServiceSparklineQuery` into a map
  * of service name → sparkline data.
@@ -84,12 +118,13 @@ export function parseServiceSparklineData(
   result: EsqlResponse,
 ): Record<string, ServiceSparklineData> {
   const get = buildColumnAccessor(result.columns);
+  const bucketColumnType = result.columns.find((column) => column.name === "bucket")?.type;
 
   const map = Object.create(null) as Record<string, ServiceSparklineData>;
   for (const row of result.values) {
     const service = String(get(row, "service.name") ?? "unknown");
     const tsRaw = get(row, "bucket");
-    const ts = tsRaw ? new Date(tsRaw as string).getTime() : null;
+    const ts = parseBucketTimestampMs(tsRaw, bucketColumnType);
     if (ts === null || !Number.isFinite(ts)) continue;
     if (!map[service]) {
       map[service] = { requests: [], latency: [], errorRate: [] };

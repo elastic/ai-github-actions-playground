@@ -9,7 +9,6 @@ interface ServiceDashboardControlsProps {
   loading: boolean;
   timeFrom: string;
   timeTo: string;
-  onSearch: () => void;
   onReset: () => void;
   onTimeRangeChange: (from: string, to: string) => void;
 }
@@ -18,7 +17,6 @@ export default function ServiceDashboardControls({
   loading,
   timeFrom,
   timeTo,
-  onSearch,
   onReset,
   onTimeRangeChange,
 }: ServiceDashboardControlsProps) {
@@ -32,9 +30,6 @@ export default function ServiceDashboardControls({
             onTimeRangeChange(traceRange.from, traceRange.to);
           }}
         />
-        <Button variant="contained" size="small" onClick={onSearch} disabled={loading}>
-          Search
-        </Button>
         <Button variant="text" size="small" onClick={onReset} disabled={loading}>
           Reset
         </Button>

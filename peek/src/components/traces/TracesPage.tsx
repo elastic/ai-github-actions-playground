@@ -6,7 +6,7 @@ import { SQLDialect } from "@codemirror/lang-sql";
 
 import { useUIStore } from "../../store/useUIStore";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
-import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
+import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import type { InsightSlotDefinition } from "../../types/insightSlots";
 import { InsightSlotProvider } from "../InsightSlotContext";
 import InsightSlot from "../InsightSlot";
@@ -29,6 +29,9 @@ import {
 const TRACES_SYSTEM_PROMPT =
   "You are a distributed-tracing observability assistant." +
   " Analyse the trace search context and produce per-slot insights." +
+  " Prefer selection-aware reasoning: selected span first, then selected trace, then grouped rows, then panel aggregate." +
+  " For row/group slots, focus on that row or group only; avoid page-wide recap text." +
+  INSIGHT_SPECIFICITY_POLICY +
   INSIGHT_GUARDRAIL;
 
 export default function TracesPage() {

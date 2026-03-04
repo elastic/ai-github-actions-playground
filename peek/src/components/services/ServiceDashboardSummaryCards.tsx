@@ -22,7 +22,7 @@ export default function ServiceDashboardSummaryCards({
   summary,
 }: ServiceDashboardSummaryCardsProps) {
   return (
-    <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
       <Box sx={{ flex: 1 }}>
         <OverviewInfoCard title="Total Requests">
           <Typography variant="h5" component="p">
@@ -45,6 +45,17 @@ export default function ServiceDashboardSummaryCards({
             sx={{ color: summary.overallErrorRate > 0.05 ? "error.main" : "text.primary" }}
           >
             {formatErrorRate(summary.overallErrorRate)}
+          </Typography>
+        </OverviewInfoCard>
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <OverviewInfoCard title="Total Errors">
+          <Typography
+            variant="h5"
+            component="p"
+            sx={{ color: summary.totalErrors > 0 ? "error.main" : "text.primary" }}
+          >
+            {summary.totalErrors.toLocaleString()}
           </Typography>
         </OverviewInfoCard>
       </Box>
