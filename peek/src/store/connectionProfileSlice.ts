@@ -132,9 +132,13 @@ export const createConnectionProfileSlice: StateCreator<
         CONNECTION_STORE_NAME + PROFILE_SESSION_PREFIX + id + ENCRYPTED_STORE_SUFFIX,
       );
       const filtered = s.connectionProfiles.filter((p) => p.id !== id);
+      const remainingHealth = Object.fromEntries(
+        Object.entries(s.profileHealthMap).filter(([key]) => key !== id),
+      );
       return {
         connectionProfiles: filtered,
         activeProfileId: s.activeProfileId === id ? null : s.activeProfileId,
+        profileHealthMap: remainingHealth,
       };
     }),
 

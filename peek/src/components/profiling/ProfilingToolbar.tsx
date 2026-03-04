@@ -6,6 +6,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import DateRangePicker from "../DateRangePicker";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import type { ViewMode } from "./useProfilingData";
 
@@ -81,7 +82,7 @@ export default function ProfilingToolbar({
               color={viewMode === mode ? "primary" : "default"}
               aria-pressed={viewMode === mode}
               onClick={() => onViewModeChange(mode)}
-              sx={{ cursor: "pointer" }}
+              sx={{ height: COMPONENT_HEIGHTS.input, cursor: "pointer" }}
             />
           ),
         )}

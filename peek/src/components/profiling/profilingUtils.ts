@@ -1,3 +1,8 @@
+/** Detect ES|QL "Unknown index" errors that indicate missing profiling data streams. */
+export function isMissingProfilingIndex(error: string): boolean {
+  return /Unknown index \[profiling-/i.test(error);
+}
+
 export interface ProfilingEvent {
   stacktraceId: string;
   count: number;

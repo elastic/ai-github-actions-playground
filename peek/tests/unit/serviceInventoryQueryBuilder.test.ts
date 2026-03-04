@@ -103,7 +103,8 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain("parent.id IS NULL");
       expect(query).toContain("request_count = COUNT(*)");
       expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
-      expect(query).toContain("error_rate = SUM(is_error) / COUNT(*)");
+      expect(query).toContain("error_count = SUM(is_error)");
+      expect(query).toContain("EVAL error_rate = error_count / request_count");
       expect(query).toContain("BY service.name");
       expect(query).toContain("BUCKET(@timestamp");
       expect(query).toContain("SORT bucket");
