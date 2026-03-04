@@ -5,6 +5,7 @@ import {
   readNestedNumber,
   fleetStatusColor,
   computeCheckinStaleness,
+  deriveAgentStatus,
   aggregateFleetPolicies,
   type FleetAgentSummary,
 } from "../../src/services/fleet";
@@ -115,6 +116,13 @@ describe("computeCheckinStaleness", () => {
     const future = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const result = computeCheckinStaleness(future);
     expect(result).toEqual({ label: "0s ago", severity: "fresh" });
+  });
+});
+
+describe("deriveAgentStatus", () => {
+  it("maps unknown or invalid check-ins to Offline via critical severity", () => {
+    expect(deriveAgentStatus(null)).toBe("Offline");
+    expect(deriveAgentStatus("not-a-date")).toBe("Offline");
   });
 });
 

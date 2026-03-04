@@ -200,8 +200,7 @@ export function computeCheckinStaleness(lastSeen: string | null): {
 // ---------------------------------------------------------------------------
 
 export function deriveAgentStatus(lastSeen: string | null): string {
-  const { label, severity } = computeCheckinStaleness(lastSeen);
-  if (label === "unknown") return "Inactive";
+  const { severity } = computeCheckinStaleness(lastSeen);
   switch (severity) {
     case "fresh":
       return "Healthy";
