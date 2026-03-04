@@ -276,14 +276,14 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Add Data");
 
-    await expect(page.getByRole("heading", { name: "What are you monitoring?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /What are we observing/i })).toBeVisible();
     const main = page.getByRole("main");
     await main.getByPlaceholder("Search technologies").fill("Kubernetes");
     await main
       .getByRole("button", { name: /Kubernetes/, pressed: false })
       .first()
       .click();
-    await main.getByRole("button", { name: /^Continue$/ }).click();
+    // Clicking a technology now auto-advances to step 2
     await expect(page.getByRole("heading", { name: /Set up Kubernetes/i })).toBeVisible();
 
     await main.getByRole("button", { name: /^Continue$/ }).click();
@@ -413,6 +413,8 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
+    // The ES|QL editor starts collapsed; expand it first
+    await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await expect(queryEditor).toBeVisible();
@@ -429,10 +431,13 @@ test.describe("smoke – site navigation", () => {
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
 
+    // Expand the collapsed ES|QL editor to verify generated queries
+    await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
-    await page.getByLabel("Search logs").fill('"Hello World"');
-    await page.getByRole("button", { name: "Apply Search" }).click();
+    // Use the guided search input (stepper-based flow)
+    await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
+    await page.getByRole("button", { name: "Apply", exact: true }).click();
     await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
 
     await page.getByRole("button", { name: /^Search Logs\b/ }).click();
@@ -457,7 +462,7 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
-      Logs: () => expect(page.getByLabel("Logs Explorer query editor")).toBeVisible(),
+      Logs: () => expect(page.getByText("ES|QL Query")).toBeVisible(),
       Console: () => expect(page.getByRole("heading", { name: "API Console" })).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
