@@ -244,4 +244,43 @@ describe("ClusterHealthPage", () => {
     expect(screen.getByText(/Partial data loaded/)).toBeInTheDocument();
     expect(screen.getByText(/node stats/)).toBeInTheDocument();
   });
+
+  it("formats disk usage as human-readable sizes on Capacity tab", async () => {
+    getCatAllocationMock.mockResolvedValue([
+      {
+        node: "n1",
+        "disk.used": "66550173696",
+        "disk.avail": "88344014848",
+        "disk.percent": "43",
+      },
+    ]);
+
+    renderHealth("capacityPressure");
+
+    await waitFor(() => {
+      expect(screen.getByText("n1")).toBeInTheDocument();
+    });
+
+    const table = screen.getByRole("table", { name: "Node Disk Usage" });
+    expect(within(table).getByText("62 GB")).toBeInTheDocument();
+    expect(within(table).getByText("82 GB")).toBeInTheDocument();
+  });
+
+  it("shows shard distribution by node on Shards tab", async () => {
+    getCatShardsMock.mockResolvedValue([
+      { index: "idx-a", node: "node-x", state: "STARTED", prirep: "p" },
+      { index: "idx-a", node: "node-x", state: "STARTED", prirep: "r" },
+      { index: "idx-b", node: "node-y", state: "STARTED", prirep: "p" },
+    ]);
+
+    renderHealth("shardDistribution");
+
+    await waitFor(() => {
+      expect(screen.getByText("Shard Distribution by Node")).toBeInTheDocument();
+    });
+
+    const nodeTable = screen.getByRole("table", { name: "Shard Distribution by Node" });
+    expect(within(nodeTable).getByText("node-x")).toBeInTheDocument();
+    expect(within(nodeTable).getByText("node-y")).toBeInTheDocument();
+  });
 });

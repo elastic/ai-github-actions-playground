@@ -8,6 +8,7 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import type { CatAllocationRecord } from "../../services/es";
+import { formatBytes } from "../../utils/formatBytes";
 
 import { type DiskWatermarks, parseNumber } from "./clusterHealthUtils";
 
@@ -43,8 +44,8 @@ export default function NodeDiskUsageTable({ allocation, watermarks }: NodeDiskU
               return (
                 <TableRow key={a.node}>
                   <TableCell>{a.node}</TableCell>
-                  <TableCell align="right">{a["disk.used"] ?? "n/a"}</TableCell>
-                  <TableCell align="right">{a["disk.avail"] ?? "n/a"}</TableCell>
+                  <TableCell align="right">{formatBytes(parseNumber(a["disk.used"]))}</TableCell>
+                  <TableCell align="right">{formatBytes(parseNumber(a["disk.avail"]))}</TableCell>
                   <TableCell align="right">{pct != null ? `${pct}%` : "n/a"}</TableCell>
                   <TableCell>
                     {pctValue != null ? (
