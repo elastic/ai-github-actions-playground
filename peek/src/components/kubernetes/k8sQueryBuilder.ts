@@ -154,16 +154,30 @@ export type WorkloadKind =
   | "job"
   | "cronjob";
 
+type WorkloadFieldKey =
+  | "deploymentName"
+  | "replicaSetName"
+  | "statefulSetName"
+  | "daemonSetName"
+  | "jobName"
+  | "cronJobName";
+
+const WORKLOAD_KIND_FIELD_KEYS: ReadonlyArray<{ kind: WorkloadKind; fieldKey: WorkloadFieldKey }> =
+  [
+    { kind: "deployment", fieldKey: "deploymentName" },
+    { kind: "replicaset", fieldKey: "replicaSetName" },
+    { kind: "statefulset", fieldKey: "statefulSetName" },
+    { kind: "daemonset", fieldKey: "daemonSetName" },
+    { kind: "job", fieldKey: "jobName" },
+    { kind: "cronjob", fieldKey: "cronJobName" },
+  ];
+
 function workloadField(kind: WorkloadKind, fields: K8sFieldMapping): string {
-  const map: Record<WorkloadKind, string> = {
-    deployment: fields.deploymentName,
-    replicaset: fields.replicaSetName,
-    statefulset: fields.statefulSetName,
-    daemonset: fields.daemonSetName,
-    job: fields.jobName,
-    cronjob: fields.cronJobName,
-  };
-  return map[kind];
+  const entry = WORKLOAD_KIND_FIELD_KEYS.find((item) => item.kind === kind);
+  if (!entry) {
+    throw new Error(`Unsupported workload kind: ${kind}`);
+  }
+  return fields[entry.fieldKey];
 }
 
 /**
@@ -194,17 +208,16 @@ export function buildAllWorkloadsInventoryQuery(
   filters: K8sQueryFilters,
   fields: K8sFieldMapping = DEFAULT_K8S_FIELD_MAPPING,
 ): string {
-  const workloadFields = [
-    fields.deploymentName,
-    fields.replicaSetName,
-    fields.statefulSetName,
-    fields.daemonSetName,
-    fields.jobName,
-    fields.cronJobName,
-  ];
+  const workloadKindFields = WORKLOAD_KIND_FIELD_KEYS.map(({ kind, fieldKey }) => ({
+    kind,
+    field: fields[fieldKey],
+  }));
+  const workloadFields = workloadKindFields.map(({ field }) => field);
   const whereClauses = buildTimeWhereClauses(filters, fields);
   whereClauses.push(`(${workloadFields.map((field) => `${field} IS NOT NULL`).join(" OR ")})`);
-  const workloadKind = `CASE(${fields.deploymentName} IS NOT NULL, "deployment", ${fields.replicaSetName} IS NOT NULL, "replicaset", ${fields.statefulSetName} IS NOT NULL, "statefulset", ${fields.daemonSetName} IS NOT NULL, "daemonset", ${fields.jobName} IS NOT NULL, "job", ${fields.cronJobName} IS NOT NULL, "cronjob", "unknown")`;
+  const workloadKind = `CASE(${workloadKindFields
+    .map(({ kind, field }) => `${field} IS NOT NULL, "${kind}"`)
+    .join(", ")}, "unknown")`;
 
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
