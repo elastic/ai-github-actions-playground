@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { EChart } from "@perses-dev/components";
-import type { ECharts } from "echarts/core";
 
 import {
   buildFlamegraphTree,
@@ -13,6 +12,7 @@ import {
 
 import { useEChartTheme } from "./useEChartTheme";
 import ProfilingFlamegraph from "./ProfilingFlamegraph";
+import type { EChartInstance } from "./chartExport";
 
 interface Props {
   stacktraces: SymbolizedStacktrace[];
@@ -22,7 +22,7 @@ interface Props {
 
 export default function ProfilingFlamescope({ stacktraces, onWindowChange, onFrameClick }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
   const model = useMemo(() => buildFlamescopeHeatmap(stacktraces), [stacktraces]);
   const [selectedBucket, setSelectedBucket] = useState(0);
   const activeBucket =

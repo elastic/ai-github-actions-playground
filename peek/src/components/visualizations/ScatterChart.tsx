@@ -1,13 +1,12 @@
 import { useMemo, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
 import { formatValue } from "@perses-dev/core";
-import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse, ScatterChartOptions } from "../../types";
 import { CHART_COLORS } from "../../theme";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { createPngExporter } from "./chartExport";
+import { createPngExporter, type EChartInstance } from "./chartExport";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 
 interface Props {
@@ -18,7 +17,7 @@ interface Props {
 
 export default function ScatterChart({ data, options, onExportReady }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
   const format = options?.format;
 
   useEffect(() => {

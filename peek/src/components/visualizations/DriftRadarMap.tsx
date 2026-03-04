@@ -1,7 +1,6 @@
 import { useMemo, useCallback, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import type { ECharts } from "echarts/core";
 
 import type { Span, ServiceMapEdge } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
@@ -12,6 +11,7 @@ import { EChart } from "../perses/PersesEChartWrapper";
 import { useEChartTheme } from "./useEChartTheme";
 import { buildServiceGraphOption } from "./serviceGraphOptions";
 import type { EdgeExtras } from "./serviceGraphOptions";
+import type { EChartInstance } from "./chartExport";
 
 interface Props {
   currentSpans: Span[];
@@ -50,7 +50,7 @@ function classifyEdge(current: ServiceMapEdge, baseline?: ServiceMapEdge): EdgeS
 
 export default function DriftRadarMap({ currentSpans, baselineSpans, onNodeClick }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
   const mapData = useMemo(() => buildServiceMapData(currentSpans), [currentSpans]);
   const baselineMapData = useMemo(
     () => (baselineSpans ? buildServiceMapData(baselineSpans) : null),

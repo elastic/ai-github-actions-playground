@@ -1,6 +1,5 @@
 import { useMemo, useCallback, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
-import type { ECharts } from "echarts/core";
 
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
@@ -8,6 +7,7 @@ import { formatTimestamp } from "../../utils/formatDate";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
+import type { EChartInstance } from "./chartExport";
 
 interface ScatterDataPoint {
   timestamp: string;
@@ -23,7 +23,7 @@ interface TraceScatterChartProps {
 
 export default function TraceScatterChart({ data, onPointClick }: TraceScatterChartProps) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
 
   const option = useMemo(() => {
     if (data.length === 0) {
