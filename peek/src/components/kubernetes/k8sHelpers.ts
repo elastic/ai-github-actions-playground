@@ -62,6 +62,18 @@ export interface PodDetailRow {
   restarts: number;
 }
 
+export function formatCpu(value: number | null): string {
+  if (value == null) return "—";
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+export function formatMemory(bytes: number | null): string {
+  if (bytes == null) return "—";
+  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GiB`;
+  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MiB`;
+  return `${(bytes / 1024).toFixed(1)} KiB`;
+}
+
 // ---------------------------------------------------------------------------
 // Column index resolver
 // ---------------------------------------------------------------------------

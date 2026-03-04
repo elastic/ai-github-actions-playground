@@ -153,6 +153,16 @@ describe("k8sQueryBuilder", () => {
         "BY workload_name = COALESCE(k8s.deployment.name, k8s.replicaset.name, k8s.statefulset.name, k8s.daemonset.name, k8s.job.name, k8s.cronjob.name)",
       );
     });
+
+    it("includes cluster and namespace filters when provided", () => {
+      const query = buildAllWorkloadsInventoryQuery({
+        ...DEFAULT_FILTERS,
+        cluster: "prod",
+        namespace: "kube-system",
+      });
+      expect(query).toContain('k8s.cluster.name == "prod"');
+      expect(query).toContain('k8s.namespace.name == "kube-system"');
+    });
   });
 
   describe("buildPodInventoryQuery", () => {

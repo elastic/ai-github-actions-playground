@@ -8,7 +8,14 @@ import Typography from "@mui/material/Typography";
 
 import type { KubernetesActiveTab } from "../../types/pageFilters";
 
-import type { ClusterRow, NamespaceRow, WorkloadRow, PodRow } from "./k8sHelpers";
+import {
+  formatCpu,
+  formatMemory,
+  type ClusterRow,
+  type NamespaceRow,
+  type WorkloadRow,
+  type PodRow,
+} from "./k8sHelpers";
 import type { K8sSortDirection } from "./useK8sInventorySearch";
 
 // ---------------------------------------------------------------------------
@@ -21,18 +28,6 @@ interface ColumnDef<T> {
   sortable: boolean;
   align?: "left" | "right";
   render: (row: T) => React.ReactNode;
-}
-
-function formatCpu(value: number | null): string {
-  if (value == null) return "—";
-  return `${(value * 100).toFixed(1)}%`;
-}
-
-function formatMemory(bytes: number | null): string {
-  if (bytes == null) return "—";
-  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GiB`;
-  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MiB`;
-  return `${(bytes / 1024).toFixed(1)} KiB`;
 }
 
 const CLUSTER_COLUMNS: ColumnDef<ClusterRow>[] = [
@@ -177,7 +172,7 @@ function renderTable<T>(
   sortDirection: K8sSortDirection,
   handleSort: (field: string) => void,
   ariaLabel: string,
-  rowKey: (row: T) => string,
+  rowKey: (row: T, index: number) => string,
 ) {
   return (
     <Table size="medium" aria-label={ariaLabel}>
@@ -201,8 +196,8 @@ function renderTable<T>(
         </TableRow>
       </TableHead>
       <TableBody>
-        {rows.map((row) => (
-          <TableRow key={rowKey(row)} hover>
+        {rows.map((row, index) => (
+          <TableRow key={rowKey(row, index)} hover>
             {columns.map((col) => (
               <TableCell key={col.key} align={col.align ?? "left"}>
                 <Typography variant="body2">{col.render(row)}</Typography>
@@ -248,7 +243,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Namespace inventory",
-        (r) => r.namespace,
+        (r, index) => `${r.namespace}-${index}`,
       );
     case "workloads":
       return renderTable(
@@ -258,7 +253,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Workload inventory",
-        (r) => r.workloadName,
+        (r, index) => `${r.workloadName}-${index}`,
       );
     case "pods":
       return renderTable(
@@ -268,7 +263,11 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Pod inventory",
-        (r) => r.podName,
+        (r, index) => `${r.namespace}-${r.podName}-${index}`,
       );
+    default: {
+      const _exhaustive: never = activeTab;
+      return _exhaustive;
+    }
   }
 }

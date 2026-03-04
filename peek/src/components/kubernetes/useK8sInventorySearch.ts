@@ -27,6 +27,12 @@ import {
 } from "./k8sHelpers";
 
 export type K8sSortDirection = "asc" | "desc";
+const DEFAULT_SORT_FIELD: Record<KubernetesActiveTab, string> = {
+  clusters: "podCount",
+  namespaces: "podCount",
+  workloads: "podCount",
+  pods: "restarts",
+};
 
 function buildQueryForTab(tab: KubernetesActiveTab, filters: K8sQueryFilters): string {
   switch (tab) {
@@ -68,7 +74,7 @@ export function useK8sInventorySearch() {
     [queryClient, searchQueryKey],
   );
 
-  const [sortField, setSortField] = useState<string>("podCount");
+  const [sortField, setSortField] = useState<string>(DEFAULT_SORT_FIELD[filters.activeTab]);
   const [sortDirection, setSortDirection] = useState<K8sSortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
 
@@ -131,10 +137,13 @@ export function useK8sInventorySearch() {
   const handleTabChange = useCallback(
     (tab: KubernetesActiveTab) => {
       cancelSearch();
+      clearError();
       setSearchResult(null);
+      setSortField(DEFAULT_SORT_FIELD[tab]);
+      setSortDirection("desc");
       updateFilters({ activeTab: tab });
     },
-    [cancelSearch, setSearchResult, updateFilters],
+    [cancelSearch, clearError, setSearchResult, updateFilters],
   );
 
   const clusterRows = useMemo<ClusterRow[]>(() => {

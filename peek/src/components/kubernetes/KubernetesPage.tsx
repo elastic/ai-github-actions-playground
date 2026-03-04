@@ -1,4 +1,5 @@
 import Alert from "@mui/material/Alert";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -21,11 +22,11 @@ import K8sInventoryTable from "./K8sInventoryTable";
 import K8sOverviewCards from "./K8sOverviewCards";
 import { useK8sInventorySearch } from "./useK8sInventorySearch";
 
-const TAB_OPTIONS: { value: KubernetesActiveTab; label: string }[] = [
-  { value: "clusters", label: "Clusters" },
-  { value: "namespaces", label: "Namespaces" },
-  { value: "workloads", label: "Workloads" },
-  { value: "pods", label: "Pods" },
+const TAB_OPTIONS: { value: KubernetesActiveTab; label: string; singularLabel: string }[] = [
+  { value: "clusters", label: "Clusters", singularLabel: "cluster" },
+  { value: "namespaces", label: "Namespaces", singularLabel: "namespace" },
+  { value: "workloads", label: "Workloads", singularLabel: "workload" },
+  { value: "pods", label: "Pods", singularLabel: "pod" },
 ];
 
 export default function KubernetesPage() {
@@ -62,6 +63,8 @@ export default function KubernetesPage() {
   })();
 
   const tabLabel = TAB_OPTIONS.find((t) => t.value === filters.activeTab)?.label ?? "";
+  const tabSingularLabel =
+    TAB_OPTIONS.find((t) => t.value === filters.activeTab)?.singularLabel ?? "";
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -96,7 +99,7 @@ export default function KubernetesPage() {
           {searchResult && (
             <Typography variant="body2" color="text.secondary">
               {activeRows.length}{" "}
-              {activeRows.length === 1 ? tabLabel.replace(/s$/, "") : tabLabel.toLowerCase()} found
+              {activeRows.length === 1 ? tabSingularLabel : tabLabel.toLowerCase()} found
             </Typography>
           )}
         </Box>
@@ -120,6 +123,7 @@ export default function KubernetesPage() {
       {!loading && !searchResult && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
+            icon={<SearchOffIcon />}
             heading="No Kubernetes data loaded"
             description="Click Search to discover Kubernetes resources from your metrics data."
             addDataHref={PAGE_MANIFEST.addData.path}

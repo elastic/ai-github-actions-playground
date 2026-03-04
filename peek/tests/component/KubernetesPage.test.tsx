@@ -68,10 +68,10 @@ const POD_RESPONSE = {
 };
 
 function responseForQuery(query: string) {
-  if (query.includes("namespace_count")) return CLUSTER_RESPONSE;
-  if (query.includes("namespace_name = ") && !query.includes("pod_name ="))
-    return NAMESPACE_RESPONSE;
-  if (query.includes("workload_name")) return WORKLOAD_RESPONSE;
+  if (query.includes("namespace_count = COUNT_DISTINCT")) return CLUSTER_RESPONSE;
+  if (/BY namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
+  if (/BY workload_name = /.test(query)) return WORKLOAD_RESPONSE;
+  if (/BY pod_name = /.test(query)) return POD_RESPONSE;
   return POD_RESPONSE;
 }
 
