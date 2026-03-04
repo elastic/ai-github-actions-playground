@@ -252,6 +252,8 @@ describe("InvestigatePage", () => {
 
     // Wait for the full retry chain (full → otel → minimal) to complete
     await waitFor(
+      // Wait for the full retry chain (full → otel → minimal); in practice
+      // completes in <1 s, the 5 s cap is a generous safety margin.
       () => {
         expect(queryMock).toHaveBeenCalledTimes(4);
       },
