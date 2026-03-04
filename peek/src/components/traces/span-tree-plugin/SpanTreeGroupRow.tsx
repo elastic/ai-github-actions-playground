@@ -59,6 +59,7 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
         if (representativeSpanId) onClick(representativeSpanId);
       }}
       onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           if (representativeSpanId) onClick(representativeSpanId);
