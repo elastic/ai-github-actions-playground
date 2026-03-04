@@ -15,7 +15,7 @@
  * Supported --page values:
  *   cluster-overview | data-streams | indices | ingest-pipelines |
  *   query-lab | logs | metrics | traces | console | users | roles |
- *   dashboards | fleet | add-data | api-keys
+ *   dashboards | fleet | add-data | api-keys | kubernetes | health | docs
  *
  * The script mocks all required Elasticsearch endpoints so no live cluster
  * is needed.
