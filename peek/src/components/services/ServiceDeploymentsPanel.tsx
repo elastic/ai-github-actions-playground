@@ -101,23 +101,22 @@ export default function ServiceDeploymentsPanel({
           {deployments.map((row, index) => (
             <TableRow key={row.version} hover>
               <TableCell>
-                {deploymentInsightSlotIds?.[row.version] ? (
-                  <InsightSlot slotId={deploymentInsightSlotIds[row.version]!}>
+                {(() => {
+                  const versionChip = (
                     <Chip
                       size="small"
                       label={row.version}
                       color={index === 0 ? "primary" : "default"}
                       variant={index === 0 ? "filled" : "outlined"}
                     />
-                  </InsightSlot>
-                ) : (
-                  <Chip
-                    size="small"
-                    label={row.version}
-                    color={index === 0 ? "primary" : "default"}
-                    variant={index === 0 ? "filled" : "outlined"}
-                  />
-                )}
+                  );
+                  const slotId = deploymentInsightSlotIds?.[row.version];
+                  return slotId ? (
+                    <InsightSlot slotId={slotId}>{versionChip}</InsightSlot>
+                  ) : (
+                    versionChip
+                  );
+                })()}
               </TableCell>
               <TableCell>
                 <Tooltip title={formatExactTimestamp(row.firstSeen)}>

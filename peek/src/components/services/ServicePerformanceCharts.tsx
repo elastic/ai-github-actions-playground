@@ -11,6 +11,7 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 
 import EmptyState from "../EmptyState";
 import InsightSlot from "../InsightSlot";
@@ -97,6 +98,7 @@ function RankedList({
   rowSlotIdForService?: (serviceName: string) => string;
   sparklineData?: Record<string, ServiceSparklineData>;
 }) {
+  const theme = useTheme();
   const { insightsBySlot } = useInsightSlotContext();
   if (items.length === 0) {
     return <EmptyState heading="No data available" size="small" />;
@@ -159,6 +161,7 @@ function RankedList({
                       ? (sparklineData?.[item.serviceName]?.errorRate ?? [])
                       : (sparklineData?.[item.serviceName]?.latency ?? [])
                   }
+                  color={color === "error" ? theme.palette.error.main : undefined}
                 />
               </TableCell>
               <TableCell align="right" sx={{ width: "20%", pr: 0, py: 1 }}>

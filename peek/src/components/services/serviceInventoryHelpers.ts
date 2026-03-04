@@ -1,6 +1,7 @@
 import type { EsqlResponse } from "../../types";
 import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
 
+import { parseBucketTimestampMs } from "./serviceTimeUtils";
 import type { SortDirection } from "./serviceDashboardHelpers";
 
 export type { SortDirection };
@@ -74,40 +75,6 @@ export interface ServiceSparklineData {
   requests: SparklinePoint[];
   latency: SparklinePoint[];
   errorRate: SparklinePoint[];
-}
-
-function parseBucketTimestampMs(value: unknown, columnType?: string): number | null {
-  const fromNumeric = (numeric: number): number => {
-    // date_nanos values are emitted as epoch nanoseconds.
-    if (columnType === "date_nanos") return numeric / 1_000_000;
-    return numeric;
-  };
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return fromNumeric(value);
-  }
-  if (typeof value === "string") {
-    // Some clusters serialize date/date_nanos buckets as epoch strings.
-    if (/^\d+$/.test(value.trim())) {
-      const asNumber = Number(value);
-      if (Number.isFinite(asNumber)) return fromNumeric(asNumber);
-      try {
-        const asBigInt = BigInt(value);
-        // Avoid unsafe Number conversion by scaling first when needed.
-        const ms = columnType === "date_nanos" ? Number(asBigInt / 1_000_000n) : Number(asBigInt);
-        if (Number.isFinite(ms)) return ms;
-      } catch {
-        // Fall through to Date.parse below.
-      }
-    }
-    const parsed = Date.parse(value);
-    return Number.isNaN(parsed) ? null : parsed;
-  }
-  if (value instanceof Date) {
-    const ms = value.getTime();
-    return Number.isNaN(ms) ? null : ms;
-  }
-  return null;
 }
 
 /**

@@ -284,6 +284,8 @@ export function useServiceDashboardQueries({
     runRoutesQuery(routesQuery);
     const tracesQuery = buildServiceRecentTracesQuery(filters);
     latestTracesQueryRef.current = tracesQuery.trim();
+    latestTraceSpansQueryRef.current = null;
+    clearTraceSpansError();
     setTraceExplorerSpans([]);
     runTracesQuery(tracesQuery);
     const deploymentsQuery = buildServiceDeploymentsQuery(filters);
@@ -302,6 +304,7 @@ export function useServiceDashboardQueries({
     runDeploymentsQuery,
     runSparklineQuery,
     runK8sContextQuery,
+    clearTraceSpansError,
     serviceName,
     timeFrom,
     timeTo,

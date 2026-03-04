@@ -9,6 +9,10 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+
+import EmptyState from "../EmptyState";
 
 import type { RecentTrace } from "./serviceDashboardHelpers";
 import { formatLatency } from "./serviceInventoryHelpers";
@@ -49,46 +53,55 @@ export function ServiceTraceStatusPanel({ traces }: { traces: RecentTrace[] }) {
           Trace Status Breakdown
         </Typography>
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1 }}>
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            height: 16,
-            overflow: "hidden",
-            borderRadius: 99,
-            bgcolor: "action.hover",
-          }}
-        >
-          {statusBreakdown.map((row) => (
-            <Tooltip
-              key={row.status}
-              title={`${row.status}: ${row.count.toLocaleString()} (${row.percent.toFixed(1)}%)`}
-            >
-              <Box
+      {traces.length === 0 ? (
+        <EmptyState
+          size="small"
+          icon={<TimelineIcon fontSize="small" />}
+          heading="No traces yet"
+          description="Run a search to populate status distribution."
+        />
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              height: 16,
+              overflow: "hidden",
+              borderRadius: 99,
+              bgcolor: "action.hover",
+            }}
+          >
+            {statusBreakdown.map((row) => (
+              <Tooltip
+                key={row.status}
+                title={`${row.status}: ${row.count.toLocaleString()} (${row.percent.toFixed(1)}%)`}
+              >
+                <Box
+                  sx={{
+                    width: `${Math.max(row.percent, 2)}%`,
+                    minWidth: row.percent > 0 ? 2 : 0,
+                    bgcolor: statusColor(row.status),
+                  }}
+                />
+              </Tooltip>
+            ))}
+          </Box>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {statusBreakdown.map((row) => (
+              <Chip
+                key={row.status}
+                size="small"
+                variant="outlined"
+                label={`${row.status} ${row.percent.toFixed(1)}% (${row.count.toLocaleString()})`}
                 sx={{
-                  width: `${Math.max(row.percent, 2)}%`,
-                  minWidth: row.percent > 0 ? 2 : 0,
-                  bgcolor: statusColor(row.status),
+                  "& .MuiChip-label": { fontVariantNumeric: "tabular-nums" },
                 }}
               />
-            </Tooltip>
-          ))}
+            ))}
+          </Box>
         </Box>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {statusBreakdown.map((row) => (
-            <Chip
-              key={row.status}
-              size="small"
-              variant="outlined"
-              label={`${row.status} ${row.percent.toFixed(1)}% (${row.count.toLocaleString()})`}
-              sx={{
-                "& .MuiChip-label": { fontVariantNumeric: "tabular-nums" },
-              }}
-            />
-          ))}
-        </Box>
-      </Box>
+      )}
     </Paper>
   );
 }
@@ -130,30 +143,39 @@ export function ServiceSlowOperationsPanel({ traces }: { traces: RecentTrace[] }
           Slowest Operations
         </Typography>
       </Box>
-      <Table size="small" aria-label="Slowest operations">
-        <TableHead>
-          <TableRow>
-            <TableCell>Operation</TableCell>
-            <TableCell align="right">Max</TableCell>
-            <TableCell align="right">Avg</TableCell>
-            <TableCell align="right">Count</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {slowOperations.map((row) => (
-            <TableRow key={row.name}>
-              <TableCell>
-                <Typography variant="body2" noWrap>
-                  {row.name}
-                </Typography>
-              </TableCell>
-              <TableCell align="right">{formatLatency(row.maxDurationMs)}</TableCell>
-              <TableCell align="right">{formatLatency(row.avgDurationMs)}</TableCell>
-              <TableCell align="right">{row.count}</TableCell>
+      {traces.length === 0 ? (
+        <EmptyState
+          size="small"
+          icon={<ScheduleIcon fontSize="small" />}
+          heading="No operations yet"
+          description="Run a search to identify slow spans."
+        />
+      ) : (
+        <Table size="small" aria-label="Slowest operations">
+          <TableHead>
+            <TableRow>
+              <TableCell>Operation</TableCell>
+              <TableCell align="right">Max</TableCell>
+              <TableCell align="right">Avg</TableCell>
+              <TableCell align="right">Count</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {slowOperations.map((row) => (
+              <TableRow key={row.name}>
+                <TableCell>
+                  <Typography variant="body2" noWrap>
+                    {row.name}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">{formatLatency(row.maxDurationMs)}</TableCell>
+                <TableCell align="right">{formatLatency(row.avgDurationMs)}</TableCell>
+                <TableCell align="right">{row.count}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </Paper>
   );
 }

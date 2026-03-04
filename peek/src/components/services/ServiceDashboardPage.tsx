@@ -312,7 +312,6 @@ export default function ServiceDashboardPage() {
       timeTo,
       routeRows.length,
       recentTraces.length,
-      deployments.length,
       k8sRows,
       summary,
       traceSignals,
