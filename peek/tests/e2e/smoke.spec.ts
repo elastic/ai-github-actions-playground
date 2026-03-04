@@ -276,17 +276,18 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Add Data");
 
-    await expect(
-      page.getByRole("heading", { name: "Step 1: What are you monitoring?" }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Kubernetes" }).first().click();
-    await page.getByRole("button", { name: "Continue to step 2" }).click();
-    await expect(page.getByRole("heading", { name: "Step 2: Set up and verify" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What are you monitoring?" })).toBeVisible();
+    const main = page.getByRole("main");
+    await main.getByPlaceholder("Search technologies").fill("Kubernetes");
+    await main
+      .getByRole("button", { name: /Kubernetes/, pressed: false })
+      .first()
+      .click();
+    await main.getByRole("button", { name: /^Continue$/ }).click();
+    await expect(page.getByRole("heading", { name: /Set up Kubernetes/i })).toBeVisible();
 
-    await page.getByRole("button", { name: /^Continue$/ }).click();
-    await expect(
-      page.getByRole("heading", { name: "Explore your data + next steps" }),
-    ).toBeVisible();
+    await main.getByRole("button", { name: /^Continue$/ }).click();
+    await expect(page.getByRole("heading", { name: /next steps/i })).toBeVisible();
   });
 
   test("metrics user connects, picks a metric, and gets a line chart-ready result", async ({
