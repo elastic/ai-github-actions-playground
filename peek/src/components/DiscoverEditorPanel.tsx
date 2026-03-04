@@ -87,47 +87,49 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           ) : undefined
         }
         actions={
-          <>
-            <Tooltip
-              title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
-            >
-              <span>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={(e) => p.setHistoryAnchor(e.currentTarget)}
-                  disabled={!hasQueryHistory}
-                >
-                  Recent queries
-                </Button>
-              </span>
-            </Tooltip>
-            <Menu
-              anchorEl={p.historyAnchor}
-              open={Boolean(p.historyAnchor)}
-              onClose={() => p.setHistoryAnchor(null)}
-            >
-              {p.queryHistory.map((historyQuery, idx) => (
-                <MenuItem
-                  key={`${historyQuery}-${idx}`}
-                  onClick={() => p.handleSelectHistory(historyQuery)}
-                >
-                  {historyQuery}
-                </MenuItem>
-              ))}
-            </Menu>
-            <Typography
-              component="a"
-              href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
-              target="_blank"
-              rel="noreferrer"
-              variant="caption"
-              color="primary.main"
-              sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
-            >
-              ES|QL documentation
-            </Typography>
-          </>
+          !p.collapsed ? (
+            <>
+              <Tooltip
+                title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
+              >
+                <span>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={(e) => p.setHistoryAnchor(e.currentTarget)}
+                    disabled={!hasQueryHistory}
+                  >
+                    Recent queries
+                  </Button>
+                </span>
+              </Tooltip>
+              <Menu
+                anchorEl={p.historyAnchor}
+                open={Boolean(p.historyAnchor)}
+                onClose={() => p.setHistoryAnchor(null)}
+              >
+                {p.queryHistory.map((historyQuery, idx) => (
+                  <MenuItem
+                    key={`${historyQuery}-${idx}`}
+                    onClick={() => p.handleSelectHistory(historyQuery)}
+                  >
+                    {historyQuery}
+                  </MenuItem>
+                ))}
+              </Menu>
+              <Typography
+                component="a"
+                href="https://www.elastic.co/guide/en/elasticsearch/reference/current/esql.html"
+                target="_blank"
+                rel="noreferrer"
+                variant="caption"
+                color="primary.main"
+                sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+              >
+                ES|QL documentation
+              </Typography>
+            </>
+          ) : null
         }
       />
       {p.collapsed && (
@@ -137,7 +139,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           noWrap
           sx={{ minWidth: 0, mb: 1, fontStyle: "italic" }}
         >
-          {explanation ?? p.effectiveQuery}
+          {explanation ?? "AI summary unavailable."}
         </Typography>
       )}
       <Collapse in={!p.collapsed} unmountOnExit>

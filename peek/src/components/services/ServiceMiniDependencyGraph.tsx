@@ -38,7 +38,7 @@ export default function ServiceMiniDependencyGraph({
     const graph = buildServiceMapData(spans);
     const rows: NeighborEdge[] = graph.edges
       .filter((edge) => edge.source === serviceName || edge.target === serviceName)
-      .map((edge) => ({
+      .map<NeighborEdge>((edge) => ({
         direction: edge.source === serviceName ? "outbound" : "inbound",
         peerService: edge.source === serviceName ? edge.target : edge.source,
         calls: edge.callCount,
@@ -123,9 +123,12 @@ export default function ServiceMiniDependencyGraph({
   }, [neighbors, maxCalls, serviceName]);
 
   const handleClick = useCallback(
-    (params: { data: { name?: unknown } }) => {
+    (params: unknown) => {
       if (!onPeerServiceClick) return;
-      const clicked = params?.data?.name;
+      const clicked =
+        typeof params === "object" && params !== null && "data" in params
+          ? (params.data as { name?: unknown })?.name
+          : undefined;
       if (typeof clicked !== "string" || clicked === serviceName) return;
       onPeerServiceClick(clicked);
     },
@@ -136,7 +139,9 @@ export default function ServiceMiniDependencyGraph({
     const instance = instanceRef.current;
     if (!instance || !onPeerServiceClick) return;
     instance.on("click", handleClick);
-    return () => instance.off("click", handleClick);
+    return () => {
+      instance.off("click", handleClick);
+    };
   }, [handleClick, onPeerServiceClick]);
 
   if (neighbors.length === 0) {
