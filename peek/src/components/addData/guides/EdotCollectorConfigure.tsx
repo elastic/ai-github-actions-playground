@@ -4,10 +4,20 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { COMPONENT_HEIGHTS } from "../../../types/tokens";
 import type { EndpointType, Platform } from "../../../utils/addDataUtils";
+import type { AddDataEnvironment } from "../../../services/addData/catalog";
+
+const ALL_PLATFORM_TABS: { value: Platform; label: string }[] = [
+  { value: "kubernetes", label: "Kubernetes" },
+  { value: "docker", label: "Docker" },
+  { value: "linux", label: "Linux" },
+  { value: "macos", label: "macOS" },
+  { value: "windows", label: "Windows" },
+];
 
 export interface EdotCollectorConfigureProps {
   endpointType: EndpointType;
@@ -17,6 +27,7 @@ export interface EdotCollectorConfigureProps {
   ingestAvailable: boolean | null;
   platform: Platform;
   onPlatformChange: (platform: Platform) => void;
+  supportedEnvironments?: readonly AddDataEnvironment[];
 }
 
 export default function EdotCollectorConfigure({
@@ -27,7 +38,15 @@ export default function EdotCollectorConfigure({
   ingestAvailable,
   platform,
   onPlatformChange,
+  supportedEnvironments,
 }: EdotCollectorConfigureProps) {
+  const filteredTabs = supportedEnvironments
+    ? ALL_PLATFORM_TABS.filter((tab) =>
+        supportedEnvironments.includes(tab.value as AddDataEnvironment),
+      )
+    : ALL_PLATFORM_TABS;
+  const displayTabs = filteredTabs.length > 0 ? filteredTabs : ALL_PLATFORM_TABS;
+
   return (
     <>
       <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
@@ -45,7 +64,11 @@ export default function EdotCollectorConfigure({
           aria-label="Endpoint type"
         >
           <ToggleButton value="elasticsearch">Elasticsearch</ToggleButton>
-          <ToggleButton value="managed_otlp">Managed OTLP</ToggleButton>
+          <ToggleButton value="managed_otlp">
+            <Tooltip title="Send telemetry via OpenTelemetry Protocol to an Elastic-managed ingest endpoint.">
+              <span>Managed OTLP</span>
+            </Tooltip>
+          </ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
@@ -81,11 +104,9 @@ export default function EdotCollectorConfigure({
           "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
         }}
       >
-        <Tab value="kubernetes" label="Kubernetes" />
-        <Tab value="docker" label="Docker" />
-        <Tab value="linux" label="Linux" />
-        <Tab value="macos" label="macOS" />
-        <Tab value="windows" label="Windows" />
+        {displayTabs.map((tab) => (
+          <Tab key={tab.value} value={tab.value} label={tab.label} />
+        ))}
       </Tabs>
     </>
   );

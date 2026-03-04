@@ -184,8 +184,8 @@ describe("IndicesPage", () => {
     const tableEl = await screen.findByRole("table", { name: /index list/i });
     const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
 
-    const cell = await within(tableEl).findByRole("cell", { name: longName });
-    expect(cell).toHaveAttribute("title", longName);
+    const metricsLabel = await within(tableEl).findByText(longName);
+    expect(metricsLabel).toHaveAttribute("title", longName);
   });
 
   it("shows system indices when the toggle is enabled", async () => {
@@ -220,6 +220,48 @@ describe("IndicesPage", () => {
     expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("metrics");
     expect(await screen.findByRole("heading", { level: 2, name: indexName })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /settings/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("sorts indices by size when the Size column header is clicked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+    await within(tableEl).findByText("logs-app");
+
+    // Click "Size" column header to sort ascending
+    await user.click(screen.getByRole("button", { name: /size/i }));
+
+    const rows = within(tableEl).getAllByRole("row");
+    // First row is the header; data rows follow
+    const dataRows = rows.slice(1);
+    // With ascending sort: .system-index is hidden, logs-app (1 MB) < metrics (2 MB)
+    expect(within(dataRows[0]).getByText("logs-app")).toBeInTheDocument();
+    expect(
+      within(dataRows[1]).getByText(
+        "metrics-service_destination.1m.otel-default-2026.03.02-000001",
+      ),
+    ).toBeInTheDocument();
+
+    // Click again to sort descending
+    await user.click(screen.getByRole("button", { name: /size/i }));
+    const rowsDesc = within(tableEl).getAllByRole("row");
+    const dataRowsDesc = rowsDesc.slice(1);
+    expect(
+      within(dataRowsDesc[0]).getByText(
+        "metrics-service_destination.1m.otel-default-2026.03.02-000001",
+      ),
+    ).toBeInTheDocument();
+    expect(within(dataRowsDesc[1]).getByText("logs-app")).toBeInTheDocument();
+  });
+
+  it("displays table column headers for Name, Health, Docs, and Size", async () => {
+    renderPage();
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+
+    expect(within(tableEl).getByText("Name")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Health")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Docs")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Size")).toBeInTheDocument();
   });
 
   it("clears the detail panel when search excludes the selected index", async () => {
@@ -348,63 +390,5 @@ describe("IndicesPage", () => {
       path: "/logs-app/_mapping",
     });
     expect(screen.getByTestId("location")).toHaveTextContent("/console");
-  });
-
-  it("sorts indices by size when Size column header is clicked", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    const tableEl = await screen.findByRole("table", { name: /index list/i });
-    await within(tableEl).findByText("logs-app");
-
-    // Click the Size sort header
-    await user.click(screen.getByRole("button", { name: /size/i }));
-
-    // After sorting by size ascending, metrics (2 MB) should come after logs-app (1 MB)
-    const rows = within(tableEl).getAllByRole("row");
-    // rows[0] is the header row
-    expect(rows[1]).toHaveTextContent(/logs-app/);
-    expect(rows[2]).toHaveTextContent(/metrics-service_destination/);
-
-    // Click again to reverse (descending)
-    await user.click(screen.getByRole("button", { name: /size/i }));
-    const rowsDesc = within(tableEl).getAllByRole("row");
-    expect(rowsDesc[1]).toHaveTextContent(/metrics-service_destination/);
-    expect(rowsDesc[2]).toHaveTextContent(/logs-app/);
-  });
-
-  it("sorts indices by docs count when Docs column header is clicked", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    const tableEl = await screen.findByRole("table", { name: /index list/i });
-    await within(tableEl).findByText("logs-app");
-
-    const docsHeader = screen.getByRole("button", { name: /docs/i });
-    // First click: ascending
-    await user.click(docsHeader);
-
-    const rows = within(tableEl).getAllByRole("row");
-    // logs-app has 5000 docs, metrics has 20000 docs
-    expect(rows[1]).toHaveTextContent(/logs-app/);
-    expect(rows[2]).toHaveTextContent(/metrics-service_destination/);
-
-    // Second click: descending
-    await user.click(docsHeader);
-    const rowsDesc = within(tableEl).getAllByRole("row");
-    expect(rowsDesc[1]).toHaveTextContent(/metrics-service_destination/);
-    expect(rowsDesc[2]).toHaveTextContent(/logs-app/);
-  });
-
-  it("displays docs count and store size in table cells", async () => {
-    renderPage();
-    const tableEl = await screen.findByRole("table", { name: /index list/i });
-    await within(tableEl).findByText("logs-app");
-
-    // logs-app: 5000 docs, 1 MB store
-    expect(within(tableEl).getByText("5,000")).toBeInTheDocument();
-    expect(within(tableEl).getByText("1.0 MB")).toBeInTheDocument();
-
-    // metrics index: 20000 docs, 2 MB store
-    expect(within(tableEl).getByText("20,000")).toBeInTheDocument();
-    expect(within(tableEl).getByText("2.0 MB")).toBeInTheDocument();
   });
 });

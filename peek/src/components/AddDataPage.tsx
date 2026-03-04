@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 
 import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -10,8 +12,8 @@ import { deriveIngestCandidates, probeOtlpEndpoint } from "../utils/addDataUtils
 import type { EndpointType, Platform, TelemetrySignal } from "../utils/addDataUtils";
 import type { AddDataTechnologyCatalogEntry } from "../services/addData/catalog";
 import { OTEL_RECEIVER_BY_ID } from "../services/addData/otelReceiverCatalog";
-import type { AwsDeployTarget } from "../services/addData/awsDeployCatalog";
-import type { ApmLanguageDefinition } from "../services/addData/apmCatalog";
+import { AWS_DEPLOY_TARGETS, type AwsDeployTarget } from "../services/addData/awsDeployCatalog";
+import { APM_LANGUAGE_BY_ID, type ApmLanguageDefinition } from "../services/addData/apmCatalog";
 import type { FluentBitOutputMode } from "../services/addData/fluentBitConfig";
 
 import PageHeader from "./PageHeader";
@@ -157,9 +159,22 @@ export default function AddDataPage() {
     setSelectedTechnology(tech);
     setPlatform(tech.defaultPlatform);
     setReceiverFieldValues({});
-    setSelectedAwsTarget(null);
-    setSelectedApmLanguage(null);
     setFluentBitOutputMode("elasticsearch");
+
+    // Pre-select APM language from tech ID (e.g., "java-apm" → "java")
+    if (tech.guideType === "apm") {
+      const languageId = tech.id.replace(/-apm$/, "");
+      setSelectedApmLanguage(APM_LANGUAGE_BY_ID.get(languageId) ?? null);
+    } else {
+      setSelectedApmLanguage(null);
+    }
+
+    // Pre-select first AWS deploy target
+    if (tech.guideType === "aws_cloud_deploy") {
+      setSelectedAwsTarget(AWS_DEPLOY_TARGETS[0] ?? null);
+    } else {
+      setSelectedAwsTarget(null);
+    }
   };
 
   const handleAddAnotherSource = () => {
@@ -179,7 +194,29 @@ export default function AddDataPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader title="Add Data" description="Set up a new telemetry source" />
+        <PageHeader
+          title="Add Data"
+          description="Set up a new telemetry source"
+          actions={
+            <Stack direction="row" spacing={0.5}>
+              {(
+                [
+                  { step: 1 as const, label: "1. Select" },
+                  { step: 2 as const, label: "2. Set up" },
+                  { step: 3 as const, label: "3. Explore" },
+                ] satisfies { step: WizardStep; label: string }[]
+              ).map(({ step, label }) => (
+                <Chip
+                  key={step}
+                  label={label}
+                  size="small"
+                  color={wizardStep === step ? "primary" : "default"}
+                  variant={wizardStep >= step ? "filled" : "outlined"}
+                />
+              ))}
+            </Stack>
+          }
+        />
       </Paper>
 
       {wizardStep === 1 && (

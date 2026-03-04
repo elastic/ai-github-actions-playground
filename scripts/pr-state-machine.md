@@ -221,6 +221,19 @@ gh workflow run trigger-mention-in-pr-by-id.yml \
   --field prompt="Please review this PR. Assess correctness, code quality, and alignment with DEVELOPING.md. Approve if good, request changes if needed."
 ```
 
+### `CMD_UPDATE_BRANCH`
+
+```bash
+REPO_SLUG=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+gh api -X PUT "repos/$REPO_SLUG/pulls/$NUMBER/update-branch"
+```
+
+Merges the latest default branch (main) into the PR branch.  Returns 202 on
+success; GitHub returns an error containing "already up to date" when no merge
+is needed.  Only call when CI is idle (not queued/in_progress/action_required)
+and the PR is not yet approved — approved PRs should be merged, not silently
+rebased.
+
 ### `CMD_MERGE`
 
 ```bash

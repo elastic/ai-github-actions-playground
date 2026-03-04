@@ -1,5 +1,4 @@
 import { useMemo, useCallback, useRef, useEffect } from "react";
-import type { ECharts } from "echarts/core";
 
 import type { Span } from "../traces/traceUtils";
 import { buildServiceMapData } from "../traces/traceUtils";
@@ -8,6 +7,7 @@ import { EChart } from "../perses/PersesEChartWrapper";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { buildServiceGraphOption } from "./serviceGraphOptions";
+import type { EChartInstance } from "./chartExport";
 
 interface Props {
   spans: Span[];
@@ -16,7 +16,7 @@ interface Props {
 
 export default function TraceServiceMap({ spans, onNodeClick }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
   const mapData = useMemo(() => buildServiceMapData(spans), [spans]);
 
   const option = useMemo(() => buildServiceGraphOption({ mapData }), [mapData]);

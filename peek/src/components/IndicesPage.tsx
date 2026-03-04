@@ -21,11 +21,11 @@ import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
-import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
+import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { useDiskUsage } from "../hooks/useDiskUsage";
 import { formatBytes } from "../utils/formatBytes";
 
@@ -33,18 +33,41 @@ import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import IndexDetailPanel from "./IndexDetailPanel";
 import AskAiButton from "./AskAiButton";
-import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
+import { type IndexTab, parseIntOrNull, healthColor, INDEX_TABS } from "./indicesUtils";
 
 // ---------------------------------------------------------------------------
-// Sort helpers
+// Sorting helpers
 // ---------------------------------------------------------------------------
 
-type SortField = "index" | "health" | "docs.count" | "store.size";
+type IndexSortField = "index" | "health" | "docs.count" | "store.size";
+type SortDirection = "asc" | "desc";
 
-function parseNum(val: string | null): number | null {
-  if (val == null) return null;
-  const n = Number(val);
-  return Number.isFinite(n) ? n : null;
+const HEALTH_ORDER: Record<string, number> = { green: 0, yellow: 1, red: 2 };
+
+function compareIndices(
+  a: { index: string; health: string; "docs.count": string | null; "store.size": string | null },
+  b: { index: string; health: string; "docs.count": string | null; "store.size": string | null },
+  field: IndexSortField,
+  dir: SortDirection,
+): number {
+  let cmp: number;
+  switch (field) {
+    case "index":
+      cmp = a.index.localeCompare(b.index);
+      break;
+    case "health":
+      cmp = (HEALTH_ORDER[a.health] ?? 99) - (HEALTH_ORDER[b.health] ?? 99);
+      break;
+    case "docs.count":
+      cmp = (parseIntOrNull(a["docs.count"]) ?? -1) - (parseIntOrNull(b["docs.count"]) ?? -1);
+      break;
+    case "store.size":
+      cmp = (parseIntOrNull(a["store.size"]) ?? -1) - (parseIntOrNull(b["store.size"]) ?? -1);
+      break;
+    default:
+      cmp = 0;
+  }
+  return dir === "asc" ? cmp : -cmp;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,7 +75,7 @@ function parseNum(val: string | null): number | null {
 // ---------------------------------------------------------------------------
 
 export default function IndicesPage() {
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const openInDiscover = useOpenInDiscover();
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
@@ -61,6 +84,8 @@ export default function IndicesPage() {
     parseAsString.withDefault("").withOptions({ history: "replace" }),
   );
   const [showSystemIndices, setShowSystemIndices] = useState(false);
+  const [sortField, setSortField] = useState<IndexSortField>("index");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedIndex, setSelectedIndex] = useQueryState("selectedIndex", parseAsString);
   const [activeTab, setActiveTab] = useQueryState(
     "tab",
@@ -105,44 +130,21 @@ export default function IndicesPage() {
 
   const deferredSearch = useDeferredValue(search);
   const filteredIndices = useMemo(() => {
-    return indices.filter((idx) => {
+    const filtered = indices.filter((idx) => {
       if (!showSystemIndices && idx.index.startsWith(".")) return false;
       const term = deferredSearch.trim().toLowerCase();
       return !term || idx.index.toLowerCase().includes(term);
     });
-  }, [indices, showSystemIndices, deferredSearch]);
-
-  // Sort state for the index table
-  const [sortField, setSortField] = useState<SortField>("index");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    return [...filtered].sort((a, b) => compareIndices(a, b, sortField, sortDirection));
+  }, [indices, showSystemIndices, deferredSearch, sortField, sortDirection]);
 
   const handleSort = useCallback(
-    (field: SortField) => {
-      if (sortField === field) {
-        setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
-      } else {
-        setSortField(field);
-        setSortDirection("asc");
-      }
+    (field: IndexSortField) => {
+      setSortDirection((prev) => (sortField === field && prev === "asc" ? "desc" : "asc"));
+      setSortField(field);
     },
     [sortField],
   );
-
-  const sortedIndices = useMemo(() => {
-    const copy = [...filteredIndices];
-    copy.sort((a, b) => {
-      let cmp: number;
-      if (sortField === "index" || sortField === "health") {
-        cmp = (a[sortField] ?? "").localeCompare(b[sortField] ?? "");
-      } else {
-        const aNum = parseNum(a[sortField]);
-        const bNum = parseNum(b[sortField]);
-        cmp = (aNum ?? Number.POSITIVE_INFINITY) - (bNum ?? Number.POSITIVE_INFINITY);
-      }
-      return sortDirection === "asc" ? cmp : -cmp;
-    });
-    return copy;
-  }, [filteredIndices, sortField, sortDirection]);
 
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
@@ -180,9 +182,8 @@ export default function IndicesPage() {
 
   const handleOpenInQueryLab = useCallback(() => {
     if (!selectedIndex) return;
-    setDiscoverQueryDraft(`FROM ${selectedIndex} | LIMIT 50`);
-    navigate(PAGE_MANIFEST.discover.path);
-  }, [selectedIndex, navigate, setDiscoverQueryDraft]);
+    openInDiscover(`FROM ${selectedIndex} | LIMIT 50`);
+  }, [selectedIndex, openInDiscover]);
 
   const handleInspectInConsole = useCallback(() => {
     if (!selectedIndex) return;
@@ -246,14 +247,14 @@ export default function IndicesPage() {
       {error && <Alert severity="error">{error}</Alert>}
 
       <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
-        {/* Left panel: index list */}
+        {/* Left panel: index table */}
         <Paper
           variant="outlined"
           sx={{
             display: "flex",
             flexShrink: 0,
             flexDirection: "column",
-            width: 380,
+            width: 480,
             minHeight: 0,
           }}
         >
@@ -287,108 +288,104 @@ export default function IndicesPage() {
             <Table size="small" stickyHeader aria-label="Index list">
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox" sx={{ px: 1 }}>
-                    <TableSortLabel
-                      active={sortField === "health"}
-                      direction={sortField === "health" ? sortDirection : "asc"}
-                      onClick={() => handleSort("health")}
-                    >
-                      <Typography variant="caption">Health</Typography>
-                    </TableSortLabel>
-                  </TableCell>
                   <TableCell>
                     <TableSortLabel
                       active={sortField === "index"}
                       direction={sortField === "index" ? sortDirection : "asc"}
                       onClick={() => handleSort("index")}
                     >
-                      <Typography variant="caption">Name</Typography>
+                      Name
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell align="right" sx={{ px: 1 }}>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortField === "health"}
+                      direction={sortField === "health" ? sortDirection : "asc"}
+                      onClick={() => handleSort("health")}
+                    >
+                      Health
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right">
                     <TableSortLabel
                       active={sortField === "docs.count"}
                       direction={sortField === "docs.count" ? sortDirection : "asc"}
                       onClick={() => handleSort("docs.count")}
                     >
-                      <Typography variant="caption">Docs</Typography>
+                      Docs
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell align="right" sx={{ px: 1 }}>
+                  <TableCell align="right">
                     <TableSortLabel
                       active={sortField === "store.size"}
                       direction={sortField === "store.size" ? sortDirection : "asc"}
                       onClick={() => handleSort("store.size")}
                     >
-                      <Typography variant="caption">Size</Typography>
+                      Size
                     </TableSortLabel>
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedIndices.map((idx) => (
+                {filteredIndices.map((idx) => (
                   <TableRow
                     key={idx.index}
                     hover
                     selected={idx.index === selectedIndex}
                     onClick={() => void setSelectedIndex(idx.index)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
                         void setSelectedIndex(idx.index);
                       }
                     }}
                     sx={{ cursor: "pointer" }}
-                    aria-selected={idx.index === selectedIndex}
-                    tabIndex={0}
                   >
-                    <TableCell padding="checkbox" sx={{ px: 1 }}>
+                    <TableCell>
+                      <Typography variant="body2" noWrap title={idx.index} sx={{ maxWidth: 200 }}>
+                        {idx.index}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
                       <Chip
                         size="small"
                         color={healthColor(idx.health)}
-                        label={idx.health.slice(0, 1).toUpperCase()}
+                        label={idx.health}
                         aria-label={`Health: ${idx.health}`}
-                        sx={{ width: 24, height: 20, fontSize: "0.65rem" }}
+                        sx={{ height: 20, fontSize: "0.7rem" }}
                       />
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        maxWidth: 160,
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        textOverflow: "ellipsis",
-                      }}
-                      title={idx.index}
-                    >
-                      {idx.index}
+                    <TableCell align="right">
+                      <Typography variant="body2">
+                        {parseIntOrNull(idx["docs.count"])?.toLocaleString() ?? "n/a"}
+                      </Typography>
                     </TableCell>
-                    <TableCell align="right" sx={{ px: 1 }}>
-                      {(() => {
-                        const docsCount = parseNum(idx["docs.count"]);
-                        return docsCount == null ? "—" : docsCount.toLocaleString();
-                      })()}
-                    </TableCell>
-                    <TableCell align="right" sx={{ px: 1 }}>
-                      {formatBytes(parseNum(idx["store.size"]), "—")}
+                    <TableCell align="right">
+                      <Typography variant="body2">
+                        {formatBytes(parseIntOrNull(idx["store.size"]))}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 ))}
+                {!loadingIndices && filteredIndices.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} sx={{ border: 0 }}>
+                      <EmptyState
+                        size="small"
+                        icon={<StorageIcon sx={{ fontSize: 28 }} />}
+                        heading="No indices found"
+                        description={
+                          showSystemIndices
+                            ? "No indices match the current search filter."
+                            : "Toggle 'Show system indices' above to include system indices."
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
-            {!loadingIndices && sortedIndices.length === 0 && (
-              <Box sx={{ p: 2 }}>
-                <EmptyState
-                  size="small"
-                  icon={<StorageIcon sx={{ fontSize: 28 }} />}
-                  heading="No indices found"
-                  description={
-                    showSystemIndices
-                      ? "No indices match the current search filter."
-                      : "Toggle 'Show system indices' above to include system indices."
-                  }
-                />
-              </Box>
-            )}
           </TableContainer>
         </Paper>
 
