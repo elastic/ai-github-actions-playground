@@ -17,12 +17,7 @@ import EmptyState from "../EmptyState";
 
 import type { RecentTrace } from "./serviceDashboardHelpers";
 import { formatLatency } from "./serviceInventoryHelpers";
-
-function normalizeStatusLabel(statusCode: string): string {
-  if (!statusCode || statusCode === "STATUS_CODE_OK") return "OK";
-  if (statusCode === "STATUS_CODE_ERROR") return "Error";
-  return statusCode;
-}
+import { aggregateSlowOperations, normalizeStatusLabel } from "./serviceDashboardPageUtils";
 
 export function ServiceTraceStatusPanel({ traces }: { traces: RecentTrace[] }) {
   const theme = useTheme();
@@ -109,34 +104,7 @@ export function ServiceTraceStatusPanel({ traces }: { traces: RecentTrace[] }) {
 }
 
 export function ServiceSlowOperationsPanel({ traces }: { traces: RecentTrace[] }) {
-  const slowOperations = useMemo(() => {
-    const byOperation = new Map<
-      string,
-      { count: number; maxDurationMs: number; avgDurationMs: number }
-    >();
-    for (const trace of traces) {
-      const key = trace.spanName || "unknown";
-      const current = byOperation.get(key);
-      if (!current) {
-        byOperation.set(key, {
-          count: 1,
-          maxDurationMs: trace.durationMs,
-          avgDurationMs: trace.durationMs,
-        });
-      } else {
-        const nextCount = current.count + 1;
-        byOperation.set(key, {
-          count: nextCount,
-          maxDurationMs: Math.max(current.maxDurationMs, trace.durationMs),
-          avgDurationMs: (current.avgDurationMs * current.count + trace.durationMs) / nextCount,
-        });
-      }
-    }
-    return Array.from(byOperation.entries())
-      .map(([name, stats]) => ({ name, ...stats }))
-      .sort((a, b) => b.maxDurationMs - a.maxDurationMs)
-      .slice(0, 6);
-  }, [traces]);
+  const slowOperations = useMemo(() => aggregateSlowOperations(traces, 6), [traces]);
 
   return (
     <Paper variant="outlined" sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>

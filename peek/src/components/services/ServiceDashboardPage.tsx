@@ -38,9 +38,11 @@ import ServiceRoutesPanel from "./ServiceRoutesPanel";
 import { ServiceSlowOperationsPanel, ServiceTraceStatusPanel } from "./ServiceTraceBreakdownPanels";
 import ServiceTracesPanel from "./ServiceTracesPanel";
 import {
+  aggregateSlowOperations,
   buildDashboardSummary,
   compareByField,
   decodeServiceName,
+  normalizeStatusLabel,
 } from "./serviceDashboardPageUtils";
 import {
   SERVICE_DASHBOARD_INSIGHT_SLOTS,
@@ -183,8 +185,7 @@ export default function ServiceDashboardPage() {
     const total = recentTraces.length;
     const counts = new Map<string, number>();
     for (const trace of recentTraces) {
-      const status =
-        !trace.statusCode || trace.statusCode === "STATUS_CODE_OK" ? "OK" : trace.statusCode;
+      const status = normalizeStatusLabel(trace.statusCode);
       counts.set(status, (counts.get(status) ?? 0) + 1);
     }
     return Array.from(counts.entries())
@@ -196,34 +197,10 @@ export default function ServiceDashboardPage() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
   }, [recentTraces]);
-  const slowOperationSignals = useMemo(() => {
-    const byOperation = new Map<
-      string,
-      { count: number; maxDurationMs: number; avgDurationMs: number }
-    >();
-    for (const trace of recentTraces) {
-      const key = trace.spanName || "unknown";
-      const existing = byOperation.get(key);
-      if (!existing) {
-        byOperation.set(key, {
-          count: 1,
-          maxDurationMs: trace.durationMs,
-          avgDurationMs: trace.durationMs,
-        });
-      } else {
-        const nextCount = existing.count + 1;
-        byOperation.set(key, {
-          count: nextCount,
-          maxDurationMs: Math.max(existing.maxDurationMs, trace.durationMs),
-          avgDurationMs: (existing.avgDurationMs * existing.count + trace.durationMs) / nextCount,
-        });
-      }
-    }
-    return Array.from(byOperation.entries())
-      .map(([name, stats]) => ({ name, ...stats }))
-      .sort((a, b) => b.maxDurationMs - a.maxDurationMs)
-      .slice(0, 10);
-  }, [recentTraces]);
+  const slowOperationSignals = useMemo(
+    () => aggregateSlowOperations(recentTraces, 10),
+    [recentTraces],
+  );
   const dependencySignals = useMemo(() => {
     if (traceExplorerSpans.length === 0) return [];
     const graph = buildServiceMapData(traceExplorerSpans);
