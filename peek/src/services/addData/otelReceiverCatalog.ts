@@ -174,10 +174,10 @@ export function mergeIntoExistingOtelConfig(
   >;
 
   for (const signal of uniqueSignals) {
-    const existing_pipeline = (pipelines[signal] ?? {}) as Record<string, unknown>;
-    const existingReceivers = (existing_pipeline.receivers ?? []) as string[];
-    const existingProcessors = (existing_pipeline.processors ?? []) as string[];
-    const existingExporters = (existing_pipeline.exporters ?? []) as string[];
+    const existingPipeline = (pipelines[signal] ?? {}) as Record<string, unknown>;
+    const existingReceivers = (existingPipeline.receivers ?? []) as string[];
+    const existingProcessors = (existingPipeline.processors ?? []) as string[];
+    const existingExporters = (existingPipeline.exporters ?? []) as string[];
 
     if (!existingReceivers.includes(opts.receiverType)) {
       existingReceivers.push(opts.receiverType);
@@ -189,10 +189,10 @@ export function mergeIntoExistingOtelConfig(
       existingExporters.push("elasticsearch");
     }
 
-    existing_pipeline.receivers = existingReceivers;
-    existing_pipeline.processors = existingProcessors;
-    existing_pipeline.exporters = existingExporters;
-    pipelines[signal] = existing_pipeline;
+    existingPipeline.receivers = existingReceivers;
+    existingPipeline.processors = existingProcessors;
+    existingPipeline.exporters = existingExporters;
+    pipelines[signal] = existingPipeline;
   }
 
   service.pipelines = pipelines;
