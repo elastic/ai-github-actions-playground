@@ -1,3 +1,5 @@
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+
 import type { AddDataExpectedSignal } from "./catalog";
 
 /**
@@ -36,6 +38,26 @@ function escapeYamlValue(value: string): string {
     .replace(/\n/g, "\\n")
     .replace(/\r/g, "\\r")
     .replace(/\t/g, "\\t");
+}
+
+function asMapping(value: unknown, path: string): Record<string, unknown> {
+  if (value == null) {
+    return {};
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Expected "${path}" to be a YAML mapping.`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function asStringArray(value: unknown, path: string): string[] {
+  if (value == null) {
+    return [];
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    throw new Error(`Expected "${path}" to be a string array.`);
+  }
+  return [...value];
 }
 
 /**
@@ -103,6 +125,107 @@ service:
   pipelines:
 ${pipelines}
 `;
+}
+
+/**
+ * Merge a new receiver, batch processor, Elasticsearch exporter, and service
+ * pipelines into an existing OTel Collector YAML config.  If any section
+ * already exists it is extended rather than replaced.
+ *
+ * Returns the merged YAML string.  Throws on YAML parse failure, empty
+ * signals, shape-validation errors (non-mapping / non-string-array where
+ * expected), or when the receiver block does not define the target receiver.
+ */
+export function mergeIntoExistingOtelConfig(
+  existingYaml: string,
+  receiverBlock: string,
+  opts: {
+    receiverType: string;
+    esUrl: string;
+    apiKey: string;
+    signals: readonly AddDataExpectedSignal[];
+  },
+): string {
+  const uniqueSignals = [...new Set(opts.signals)];
+  if (uniqueSignals.length === 0) {
+    throw new Error("At least one signal is required to build pipelines.");
+  }
+
+  // Parse existing config and incoming receiver block as JS objects.
+  const existing = asMapping(parseYaml(existingYaml) ?? {}, "root");
+  const receiverObj = asMapping(parseYaml(`receivers:\n${receiverBlock}`), "receiver block");
+  const newReceivers = asMapping(receiverObj.receivers, "receiver block.receivers");
+  if (!(opts.receiverType in newReceivers)) {
+    throw new Error(
+      `Receiver block must define "receivers.${opts.receiverType}" before pipelines can reference it.`,
+    );
+  }
+
+  // --- receivers ---
+  const receivers = asMapping(existing.receivers, "receivers");
+  Object.assign(receivers, newReceivers);
+  existing.receivers = receivers;
+
+  // --- processors (add batch if missing) ---
+  const processors = asMapping(existing.processors, "processors");
+  if (processors.batch == null) {
+    processors.batch = { send_batch_size: 1000, timeout: "5s" };
+  } else {
+    asMapping(processors.batch, "processors.batch");
+  }
+  existing.processors = processors;
+
+  // --- exporters (add elasticsearch if missing) ---
+  const exporters = asMapping(existing.exporters, "exporters");
+  if (exporters.elasticsearch == null) {
+    exporters.elasticsearch = {
+      endpoints: [opts.esUrl],
+      api_key: opts.apiKey,
+    };
+  } else {
+    asMapping(exporters.elasticsearch, "exporters.elasticsearch");
+  }
+  existing.exporters = exporters;
+
+  // --- service.pipelines ---
+  const service = asMapping(existing.service, "service");
+  const pipelines = asMapping(service.pipelines, "service.pipelines");
+
+  for (const signal of uniqueSignals) {
+    const existingPipeline = asMapping(pipelines[signal], `service.pipelines.${signal}`);
+    const existingReceivers = asStringArray(
+      existingPipeline.receivers,
+      `service.pipelines.${signal}.receivers`,
+    );
+    const existingProcessors = asStringArray(
+      existingPipeline.processors,
+      `service.pipelines.${signal}.processors`,
+    );
+    const existingExporters = asStringArray(
+      existingPipeline.exporters,
+      `service.pipelines.${signal}.exporters`,
+    );
+
+    if (!existingReceivers.includes(opts.receiverType)) {
+      existingReceivers.push(opts.receiverType);
+    }
+    if (!existingProcessors.includes("batch")) {
+      existingProcessors.push("batch");
+    }
+    if (!existingExporters.includes("elasticsearch")) {
+      existingExporters.push("elasticsearch");
+    }
+
+    existingPipeline.receivers = existingReceivers;
+    existingPipeline.processors = existingProcessors;
+    existingPipeline.exporters = existingExporters;
+    pipelines[signal] = existingPipeline;
+  }
+
+  service.pipelines = pipelines;
+  existing.service = service;
+
+  return stringifyYaml(existing, { lineWidth: 0 });
 }
 
 // ---------------------------------------------------------------------------

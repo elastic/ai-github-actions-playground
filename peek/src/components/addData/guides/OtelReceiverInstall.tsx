@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -13,6 +14,7 @@ import { useCopyFeedbackTimeout } from "../../../hooks/useCopyFeedbackTimeout";
 import {
   interpolateReceiverTemplate,
   buildFullOtelConfig,
+  mergeIntoExistingOtelConfig,
 } from "../../../services/addData/otelReceiverCatalog";
 import type { OtelReceiverDefinition } from "../../../services/addData/otelReceiverCatalog";
 
@@ -21,6 +23,8 @@ export interface OtelReceiverInstallProps {
   fieldValues: Record<string, string>;
   esUrl: string;
   apiKey: string;
+  existingCollectorConfig: string;
+  useExistingConfig: boolean;
 }
 
 const RUN_COMMAND = "./elastic-agent otel --config otel-collector-config.yaml";
@@ -30,6 +34,8 @@ export default function OtelReceiverInstall({
   fieldValues,
   esUrl,
   apiKey,
+  existingCollectorConfig,
+  useExistingConfig,
 }: OtelReceiverInstallProps) {
   const [copiedConfig, setCopiedConfig] = useState(false);
   const [copiedRun, setCopiedRun] = useState(false);
@@ -49,16 +55,45 @@ export default function OtelReceiverInstall({
     [receiver.yamlTemplate, resolvedValues],
   );
 
-  const fullConfig = useMemo(
-    () =>
-      buildFullOtelConfig(receiverBlock, {
-        receiverType: receiver.receiverType,
-        esUrl,
-        apiKey,
-        signals: receiver.signals,
-      }),
-    [receiverBlock, receiver.receiverType, esUrl, apiKey, receiver.signals],
-  );
+  const { fullConfig, mergeError } = useMemo(() => {
+    const buildOpts = {
+      receiverType: receiver.receiverType,
+      esUrl,
+      apiKey,
+      signals: receiver.signals,
+    };
+
+    if (useExistingConfig && existingCollectorConfig.trim()) {
+      try {
+        return {
+          fullConfig: mergeIntoExistingOtelConfig(
+            existingCollectorConfig,
+            receiverBlock,
+            buildOpts,
+          ),
+          mergeError: null,
+        };
+      } catch (err: unknown) {
+        return {
+          fullConfig: buildFullOtelConfig(receiverBlock, buildOpts),
+          mergeError: err instanceof Error ? err.message : "Failed to parse existing config.",
+        };
+      }
+    }
+
+    return {
+      fullConfig: buildFullOtelConfig(receiverBlock, buildOpts),
+      mergeError: null,
+    };
+  }, [
+    receiverBlock,
+    receiver.receiverType,
+    esUrl,
+    apiKey,
+    receiver.signals,
+    useExistingConfig,
+    existingCollectorConfig,
+  ]);
 
   const handleCopyConfig = useCallback(async () => {
     const ok = await copyToClipboard(fullConfig);
@@ -99,6 +134,11 @@ export default function OtelReceiverInstall({
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
           Save this as <code>otel-collector-config.yaml</code>
         </Typography>
+        {mergeError && (
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            Could not merge into existing config: {mergeError}. Showing a standalone config instead.
+          </Alert>
+        )}
         <Box
           component="pre"
           sx={{
