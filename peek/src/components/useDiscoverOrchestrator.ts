@@ -39,8 +39,12 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const discoverEditorHeight = useSearchPanelUIStore((s) => s.discoverEditorHeight);
   const setDiscoverEditorHeight = useSearchPanelUIStore((s) => s.setDiscoverEditorHeight);
-  const discoverSearchCollapsed = useSearchPanelUIStore((s) => s.discoverSearchCollapsed);
-  const setDiscoverSearchCollapsed = useSearchPanelUIStore((s) => s.setDiscoverSearchCollapsed);
+  const discoverSearchCollapsed = useSearchPanelUIStore((s) =>
+    isLogsExplorer ? s.logsSearchCollapsed : s.discoverSearchCollapsed,
+  );
+  const setDiscoverSearchCollapsed = useSearchPanelUIStore((s) =>
+    isLogsExplorer ? s.setLogsSearchCollapsed : s.setDiscoverSearchCollapsed,
+  );
   const [editorFocused, setEditorFocused] = useState(false);
   const queryClient = useQueryClient();
   const { data: result = null } = useQuery<EsqlResponse | null>({
