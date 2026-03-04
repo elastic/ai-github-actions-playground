@@ -8,7 +8,7 @@ import Chip from "@mui/material/Chip";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
 
-import { useUIStore } from "../store/useUIStore";
+import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
@@ -40,7 +40,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
       }
       if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
         e.preventDefault();
-        setDiscoverSearchCollapsed(!useUIStore.getState().discoverSearchCollapsed);
+        setDiscoverSearchCollapsed(!useSearchPanelUIStore.getState().discoverSearchCollapsed);
       }
     }
     document.addEventListener("keydown", handleKeyDown);

@@ -36,7 +36,8 @@ import CodeMirror from "@uiw/react-codemirror";
 
 import { ElasticsearchClient, getFieldValues } from "../../services/es";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { useUIStore } from "../../store/useUIStore";
+import { useThemeStore } from "../../store/useThemeStore";
+import { useSearchPanelUIStore } from "../../store/useSearchPanelUIStore";
 import { useLogsStore } from "../../store/useLogsStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
@@ -98,9 +99,9 @@ const LOGS_SYSTEM_PROMPT =
 export default function LogsPage() {
   const openInDiscover = useOpenInDiscover();
   const connection = useConnectionStore((s) => s.connection);
-  const themeMode = useUIStore((s) => s.themeMode);
-  const logsSearchCollapsed = useUIStore((s) => s.logsSearchCollapsed);
-  const setLogsSearchCollapsed = useUIStore((s) => s.setLogsSearchCollapsed);
+  const themeMode = useThemeStore((s) => s.themeMode);
+  const logsSearchCollapsed = useSearchPanelUIStore((s) => s.logsSearchCollapsed);
+  const setLogsSearchCollapsed = useSearchPanelUIStore((s) => s.setLogsSearchCollapsed);
   const {
     indexPattern,
     searchText,
@@ -304,7 +305,7 @@ export default function LogsPage() {
       }
       if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
         e.preventDefault();
-        setLogsSearchCollapsed(!useUIStore.getState().logsSearchCollapsed);
+        setLogsSearchCollapsed(!useSearchPanelUIStore.getState().logsSearchCollapsed);
       }
     }
     document.addEventListener("keydown", handleKeyDown);

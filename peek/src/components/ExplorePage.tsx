@@ -11,7 +11,8 @@ import { EditorView } from "@codemirror/view";
 
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
-import { useUIStore } from "../store/useUIStore";
+import { useThemeStore } from "../store/useThemeStore";
+import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import { useExplorerStore } from "../store/useExplorerStore";
 import { ElasticsearchClient } from "../services/es";
 import type { FieldInfo, ExplorerFilter } from "../services/es";
@@ -50,9 +51,9 @@ export default function ExplorePage() {
     })),
   );
   const connection = useConnectionStore((s) => s.connection);
-  const themeMode = useUIStore((s) => s.themeMode);
-  const metricsSearchCollapsed = useUIStore((s) => s.metricsSearchCollapsed);
-  const setMetricsSearchCollapsed = useUIStore((s) => s.setMetricsSearchCollapsed);
+  const themeMode = useThemeStore((s) => s.themeMode);
+  const metricsSearchCollapsed = useSearchPanelUIStore((s) => s.metricsSearchCollapsed);
+  const setMetricsSearchCollapsed = useSearchPanelUIStore((s) => s.setMetricsSearchCollapsed);
 
   const location = useLocation();
   const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
@@ -215,7 +216,7 @@ export default function ExplorePage() {
       }
       if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
         e.preventDefault();
-        setMetricsSearchCollapsed(!useUIStore.getState().metricsSearchCollapsed);
+        setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed);
       }
     }
     document.addEventListener("keydown", handleKeyDown);

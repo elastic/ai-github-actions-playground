@@ -4,7 +4,7 @@ import { EditorView } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 
-import { useUIStore } from "../../store/useUIStore";
+import { useThemeStore } from "../../store/useThemeStore";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import type { InsightSlotDefinition } from "../../types/insightSlots";
@@ -35,7 +35,7 @@ const TRACES_SYSTEM_PROMPT =
   INSIGHT_GUARDRAIL;
 
 export default function TracesPage() {
-  const themeMode = useUIStore((s) => s.themeMode);
+  const themeMode = useThemeStore((s) => s.themeMode);
   const orchestrator = useTracesOrchestrator();
 
   const rowInsightModel = useMemo(() => {

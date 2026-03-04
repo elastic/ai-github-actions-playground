@@ -16,6 +16,9 @@ import { useLLMStore } from "./useLLMStore";
 import { useQueryStore } from "./useQueryStore";
 import { useTracesStore } from "./useTracesStore";
 import { useUIStore } from "./useUIStore";
+import { useThemeStore } from "./useThemeStore";
+import { useCommandPaletteStore } from "./useCommandPaletteStore";
+import { useSearchPanelUIStore } from "./useSearchPanelUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
 import { usePageContextStore } from "./usePageContextStore";
 import { useLogsStore } from "./useLogsStore";
@@ -31,6 +34,9 @@ const resetServices = () => usePageFiltersStore.getState().resetServiceFilters()
 const resetKubernetes = () => usePageFiltersStore.getState().resetKubernetesFilters();
 const resetTraces = () => useTracesStore.getState().resetFilters();
 const resetUi = () => useUIStore.getState().resetUIState();
+const resetTheme = () => useThemeStore.getState().resetThemeState();
+const resetCommandPalette = () => useCommandPaletteStore.getState().resetCommandPaletteState();
+const resetSearchPanelUi = () => useSearchPanelUIStore.getState().resetSearchPanelUIState();
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
 const resetPageContext = () => usePageContextStore.getState().resetPageContext();
 const resetLogs = () => useLogsStore.getState().reset();
@@ -48,6 +54,9 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetTraces,
   resetLogs,
   resetUi,
+  resetTheme,
+  resetCommandPalette,
+  resetSearchPanelUi,
   resetApiConsole,
   resetPageContext,
 ];
@@ -83,7 +92,12 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
   },
   {
     label: "UI preferences (theme, panel state)",
-    reset: resetUi,
+    reset: () => {
+      resetUi();
+      resetTheme();
+      resetCommandPalette();
+      resetSearchPanelUi();
+    },
   },
   {
     label: "Console history and request state",
