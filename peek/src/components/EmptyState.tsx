@@ -57,11 +57,16 @@ export default function EmptyState({
       >
         {icon ?? <SearchIcon sx={{ fontSize: iconSize }} />}
       </Box>
-      <Typography variant="h6" component="p" color="text.primary">
+      <Typography variant="h6" component="h2" color="text.primary" fontWeight={700}>
         {heading}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          noWrap
+          sx={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis" }}
+        >
           {description}
         </Typography>
       )}
@@ -71,7 +76,6 @@ export default function EmptyState({
           component={RouterLink}
           to={addDataHref}
           variant="outlined"
-          size="small"
           startIcon={<RocketLaunchIcon sx={{ fontSize: 16 }} />}
           sx={{ mt: 0.5 }}
         >
