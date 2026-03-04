@@ -206,6 +206,14 @@ const NAVIGABLE_PAGES = Object.entries(PAGE_MANIFEST)
   .filter(([, config]) => !config.path.includes(":"))
   .map(([key]) => key) as [PageId, ...PageId[]];
 
+function normalizeNonEmptyQuery(query: string): string {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    throw new Error("Query must not be empty");
+  }
+  return trimmedQuery;
+}
+
 export function getScreenContextTool(getPathname: () => string): ToolSet {
   return {
     get_screen_context: tool({
@@ -246,10 +254,7 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
         query: z.string().min(1).describe("The ES|QL query to set in the Query Lab editor."),
       }),
       execute: async ({ query }) => {
-        const trimmedQuery = query.trim();
-        if (!trimmedQuery) {
-          throw new Error("Query must not be empty");
-        }
+        const trimmedQuery = normalizeNonEmptyQuery(query);
         openInDiscover(navigate, trimmedQuery);
         return { set: true, navigatedTo: "discover" };
       },
@@ -291,10 +296,7 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
           .describe("When true, navigate to the Query Lab page after setting the query."),
       }),
       execute: async ({ query, navigate_to_query_lab }) => {
-        const trimmedQuery = query.trim();
-        if (!trimmedQuery) {
-          throw new Error("Query must not be empty");
-        }
+        const trimmedQuery = normalizeNonEmptyQuery(query);
         if (navigate_to_query_lab) {
           openInDiscover(navigate, trimmedQuery);
         } else {
