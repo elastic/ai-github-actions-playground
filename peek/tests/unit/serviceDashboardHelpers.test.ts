@@ -281,7 +281,7 @@ describe("serviceDashboardHelpers", () => {
     it("parses K8s context rows from ES|QL response", () => {
       const response: EsqlResponse = {
         columns: [
-          { name: "pod_count", type: "long" },
+          { name: "trace_count", type: "long" },
           { name: "k8s_namespace", type: "keyword" },
           { name: "k8s_node", type: "keyword" },
           { name: "k8s_pod", type: "keyword" },
@@ -311,7 +311,7 @@ describe("serviceDashboardHelpers", () => {
     it("handles missing values gracefully", () => {
       const response: EsqlResponse = {
         columns: [
-          { name: "pod_count", type: "long" },
+          { name: "trace_count", type: "long" },
           { name: "k8s_namespace", type: "keyword" },
           { name: "k8s_node", type: "keyword" },
           { name: "k8s_pod", type: "keyword" },
@@ -332,7 +332,7 @@ describe("serviceDashboardHelpers", () => {
     it("returns empty array for empty response", () => {
       const response: EsqlResponse = {
         columns: [
-          { name: "pod_count", type: "long" },
+          { name: "trace_count", type: "long" },
           { name: "k8s_namespace", type: "keyword" },
           { name: "k8s_node", type: "keyword" },
           { name: "k8s_pod", type: "keyword" },

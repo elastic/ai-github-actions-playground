@@ -100,8 +100,10 @@ export function extractServiceNames(response: EsqlResponse): string[] {
   const names = new Set<string>();
   for (const row of response.values) {
     const value = row[idx];
-    if (value != null && String(value).trim().length > 0) {
-      names.add(String(value).trim());
+    if (value == null) continue;
+    const trimmed = String(value).trim();
+    if (trimmed.length > 0) {
+      names.add(trimmed);
     }
   }
   return Array.from(names).sort();

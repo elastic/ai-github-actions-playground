@@ -257,11 +257,11 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("FROM traces-*");
       expect(query).toContain('service.name == "my-service"');
       expect(query).toContain("k8s.pod.name IS NOT NULL");
-      expect(query).toContain("COUNT_DISTINCT(k8s.pod.name)");
+      expect(query).toContain("COUNT(*)");
       expect(query).toContain("BY k8s_namespace = k8s.namespace.name");
       expect(query).toContain("k8s_node = k8s.node.name");
       expect(query).toContain("k8s_pod = k8s.pod.name");
-      expect(query).toContain("SORT pod_count DESC");
+      expect(query).toContain("SORT trace_count DESC");
       expect(query).toContain("LIMIT 50");
     });
 
