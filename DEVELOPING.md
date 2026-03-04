@@ -267,7 +267,7 @@ The project has a custom ESLint plugin at `peek/eslint-plugin-peek/` that enforc
 |------|----------|------------------|
 | `peek/no-hardcoded-colors` | error | No inline hex values in `sx` props — use theme tokens (`text.secondary`, `background.paper`, etc.) |
 | `peek/consistent-typography-variants` | error | Only approved Typography variants: `h3` (metrics only), `h5`, `h6`, `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, `overline`. Notably, `h4` is banned. |
-| `peek/no-direct-echarts-import` | error | No `import * as echarts from 'echarts/core'` — use `EChartWrapper` or Perses components |
+| `peek/no-direct-echarts-import` | error | No `import * as echarts from 'echarts/core'` — use Perses `EChart` or `PersesEChartWrapper` |
 | `peek/no-div-onclick` | error | No `<Box onClick>` or `<div onClick>` — use `ButtonBase`, `Button`, `IconButton`, or `ListItemButton` |
 | `peek/enforce-spacing-tokens` | error | MUI spacing values must be in the approved set: `0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 6`. Values like `0.75` or `0.125` are rejected. |
 | `peek/no-hardcoded-heights` | error | No hardcoded pixel heights for standard UI elements — use `COMPONENT_HEIGHTS` from `src/types/tokens.ts` |
@@ -332,8 +332,10 @@ import Typography from '@mui/material/Typography';
 
 // ❌ Direct ECharts import in chart components
 import * as echarts from 'echarts/core';
-// ✅ Use the wrapper or Perses component
-import EChartWrapper from './EChartWrapper';
+// ✅ Use Perses EChart or the GraphChart-enabled shim
+import { EChart } from '@perses-dev/components';
+// or
+import { EChart } from 'components/perses/PersesEChartWrapper';
 
 // ❌ Fetching data inside a chart component
 useEffect(() => { fetchData(query) }, [query]);
