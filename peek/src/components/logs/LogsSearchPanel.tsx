@@ -109,7 +109,7 @@ export default function LogsSearchPanel({
   return (
     <SignalSearchPanel
       title="Logs Explorer"
-      resultNoun="rows"
+      resultNoun="logs"
       effectiveQuery={effectiveQuery}
       onRawQueryChange={onRawQueryChange}
       onCreateEditor={onCreateEditor}
