@@ -30,6 +30,7 @@ export default function TracesPage() {
   const slotContext = useMemo(
     () =>
       JSON.stringify({
+        effectiveQuery: orchestrator.effectiveQuery,
         filters: orchestrator.filters,
         resultCount: orchestrator.searchResult?.values.length ?? 0,
         selectedTraceId: orchestrator.selectedTraceId,
@@ -37,6 +38,7 @@ export default function TracesPage() {
         viewMode: orchestrator.viewMode,
       }),
     [
+      orchestrator.effectiveQuery,
       orchestrator.filters,
       orchestrator.searchResult?.values.length,
       orchestrator.selectedTraceId,
