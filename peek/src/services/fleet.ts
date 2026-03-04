@@ -199,7 +199,9 @@ export function computeCheckinStaleness(lastSeen: string | null): {
 // Derive agent status from checkin staleness
 // ---------------------------------------------------------------------------
 
-export function deriveAgentStatus(lastSeen: string | null): string {
+export type DerivedAgentStatus = "Healthy" | "Unhealthy" | "Offline";
+
+export function deriveAgentStatus(lastSeen: string | null): DerivedAgentStatus {
   const { severity } = computeCheckinStaleness(lastSeen);
   switch (severity) {
     case "fresh":

@@ -124,6 +124,15 @@ describe("deriveAgentStatus", () => {
     expect(deriveAgentStatus(null)).toBe("Offline");
     expect(deriveAgentStatus("not-a-date")).toBe("Offline");
   });
+
+  it("maps recent check-ins to Healthy", () => {
+    expect(deriveAgentStatus(new Date().toISOString())).toBe("Healthy");
+  });
+
+  it("maps stale check-ins to Unhealthy", () => {
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    expect(deriveAgentStatus(tenMinAgo)).toBe("Unhealthy");
+  });
 });
 
 describe("aggregateFleetPolicies", () => {
