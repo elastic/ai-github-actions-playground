@@ -93,16 +93,15 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
       addMessage({ id: assistantId, role: "assistant", content: "", toolCalls: [] });
       setLoading(true);
 
-      const controller = new AbortController();
       const timeoutMs = getChatRequestTimeoutMs(config);
-      const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+      const signal = AbortSignal.timeout(timeoutMs);
 
       try {
         const { systemPrompt, tools, stopWhen } = await buildChatRuntime({
           config,
           connection,
           pathname: location.pathname,
-          signal: controller.signal,
+          signal,
           navigate,
         });
 
@@ -122,7 +121,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
           ],
           tools,
           stopWhen,
-          abortSignal: controller.signal,
+          abortSignal: signal,
         });
 
         let text = "";
@@ -148,7 +147,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         }
       } catch (e: unknown) {
         const errorMessage =
-          e instanceof DOMException && e.name === "AbortError"
+          e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError")
             ? "Request timed out. Please try again."
             : e instanceof Error
               ? e.message
@@ -156,7 +155,6 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         removeMessage(assistantId);
         setError(errorMessage);
       } finally {
-        clearTimeout(timeoutId);
         setLoading(false);
       }
     },
