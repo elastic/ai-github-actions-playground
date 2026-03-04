@@ -52,10 +52,17 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
   return (
     <ButtonBase
       component="div"
-      role="listitem"
-      aria-label={expanded ? "Collapse grouped spans" : "Expand grouped spans"}
+      role="button"
+      aria-label="Open grouped span details"
+      tabIndex={0}
       onClick={() => {
         if (representativeSpanId) onClick(representativeSpanId);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          if (representativeSpanId) onClick(representativeSpanId);
+        }
       }}
       sx={{
         position: "relative",
@@ -98,6 +105,7 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
       >
         <Chip
           label={`x${stats.count}`}
+          aria-label={expanded ? "Collapse grouped spans" : "Expand grouped spans"}
           onClick={(event) => {
             event.stopPropagation();
             onToggle(groupKey);

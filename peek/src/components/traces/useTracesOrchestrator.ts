@@ -92,7 +92,11 @@ export function useTracesOrchestrator() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setTraceSearchCollapsed]);
 
-  const { runQuery: runSearchSpansQuery, loading: searchSpansLoading } = useEsqlQuery({
+  const {
+    runQuery: runSearchSpansQuery,
+    loading: searchSpansLoading,
+    error: searchSpansError,
+  } = useEsqlQuery({
     connection,
     onSuccess: (data) =>
       setSearchTraceSpans(parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING)),
@@ -463,6 +467,7 @@ export function useTracesOrchestrator() {
     // Query loading & errors
     searchLoading,
     searchSpansLoading,
+    searchSpansError,
     searchError,
     detailLoading,
     detailError,

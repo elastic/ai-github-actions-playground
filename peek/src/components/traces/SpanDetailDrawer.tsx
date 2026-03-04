@@ -217,8 +217,13 @@ export default function SpanDetailDrawer({
   const tsDisplay = span.timestamp ? formatEventTimestamp(span.timestamp) : "—";
   const timelineSpans = (() => {
     const fromDetail = traceSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
-    if (fromDetail.length > 0) return fromDetail;
-    return searchSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
+    const unsorted =
+      fromDetail.length > 0
+        ? fromDetail
+        : searchSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
+    return [...unsorted].sort(
+      (a, b) => a.startTimeUs - b.startTimeUs || a.durationUs - b.durationUs,
+    );
   })();
   const selectedTimelineSpanId = selectedSpanId ?? span.spanId;
   const selectedTimelineIndex = timelineSpans.findIndex(
@@ -403,6 +408,7 @@ export default function SpanDetailDrawer({
                           >
                             <ButtonBase
                               component="button"
+                              aria-label={`Select span ${traceSpan.name} from service ${traceSpan.serviceName}`}
                               sx={{
                                 position: "absolute",
                                 top: isSelected ? 8 : 10,

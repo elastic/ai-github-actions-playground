@@ -50,6 +50,13 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
   const serviceColor = getServiceColor(span.serviceName);
   const isError = isErrorStatus(span.status);
   const showDurationBar = showTimeline && !isTraceRoot;
+  const clampedOffset = Math.min(Math.max(timelineOffset ?? 0, 0), 1);
+  const availableFraction = Math.max(0, 1 - clampedOffset);
+  const clampedFraction = Math.min(Math.max(timelineFraction, 0), availableFraction);
+  const rawWidthPct = clampedFraction * 100;
+  const maxWidthPct = availableFraction * 100;
+  const widthPct =
+    maxWidthPct === 0 ? 0 : Math.min(Math.max(rawWidthPct, rawWidthPct > 0 ? 0.5 : 0), maxWidthPct);
 
   return (
     <ButtonBase
@@ -104,7 +111,7 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
         {hasChildren ? (
           <IconButton
             size="small"
-            aria-label={expanded ? "Collapse" : "Expand"}
+            aria-label={expanded ? `Collapse span ${span.name}` : `Expand span ${span.name}`}
             onClick={(e) => {
               e.stopPropagation();
               onToggle(span.spanId);
@@ -181,6 +188,7 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
               position: "relative",
               width: "100%",
               height: 6,
+              overflow: "hidden",
               borderRadius: 0.5,
               bgcolor: "action.hover",
             }}
@@ -189,9 +197,8 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
               sx={{
                 position: "absolute",
                 top: 0,
-                left:
-                  timelineOffset != null ? `${Math.min(Math.max(timelineOffset, 0), 1) * 100}%` : 0,
-                width: `${Math.min(Math.max(timelineFraction * 100, 0.5), 100)}%`,
+                left: `${clampedOffset * 100}%`,
+                width: `${widthPct}%`,
                 height: "100%",
                 borderRadius: 0.5,
                 bgcolor: isError ? "error.main" : serviceColor,

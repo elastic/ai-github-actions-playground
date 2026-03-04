@@ -179,7 +179,7 @@ export default function TraceResultsView({
             selectedSpanId={selectedSpanId}
             onSelectSpan={onSelectSpan}
             onOpenInQueryLab={onOpenInQueryLab}
-            loading={detailLoading}
+            loading={false}
           />
         )}
 

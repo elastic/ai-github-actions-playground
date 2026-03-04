@@ -113,6 +113,7 @@ export default function TracesPage() {
         <TraceErrorAlerts
           errors={[
             orchestrator.searchError,
+            orchestrator.searchSpansError,
             orchestrator.detailError,
             orchestrator.timeseriesError,
             orchestrator.driftRadarError,
