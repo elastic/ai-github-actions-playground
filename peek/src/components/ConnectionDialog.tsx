@@ -300,8 +300,8 @@ export default function ConnectionDialog() {
           </Typography>
           {likelyServerless && (
             <Alert severity="warning" sx={{ py: 0 }}>
-              This endpoint looks like Elasticsearch Serverless (`*.elastic.cloud`). Direct browser
-              access typically fails because required CORS settings are unavailable.
+              This endpoint looks like Elasticsearch Serverless (<code>*.elastic.cloud</code>).
+              Direct browser access typically fails because required CORS settings are unavailable.
             </Alert>
           )}
 

@@ -90,10 +90,14 @@ export default function SignalSearchPanel({
   queryEditorLabel,
   queryEditorDescription,
   queryEditorSectionTitle,
-  queryEditorCollapsedByDefault = false,
+  queryEditorCollapsedByDefault: rawQueryEditorCollapsedByDefault = false,
   showQueryEditor = true,
   editorHeight = DEFAULT_EDITOR_HEIGHT,
 }: SignalSearchPanelProps) {
+  // Prevent unrecoverable hidden state: only allow collapsed-by-default if there's a
+  // section title that renders the toggle button.
+  const queryEditorCollapsedByDefault =
+    rawQueryEditorCollapsedByDefault && Boolean(queryEditorSectionTitle);
   const [editorFocused, setEditorFocused] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
   const [queryEditorCollapsed, setQueryEditorCollapsed] = useState(queryEditorCollapsedByDefault);

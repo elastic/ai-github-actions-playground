@@ -104,8 +104,8 @@ export default function ServiceInventoryTable({
           return (
             <TableRow key={row.serviceName} hover>
               <TableCell>
-                {rowInsightSlotIds?.[row.serviceName] ? (
-                  <InsightSlot slotId={rowInsightSlotIds[row.serviceName]}>
+                {rowInsightSlotIds?.[row.serviceName] != null ? (
+                  <InsightSlot slotId={rowInsightSlotIds[row.serviceName]!}>
                     <Link
                       component={RouterLink}
                       to={`/services/${encodeURIComponent(row.serviceName)}`}
