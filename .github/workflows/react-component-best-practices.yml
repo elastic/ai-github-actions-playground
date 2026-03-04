@@ -1,0 +1,89 @@
+name: React Component Best Practices
+on:
+  schedule:
+    - cron: "0 9 * * 2,4"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
+    with:
+      title-prefix: "[react-component-best-practices]"
+      additional-instructions: |
+        Focus your investigation on React component best-practices violations in
+        this repository (Elastic Peek, a React + TypeScript + MUI app).
+
+        All components live under `peek/src/components/`. Custom hooks live in
+        `peek/src/hooks/`. Shared UI primitives are in `peek/src/components/common/`.
+
+        ## Categories to investigate
+
+        ### 1. Missing or incorrect hook dependency arrays
+        Look for `useEffect`, `useCallback`, and `useMemo` calls whose dependency
+        arrays are incomplete or over-specified:
+        - Missing deps cause stale closures where callbacks reference outdated values.
+        - Extra deps (e.g. object literals inline in JSX) cause unnecessary re-runs.
+        - Look for ESLint `react-hooks/exhaustive-deps` suppressions that hide real bugs.
+
+        ### 2. Unstable object/array references passed as props or deps
+        Look for cases where a new object or array is created inline on every render
+        and passed as a prop or included in a dependency array, e.g.:
+        - `<Component style={{ margin: 0 }} />` where `style` is a dep downstream
+        - `useEffect(() => {}, [{ a, b }])` — new object on every render = infinite loop risk
+        - `sx={{ ... }}` objects that are rebuilt every render inside loops or mapped lists
+
+        ### 3. React.memo misuse
+        - Components wrapped in `React.memo` that receive non-memoized props, making
+          the memo wrapper ineffective.
+        - Components NOT wrapped in memo that are expensive and frequently re-rendered
+          by parent state changes they don't consume.
+        - Memo wrappers with a custom `areEqual` function that has subtle bugs.
+
+        ### 4. Key prop mistakes in lists
+        - Lists using array index as `key` where items can be reordered, added to the
+          front, or deleted — causes React to reuse the wrong DOM node.
+        - Lists with no `key` at all on the top-level mapped element.
+        - `key` values that aren't stable across renders (e.g. `Math.random()`).
+
+        ### 5. Component responsibilities and size
+        - Components doing too many things: mixing data fetching, business logic, and
+          rendering in one file.
+        - Custom hooks that contain JSX (should be plain functions, not hooks).
+        - Render props or children patterns that re-create functions on every render.
+
+        ### 6. forwardRef and ref handling
+        - `ref` passed to a component that doesn't use `forwardRef` — silently dropped.
+        - `useImperativeHandle` exposing more than needed.
+
+        ### 7. Event handler patterns
+        - Event handlers defined inline in JSX inside `map()` — creates a new function
+          per list item per render; should be extracted and use the item's id.
+        - Handlers not wrapped in `useCallback` in components that are wrapped in
+          `React.memo` (defeats the memo optimization).
+
+        ## How to work
+
+        Pick 2–3 of the most impactful issues you find. For each:
+        1. Read the relevant source file(s) carefully.
+        2. Explain exactly why it is a bug or suboptimal pattern.
+        3. Show the problematic code and the correct fix.
+        4. Write a reproduction test using Vitest + React Testing Library if applicable.
+
+        Install dependencies with `cd peek && npm ci` before running tests.
+
+        ## Output rules
+        - Only report genuine bugs or patterns that cause incorrect behavior or
+          measurable performance degradation. Style preferences are not bugs.
+        - If everything you check looks correct, do **not** open an issue.
+        - When filing an issue, describe: what the bug is, where it is, why it matters,
+          and the suggested fix. Include code snippets.
+        - Prefix issue titles with `[react-component-best-practices]`.
+      setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
