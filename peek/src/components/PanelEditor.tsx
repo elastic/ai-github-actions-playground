@@ -144,6 +144,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
   }, [setEditorFocused]);
   const queryEditorExtensions = useMemo(
     () => [
+      EditorView.contentAttributes.of({ "aria-label": "ES|QL query editor" }),
       EditorView.lineWrapping,
       // eslint-disable-next-line react-hooks/refs -- ref is read at event time, not during render
       ...createEsqlQueryEditorExtensions(() => void handleRunQueryRef.current()),
@@ -276,7 +277,6 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
                       theme={themeMode}
                       height={`${panelEditorHeight}px`}
                       basicSetup={basicSetup}
-                      aria-label="ES|QL query editor"
                     />
                     <QueryAnnotationOverlay
                       query={query}

@@ -6,6 +6,18 @@ import electron from "vite-plugin-electron/simple";
 
 import { rewriteEsProxyPath } from "./src/utils/rewriteEsProxyPath";
 
+function sanitizeProxyHostHeader(target: string): string | null {
+  try {
+    const parsed = new URL(target);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    if (parsed.username || parsed.password) return null;
+    if (parsed.pathname !== "/" || parsed.search || parsed.hash) return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // Load env vars from the repo root (.env) and peek/ directory.
   const repoRoot = path.resolve(import.meta.dirname, "..");
@@ -80,7 +92,10 @@ export default defineConfig(({ mode }) => {
           rewrite: rewriteEsProxyPath,
           router: (req) => {
             const host = req.headers["x-elastic-peek-proxy-host"];
-            if (typeof host === "string" && host) return host;
+            if (typeof host === "string" && host) {
+              const sanitized = sanitizeProxyHostHeader(host);
+              if (sanitized) return sanitized;
+            }
             return "http://localhost:9200";
           },
         },

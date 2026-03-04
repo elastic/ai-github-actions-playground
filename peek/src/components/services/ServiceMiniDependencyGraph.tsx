@@ -10,15 +10,17 @@ import type { EChartInstance } from "../visualizations/chartExport";
 
 interface ServiceMiniDependencyGraphProps {
   serviceName: string;
-  spans: Span[];
+  spans?: Span[];
+  neighbors?: DependencyNeighborEdge[];
   onPeerServiceClick?: (serviceName: string) => void;
 }
 
-interface NeighborEdge {
+export interface DependencyNeighborEdge {
   direction: "inbound" | "outbound";
   peerService: string;
   calls: number;
   errorRate: number;
+  avgLatencyMs: number;
 }
 
 function distributeY(index: number, total: number): number {
@@ -30,30 +32,37 @@ function distributeY(index: number, total: number): number {
 export default function ServiceMiniDependencyGraph({
   serviceName,
   spans,
+  neighbors,
   onPeerServiceClick,
 }: ServiceMiniDependencyGraphProps) {
   const echartTheme = useEChartTheme();
   const muiTheme = useTheme();
   const instanceRef = useRef<EChartInstance | undefined>(undefined);
 
-  const { neighbors, maxCalls } = useMemo(() => {
+  const resolvedNeighbors = useMemo(() => {
+    if (neighbors) return neighbors;
+    if (!spans) return [];
     const graph = buildServiceMapData(spans);
-    const rows: NeighborEdge[] = graph.edges
+    return graph.edges
       .filter((edge) => edge.source === serviceName || edge.target === serviceName)
-      .map<NeighborEdge>((edge) => ({
+      .map<DependencyNeighborEdge>((edge) => ({
         direction: edge.source === serviceName ? "outbound" : "inbound",
         peerService: edge.source === serviceName ? edge.target : edge.source,
         calls: edge.callCount,
         errorRate: edge.callCount > 0 ? edge.errorCount / edge.callCount : 0,
+        avgLatencyMs: edge.callCount > 0 ? edge.totalDurationUs / edge.callCount / 1000 : 0,
       }))
       .sort((a, b) => b.calls - a.calls)
       .slice(0, 10);
-    return { neighbors: rows, maxCalls: Math.max(1, ...rows.map((r) => r.calls)) };
-  }, [serviceName, spans]);
+  }, [neighbors, serviceName, spans]);
+  const maxCalls = useMemo(
+    () => Math.max(1, ...resolvedNeighbors.map((edge) => edge.calls)),
+    [resolvedNeighbors],
+  );
 
   const option = useMemo(() => {
-    const inbound = neighbors.filter((n) => n.direction === "inbound");
-    const outbound = neighbors.filter((n) => n.direction === "outbound");
+    const inbound = resolvedNeighbors.filter((n) => n.direction === "inbound");
+    const outbound = resolvedNeighbors.filter((n) => n.direction === "outbound");
     const inboundPeerSet = new Set(inbound.map((edge) => edge.peerService));
     const outboundPeerSet = new Set(outbound.map((edge) => edge.peerService));
     const bidirectionalPeers = Array.from(inboundPeerSet).filter((peer) =>
@@ -126,7 +135,7 @@ export default function ServiceMiniDependencyGraph({
       });
     });
 
-    const links = neighbors.map((edge) => ({
+    const links = resolvedNeighbors.map((edge) => ({
       source: edge.direction === "inbound" ? edge.peerService : serviceName,
       target: edge.direction === "inbound" ? serviceName : edge.peerService,
       lineStyle: {
@@ -161,7 +170,7 @@ export default function ServiceMiniDependencyGraph({
         },
       ],
     };
-  }, [maxCalls, muiTheme.palette, neighbors, serviceName]);
+  }, [maxCalls, muiTheme.palette, resolvedNeighbors, serviceName]);
 
   const handleClick = useCallback(
     (params: unknown) => {
@@ -185,7 +194,7 @@ export default function ServiceMiniDependencyGraph({
     };
   }, [handleClick, onPeerServiceClick]);
 
-  if (neighbors.length === 0) {
+  if (resolvedNeighbors.length === 0) {
     return (
       <EmptyState
         size="small"

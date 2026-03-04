@@ -80,7 +80,7 @@ export default function ServiceDeploymentsPanel({
         size="small"
         aria-label="Service deployments"
         sx={{
-          minWidth: 520,
+          minWidth: { sm: 520, xs: "100%" },
           "& td, & th": { py: 1, px: 1.5 },
         }}
       >

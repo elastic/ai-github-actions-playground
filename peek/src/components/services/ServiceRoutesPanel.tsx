@@ -1,5 +1,4 @@
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -48,9 +47,13 @@ export default function ServiceRoutesPanel({
             Top Routes
           </Typography>
           <Tooltip title="Request volume, latency, and error rate by route.">
-            <IconButton size="small" aria-label="About top routes">
-              <InfoOutlinedIcon fontSize="inherit" />
-            </IconButton>
+            <Box
+              component="span"
+              aria-label="About top routes"
+              sx={{ display: "inline-flex", color: "text.secondary" }}
+            >
+              <InfoOutlinedIcon fontSize="small" />
+            </Box>
           </Tooltip>
         </Box>
       </Box>
