@@ -3,9 +3,11 @@ PEEK_DIR := peek
 # Base ref for changed-file targets (override: make lint BASE=HEAD~3)
 BASE ?= main
 
-.PHONY: help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e test-e2e-preview docker-build docker-run electron-dev electron-build electron-dist
+.PHONY: all help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e test-e2e-preview docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
-.PHONY: seed-es screenshot-all screenshot-section test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down
+.PHONY: seed-es screenshot-all screenshot-section test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down seed-k8s
+
+all: help
 
 help:
 	@echo "Elastic Peek — a static dashboarding tool powered by Perses + ES|QL"
@@ -34,6 +36,7 @@ help:
 	@echo "  test-e2e-preview - Run e2e tests against production build (catches bundle issues)"
 	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
 	@echo "  seed-es          - Seed Elasticsearch with non-OTLP test data (set ES_URL)"
+	@echo "  seed-k8s         - Seed Kubernetes synthetic OTel data (metrics/logs/traces, set ES_URL)"
 	@echo "  screenshot-all   - Capture all page screenshots (mocked data)"
 	@echo "  screenshot-section - Capture screenshots for one section in light+dark (SECTION=metrics|logs|traces|...)"
 	@echo "  otel-capture     - Capture OTLP fixtures from live OTel stack"
@@ -249,6 +252,11 @@ seed-es:
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
 	@echo "✓ Elasticsearch seeded."
 
+seed-k8s:
+	@echo "Seeding Kubernetes OTel data (metrics/logs/traces) at $${ES_URL:-http://localhost:9200}..."
+	@cd $(PEEK_DIR) && node scripts/seed-k8s.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
+	@echo "✓ Kubernetes data seeded."
+
 screenshot-all:
 	@echo "Capturing all page screenshots (mocked)..."
 	@cd $(PEEK_DIR) && node scripts/screenshot-all.mjs --out-dir screenshots
@@ -288,6 +296,7 @@ otel-replay:
 	@echo "Replaying OTLP fixtures + seeding non-OTLP data..."
 	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url "$${ES_URL:-http://localhost:9200}" --wait-for-ready
+	@$(MAKE) seed-k8s
 	@sleep 5  # allow collector to flush replayed data to ES
 	@echo "✓ Data replayed and seeded."
 
