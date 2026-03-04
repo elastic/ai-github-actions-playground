@@ -31,6 +31,8 @@ export default function AddDataPage() {
   const [platform, setPlatform] = useState<Platform>("kubernetes");
   const [endpointType, setEndpointType] = useState<EndpointType>("elasticsearch");
   const [receiverFieldValues, setReceiverFieldValues] = useState<Record<string, string>>({});
+  const [existingCollectorConfig, setExistingCollectorConfig] = useState("");
+  const [useExistingConfig, setUseExistingConfig] = useState(false);
   const [selectedAwsTarget, setSelectedAwsTarget] = useState<AwsDeployTarget | null>(null);
   const [selectedApmLanguage, setSelectedApmLanguage] = useState<ApmLanguageDefinition | null>(
     null,
@@ -155,6 +157,8 @@ export default function AddDataPage() {
     setSelectedTechnology(tech);
     setPlatform(tech.defaultPlatform);
     setReceiverFieldValues({});
+    setExistingCollectorConfig("");
+    setUseExistingConfig(false);
     setFluentBitOutputMode("elasticsearch");
 
     // Pre-select APM language from tech ID (e.g., "java-apm" → "java")
@@ -179,6 +183,8 @@ export default function AddDataPage() {
     setEndpointType("elasticsearch");
     endpointTypeManuallySetRef.current = false;
     setReceiverFieldValues({});
+    setExistingCollectorConfig("");
+    setUseExistingConfig(false);
     setSelectedAwsTarget(null);
     setSelectedApmLanguage(null);
     setFluentBitOutputMode("elasticsearch");
@@ -217,6 +223,10 @@ export default function AddDataPage() {
           receiver={receiver}
           receiverFieldValues={receiverFieldValues}
           onReceiverFieldValuesChange={setReceiverFieldValues}
+          existingCollectorConfig={existingCollectorConfig}
+          onExistingCollectorConfigChange={setExistingCollectorConfig}
+          useExistingConfig={useExistingConfig}
+          onUseExistingConfigChange={setUseExistingConfig}
           selectedAwsTarget={selectedAwsTarget}
           onSelectAwsTarget={setSelectedAwsTarget}
           selectedApmLanguage={selectedApmLanguage}

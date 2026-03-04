@@ -41,6 +41,10 @@ interface ConfigureProps {
   receiver: OtelReceiverDefinition | null;
   receiverFieldValues: Record<string, string>;
   onReceiverFieldValuesChange: (values: Record<string, string>) => void;
+  existingCollectorConfig: string;
+  onExistingCollectorConfigChange: (config: string) => void;
+  useExistingConfig: boolean;
+  onUseExistingConfigChange: (use: boolean) => void;
   selectedAwsTarget: AwsDeployTarget | null;
   onSelectAwsTarget: (target: AwsDeployTarget) => void;
   selectedApmLanguage: ApmLanguageDefinition | null;
@@ -137,6 +141,10 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           receiver={p.receiver}
           fieldValues={p.receiverFieldValues}
           onFieldValuesChange={p.onReceiverFieldValuesChange}
+          existingCollectorConfig={p.existingCollectorConfig}
+          onExistingCollectorConfigChange={p.onExistingCollectorConfigChange}
+          useExistingConfig={p.useExistingConfig}
+          onUseExistingConfigChange={p.onUseExistingConfigChange}
         />
       ) : (
         <Typography variant="body2" color="text.secondary">
@@ -205,6 +213,8 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           fieldValues={p.receiverFieldValues}
           esUrl={p.esUrl}
           apiKey={p.apiKey}
+          existingCollectorConfig={p.existingCollectorConfig}
+          useExistingConfig={p.useExistingConfig}
         />
       ) : (
         <Typography variant="body2" color="text.secondary">
