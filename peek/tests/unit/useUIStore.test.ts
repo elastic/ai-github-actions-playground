@@ -2,24 +2,28 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { useUIStore } from "../../src/store/useUIStore";
+import { useThemeStore } from "../../src/store/useThemeStore";
+import { useCommandPaletteStore } from "../../src/store/useCommandPaletteStore";
 
 describe("useUIStore", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
     useUIStore.getState().resetUIState();
+    useThemeStore.getState().resetThemeState();
+    useCommandPaletteStore.getState().resetCommandPaletteState();
   });
 
   it("defaults to dark theme", () => {
-    expect(useUIStore.getState().themeMode).toBe("dark");
+    expect(useThemeStore.getState().themeMode).toBe("dark");
   });
 
   it("setThemeMode switches theme", () => {
-    useUIStore.getState().setThemeMode("light");
-    expect(useUIStore.getState().themeMode).toBe("light");
+    useThemeStore.getState().setThemeMode("light");
+    expect(useThemeStore.getState().themeMode).toBe("light");
 
-    useUIStore.getState().setThemeMode("dark");
-    expect(useUIStore.getState().themeMode).toBe("dark");
+    useThemeStore.getState().setThemeMode("dark");
+    expect(useThemeStore.getState().themeMode).toBe("dark");
   });
 
   it("setEditingPanelId tracks the panel being edited", () => {
@@ -43,24 +47,25 @@ describe("useUIStore", () => {
   });
 
   it("setCommandPaletteOpen toggles palette state", () => {
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
 
-    useUIStore.getState().setCommandPaletteOpen(true);
-    expect(useUIStore.getState().commandPaletteOpen).toBe(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(true);
   });
 
   it("resetUIState clears transient state and restores defaults", () => {
-    useUIStore.getState().setThemeMode("light");
+    useThemeStore.getState().setThemeMode("light");
     useUIStore.getState().setEditingPanelId("panel-x");
     useUIStore.getState().setConnectionDialogOpen(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
 
     useUIStore.getState().resetUIState();
+    useThemeStore.getState().resetThemeState();
+    useCommandPaletteStore.getState().resetCommandPaletteState();
 
-    const state = useUIStore.getState();
-    expect(state.themeMode).toBe("dark");
-    expect(state.editingPanelId).toBeNull();
-    expect(state.connectionDialogOpen).toBe(false);
-    expect(state.commandPaletteOpen).toBe(false);
+    expect(useThemeStore.getState().themeMode).toBe("dark");
+    expect(useUIStore.getState().editingPanelId).toBeNull();
+    expect(useUIStore.getState().connectionDialogOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
   });
 });

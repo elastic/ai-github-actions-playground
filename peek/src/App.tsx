@@ -12,6 +12,7 @@ import { Toaster, toast } from "sonner";
 
 import { lightTheme, darkTheme } from "./theme";
 import { useConnectionStore } from "./store/useConnectionStore";
+import { useThemeStore } from "./store/useThemeStore";
 import { useUIStore } from "./store/useUIStore";
 import { useDashboardHistoryStore } from "./store/useDashboardHistoryStore";
 import { useDashboardEditorStore } from "./store/useDashboardEditorStore";
@@ -35,7 +36,7 @@ import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 const currentYear = new Date().getFullYear();
 
 export default function App() {
-  const themeMode = useUIStore((s) => s.themeMode);
+  const themeMode = useThemeStore((s) => s.themeMode);
   const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
   const connected = useConnectionStore((s) => s.connected);
   const resetState = useResetAllStores();

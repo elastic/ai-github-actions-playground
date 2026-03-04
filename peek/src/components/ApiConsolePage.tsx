@@ -16,7 +16,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import { useConnectionStore } from "../store/useConnectionStore";
-import { useUIStore } from "../store/useUIStore";
+import { useThemeStore } from "../store/useThemeStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { ElasticsearchClient, isElasticsearchError } from "../services/es";
 
@@ -36,7 +36,7 @@ const CODE_SNIPPET_SX = {
 
 export default function ApiConsolePage() {
   const connection = useConnectionStore((s) => s.connection);
-  const themeMode = useUIStore((s) => s.themeMode);
+  const themeMode = useThemeStore((s) => s.themeMode);
 
   const persistedEntries = useApiConsoleStore((s) => s.entries);
   const setPersistedEntries = useApiConsoleStore((s) => s.setEntries);

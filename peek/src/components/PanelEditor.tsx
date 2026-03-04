@@ -24,7 +24,9 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { useThemeStore } from "../store/useThemeStore";
 import { useUIStore } from "../store/useUIStore";
+import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import type {
   VisualizationType,
@@ -60,15 +62,10 @@ export default function PanelEditor() {
 }
 
 function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editingId: string }) {
-  const {
-    setEditingPanelId: setEditingId,
-    themeMode,
-    panelEditorHeight,
-    setPanelEditorHeight,
-  } = useUIStore(
+  const setEditingId = useUIStore((s) => s.setEditingPanelId);
+  const themeMode = useThemeStore((s) => s.themeMode);
+  const { panelEditorHeight, setPanelEditorHeight } = useSearchPanelUIStore(
     useShallow((s) => ({
-      setEditingPanelId: s.setEditingPanelId,
-      themeMode: s.themeMode,
       panelEditorHeight: s.panelEditorHeight,
       setPanelEditorHeight: s.setPanelEditorHeight,
     })),

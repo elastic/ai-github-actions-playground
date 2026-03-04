@@ -33,6 +33,8 @@ import {
   type PageConfig,
 } from "../routes/manifest";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { useThemeStore } from "../store/useThemeStore";
+import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
@@ -72,23 +74,20 @@ function useCommands(): Command[] {
       retestConnectionProfile: s.retestConnectionProfile,
     })),
   );
-  const {
-    themeMode,
-    setConnectionDialogOpen,
-    setThemeMode,
-    setCommandPaletteOpen,
-    aiPanelOpen,
-    setAiPanelOpen,
-  } = useUIStore(
+  const { themeMode, setThemeMode } = useThemeStore(
     useShallow((s) => ({
       themeMode: s.themeMode,
-      setConnectionDialogOpen: s.setConnectionDialogOpen,
       setThemeMode: s.setThemeMode,
-      setCommandPaletteOpen: s.setCommandPaletteOpen,
-      aiPanelOpen: s.aiPanelOpen,
-      setAiPanelOpen: s.setAiPanelOpen,
     })),
   );
+  const { setConnectionDialogOpen, setAiPanelOpen, aiPanelOpen } = useUIStore(
+    useShallow((s) => ({
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+      setAiPanelOpen: s.setAiPanelOpen,
+      aiPanelOpen: s.aiPanelOpen,
+    })),
+  );
+  const setCommandPaletteOpen = useCommandPaletteStore((s) => s.setCommandPaletteOpen);
   const { queryHistory } = useQueryStore(
     useShallow((s) => ({
       queryHistory: s.queryHistory,
@@ -312,9 +311,9 @@ function CommandPalettePaper({ children }: { children?: React.ReactNode }) {
 }
 
 export default function CommandPalette() {
-  const open = useUIStore((s) => s.commandPaletteOpen);
-  const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const { addRecentCommandId, recentCommandIds } = useUIStore(
+  const open = useCommandPaletteStore((s) => s.commandPaletteOpen);
+  const setOpen = useCommandPaletteStore((s) => s.setCommandPaletteOpen);
+  const { addRecentCommandId, recentCommandIds } = useCommandPaletteStore(
     useShallow((s) => ({
       addRecentCommandId: s.addRecentCommandId,
       recentCommandIds: s.recentCommandIds,

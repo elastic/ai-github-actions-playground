@@ -28,6 +28,7 @@ import {
 } from "../routes/manifest";
 import type { UserCapabilities } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
+import { useThemeStore } from "../store/useThemeStore";
 import { useUIStore } from "../store/useUIStore";
 
 interface NavItem {
@@ -88,16 +89,19 @@ export default function AppSidebar({
   const { connected, capabilities } = useConnectionStore(
     useShallow((s) => ({ connected: s.connected, capabilities: s.capabilities })),
   );
-  const { themeMode, setConnectionDialogOpen, setThemeMode, aiPanelOpen, setAiPanelOpen } =
-    useUIStore(
-      useShallow((s) => ({
-        themeMode: s.themeMode,
-        setConnectionDialogOpen: s.setConnectionDialogOpen,
-        setThemeMode: s.setThemeMode,
-        aiPanelOpen: s.aiPanelOpen,
-        setAiPanelOpen: s.setAiPanelOpen,
-      })),
-    );
+  const { themeMode, setThemeMode } = useThemeStore(
+    useShallow((s) => ({
+      themeMode: s.themeMode,
+      setThemeMode: s.setThemeMode,
+    })),
+  );
+  const { setConnectionDialogOpen, aiPanelOpen, setAiPanelOpen } = useUIStore(
+    useShallow((s) => ({
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+      aiPanelOpen: s.aiPanelOpen,
+      setAiPanelOpen: s.setAiPanelOpen,
+    })),
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
