@@ -594,27 +594,36 @@ export class ElasticsearchClient {
         canReadApiKeys: canCreateApiKeys,
       };
     } catch (err: unknown) {
-      // A 404 means the _has_privileges endpoint could not be found (e.g. a
-      // proxy or middleware stripping the route).  This does NOT indicate that
-      // the user lacks privileges, so return an optimistic set and let the
-      // actual operation surface a clear error if it also fails.
-      if (isElasticsearchError(err) && err.status === 404) {
-        return {
-          canManageDataStreams: true,
-          canCreateApiKeys: true,
-          canReadSecurityUsers: true,
-          canReadSecurityRoles: true,
-          canReadApiKeys: true,
-        };
+      if (isElasticsearchError(err)) {
+        // A 404 means the _has_privileges endpoint could not be found (e.g. a
+        // proxy or middleware stripping the route).  This does NOT indicate that
+        // the user lacks privileges, so return an optimistic set and let the
+        // actual operation surface a clear error if it also fails.
+        if (err.status === 404) {
+          return {
+            canManageDataStreams: true,
+            canCreateApiKeys: true,
+            canReadSecurityUsers: true,
+            canReadSecurityRoles: true,
+            canReadApiKeys: true,
+          };
+        }
+        // 400: Security plugin not installed (e.g. "no handler found for uri").
+        // 403: Security enabled but user lacks privilege to check capabilities.
+        // Both are non-fatal — default to minimal privileges.
+        if (err.status === 400 || err.status === 403) {
+          return {
+            canManageDataStreams: false,
+            canCreateApiKeys: false,
+            canReadSecurityUsers: false,
+            canReadSecurityRoles: false,
+            canReadApiKeys: false,
+          };
+        }
       }
-      // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
-      return {
-        canManageDataStreams: false,
-        canCreateApiKeys: false,
-        canReadSecurityUsers: false,
-        canReadSecurityRoles: false,
-        canReadApiKeys: false,
-      };
+      // All other errors (401 Unauthorized, 5xx, network failures) are
+      // genuine connection/auth problems — surface them to the caller.
+      throw err;
     }
   }
 

@@ -220,6 +220,8 @@ export default function ConnectionDialog() {
   const isDuplicateProfileName = profileName.trim()
     ? connectionProfiles.some((p) => p.name === profileName.trim())
     : false;
+  const hasCredentials =
+    authType === "apiKey" ? Boolean(apiKey.trim()) : Boolean(username.trim() && password.trim());
   const likelyServerless = isLikelyServerlessUrl(url);
 
   const handleConnectAndSave = useCallback(async () => {
@@ -509,7 +511,13 @@ export default function ConnectionDialog() {
                   size="small"
                   variant="contained"
                   onClick={() => void handleConnectAndSave()}
-                  disabled={testing || !url.trim() || !profileName.trim() || isDuplicateProfileName}
+                  disabled={
+                    testing ||
+                    !url.trim() ||
+                    !hasCredentials ||
+                    !profileName.trim() ||
+                    isDuplicateProfileName
+                  }
                 >
                   {testing ? <CircularProgress size={18} /> : "Confirm Connect & Save"}
                 </Button>
@@ -526,17 +534,21 @@ export default function ConnectionDialog() {
         )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={handleTest} disabled={testing || !url.trim()}>
+        <Button onClick={handleTest} disabled={testing || !url.trim() || !hasCredentials}>
           {testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
         <Button
           variant="outlined"
           onClick={() => setSavePromptOpen((v) => !v)}
-          disabled={testing || !url.trim()}
+          disabled={testing || !url.trim() || !hasCredentials}
         >
           Connect & Save
         </Button>
-        <Button variant="contained" onClick={handleConnect} disabled={testing || !url.trim()}>
+        <Button
+          variant="contained"
+          onClick={handleConnect}
+          disabled={testing || !url.trim() || !hasCredentials}
+        >
           {testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
       </DialogActions>
