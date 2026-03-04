@@ -92,6 +92,23 @@ describe("InsightSlot", () => {
     expect(screen.getByTestId("child")).toBeInTheDocument();
   });
 
+  it("keeps insight dismissed after remount in same session", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithProvider("cpu-card", [SAMPLE_INSIGHT]);
+
+    await user.click(screen.getByRole("button", { name: /view warning insight/i }));
+    await waitFor(() => {
+      expect(screen.getByText("high")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: /dismiss insight/i }));
+    expect(screen.queryByRole("button", { name: /view warning insight/i })).not.toBeInTheDocument();
+
+    unmount();
+    renderWithProvider("cpu-card", [SAMPLE_INSIGHT]);
+
+    expect(screen.queryByRole("button", { name: /view warning insight/i })).not.toBeInTheDocument();
+  });
+
   it("calls refresh when refresh button is clicked in popover", async () => {
     const user = userEvent.setup();
     const { refresh } = renderWithProvider("cpu-card", [SAMPLE_INSIGHT]);

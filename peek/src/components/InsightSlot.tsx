@@ -35,10 +35,13 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
   const insight = useSlotInsight(slotId);
   const { loading, refresh } = useInsightSlotContext();
 
+  const dismissKey = `insight-slot-dismissed:${slotId}`;
   const [dismissed, setDismissed] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const open = Boolean(anchorEl);
+  const dismissedInSession =
+    typeof window !== "undefined" && window.sessionStorage.getItem(dismissKey) === "1";
 
   const handleOpen = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -51,7 +54,10 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
   const handleDismiss = useCallback(() => {
     setAnchorEl(null);
     setDismissed(true);
-  }, []);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(dismissKey, "1");
+    }
+  }, [dismissKey]);
 
   // No insight or loading — render children unchanged.
   if (!insight || loading) {
@@ -59,7 +65,7 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
   }
 
   // Dismissed — render children without decoration.
-  if (dismissed) {
+  if (dismissed || dismissedInSession) {
     return <>{children}</>;
   }
 
@@ -83,26 +89,38 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
         aria-haspopup="true"
         aria-expanded={open}
         onClick={handleOpen}
-        sx={[
-          {
-            position: "absolute",
-            top: -4,
-            right: -4,
-            width: 10,
-            minWidth: 0,
-            height: 10,
-            p: 0,
-            borderRadius: "50%",
-            bgcolor: severityColor(severity),
-            "&:focus-visible": {
-              outline: "2px solid",
-              outlineColor: "primary.main",
-              outlineOffset: 2,
-            },
+        sx={{
+          position: "absolute",
+          top: -11,
+          right: -11,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          width: 24,
+          minWidth: 24,
+          height: 24,
+          p: 0,
+          borderRadius: "50%",
+          "&:focus-visible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
           },
-          pulseSx,
-        ]}
-      />
+        }}
+      >
+        <Box
+          component="span"
+          sx={[
+            {
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              bgcolor: severityColor(severity),
+            },
+            pulseSx,
+          ]}
+        />
+      </ButtonBase>
 
       {/* Insight popover */}
       <Popover
