@@ -13,7 +13,12 @@ import PageHeader from "../PageHeader";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
-import { parseClusterInventory, parseNamespaceInventory } from "./k8sHelpers";
+import {
+  parseClusterInventory,
+  parseNamespaceInventory,
+  formatCpu,
+  formatMemory,
+} from "./k8sHelpers";
 import { useK8sDashboardQueries } from "./useK8sDashboardQueries";
 
 export default function K8sClusterDashboardPage() {
@@ -151,10 +156,10 @@ export default function K8sClusterDashboardPage() {
                     {row.podCount}
                   </Box>
                   <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {row.avgCpu != null ? `${(row.avgCpu * 100).toFixed(1)}%` : "—"}
+                    {formatCpu(row.avgCpu)}
                   </Box>
                   <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {row.avgMemory != null ? `${(row.avgMemory / 1_048_576).toFixed(1)} MiB` : "—"}
+                    {formatMemory(row.avgMemory)}
                   </Box>
                 </tr>
               ))}

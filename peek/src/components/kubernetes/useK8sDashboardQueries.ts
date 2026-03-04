@@ -40,7 +40,6 @@ function buildEntityQuery(params: UseK8sDashboardQueriesParams): string {
       filters.namespace = params.entityName;
       return buildPodInventoryQuery(filters);
     case "workload":
-      filters.namespace = params.entityName;
       return buildAllWorkloadsInventoryQuery(filters);
     case "pod":
       return buildPodDetailQuery(params.entityName, filters);
@@ -60,7 +59,7 @@ function buildOverviewQuery(params: UseK8sDashboardQueriesParams): string {
       filters.namespace = params.entityName;
       return buildNamespaceInventoryQuery(filters);
     case "workload":
-      return buildPodInventoryQuery(filters);
+      return buildAllWorkloadsInventoryQuery(filters);
     case "pod":
       return buildPodDetailQuery(params.entityName, filters);
   }
@@ -79,7 +78,6 @@ function buildLogsQueryForEntity(params: UseK8sDashboardQueriesParams): string {
       base.namespace = params.entityName;
       break;
     case "workload":
-      base.namespace = params.entityName;
       break;
     case "pod":
       base.podName = params.entityName;
@@ -101,7 +99,6 @@ function buildTracesQueryForEntity(params: UseK8sDashboardQueriesParams): string
       base.namespace = params.entityName;
       break;
     case "workload":
-      base.namespace = params.entityName;
       break;
     case "pod":
       base.podName = params.entityName;
