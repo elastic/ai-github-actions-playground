@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useQueryStore } from "../store/useQueryStore";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
+import { openInDiscover } from "../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection } from "../types";
 
 import type { EsqlQueryParams } from "./es";
@@ -245,8 +246,7 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
         query: z.string().min(1).describe("The ES|QL query to set in the Query Lab editor."),
       }),
       execute: async ({ query }) => {
-        useQueryStore.getState().setDiscoverQueryDraft(query);
-        navigate(PAGE_MANIFEST.discover.path);
+        openInDiscover(navigate, query);
         return { set: true, navigatedTo: "discover" };
       },
     }),
@@ -291,9 +291,10 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
         if (!trimmedQuery) {
           throw new Error("Query must not be empty");
         }
-        useQueryStore.getState().setDiscoverQueryDraft(trimmedQuery);
         if (navigate_to_query_lab) {
-          navigate(PAGE_MANIFEST.discover.path);
+          openInDiscover(navigate, trimmedQuery);
+        } else {
+          useQueryStore.getState().setDiscoverQueryDraft(trimmedQuery);
         }
         return { set: true, navigatedTo: navigate_to_query_lab ? "discover" : undefined };
       },

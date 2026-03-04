@@ -25,8 +25,8 @@ import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { useQueryStore } from "../../store/useQueryStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import type { EsqlResponse } from "../../types";
 
 import {
@@ -59,7 +59,7 @@ function readColumn(row: unknown[], columns: Array<{ name: string }>, field: str
 export default function ProfilingPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
-  const setDiscoverQueryDraft = useQueryStore((state) => state.setDiscoverQueryDraft);
+  const openInDiscover = useOpenInDiscover();
   const {
     filters,
     rawQuery,
@@ -222,9 +222,8 @@ export default function ProfilingPage() {
       viewMode === "flamescope" && flamescopeWindow
         ? `${effectiveQuery}\n| WHERE @timestamp >= "${escapeEsqlString(flamescopeWindow.from)}" AND @timestamp < "${escapeEsqlString(flamescopeWindow.to)}"`
         : effectiveQuery;
-    setDiscoverQueryDraft(draft);
-    navigate(PAGE_MANIFEST.discover.path);
-  }, [effectiveQuery, flamescopeWindow, navigate, setDiscoverQueryDraft, viewMode]);
+    openInDiscover(draft);
+  }, [effectiveQuery, flamescopeWindow, openInDiscover, viewMode]);
 
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
 
@@ -232,11 +231,9 @@ export default function ProfilingPage() {
     (frameName: string) => {
       if (frameName === "(unknown)") return;
       const draft = `${effectiveQuery}\n| WHERE Stackframe.function.name == "${escapeEsqlString(frameName)}"`;
-
-      setDiscoverQueryDraft(draft);
-      navigate(PAGE_MANIFEST.discover.path);
+      openInDiscover(draft);
     },
-    [effectiveQuery, navigate, setDiscoverQueryDraft],
+    [effectiveQuery, openInDiscover],
   );
 
   return (
