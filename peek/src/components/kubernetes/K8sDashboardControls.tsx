@@ -35,7 +35,7 @@ export default function K8sDashboardControls({
         <Button variant="contained" size="small" onClick={onSearch} disabled={loading}>
           Search
         </Button>
-        <Button variant="text" size="small" onClick={onReset} disabled={loading}>
+        <Button variant="text" size="small" onClick={onReset}>
           Reset
         </Button>
       </Box>

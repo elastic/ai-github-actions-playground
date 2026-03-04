@@ -106,7 +106,7 @@ export default function K8sWorkloadDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !hasData && (
+      {!loading && !error && !hasData && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No workload data loaded"

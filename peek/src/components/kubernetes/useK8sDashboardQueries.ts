@@ -61,9 +61,10 @@ function buildEntityQuery(params: UseK8sDashboardQueriesParams): string {
         filters.workloadKind = workloadKind;
         return buildWorkloadInventoryQuery(workloadKind, filters);
       }
-      // Invalid or missing workloadKind on a detail route — fall back to
-      // the all-workloads query scoped by workloadName so results are still
-      // narrowed to the selected workload name.
+      // Missing workloadKind on a detail route — fall back to the
+      // all-workloads query scoped by workloadName so results are still
+      // narrowed to the selected workload name. (Invalid kinds are
+      // rejected by handleSearch before these builders execute.)
       return buildAllWorkloadsInventoryQuery(filters);
     }
     case "pod":

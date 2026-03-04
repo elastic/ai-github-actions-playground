@@ -64,6 +64,8 @@ export default function K8sPodDashboardPage() {
   }, [containerRows]);
 
   const hasData = overviewResult || logsResult || tracesResult;
+  const hasLogs = Boolean(logsResult?.values.length);
+  const hasTraces = Boolean(tracesResult?.values.length);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -191,7 +193,7 @@ export default function K8sPodDashboardPage() {
         </Paper>
       )}
 
-      {!loading && hasData && containerRows.length === 0 && (
+      {!loading && hasData && containerRows.length === 0 && !hasLogs && !hasTraces && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No data found"
