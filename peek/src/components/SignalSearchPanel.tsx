@@ -107,6 +107,7 @@ export default function SignalSearchPanel({
   const editorExtensions = useMemo(
     () => [
       ...queryEditorExtensions,
+      EditorView.contentAttributes.of({ "aria-label": "ES|QL query editor" }),
       EditorView.focusChangeEffect.of((_state, focusing) => {
         setEditorFocused(focusing);
         return null;
@@ -305,7 +306,6 @@ export default function SignalSearchPanel({
                             foldGutter: false,
                             indentOnInput: false,
                           }}
-                          aria-label={`${title} query editor`}
                         />
                         <QueryAnnotationOverlay
                           query={effectiveQuery}

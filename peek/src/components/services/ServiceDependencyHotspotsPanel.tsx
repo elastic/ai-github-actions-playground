@@ -12,7 +12,9 @@ import Typography from "@mui/material/Typography";
 import { buildServiceMapData, type Span } from "../traces/traceUtils";
 
 import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
-import ServiceMiniDependencyGraph from "./ServiceMiniDependencyGraph";
+import ServiceMiniDependencyGraph, {
+  type DependencyNeighborEdge,
+} from "./ServiceMiniDependencyGraph";
 
 interface ServiceDependencyHotspotsPanelProps {
   serviceName: string;
@@ -25,29 +27,30 @@ export default function ServiceDependencyHotspotsPanel({
   spans,
   onPeerServiceClick,
 }: ServiceDependencyHotspotsPanelProps) {
-  const rows = useMemo(() => {
+  const neighbors = useMemo<DependencyNeighborEdge[]>(() => {
     const graph = buildServiceMapData(spans);
     return graph.edges
       .filter((edge) => edge.source === serviceName || edge.target === serviceName)
-      .map((edge) => {
-        const direction = edge.source === serviceName ? "outbound" : "inbound";
-        const peerService = edge.source === serviceName ? edge.target : edge.source;
-        const avgLatencyMs = edge.callCount > 0 ? edge.totalDurationUs / edge.callCount / 1000 : 0;
-        const errorRate = edge.callCount > 0 ? edge.errorCount / edge.callCount : 0;
-        return {
-          key: `${direction}:${peerService}`,
-          direction,
-          peerService,
-          calls: edge.callCount,
-          errorRate,
-          avgLatencyMs,
-        };
-      })
+      .map<DependencyNeighborEdge>((edge) => ({
+        direction: edge.source === serviceName ? "outbound" : "inbound",
+        peerService: edge.source === serviceName ? edge.target : edge.source,
+        calls: edge.callCount,
+        errorRate: edge.callCount > 0 ? edge.errorCount / edge.callCount : 0,
+        avgLatencyMs: edge.callCount > 0 ? edge.totalDurationUs / edge.callCount / 1000 : 0,
+      }))
       .sort(
         (a, b) => b.errorRate - a.errorRate || b.avgLatencyMs - a.avgLatencyMs || b.calls - a.calls,
       )
       .slice(0, 10);
   }, [serviceName, spans]);
+  const rows = useMemo(
+    () =>
+      neighbors.map((neighbor) => ({
+        ...neighbor,
+        key: `${neighbor.direction}:${neighbor.peerService}`,
+      })),
+    [neighbors],
+  );
 
   return (
     <Paper variant="outlined" sx={{ minWidth: 0, overflow: "auto" }}>
@@ -59,7 +62,7 @@ export default function ServiceDependencyHotspotsPanel({
       <Box sx={{ height: 240, minHeight: 180, p: 1, borderBottom: 1, borderColor: "divider" }}>
         <ServiceMiniDependencyGraph
           serviceName={serviceName}
-          spans={spans}
+          neighbors={neighbors}
           onPeerServiceClick={onPeerServiceClick}
         />
       </Box>

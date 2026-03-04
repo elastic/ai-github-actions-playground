@@ -1,6 +1,7 @@
 import type { InsightSlotDefinition } from "../../types/insightSlots";
 
 import type { DeploymentRow, RecentTrace, RouteRow } from "./serviceDashboardHelpers";
+import { normalizeStatusLabel } from "./serviceDashboardPageUtils";
 
 export const SERVICE_DASHBOARD_INSIGHT_SLOT_IDS = {
   searchControls: "service-dashboard-search-controls",
@@ -97,7 +98,7 @@ export function summarizeTraceSignals(traces: RecentTrace[]): {
 } {
   return traces.reduce(
     (acc, trace) => {
-      if (trace.statusCode === "Error" || trace.statusCode === "STATUS_CODE_ERROR") {
+      if (normalizeStatusLabel(trace.statusCode).toLowerCase() === "error") {
         acc.errorTraceCount += 1;
       }
       if (trace.durationMs > acc.maxDurationMs) {

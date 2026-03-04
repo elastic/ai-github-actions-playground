@@ -261,6 +261,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   }, []);
   const queryEditorExtensions = useMemo<Extension[]>(
     () => [
+      EditorView.contentAttributes.of({ "aria-label": "ES|QL query editor" }),
       EditorView.lineWrapping,
       ...createEsqlQueryEditorExtensions(stableRunQuery),
       EditorView.focusChangeEffect.of((_state, focusing) => {

@@ -11,6 +11,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { SpanTreeView } from "../traces/span-tree-plugin";
 import type { Span } from "../traces/traceUtils";
 import SpanDetailDrawer from "../traces/SpanDetailDrawer";
+import { useTracesStore } from "../../store/useTracesStore";
 
 import ServiceTracesTable from "./ServiceTracesTable";
 import type { RecentTrace, TraceSortField, SortDirection } from "./serviceDashboardHelpers";
@@ -38,6 +39,7 @@ export default function ServiceTracesPanel({
 }: ServiceTracesPanelProps) {
   const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const showTraceExplorer = traceExplorerSpans.length > 0 || traceExplorerLoading;
   const selectedSpan = useMemo(
     () => traceExplorerSpans.find((span) => span.spanId === selectedSpanId) ?? null,
     [traceExplorerSpans, selectedSpanId],
@@ -48,8 +50,22 @@ export default function ServiceTracesPanel({
     setDrawerOpen(true);
   }, []);
 
-  const handleFilterBy = useCallback(() => undefined, []);
-  const handleExclude = useCallback(() => undefined, []);
+  const handleFilterBy = useCallback(
+    (key: string, value: string) => {
+      onViewAllTraces();
+      useTracesStore.getState().addTagFilter(key, value, false);
+      setDrawerOpen(false);
+    },
+    [onViewAllTraces],
+  );
+  const handleExclude = useCallback(
+    (key: string, value: string) => {
+      onViewAllTraces();
+      useTracesStore.getState().addTagFilter(key, value, true);
+      setDrawerOpen(false);
+    },
+    [onViewAllTraces],
+  );
 
   return (
     <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto" }}>
@@ -72,14 +88,20 @@ export default function ServiceTracesPanel({
               <InfoOutlinedIcon fontSize="inherit" />
             </IconButton>
           </Tooltip>
-          <Chip size="small" variant="outlined" label={`${traces.length} traces`} />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={
+              showTraceExplorer ? `${traceExplorerSpans.length} spans` : `${traces.length} traces`
+            }
+          />
         </Box>
         <Button size="small" variant="text" onClick={onViewAllTraces}>
           View All Traces →
         </Button>
       </Box>
       <Box sx={{ height: 360, minHeight: 240 }}>
-        {traceExplorerSpans.length > 0 || traceExplorerLoading ? (
+        {showTraceExplorer ? (
           <SpanTreeView
             spans={traceExplorerSpans}
             showToolbar={false}
@@ -99,12 +121,15 @@ export default function ServiceTracesPanel({
       </Box>
       <SpanDetailDrawer
         span={selectedSpan}
-        open={drawerOpen}
+        open={drawerOpen && Boolean(selectedSpan)}
         selectedSpanId={selectedSpanId}
         traceSpans={traceExplorerSpans}
         searchSpans={traceExplorerSpans}
         onSelectSpan={handleSelectSpan}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setSelectedSpanId(null);
+        }}
         onFilterBy={handleFilterBy}
         onExclude={handleExclude}
       />

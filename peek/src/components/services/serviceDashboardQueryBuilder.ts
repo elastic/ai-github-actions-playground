@@ -40,6 +40,10 @@ function buildDurationMsExpr(fields: TraceFieldMapping): string {
   return `COALESCE(${fields.durationUs}, ${fields.durationNs} / 1000) / 1000.0`;
 }
 
+function buildIsErrorExpr(fields: TraceFieldMapping): string {
+  return `CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`;
+}
+
 /**
  * Builds an ES|QL query that aggregates per-route metrics for a single service.
  * Returns: route, request count, avg latency, error count, error rate.
@@ -56,7 +60,7 @@ export function buildServiceRoutesQuery(
     buildWherePipe(whereClauses),
     "EVAL duration_ms = " +
       `${durationMsExpr}, ` +
-      `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0), ` +
+      `is_error = ${buildIsErrorExpr(fields)}, ` +
       'route_key = COALESCE(attributes.http.route, "/")',
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY route_key`,
     `EVAL error_rate = error_count / request_count`,
@@ -98,7 +102,7 @@ export function buildServiceDeploymentsQuery(
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
     `EVAL version_key = CASE(${fields.serviceVersion} IS NULL OR TRIM(${fields.serviceVersion}) == "", "unknown", ${fields.serviceVersion})`,
-    `EVAL is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`,
+    `EVAL is_error = ${buildIsErrorExpr(fields)}`,
     `STATS first_seen = MIN(${fields.timestamp}), last_seen = MAX(${fields.timestamp}), request_count = COUNT(*), error_count = SUM(is_error) BY version_key`,
     `EVAL error_rate = error_count / request_count`,
     `SORT last_seen DESC, first_seen DESC`,
@@ -150,7 +154,7 @@ export function buildServiceRouteSparklineQuery(
     buildWherePipe(whereClauses),
     "EVAL duration_ms = " +
       `${durationMsExpr}, ` +
-      `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0), ` +
+      `is_error = ${buildIsErrorExpr(fields)}, ` +
       'route_key = COALESCE(attributes.http.route, "/")',
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY route_key, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
     `EVAL error_rate = error_count / request_count`,
