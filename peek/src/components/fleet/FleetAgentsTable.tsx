@@ -12,7 +12,9 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
 import DevicesIcon from "@mui/icons-material/Devices";
+import FilterListOffIcon from "@mui/icons-material/FilterListOff";
 
 import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness, fleetStatusColor } from "../../services/fleet";
@@ -311,7 +313,24 @@ export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && (
+            {filtered.length === 0 && agents.length > 0 && (
+              <TableRow>
+                <TableCell colSpan={8}>
+                  <EmptyState
+                    size="small"
+                    icon={<FilterListOffIcon sx={{ fontSize: 28 }} />}
+                    heading="No agents match current filters"
+                    description="Try adjusting your search or filters to find what you're looking for."
+                    action={
+                      <Button variant="outlined" size="small" onClick={resetFilters}>
+                        Clear filters
+                      </Button>
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {filtered.length === 0 && agents.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8}>
                   <EmptyState

@@ -1,7 +1,7 @@
 name: Branch Actions Detective
 on:
   workflow_run:
-    workflows: ["Internal: CI", "CI", "Build", "Test"]
+    workflows: ["Internal: CI", "CI", "Build", "Test", "UI Smoke Test PR Review"]
     types: [completed]
 
 permissions:
