@@ -52,7 +52,7 @@ function comparePrerelease(a: string, b: string): number {
     if (aIsNumeric) return -1;
     if (bIsNumeric) return 1;
 
-    const diff = aIdentifier.localeCompare(bIdentifier);
+    const diff = aIdentifier < bIdentifier ? -1 : aIdentifier > bIdentifier ? 1 : 0;
     if (diff !== 0) return diff;
   }
 

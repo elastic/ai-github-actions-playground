@@ -39,4 +39,9 @@ describe("compareSemver", () => {
     expect(compareSemver("8.9.0-1", "8.9.0-alpha")).toBeLessThan(0);
     expect(compareSemver("8.10.0-alpha", "8.9.0")).toBeGreaterThan(0);
   });
+
+  it("ignores build metadata", () => {
+    expect(compareSemver("8.9.0+build", "8.9.0")).toBe(0);
+    expect(compareSemver("8.9.0+exp.sha.5114f85", "8.9.0")).toBe(0);
+  });
 });

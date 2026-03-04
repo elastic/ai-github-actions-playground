@@ -26,6 +26,27 @@ const agents: ElasticAgentInfo[] = [
   makeAgent({ agentId: "a-3", version: "7.17.0" }),
 ];
 
+const getVersionColumnIndex = (): number => {
+  const headers = screen.getAllByRole("columnheader");
+  const index = headers.findIndex((header) => header.textContent?.trim() === "Version");
+  expect(index).toBeGreaterThanOrEqual(0);
+  return index;
+};
+
+const getTableVersions = (): Array<string | null> => {
+  const versionColumnIndex = getVersionColumnIndex();
+  const rows = screen.getAllByRole("row").slice(1);
+  return rows.map(
+    (row) => within(row).getAllByRole("cell")[versionColumnIndex]?.textContent ?? null,
+  );
+};
+
+const getVersionChipButtons = (): Array<string | null> =>
+  screen
+    .getAllByRole("button")
+    .filter((el) => ["7.17.0", "8.9.0", "8.10.0"].includes(el.textContent ?? ""))
+    .map((el) => el.textContent);
+
 describe("FleetAgentsTable version sorting", () => {
   beforeEach(() => {
     usePageFiltersStore.getState().resetFleetFilters();
@@ -38,10 +59,10 @@ describe("FleetAgentsTable version sorting", () => {
     // Click the Version sort header
     await user.click(screen.getByRole("button", { name: "Version" }));
 
-    const rows = screen.getAllByRole("row").slice(1); // skip header
-    const versions = rows.map((row) => within(row).getAllByRole("cell")[2]?.textContent);
+    const versions = getTableVersions();
 
     expect(versions).toEqual(["7.17.0", "8.9.0", "8.10.0"]);
+    expect(getVersionChipButtons()).toEqual(["7.17.0", "8.9.0", "8.10.0"]);
   });
 
   it("sorts versions semantically in descending order", async () => {
@@ -52,20 +73,15 @@ describe("FleetAgentsTable version sorting", () => {
     await user.click(screen.getByRole("button", { name: "Version" }));
     await user.click(screen.getByRole("button", { name: "Version" }));
 
-    const rows = screen.getAllByRole("row").slice(1);
-    const versions = rows.map((row) => within(row).getAllByRole("cell")[2]?.textContent);
+    const versions = getTableVersions();
 
     expect(versions).toEqual(["8.10.0", "8.9.0", "7.17.0"]);
+    expect(getVersionChipButtons()).toEqual(["7.17.0", "8.9.0", "8.10.0"]);
   });
 
   it("renders version filter chips in semantic order", () => {
     render(<FleetAgentsTable agents={agents} onAgentClick={() => {}} />);
 
-    const versionChipButtons = screen
-      .getAllByRole("button")
-      .filter((el) => ["7.17.0", "8.9.0", "8.10.0"].includes(el.textContent ?? ""))
-      .map((el) => el.textContent);
-
-    expect(versionChipButtons).toEqual(["7.17.0", "8.9.0", "8.10.0"]);
+    expect(getVersionChipButtons()).toEqual(["7.17.0", "8.9.0", "8.10.0"]);
   });
 });
