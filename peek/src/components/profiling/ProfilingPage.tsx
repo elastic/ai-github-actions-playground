@@ -28,6 +28,7 @@ import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import type { ProfilingViewMode } from "../../store/usePageFiltersStore";
 import type { EsqlResponse } from "../../types";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
@@ -60,12 +61,6 @@ function readColumn(row: unknown[], columns: Array<{ name: string }>, field: str
 }
 
 export default function ProfilingPage() {
-  type ProfilingViewMode =
-    | "topFunctions"
-    | "stacktraces"
-    | "timeline"
-    | "flamegraph"
-    | "flamescope";
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
   const setDiscoverQueryDraft = useQueryStore((state) => state.setDiscoverQueryDraft);
