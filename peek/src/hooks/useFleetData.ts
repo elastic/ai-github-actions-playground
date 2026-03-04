@@ -110,8 +110,14 @@ export function useFleetData(): UseFleetDataResult {
       }
       const enrichedAgents: ElasticAgentInfo[] = (inventoryResult?.agents ?? []).map((a) => {
         const match = fleetMap.get(a.agentId);
+        const status = match?.status?.trim();
+        const policyId = match?.policyId?.trim();
         return match
-          ? { ...a, status: match.status || a.status, policyId: match.policyId || a.policyId }
+          ? {
+              ...a,
+              status: status && status.toLowerCase() !== "unknown" ? status : a.status,
+              policyId: policyId && policyId.toLowerCase() !== "unknown" ? policyId : a.policyId,
+            }
           : a;
       });
 
