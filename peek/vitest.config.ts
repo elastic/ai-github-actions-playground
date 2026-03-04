@@ -2,7 +2,6 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    pool: "vmThreads",
     include: [
       "tests/unit/**/*.test.{ts,tsx}",
       "tests/smoke/**/*.test.{ts,tsx}",
