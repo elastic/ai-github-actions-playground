@@ -52,13 +52,21 @@ export default function K8sWorkloadDashboardPage() {
   const summary = useMemo<K8sDashboardSummary | null>(() => {
     if (workloadRows.length === 0) return null;
     const totalPods = workloadRows.reduce((sum, r) => sum + r.podCount, 0);
-    const cpuValues = workloadRows.filter((r) => r.avgCpu != null).map((r) => r.avgCpu!);
-    const memValues = workloadRows.filter((r) => r.avgMemory != null).map((r) => r.avgMemory!);
+    // Pod-count-weighted averages: workloads with more pods contribute proportionally.
+    const cpuRows = workloadRows.filter((r) => r.avgCpu != null);
+    const cpuPods = cpuRows.reduce((sum, r) => sum + r.podCount, 0);
+    const memRows = workloadRows.filter((r) => r.avgMemory != null);
+    const memPods = memRows.reduce((sum, r) => sum + r.podCount, 0);
     return {
       totalPods,
-      avgCpu: cpuValues.length > 0 ? cpuValues.reduce((a, b) => a + b, 0) / cpuValues.length : null,
+      avgCpu:
+        cpuPods > 0
+          ? cpuRows.reduce((sum, r) => sum + r.avgCpu! * r.podCount, 0) / cpuPods
+          : null,
       avgMemory:
-        memValues.length > 0 ? memValues.reduce((a, b) => a + b, 0) / memValues.length : null,
+        memPods > 0
+          ? memRows.reduce((sum, r) => sum + r.avgMemory! * r.podCount, 0) / memPods
+          : null,
       extras: [{ label: "Kind", value: kind }],
     };
   }, [workloadRows, kind]);

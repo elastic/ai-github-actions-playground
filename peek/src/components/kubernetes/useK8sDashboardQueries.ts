@@ -55,12 +55,15 @@ function buildEntityQuery(params: UseK8sDashboardQueriesParams): string {
       filters.namespace = params.entityName;
       return buildPodInventoryQuery(filters);
     case "workload": {
-      filters.workloadName = params.entityName;
       const workloadKind = toWorkloadKind(params.workloadKind);
+      filters.workloadName = params.entityName;
       if (workloadKind) {
         filters.workloadKind = workloadKind;
         return buildWorkloadInventoryQuery(workloadKind, filters);
       }
+      // Invalid or missing workloadKind on a detail route — fall back to
+      // the all-workloads query scoped by workloadName so results are still
+      // narrowed to the selected workload name.
       return buildAllWorkloadsInventoryQuery(filters);
     }
     case "pod":
@@ -81,8 +84,8 @@ function buildOverviewQuery(params: UseK8sDashboardQueriesParams): string {
       filters.namespace = params.entityName;
       return buildNamespaceInventoryQuery(filters);
     case "workload": {
-      filters.workloadName = params.entityName;
       const workloadKind = toWorkloadKind(params.workloadKind);
+      filters.workloadName = params.entityName;
       if (workloadKind) {
         filters.workloadKind = workloadKind;
         return buildWorkloadInventoryQuery(workloadKind, filters);
@@ -143,7 +146,9 @@ function buildTracesQueryForEntity(params: UseK8sDashboardQueriesParams): string
 export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
   const { connection, entity, entityName } = params;
   const queryClient = useQueryClient();
-  const workloadKeyPart = entity === "workload" ? (toWorkloadKind(params.workloadKind) ?? "") : "";
+  const validatedWorkloadKind = entity === "workload" ? toWorkloadKind(params.workloadKind) : undefined;
+  const invalidWorkloadKind = entity === "workload" && params.workloadKind && !validatedWorkloadKind;
+  const workloadKeyPart = validatedWorkloadKind ?? "";
 
   // --- Overview query state ---
   const overviewQueryKey = useMemo(
@@ -319,6 +324,8 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
   }, []);
 
   const handleSearch = useCallback(() => {
+    if (invalidWorkloadKind) return;
+
     const overviewQuery = buildOverviewQuery(params);
     latestOverviewRef.current = overviewQuery.trim();
     runOverviewQuery(overviewQuery);
@@ -334,7 +341,7 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
     const tracesQuery = buildTracesQueryForEntity(params);
     latestTracesRef.current = tracesQuery.trim();
     runTracesQuery(tracesQuery);
-  }, [params, runOverviewQuery, runEntityQuery, runLogsQuery, runTracesQuery]);
+  }, [params, invalidWorkloadKind, runOverviewQuery, runEntityQuery, runLogsQuery, runTracesQuery]);
 
   const handleReset = useCallback(() => {
     clearLatestQueries();
@@ -365,7 +372,9 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
     logsResult,
     tracesResult,
     loading,
-    error,
+    error: invalidWorkloadKind
+      ? `Unrecognized workload kind: "${params.workloadKind}"`
+      : error,
     handleSearch,
     handleReset,
   };
