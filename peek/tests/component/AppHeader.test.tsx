@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import AppHeader from "../../src/components/AppHeader";
 import { PAGE_MANIFEST } from "../../src/routes/manifest";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { useUIStore } from "../../src/store/useUIStore";
+import { useCommandPaletteStore } from "../../src/store/useCommandPaletteStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
@@ -189,10 +189,10 @@ describe("AppHeader narrow-layout command palette", () => {
     const user = userEvent.setup();
     renderHeader();
 
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
 
     await user.click(screen.getByRole("button", { name: /open command palette/i }));
 
-    expect(useUIStore.getState().commandPaletteOpen).toBe(true);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(true);
   });
 });
