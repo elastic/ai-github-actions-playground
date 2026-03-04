@@ -40,7 +40,7 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
 
   const open = Boolean(anchorEl);
 
-  const handleOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
+  const handleOpen = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   }, []);
 

@@ -1,18 +1,22 @@
+import type { SlotInsight } from "../types/insightSlots";
+
+type InsightSeverity = NonNullable<SlotInsight["severity"]>;
+
 /** Severity-keyed glow colors (subtle, non-disruptive). */
-const glowColor: Record<string, string> = {
+const glowColor: Record<InsightSeverity, string> = {
   info: "rgba(33,150,243,0.18)",
   warning: "rgba(255,152,0,0.22)",
   critical: "rgba(244,67,54,0.22)",
 };
 
 /** Return a box-shadow glow for the given severity. */
-export function severityGlow(severity: string): string {
+export function severityGlow(severity: InsightSeverity): string {
   const color = glowColor[severity] ?? glowColor.info;
   return `0 0 0 2px ${color}`;
 }
 
 /** Map insight severity to a MUI palette colour channel. */
-export function severityColor(severity: string): string {
+export function severityColor(severity: InsightSeverity): string {
   switch (severity) {
     case "critical":
       return "error.main";
