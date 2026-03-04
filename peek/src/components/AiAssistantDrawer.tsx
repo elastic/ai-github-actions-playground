@@ -90,6 +90,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
         },
       }}
       sx={{
+        ...(isMobile ? { zIndex: 1203 } : {}),
         "& .MuiDrawer-paper": {
           boxSizing: "border-box",
           width: isMobile ? `min(100vw, ${AI_DRAWER_WIDTH}px)` : AI_DRAWER_WIDTH,

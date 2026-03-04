@@ -76,6 +76,7 @@ test.describe("Mobile Exploration @mobile", () => {
   test("sidebar and header should be visible on mobile after connection", async ({ page }) => {
     skipDesktopChromiumInCi();
     await connectToMockCluster(page);
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
 
     const sidebar = page.getByRole("navigation", { name: "Main navigation" });
     await expect(sidebar).toBeVisible();
