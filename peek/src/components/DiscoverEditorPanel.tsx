@@ -59,6 +59,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
   const [explainOpen, setExplainOpen] = useState(false);
   const explainPanelId = useId();
   const explanation = useQueryExplanation(p.effectiveQuery);
+  const collapsedSummary = explanation ?? "AI summary unavailable.";
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
@@ -80,14 +81,26 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           </IconButton>
         }
         titleAdornment={
-          !p.isLogsExplorer ? (
+          p.collapsed ? (
+            <Tooltip title={collapsedSummary}>
+              <Typography
+                component="span"
+                variant="body2"
+                color="text.secondary"
+                noWrap
+                sx={{ maxWidth: { sm: 520, xs: 220 }, fontStyle: "italic" }}
+              >
+                {collapsedSummary}
+              </Typography>
+            </Tooltip>
+          ) : !p.isLogsExplorer ? (
             <Typography component="span" aria-hidden="true" sx={{ lineHeight: 1 }}>
               🔬
             </Typography>
           ) : undefined
         }
         actions={
-          !p.collapsed ? (
+          p.collapsed ? null : (
             <>
               <Tooltip
                 title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
@@ -129,19 +142,9 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                 ES|QL documentation
               </Typography>
             </>
-          ) : null
+          )
         }
       />
-      {p.collapsed && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          noWrap
-          sx={{ minWidth: 0, mb: 1, fontStyle: "italic" }}
-        >
-          {explanation ?? "AI summary unavailable."}
-        </Typography>
-      )}
       <Collapse in={!p.collapsed} unmountOnExit>
         <Box
           sx={{
