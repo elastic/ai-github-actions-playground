@@ -168,7 +168,7 @@ export default function ServiceDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !routesResult && !tracesResult && !deploymentsResult && (
+      {!loading && !routesResult && !tracesResult && !deploymentsResult && !k8sContextResult && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No service data loaded"
@@ -209,7 +209,8 @@ export default function ServiceDashboardPage() {
         routesResult &&
         deployments.length === 0 &&
         routeRows.length === 0 &&
-        recentTraces.length === 0 && (
+        recentTraces.length === 0 &&
+        k8sRows.length === 0 && (
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
             <EmptyState
               heading="No data found"

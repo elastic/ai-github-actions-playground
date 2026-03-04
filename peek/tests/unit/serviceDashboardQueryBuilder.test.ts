@@ -261,7 +261,7 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("BY k8s_namespace = k8s.namespace.name");
       expect(query).toContain("k8s_node = k8s.node.name");
       expect(query).toContain("k8s_pod = k8s.pod.name");
-      expect(query).toContain("SORT trace_count DESC");
+      expect(query).toContain("SORT pod_count DESC");
       expect(query).toContain("LIMIT 50");
     });
 
@@ -277,6 +277,15 @@ describe("serviceDashboardQueryBuilder", () => {
       const query = buildServiceK8sContextQuery(defaultFilters);
       expect(query).toContain("@timestamp >= NOW() - 1 hour");
       expect(query).toContain("@timestamp <= NOW()");
+    });
+
+    it("throws for unsupported time expressions", () => {
+      expect(() =>
+        buildServiceK8sContextQuery({
+          ...defaultFilters,
+          timeTo: "NOW(); DROP TABLE traces",
+        }),
+      ).toThrow("Unsupported time expression");
     });
   });
 });

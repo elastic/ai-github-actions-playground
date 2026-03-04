@@ -122,8 +122,8 @@ export function buildServiceK8sContextQuery(
       `${fields.timestamp} <= ${safeTimeTo}`,
       `k8s.pod.name IS NOT NULL`,
     ]),
-    `STATS trace_count = COUNT(*) BY k8s_namespace = k8s.namespace.name, k8s_node = k8s.node.name, k8s_pod = k8s.pod.name`,
-    `SORT trace_count DESC`,
+    `STATS pod_count = COUNT(*) BY k8s_namespace = k8s.namespace.name, k8s_node = k8s.node.name, k8s_pod = k8s.pod.name`,
+    `SORT pod_count DESC`,
     `LIMIT 50`,
   ]);
 }

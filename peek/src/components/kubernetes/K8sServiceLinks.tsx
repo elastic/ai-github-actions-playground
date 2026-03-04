@@ -11,6 +11,7 @@ interface K8sServiceLinksProps {
 
 export default function K8sServiceLinks({ serviceNames }: K8sServiceLinksProps) {
   const navigate = useNavigate();
+  const uniqueServiceNames = Array.from(new Set(serviceNames));
 
   return (
     <Paper variant="outlined" sx={{ overflow: "auto" }}>
@@ -19,11 +20,12 @@ export default function K8sServiceLinks({ serviceNames }: K8sServiceLinksProps) 
           Linked Services
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {serviceNames.length} service{serviceNames.length !== 1 ? "s" : ""} detected in trace data
+          {uniqueServiceNames.length} service{uniqueServiceNames.length !== 1 ? "s" : ""} detected
+          in trace data
         </Typography>
       </Box>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, p: 2 }}>
-        {serviceNames.map((name) => (
+        {uniqueServiceNames.map((name) => (
           <Chip
             key={name}
             label={name}
