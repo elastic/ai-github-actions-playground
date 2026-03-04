@@ -57,7 +57,7 @@ export default function EmptyState({
       >
         {icon ?? <SearchIcon sx={{ fontSize: iconSize }} />}
       </Box>
-      <Typography variant="h6" color="text.primary">
+      <Typography variant="h6" component="p" color="text.primary">
         {heading}
       </Typography>
       {description && (
