@@ -152,12 +152,12 @@ describe("k8sQueryBuilder", () => {
       expect(query).toContain("BY cluster_name = k8s.cluster.name");
       expect(query).toContain("namespace_name = k8s.namespace.name");
       expect(query).toContain("workload_kind = CASE");
-      expect(query).toContain('WHEN k8s.deployment.name IS NOT NULL THEN "deployment"');
-      expect(query).toContain('WHEN k8s.replicaset.name IS NOT NULL THEN "replicaset"');
-      expect(query).toContain('WHEN k8s.statefulset.name IS NOT NULL THEN "statefulset"');
-      expect(query).toContain('WHEN k8s.daemonset.name IS NOT NULL THEN "daemonset"');
-      expect(query).toContain('WHEN k8s.job.name IS NOT NULL THEN "job"');
-      expect(query).toContain('WHEN k8s.cronjob.name IS NOT NULL THEN "cronjob"');
+      expect(query).toContain('k8s.deployment.name IS NOT NULL, "deployment"');
+      expect(query).toContain('k8s.replicaset.name IS NOT NULL, "replicaset"');
+      expect(query).toContain('k8s.statefulset.name IS NOT NULL, "statefulset"');
+      expect(query).toContain('k8s.daemonset.name IS NOT NULL, "daemonset"');
+      expect(query).toContain('k8s.job.name IS NOT NULL, "job"');
+      expect(query).toContain('k8s.cronjob.name IS NOT NULL, "cronjob"');
       expect(query).toContain("workload_name = COALESCE(");
       expect(query).toContain("k8s.deployment.name");
       expect(query).toContain("k8s.replicaset.name");

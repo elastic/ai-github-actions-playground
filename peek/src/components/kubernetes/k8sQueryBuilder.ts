@@ -204,17 +204,7 @@ export function buildAllWorkloadsInventoryQuery(
   ];
   const whereClauses = buildTimeWhereClauses(filters, fields);
   whereClauses.push(`(${workloadFields.map((field) => `${field} IS NOT NULL`).join(" OR ")})`);
-  const workloadKind = [
-    `CASE`,
-    `WHEN ${fields.deploymentName} IS NOT NULL THEN "deployment"`,
-    `WHEN ${fields.replicaSetName} IS NOT NULL THEN "replicaset"`,
-    `WHEN ${fields.statefulSetName} IS NOT NULL THEN "statefulset"`,
-    `WHEN ${fields.daemonSetName} IS NOT NULL THEN "daemonset"`,
-    `WHEN ${fields.jobName} IS NOT NULL THEN "job"`,
-    `WHEN ${fields.cronJobName} IS NOT NULL THEN "cronjob"`,
-    `ELSE "unknown"`,
-    `END`,
-  ].join(" ");
+  const workloadKind = `CASE(${fields.deploymentName} IS NOT NULL, "deployment", ${fields.replicaSetName} IS NOT NULL, "replicaset", ${fields.statefulSetName} IS NOT NULL, "statefulset", ${fields.daemonSetName} IS NOT NULL, "daemonset", ${fields.jobName} IS NOT NULL, "job", ${fields.cronJobName} IS NOT NULL, "cronjob", "unknown")`;
 
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
