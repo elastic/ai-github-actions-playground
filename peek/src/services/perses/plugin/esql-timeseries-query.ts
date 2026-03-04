@@ -26,12 +26,11 @@ function interpolateVariables(
 ): string {
   return query.replace(/\{\{(\w+)\}\}/g, (token, name: string) => {
     const state = variableState[name];
-    if (!state?.value) {
+    if (!state || state.value === undefined || state.value === null) {
       return token;
     }
-    const value = Array.isArray(state.value)
-      ? state.value.map(String).join(",")
-      : String(state.value);
+    const rawValue = state.value;
+    const value = Array.isArray(rawValue) ? rawValue.map(String).join(",") : String(rawValue);
     return value.replace(/'/g, "''");
   });
 }
@@ -80,15 +79,15 @@ export const ESQLTimeSeriesQuery: TimeSeriesQueryPlugin<ESQLTimeSeriesQuerySpec>
   },
 
   dependsOn(spec: ESQLTimeSeriesQuerySpec) {
-    const variables: string[] = [];
+    const variables = new Set<string>();
     const pattern = /\{\{(\w+)\}\}/g;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(spec.query)) !== null) {
       if (match[1]) {
-        variables.push(match[1]);
+        variables.add(match[1]);
       }
     }
-    return { variables };
+    return { variables: [...variables] };
   },
 };
 

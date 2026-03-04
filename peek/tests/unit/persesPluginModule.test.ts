@@ -91,6 +91,18 @@ describe("ESQLTimeSeriesQuery plugin", () => {
     expect(deps.variables).toEqual([]);
   });
 
+  it("deduplicates variable dependencies from query text", () => {
+    const spec: ESQLTimeSeriesQuerySpec = {
+      query: "FROM {{index}} | WHERE a='{{host}}' OR b='{{host}}' | STATS count(*)",
+    };
+    const deps = ESQLTimeSeriesQuery.dependsOn!(spec, {
+      timeRange: { start: new Date(), end: new Date() },
+      variableState: {},
+      datasourceStore: {} as never,
+    });
+    expect(deps.variables).toEqual(["index", "host"]);
+  });
+
   it("executes query through datasource client and transforms result", async () => {
     const mockResponse = {
       columns: [
@@ -186,6 +198,52 @@ describe("ESQLTimeSeriesQuery plugin", () => {
 
     const calledQuery = mockClient.query.mock.calls[0]?.[0]?.query;
     expect(calledQuery).toBe("FROM logs-* | WHERE host = 'server-1' | STATS count(*)");
+  });
+
+  it("interpolates falsy variable values", async () => {
+    const mockResponse = {
+      columns: [{ name: "count", type: "long" }],
+      values: [[1]],
+      executionTimeMs: 1,
+    };
+
+    const mockClient = {
+      kind: "ElasticsearchDatasource" as const,
+      query: vi.fn().mockResolvedValue(mockResponse),
+      healthCheck: vi.fn(),
+      getConnection: vi.fn(),
+    };
+
+    const mockDatasourceStore = {
+      getDatasourceClient: vi.fn().mockResolvedValue(mockClient),
+      getDatasource: vi.fn(),
+      listDatasourceSelectItems: vi.fn(),
+      getLocalDatasources: vi.fn(),
+      setLocalDatasources: vi.fn(),
+      getSavedDatasources: vi.fn(),
+      setSavedDatasources: vi.fn(),
+    };
+
+    await ESQLTimeSeriesQuery.getTimeSeriesData(
+      {
+        query: "FROM {{index}} | WHERE success = {{ok}} | WHERE retries = {{retries}}",
+      },
+      {
+        timeRange: {
+          start: new Date("2024-01-01T00:00:00Z"),
+          end: new Date("2024-01-01T01:00:00Z"),
+        },
+        variableState: {
+          index: { value: "", loading: false },
+          ok: { value: false, loading: false },
+          retries: { value: 0, loading: false },
+        },
+        datasourceStore: mockDatasourceStore,
+      },
+    );
+
+    const calledQuery = mockClient.query.mock.calls[0]?.[0]?.query;
+    expect(calledQuery).toBe("FROM  | WHERE success = false | WHERE retries = 0");
   });
 
   it("passes time range filter to the ES|QL request", async () => {
