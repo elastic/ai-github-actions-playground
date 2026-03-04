@@ -1,6 +1,7 @@
 import type { TimeSeriesData } from "@perses-dev/core";
 import type { TimeSeriesQueryPlugin, TimeSeriesQueryContext } from "@perses-dev/plugin-system";
 
+import { buildTimeParams } from "../../datemath";
 import type { EsqlQueryParams } from "../../es";
 import { toTimeSeriesData } from "../dataTransformers";
 
@@ -24,10 +25,10 @@ function interpolateVariables(
   query: string,
   variableState: TimeSeriesQueryContext["variableState"],
 ): string {
-  return query.replace(/\{\{(\w+)\}\}/g, (token, name: string) => {
+  return query.replace(/\{\{(\w+)\}\}/g, (_token, name: string) => {
     const state = variableState[name];
     if (!state || state.value === undefined || state.value === null) {
-      return token;
+      throw new Error(`Missing ES|QL variable: ${name}`);
     }
     const rawValue = state.value;
     const value = Array.isArray(rawValue) ? rawValue.map(String).join(",") : String(rawValue);
@@ -63,14 +64,22 @@ export const ESQLTimeSeriesQuery: TimeSeriesQueryPlugin<ESQLTimeSeriesQuerySpec>
     const request: EsqlQueryParams = { query: interpolated };
 
     if (ctx.timeRange) {
+      const timeRange = {
+        from: ctx.timeRange.start.toISOString(),
+        to: ctx.timeRange.end.toISOString(),
+      };
       request.filter = {
         range: {
           "@timestamp": {
-            gte: ctx.timeRange.start.toISOString(),
-            lte: ctx.timeRange.end.toISOString(),
+            gte: timeRange.from,
+            lte: timeRange.to,
           },
         },
       };
+      const params = buildTimeParams(interpolated, timeRange);
+      if (Object.keys(params).length > 0) {
+        request.params = params;
+      }
     }
 
     const response = await client.query(request, signal);

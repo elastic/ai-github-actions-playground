@@ -19,6 +19,27 @@ import {
   PLUGIN_MODULE_VERSION,
 } from "../../src/services/perses/plugin/plugin-module";
 
+function createMockDatasourcePair<T>(mockResponse: T) {
+  const mockClient = {
+    kind: "ElasticsearchDatasource" as const,
+    query: vi.fn().mockResolvedValue(mockResponse),
+    healthCheck: vi.fn(),
+    getConnection: vi.fn(),
+  };
+
+  const mockDatasourceStore = {
+    getDatasourceClient: vi.fn().mockResolvedValue(mockClient),
+    getDatasource: vi.fn(),
+    listDatasourceSelectItems: vi.fn(),
+    getLocalDatasources: vi.fn(),
+    setLocalDatasources: vi.fn(),
+    getSavedDatasources: vi.fn(),
+    setSavedDatasources: vi.fn(),
+  };
+
+  return { mockClient, mockDatasourceStore };
+}
+
 describe("Elasticsearch datasource plugin", () => {
   it("exposes the correct kind constant", () => {
     expect(ELASTICSEARCH_DATASOURCE_KIND).toBe("ElasticsearchDatasource");
@@ -116,22 +137,7 @@ describe("ESQLTimeSeriesQuery plugin", () => {
       executionTimeMs: 15,
     };
 
-    const mockClient = {
-      kind: "ElasticsearchDatasource" as const,
-      query: vi.fn().mockResolvedValue(mockResponse),
-      healthCheck: vi.fn().mockResolvedValue(true),
-      getConnection: vi.fn(),
-    };
-
-    const mockDatasourceStore = {
-      getDatasourceClient: vi.fn().mockResolvedValue(mockClient),
-      getDatasource: vi.fn(),
-      listDatasourceSelectItems: vi.fn(),
-      getLocalDatasources: vi.fn(),
-      setLocalDatasources: vi.fn(),
-      getSavedDatasources: vi.fn(),
-      setSavedDatasources: vi.fn(),
-    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
 
     const spec: ESQLTimeSeriesQuerySpec = {
       query: "FROM metrics-* | STATS avg(cpu) BY @timestamp",
@@ -163,22 +169,7 @@ describe("ESQLTimeSeriesQuery plugin", () => {
       executionTimeMs: 5,
     };
 
-    const mockClient = {
-      kind: "ElasticsearchDatasource" as const,
-      query: vi.fn().mockResolvedValue(mockResponse),
-      healthCheck: vi.fn(),
-      getConnection: vi.fn(),
-    };
-
-    const mockDatasourceStore = {
-      getDatasourceClient: vi.fn().mockResolvedValue(mockClient),
-      getDatasource: vi.fn(),
-      listDatasourceSelectItems: vi.fn(),
-      getLocalDatasources: vi.fn(),
-      setLocalDatasources: vi.fn(),
-      getSavedDatasources: vi.fn(),
-      setSavedDatasources: vi.fn(),
-    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
 
     const spec: ESQLTimeSeriesQuerySpec = {
       query: "FROM {{index}} | WHERE host = '{{host}}' | STATS count(*)",
@@ -207,22 +198,7 @@ describe("ESQLTimeSeriesQuery plugin", () => {
       executionTimeMs: 1,
     };
 
-    const mockClient = {
-      kind: "ElasticsearchDatasource" as const,
-      query: vi.fn().mockResolvedValue(mockResponse),
-      healthCheck: vi.fn(),
-      getConnection: vi.fn(),
-    };
-
-    const mockDatasourceStore = {
-      getDatasourceClient: vi.fn().mockResolvedValue(mockClient),
-      getDatasource: vi.fn(),
-      listDatasourceSelectItems: vi.fn(),
-      getLocalDatasources: vi.fn(),
-      setLocalDatasources: vi.fn(),
-      getSavedDatasources: vi.fn(),
-      setSavedDatasources: vi.fn(),
-    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
 
     await ESQLTimeSeriesQuery.getTimeSeriesData(
       {
@@ -253,22 +229,7 @@ describe("ESQLTimeSeriesQuery plugin", () => {
       executionTimeMs: 3,
     };
 
-    const mockClient = {
-      kind: "ElasticsearchDatasource" as const,
-      query: vi.fn().mockResolvedValue(mockResponse),
-      healthCheck: vi.fn(),
-      getConnection: vi.fn(),
-    };
-
-    const mockDatasourceStore = {
-      getDatasourceClient: vi.fn().mockResolvedValue(mockClient),
-      getDatasource: vi.fn(),
-      listDatasourceSelectItems: vi.fn(),
-      getLocalDatasources: vi.fn(),
-      setLocalDatasources: vi.fn(),
-      getSavedDatasources: vi.fn(),
-      setSavedDatasources: vi.fn(),
-    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
 
     const start = new Date("2024-06-01T00:00:00Z");
     const end = new Date("2024-06-02T00:00:00Z");
@@ -291,6 +252,59 @@ describe("ESQLTimeSeriesQuery plugin", () => {
         },
       },
     });
+  });
+
+  it("passes _tstart/_tend params when the query references named time params", async () => {
+    const mockResponse = {
+      columns: [{ name: "count", type: "long" }],
+      values: [[42]],
+      executionTimeMs: 3,
+    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
+
+    const start = new Date("2024-06-01T00:00:00Z");
+    const end = new Date("2024-06-02T00:00:00Z");
+
+    await ESQLTimeSeriesQuery.getTimeSeriesData(
+      {
+        query: "FROM metrics-* | STATS count(*) BY BUCKET(@timestamp, 50, ?_tstart, ?_tend)",
+      },
+      {
+        timeRange: { start, end },
+        variableState: {},
+        datasourceStore: mockDatasourceStore,
+      },
+    );
+
+    const calledRequest = mockClient.query.mock.calls[0]?.[0];
+    expect(calledRequest?.params).toEqual({
+      _tstart: start.toISOString(),
+      _tend: end.toISOString(),
+    });
+  });
+
+  it("throws before executing query when a template variable is missing", async () => {
+    const mockResponse = {
+      columns: [{ name: "count", type: "long" }],
+      values: [[100]],
+      executionTimeMs: 5,
+    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
+
+    await expect(
+      ESQLTimeSeriesQuery.getTimeSeriesData(
+        { query: "FROM {{index}} | STATS count(*)" },
+        {
+          timeRange: {
+            start: new Date("2024-01-01T00:00:00Z"),
+            end: new Date("2024-01-01T01:00:00Z"),
+          },
+          variableState: {},
+          datasourceStore: mockDatasourceStore,
+        },
+      ),
+    ).rejects.toThrow("Missing ES|QL variable: index");
+    expect(mockClient.query).not.toHaveBeenCalled();
   });
 });
 
