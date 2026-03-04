@@ -65,7 +65,7 @@ export interface FleetAgentSearchResult {
 export interface FleetPolicySummary {
   policyId: string;
   agents: number;
-  onlineAgents: number;
+  healthyAgents: number;
   degradedAgents: number;
   errorAgents: number;
   inactiveAgents: number;
@@ -199,18 +199,21 @@ export function computeCheckinStaleness(lastSeen: string | null): {
 // Derive agent status from checkin staleness
 // ---------------------------------------------------------------------------
 
-export function deriveAgentStatus(lastSeen: string | null): string {
-  const { label, severity } = computeCheckinStaleness(lastSeen);
-  if (label === "unknown") return "unknown";
+export type DerivedAgentStatus = "Healthy" | "Unhealthy" | "Offline";
+
+export function deriveAgentStatus(lastSeen: string | null): DerivedAgentStatus {
+  const { severity } = computeCheckinStaleness(lastSeen);
   switch (severity) {
     case "fresh":
-      return "online";
+      return "Healthy";
     case "stale":
-      return "offline";
+      return "Unhealthy";
     case "critical":
-      return "offline";
-    default:
-      return "unknown";
+      return "Offline";
+    default: {
+      const exhaustiveCheck: never = severity;
+      return exhaustiveCheck;
+    }
   }
 }
 
@@ -225,14 +228,14 @@ export function aggregateFleetPolicies(agents: FleetAgentSummary[]): FleetPolicy
     const current = policies.get(policyId) ?? {
       policyId,
       agents: 0,
-      onlineAgents: 0,
+      healthyAgents: 0,
       degradedAgents: 0,
       errorAgents: 0,
       inactiveAgents: 0,
     };
     current.agents += 1;
     const status = agent.status.trim().toLowerCase();
-    if (status === "online") current.onlineAgents += 1;
+    if (status === "healthy" || status === "online") current.healthyAgents += 1;
     if (status === "degraded" || status === "warning") current.degradedAgents += 1;
     if (status === "error") current.errorAgents += 1;
     if (agent.active === false) current.inactiveAgents += 1;

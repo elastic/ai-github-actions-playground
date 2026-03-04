@@ -5,6 +5,7 @@ import {
   readNestedNumber,
   fleetStatusColor,
   computeCheckinStaleness,
+  deriveAgentStatus,
   aggregateFleetPolicies,
   type FleetAgentSummary,
 } from "../../src/services/fleet";
@@ -118,6 +119,22 @@ describe("computeCheckinStaleness", () => {
   });
 });
 
+describe("deriveAgentStatus", () => {
+  it("maps unknown or invalid check-ins to Offline via critical severity", () => {
+    expect(deriveAgentStatus(null)).toBe("Offline");
+    expect(deriveAgentStatus("not-a-date")).toBe("Offline");
+  });
+
+  it("maps recent check-ins to Healthy", () => {
+    expect(deriveAgentStatus(new Date().toISOString())).toBe("Healthy");
+  });
+
+  it("maps stale check-ins to Unhealthy", () => {
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    expect(deriveAgentStatus(tenMinAgo)).toBe("Unhealthy");
+  });
+});
+
 describe("aggregateFleetPolicies", () => {
   it("aggregates agents by policy", () => {
     const agents: FleetAgentSummary[] = [
@@ -129,7 +146,7 @@ describe("aggregateFleetPolicies", () => {
     expect(policies).toHaveLength(2);
     const p1 = policies.find((p) => p.policyId === "p1")!;
     expect(p1.agents).toBe(2);
-    expect(p1.onlineAgents).toBe(1);
+    expect(p1.healthyAgents).toBe(1);
     expect(p1.errorAgents).toBe(1);
   });
 
