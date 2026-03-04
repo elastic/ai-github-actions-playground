@@ -39,7 +39,7 @@ export default function NodeDiskUsageTable({ allocation, watermarks }: NodeDiskU
           <TableBody>
             {nodes.map((a) => {
               const pct = parseNumber(a["disk.percent"]);
-              const pctValue = pct ?? 0;
+              const pctValue = pct == null ? null : Math.max(0, Math.min(pct, 100));
               return (
                 <TableRow key={a.node}>
                   <TableCell>{a.node}</TableCell>
@@ -47,18 +47,24 @@ export default function NodeDiskUsageTable({ allocation, watermarks }: NodeDiskU
                   <TableCell align="right">{a["disk.avail"] ?? "n/a"}</TableCell>
                   <TableCell align="right">{pct != null ? `${pct}%` : "n/a"}</TableCell>
                   <TableCell>
-                    <LinearProgress
-                      variant="determinate"
-                      value={Math.min(pctValue, 100)}
-                      color={
-                        pctValue >= watermarks.flood
-                          ? "error"
-                          : pctValue >= watermarks.high
-                            ? "warning"
-                            : "primary"
-                      }
-                      sx={{ height: 8, borderRadius: 1 }}
-                    />
+                    {pctValue != null ? (
+                      <LinearProgress
+                        variant="determinate"
+                        value={pctValue}
+                        color={
+                          pctValue >= watermarks.flood
+                            ? "error"
+                            : pctValue >= watermarks.high
+                              ? "warning"
+                              : "primary"
+                        }
+                        sx={{ height: 8, borderRadius: 1 }}
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        n/a
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               );
