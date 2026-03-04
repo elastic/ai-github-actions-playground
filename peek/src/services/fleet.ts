@@ -199,8 +199,9 @@ export function computeCheckinStaleness(lastSeen: string | null): {
 // Derive agent status from checkin staleness
 // ---------------------------------------------------------------------------
 
-export function deriveAgentStatus(lastSeen: string): string {
-  const { severity } = computeCheckinStaleness(lastSeen);
+export function deriveAgentStatus(lastSeen: string | null): string {
+  const { label, severity } = computeCheckinStaleness(lastSeen);
+  if (label === "unknown") return "unknown";
   switch (severity) {
     case "fresh":
       return "online";
@@ -208,6 +209,8 @@ export function deriveAgentStatus(lastSeen: string): string {
       return "offline";
     case "critical":
       return "offline";
+    default:
+      return "unknown";
   }
 }
 

@@ -103,7 +103,9 @@ export function useFleetData(): UseFleetDataResult {
       const fleetMap = new Map<string, { status: string; policyId: string }>();
       if (fleetAgents) {
         for (const fa of fleetAgents.agents) {
-          fleetMap.set(fa.id, { status: fa.status, policyId: fa.policyId });
+          if (!fleetMap.has(fa.id)) {
+            fleetMap.set(fa.id, { status: fa.status, policyId: fa.policyId });
+          }
         }
       }
       const enrichedAgents: ElasticAgentInfo[] = (inventoryResult?.agents ?? []).map((a) => {
@@ -119,8 +121,7 @@ export function useFleetData(): UseFleetDataResult {
         outputHealthResult.status === "fulfilled" ||
         inventoryResultSettled.status === "fulfilled" ||
         actionsResult.status === "fulfilled" ||
-        actionResultsResult.status === "fulfilled" ||
-        fleetAgentsResult.status === "fulfilled";
+        actionResultsResult.status === "fulfilled";
       if (!hasSuccessfulSource) {
         throw new Error(errors.join("; "));
       }
