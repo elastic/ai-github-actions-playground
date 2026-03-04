@@ -28,7 +28,7 @@ export const EMPTY_PROFILING_FILTERS: ProfilingFilters = {
   limit: 100,
 };
 
-export type KubernetesActiveTab = "overview" | "pods" | "logs" | "traces";
+export type KubernetesActiveTab = "clusters" | "namespaces" | "workloads" | "pods";
 
 export interface KubernetesFilters {
   timeFrom: string;
@@ -43,5 +43,5 @@ export const DEFAULT_KUBERNETES_FILTERS: KubernetesFilters = {
   timeTo: "NOW()",
   cluster: null,
   namespace: null,
-  activeTab: "overview",
+  activeTab: "clusters",
 };

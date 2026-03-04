@@ -38,6 +38,7 @@ export interface NamespaceRow {
 
 export interface WorkloadRow {
   workloadName: string;
+  workloadKind: string;
   podCount: number;
   avgCpu: number | null;
   avgMemory: number | null;
@@ -60,6 +61,18 @@ export interface PodDetailRow {
   avgCpu: number | null;
   avgMemory: number | null;
   restarts: number;
+}
+
+export function formatCpu(value: number | null): string {
+  if (value == null) return "—";
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+export function formatMemory(bytes: number | null): string {
+  if (bytes == null) return "—";
+  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GiB`;
+  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MiB`;
+  return `${(bytes / 1024).toFixed(1)} KiB`;
 }
 
 // ---------------------------------------------------------------------------
@@ -113,12 +126,14 @@ export function parseNamespaceInventory(response: EsqlResponse): NamespaceRow[] 
 export function parseWorkloadInventory(response: EsqlResponse): WorkloadRow[] {
   const cols = response.columns;
   const iWorkloadName = columnIndex(cols, "workload_name");
+  const iWorkloadKind = columnIndex(cols, "workload_kind");
   const iPodCount = columnIndex(cols, "pod_count");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
 
   return response.values.map((row) => ({
     workloadName: String(row[iWorkloadName] ?? ""),
+    workloadKind: String(row[iWorkloadKind] ?? ""),
     podCount: Number(row[iPodCount] ?? 0),
     avgCpu: row[iAvgCpu] != null ? Number(row[iAvgCpu]) : null,
     avgMemory: row[iAvgMemory] != null ? Number(row[iAvgMemory]) : null,

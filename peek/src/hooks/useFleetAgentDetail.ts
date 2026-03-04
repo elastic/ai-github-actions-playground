@@ -41,6 +41,8 @@ export function useFleetAgentDetail(agentId: string): DataFetchResult<FleetAgent
               lastSeen: agentLogs[0]?.timestamp ?? agentMetrics[0]?.timestamp ?? "",
               logCount: agentLogs.length,
               errorCount: agentLogs.filter((entry) => entry.level.toLowerCase() === "error").length,
+              status: "unknown",
+              policyId: "—",
             }
           : null;
       return {

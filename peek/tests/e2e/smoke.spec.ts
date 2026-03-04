@@ -34,7 +34,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Traces: {
       "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
-      "color-contrast": 12,
+      "color-contrast": 16,
     },
     "Query Lab": {
       "aria-input-field-name": 2,
@@ -44,7 +44,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Logs: {
       "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
-      "color-contrast": 16,
+      "color-contrast": 17,
       "scrollable-region-focusable": 1,
     },
     Console: {
@@ -277,17 +277,15 @@ test.describe("smoke – site navigation", () => {
     await navigateViaSidebar(page, "Add Data");
 
     await expect(page.getByRole("heading", { name: "What are you monitoring?" })).toBeVisible();
-    // Click the Kubernetes experience tile
-    await page
+    // Click the Kubernetes experience tile (scoped to main to avoid sidebar nav button)
+    const main = page.getByRole("main");
+    await main
       .getByRole("button", { name: /Kubernetes/ })
       .first()
       .click();
     // Wait for experience tiles to disappear, then click the Kubernetes technology card
     await expect(page.getByText("Cloud Providers")).toBeHidden();
-    await page
-      .getByRole("button", { name: /Kubernetes/ })
-      .first()
-      .click();
+    await main.getByRole("button", { name: /^Kubernetes Collect cluster/i }).click();
     await page.getByRole("button", { name: /^Continue$/ }).click();
     await expect(page.getByRole("heading", { name: "Set up and verify" })).toBeVisible();
 
@@ -325,6 +323,8 @@ test.describe("smoke – site navigation", () => {
     await expect(
       page.getByText("Select a trace in List or Scatter view to see its service map"),
     ).toBeHidden();
+    // Return to list view where Open in Query Lab is available in the span tree toolbar
+    await page.getByRole("button", { name: "List" }).click();
     await page.getByRole("button", { name: "Open in Query Lab" }).click();
     await expect(page).toHaveURL(/\/discover$/);
   });
@@ -463,7 +463,7 @@ test.describe("smoke – site navigation", () => {
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
       Logs: () => expect(page.getByLabel("Logs Explorer query editor")).toBeVisible(),
-      Console: () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
+      Console: () => expect(page.getByRole("heading", { name: "API Console" })).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
 

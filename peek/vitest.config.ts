@@ -44,6 +44,10 @@ export default defineConfig({
         find: /^@perses-dev\/components$/,
         replacement: "@perses-dev/components/dist/index.js",
       },
+      {
+        find: /^@perses-dev\/plugin-system$/,
+        replacement: "@perses-dev/plugin-system/dist/index.js",
+      },
     ],
   },
 });

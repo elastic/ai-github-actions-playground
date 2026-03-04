@@ -1,6 +1,8 @@
 import type { DashboardDefinition } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 
+const TIME_RANGE_FILTER = "@timestamp >= ?_tstart AND @timestamp <= ?_tend";
+
 export function createDefaultDashboard(): DashboardDefinition {
   const now = new Date().toISOString();
   return {
@@ -12,21 +14,21 @@ export function createDefaultDashboard(): DashboardDefinition {
       {
         id: crypto.randomUUID(),
         title: "Logs",
-        query: "FROM logs-* | STATS logs = COUNT(*)",
+        query: `FROM logs-* | WHERE ${TIME_RANGE_FILTER} | STATS logs = COUNT(*)`,
         visualization: "stat",
         layout: { x: 0, y: 0, w: 4, h: 2 },
       },
       {
         id: crypto.randomUUID(),
         title: "Metrics",
-        query: "FROM metrics-* | STATS metrics = COUNT(*)",
+        query: `FROM metrics-* | WHERE ${TIME_RANGE_FILTER} | STATS metrics = COUNT(*)`,
         visualization: "stat",
         layout: { x: 4, y: 0, w: 4, h: 2 },
       },
       {
         id: crypto.randomUUID(),
         title: "Traces",
-        query: "FROM traces-* | STATS traces = COUNT(*)",
+        query: `FROM traces-* | WHERE ${TIME_RANGE_FILTER} | STATS traces = COUNT(*)`,
         visualization: "stat",
         layout: { x: 8, y: 0, w: 4, h: 2 },
       },
@@ -44,15 +46,14 @@ export function createDefaultDashboard(): DashboardDefinition {
       {
         id: crypto.randomUUID(),
         title: "Volume by Type",
-        query: "FROM * | STATS doc_count = COUNT(*) BY `data_stream.type`",
+        query: `FROM * | WHERE ${TIME_RANGE_FILTER} | STATS doc_count = COUNT(*) BY \`data_stream.type\``,
         visualization: "pie",
         layout: { x: 0, y: 7, w: 4, h: 5 },
       },
       {
         id: crypto.randomUUID(),
         title: "Top 10 Data Streams",
-        query:
-          "FROM * | STATS doc_count = COUNT(*) BY `data_stream.dataset` | SORT doc_count DESC | LIMIT 10",
+        query: `FROM * | WHERE ${TIME_RANGE_FILTER} | STATS doc_count = COUNT(*) BY \`data_stream.dataset\` | SORT doc_count DESC | LIMIT 10`,
         visualization: "bar",
         layout: { x: 4, y: 7, w: 8, h: 5 },
       },
