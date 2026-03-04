@@ -38,23 +38,22 @@ export default function NodeDiskUsageTable({ allocation, watermarks }: NodeDiskU
           </TableHead>
           <TableBody>
             {nodes.map((a) => {
-              const pct = parseNumber(a["disk.percent"]) ?? 0;
+              const pct = parseNumber(a["disk.percent"]);
+              const pctValue = pct ?? 0;
               return (
                 <TableRow key={a.node}>
                   <TableCell>{a.node}</TableCell>
                   <TableCell align="right">{a["disk.used"] ?? "n/a"}</TableCell>
                   <TableCell align="right">{a["disk.avail"] ?? "n/a"}</TableCell>
-                  <TableCell align="right">
-                    {a["disk.percent"] != null ? `${a["disk.percent"]}%` : "n/a"}
-                  </TableCell>
+                  <TableCell align="right">{pct != null ? `${pct}%` : "n/a"}</TableCell>
                   <TableCell>
                     <LinearProgress
                       variant="determinate"
-                      value={Math.min(pct, 100)}
+                      value={Math.min(pctValue, 100)}
                       color={
-                        pct >= watermarks.flood
+                        pctValue >= watermarks.flood
                           ? "error"
-                          : pct >= watermarks.high
+                          : pctValue >= watermarks.high
                             ? "warning"
                             : "primary"
                       }

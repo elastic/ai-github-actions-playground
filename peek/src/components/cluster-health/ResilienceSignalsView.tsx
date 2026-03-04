@@ -23,7 +23,7 @@ export default function ResilienceSignalsView({ data }: ResilienceSignalsViewPro
         : healthStatus === "green"
           ? "success"
           : undefined;
-  const unassignedShards = data.clusterHealth?.unassigned_shards ?? 0;
+  const unassignedShards = data.clusterHealth?.unassigned_shards;
 
   // Recovery
   const recoveringIndices = Object.keys(data.recovery ?? {}).length;
@@ -83,8 +83,10 @@ export default function ResilienceSignalsView({ data }: ResilienceSignalsViewPro
         />
         <InfoCard
           title="Unassigned shards"
-          value={unassignedShards.toLocaleString()}
-          severity={unassignedShards > 0 ? "error" : "success"}
+          value={unassignedShards == null ? "—" : unassignedShards.toLocaleString()}
+          severity={
+            unassignedShards == null ? undefined : unassignedShards > 0 ? "error" : "success"
+          }
         />
         <InfoCard title="Recovering indices" value={recoveringIndices.toString()} />
         <InfoCard title="Active recoveries" value={activeRecoveries.toString()} />

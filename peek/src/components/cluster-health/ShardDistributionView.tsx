@@ -118,7 +118,11 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
                       ["unassigned", "Unassigned"],
                     ] as const
                   ).map(([key, label]) => (
-                    <TableCell key={key} align={key === "index" ? undefined : "right"}>
+                    <TableCell
+                      key={key}
+                      align={key === "index" ? undefined : "right"}
+                      sortDirection={sortKey === key ? sortDir : false}
+                    >
                       <TableSortLabel
                         active={sortKey === key}
                         direction={sortKey === key ? sortDir : "asc"}
