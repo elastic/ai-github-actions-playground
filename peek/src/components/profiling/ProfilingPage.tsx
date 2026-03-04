@@ -60,6 +60,12 @@ function readColumn(row: unknown[], columns: Array<{ name: string }>, field: str
 }
 
 export default function ProfilingPage() {
+  type ProfilingViewMode =
+    | "topFunctions"
+    | "stacktraces"
+    | "timeline"
+    | "flamegraph"
+    | "flamescope";
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
   const setDiscoverQueryDraft = useQueryStore((state) => state.setDiscoverQueryDraft);
@@ -89,7 +95,13 @@ export default function ProfilingPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasRun, setHasRun] = useState(false);
+  const [hasRunByMode, setHasRunByMode] = useState<Record<ProfilingViewMode, boolean>>({
+    topFunctions: false,
+    stacktraces: false,
+    timeline: false,
+    flamegraph: false,
+    flamescope: false,
+  });
   const abortRef = useRef<AbortController | null>(null);
   const [topFunctionsRows, setTopFunctionsRows] = useState<TopFunctionRow[]>([]);
   const [timelineResult, setTimelineResult] = useState<EsqlResponse | null>(null);
@@ -204,7 +216,7 @@ export default function ProfilingPage() {
     const client = new ElasticsearchClient(connection);
     setLoading(true);
     setError(null);
-    setHasRun(true);
+    setHasRunByMode((previous) => ({ ...previous, [viewMode]: true }));
     try {
       if (viewMode === "topFunctions") {
         await runTopFunctions(client, controller.signal);
@@ -243,6 +255,13 @@ export default function ProfilingPage() {
     },
     [effectiveQuery, navigate, setDiscoverQueryDraft],
   );
+  const hasDataForCurrentView =
+    viewMode === "topFunctions"
+      ? topFunctionsRows.length > 0
+      : viewMode === "timeline"
+        ? Boolean(timelineResult)
+        : stacktraces.length > 0;
+  const hasRunCurrentView = hasRunByMode[viewMode];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
@@ -371,30 +390,20 @@ export default function ProfilingPage() {
 
       {!(error && isMissingProfilingIndex(error)) && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-          {!loading &&
-            !error &&
-            !hasRun &&
-            topFunctionsRows.length === 0 &&
-            stacktraces.length === 0 &&
-            !timelineResult && (
-              <Box sx={{ p: 3 }}>
-                <Typography variant="body2" color="text.primary">
-                  Run the selected view to load profiling data.
-                </Typography>
-              </Box>
-            )}
-          {!loading &&
-            !error &&
-            hasRun &&
-            topFunctionsRows.length === 0 &&
-            stacktraces.length === 0 &&
-            !timelineResult && (
-              <EmptyState
-                heading="No profiling data found"
-                description="No samples matched the selected filters and time range."
-                size="small"
-              />
-            )}
+          {!loading && !error && !hasRunCurrentView && !hasDataForCurrentView && (
+            <EmptyState
+              heading="No profiling data"
+              description="Run the selected view to load profiling data."
+              size="small"
+            />
+          )}
+          {!loading && !error && hasRunCurrentView && !hasDataForCurrentView && (
+            <EmptyState
+              heading="No profiling data found"
+              description="No samples matched the selected filters and time range."
+              size="small"
+            />
+          )}
           {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
             <Table size="small">
               <TableHead>
