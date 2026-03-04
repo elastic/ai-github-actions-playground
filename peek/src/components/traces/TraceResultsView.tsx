@@ -63,6 +63,8 @@ interface TraceResultsViewProps {
   onSearch?: () => void;
   searchSpans: Span[];
   searchSpansLoading: boolean;
+  spanInsightSlotIds?: Record<string, string>;
+  groupInsightSlotIds?: Record<string, string>;
   selectedSpanId?: string | null;
   onSelectSpan?: (spanId: string) => void;
   onOpenInQueryLab?: () => void;
@@ -92,6 +94,8 @@ export default function TraceResultsView({
   onSearch,
   searchSpans,
   searchSpansLoading,
+  spanInsightSlotIds,
+  groupInsightSlotIds,
   selectedSpanId,
   onSelectSpan,
   onOpenInQueryLab,
@@ -175,8 +179,11 @@ export default function TraceResultsView({
           <SpanTreeView
             spans={searchSpans}
             showToolbar={false}
+            spanInsightSlotIds={spanInsightSlotIds}
+            groupInsightSlotIds={groupInsightSlotIds}
             selectedTraceId={selectedTraceId}
             selectedSpanId={selectedSpanId}
+            onSelectTrace={onSelectTrace}
             onSelectSpan={onSelectSpan}
             onOpenInQueryLab={onOpenInQueryLab}
             loading={false}

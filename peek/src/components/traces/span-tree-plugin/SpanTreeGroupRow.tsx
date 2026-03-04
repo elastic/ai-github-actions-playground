@@ -12,6 +12,7 @@ import { alpha } from "@mui/material/styles";
 
 import { formatSpanDuration } from "../traceUtils";
 import { getServiceColor } from "../traceColors";
+import InsightSlot from "../../InsightSlot";
 
 import type { GroupStats } from "./spanTreeTypes";
 
@@ -19,6 +20,7 @@ interface SpanTreeGroupRowProps {
   groupKey: string;
   representativeSpanId: string;
   isTraceRootGroup: boolean;
+  insightSlotId?: string;
   depth: number;
   stats: GroupStats;
   expanded: boolean;
@@ -37,6 +39,7 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
   groupKey,
   representativeSpanId,
   isTraceRootGroup,
+  insightSlotId,
   depth,
   stats,
   expanded,
@@ -48,13 +51,18 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
 }: SpanTreeGroupRowProps) {
   const serviceColor = getServiceColor(stats.serviceName);
   const showDurationBar = showTimeline && !isTraceRootGroup;
+  const clampedOffset = Math.min(Math.max(timelineOffset ?? 0, 0), 1);
+  const leftPct = clampedOffset * 100;
+  const availablePct = Math.max(0, 100 - leftPct);
+  const rawWidthPct = Math.max(timelineFraction * 100, 0);
+  const widthPct = Math.min(rawWidthPct > 0 ? Math.max(rawWidthPct, 0.5) : 0, availablePct);
 
   return (
     <ButtonBase
       component="div"
       role="button"
-      aria-label="Open grouped span details"
       tabIndex={0}
+      aria-label="Open grouped span details"
       onClick={() => {
         if (representativeSpanId) onClick(representativeSpanId);
       }}
@@ -163,9 +171,17 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
       </Tooltip>
 
       {/* Operation name with count */}
-      <Typography variant="caption" noWrap sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5 }}>
-        {stats.operationName}
-      </Typography>
+      {insightSlotId ? (
+        <InsightSlot slotId={insightSlotId}>
+          <Typography variant="caption" noWrap sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5 }}>
+            {stats.operationName}
+          </Typography>
+        </InsightSlot>
+      ) : (
+        <Typography variant="caption" noWrap sx={{ flex: "1 1 0", minWidth: 60, mr: 0.5 }}>
+          {stats.operationName}
+        </Typography>
+      )}
 
       {/* Error count badge */}
       {stats.errorCount > 0 && (
@@ -200,9 +216,8 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
               sx={{
                 position: "absolute",
                 top: 0,
-                left:
-                  timelineOffset != null ? `${Math.min(Math.max(timelineOffset, 0), 1) * 100}%` : 0,
-                width: `${Math.min(Math.max(timelineFraction * 100, 0.5), 100)}%`,
+                left: `${leftPct}%`,
+                width: `${widthPct}%`,
                 height: "100%",
                 borderRadius: 0.5,
                 bgcolor: alpha(serviceColor, 0.5),

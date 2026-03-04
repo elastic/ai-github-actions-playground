@@ -22,6 +22,8 @@ export default function SpanTreeView({
   spans,
   options,
   showToolbar = true,
+  spanInsightSlotIds,
+  groupInsightSlotIds,
   selectedTraceId,
   selectedSpanId,
   onSelectTrace,
@@ -71,6 +73,7 @@ export default function SpanTreeView({
         const span = spans.find((s) => s.spanId === spanId);
         if (span) {
           onSelectTrace(span.traceId, span.spanId, span.timestamp);
+          onSelectSpan?.(spanId);
         }
       } else if (onSelectSpan) {
         onSelectSpan(spanId);
@@ -155,6 +158,7 @@ export default function SpanTreeView({
           groupKey={item.groupKey}
           representativeSpanId={item.spans[0]?.span.spanId ?? ""}
           isTraceRootGroup={isTraceRootGroup}
+          insightSlotId={groupInsightSlotIds?.[item.groupKey]}
           depth={item.depth}
           stats={item.stats}
           expanded={item.expanded}
@@ -171,6 +175,7 @@ export default function SpanTreeView({
       <SpanTreeRow
         node={item.node}
         isTraceRoot={!item.node.span.parentSpanId || item.node.span.parentSpanId === ""}
+        insightSlotId={spanInsightSlotIds?.[item.node.span.spanId]}
         expanded={item.expanded}
         hasChildren={item.hasChildren}
         selected={item.node.span.spanId === selectedSpanId}

@@ -62,6 +62,8 @@ export interface SpanTreeViewProps {
   spans: Span[];
   options?: TracingSpanTreeOptions;
   showToolbar?: boolean;
+  spanInsightSlotIds?: Record<string, string>;
+  groupInsightSlotIds?: Record<string, string>;
   selectedTraceId?: string | null;
   selectedSpanId?: string | null;
   onSelectTrace?: (traceId: string, spanId?: string, timestamp?: string) => void;

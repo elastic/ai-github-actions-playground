@@ -14,10 +14,12 @@ import { alpha } from "@mui/material/styles";
 import type { SpanTreeNode } from "../traceUtils";
 import { formatSpanDuration, formatStatusLabel, isErrorStatus } from "../traceUtils";
 import { getServiceColor } from "../traceColors";
+import InsightSlot from "../../InsightSlot";
 
 interface SpanTreeRowProps {
   node: SpanTreeNode;
   isTraceRoot: boolean;
+  insightSlotId?: string;
   expanded: boolean;
   hasChildren: boolean;
   selected: boolean;
@@ -36,6 +38,7 @@ const CONTROL_SLOT_WIDTH = 44;
 export const SpanTreeRow = React.memo(function SpanTreeRow({
   node,
   isTraceRoot,
+  insightSlotId,
   expanded,
   hasChildren,
   selected,
@@ -172,13 +175,25 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
       </Tooltip>
 
       {/* Operation name */}
-      <Typography
-        variant="caption"
-        noWrap
-        sx={{ flex: "1 1 0", minWidth: 60, mr: 1, fontWeight: selected ? 600 : 400 }}
-      >
-        {span.name}
-      </Typography>
+      {insightSlotId ? (
+        <InsightSlot slotId={insightSlotId}>
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{ flex: "1 1 0", minWidth: 60, mr: 1, fontWeight: selected ? 600 : 400 }}
+          >
+            {span.name}
+          </Typography>
+        </InsightSlot>
+      ) : (
+        <Typography
+          variant="caption"
+          noWrap
+          sx={{ flex: "1 1 0", minWidth: 60, mr: 1, fontWeight: selected ? 600 : 400 }}
+        >
+          {span.name}
+        </Typography>
+      )}
 
       {/* Child spans keep timeline context; top-level trace rows stay clean */}
       {showDurationBar && (
@@ -188,7 +203,6 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
               position: "relative",
               width: "100%",
               height: 6,
-              overflow: "hidden",
               borderRadius: 0.5,
               bgcolor: "action.hover",
             }}

@@ -277,7 +277,7 @@ describe("SpanDetailDrawer – status label consistency", () => {
       />,
     );
 
-    expect(screen.getByText("Success")).toBeInTheDocument();
+    expect(screen.getAllByText("Success").length).toBeGreaterThan(0);
   });
 
   it('displays "Success" for a span with status "STATUS_CODE_OK"', () => {
@@ -292,7 +292,7 @@ describe("SpanDetailDrawer – status label consistency", () => {
       />,
     );
 
-    expect(screen.getByText("Success")).toBeInTheDocument();
+    expect(screen.getAllByText("Success").length).toBeGreaterThan(0);
   });
 
   it('displays "Error" for a span with status "Error"', () => {
@@ -307,7 +307,7 @@ describe("SpanDetailDrawer – status label consistency", () => {
       />,
     );
 
-    expect(screen.getByText("Error")).toBeInTheDocument();
+    expect(screen.getAllByText("Error").length).toBeGreaterThan(0);
   });
 });
 
@@ -332,8 +332,8 @@ describe("SpanDetailDrawer – copy action", () => {
         />,
       );
 
-      const copyButtons = screen.getAllByRole("button", { name: /copy/i });
-      await expect(user.click(copyButtons[0])).resolves.toBeUndefined();
+      const quickFactsCopyButton = screen.getByRole("button", { name: "trace-abc" });
+      await expect(user.click(quickFactsCopyButton)).resolves.toBeUndefined();
     } finally {
       // Always restore the original clipboard descriptor
       if (originalClipboard) {

@@ -213,18 +213,17 @@ export default function SpanDetailDrawer({
     return { resourceAttrs: resource, spanAttrs: regular };
   }, [attributes]);
 
-  if (!span) return null;
-  const tsDisplay = span.timestamp ? formatEventTimestamp(span.timestamp) : "—";
-  const timelineSpans = (() => {
+  const timelineSpans = useMemo(() => {
+    if (!span) return [];
     const fromDetail = traceSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
-    const unsorted =
+    const base =
       fromDetail.length > 0
         ? fromDetail
         : searchSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
-    return [...unsorted].sort(
-      (a, b) => a.startTimeUs - b.startTimeUs || a.durationUs - b.durationUs,
-    );
-  })();
+    return [...base].sort((a, b) => a.startTimeUs - b.startTimeUs || a.durationUs - b.durationUs);
+  }, [traceSpans, searchSpans, span]);
+  if (!span) return null;
+  const tsDisplay = span.timestamp ? formatEventTimestamp(span.timestamp) : "—";
   const selectedTimelineSpanId = selectedSpanId ?? span.spanId;
   const selectedTimelineIndex = timelineSpans.findIndex(
     (timelineSpan) => timelineSpan.spanId === selectedTimelineSpanId,
