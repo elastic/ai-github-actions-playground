@@ -6,12 +6,15 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -24,12 +27,25 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
 import { useDiskUsage } from "../hooks/useDiskUsage";
+import { formatBytes } from "../utils/formatBytes";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import IndexDetailPanel from "./IndexDetailPanel";
 import AskAiButton from "./AskAiButton";
 import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
+
+// ---------------------------------------------------------------------------
+// Sort helpers
+// ---------------------------------------------------------------------------
+
+type SortField = "index" | "health" | "docs.count" | "store.size";
+
+function parseNum(val: string | null): number {
+  if (val == null) return 0;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : 0;
+}
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -95,6 +111,36 @@ export default function IndicesPage() {
       return !term || idx.index.toLowerCase().includes(term);
     });
   }, [indices, showSystemIndices, deferredSearch]);
+
+  // Sort state for the index table
+  const [sortField, setSortField] = useState<SortField>("index");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSort = useCallback(
+    (field: SortField) => {
+      if (sortField === field) {
+        setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+      } else {
+        setSortField(field);
+        setSortDirection("asc");
+      }
+    },
+    [sortField],
+  );
+
+  const sortedIndices = useMemo(() => {
+    const copy = [...filteredIndices];
+    copy.sort((a, b) => {
+      let cmp: number;
+      if (sortField === "index" || sortField === "health") {
+        cmp = (a[sortField] ?? "").localeCompare(b[sortField] ?? "");
+      } else {
+        cmp = parseNum(a[sortField]) - parseNum(b[sortField]);
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+    return copy;
+  }, [filteredIndices, sortField, sortDirection]);
 
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
@@ -205,7 +251,7 @@ export default function IndicesPage() {
             display: "flex",
             flexShrink: 0,
             flexDirection: "column",
-            width: 280,
+            width: 380,
             minHeight: 0,
           }}
         >
@@ -235,36 +281,90 @@ export default function IndicesPage() {
               sx={{ mt: 0.5, ml: 0 }}
             />
           </Box>
-          <List
-            dense
-            sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
-            aria-label="Index list"
-            tabIndex={0}
-          >
-            {filteredIndices.map((idx) => (
-              <ListItem key={idx.index} disablePadding>
-                <ListItemButton
-                  selected={idx.index === selectedIndex}
-                  onClick={() => void setSelectedIndex(idx.index)}
-                >
-                  <Chip
-                    size="small"
-                    color={healthColor(idx.health)}
-                    label={idx.health.slice(0, 1).toUpperCase()}
-                    aria-label={`Health: ${idx.health}`}
-                    sx={{ flexShrink: 0, width: 24, height: 20, mr: 1, fontSize: "0.65rem" }}
-                  />
-                  <ListItemText
-                    primary={idx.index}
-                    secondary={`${idx.status} · ${idx.pri}P / ${idx.rep}R`}
-                    primaryTypographyProps={{ noWrap: true, title: idx.index }}
-                    sx={{ minWidth: 0 }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {!loadingIndices && filteredIndices.length === 0 && (
-              <ListItem>
+          <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+            <Table size="small" stickyHeader aria-label="Index list">
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox" sx={{ px: 1 }}>
+                    <TableSortLabel
+                      active={sortField === "health"}
+                      direction={sortField === "health" ? sortDirection : "asc"}
+                      onClick={() => handleSort("health")}
+                    >
+                      <Typography variant="caption">Health</Typography>
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortField === "index"}
+                      direction={sortField === "index" ? sortDirection : "asc"}
+                      onClick={() => handleSort("index")}
+                    >
+                      <Typography variant="caption">Name</Typography>
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right" sx={{ px: 1 }}>
+                    <TableSortLabel
+                      active={sortField === "docs.count"}
+                      direction={sortField === "docs.count" ? sortDirection : "asc"}
+                      onClick={() => handleSort("docs.count")}
+                    >
+                      <Typography variant="caption">Docs</Typography>
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right" sx={{ px: 1 }}>
+                    <TableSortLabel
+                      active={sortField === "store.size"}
+                      direction={sortField === "store.size" ? sortDirection : "asc"}
+                      onClick={() => handleSort("store.size")}
+                    >
+                      <Typography variant="caption">Size</Typography>
+                    </TableSortLabel>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedIndices.map((idx) => (
+                  <TableRow
+                    key={idx.index}
+                    hover
+                    selected={idx.index === selectedIndex}
+                    onClick={() => void setSelectedIndex(idx.index)}
+                    sx={{ cursor: "pointer" }}
+                    aria-selected={idx.index === selectedIndex}
+                  >
+                    <TableCell padding="checkbox" sx={{ px: 1 }}>
+                      <Chip
+                        size="small"
+                        color={healthColor(idx.health)}
+                        label={idx.health.slice(0, 1).toUpperCase()}
+                        aria-label={`Health: ${idx.health}`}
+                        sx={{ width: 24, height: 20, fontSize: "0.65rem" }}
+                      />
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        maxWidth: 160,
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      }}
+                      title={idx.index}
+                    >
+                      {idx.index}
+                    </TableCell>
+                    <TableCell align="right" sx={{ px: 1 }}>
+                      {parseNum(idx["docs.count"]).toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right" sx={{ px: 1 }}>
+                      {formatBytes(parseNum(idx["store.size"]) || null, "—")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {!loadingIndices && sortedIndices.length === 0 && (
+              <Box sx={{ p: 2 }}>
                 <EmptyState
                   size="small"
                   icon={<StorageIcon sx={{ fontSize: 28 }} />}
@@ -275,9 +375,9 @@ export default function IndicesPage() {
                       : "Toggle 'Show system indices' above to include system indices."
                   }
                 />
-              </ListItem>
+              </Box>
             )}
-          </List>
+          </TableContainer>
         </Paper>
 
         {/* Right panel: index details */}
