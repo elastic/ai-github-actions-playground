@@ -59,12 +59,14 @@ const TRACES_RESPONSE = {
   values: [],
 };
 
+const EMPTY_RESPONSE = { columns: [], values: [] };
+
 function responseForQuery(query: string) {
   if (query.includes("namespace_count = COUNT_DISTINCT")) return CLUSTER_RESPONSE;
   if (/BY namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
   if (query.includes("FROM logs-")) return LOGS_RESPONSE;
   if (query.includes("FROM traces-")) return TRACES_RESPONSE;
-  return NAMESPACE_RESPONSE;
+  return EMPTY_RESPONSE;
 }
 
 vi.mock("../../src/hooks/useEsqlQuery", () => ({

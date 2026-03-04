@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import K8sPodDashboardPage from "../../src/components/kubernetes/K8sPodDashboardPage";
+import { buildPodDetailQuery } from "../../src/components/kubernetes/k8sQueryBuilder";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
@@ -29,7 +30,11 @@ const POD_DETAIL_RESPONSE = {
 const EMPTY_RESPONSE = { columns: [], values: [] };
 
 function responseForQuery(query: string) {
-  if (query.includes('k8s.pod.name == "web-abc123"')) return POD_DETAIL_RESPONSE;
+  if (
+    query.trim() ===
+    buildPodDetailQuery("web-abc123", { timeFrom: "NOW() - 1 hour", timeTo: "NOW()" })
+  )
+    return POD_DETAIL_RESPONSE;
   return EMPTY_RESPONSE;
 }
 

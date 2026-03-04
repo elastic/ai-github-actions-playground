@@ -13,7 +13,8 @@ import PageHeader from "../PageHeader";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
-import { parseWorkloadInventory, formatCpu, formatMemory } from "./k8sHelpers";
+import K8sWorkloadTable from "./K8sWorkloadTable";
+import { parseWorkloadInventory } from "./k8sHelpers";
 import { useK8sDashboardQueries } from "./useK8sDashboardQueries";
 
 export default function K8sWorkloadDashboardPage() {
@@ -109,60 +110,7 @@ export default function K8sWorkloadDashboardPage() {
 
       {summary && <K8sDashboardSummaryCards summary={summary} />}
 
-      {workloadRows.length > 0 && (
-        <Paper variant="outlined" sx={{ overflow: "auto" }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Workloads
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {workloadRows.length} workload{workloadRows.length !== 1 ? "s" : ""}
-            </Typography>
-          </Box>
-          <Box component="table" sx={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <Box component="th" sx={{ p: 1, textAlign: "left" }}>
-                  Name
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "left" }}>
-                  Kind
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Pods
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Avg CPU
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Avg Memory
-                </Box>
-              </tr>
-            </thead>
-            <tbody>
-              {workloadRows.map((row) => (
-                <tr key={`${row.workloadKind}-${row.workloadName}`}>
-                  <Box component="td" sx={{ p: 1 }}>
-                    {row.workloadName}
-                  </Box>
-                  <Box component="td" sx={{ p: 1 }}>
-                    {row.workloadKind}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {row.podCount}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {formatCpu(row.avgCpu)}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {formatMemory(row.avgMemory)}
-                  </Box>
-                </tr>
-              ))}
-            </tbody>
-          </Box>
-        </Paper>
-      )}
+      {workloadRows.length > 0 && <K8sWorkloadTable rows={workloadRows} />}
 
       {logsResult && logsResult.values.length > 0 && (
         <Paper variant="outlined" sx={{ overflow: "auto" }}>

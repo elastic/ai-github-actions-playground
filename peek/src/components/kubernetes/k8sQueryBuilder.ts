@@ -72,6 +72,8 @@ export interface K8sQueryFilters {
   timeTo: string;
   cluster?: string;
   namespace?: string;
+  workloadName?: string;
+  workloadKind?: WorkloadKind;
 }
 
 function toSafeRelativeTimeExpression(value: string): string {
@@ -92,6 +94,16 @@ function buildTimeWhereClauses(filters: K8sQueryFilters, fields: K8sFieldMapping
   }
   if (filters.namespace) {
     clauses.push(`${fields.namespace} == "${escapeEsqlString(filters.namespace)}"`);
+  }
+  if (filters.workloadName) {
+    const safeWorkloadName = escapeEsqlString(filters.workloadName);
+    if (filters.workloadKind) {
+      clauses.push(`${workloadField(filters.workloadKind, fields)} == "${safeWorkloadName}"`);
+    } else {
+      clauses.push(
+        `(${WORKLOAD_KIND_FIELD_KEYS.map(({ fieldKey }) => `${fields[fieldKey]} == "${safeWorkloadName}"`).join(" OR ")})`,
+      );
+    }
   }
   return clauses;
 }

@@ -13,12 +13,8 @@ import PageHeader from "../PageHeader";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
-import {
-  parseClusterInventory,
-  parseNamespaceInventory,
-  formatCpu,
-  formatMemory,
-} from "./k8sHelpers";
+import K8sNamespaceTable from "./K8sNamespaceTable";
+import { parseClusterInventory, parseNamespaceInventory } from "./k8sHelpers";
 import { useK8sDashboardQueries } from "./useK8sDashboardQueries";
 
 export default function K8sClusterDashboardPage() {
@@ -118,55 +114,7 @@ export default function K8sClusterDashboardPage() {
 
       {summary && <K8sDashboardSummaryCards summary={summary} />}
 
-      {namespaceRows.length > 0 && (
-        <Paper variant="outlined" sx={{ overflow: "auto" }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Namespaces
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {namespaceRows.length} namespace{namespaceRows.length !== 1 ? "s" : ""} in this
-              cluster
-            </Typography>
-          </Box>
-          <Box component="table" sx={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <Box component="th" sx={{ p: 1, textAlign: "left" }}>
-                  Namespace
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Pods
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Avg CPU
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Avg Memory
-                </Box>
-              </tr>
-            </thead>
-            <tbody>
-              {namespaceRows.map((row) => (
-                <tr key={row.namespace}>
-                  <Box component="td" sx={{ p: 1 }}>
-                    {row.namespace}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {row.podCount}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {formatCpu(row.avgCpu)}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {formatMemory(row.avgMemory)}
-                  </Box>
-                </tr>
-              ))}
-            </tbody>
-          </Box>
-        </Paper>
-      )}
+      {namespaceRows.length > 0 && <K8sNamespaceTable rows={namespaceRows} />}
 
       {logsResult && logsResult.values.length > 0 && (
         <Paper variant="outlined" sx={{ overflow: "auto" }}>

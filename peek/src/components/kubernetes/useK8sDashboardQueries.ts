@@ -13,6 +13,7 @@ import {
   buildK8sTracesQuery,
   buildAllWorkloadsInventoryQuery,
   type K8sQueryFilters,
+  type WorkloadKind,
 } from "./k8sQueryBuilder";
 
 export type K8sDashboardEntity = "cluster" | "namespace" | "workload" | "pod";
@@ -25,6 +26,19 @@ interface UseK8sDashboardQueriesParams {
   workloadKind?: string;
   timeFrom: string;
   timeTo: string;
+}
+
+const WORKLOAD_KINDS: ReadonlySet<string> = new Set([
+  "deployment",
+  "replicaset",
+  "statefulset",
+  "daemonset",
+  "job",
+  "cronjob",
+]);
+
+function toWorkloadKind(value?: string): WorkloadKind | undefined {
+  return value && WORKLOAD_KINDS.has(value) ? (value as WorkloadKind) : undefined;
 }
 
 function buildEntityQuery(params: UseK8sDashboardQueriesParams): string {
@@ -40,6 +54,8 @@ function buildEntityQuery(params: UseK8sDashboardQueriesParams): string {
       filters.namespace = params.entityName;
       return buildPodInventoryQuery(filters);
     case "workload":
+      filters.workloadName = params.entityName;
+      filters.workloadKind = toWorkloadKind(params.workloadKind);
       return buildAllWorkloadsInventoryQuery(filters);
     case "pod":
       return buildPodDetailQuery(params.entityName, filters);
@@ -59,6 +75,8 @@ function buildOverviewQuery(params: UseK8sDashboardQueriesParams): string {
       filters.namespace = params.entityName;
       return buildNamespaceInventoryQuery(filters);
     case "workload":
+      filters.workloadName = params.entityName;
+      filters.workloadKind = toWorkloadKind(params.workloadKind);
       return buildAllWorkloadsInventoryQuery(filters);
     case "pod":
       return buildPodDetailQuery(params.entityName, filters);
@@ -78,6 +96,8 @@ function buildLogsQueryForEntity(params: UseK8sDashboardQueriesParams): string {
       base.namespace = params.entityName;
       break;
     case "workload":
+      base.workloadName = params.entityName;
+      base.workloadKind = toWorkloadKind(params.workloadKind);
       break;
     case "pod":
       base.podName = params.entityName;
@@ -99,6 +119,8 @@ function buildTracesQueryForEntity(params: UseK8sDashboardQueriesParams): string
       base.namespace = params.entityName;
       break;
     case "workload":
+      base.workloadName = params.entityName;
+      base.workloadKind = toWorkloadKind(params.workloadKind);
       break;
     case "pod":
       base.podName = params.entityName;
