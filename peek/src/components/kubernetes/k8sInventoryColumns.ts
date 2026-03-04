@@ -83,6 +83,7 @@ export const NAMESPACE_COLUMNS: ColumnDef<NamespaceRow>[] = [
 
 export const WORKLOAD_COLUMNS: ColumnDef<WorkloadRow>[] = [
   { key: "workloadName", label: "Workload", sortable: true, render: (r) => r.workloadName },
+  { key: "workloadKind", label: "Kind", sortable: true, render: (r) => r.workloadKind },
   {
     key: "podCount",
     label: "Pods",

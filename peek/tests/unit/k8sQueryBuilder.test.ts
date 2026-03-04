@@ -343,17 +343,19 @@ describe("k8sHelpers", () => {
           { name: "pod_count", type: "long" },
           { name: "avg_cpu", type: "double" },
           { name: "avg_memory", type: "long" },
+          { name: "workload_kind", type: "keyword" },
           { name: "workload_name", type: "keyword" },
         ],
         values: [
-          [3, 0.4, 524288000, "nginx-deploy"],
-          [2, 0.2, 262144000, "redis-deploy"],
+          [3, 0.4, 524288000, "deployment", "nginx-deploy"],
+          [2, 0.2, 262144000, "statefulset", "redis-deploy"],
         ],
       });
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         workloadName: "nginx-deploy",
+        workloadKind: "deployment",
         podCount: 3,
         avgCpu: 0.4,
         avgMemory: 524288000,

@@ -41,14 +41,15 @@ const NAMESPACE_RESPONSE = {
 
 const WORKLOAD_RESPONSE = {
   columns: [
+    { name: "workload_kind", type: "keyword" },
     { name: "workload_name", type: "keyword" },
     { name: "pod_count", type: "long" },
     { name: "avg_cpu", type: "double" },
     { name: "avg_memory", type: "double" },
   ],
   values: [
-    ["nginx-deployment", 3, 0.15, 268435456],
-    ["api-server", 2, 0.35, 536870912],
+    ["deployment", "nginx-deployment", 3, 0.15, 268435456],
+    ["statefulset", "api-server", 2, 0.35, 536870912],
   ],
 };
 
@@ -70,7 +71,7 @@ const POD_RESPONSE = {
 function responseForQuery(query: string) {
   if (query.includes("namespace_count = COUNT_DISTINCT")) return CLUSTER_RESPONSE;
   if (/BY namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
-  if (/BY workload_name = /.test(query)) return WORKLOAD_RESPONSE;
+  if (/workload_name = COALESCE\(/.test(query)) return WORKLOAD_RESPONSE;
   if (/BY pod_name = /.test(query)) return POD_RESPONSE;
   return POD_RESPONSE;
 }
