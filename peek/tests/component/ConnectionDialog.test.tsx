@@ -177,6 +177,24 @@ describe("ConnectionDialog", () => {
     expect(useConnectionStore.getState().connected).toBe(true);
   });
 
+  it("does not connect and save from Enter when credentials are missing", async () => {
+    const user = userEvent.setup();
+    fetchCapabilitiesForConnectionMock.mockResolvedValue({
+      canManageDataStreams: true,
+    });
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
+    await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
+    await user.click(screen.getByRole("button", { name: /^connect & save$/i }));
+    await user.clear(screen.getByLabelText(/^api key$/i));
+    await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster{enter}");
+
+    expect(fetchCapabilitiesForConnectionMock).not.toHaveBeenCalled();
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
+    expect(useConnectionStore.getState().connected).toBe(false);
+  });
+
   it("displays saved profiles in the dialog", () => {
     useConnectionStore.setState({
       connection: { url: "https://dev.example.com", apiKey: "dev-key" },

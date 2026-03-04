@@ -226,7 +226,7 @@ export default function ConnectionDialog() {
 
   const handleConnectAndSave = useCallback(async () => {
     const trimmed = profileName.trim();
-    if (!trimmed) return;
+    if (testing || !url.trim() || !hasCredentials || !trimmed || isDuplicateProfileName) return;
     const conn = buildConnection();
     setTesting(true);
     setResult(null);
@@ -251,6 +251,10 @@ export default function ConnectionDialog() {
     }
   }, [
     profileName,
+    testing,
+    url,
+    hasCredentials,
+    isDuplicateProfileName,
     buildConnection,
     saveConnectionProfile,
     savePin,
