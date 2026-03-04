@@ -90,10 +90,10 @@ export default function KubernetesPage() {
             onChange={(e) => updateFilters({ cluster: e.target.value || null })}
             sx={{ minWidth: 160 }}
           />
-          <Button variant="contained" size="small" onClick={handleSearch} disabled={loading}>
+          <Button variant="contained" onClick={handleSearch} disabled={loading}>
             {loading ? <CircularProgress size={14} color="inherit" /> : "Search"}
           </Button>
-          <Button variant="text" size="small" onClick={handleReset} disabled={loading}>
+          <Button variant="text" onClick={handleReset} disabled={loading}>
             Reset
           </Button>
           {searchResult && (

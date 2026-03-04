@@ -99,7 +99,6 @@ export default function DateRangePicker({ value, onChange, timeZone, onTimeZoneC
   return (
     <>
       <Button
-        size="small"
         variant="outlined"
         startIcon={<AccessTimeIcon fontSize="small" sx={{ color: "inherit" }} />}
         onClick={handleOpen}

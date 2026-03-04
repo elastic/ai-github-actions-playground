@@ -66,7 +66,7 @@ export default function DocsPage() {
         variant="outlined"
         sx={{ display: "flex", flexShrink: 0, flexDirection: "column", gap: 1, width: 320, p: 1.5 }}
       >
-        <Typography variant="subtitle1" component="h1" fontWeight={600}>
+        <Typography variant="h5" component="h1">
           Docs
         </Typography>
         <TextField
@@ -100,7 +100,12 @@ export default function DocsPage() {
                 size="small"
                 variant={activeSection === section.id ? "contained" : "text"}
                 onClick={() => jumpToSection(section.id)}
-                sx={{ justifyContent: "flex-start", textTransform: "none" }}
+                sx={{
+                  justifyContent: "flex-start",
+                  color: activeSection === section.id ? undefined : "text.secondary",
+                  textTransform: "none",
+                  fontWeight: activeSection === section.id ? 600 : 400,
+                }}
               >
                 {section.title}
               </Button>
@@ -126,7 +131,7 @@ export default function DocsPage() {
                 sx={{ width: 120, height: 120, mb: 1.5, objectFit: "contain" }}
               />
             )}
-            <Typography variant="h5" sx={{ mb: 1 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
             {section.body.map((paragraph, index) => {

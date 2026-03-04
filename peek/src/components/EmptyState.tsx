@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import Link from "@mui/material/Link";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
@@ -12,7 +12,7 @@ interface EmptyStateProps {
   action?: React.ReactNode;
   size?: "small" | "medium";
   verticalAlign?: "center" | "start";
-  /** When set, renders a subtle "Add data" link pointing to the given href. */
+  /** When set, renders an "Add data" button pointing to the given href. */
   addDataHref?: string;
 }
 
@@ -32,7 +32,7 @@ export default function EmptyState({
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: 1,
+        gap: 1.5,
         justifyContent: verticalAlign === "start" ? "flex-start" : "center",
         alignItems: "center",
         maxWidth: 400,
@@ -48,8 +48,8 @@ export default function EmptyState({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          width: size === "small" ? 44 : 56,
-          height: size === "small" ? 44 : 56,
+          width: size === "small" ? 44 : 64,
+          height: size === "small" ? 44 : 64,
           borderRadius: "50%",
           bgcolor: "background.subtle",
           color: "text.secondary",
@@ -57,27 +57,30 @@ export default function EmptyState({
       >
         {icon ?? <SearchIcon sx={{ fontSize: iconSize }} />}
       </Box>
-      <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 600 }}>
+      <Typography variant="h6" component="h2" color="text.primary" fontWeight={700}>
         {heading}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          noWrap
+          sx={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis" }}
+        >
           {description}
         </Typography>
       )}
-      {action && <Box sx={{ mt: 1 }}>{action}</Box>}
+      {action && <Box sx={{ mt: 0.5 }}>{action}</Box>}
       {addDataHref && (
-        <Link
+        <Button
           component={RouterLink}
           to={addDataHref}
-          underline="hover"
-          variant="body2"
-          color="text.secondary"
-          sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 1 }}
+          variant="outlined"
+          startIcon={<RocketLaunchIcon sx={{ fontSize: 16 }} />}
+          sx={{ mt: 0.5 }}
         >
-          <RocketLaunchIcon sx={{ fontSize: 16 }} />
           Add data
-        </Link>
+        </Button>
       )}
     </Box>
   );
