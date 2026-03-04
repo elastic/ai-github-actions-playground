@@ -310,47 +310,51 @@ export default function ExplorePage() {
       refresh={slotInsights.refresh}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
-        <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreSearch}>
-          <MetricsSearchPanel
-            indexPattern={indexPattern}
-            fields={fields}
-            fieldsLoading={fieldsLoading}
-            selectedMetric={selectedMetric}
-            selectedNamespace={selectedNamespace}
-            metricType={metricType}
-            aggregation={aggregation}
-            filters={filters}
-            groupBy={groupBy}
-            rawQuery={rawQuery}
-            timeRange={dashboard.timeRange}
-            onIndexPatternChange={setIndexPattern}
-            onNamespaceChange={(namespace) => {
-              setSelectedNamespace(namespace);
-              if (
-                selectedMetric &&
-                namespace &&
-                !selectedMetric.startsWith(`${namespace}.`) &&
-                selectedMetric !== namespace
-              ) {
-                setSelectedMetric(null);
-              }
-            }}
-            onMetricSelect={handleMetricSelect}
-            onAggregationChange={setAggregation}
-            onRemoveFilter={removeFilter}
-            onClearFilters={clearFilters}
-            onGroupByDelete={() => setGroupBy(null)}
-            onRawQueryChange={setRawQuery}
-            onCreateEditor={setQueryContextView}
-            queryEditorExtensions={queryEditorExtensions}
-            themeMode={themeMode}
-            searchLoading={queryResult.status === "loading"}
-            onSearch={handleSearch}
-            searchResultCount={chartData ? chartData.values.length : null}
-            collapsed={metricsSearchCollapsed}
-            onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
-          />
-        </InsightSlot>
+        <Box sx={{ width: "100%" }}>
+          <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreSearch}>
+            <Box sx={{ width: "100%" }}>
+              <MetricsSearchPanel
+                indexPattern={indexPattern}
+                fields={fields}
+                fieldsLoading={fieldsLoading}
+                selectedMetric={selectedMetric}
+                selectedNamespace={selectedNamespace}
+                metricType={metricType}
+                aggregation={aggregation}
+                filters={filters}
+                groupBy={groupBy}
+                rawQuery={rawQuery}
+                timeRange={dashboard.timeRange}
+                onIndexPatternChange={setIndexPattern}
+                onNamespaceChange={(namespace) => {
+                  setSelectedNamespace(namespace);
+                  if (
+                    selectedMetric &&
+                    namespace &&
+                    !selectedMetric.startsWith(`${namespace}.`) &&
+                    selectedMetric !== namespace
+                  ) {
+                    setSelectedMetric(null);
+                  }
+                }}
+                onMetricSelect={handleMetricSelect}
+                onAggregationChange={setAggregation}
+                onRemoveFilter={removeFilter}
+                onClearFilters={clearFilters}
+                onGroupByDelete={() => setGroupBy(null)}
+                onRawQueryChange={setRawQuery}
+                onCreateEditor={setQueryContextView}
+                queryEditorExtensions={queryEditorExtensions}
+                themeMode={themeMode}
+                searchLoading={queryResult.status === "loading"}
+                onSearch={handleSearch}
+                searchResultCount={chartData ? chartData.values.length : null}
+                collapsed={metricsSearchCollapsed}
+                onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+              />
+            </Box>
+          </InsightSlot>
+        </Box>
 
         {/* Error display */}
         {queryResult.status === "error" &&
@@ -372,31 +376,35 @@ export default function ExplorePage() {
             </Alert>
           )}
 
-        <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreContent}>
-          <ExploreContentArea
-            fields={fields}
-            client={client}
-            indexPattern={indexPattern}
-            selectedMetric={selectedMetric}
-            selectedMetricNamespace={selectedMetricNamespace}
-            metricType={metricType}
-            selectedNamespace={selectedNamespace}
-            groupBy={groupBy}
-            showOverview={showOverview}
-            showDimensionOverview={showDimensionOverview}
-            metricNotFound={metricNotFound}
-            chartData={chartData}
-            queryStatus={queryResult.status}
-            timeRange={dashboard.timeRange}
-            onMetricSelect={handleMetricSelect}
-            onDimensionSelect={handleDimensionSelect}
-            onBackToOverview={handleBackToOverview}
-            onBackToDimensionOverview={handleBackToDimensionOverview}
-            onViewUngrouped={handleViewUngrouped}
-            onAddFilter={handleAddFilter}
-            onSetGroupBy={setGroupBy}
-          />
-        </InsightSlot>
+        <Box sx={{ flex: 1, width: "100%", minHeight: 0 }}>
+          <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreContent}>
+            <Box sx={{ width: "100%" }}>
+              <ExploreContentArea
+                fields={fields}
+                client={client}
+                indexPattern={indexPattern}
+                selectedMetric={selectedMetric}
+                selectedMetricNamespace={selectedMetricNamespace}
+                metricType={metricType}
+                selectedNamespace={selectedNamespace}
+                groupBy={groupBy}
+                showOverview={showOverview}
+                showDimensionOverview={showDimensionOverview}
+                metricNotFound={metricNotFound}
+                chartData={chartData}
+                queryStatus={queryResult.status}
+                timeRange={dashboard.timeRange}
+                onMetricSelect={handleMetricSelect}
+                onDimensionSelect={handleDimensionSelect}
+                onBackToOverview={handleBackToOverview}
+                onBackToDimensionOverview={handleBackToDimensionOverview}
+                onViewUngrouped={handleViewUngrouped}
+                onAddFilter={handleAddFilter}
+                onSetGroupBy={setGroupBy}
+              />
+            </Box>
+          </InsightSlot>
+        </Box>
       </Box>
     </InsightSlotProvider>
   );
