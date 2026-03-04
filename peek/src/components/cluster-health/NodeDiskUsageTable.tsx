@@ -1,0 +1,77 @@
+import LinearProgress from "@mui/material/LinearProgress";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+
+import type { CatAllocationRecord } from "../../services/es";
+
+import { type DiskWatermarks, parseNumber } from "./clusterHealthUtils";
+
+interface NodeDiskUsageTableProps {
+  allocation: CatAllocationRecord[];
+  watermarks: DiskWatermarks;
+}
+
+export default function NodeDiskUsageTable({ allocation, watermarks }: NodeDiskUsageTableProps) {
+  const nodes = allocation.filter((a) => a.node && a.node !== "UNASSIGNED");
+  if (nodes.length === 0) return null;
+
+  return (
+    <>
+      <Typography variant="body2" sx={{ mt: 3, mb: 1 }}>
+        Node Disk Usage
+      </Typography>
+      <TableContainer>
+        <Table size="small" aria-label="Node Disk Usage">
+          <TableHead>
+            <TableRow>
+              <TableCell>Node</TableCell>
+              <TableCell align="right">Disk Used</TableCell>
+              <TableCell align="right">Disk Available</TableCell>
+              <TableCell align="right">Usage</TableCell>
+              <TableCell sx={{ minWidth: 120 }}>Usage Bar</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {nodes.map((a) => {
+              const pct = parseNumber(a["disk.percent"]);
+              const pctValue = pct == null ? null : Math.max(0, Math.min(pct, 100));
+              return (
+                <TableRow key={a.node}>
+                  <TableCell>{a.node}</TableCell>
+                  <TableCell align="right">{a["disk.used"] ?? "n/a"}</TableCell>
+                  <TableCell align="right">{a["disk.avail"] ?? "n/a"}</TableCell>
+                  <TableCell align="right">{pct != null ? `${pct}%` : "n/a"}</TableCell>
+                  <TableCell>
+                    {pctValue != null ? (
+                      <LinearProgress
+                        variant="determinate"
+                        value={pctValue}
+                        color={
+                          pctValue >= watermarks.flood
+                            ? "error"
+                            : pctValue >= watermarks.high
+                              ? "warning"
+                              : "primary"
+                        }
+                        sx={{ height: 8, borderRadius: 1 }}
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        n/a
+                      </Typography>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
+  );
+}
