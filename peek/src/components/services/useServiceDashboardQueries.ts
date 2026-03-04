@@ -1,8 +1,14 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import type { EsqlResponse, ElasticsearchConnection } from "../../types";
+import { buildColumnAccessor } from "../../services/es/columnUtils";
+import { parseSpansFromEsql, type Span } from "../traces/traceUtils";
+import {
+  buildTraceSpansForTraceIdsQuery,
+  DEFAULT_FIELD_MAPPING,
+} from "../traces/traceQueryBuilder";
 
 import {
   buildServiceDeploymentsQuery,
@@ -94,12 +100,14 @@ export function useServiceDashboardQueries({
 
   const latestRoutesQueryRef = useRef<string | null>(null);
   const latestTracesQueryRef = useRef<string | null>(null);
+  const latestTraceSpansQueryRef = useRef<string | null>(null);
   const latestDeploymentsQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
   const latestK8sContextQueryRef = useRef<string | null>(null);
   const [routeSparklineData, setRouteSparklineData] = useState<Record<string, RouteSparklineData>>(
     {},
   );
+  const [traceExplorerSpans, setTraceExplorerSpans] = useState<Span[]>([]);
 
   const {
     runQuery: runRoutesQuery,
@@ -125,6 +133,23 @@ export function useServiceDashboardQueries({
   });
 
   const {
+    runQuery: runTraceSpansQuery,
+    loading: traceSpansLoading,
+    error: traceSpansError,
+    clearError: clearTraceSpansError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: useCallback((data: EsqlResponse, executedQuery: string) => {
+      if (executedQuery !== latestTraceSpansQueryRef.current) return;
+      setTraceExplorerSpans(parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING));
+    }, []),
+    onFailure: useCallback((failedQuery: string) => {
+      if (failedQuery !== latestTraceSpansQueryRef.current) return;
+      setTraceExplorerSpans([]);
+    }, []),
+  });
+
+  const {
     runQuery: runTracesQuery,
     loading: tracesLoading,
     error: tracesError,
@@ -135,13 +160,31 @@ export function useServiceDashboardQueries({
       (data: EsqlResponse, executedQuery: string) => {
         if (executedQuery !== latestTracesQueryRef.current) return;
         setTracesResult(data);
+        const get = buildColumnAccessor(data.columns);
+        const traceIds = Array.from(
+          new Set(
+            data.values
+              .map((row) => String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""))
+              .filter((id) => id.length > 0),
+          ),
+        );
+        if (traceIds.length === 0) {
+          latestTraceSpansQueryRef.current = null;
+          setTraceExplorerSpans([]);
+          return;
+        }
+        const traceSpansQuery = buildTraceSpansForTraceIdsQuery(traceIds);
+        latestTraceSpansQueryRef.current = traceSpansQuery.trim();
+        runTraceSpansQuery(traceSpansQuery);
       },
-      [setTracesResult],
+      [runTraceSpansQuery, setTracesResult],
     ),
     onFailure: useCallback(
       (failedQuery: string) => {
         if (failedQuery !== latestTracesQueryRef.current) return;
         setTracesResult(null);
+        latestTraceSpansQueryRef.current = null;
+        setTraceExplorerSpans([]);
       },
       [setTracesResult],
     ),
@@ -211,12 +254,24 @@ export function useServiceDashboardQueries({
   });
 
   const loading =
-    routesLoading || tracesLoading || deploymentsLoading || sparklineLoading || k8sContextLoading;
-  const error = routesError || tracesError || deploymentsError || sparklineError || k8sContextError;
+    routesLoading ||
+    tracesLoading ||
+    traceSpansLoading ||
+    deploymentsLoading ||
+    sparklineLoading ||
+    k8sContextLoading;
+  const error =
+    routesError ||
+    tracesError ||
+    traceSpansError ||
+    deploymentsError ||
+    sparklineError ||
+    k8sContextError;
 
   const clearLatestQueries = useCallback(() => {
     latestRoutesQueryRef.current = null;
     latestTracesQueryRef.current = null;
+    latestTraceSpansQueryRef.current = null;
     latestDeploymentsQueryRef.current = null;
     latestSparklineQueryRef.current = null;
     latestK8sContextQueryRef.current = null;
@@ -229,6 +284,9 @@ export function useServiceDashboardQueries({
     runRoutesQuery(routesQuery);
     const tracesQuery = buildServiceRecentTracesQuery(filters);
     latestTracesQueryRef.current = tracesQuery.trim();
+    latestTraceSpansQueryRef.current = null;
+    clearTraceSpansError();
+    setTraceExplorerSpans([]);
     runTracesQuery(tracesQuery);
     const deploymentsQuery = buildServiceDeploymentsQuery(filters);
     latestDeploymentsQueryRef.current = deploymentsQuery.trim();
@@ -246,6 +304,7 @@ export function useServiceDashboardQueries({
     runDeploymentsQuery,
     runSparklineQuery,
     runK8sContextQuery,
+    clearTraceSpansError,
     serviceName,
     timeFrom,
     timeTo,
@@ -256,11 +315,13 @@ export function useServiceDashboardQueries({
     clearLatestQueries();
     clearRoutesError();
     clearTracesError();
+    clearTraceSpansError();
     clearDeploymentsError();
     clearSparklineError();
     clearK8sContextError();
     setRoutesResult(null);
     setTracesResult(null);
+    setTraceExplorerSpans([]);
     setDeploymentsResult(null);
     setRouteSparklineData({});
     setK8sContextResult(null);
@@ -268,6 +329,7 @@ export function useServiceDashboardQueries({
     clearLatestQueries,
     clearRoutesError,
     clearTracesError,
+    clearTraceSpansError,
     clearDeploymentsError,
     clearSparklineError,
     clearK8sContextError,
@@ -278,6 +340,14 @@ export function useServiceDashboardQueries({
     setK8sContextResult,
   ]);
 
+  useEffect(() => {
+    if (!connection || !serviceName.trim()) return;
+    const timer = window.setTimeout(() => {
+      handleSearch();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [connection, handleSearch, serviceName]);
+
   return {
     clearLatestQueries,
     deploymentsResult,
@@ -287,6 +357,8 @@ export function useServiceDashboardQueries({
     k8sContextResult,
     loading,
     routeSparklineData,
+    traceExplorerLoading: traceSpansLoading,
+    traceExplorerSpans,
     routesResult,
     tracesResult,
   };

@@ -11,6 +11,7 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 
 import EmptyState from "../EmptyState";
 import InsightSlot from "../InsightSlot";
@@ -22,17 +23,23 @@ import {
   highestErrorServiceRowInsightSlotId,
   slowestServiceRowInsightSlotId,
 } from "./serviceInsightSlots";
-import { type ServiceRow, formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
+import {
+  type ServiceRow,
+  type ServiceSparklineData,
+  formatLatency,
+  formatErrorRate,
+} from "./serviceInventoryHelpers";
+import ServiceSparklineCell from "./ServiceSparklineCell";
 
 interface ServicePerformanceChartsProps {
   serviceRows: ServiceRow[];
+  sparklineData?: Record<string, ServiceSparklineData>;
 }
 
 interface RankedService {
   serviceName: string;
   value: number;
   formatted: string;
-  ratio: number;
 }
 
 interface DistributionEntry {
@@ -50,14 +57,14 @@ function rankByField(
   formatter: (v: number) => string,
   limit = 5,
 ): RankedService[] {
-  const sorted = [...rows].sort((a, b) => b[field] - a[field]).slice(0, limit);
-  const maxVal = sorted.length > 0 ? sorted[0]![field] : 1;
-  return sorted.map((row) => ({
-    serviceName: row.serviceName,
-    value: row[field],
-    formatted: formatter(row[field]),
-    ratio: maxVal > 0 ? row[field] / maxVal : 0,
-  }));
+  return [...rows]
+    .sort((a, b) => b[field] - a[field])
+    .slice(0, limit)
+    .map((row) => ({
+      serviceName: row.serviceName,
+      value: row[field],
+      formatted: formatter(row[field]),
+    }));
 }
 
 function computeDistribution(
@@ -84,11 +91,14 @@ function RankedList({
   items,
   color = "primary",
   rowSlotIdForService,
+  sparklineData,
 }: {
   items: RankedService[];
   color?: "primary" | "error";
   rowSlotIdForService?: (serviceName: string) => string;
+  sparklineData?: Record<string, ServiceSparklineData>;
 }) {
+  const theme = useTheme();
   const { insightsBySlot } = useInsightSlotContext();
   if (items.length === 0) {
     return <EmptyState heading="No data available" size="small" />;
@@ -145,11 +155,13 @@ function RankedList({
                 )}
               </TableCell>
               <TableCell sx={{ py: 1 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={item.ratio * 100}
-                  color={color}
-                  sx={{ height: 6, borderRadius: 3 }}
+                <ServiceSparklineCell
+                  data={
+                    color === "error"
+                      ? (sparklineData?.[item.serviceName]?.errorRate ?? [])
+                      : (sparklineData?.[item.serviceName]?.latency ?? [])
+                  }
+                  color={color === "error" ? theme.palette.error.main : undefined}
                 />
               </TableCell>
               <TableCell align="right" sx={{ width: "20%", pr: 0, py: 1 }}>
@@ -190,7 +202,10 @@ function DistributionPanel({ entries }: { entries: DistributionEntry[] }) {
   );
 }
 
-export default function ServicePerformanceCharts({ serviceRows }: ServicePerformanceChartsProps) {
+export default function ServicePerformanceCharts({
+  serviceRows,
+  sparklineData,
+}: ServicePerformanceChartsProps) {
   const [showMoreSlowest, setShowMoreSlowest] = useState(false);
   const [showMoreHighestError, setShowMoreHighestError] = useState(false);
 
@@ -224,6 +239,7 @@ export default function ServicePerformanceCharts({ serviceRows }: ServicePerform
                 <RankedList
                   items={topByLatency}
                   rowSlotIdForService={slowestServiceRowInsightSlotId}
+                  sparklineData={sparklineData}
                 />
                 {serviceRows.length > DEFAULT_RANKED_LIMIT && (
                   <Button
@@ -247,6 +263,7 @@ export default function ServicePerformanceCharts({ serviceRows }: ServicePerform
                   items={topByErrorRate}
                   color="error"
                   rowSlotIdForService={highestErrorServiceRowInsightSlotId}
+                  sparklineData={sparklineData}
                 />
                 {serviceRows.length > DEFAULT_RANKED_LIMIT && (
                   <Button

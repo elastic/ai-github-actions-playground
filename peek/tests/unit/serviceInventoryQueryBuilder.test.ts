@@ -172,5 +172,40 @@ describe("serviceInventoryQueryBuilder", () => {
       });
       expect(result).toEqual({});
     });
+
+    it("parses numeric date_nanos bucket timestamps", () => {
+      const result = parseServiceSparklineData({
+        columns: [
+          { name: "service.name", type: "keyword" },
+          { name: "bucket", type: "date_nanos" },
+          { name: "request_count", type: "long" },
+          { name: "avg_latency_ms", type: "double" },
+          { name: "error_rate", type: "double" },
+        ],
+        values: [["frontend", 1_735_689_600_000_000_000, 100, 45.2, 0.02]],
+      });
+
+      expect(Object.keys(result)).toEqual(["frontend"]);
+      // 1_735_689_600_000_000_000 ns -> 1_735_689_600_000 ms
+      expect(result["frontend"]!.requests[0]![0]).toBe(1_735_689_600_000);
+      expect(result["frontend"]!.requests[0]![1]).toBe(100);
+    });
+
+    it("parses string date_nanos bucket timestamps", () => {
+      const result = parseServiceSparklineData({
+        columns: [
+          { name: "service.name", type: "keyword" },
+          { name: "bucket", type: "date_nanos" },
+          { name: "request_count", type: "long" },
+          { name: "avg_latency_ms", type: "double" },
+          { name: "error_rate", type: "double" },
+        ],
+        values: [["frontend", "1735689600000000000", 120, 50.1, 0.01]],
+      });
+
+      expect(Object.keys(result)).toEqual(["frontend"]);
+      expect(result["frontend"]!.requests[0]![0]).toBe(1_735_689_600_000);
+      expect(result["frontend"]!.requests[0]![1]).toBe(120);
+    });
   });
 });

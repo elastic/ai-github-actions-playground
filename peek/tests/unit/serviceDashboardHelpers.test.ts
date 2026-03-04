@@ -197,12 +197,16 @@ describe("serviceDashboardHelpers", () => {
         firstSeen: "2026-01-01T12:00:00Z",
         lastSeen: "2026-01-01T18:00:00Z",
         requestCount: 500,
+        errorCount: 0,
+        errorRate: 0,
       });
       expect(rows[1]).toEqual({
         version: "1.0.0",
         firstSeen: "2026-01-01T00:00:00Z",
         lastSeen: "2026-01-01T11:59:59Z",
         requestCount: 1000,
+        errorCount: 0,
+        errorRate: 0,
       });
     });
 
@@ -217,6 +221,8 @@ describe("serviceDashboardHelpers", () => {
         firstSeen: "",
         lastSeen: "",
         requestCount: 0,
+        errorCount: 0,
+        errorRate: 0,
       });
     });
 
@@ -236,6 +242,8 @@ describe("serviceDashboardHelpers", () => {
         firstSeen: "",
         lastSeen: "",
         requestCount: 0,
+        errorCount: 0,
+        errorRate: 0,
       });
     });
 
@@ -273,6 +281,8 @@ describe("serviceDashboardHelpers", () => {
         firstSeen: "2026-01-01T00:00:00Z",
         lastSeen: "2026-01-01T01:00:00Z",
         requestCount: 0,
+        errorCount: 0,
+        errorRate: 0,
       });
     });
   });

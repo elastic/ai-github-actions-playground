@@ -1,6 +1,8 @@
 import type { EsqlResponse } from "../../types";
 import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
 
+import { parseBucketTimestampMs } from "./serviceTimeUtils";
+
 /** A Kubernetes resource associated with a service. */
 export interface ServiceK8sRow {
   namespace: string;
@@ -78,6 +80,8 @@ export interface DeploymentRow {
   firstSeen: string;
   lastSeen: string;
   requestCount: number;
+  errorCount: number;
+  errorRate: number;
 }
 
 export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
@@ -88,6 +92,8 @@ export function parseDeploymentRows(result: EsqlResponse): DeploymentRow[] {
     firstSeen: String(get(row, "first_seen") ?? ""),
     lastSeen: String(get(row, "last_seen") ?? ""),
     requestCount: toFiniteNumber(get(row, "request_count")),
+    errorCount: toFiniteNumber(get(row, "error_count")),
+    errorRate: toFiniteNumber(get(row, "error_rate")),
   }));
 }
 
@@ -107,12 +113,13 @@ export interface RouteSparklineData {
  */
 export function parseRouteSparklineData(result: EsqlResponse): Record<string, RouteSparklineData> {
   const get = buildColumnAccessor(result.columns);
+  const bucketColumnType = result.columns.find((column) => column.name === "bucket")?.type;
 
   const map = Object.create(null) as Record<string, RouteSparklineData>;
   for (const row of result.values) {
     const route = String(get(row, "route_key") ?? "/");
     const tsRaw = get(row, "bucket");
-    const ts = tsRaw == null ? null : new Date(tsRaw as string).getTime();
+    const ts = parseBucketTimestampMs(tsRaw, bucketColumnType);
     if (ts === null || !Number.isFinite(ts)) continue;
     if (!map[route]) {
       map[route] = { requests: [], latency: [], errorRate: [] };

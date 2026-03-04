@@ -50,3 +50,48 @@ export function decodeServiceName(rawServiceName: string): string {
     return rawServiceName;
   }
 }
+
+export function normalizeStatusLabel(statusCode: string): string {
+  if (!statusCode || statusCode === "STATUS_CODE_OK") return "OK";
+  if (statusCode === "STATUS_CODE_ERROR") return "Error";
+  return statusCode;
+}
+
+export interface SlowOperationSignal {
+  name: string;
+  count: number;
+  maxDurationMs: number;
+  avgDurationMs: number;
+}
+
+export function aggregateSlowOperations(
+  traces: RecentTrace[],
+  limit: number,
+): SlowOperationSignal[] {
+  const byOperation = new Map<
+    string,
+    { count: number; maxDurationMs: number; avgDurationMs: number }
+  >();
+  for (const trace of traces) {
+    const key = trace.spanName || "unknown";
+    const current = byOperation.get(key);
+    if (!current) {
+      byOperation.set(key, {
+        count: 1,
+        maxDurationMs: trace.durationMs,
+        avgDurationMs: trace.durationMs,
+      });
+    } else {
+      const nextCount = current.count + 1;
+      byOperation.set(key, {
+        count: nextCount,
+        maxDurationMs: Math.max(current.maxDurationMs, trace.durationMs),
+        avgDurationMs: (current.avgDurationMs * current.count + trace.durationMs) / nextCount,
+      });
+    }
+  }
+  return Array.from(byOperation.entries())
+    .map(([name, stats]) => ({ name, ...stats }))
+    .sort((a, b) => b.maxDurationMs - a.maxDurationMs)
+    .slice(0, limit);
+}

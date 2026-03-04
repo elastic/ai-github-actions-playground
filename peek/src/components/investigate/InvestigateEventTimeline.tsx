@@ -70,6 +70,8 @@ export default function InvestigateEventTimeline({
       return Number.isFinite(ms) ? [{ ...m, pct: toPercent(m.timestamp, minMs, range) }] : [];
     });
   }, [markers, minMs, range]);
+  const isSingleTimestampRange =
+    Number.isFinite(minMs) && Number.isFinite(maxMs) && minMs === maxMs;
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }} aria-label="Event timeline">
@@ -116,14 +118,22 @@ export default function InvestigateEventTimeline({
       </Box>
 
       {/* axis labels */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mx: 1 }}>
-        <Typography variant="caption" color="text.secondary">
-          {Number.isFinite(minMs) ? fmtTime(new Date(minMs).toISOString()) : "—"}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {Number.isFinite(maxMs) ? fmtTime(new Date(maxMs).toISOString()) : "—"}
-        </Typography>
-      </Box>
+      {isSingleTimestampRange ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mx: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {fmtTime(new Date(minMs).toISOString())}
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", justifyContent: "space-between", mx: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {Number.isFinite(minMs) ? fmtTime(new Date(minMs).toISOString()) : "—"}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {Number.isFinite(maxMs) ? fmtTime(new Date(maxMs).toISOString()) : "—"}
+          </Typography>
+        </Box>
+      )}
     </Paper>
   );
 }

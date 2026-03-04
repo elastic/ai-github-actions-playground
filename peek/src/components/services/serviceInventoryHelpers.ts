@@ -1,6 +1,7 @@
 import type { EsqlResponse } from "../../types";
 import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
 
+import { parseBucketTimestampMs } from "./serviceTimeUtils";
 import type { SortDirection } from "./serviceDashboardHelpers";
 
 export type { SortDirection };
@@ -84,12 +85,13 @@ export function parseServiceSparklineData(
   result: EsqlResponse,
 ): Record<string, ServiceSparklineData> {
   const get = buildColumnAccessor(result.columns);
+  const bucketColumnType = result.columns.find((column) => column.name === "bucket")?.type;
 
   const map = Object.create(null) as Record<string, ServiceSparklineData>;
   for (const row of result.values) {
     const service = String(get(row, "service.name") ?? "unknown");
     const tsRaw = get(row, "bucket");
-    const ts = tsRaw ? new Date(tsRaw as string).getTime() : null;
+    const ts = parseBucketTimestampMs(tsRaw, bucketColumnType);
     if (ts === null || !Number.isFinite(ts)) continue;
     if (!map[service]) {
       map[service] = { requests: [], latency: [], errorRate: [] };

@@ -132,7 +132,9 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("STATS first_seen = MIN(@timestamp)");
       expect(query).toContain("last_seen = MAX(@timestamp)");
       expect(query).toContain("request_count = COUNT(*)");
+      expect(query).toContain("error_count = SUM(is_error)");
       expect(query).toContain("BY version_key");
+      expect(query).toContain("EVAL error_rate = error_count / request_count");
       expect(query).toContain("SORT last_seen DESC");
     });
 
@@ -248,6 +250,24 @@ describe("serviceDashboardQueryBuilder", () => {
         values: [],
       });
       expect(result).toEqual({});
+    });
+
+    it("parses date_nanos bucket values passed as strings", () => {
+      const result = parseRouteSparklineData({
+        columns: [
+          { name: "route_key", type: "keyword" },
+          { name: "bucket", type: "date_nanos" },
+          { name: "request_count", type: "long" },
+          { name: "avg_latency_ms", type: "double" },
+          { name: "error_count", type: "long" },
+          { name: "error_rate", type: "double" },
+        ],
+        values: [["/checkout", "1704067200000000000", 42, 190.5, 3, 0.0714]],
+      });
+
+      expect(result["/checkout"]?.requests).toEqual([[1704067200000, 42]]);
+      expect(result["/checkout"]?.latency).toEqual([[1704067200000, 190.5]]);
+      expect(result["/checkout"]?.errorRate).toEqual([[1704067200000, 0.0714]]);
     });
   });
 

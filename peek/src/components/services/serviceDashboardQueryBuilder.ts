@@ -98,7 +98,9 @@ export function buildServiceDeploymentsQuery(
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
     `EVAL version_key = CASE(${fields.serviceVersion} IS NULL OR TRIM(${fields.serviceVersion}) == "", "unknown", ${fields.serviceVersion})`,
-    `STATS first_seen = MIN(${fields.timestamp}), last_seen = MAX(${fields.timestamp}), request_count = COUNT(*) BY version_key`,
+    `EVAL is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`,
+    `STATS first_seen = MIN(${fields.timestamp}), last_seen = MAX(${fields.timestamp}), request_count = COUNT(*), error_count = SUM(is_error) BY version_key`,
+    `EVAL error_rate = error_count / request_count`,
     `SORT last_seen DESC, first_seen DESC`,
   ]);
 }
