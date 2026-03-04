@@ -36,7 +36,7 @@ The section label varies (e.g., "Install and configure", "Instrument your app", 
 - Progressive command step cards with per-step copy
 - Copy-all support
 - Official quickstart docs link
-- Collector credentials — API key generation (when permissions allow) or manual credential provisioning when API key creation is unavailable
+- Collector credentials — API key generation when permissions allow, otherwise manual credential provisioning
 
 The command template pre-fills available endpoint/version/API key values.
 
