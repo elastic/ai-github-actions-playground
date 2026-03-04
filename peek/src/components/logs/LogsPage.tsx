@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -34,8 +33,8 @@ import { ElasticsearchClient, getFieldValues } from "../../services/es";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useLogsStore } from "../../store/useLogsStore";
-import { useQueryStore } from "../../store/useQueryStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { createEsqlQueryEditorExtensions } from "../queryEditorExtensions";
@@ -43,7 +42,6 @@ import { InsightSlotProvider } from "../InsightSlotContext";
 import InsightSlot from "../InsightSlot";
 import DataTable from "../visualizations/DataTable";
 import EmptyState from "../EmptyState";
-import { PAGE_MANIFEST } from "../../routes/manifest";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
 import LogsSearchPanel from "./LogsSearchPanel";
@@ -92,12 +90,11 @@ const LOGS_SYSTEM_PROMPT =
   INSIGHT_GUARDRAIL;
 
 export default function LogsPage() {
-  const navigate = useNavigate();
+  const openInDiscover = useOpenInDiscover();
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const logsSearchCollapsed = useUIStore((s) => s.logsSearchCollapsed);
   const setLogsSearchCollapsed = useUIStore((s) => s.setLogsSearchCollapsed);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
   const {
     indexPattern,
     searchText,
@@ -345,12 +342,11 @@ export default function LogsPage() {
       const trimmed = traceId.trim();
       if (!trimmed) return;
       const safeTraceId = escapeEsqlString(trimmed);
-      setDiscoverQueryDraft(
+      openInDiscover(
         `FROM traces-* | WHERE trace.id == "${safeTraceId}" | SORT @timestamp DESC | LIMIT 200`,
       );
-      navigate(PAGE_MANIFEST.discover.path);
     },
-    [navigate, setDiscoverQueryDraft],
+    [openInDiscover],
   );
 
   const handleAnomalyDrillIn = useCallback(

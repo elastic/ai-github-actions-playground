@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
@@ -19,8 +18,7 @@ import { buildOverviewQuery } from "../services/es";
 import { CHART_COLORS } from "../theme";
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
-import { useQueryStore } from "../store/useQueryStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EmptyState from "./EmptyState";
@@ -105,8 +103,7 @@ export default function MetricOverviewGrid({
 }: Props) {
   const theme = useTheme();
   const echartsTheme = useEChartTheme();
-  const navigate = useNavigate();
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const openInDiscover = useOpenInDiscover();
 
   // Filter to only metric fields in the selected namespace
   const namespaceMetrics = useMemo(() => {
@@ -340,8 +337,7 @@ export default function MetricOverviewGrid({
                       metricType,
                       timeRange,
                     });
-                    setDiscoverQueryDraft(esql);
-                    navigate(PAGE_MANIFEST.discover.path);
+                    openInDiscover(esql);
                   }}
                 >
                   <SearchIcon fontSize="small" />

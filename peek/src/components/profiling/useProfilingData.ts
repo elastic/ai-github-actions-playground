@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { NavigateFunction } from "react-router-dom";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection, EsqlResponse } from "../../types";
 import type { ProfilingFilters } from "../../types/pageFilters";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
@@ -65,8 +64,6 @@ interface UseProfilingDataParams {
   timeFrom: string;
   timeTo: string;
   showResults: boolean;
-  navigate: NavigateFunction;
-  setDiscoverQueryDraft: (draft: string) => void;
 }
 
 interface UseProfilingDataResult {
@@ -93,9 +90,8 @@ export function useProfilingData({
   timeFrom,
   timeTo,
   showResults,
-  navigate,
-  setDiscoverQueryDraft,
 }: UseProfilingDataParams): UseProfilingDataResult {
+  const openInDiscover = useOpenInDiscover();
   const abortRef = useRef<AbortController | null>(null);
   const hasRunRef = useRef(false);
 
@@ -262,18 +258,16 @@ export function useProfilingData({
             timeTo: flamescopeWindow.to,
           })
         : effectiveQuery;
-    setDiscoverQueryDraft(draft);
-    navigate(PAGE_MANIFEST.discover.path);
-  }, [effectiveQuery, filters, flamescopeWindow, navigate, setDiscoverQueryDraft, viewMode]);
+    openInDiscover(draft);
+  }, [effectiveQuery, filters, flamescopeWindow, openInDiscover, viewMode]);
 
   const handleFrameClick = useCallback(
     (frameName: string) => {
       if (frameName === "(unknown)") return;
       const draft = `${effectiveQuery}\n| WHERE Stackframe.function.name == "${escapeEsqlString(frameName)}"`;
-      setDiscoverQueryDraft(draft);
-      navigate(PAGE_MANIFEST.discover.path);
+      openInDiscover(draft);
     },
-    [effectiveQuery, navigate, setDiscoverQueryDraft],
+    [effectiveQuery, openInDiscover],
   );
 
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);

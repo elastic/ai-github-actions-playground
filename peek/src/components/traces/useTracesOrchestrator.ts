@@ -1,13 +1,11 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import type { EditorView } from "@codemirror/view";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useDashboardEditorStore } from "../../store/useDashboardEditorStore";
-import { useQueryStore } from "../../store/useQueryStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useUIStore } from "../../store/useUIStore";
 import type { EsqlResponse } from "../../types";
@@ -27,9 +25,8 @@ import {
 import type { TraceFilters } from "./traceQueryBuilder";
 
 export function useTracesOrchestrator() {
-  const navigate = useNavigate();
+  const openInDiscover = useOpenInDiscover();
   const connection = useConnectionStore((s) => s.connection);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
 
   const filters = useTracesStore((s) => s.filters);
   const rawQuery = useTracesStore((s) => s.rawQuery);
@@ -285,10 +282,9 @@ export function useTracesOrchestrator() {
 
   const handleOpenInDiscover = useCallback(
     (traceId: string, spanId?: string | null, timestamp?: string | null) => {
-      setDiscoverQueryDraft(buildTraceQueryLabDraft({ traceId, spanId, timestamp }));
-      navigate(PAGE_MANIFEST.discover.path);
+      openInDiscover(buildTraceQueryLabDraft({ traceId, spanId, timestamp }));
     },
-    [navigate, setDiscoverQueryDraft],
+    [openInDiscover],
   );
 
   const clearTraceSelection = useCallback(() => {

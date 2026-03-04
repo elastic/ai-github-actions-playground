@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useQueryStore } from "../store/useQueryStore";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
+import { openInDiscover } from "../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection } from "../types";
 
 import type { EsqlQueryParams } from "./es";
@@ -205,6 +206,14 @@ const NAVIGABLE_PAGES = Object.entries(PAGE_MANIFEST)
   .filter(([, config]) => !config.path.includes(":"))
   .map(([key]) => key) as [PageId, ...PageId[]];
 
+function normalizeNonEmptyQuery(query: string): string {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    throw new Error("Query must not be empty");
+  }
+  return trimmedQuery;
+}
+
 export function getScreenContextTool(getPathname: () => string): ToolSet {
   return {
     get_screen_context: tool({
@@ -245,8 +254,8 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
         query: z.string().min(1).describe("The ES|QL query to set in the Query Lab editor."),
       }),
       execute: async ({ query }) => {
-        useQueryStore.getState().setDiscoverQueryDraft(query);
-        navigate(PAGE_MANIFEST.discover.path);
+        const trimmedQuery = normalizeNonEmptyQuery(query);
+        openInDiscover(navigate, trimmedQuery);
         return { set: true, navigatedTo: "discover" };
       },
     }),
@@ -287,13 +296,11 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
           .describe("When true, navigate to the Query Lab page after setting the query."),
       }),
       execute: async ({ query, navigate_to_query_lab }) => {
-        const trimmedQuery = query.trim();
-        if (!trimmedQuery) {
-          throw new Error("Query must not be empty");
-        }
-        useQueryStore.getState().setDiscoverQueryDraft(trimmedQuery);
+        const trimmedQuery = normalizeNonEmptyQuery(query);
         if (navigate_to_query_lab) {
-          navigate(PAGE_MANIFEST.discover.path);
+          openInDiscover(navigate, trimmedQuery);
+        } else {
+          useQueryStore.getState().setDiscoverQueryDraft(trimmedQuery);
         }
         return { set: true, navigatedTo: navigate_to_query_lab ? "discover" : undefined };
       },

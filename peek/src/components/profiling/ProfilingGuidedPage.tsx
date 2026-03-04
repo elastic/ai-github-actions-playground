@@ -9,7 +9,6 @@ import { parseAsString, useQueryState } from "nuqs";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { useQueryStore } from "../../store/useQueryStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
 import EmptyState from "../EmptyState";
@@ -30,7 +29,6 @@ function isProfilingFocusDimension(value: string | null): value is ProfilingFocu
 export default function ProfilingGuidedPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
-  const setDiscoverQueryDraft = useQueryStore((state) => state.setDiscoverQueryDraft);
   const { expandedStacktraceIds, toggleExpandedStacktraceId } = usePageFiltersStore(
     useShallow((s) => ({
       expandedStacktraceIds: s.expandedStacktraceIds,
@@ -79,8 +77,6 @@ export default function ProfilingGuidedPage() {
     timeFrom,
     timeTo,
     showResults,
-    navigate,
-    setDiscoverQueryDraft,
   });
 
   const handleSelectDimension = useCallback(
