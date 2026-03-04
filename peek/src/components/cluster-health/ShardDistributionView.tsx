@@ -40,7 +40,7 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
         entry.total++;
         if (shard.prirep === "p") {
           entry.primary++;
-        } else {
+        } else if (shard.prirep === "r") {
           entry.replica++;
         }
       }

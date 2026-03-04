@@ -270,6 +270,7 @@ describe("ClusterHealthPage", () => {
     getCatShardsMock.mockResolvedValue([
       { index: "idx-a", node: "node-x", state: "STARTED", prirep: "p" },
       { index: "idx-a", node: "node-x", state: "STARTED", prirep: "r" },
+      { index: "idx-a", node: "node-x", state: "STARTED", prirep: "x" },
       { index: "idx-b", node: "node-y", state: "STARTED", prirep: "p" },
     ]);
 
@@ -282,5 +283,13 @@ describe("ClusterHealthPage", () => {
     const nodeTable = screen.getByRole("table", { name: "Shard Distribution by Node" });
     expect(within(nodeTable).getByText("node-x")).toBeInTheDocument();
     expect(within(nodeTable).getByText("node-y")).toBeInTheDocument();
+    const nodeXRow = within(nodeTable)
+      .getAllByRole("row")
+      .find((row) => within(row).queryByText("node-x"));
+    expect(nodeXRow).toBeDefined();
+    const nodeXCells = within(nodeXRow as HTMLTableRowElement)
+      .getAllByRole("cell")
+      .map((cell) => cell.textContent);
+    expect(nodeXCells).toEqual(["node-x", "1", "1", "3"]);
   });
 });
