@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 
 import ServicePerformanceCharts from "../../src/components/services/ServicePerformanceCharts";
 import type { ServiceRow } from "../../src/components/services/serviceInventoryHelpers";
@@ -69,7 +70,7 @@ describe("ServicePerformanceCharts", () => {
   });
 
   it("renders all dashboard panels", () => {
-    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />);
+    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />, { wrapper: MemoryRouter });
 
     expect(screen.getByText("Slowest Services")).toBeInTheDocument();
     expect(screen.getByText("Highest Error Rate")).toBeInTheDocument();
@@ -78,7 +79,7 @@ describe("ServicePerformanceCharts", () => {
   });
 
   it("shows service names in ranked lists", () => {
-    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />);
+    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />, { wrapper: MemoryRouter });
 
     // All 3 services should appear in ranked lists
     expect(screen.getAllByText("payment-service").length).toBeGreaterThan(0);
@@ -87,7 +88,7 @@ describe("ServicePerformanceCharts", () => {
   });
 
   it("shows language distribution", () => {
-    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />);
+    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />, { wrapper: MemoryRouter });
 
     expect(screen.getByText("nodejs")).toBeInTheDocument();
     expect(screen.getByText("java")).toBeInTheDocument();
@@ -95,7 +96,7 @@ describe("ServicePerformanceCharts", () => {
   });
 
   it("shows environment distribution", () => {
-    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />);
+    render(<ServicePerformanceCharts serviceRows={MOCK_ROWS} />, { wrapper: MemoryRouter });
 
     expect(screen.getByText("prod")).toBeInTheDocument();
     expect(screen.getByText("staging")).toBeInTheDocument();

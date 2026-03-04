@@ -18,6 +18,8 @@ import type {
   AddDataGuidedExperience,
 } from "../../services/addData/catalog";
 
+const KUBERNETES_BRAND_COLOR = "#326CE5";
+
 export const SIGNAL_COLORS: Record<AddDataExpectedSignal, "info" | "success" | "warning"> = {
   logs: "info",
   metrics: "success",
@@ -26,7 +28,7 @@ export const SIGNAL_COLORS: Record<AddDataExpectedSignal, "info" | "success" | "
 
 export const EXPERIENCE_ICONS: Record<AddDataGuidedExperience, React.ReactElement> = {
   cloud_providers: <CloudIcon />,
-  kubernetes: <ViewInArIcon />,
+  kubernetes: <ViewInArIcon sx={{ color: KUBERNETES_BRAND_COLOR }} />,
   servers: <DnsIcon />,
   saas_databases: <IntegrationInstructionsIcon />,
   advanced: <TerminalIcon />,
@@ -35,7 +37,7 @@ export const EXPERIENCE_ICONS: Record<AddDataGuidedExperience, React.ReactElemen
 export const TECHNOLOGY_ICONS: Record<string, React.ReactElement> = {
   aws: <CloudIcon fontSize="small" />,
   "vpc-flow-logs": <LanIcon fontSize="small" />,
-  kubernetes: <ViewInArIcon fontSize="small" />,
+  kubernetes: <ViewInArIcon fontSize="small" sx={{ color: KUBERNETES_BRAND_COLOR }} />,
   docker: <Inventory2Icon fontSize="small" />,
   "linux-host": <TerminalIcon fontSize="small" />,
   "windows-host": <DesktopWindowsIcon fontSize="small" />,

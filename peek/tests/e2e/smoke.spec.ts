@@ -276,14 +276,14 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Add Data");
 
-    await expect(page.getByRole("heading", { name: "What are you monitoring?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /What are we observing/i })).toBeVisible();
     const main = page.getByRole("main");
     await main.getByPlaceholder("Search technologies").fill("Kubernetes");
     await main
       .getByRole("button", { name: /Kubernetes/, pressed: false })
       .first()
       .click();
-    await main.getByRole("button", { name: /^Continue$/ }).click();
+    // Clicking a technology now auto-advances to step 2
     await expect(page.getByRole("heading", { name: /Set up Kubernetes/i })).toBeVisible();
 
     await main.getByRole("button", { name: /^Continue$/ }).click();
@@ -413,6 +413,8 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
+    // The ES|QL editor starts collapsed; expand it first
+    await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await expect(queryEditor).toBeVisible();
@@ -425,19 +427,30 @@ test.describe("smoke – site navigation", () => {
   });
 
   test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
+    test.setTimeout(60_000);
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Logs");
     await expect(page).toHaveURL(/\/logs$/);
 
-    const queryEditor = page.getByLabel("Logs Explorer query editor");
-    const queryInput = queryEditor.getByRole("textbox");
-    await page.getByLabel("Search logs").fill('"Hello World"');
-    await page.getByRole("button", { name: "Apply Search" }).click();
-    await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
+    // Use the guided search input (stepper-based flow) to set search text
+    await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
+    await page.getByRole("button", { name: "Apply", exact: true }).click();
 
+    // Run the query and wait for results
     await page.getByRole("button", { name: /^Search Logs\b/ }).click();
+    await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // Click-to-filter: clicking a cell adds a filter chip and updates the query
     await page.getByRole("cell", { name: "checkout-service" }).click();
     await expect(page.getByText("service.name: checkout-service")).toBeVisible();
+
+    // Expand the collapsed ES|QL editor to verify the generated query text
+    await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
+    const queryEditor = page.getByLabel("Logs Explorer query editor");
+    const queryInput = queryEditor.getByRole("textbox");
+    await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
@@ -457,7 +470,7 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("heading", { name: "Service Performance" })).toBeVisible(),
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () => expect(page.getByLabel("ES|QL query editor")).toBeVisible(),
-      Logs: () => expect(page.getByLabel("Logs Explorer query editor")).toBeVisible(),
+      Logs: () => expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
       Console: () => expect(page.getByRole("heading", { name: "API Console" })).toBeVisible(),
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };

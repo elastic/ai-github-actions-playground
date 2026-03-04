@@ -125,7 +125,8 @@ export default function AppSidebar({
         flexShrink: 0,
         flexDirection: "column",
         width: mobile ? 260 : isCollapsed ? 68 : 200,
-        overflow: "auto",
+        minHeight: 0,
+        overflow: "hidden",
         borderRight: mobile ? 0 : 1,
         borderColor: "border.subtle",
         bgcolor: "background.paper",
@@ -133,167 +134,141 @@ export default function AppSidebar({
           theme.transitions.create("width", { duration: theme.transitions.duration.shorter }),
       }}
     >
-      {!mobile && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: isCollapsed ? "center" : "flex-end",
-            pt: 1,
-            px: 1,
-          }}
-        >
-          <Tooltip title={isCollapsed ? "Expand navigation" : "Collapse navigation"}>
-            <IconButton
-              size="small"
-              aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
-              onClick={onToggleCollapse}
-            >
-              {isCollapsed ? (
-                <ChevronRightIcon fontSize="small" />
-              ) : (
-                <ChevronLeftIcon fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
-      {NAV_SECTIONS.map((section) => {
-        const visibleItems = section.items.filter(
-          (item) => !isHiddenByCapability(item.requiredCapability, capabilities),
-        );
-        if (visibleItems.length === 0) return null;
-        return (
-          <Box key={section.label} sx={{ pt: 1 }}>
-            {!isCollapsed && (
-              <Typography
-                variant="caption"
-                sx={{
-                  display: "block",
-                  py: 0.5,
-                  px: 2,
-                  color: "text.secondary",
-                  letterSpacing: "0.02em",
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  fontSize: "0.6875rem",
-                }}
+      <Box sx={{ flex: 1, minHeight: 0, overflowX: "hidden", overflowY: "auto" }}>
+        {!mobile && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: isCollapsed ? "center" : "flex-end",
+              pt: 1,
+              px: 1,
+            }}
+          >
+            <Tooltip title={isCollapsed ? "Expand navigation" : "Collapse navigation"}>
+              <IconButton
+                size="small"
+                aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
+                onClick={onToggleCollapse}
               >
-                {section.label}
-              </Typography>
-            )}
-            <List dense={!mobile} disablePadding>
-              {visibleItems.map((item) => {
-                const itemPath = PAGE_MANIFEST[item.page].path;
-                const isActive =
-                  location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
-                const isDisabled = item.requiresConnection && !connected;
-                const button = (
-                  <ListItemButton
-                    selected={isActive}
-                    disabled={isDisabled}
-                    onClick={() => {
-                      navigate(PAGE_MANIFEST[item.page].path);
-                      onNavigate?.();
-                    }}
-                    aria-current={isActive ? "page" : undefined}
-                    aria-label={item.label}
-                    sx={{
-                      position: "relative",
-                      justifyContent: isCollapsed ? "center" : "flex-start",
-                      mx: 0.5,
-                      py: mobile ? 1.125 : 0.75,
-                      px: isCollapsed ? 1 : 2,
-                      borderRadius: 1,
-                      "&.Mui-selected": {
-                        bgcolor: "action.selected",
-                        "&::before": {
-                          position: "absolute",
-                          top: "25%",
-                          bottom: "25%",
-                          left: 0,
-                          width: 3,
-                          borderRadius: 1,
-                          bgcolor: "primary.main",
-                          content: '""',
-                        },
-                        "&:hover": { bgcolor: "action.selected" },
-                      },
-                    }}
-                  >
-                    <ListItemIcon
+                {isCollapsed ? (
+                  <ChevronRightIcon fontSize="small" />
+                ) : (
+                  <ChevronLeftIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
+        {NAV_SECTIONS.map((section) => {
+          const visibleItems = section.items.filter(
+            (item) => !isHiddenByCapability(item.requiredCapability, capabilities),
+          );
+          if (visibleItems.length === 0) return null;
+          return (
+            <Box key={section.label} sx={{ pt: 1 }}>
+              {!isCollapsed && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    py: 0.5,
+                    px: 2,
+                    color: "text.secondary",
+                    letterSpacing: "0.02em",
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    fontSize: "0.6875rem",
+                  }}
+                >
+                  {section.label}
+                </Typography>
+              )}
+              <List dense={!mobile} disablePadding>
+                {visibleItems.map((item) => {
+                  const itemPath = PAGE_MANIFEST[item.page].path;
+                  const isActive =
+                    location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+                  const isDisabled = item.requiresConnection && !connected;
+                  const button = (
+                    <ListItemButton
+                      selected={isActive}
+                      disabled={isDisabled}
+                      onClick={() => {
+                        navigate(PAGE_MANIFEST[item.page].path);
+                        onNavigate?.();
+                      }}
+                      aria-current={isActive ? "page" : undefined}
+                      aria-label={item.label}
                       sx={{
-                        minWidth: isCollapsed ? 0 : 32,
-                        color: isActive ? "primary.main" : "inherit",
+                        position: "relative",
+                        justifyContent: isCollapsed ? "center" : "flex-start",
+                        mx: 0.5,
+                        py: mobile ? 1.125 : 0.75,
+                        px: isCollapsed ? 1 : 2,
+                        borderRadius: 1,
+                        "&.Mui-selected": {
+                          bgcolor: "action.selected",
+                          "&::before": {
+                            position: "absolute",
+                            top: "25%",
+                            bottom: "25%",
+                            left: 0,
+                            width: 3,
+                            borderRadius: 1,
+                            bgcolor: "primary.main",
+                            content: '""',
+                          },
+                          "&:hover": { bgcolor: "action.selected" },
+                        },
                       }}
                     >
-                      {item.icon}
-                    </ListItemIcon>
-                    {!isCollapsed && (
-                      <ListItemText
-                        primary={item.label}
-                        primaryTypographyProps={{
-                          fontSize: "0.875rem",
-                          fontWeight: isActive ? 600 : 400,
+                      <ListItemIcon
+                        sx={{
+                          minWidth: isCollapsed ? 0 : 32,
                           color: isActive ? "primary.main" : "inherit",
                         }}
-                      />
-                    )}
-                  </ListItemButton>
-                );
-                return (
-                  <ListItem key={item.page} disablePadding>
-                    {isCollapsed ? (
-                      <Tooltip title={item.label} placement="right">
-                        {button}
-                      </Tooltip>
-                    ) : (
-                      button
-                    )}
-                  </ListItem>
-                );
-              })}
-            </List>
-          </Box>
-        );
-      })}
-      {hiddenCount > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-            py: 1,
-            px: isCollapsed ? 0 : 2,
-          }}
-        >
-          <Tooltip title={hiddenLabel} placement={isCollapsed ? "right" : "top"}>
-            <WarningAmberIcon
-              fontSize="small"
-              titleAccess={hiddenLabel}
-              sx={{ color: "text.secondary" }}
-            />
-          </Tooltip>
-        </Box>
-      )}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      {!isCollapsed && (
+                        <ListItemText
+                          primary={item.label}
+                          primaryTypographyProps={{
+                            fontSize: "0.875rem",
+                            fontWeight: isActive ? 600 : 400,
+                            color: isActive ? "primary.main" : "inherit",
+                          }}
+                        />
+                      )}
+                    </ListItemButton>
+                  );
+                  return (
+                    <ListItem key={item.page} disablePadding>
+                      {isCollapsed ? (
+                        <Tooltip title={item.label} placement="right">
+                          {button}
+                        </Tooltip>
+                      ) : (
+                        button
+                      )}
+                    </ListItem>
+                  );
+                })}
+              </List>
+            </Box>
+          );
+        })}
+      </Box>
       <Divider />
       <Box
         sx={{
           display: "flex",
           gap: 0.5,
           justifyContent: isCollapsed ? "center" : "flex-start",
-          mt: "auto",
+          alignItems: "center",
           p: 1,
         }}
       >
-        <Tooltip title="AI Assistant" placement={isCollapsed ? "right" : "top"}>
-          <IconButton
-            size={mobile ? "medium" : "small"}
-            color={aiPanelOpen ? "primary" : "default"}
-            aria-label="Toggle AI assistant panel"
-            onClick={() => setAiPanelOpen(!aiPanelOpen)}
-          >
-            <ChatIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="Settings" placement={isCollapsed ? "right" : "top"}>
           <IconButton
             size={mobile ? "medium" : "small"}
@@ -304,6 +279,26 @@ export default function AppSidebar({
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        <Tooltip title="AI Assistant" placement={isCollapsed ? "right" : "top"}>
+          <IconButton
+            size={mobile ? "medium" : "small"}
+            color={aiPanelOpen ? "primary" : "default"}
+            aria-label="Toggle AI assistant panel"
+            onClick={() => setAiPanelOpen(!aiPanelOpen)}
+          >
+            <ChatIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Box sx={{ flex: 1 }} />
+        {hiddenCount > 0 && (
+          <Tooltip title={hiddenLabel} placement={isCollapsed ? "right" : "top"}>
+            <WarningAmberIcon
+              fontSize="small"
+              titleAccess={hiddenLabel}
+              sx={{ color: "text.secondary" }}
+            />
+          </Tooltip>
+        )}
       </Box>
       <Menu
         anchorEl={settingsAnchor}

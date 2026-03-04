@@ -121,6 +121,14 @@ export default function App() {
                   open={mobileNavOpen}
                   onClose={() => setMobileNavOpen(false)}
                   variant="temporary"
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        top: { sm: 64, xs: 56 },
+                        height: { sm: "calc(100% - 64px)", xs: "calc(100% - 56px)" },
+                      },
+                    },
+                  }}
                 >
                   <AppSidebar
                     mobile

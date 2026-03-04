@@ -11,6 +11,7 @@ interface EmptyStateProps {
   description?: string;
   action?: React.ReactNode;
   size?: "small" | "medium";
+  verticalAlign?: "center" | "start";
   /** When set, renders a subtle "Add data" link pointing to the given href. */
   addDataHref?: string;
 }
@@ -21,6 +22,7 @@ export default function EmptyState({
   description,
   action,
   size = "medium",
+  verticalAlign = "center",
   addDataHref,
 }: EmptyStateProps) {
   const iconSize = size === "small" ? 28 : 40;
@@ -31,12 +33,12 @@ export default function EmptyState({
         display: "flex",
         flexDirection: "column",
         gap: 1,
-        justifyContent: "center",
+        justifyContent: verticalAlign === "start" ? "flex-start" : "center",
         alignItems: "center",
         maxWidth: 400,
-        height: "100%",
+        height: verticalAlign === "start" ? "auto" : "100%",
         mx: "auto",
-        py: size === "small" ? 3 : 6,
+        py: verticalAlign === "start" ? (size === "small" ? 1.5 : 2) : size === "small" ? 3 : 6,
         px: 2,
         textAlign: "center",
       }}

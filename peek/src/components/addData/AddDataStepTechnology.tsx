@@ -81,14 +81,15 @@ export default function AddDataStepTechnology({
 
   const showExperienceTiles = !selectedExperience && technologySearch.trim().length === 0;
   const showSearchResults = technologySearch.trim().length > 0;
+  const handleSelectAndContinue = (tech: AddDataTechnologyCatalogEntry) => {
+    onSelectTechnology(tech);
+    onContinue();
+  };
 
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 2, p: 2 }}>
       <Box>
-        <Typography variant="h6">What are you monitoring?</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Pick a technology to tailor environment choices, setup commands, and verification checks.
-        </Typography>
+        <Typography variant="h6">What are we observing? 🔭</Typography>
       </Box>
 
       <TextField
@@ -177,7 +178,7 @@ export default function AddDataStepTechnology({
                 <AddDataTechnologyResults
                   filteredTechnologies={advancedTechnologies}
                   selectedTechnology={selectedTechnology}
-                  onSelectTechnology={onSelectTechnology}
+                  onSelectTechnology={handleSelectAndContinue}
                 />
               </Box>
             </Collapse>
@@ -205,7 +206,7 @@ export default function AddDataStepTechnology({
         <AddDataTechnologyResults
           filteredTechnologies={filteredTechnologies}
           selectedTechnology={selectedTechnology}
-          onSelectTechnology={onSelectTechnology}
+          onSelectTechnology={handleSelectAndContinue}
         />
       )}
 

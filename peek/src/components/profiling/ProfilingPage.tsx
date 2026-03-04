@@ -21,6 +21,7 @@ import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
+import PageInsightBanner from "../PageInsightBanner";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
@@ -28,6 +29,7 @@ import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { usePageFiltersStore, type ProfilingViewMode } from "../../store/usePageFiltersStore";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
+import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import type { EsqlResponse } from "../../types";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
@@ -247,6 +249,21 @@ export default function ProfilingPage() {
     [effectiveQuery, openInDiscover],
   );
   const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
+  const timelineCountStats = useMemo(() => {
+    if (!timelineResult) return null;
+    const countIdx = timelineResult.columns.findIndex((c) => c.name === "count");
+    if (countIdx < 0) return null;
+    const counts = timelineResult.values
+      .map((row) => Number(row[countIdx] ?? 0))
+      .filter((value) => Number.isFinite(value));
+    if (counts.length === 0) return null;
+    return {
+      points: counts.length,
+      max: Math.max(...counts),
+      min: Math.min(...counts),
+      avg: counts.reduce((sum, value) => sum + value, 0) / counts.length,
+    };
+  }, [timelineResult]);
   const hasDataForCurrentView =
     viewMode === "topFunctions"
       ? topFunctionsRows.length > 0
@@ -254,6 +271,46 @@ export default function ProfilingPage() {
         ? timelineHasData
         : stacktraces.length > 0;
   const hasRunCurrentView = hasRunByMode[viewMode];
+  const canShowProfilingInsights = !loading && !error && hasRunCurrentView && hasDataForCurrentView;
+  const profilingInsightContext = useMemo(() => {
+    if (!canShowProfilingInsights) return "";
+    const topFunctions = topFunctionsRows.slice(0, 10).map((row) => ({
+      name: row.functionName,
+      total: row.totalCount ?? 0,
+      self: row.selfCount ?? 0,
+    }));
+    const topStacks = stacktraces
+      .slice()
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((row) => ({
+        id: row.stacktraceId,
+        count: row.count,
+        service: row.serviceName,
+        host: row.hostName,
+      }));
+    return JSON.stringify({
+      page: "profiling-advanced",
+      viewMode,
+      filters,
+      query: viewMode === "topFunctions" ? null : effectiveQuery,
+      datasets: {
+        topFunctions,
+        timeline: timelineCountStats,
+        stacktraces: topStacks,
+        flamegraphNodeCount: flamegraphTree.children.length,
+      },
+    });
+  }, [
+    canShowProfilingInsights,
+    effectiveQuery,
+    filters,
+    flamegraphTree.children.length,
+    stacktraces,
+    timelineCountStats,
+    topFunctionsRows,
+    viewMode,
+  ]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
@@ -381,123 +438,139 @@ export default function ProfilingPage() {
       )}
 
       {!(error && isMissingProfilingIndex(error)) && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-          {!loading && !error && !hasRunCurrentView && !hasDataForCurrentView && (
-            <EmptyState
-              heading="No profiling data"
-              description="Run the selected view to load profiling data."
-              size="small"
+        <>
+          {canShowProfilingInsights && profilingInsightContext && (
+            <PageInsightBanner
+              context={profilingInsightContext}
+              systemPrompt={
+                "You are an advanced profiling analyst. Use the active profiling dataset to identify " +
+                "one concrete hotspot or bottleneck signal and one suggested next query/action." +
+                INSIGHT_GUARDRAIL
+              }
+              cacheKey={`profiling-advanced::${profilingInsightContext}`}
             />
           )}
-          {!loading && !error && hasRunCurrentView && !hasDataForCurrentView && (
-            <EmptyState
-              heading="No profiling data found"
-              description="No samples matched the selected filters and time range."
-              size="small"
-            />
-          )}
-          {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Function</TableCell>
-                  <TableCell align="right">Self count</TableCell>
-                  <TableCell align="right">Total count</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {topFunctionsRows.map((row, index) => (
-                  <TableRow key={`${row.functionName}-${index}`}>
-                    <TableCell>{row.functionName}</TableCell>
-                    <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
-                    <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+            {!loading && !error && !hasRunCurrentView && !hasDataForCurrentView && (
+              <EmptyState
+                heading="No profiling data"
+                description="Run the selected view to load profiling data."
+                size="small"
+              />
+            )}
+            {!loading && !error && hasRunCurrentView && !hasDataForCurrentView && (
+              <EmptyState
+                heading="No profiling data found"
+                description="No samples matched the selected filters and time range."
+                size="small"
+              />
+            )}
+            {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Function</TableCell>
+                    <TableCell align="right">Self count</TableCell>
+                    <TableCell align="right">Total count</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {viewMode === "timeline" && timelineHasData && timelineResult && (
-            <Box sx={{ height: 360 }}>
-              <TimeSeriesChart data={timelineResult} options={{ smooth: true, showArea: false }} />
-            </Box>
-          )}
-          {viewMode === "stacktraces" && stacktraces.length > 0 && (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Stacktrace ID</TableCell>
-                  <TableCell align="right">Count</TableCell>
-                  <TableCell>Service</TableCell>
-                  <TableCell>Host</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {stacktraces.map((stacktrace) => {
-                  const isExpanded = expandedStacktraceIds.has(stacktrace.stacktraceId);
-                  const detailsId = `stacktrace-details-${encodeURIComponent(stacktrace.stacktraceId)}`;
-                  return (
-                    <Fragment key={stacktrace.stacktraceId}>
-                      <TableRow
-                        hover
-                        role="button"
-                        tabIndex={0}
-                        aria-expanded={isExpanded}
-                        aria-controls={detailsId}
-                        onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            toggleExpandedStacktraceId(stacktrace.stacktraceId);
-                          }
-                        }}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
-                          {stacktrace.stacktraceId}
-                        </TableCell>
-                        <TableCell align="right">{stacktrace.count}</TableCell>
-                        <TableCell>{stacktrace.serviceName || "—"}</TableCell>
-                        <TableCell>{stacktrace.hostName || "—"}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell colSpan={4} sx={{ py: 0 }}>
-                          <Collapse in={isExpanded}>
-                            <Box id={detailsId} sx={{ p: 1 }}>
-                              {stacktrace.frames.map((frame) => (
-                                <Typography
-                                  key={`${stacktrace.stacktraceId}-${frame.frameId}`}
-                                  variant="caption"
-                                  sx={{ display: "block", fontFamily: "monospace" }}
-                                >
-                                  {frame.functionName}{" "}
-                                  {frame.fileName
-                                    ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
-                                    : ""}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-          {viewMode === "flamegraph" && stacktraces.length > 0 && (
-            <Box sx={{ height: 480 }}>
-              <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
-            </Box>
-          )}
-          {viewMode === "flamescope" && stacktraces.length > 0 && (
-            <ProfilingFlamescope
-              stacktraces={stacktraces}
-              onWindowChange={setFlamescopeWindow}
-              onFrameClick={handleFrameClick}
-            />
-          )}
-        </Paper>
+                </TableHead>
+                <TableBody>
+                  {topFunctionsRows.map((row, index) => (
+                    <TableRow key={`${row.functionName}-${index}`}>
+                      <TableCell>{row.functionName}</TableCell>
+                      <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
+                      <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            {viewMode === "timeline" && timelineHasData && timelineResult && (
+              <Box sx={{ height: 360 }}>
+                <TimeSeriesChart
+                  data={timelineResult}
+                  options={{ smooth: true, showArea: false }}
+                />
+              </Box>
+            )}
+            {viewMode === "stacktraces" && stacktraces.length > 0 && (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Stacktrace ID</TableCell>
+                    <TableCell align="right">Count</TableCell>
+                    <TableCell>Service</TableCell>
+                    <TableCell>Host</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {stacktraces.map((stacktrace) => {
+                    const isExpanded = expandedStacktraceIds.has(stacktrace.stacktraceId);
+                    const detailsId = `stacktrace-details-${encodeURIComponent(stacktrace.stacktraceId)}`;
+                    return (
+                      <Fragment key={stacktrace.stacktraceId}>
+                        <TableRow
+                          hover
+                          role="button"
+                          tabIndex={0}
+                          aria-expanded={isExpanded}
+                          aria-controls={detailsId}
+                          onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              toggleExpandedStacktraceId(stacktrace.stacktraceId);
+                            }
+                          }}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
+                            {stacktrace.stacktraceId}
+                          </TableCell>
+                          <TableCell align="right">{stacktrace.count}</TableCell>
+                          <TableCell>{stacktrace.serviceName || "—"}</TableCell>
+                          <TableCell>{stacktrace.hostName || "—"}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={4} sx={{ py: 0 }}>
+                            <Collapse in={isExpanded}>
+                              <Box id={detailsId} sx={{ p: 1 }}>
+                                {stacktrace.frames.map((frame) => (
+                                  <Typography
+                                    key={`${stacktrace.stacktraceId}-${frame.frameId}`}
+                                    variant="caption"
+                                    sx={{ display: "block", fontFamily: "monospace" }}
+                                  >
+                                    {frame.functionName}{" "}
+                                    {frame.fileName
+                                      ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
+                                      : ""}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      </Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+            {viewMode === "flamegraph" && stacktraces.length > 0 && (
+              <Box sx={{ height: 480 }}>
+                <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
+              </Box>
+            )}
+            {viewMode === "flamescope" && stacktraces.length > 0 && (
+              <ProfilingFlamescope
+                stacktraces={stacktraces}
+                onWindowChange={setFlamescopeWindow}
+                onFrameClick={handleFrameClick}
+              />
+            )}
+          </Paper>
+        </>
       )}
     </Box>
   );

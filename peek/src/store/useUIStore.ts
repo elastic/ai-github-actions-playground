@@ -20,6 +20,7 @@ interface UIState {
   explainModeActive: boolean;
   discoverEditorHeight: number;
   panelEditorHeight: number;
+  discoverSearchCollapsed: boolean;
   traceSearchCollapsed: boolean;
   logsSearchCollapsed: boolean;
   metricsSearchCollapsed: boolean;
@@ -33,6 +34,7 @@ interface UIState {
   setExplainModeActive: (active: boolean) => void;
   setDiscoverEditorHeight: (height: number) => void;
   setPanelEditorHeight: (height: number) => void;
+  setDiscoverSearchCollapsed: (collapsed: boolean) => void;
   setTraceSearchCollapsed: (collapsed: boolean) => void;
   setLogsSearchCollapsed: (collapsed: boolean) => void;
   setMetricsSearchCollapsed: (collapsed: boolean) => void;
@@ -50,6 +52,7 @@ const DEFAULT_UI_STATE = {
   explainModeActive: false,
   discoverEditorHeight: 100,
   panelEditorHeight: 120,
+  discoverSearchCollapsed: false,
   traceSearchCollapsed: false,
   logsSearchCollapsed: false,
   metricsSearchCollapsed: false,
@@ -74,6 +77,7 @@ export const useUIStore = create<UIState>()(
           }),
         setPanelEditorHeight: (height) =>
           set({ panelEditorHeight: clampEditorHeight(height, DEFAULT_UI_STATE.panelEditorHeight) }),
+        setDiscoverSearchCollapsed: (collapsed) => set({ discoverSearchCollapsed: collapsed }),
         setTraceSearchCollapsed: (collapsed) => set({ traceSearchCollapsed: collapsed }),
         setLogsSearchCollapsed: (collapsed) => set({ logsSearchCollapsed: collapsed }),
         setMetricsSearchCollapsed: (collapsed) => set({ metricsSearchCollapsed: collapsed }),
@@ -95,6 +99,7 @@ export const useUIStore = create<UIState>()(
           themeMode: state.themeMode,
           discoverEditorHeight: state.discoverEditorHeight,
           panelEditorHeight: state.panelEditorHeight,
+          discoverSearchCollapsed: state.discoverSearchCollapsed,
           traceSearchCollapsed: state.traceSearchCollapsed,
           logsSearchCollapsed: state.logsSearchCollapsed,
           metricsSearchCollapsed: state.metricsSearchCollapsed,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -20,14 +20,19 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
+import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import AddIcon from "@mui/icons-material/Add";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RemoveIcon from "@mui/icons-material/Remove";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { EditorView } from "@codemirror/view";
+import CodeMirror from "@uiw/react-codemirror";
 
 import { ElasticsearchClient, getFieldValues } from "../../services/es";
 import { useConnectionStore } from "../../store/useConnectionStore";
@@ -42,6 +47,7 @@ import { InsightSlotProvider } from "../InsightSlotContext";
 import InsightSlot from "../InsightSlot";
 import DataTable from "../visualizations/DataTable";
 import EmptyState from "../EmptyState";
+import QueryAnnotationOverlay, { useQueryExplanation } from "../QueryAnnotationOverlay";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
 import LogsSearchPanel from "./LogsSearchPanel";
@@ -136,6 +142,10 @@ export default function LogsPage() {
   const [extractMethod, setExtractMethod] = useState<ExtractMethod>("DISSECT");
   const [extractPattern, setExtractPattern] = useState("%{extracted.value}");
   const [extractSource, setExtractSource] = useState("");
+  const [logsQueryEditorCollapsed, setLogsQueryEditorCollapsed] = useState(true);
+  const [logsEditorFocused, setLogsEditorFocused] = useState(false);
+  const [logsExplainOpen, setLogsExplainOpen] = useState(false);
+  const logsExplainPanelId = useId();
 
   const handleRunQueryRef = useRef<() => void>(() => undefined);
   const generatedQuery = useMemo(
@@ -268,6 +278,17 @@ export default function LogsPage() {
     ],
     [],
   );
+  const logsQueryEditorExtensions = useMemo(
+    () => [
+      ...queryEditorExtensions,
+      EditorView.focusChangeEffect.of((_state, focusing) => {
+        setLogsEditorFocused(focusing);
+        return null;
+      }),
+    ],
+    [queryEditorExtensions],
+  );
+  const logsQueryExplanation = useQueryExplanation(effectiveQuery);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
   useEffect(() => {
@@ -378,6 +399,19 @@ export default function LogsPage() {
     setExtractDialogOpen(false);
   }, [effectiveQuery, extractMethod, extractPattern, runQuery, setRawQuery]);
 
+  const handleOpenExtractBuilder = useCallback(() => {
+    const messageColumnIndex =
+      result?.columns.findIndex((column) => column.name === MESSAGE_FIELD) ?? -1;
+    const sampleMessage =
+      messageColumnIndex >= 0 && result?.values.length
+        ? String(result.values[0]?.[messageColumnIndex] ?? "")
+        : "";
+    setExtractSource(sampleMessage);
+    setExtractMethod("DISSECT");
+    setExtractPattern("%{extracted.value}");
+    setExtractDialogOpen(true);
+  }, [result]);
+
   const runCategorizeQuery = useCallback(() => {
     const nextQuery = appendPipeClause(
       effectiveQuery,
@@ -386,6 +420,57 @@ export default function LogsPage() {
     setRawQuery(nextQuery);
     void runQuery(nextQuery);
     setViewMode("patterns");
+  }, [effectiveQuery, runQuery, setRawQuery]);
+
+  const runChangePointExperience = useCallback(() => {
+    const nextQuery = appendPipeClause(
+      effectiveQuery,
+      "STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, 5 minutes) | EVAL anomaly = CHANGE_POINT(log_count) | WHERE anomaly IS NOT NULL | SORT bucket DESC",
+    );
+    setRawQuery(nextQuery);
+    void runQuery(nextQuery);
+    setViewMode("chart");
+  }, [effectiveQuery, runQuery, setRawQuery]);
+
+  const runErrorTriageExperience = useCallback(() => {
+    setRawQuery(null);
+    setSearchText('"error" OR "exception" OR "timeout" OR "failed"');
+    setViewMode("lines");
+  }, [setRawQuery, setSearchText]);
+
+  const runGuidedGenericMatch = useCallback(
+    (text: string) => {
+      setRawQuery(null);
+      setSearchText(text.trim());
+      setViewMode("lines");
+    },
+    [setRawQuery, setSearchText],
+  );
+
+  const runServicePivotExperience = useCallback(
+    (opts: { serviceName?: string; topN: number }) => {
+      const serviceFilter = opts.serviceName
+        ? `WHERE service.name == "${escapeEsqlString(opts.serviceName)}" | `
+        : "";
+      const nextQuery = appendPipeClause(
+        effectiveQuery,
+        `${serviceFilter}WHERE service.name IS NOT NULL | STATS log_count = COUNT(*) BY service.name | SORT log_count DESC | LIMIT ${opts.topN}`,
+      );
+      setRawQuery(nextQuery);
+      void runQuery(nextQuery);
+      setViewMode("lines");
+    },
+    [effectiveQuery, runQuery, setRawQuery],
+  );
+
+  const runTraceCorrelationExperience = useCallback(() => {
+    const nextQuery = appendPipeClause(
+      effectiveQuery,
+      "WHERE trace.id IS NOT NULL | KEEP @timestamp, service.name, trace.id, message | SORT @timestamp DESC | LIMIT 200",
+    );
+    setRawQuery(nextQuery);
+    void runQuery(nextQuery);
+    setViewMode("lines");
   }, [effectiveQuery, runQuery, setRawQuery]);
 
   const slotContext = useMemo(
@@ -437,6 +522,7 @@ export default function LogsPage() {
                 searchText={searchText}
                 onSearchTextChange={setSearchText}
                 filters={filters}
+                onAddFilter={addFilter}
                 onRemoveFilter={removeFilter}
                 onClearFilters={clearFilters}
                 effectiveQuery={effectiveQuery}
@@ -449,10 +535,129 @@ export default function LogsPage() {
                 searchResultCount={result ? result.values.length : null}
                 collapsed={logsSearchCollapsed}
                 onToggleCollapsed={() => setLogsSearchCollapsed(!logsSearchCollapsed)}
+                onGuidedGenericMatch={runGuidedGenericMatch}
+                onUseCaseChangePoint={runChangePointExperience}
+                onUseCaseCategorize={runCategorizeQuery}
+                onUseCaseErrorTriage={runErrorTriageExperience}
+                onUseCaseServicePivot={runServicePivotExperience}
+                onUseCaseTraceCorrelation={runTraceCorrelationExperience}
+                onUseCaseExtractFields={handleOpenExtractBuilder}
               />
             </Box>
           </InsightSlot>
         </Box>
+
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 0.5,
+              alignItems: "center",
+              mb: logsQueryEditorCollapsed ? 0 : 1,
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={() => setLogsQueryEditorCollapsed((v) => !v)}
+              aria-expanded={!logsQueryEditorCollapsed}
+              aria-label={
+                logsQueryEditorCollapsed
+                  ? "Expand ES|QL query section"
+                  : "Collapse ES|QL query section"
+              }
+            >
+              <ExpandMoreIcon
+                sx={{
+                  transform: logsQueryEditorCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                  fontSize: 20,
+                }}
+              />
+            </IconButton>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              ES|QL Query
+            </Typography>
+          </Box>
+
+          {logsQueryEditorCollapsed && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              noWrap
+              sx={{ display: "block", fontStyle: "italic" }}
+            >
+              {logsQueryExplanation ?? effectiveQuery}
+            </Typography>
+          )}
+
+          <Collapse in={!logsQueryEditorCollapsed} unmountOnExit>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+              Generated from the query builder. Edit before running if needed.
+            </Typography>
+            <Box sx={{ overflow: "hidden", border: 1, borderColor: "divider", borderRadius: 1 }}>
+              <Box sx={{ position: "relative" }}>
+                <CodeMirror
+                  value={effectiveQuery}
+                  onChange={setRawQuery}
+                  onCreateEditor={setQueryContextView}
+                  extensions={logsQueryEditorExtensions}
+                  theme={themeMode}
+                  height="120px"
+                  basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
+                  aria-label="Logs Explorer query editor"
+                />
+                <QueryAnnotationOverlay
+                  query={effectiveQuery}
+                  editorFocused={logsEditorFocused}
+                  height={120}
+                />
+                <Box sx={{ position: "absolute", zIndex: 3, right: 8, bottom: 6 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />}
+                    onClick={() => setLogsExplainOpen((v) => !v)}
+                    aria-expanded={logsExplainOpen}
+                    aria-controls={logsExplainPanelId}
+                    sx={{
+                      minHeight: "unset",
+                      py: 0.5,
+                      px: 1,
+                      opacity: 0.75,
+                      lineHeight: 1.4,
+                      fontSize: "0.7rem",
+                      "&:hover": { opacity: 1 },
+                    }}
+                  >
+                    Explain Query
+                  </Button>
+                </Box>
+              </Box>
+              <Collapse in={logsExplainOpen}>
+                <Box
+                  id={logsExplainPanelId}
+                  sx={{
+                    py: 1,
+                    px: 1.5,
+                    borderTop: 1,
+                    borderColor: "divider",
+                    bgcolor: "action.hover",
+                  }}
+                >
+                  {logsQueryExplanation ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                      {logsQueryExplanation}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic" }}>
+                      Generating explanation… (requires an AI provider configured in Settings)
+                    </Typography>
+                  )}
+                </Box>
+              </Collapse>
+            </Box>
+          </Collapse>
+        </Paper>
 
         {/* View mode toggle */}
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -601,11 +806,6 @@ export default function LogsPage() {
                       />
                     ))}
                   </Box>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                    <Button size="small" variant="text" onClick={runCategorizeQuery}>
-                      Run CATEGORIZE patterns
-                    </Button>
-                  </Stack>
                 </Box>
 
                 {!result && !loading && (

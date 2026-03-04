@@ -81,13 +81,13 @@ export default function EdotCollectorInstall({
   return (
     <>
       <Typography variant="body2" color="text.secondary">
-        Use the generated {activeGuide.label} quickstart commands for {technologyLabel}.
+        Use the generated quickstart commands for {technologyLabel}.
       </Typography>
 
       <Box role="tabpanel">
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="body2" sx={{ flex: 1 }}>
-            {activeGuide.label} quickstart
+            {activeGuide.label} commands
           </Typography>
           <Button size="small" variant="outlined" onClick={() => void handleCopyAll()}>
             {copied ? "Copied!" : "Copy all"}

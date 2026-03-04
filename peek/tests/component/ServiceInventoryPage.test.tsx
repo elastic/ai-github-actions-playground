@@ -137,7 +137,7 @@ describe("ServiceInventoryPage", () => {
     expect(screen.getByText("Service Performance")).toBeInTheDocument();
     expect(screen.getByText("No service data loaded")).toBeInTheDocument();
     expect(
-      screen.getByText("Click Search to discover services from your OpenTelemetry trace data."),
+      screen.getByText("Run a search to discover services from your OpenTelemetry traces."),
     ).toBeInTheDocument();
   });
 

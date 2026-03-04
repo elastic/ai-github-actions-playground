@@ -15,6 +15,8 @@ import Button from "@mui/material/Button";
 
 import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
+import DateRangePicker from "../DateRangePicker";
+import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import type { ElasticsearchConnection } from "../../services/es";
 
@@ -34,6 +36,7 @@ interface ProfilingValuePickerProps {
   connection: ElasticsearchConnection;
   timeFrom: string;
   timeTo: string;
+  onTimeRangeChange?: (from: string, to: string) => void;
   onSelect: (value: string) => void;
   onBack: () => void;
 }
@@ -43,6 +46,7 @@ export default function ProfilingValuePicker({
   connection,
   timeFrom,
   timeTo,
+  onTimeRangeChange,
   onSelect,
   onBack,
 }: ProfilingValuePickerProps) {
@@ -95,7 +99,11 @@ export default function ProfilingValuePicker({
     ? `No ${dimensionLabel.toLowerCase()} data found`
     : `No results match "${search}"`;
   const emptyDescription = noData
-    ? `No profiling samples found for the selected time range.`
+    ? dimension === "service.name"
+      ? "No service labels were found in profiling samples for the current time range. Try Process focus, expand the time range, or ensure service.name is attached to profiling data."
+      : dimension === "host.name"
+        ? "No host labels were found in profiling samples for the current time range. Try Process focus, expand the time range, or ensure host.name is attached to profiling data."
+        : "No profiling samples found for the current time range."
     : undefined;
 
   return (
@@ -113,10 +121,22 @@ export default function ProfilingValuePicker({
         <Box>
           <Typography variant="h6">Pick a {dimensionLabel.toLowerCase()}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Ranked by profiling activity in the selected time range
+            Ranked by profiling activity in the current time range
           </Typography>
         </Box>
       </Box>
+
+      {onTimeRangeChange && (
+        <Box sx={{ mb: 2 }}>
+          <DateRangePicker
+            value={toDashboardTimeRange({ from: timeFrom, to: timeTo })}
+            onChange={(range) => {
+              const traceRange = toTraceTimeRange(range);
+              onTimeRangeChange(traceRange.from, traceRange.to);
+            }}
+          />
+        </Box>
+      )}
 
       <TextField
         placeholder={`Search ${dimensionLabel.toLowerCase()} names…`}

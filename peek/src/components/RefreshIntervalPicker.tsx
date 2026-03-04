@@ -2,6 +2,7 @@ import { useState } from "react";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 
 export type RefreshIntervalOption = { label: string; seconds: number };
 
@@ -28,6 +29,7 @@ export default function RefreshIntervalPicker({
       <Button
         size={size}
         variant={variant}
+        startIcon={<AutorenewIcon sx={{ fontSize: "0.95rem" }} />}
         onClick={(event) => setAnchorEl(event.currentTarget)}
         aria-haspopup="menu"
         aria-expanded={Boolean(anchorEl)}

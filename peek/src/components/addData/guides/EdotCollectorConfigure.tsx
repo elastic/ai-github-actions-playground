@@ -94,20 +94,22 @@ export default function EdotCollectorConfigure({
         </Alert>
       )}
 
-      <Tabs
-        value={platform}
-        onChange={(_, value: Platform) => onPlatformChange(value)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          minHeight: COMPONENT_HEIGHTS.tab,
-          "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
-        }}
-      >
-        {displayTabs.map((tab) => (
-          <Tab key={tab.value} value={tab.value} label={tab.label} />
-        ))}
-      </Tabs>
+      {displayTabs.length > 1 && (
+        <Tabs
+          value={platform}
+          onChange={(_, value: Platform) => onPlatformChange(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            minHeight: COMPONENT_HEIGHTS.tab,
+            "& .MuiTab-root": { minHeight: COMPONENT_HEIGHTS.tab, py: 0.5 },
+          }}
+        >
+          {displayTabs.map((tab) => (
+            <Tab key={tab.value} value={tab.value} label={tab.label} />
+          ))}
+        </Tabs>
+      )}
     </>
   );
 }
