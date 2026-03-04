@@ -201,16 +201,16 @@ export function computeCheckinStaleness(lastSeen: string | null): {
 
 export function deriveAgentStatus(lastSeen: string | null): string {
   const { label, severity } = computeCheckinStaleness(lastSeen);
-  if (label === "unknown") return "unknown";
+  if (label === "unknown") return "Inactive";
   switch (severity) {
     case "fresh":
       return "Healthy";
     case "stale":
-      return "Offline";
+      return "Unhealthy";
     case "critical":
       return "Offline";
     default:
-      return "unknown";
+      return "Inactive";
   }
 }
 
@@ -232,7 +232,7 @@ export function aggregateFleetPolicies(agents: FleetAgentSummary[]): FleetPolicy
     };
     current.agents += 1;
     const status = agent.status.trim().toLowerCase();
-    if (status === "healthy") current.healthyAgents += 1;
+    if (status === "healthy" || status === "online") current.healthyAgents += 1;
     if (status === "degraded" || status === "warning") current.degradedAgents += 1;
     if (status === "error") current.errorAgents += 1;
     if (agent.active === false) current.inactiveAgents += 1;

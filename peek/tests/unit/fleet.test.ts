@@ -129,7 +129,7 @@ describe("aggregateFleetPolicies", () => {
     expect(policies).toHaveLength(2);
     const p1 = policies.find((p) => p.policyId === "p1")!;
     expect(p1.agents).toBe(2);
-    expect(p1.onlineAgents).toBe(1);
+    expect(p1.healthyAgents).toBe(1);
     expect(p1.errorAgents).toBe(1);
   });
 
