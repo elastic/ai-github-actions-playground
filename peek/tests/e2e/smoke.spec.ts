@@ -26,29 +26,24 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "color-contrast": 2,
     },
     Metrics: {
-      "aria-input-field-name": 1,
       "aria-prohibited-attr": 1,
       "color-contrast": 2,
     },
     Services: {},
     Traces: {
-      "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
       "color-contrast": 16,
     },
     "Query Lab": {
-      "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
-      "color-contrast": 12,
+      "color-contrast": 16,
     },
     Logs: {
-      "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
       "color-contrast": 17,
       "scrollable-region-focusable": 1,
     },
     Console: {
-      "aria-input-field-name": 1,
       "color-contrast": 16,
       "scrollable-region-focusable": 1,
     },
@@ -58,25 +53,21 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
   },
   "mobile-safari": {
     "Query Lab": {
-      "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
-      "color-contrast": 12,
+      "color-contrast": 16,
       "scrollable-region-focusable": 2,
     },
     Logs: {
-      "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
       "color-contrast": 16,
       "scrollable-region-focusable": 2,
     },
     Traces: {
-      "aria-input-field-name": 2,
       "aria-prohibited-attr": 1,
       "color-contrast": 12,
       "scrollable-region-focusable": 1,
     },
     Console: {
-      "aria-input-field-name": 1,
       "color-contrast": 16,
       "scrollable-region-focusable": 2,
     },
