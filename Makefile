@@ -109,6 +109,7 @@ serve-explore: setup
 	@echo "Replaying OTel fixtures + seeding data..."
 	@cd $(PEEK_DIR) && node scripts/otel-replay.mjs
 	@cd $(PEEK_DIR) && node scripts/seed-elasticsearch.mjs --url http://localhost:9200 --wait-for-ready
+	@cd $(PEEK_DIR) && node scripts/seed-k8s.mjs --url http://localhost:9200
 	@echo "Waiting for seeded data to be searchable..."
 	@for i in $$(seq 1 30); do \
 		curl -sf 'http://localhost:9200/web_logs/_count' | grep -Eq '"count":[[:space:]]*[1-9][0-9]*' && break; \
