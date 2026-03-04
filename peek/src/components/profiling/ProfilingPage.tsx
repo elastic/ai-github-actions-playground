@@ -20,6 +20,7 @@ import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import DateRangePicker from "../DateRangePicker";
+import EmptyState from "../EmptyState";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
@@ -28,6 +29,7 @@ import { useConnectionStore } from "../../store/useConnectionStore";
 import { useQueryStore } from "../../store/useQueryStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import type { EsqlResponse } from "../../types";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import {
   buildProfilingEventsQuery,
@@ -50,6 +52,14 @@ import {
   normalizeTopFunctions,
   parseFrameIds,
 } from "./profilingUtils";
+
+/** Height for toolbar-level interactive controls (chips, text fields). */
+const TOOLBAR_CONTROL_HEIGHT = COMPONENT_HEIGHTS.input;
+
+/** Detect ES|QL "Unknown index" errors that indicate missing profiling data streams. */
+function isMissingProfilingIndex(error: string): boolean {
+  return /Unknown index \[profiling-/i.test(error);
+}
 
 function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
   const index = columns.findIndex((column) => column.name === field);
@@ -86,6 +96,7 @@ export default function ProfilingPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasRun, setHasRun] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const [topFunctionsRows, setTopFunctionsRows] = useState<TopFunctionRow[]>([]);
   const [timelineResult, setTimelineResult] = useState<EsqlResponse | null>(null);
@@ -200,6 +211,7 @@ export default function ProfilingPage() {
     const client = new ElasticsearchClient(connection);
     setLoading(true);
     setError(null);
+    setHasRun(true);
     try {
       if (viewMode === "topFunctions") {
         await runTopFunctions(client, controller.signal);
@@ -267,7 +279,7 @@ export default function ProfilingPage() {
             </Button>
           </Box>
         </Box>
-        <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
+        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mb: 1 }}>
           {(["topFunctions", "stacktraces", "timeline", "flamegraph", "flamescope"] as const).map(
             (mode) => (
               <Chip
@@ -287,6 +299,7 @@ export default function ProfilingPage() {
                 variant={viewMode === mode ? "filled" : "outlined"}
                 color={viewMode === mode ? "primary" : "default"}
                 onClick={() => setViewMode(mode)}
+                sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               />
             ),
           )}
@@ -353,107 +366,131 @@ export default function ProfilingPage() {
         </Box>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && !isMissingProfilingIndex(error) && <Alert severity="error">{error}</Alert>}
+      {error && isMissingProfilingIndex(error) && (
+        <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+          <EmptyState
+            heading="No profiling data available"
+            description="The profiling-events data stream was not found. Enable Universal Profiling in your Elastic cluster to start collecting continuous profiling data."
+          />
+        </Paper>
+      )}
 
-      <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
-        {!loading &&
-          topFunctionsRows.length === 0 &&
-          stacktraces.length === 0 &&
-          !timelineResult && (
-            <Box sx={{ p: 3 }}>
-              <Typography variant="body2" color="text.primary">
-                Run the selected view to load profiling data.
-              </Typography>
+      {!(error && isMissingProfilingIndex(error)) && (
+        <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+          {!loading &&
+            !error &&
+            !hasRun &&
+            topFunctionsRows.length === 0 &&
+            stacktraces.length === 0 &&
+            !timelineResult && (
+              <Box sx={{ p: 3 }}>
+                <Typography variant="body2" color="text.primary">
+                  Run the selected view to load profiling data.
+                </Typography>
+              </Box>
+            )}
+          {!loading &&
+            !error &&
+            hasRun &&
+            topFunctionsRows.length === 0 &&
+            stacktraces.length === 0 &&
+            !timelineResult && (
+              <EmptyState
+                heading="No profiling data found"
+                description="No samples matched the selected filters and time range."
+                size="small"
+              />
+            )}
+          {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Function</TableCell>
+                  <TableCell align="right">Self count</TableCell>
+                  <TableCell align="right">Total count</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {topFunctionsRows.map((row, index) => (
+                  <TableRow key={`${row.functionName}-${index}`}>
+                    <TableCell>{row.functionName}</TableCell>
+                    <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
+                    <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          {viewMode === "timeline" && timelineResult && (
+            <Box sx={{ height: 360 }}>
+              <TimeSeriesChart data={timelineResult} options={{ smooth: true, showArea: false }} />
             </Box>
           )}
-        {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Function</TableCell>
-                <TableCell align="right">Self count</TableCell>
-                <TableCell align="right">Total count</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {topFunctionsRows.map((row, index) => (
-                <TableRow key={`${row.functionName}-${index}`}>
-                  <TableCell>{row.functionName}</TableCell>
-                  <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
-                  <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
+          {viewMode === "stacktraces" && stacktraces.length > 0 && (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Stacktrace ID</TableCell>
+                  <TableCell align="right">Count</TableCell>
+                  <TableCell>Service</TableCell>
+                  <TableCell>Host</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        {viewMode === "timeline" && timelineResult && (
-          <Box sx={{ height: 360 }}>
-            <TimeSeriesChart data={timelineResult} options={{ smooth: true, showArea: false }} />
-          </Box>
-        )}
-        {viewMode === "stacktraces" && stacktraces.length > 0 && (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Stacktrace ID</TableCell>
-                <TableCell align="right">Count</TableCell>
-                <TableCell>Service</TableCell>
-                <TableCell>Host</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {stacktraces.map((stacktrace) => (
-                <Fragment key={stacktrace.stacktraceId}>
-                  <TableRow
-                    hover
-                    onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
-                      {stacktrace.stacktraceId}
-                    </TableCell>
-                    <TableCell align="right">{stacktrace.count}</TableCell>
-                    <TableCell>{stacktrace.serviceName || "—"}</TableCell>
-                    <TableCell>{stacktrace.hostName || "—"}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={4} sx={{ py: 0 }}>
-                      <Collapse in={expandedStacktraceIds.has(stacktrace.stacktraceId)}>
-                        <Box sx={{ p: 1 }}>
-                          {stacktrace.frames.map((frame) => (
-                            <Typography
-                              key={`${stacktrace.stacktraceId}-${frame.frameId}`}
-                              variant="caption"
-                              sx={{ display: "block", fontFamily: "monospace" }}
-                            >
-                              {frame.functionName}{" "}
-                              {frame.fileName
-                                ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
-                                : ""}
-                            </Typography>
-                          ))}
-                        </Box>
-                      </Collapse>
-                    </TableCell>
-                  </TableRow>
-                </Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        {viewMode === "flamegraph" && stacktraces.length > 0 && (
-          <Box sx={{ height: 480 }}>
-            <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
-          </Box>
-        )}
-        {viewMode === "flamescope" && stacktraces.length > 0 && (
-          <ProfilingFlamescope
-            stacktraces={stacktraces}
-            onWindowChange={setFlamescopeWindow}
-            onFrameClick={handleFrameClick}
-          />
-        )}
-      </Paper>
+              </TableHead>
+              <TableBody>
+                {stacktraces.map((stacktrace) => (
+                  <Fragment key={stacktrace.stacktraceId}>
+                    <TableRow
+                      hover
+                      onClick={() => toggleExpandedStacktraceId(stacktrace.stacktraceId)}
+                      sx={{ cursor: "pointer" }}
+                    >
+                      <TableCell sx={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
+                        {stacktrace.stacktraceId}
+                      </TableCell>
+                      <TableCell align="right">{stacktrace.count}</TableCell>
+                      <TableCell>{stacktrace.serviceName || "—"}</TableCell>
+                      <TableCell>{stacktrace.hostName || "—"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={4} sx={{ py: 0 }}>
+                        <Collapse in={expandedStacktraceIds.has(stacktrace.stacktraceId)}>
+                          <Box sx={{ p: 1 }}>
+                            {stacktrace.frames.map((frame) => (
+                              <Typography
+                                key={`${stacktrace.stacktraceId}-${frame.frameId}`}
+                                variant="caption"
+                                sx={{ display: "block", fontFamily: "monospace" }}
+                              >
+                                {frame.functionName}{" "}
+                                {frame.fileName
+                                  ? `(${frame.fileName}${frame.lineNumber ? `:${frame.lineNumber}` : ""})`
+                                  : ""}
+                              </Typography>
+                            ))}
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          {viewMode === "flamegraph" && stacktraces.length > 0 && (
+            <Box sx={{ height: 480 }}>
+              <ProfilingFlamegraph tree={flamegraphTree} onFrameClick={handleFrameClick} />
+            </Box>
+          )}
+          {viewMode === "flamescope" && stacktraces.length > 0 && (
+            <ProfilingFlamescope
+              stacktraces={stacktraces}
+              onWindowChange={setFlamescopeWindow}
+              onFrameClick={handleFrameClick}
+            />
+          )}
+        </Paper>
+      )}
     </Box>
   );
 }
