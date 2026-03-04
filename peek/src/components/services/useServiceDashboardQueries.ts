@@ -7,8 +7,10 @@ import type { EsqlResponse, ElasticsearchConnection } from "../../types";
 import {
   buildServiceDeploymentsQuery,
   buildServiceRecentTracesQuery,
+  buildServiceRouteSparklineQuery,
   buildServiceRoutesQuery,
 } from "./serviceDashboardQueryBuilder";
+import { type RouteSparklineData, parseRouteSparklineData } from "./serviceDashboardHelpers";
 
 interface UseServiceDashboardQueriesParams {
   connection: ElasticsearchConnection | null;
@@ -76,6 +78,10 @@ export function useServiceDashboardQueries({
   const latestRoutesQueryRef = useRef<string | null>(null);
   const latestTracesQueryRef = useRef<string | null>(null);
   const latestDeploymentsQueryRef = useRef<string | null>(null);
+  const latestSparklineQueryRef = useRef<string | null>(null);
+  const [routeSparklineData, setRouteSparklineData] = useState<Record<string, RouteSparklineData>>(
+    {},
+  );
 
   const {
     runQuery: runRoutesQuery,
@@ -146,13 +152,31 @@ export function useServiceDashboardQueries({
     ),
   });
 
-  const loading = routesLoading || tracesLoading || deploymentsLoading;
-  const error = routesError || tracesError || deploymentsError;
+  const {
+    runQuery: runSparklineQuery,
+    loading: sparklineLoading,
+    error: sparklineError,
+    clearError: clearSparklineError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: useCallback((data: EsqlResponse, executedQuery: string) => {
+      if (executedQuery !== latestSparklineQueryRef.current) return;
+      setRouteSparklineData(parseRouteSparklineData(data));
+    }, []),
+    onFailure: useCallback((failedQuery: string) => {
+      if (failedQuery !== latestSparklineQueryRef.current) return;
+      setRouteSparklineData({});
+    }, []),
+  });
+
+  const loading = routesLoading || tracesLoading || deploymentsLoading || sparklineLoading;
+  const error = routesError || tracesError || deploymentsError || sparklineError;
 
   const clearLatestQueries = useCallback(() => {
     latestRoutesQueryRef.current = null;
     latestTracesQueryRef.current = null;
     latestDeploymentsQueryRef.current = null;
+    latestSparklineQueryRef.current = null;
   }, []);
 
   const handleSearch = useCallback(() => {
@@ -166,7 +190,19 @@ export function useServiceDashboardQueries({
     const deploymentsQuery = buildServiceDeploymentsQuery(filters);
     latestDeploymentsQueryRef.current = deploymentsQuery.trim();
     runDeploymentsQuery(deploymentsQuery);
-  }, [runRoutesQuery, runTracesQuery, runDeploymentsQuery, serviceName, timeFrom, timeTo]);
+    const sparklineQuery = buildServiceRouteSparklineQuery(filters);
+    latestSparklineQueryRef.current = sparklineQuery.trim();
+    setRouteSparklineData({});
+    runSparklineQuery(sparklineQuery);
+  }, [
+    runRoutesQuery,
+    runTracesQuery,
+    runDeploymentsQuery,
+    runSparklineQuery,
+    serviceName,
+    timeFrom,
+    timeTo,
+  ]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
@@ -174,14 +210,17 @@ export function useServiceDashboardQueries({
     clearRoutesError();
     clearTracesError();
     clearDeploymentsError();
+    clearSparklineError();
     setRoutesResult(null);
     setTracesResult(null);
     setDeploymentsResult(null);
+    setRouteSparklineData({});
   }, [
     clearLatestQueries,
     clearRoutesError,
     clearTracesError,
     clearDeploymentsError,
+    clearSparklineError,
     loading,
     setRoutesResult,
     setTracesResult,
@@ -195,6 +234,7 @@ export function useServiceDashboardQueries({
     handleReset,
     handleSearch,
     loading,
+    routeSparklineData,
     routesResult,
     tracesResult,
   };

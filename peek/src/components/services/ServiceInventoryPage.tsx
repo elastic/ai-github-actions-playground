@@ -18,7 +18,6 @@ import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
 import ServiceOverviewCards from "./ServiceOverviewCards";
 import ServicePerformanceCharts from "./ServicePerformanceCharts";
-import ServiceBusiestPanel from "./ServiceBusiestPanel";
 import ServiceInsightsPanel from "./ServiceInsightsPanel";
 import ServiceInventoryTable from "./ServiceInventoryTable";
 import { useServiceInventorySearch } from "./useServiceInventorySearch";
@@ -143,7 +142,6 @@ export default function ServiceInventoryPage() {
           <ServiceInsightsPanel serviceRows={serviceRows} />
           <ServiceOverviewCards serviceRows={serviceRows} />
           <ServicePerformanceCharts serviceRows={serviceRows} />
-          <ServiceBusiestPanel serviceRows={serviceRows} onViewTraces={handleViewTraces} />
           <Paper variant="outlined" sx={{ overflow: "auto" }}>
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>

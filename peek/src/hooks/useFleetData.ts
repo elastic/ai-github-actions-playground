@@ -8,6 +8,7 @@ import {
   loadElasticAgentInventory,
   loadFleetActions,
   loadFleetActionResults,
+  loadFleetAgents,
   type FleetServerStatusMetrics,
   type FleetAgentVersionCount,
   type FleetOutputHealth,
@@ -72,6 +73,7 @@ export function useFleetData(): UseFleetDataResult {
         inventoryResultSettled,
         actionsResult,
         actionResultsResult,
+        fleetAgentsResult,
       ] = await Promise.allSettled([
         loadFleetServerStatus(client),
         loadFleetAgentVersions(client),
@@ -79,6 +81,7 @@ export function useFleetData(): UseFleetDataResult {
         loadElasticAgentInventory(client),
         loadFleetActions(client),
         loadFleetActionResults(client),
+        loadFleetAgents(client),
       ]);
 
       const errors: string[] = [];
@@ -94,6 +97,29 @@ export function useFleetData(): UseFleetDataResult {
       };
 
       const inventoryResult = value(inventoryResultSettled, "Agent inventory");
+      const fleetAgents = value(fleetAgentsResult, "Fleet agents");
+
+      // Enrich inventory agents with status/policy from fleet-agents index
+      const fleetMap = new Map<string, { status: string; policyId: string }>();
+      if (fleetAgents) {
+        for (const fa of fleetAgents.agents) {
+          if (!fleetMap.has(fa.id)) {
+            fleetMap.set(fa.id, { status: fa.status, policyId: fa.policyId });
+          }
+        }
+      }
+      const enrichedAgents: ElasticAgentInfo[] = (inventoryResult?.agents ?? []).map((a) => {
+        const match = fleetMap.get(a.agentId);
+        const status = match?.status?.trim();
+        const policyId = match?.policyId?.trim();
+        return match
+          ? {
+              ...a,
+              status: status && status.toLowerCase() !== "unknown" ? status : a.status,
+              policyId: policyId && policyId.toLowerCase() !== "unknown" ? policyId : a.policyId,
+            }
+          : a;
+      });
 
       const hasSuccessfulSource =
         serverStatusResult.status === "fulfilled" ||
@@ -111,7 +137,7 @@ export function useFleetData(): UseFleetDataResult {
           serverStatus: value(serverStatusResult, "Server status") ?? null,
           agentVersions: value(agentVersionsResult, "Agent versions") ?? [],
           outputHealth: value(outputHealthResult, "Output health") ?? [],
-          agentInventory: inventoryResult?.agents ?? [],
+          agentInventory: enrichedAgents,
           agentInventoryTotal: inventoryResult?.total ?? 0,
           agentInventoryTotalErrorCount: inventoryResult?.errorAgentTotal ?? 0,
           actions: value(actionsResult, "Actions") ?? [],

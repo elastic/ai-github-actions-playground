@@ -112,6 +112,8 @@ export interface ElasticAgentInfo {
   lastSeen: string;
   logCount: number;
   errorCount: number;
+  status: string;
+  policyId: string;
 }
 
 export interface ElasticAgentLogEntry {
@@ -191,6 +193,25 @@ export function computeCheckinStaleness(lastSeen: string | null): {
   }
   const days = Math.floor(hours / 24);
   return { label: `${days}d ago`, severity: "critical" };
+}
+
+// ---------------------------------------------------------------------------
+// Derive agent status from checkin staleness
+// ---------------------------------------------------------------------------
+
+export function deriveAgentStatus(lastSeen: string | null): string {
+  const { label, severity } = computeCheckinStaleness(lastSeen);
+  if (label === "unknown") return "unknown";
+  switch (severity) {
+    case "fresh":
+      return "online";
+    case "stale":
+      return "offline";
+    case "critical":
+      return "offline";
+    default:
+      return "unknown";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -457,14 +478,17 @@ export async function loadElasticAgentInventory(
     const osPlatform = readNestedString(source, ["host", "os", "platform"], "");
     const osVersion = readNestedString(source, ["host", "os", "version"], "");
     const osFull = readNestedString(source, ["host", "os", "full"], "");
+    const lastSeen = readNestedString(source, ["@timestamp"], "");
     return {
       agentId: bucket.key,
       hostname: readNestedString(source, ["host", "hostname"], "unknown"),
       version: readNestedString(source, ["agent", "version"], "unknown"),
       os: osName ? { name: osName, platform: osPlatform, version: osVersion, full: osFull } : null,
-      lastSeen: readNestedString(source, ["@timestamp"], ""),
+      lastSeen,
       logCount: bucket.doc_count,
       errorCount: bucket.errors.doc_count,
+      status: deriveAgentStatus(lastSeen),
+      policyId: "—",
     };
   });
   return {
@@ -532,14 +556,17 @@ export async function loadElasticAgentInfo(
   const osPlatform = readNestedString(source, ["host", "os", "platform"], "");
   const osVersion = readNestedString(source, ["host", "os", "version"], "");
   const osFull = readNestedString(source, ["host", "os", "full"], "");
+  const lastSeen = readNestedString(source, ["@timestamp"], "");
   return {
     agentId: bucket.key,
     hostname: readNestedString(source, ["host", "hostname"], "unknown"),
     version: readNestedString(source, ["agent", "version"], "unknown"),
     os: osName ? { name: osName, platform: osPlatform, version: osVersion, full: osFull } : null,
-    lastSeen: readNestedString(source, ["@timestamp"], ""),
+    lastSeen,
     logCount: bucket.doc_count,
     errorCount: bucket.errors.doc_count,
+    status: deriveAgentStatus(lastSeen),
+    policyId: "—",
   };
 }
 
