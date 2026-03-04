@@ -21,7 +21,7 @@ import {
 
 function createMockDatasourcePair<T>(mockResponse: T) {
   const mockClient = {
-    kind: "ElasticsearchDatasource" as const,
+    kind: ELASTICSEARCH_DATASOURCE_KIND,
     query: vi.fn().mockResolvedValue(mockResponse),
     healthCheck: vi.fn(),
     getConnection: vi.fn(),
@@ -124,6 +124,18 @@ describe("ESQLTimeSeriesQuery plugin", () => {
     expect(deps.variables).toEqual(["index", "host"]);
   });
 
+  it("extracts hyphenated variable dependencies", () => {
+    const spec: ESQLTimeSeriesQuerySpec = {
+      query: "FROM {{logs-index}} | WHERE host='{{host-name}}'",
+    };
+    const deps = ESQLTimeSeriesQuery.dependsOn!(spec, {
+      timeRange: { start: new Date(), end: new Date() },
+      variableState: {},
+      datasourceStore: {} as never,
+    });
+    expect(deps.variables).toEqual(["logs-index", "host-name"]);
+  });
+
   it("executes query through datasource client and transforms result", async () => {
     const mockResponse = {
       columns: [
@@ -220,6 +232,35 @@ describe("ESQLTimeSeriesQuery plugin", () => {
 
     const calledQuery = mockClient.query.mock.calls[0]?.[0]?.query;
     expect(calledQuery).toBe("FROM  | WHERE success = false | WHERE retries = 0");
+  });
+
+  it("interpolates hyphenated variables in query text", async () => {
+    const mockResponse = {
+      columns: [{ name: "count", type: "long" }],
+      values: [[1]],
+      executionTimeMs: 1,
+    };
+    const { mockClient, mockDatasourceStore } = createMockDatasourcePair(mockResponse);
+
+    await ESQLTimeSeriesQuery.getTimeSeriesData(
+      {
+        query: "FROM {{logs-index}} | WHERE host = '{{host-name}}'",
+      },
+      {
+        timeRange: {
+          start: new Date("2024-01-01T00:00:00Z"),
+          end: new Date("2024-01-01T01:00:00Z"),
+        },
+        variableState: {
+          "logs-index": { value: "logs-*", loading: false },
+          "host-name": { value: "server-1", loading: false },
+        },
+        datasourceStore: mockDatasourceStore,
+      },
+    );
+
+    const calledQuery = mockClient.query.mock.calls[0]?.[0]?.query;
+    expect(calledQuery).toBe("FROM logs-* | WHERE host = 'server-1'");
   });
 
   it("passes time range filter to the ES|QL request", async () => {

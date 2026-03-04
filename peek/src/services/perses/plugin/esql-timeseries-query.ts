@@ -25,7 +25,7 @@ function interpolateVariables(
   query: string,
   variableState: TimeSeriesQueryContext["variableState"],
 ): string {
-  return query.replace(/\{\{(\w+)\}\}/g, (_token, name: string) => {
+  return query.replace(/\{\{([^{}\s]+)\}\}/g, (_token, name: string) => {
     const state = variableState[name];
     if (!state || state.value === undefined || state.value === null) {
       throw new Error(`Missing ES|QL variable: ${name}`);
@@ -89,7 +89,7 @@ export const ESQLTimeSeriesQuery: TimeSeriesQueryPlugin<ESQLTimeSeriesQuerySpec>
 
   dependsOn(spec: ESQLTimeSeriesQuerySpec) {
     const variables = new Set<string>();
-    const pattern = /\{\{(\w+)\}\}/g;
+    const pattern = /\{\{([^{}\s]+)\}\}/g;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(spec.query)) !== null) {
       if (match[1]) {
