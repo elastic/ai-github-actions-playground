@@ -21,8 +21,9 @@ export function compareSemver(a: string, b: string): number {
 
 function splitSemver(version: string): [string, string] {
   const normalized = version.split("+", 1)[0] ?? "";
-  const [core = "", pre = ""] = normalized.split("-", 2);
-  return [core, pre];
+  const dashIndex = normalized.indexOf("-");
+  if (dashIndex === -1) return [normalized, ""];
+  return [normalized.slice(0, dashIndex), normalized.slice(dashIndex + 1)];
 }
 
 function toInt(value: string): number {
