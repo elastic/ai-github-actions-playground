@@ -42,10 +42,18 @@ export async function buildChatRuntime({
   tools: ToolSet;
   stopWhen: ReturnType<typeof stepCountIs>;
 }> {
+  let currentPathname = pathname;
+  const trackingNavigate = navigate
+    ? (path: string) => {
+        currentPathname = path;
+        navigate(path);
+      }
+    : undefined;
+
   const localTools: ToolSet = {
     ...getLocalChatTools(connection),
-    ...getScreenContextTool(() => pathname),
-    ...getBrowserControlTools(navigate),
+    ...getScreenContextTool(() => currentPathname),
+    ...getBrowserControlTools(trackingNavigate),
   };
 
   const { tools, mcpInstructions, maxStepCountLimit } = await discoverMcpTools(
