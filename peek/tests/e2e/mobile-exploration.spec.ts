@@ -14,10 +14,17 @@ async function connectToMockCluster(page: Page) {
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 }
 
-const mobileTest = test.extend({ device: devices["iPhone 14"] });
+const iPhone14 = devices["iPhone 14"];
+test.use({
+  viewport: iPhone14.viewport,
+  userAgent: iPhone14.userAgent,
+  deviceScaleFactor: iPhone14.deviceScaleFactor,
+  isMobile: iPhone14.isMobile,
+  hasTouch: iPhone14.hasTouch,
+});
 
-mobileTest.describe("Mobile Exploration @mobile", () => {
-  mobileTest("should render correctly on mobile", async ({ page }) => {
+test.describe("Mobile Exploration @mobile", () => {
+  test("should render correctly on mobile", async ({ page }) => {
     await page.goto("");
 
     // Check if the logo is visible and not too large for the viewport
@@ -54,26 +61,23 @@ mobileTest.describe("Mobile Exploration @mobile", () => {
     ).toHaveLength(0);
   });
 
-  mobileTest(
-    "sidebar and header should be visible on mobile after connection",
-    async ({ page }) => {
-      await connectToMockCluster(page);
+  test("sidebar and header should be visible on mobile after connection", async ({ page }) => {
+    await connectToMockCluster(page);
 
-      const sidebar = page.getByRole("navigation", { name: "Main navigation" });
-      await expect(sidebar).toBeVisible();
+    const sidebar = page.getByRole("navigation", { name: "Main navigation" });
+    await expect(sidebar).toBeVisible();
 
-      const header = page.getByRole("banner");
-      await expect(header).toBeVisible();
+    const header = page.getByRole("banner");
+    await expect(header).toBeVisible();
 
-      // Axe accessibility scan on mobile post-connect page
-      const postConnectResults = await new AxeBuilder({ page }).analyze();
-      const postConnectViolations = postConnectResults.violations.filter(
-        (v) => v.id === "color-contrast",
-      );
-      expect(
-        postConnectViolations,
-        `Mobile post-connect page has color-contrast violations: ${JSON.stringify(postConnectViolations, null, 2)}`,
-      ).toHaveLength(0);
-    },
-  );
+    // Axe accessibility scan on mobile post-connect page
+    const postConnectResults = await new AxeBuilder({ page }).analyze();
+    const postConnectViolations = postConnectResults.violations.filter(
+      (v) => v.id === "color-contrast",
+    );
+    expect(
+      postConnectViolations,
+      `Mobile post-connect page has color-contrast violations: ${JSON.stringify(postConnectViolations, null, 2)}`,
+    ).toHaveLength(0);
+  });
 });
