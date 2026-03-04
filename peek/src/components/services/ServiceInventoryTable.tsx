@@ -101,29 +101,24 @@ export default function ServiceInventoryTable({
       <TableBody>
         {serviceRows.map((row) => {
           const sparkline = sparklineData?.[row.serviceName];
+          const slotId = rowInsightSlotIds?.[row.serviceName];
+          const serviceLink = (
+            <Link
+              component={RouterLink}
+              to={`/services/${encodeURIComponent(row.serviceName)}`}
+              underline="hover"
+              sx={{ fontWeight: 500 }}
+            >
+              {row.serviceName}
+            </Link>
+          );
           return (
             <TableRow key={row.serviceName} hover>
               <TableCell>
-                {rowInsightSlotIds?.[row.serviceName] != null ? (
-                  <InsightSlot slotId={rowInsightSlotIds[row.serviceName]!}>
-                    <Link
-                      component={RouterLink}
-                      to={`/services/${encodeURIComponent(row.serviceName)}`}
-                      underline="hover"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {row.serviceName}
-                    </Link>
-                  </InsightSlot>
+                {slotId != null ? (
+                  <InsightSlot slotId={slotId}>{serviceLink}</InsightSlot>
                 ) : (
-                  <Link
-                    component={RouterLink}
-                    to={`/services/${encodeURIComponent(row.serviceName)}`}
-                    underline="hover"
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {row.serviceName}
-                  </Link>
+                  serviceLink
                 )}
               </TableCell>
               <TableCell align="right">
