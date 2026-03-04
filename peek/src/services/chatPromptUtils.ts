@@ -48,11 +48,5 @@ export function truncateCellValue(value: unknown): { value: unknown; truncated: 
 export async function runWithToolTimeout<T>(
   operation: (signal: AbortSignal) => Promise<T>,
 ): Promise<T> {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), CHAT_TOOL_TIMEOUT_MS);
-  try {
-    return await operation(controller.signal);
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return operation(AbortSignal.timeout(CHAT_TOOL_TIMEOUT_MS));
 }

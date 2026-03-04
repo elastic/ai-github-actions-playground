@@ -25,7 +25,7 @@ export interface RawRequestError {
 }
 
 function isAbortError(err: unknown): boolean {
-  return err instanceof DOMException && err.name === "AbortError";
+  return err instanceof DOMException && (err.name === "AbortError" || err.name === "TimeoutError");
 }
 
 const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -69,18 +69,14 @@ export async function executeRawRequest(
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const trimmedPath = path.trim();
   const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
-  const controller = new AbortController();
+  // Keep manual timer wiring for fake-timer tests while using AbortSignal.any for composition.
+  const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => {
-    controller.abort(new DOMException("Request timed out", "AbortError"));
+    timeoutController.abort(new DOMException("Request timed out", "AbortError"));
   }, RAW_REQUEST_TIMEOUT_MS);
-  const onAbort = () => {
-    controller.abort(signal?.reason);
-  };
-  if (signal?.aborted) {
-    onAbort();
-  } else {
-    signal?.addEventListener("abort", onAbort, { once: true });
-  }
+  const signals: AbortSignal[] = [timeoutController.signal];
+  if (signal) signals.push(signal);
+  const combinedSignal = AbortSignal.any(signals);
   const rawBody = body && body.trim() ? body : undefined;
   const normalizedMethod = method.toUpperCase();
   const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
@@ -94,7 +90,7 @@ export async function executeRawRequest(
           {
             method: normalizedMethod,
             body: rawBody,
-            signal: controller.signal,
+            signal: combinedSignal,
           },
         );
 
@@ -107,7 +103,7 @@ export async function executeRawRequest(
           throw err;
         }
       }
-      await delay(RETRY_DELAYS_MS[attempt] ?? 0, controller.signal);
+      await delay(RETRY_DELAYS_MS[attempt] ?? 0, combinedSignal);
     }
     if (!response) {
       throw new Error("No response received");
@@ -138,6 +134,5 @@ export async function executeRawRequest(
     } satisfies RawRequestError;
   } finally {
     clearTimeout(timeoutId);
-    signal?.removeEventListener("abort", onAbort);
   }
 }

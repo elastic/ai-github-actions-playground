@@ -69,14 +69,12 @@ export function deriveIngestCandidates(esUrl: string): string[] {
  */
 export async function probeOtlpEndpoint(otlpUrl: string, timeoutMs = 5000): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      await fetch(otlpUrl, { method: "HEAD", mode: "no-cors", signal: controller.signal });
-      return true;
-    } finally {
-      clearTimeout(timeout);
-    }
+    await fetch(otlpUrl, {
+      method: "HEAD",
+      mode: "no-cors",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    return true;
   } catch {
     return false;
   }
