@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import AppSidebar from "../../src/components/AppSidebar";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
+import { useThemeStore } from "../../src/store/useThemeStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 /** Helper to capture the current router location inside tests. */
@@ -279,7 +280,7 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /settings/i }));
     await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
 
-    expect(useUIStore.getState().themeMode).toBe("light");
+    expect(useThemeStore.getState().themeMode).toBe("light");
   });
 
   it("calls onRequestReset when Reset All State menu item is clicked", async () => {

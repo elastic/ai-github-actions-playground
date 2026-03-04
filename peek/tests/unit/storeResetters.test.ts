@@ -10,6 +10,9 @@ import { useLLMStore } from "../../src/store/useLLMStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { useUIStore } from "../../src/store/useUIStore";
+import { useThemeStore } from "../../src/store/useThemeStore";
+import { useCommandPaletteStore } from "../../src/store/useCommandPaletteStore";
+import { useSearchPanelUIStore } from "../../src/store/useSearchPanelUIStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { usePageContextStore } from "../../src/store/usePageContextStore";
 import { useLogsStore } from "../../src/store/useLogsStore";
@@ -43,6 +46,17 @@ const STORES_WITH_RESET_API = [
   },
   { name: "useTracesStore", store: useTracesStore, method: "resetFilters" },
   { name: "useUIStore", store: useUIStore, method: "resetUIState" },
+  { name: "useThemeStore", store: useThemeStore, method: "resetThemeState" },
+  {
+    name: "useCommandPaletteStore",
+    store: useCommandPaletteStore,
+    method: "resetCommandPaletteState",
+  },
+  {
+    name: "useSearchPanelUIStore",
+    store: useSearchPanelUIStore,
+    method: "resetSearchPanelUIState",
+  },
   { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },
   { name: "usePageContextStore", store: usePageContextStore, method: "resetPageContext" },
   { name: "useLogsStore", store: useLogsStore, method: "reset" },

@@ -22,6 +22,7 @@ import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useDashboardHistoryStore } from "../store/useDashboardHistoryStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
+import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
@@ -75,12 +76,8 @@ export default function AppHeader({
       connected: s.connected,
     })),
   );
-  const { setEditingPanelId, setCommandPaletteOpen } = useUIStore(
-    useShallow((s) => ({
-      setEditingPanelId: s.setEditingPanelId,
-      setCommandPaletteOpen: s.setCommandPaletteOpen,
-    })),
-  );
+  const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
+  const setCommandPaletteOpen = useCommandPaletteStore((s) => s.setCommandPaletteOpen);
 
   const location = useLocation();
   const navigate = useNavigate();

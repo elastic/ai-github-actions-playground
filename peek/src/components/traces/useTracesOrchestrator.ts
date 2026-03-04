@@ -7,7 +7,7 @@ import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useDashboardEditorStore } from "../../store/useDashboardEditorStore";
 import { useTracesStore } from "../../store/useTracesStore";
-import { useUIStore } from "../../store/useUIStore";
+import { useSearchPanelUIStore } from "../../store/useSearchPanelUIStore";
 import type { EsqlResponse } from "../../types";
 import { toTraceTimeRange } from "../timePresets";
 
@@ -69,8 +69,8 @@ export function useTracesOrchestrator() {
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
 
-  const traceSearchCollapsed = useUIStore((s) => s.traceSearchCollapsed);
-  const setTraceSearchCollapsed = useUIStore((s) => s.setTraceSearchCollapsed);
+  const traceSearchCollapsed = useSearchPanelUIStore((s) => s.traceSearchCollapsed);
+  const setTraceSearchCollapsed = useSearchPanelUIStore((s) => s.setTraceSearchCollapsed);
 
   const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
@@ -85,7 +85,7 @@ export function useTracesOrchestrator() {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
         e.preventDefault();
-        setTraceSearchCollapsed(!useUIStore.getState().traceSearchCollapsed);
+        setTraceSearchCollapsed(!useSearchPanelUIStore.getState().traceSearchCollapsed);
       }
     }
     document.addEventListener("keydown", handleKeyDown);

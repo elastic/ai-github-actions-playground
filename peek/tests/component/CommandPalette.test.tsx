@@ -6,6 +6,8 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import CommandPalette from "../../src/components/CommandPalette";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
+import { useThemeStore } from "../../src/store/useThemeStore";
+import { useCommandPaletteStore } from "../../src/store/useCommandPaletteStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import * as esService from "../../src/services/es";
@@ -45,7 +47,7 @@ describe("CommandPalette", () => {
   });
 
   it("opens when commandPaletteOpen is set to true", () => {
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByLabelText("Command palette")).toBeInTheDocument();
@@ -54,7 +56,7 @@ describe("CommandPalette", () => {
 
   it("shows navigation commands when connected", () => {
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // These titles also appear in the Docs group, so use getAllByText
@@ -64,7 +66,7 @@ describe("CommandPalette", () => {
   });
 
   it("hides connection-required nav commands when disconnected", () => {
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // These titles still appear once from Docs shortcuts; the nav commands are hidden.
@@ -76,7 +78,7 @@ describe("CommandPalette", () => {
   it("filters commands based on search input", async () => {
     const user = userEvent.setup();
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.type(screen.getByLabelText("Search commands"), "query");
@@ -88,7 +90,7 @@ describe("CommandPalette", () => {
 
   it("shows 'No matching commands' when nothing matches", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.type(screen.getByLabelText("Search commands"), "zzzznonexistent");
@@ -101,18 +103,18 @@ describe("CommandPalette", () => {
   it("navigates to a page when a command is clicked", async () => {
     const user = userEvent.setup();
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // Navigation command appears first (before Docs), click the first "Query Lab"
     await user.click(screen.getAllByText("Query Lab")[0]);
 
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("shows action commands", () => {
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByText("Connection Settings")).toBeInTheDocument();
@@ -121,29 +123,29 @@ describe("CommandPalette", () => {
 
   it("opens connection dialog when Connection Settings is clicked", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.click(screen.getByText("Connection Settings"));
 
     expect(useUIStore.getState().connectionDialogOpen).toBe(true);
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("toggles theme when theme command is clicked", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
-    expect(useUIStore.getState().themeMode).toBe("dark");
+    expect(useThemeStore.getState().themeMode).toBe("dark");
     await user.click(screen.getByText("Switch to Light Mode"));
 
-    expect(useUIStore.getState().themeMode).toBe("light");
+    expect(useThemeStore.getState().themeMode).toBe("light");
   });
 
   it("shows recent queries when available", () => {
     useQueryStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByText("FROM logs-* | LIMIT 10")).toBeInTheDocument();
@@ -154,18 +156,18 @@ describe("CommandPalette", () => {
     const user = userEvent.setup();
     useQueryStore.getState().appendQueryToHistory("FROM logs-* | LIMIT 10");
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.click(screen.getByText("FROM logs-* | LIMIT 10"));
 
     expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM logs-* | LIMIT 10");
     expect(screen.getByTestId("location")).toHaveTextContent("/discover");
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("shows Docs group with section shortcuts", () => {
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // "Docs" appears as both a nav item label and a group heading
@@ -176,18 +178,18 @@ describe("CommandPalette", () => {
 
   it("navigates to /docs?section=<id> when a docs command is clicked", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.click(screen.getByText("Connecting to Elasticsearch"));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/docs?section=connecting");
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("filters docs commands by section title", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.type(screen.getByLabelText("Search commands"), "keyboard");
@@ -210,7 +212,7 @@ describe("CommandPalette", () => {
   });
 
   it("shows Toggle AI Assistant action command", () => {
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByText("Toggle AI Assistant")).toBeInTheDocument();
@@ -218,14 +220,14 @@ describe("CommandPalette", () => {
 
   it("opens AI panel when Toggle AI Assistant is clicked", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(useUIStore.getState().aiPanelOpen).toBe(false);
     await user.click(screen.getByText("Toggle AI Assistant"));
 
     expect(useUIStore.getState().aiPanelOpen).toBe(true);
-    expect(useUIStore.getState().commandPaletteOpen).toBe(false);
+    expect(useCommandPaletteStore.getState().commandPaletteOpen).toBe(false);
   });
 
   it("toggles AI panel open with Ctrl+Shift+A keyboard shortcut", async () => {
@@ -253,7 +255,7 @@ describe("CommandPalette", () => {
 
   it("excludes the current page from navigation commands", () => {
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette("/discover");
 
     // Query Lab nav command is excluded when on /discover, but the Docs shortcut still shows it.
@@ -265,7 +267,7 @@ describe("CommandPalette", () => {
 
   it("excludes parameterized and hidden routes from navigation commands", () => {
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // Fleet Agent Detail has showInSidebar: false and a parameterized path — must not appear
@@ -283,7 +285,7 @@ describe("CommandPalette", () => {
       canReadSecurityRoles: false,
       canReadApiKeys: false,
     });
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // "Users" and "Roles" nav commands should not appear (no docs equivalent)
@@ -304,7 +306,7 @@ describe("CommandPalette", () => {
       canReadSecurityRoles: true,
       canReadApiKeys: true,
     });
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // Nav commands should appear alongside any docs entries
@@ -316,7 +318,7 @@ describe("CommandPalette", () => {
   it("shows capability-restricted pages when capabilities are null (not yet fetched)", () => {
     useConnectionStore.getState().setConnected(true);
     // capabilities default to null
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // When capabilities haven't been fetched, restricted pages remain visible
@@ -327,7 +329,7 @@ describe("CommandPalette", () => {
 
   it("shows Favorite Dashboards group when a dashboard is favorited", () => {
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     const id = useDashboardStore.getState().activeDashboardId;
     useDashboardStore.getState().toggleFavoriteDashboard(id);
 
@@ -338,7 +340,7 @@ describe("CommandPalette", () => {
 
   it("does not show Favorite Dashboards group when no dashboard is favorited", () => {
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
 
     renderPalette();
 
@@ -359,7 +361,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
     useConnectionStore.getState().setActiveProfileId(id!);
     // Not connected
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.queryByText("Connection Profiles")).not.toBeInTheDocument();
@@ -367,7 +369,7 @@ describe("CommandPalette — Connection Profiles group", () => {
 
   it("does not show Connection Profiles group when no profiles exist", () => {
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.queryByText("Connection Profiles")).not.toBeInTheDocument();
@@ -379,7 +381,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       .saveConnectionProfile("Dev", { url: "https://dev.example.com", apiKey: "key" });
     useConnectionStore.getState().setActiveProfileId(id!);
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByText("Re-test Dev")).toBeInTheDocument();
@@ -395,7 +397,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
     useConnectionStore.getState().setActiveProfileId(id1!);
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     // Active profile (Dev): only Re-test, no Switch
@@ -418,7 +420,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "k2" });
     useConnectionStore.getState().setActiveProfileId(id!);
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByText("Connection Profiles")).toBeInTheDocument();
@@ -435,7 +437,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       .saveConnectionProfile("Prod", { url: "https://prod.example.com", apiKey: "key2" });
     useConnectionStore.getState().setActiveProfileId(id1!);
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.type(screen.getByLabelText("Search commands"), "prod");
@@ -460,7 +462,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       .saveConnectionProfile("QA", { url: "https://qa.example.com", apiKey: "key3" });
     useConnectionStore.getState().setActiveProfileId(id1!);
     useConnectionStore.getState().setConnected(true);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     const switchPromise = new Promise<never>(() => {});
     const fetchCapsSpy = vi
       .spyOn(esService, "fetchCapabilitiesForConnection")
@@ -468,7 +470,7 @@ describe("CommandPalette — Connection Profiles group", () => {
     renderPalette();
 
     await user.click(screen.getByText("Switch to Prod"));
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     await user.click(screen.getByText("Switch to QA"));
 
     await waitFor(() => {
@@ -493,7 +495,7 @@ describe("CommandPalette — Connection Profiles group", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
     });
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     const fetchCapsSpy = vi
       .spyOn(esService, "fetchCapabilitiesForConnection")
       .mockRejectedValue(new Error("switch failed"));
@@ -526,7 +528,7 @@ describe("CommandPalette — Recent Commands group", () => {
   });
 
   it("does not show Recent Commands group when no commands have been executed", () => {
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.queryByText("Recent Commands")).not.toBeInTheDocument();
@@ -534,13 +536,13 @@ describe("CommandPalette — Recent Commands group", () => {
 
   it("shows Recent Commands group after executing a command", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.click(screen.getByText("Connection Settings"));
 
     // Re-open the palette
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
 
     await waitFor(() => {
       expect(screen.getByText("Recent Commands")).toBeInTheDocument();
@@ -549,12 +551,12 @@ describe("CommandPalette — Recent Commands group", () => {
 
   it("records executed command ID in the store", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.click(screen.getByText("Connection Settings"));
 
-    expect(useUIStore.getState().recentCommandIds).toContain("action:connection");
+    expect(useCommandPaletteStore.getState().recentCommandIds).toContain("action:connection");
   });
 
   it("keeps recent query command mapping stable when query history is reindexed", async () => {
@@ -564,16 +566,16 @@ describe("CommandPalette — Recent Commands group", () => {
     const thirdQuery = "FROM traces-* | LIMIT 20";
     useQueryStore.getState().appendQueryToHistory(firstQuery);
     useQueryStore.getState().appendQueryToHistory(secondQuery);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     await user.click(screen.getByText(firstQuery));
-    expect(useUIStore.getState().recentCommandIds[0]).toBe(
+    expect(useCommandPaletteStore.getState().recentCommandIds[0]).toBe(
       `query:${encodeURIComponent(firstQuery)}`,
     );
 
     useQueryStore.getState().appendQueryToHistory(thirdQuery);
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
 
     await waitFor(() => {
       expect(screen.getByText("Recent Commands")).toBeInTheDocument();
@@ -582,27 +584,27 @@ describe("CommandPalette — Recent Commands group", () => {
   });
 
   it("deduplicates repeated commands and moves them to the front", () => {
-    useUIStore.getState().addRecentCommandId("action:connection");
-    useUIStore.getState().addRecentCommandId("action:theme");
-    useUIStore.getState().addRecentCommandId("action:connection");
+    useCommandPaletteStore.getState().addRecentCommandId("action:connection");
+    useCommandPaletteStore.getState().addRecentCommandId("action:theme");
+    useCommandPaletteStore.getState().addRecentCommandId("action:connection");
 
-    const ids = useUIStore.getState().recentCommandIds;
+    const ids = useCommandPaletteStore.getState().recentCommandIds;
     expect(ids).toEqual(["action:connection", "action:theme"]);
   });
 
   it("limits recent commands to 5", () => {
     for (let i = 0; i < 7; i++) {
-      useUIStore.getState().addRecentCommandId(`cmd:${i}`);
+      useCommandPaletteStore.getState().addRecentCommandId(`cmd:${i}`);
     }
 
-    expect(useUIStore.getState().recentCommandIds).toHaveLength(5);
-    expect(useUIStore.getState().recentCommandIds[0]).toBe("cmd:6");
+    expect(useCommandPaletteStore.getState().recentCommandIds).toHaveLength(5);
+    expect(useCommandPaletteStore.getState().recentCommandIds[0]).toBe("cmd:6");
   });
 
   it("hides Recent Commands group when search input is not empty", async () => {
     const user = userEvent.setup();
-    useUIStore.getState().addRecentCommandId("action:connection");
-    useUIStore.getState().setCommandPaletteOpen(true);
+    useCommandPaletteStore.getState().addRecentCommandId("action:connection");
+    useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
 
     expect(screen.getByText("Recent Commands")).toBeInTheDocument();
@@ -615,19 +617,19 @@ describe("CommandPalette — Recent Commands group", () => {
   });
 
   it("persists recent command IDs across store rehydration", () => {
-    useUIStore.getState().addRecentCommandId("action:connection");
-    useUIStore.getState().addRecentCommandId("action:theme");
+    useCommandPaletteStore.getState().addRecentCommandId("action:connection");
+    useCommandPaletteStore.getState().addRecentCommandId("action:theme");
 
     // Verify persistence config includes recentCommandIds
-    const persisted = JSON.parse(localStorage.getItem("elastic-peek-ui") || "{}");
+    const persisted = JSON.parse(localStorage.getItem("elastic-peek-command-palette") || "{}");
     expect(persisted.state.recentCommandIds).toEqual(["action:theme", "action:connection"]);
   });
 
-  it("clears recent command IDs on resetUIState", () => {
-    useUIStore.getState().addRecentCommandId("action:connection");
-    expect(useUIStore.getState().recentCommandIds).toHaveLength(1);
+  it("clears recent command IDs on resetCommandPaletteState", () => {
+    useCommandPaletteStore.getState().addRecentCommandId("action:connection");
+    expect(useCommandPaletteStore.getState().recentCommandIds).toHaveLength(1);
 
-    useUIStore.getState().resetUIState();
-    expect(useUIStore.getState().recentCommandIds).toEqual([]);
+    useCommandPaletteStore.getState().resetCommandPaletteState();
+    expect(useCommandPaletteStore.getState().recentCommandIds).toEqual([]);
   });
 });
