@@ -82,7 +82,7 @@ function TechnologyCard({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 WebkitBoxOrient: "vertical",
-                WebkitLineClamp: 1,
+                WebkitLineClamp: 2,
               }}
             >
               {tech.summary}
@@ -128,8 +128,8 @@ export default function AddDataTechnologyResults({
     <Box>
       {filteredTechnologies.length === 0 ? (
         <EmptyState
-          heading="No integrations found"
-          description="No integrations match your search. Try a different query."
+          heading="No matching technologies"
+          description="No technologies match your search. Try a broader term or browse by category above."
           size="small"
         />
       ) : (
@@ -137,7 +137,7 @@ export default function AddDataTechnologyResults({
           sx={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(min(220px, 100%), 1fr))",
-            gap: 1,
+            gap: 1.5,
           }}
         >
           {filteredTechnologies.map((tech) => (

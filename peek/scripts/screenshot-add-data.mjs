@@ -1,22 +1,25 @@
 /**
- * screenshot-all.mjs
+ * screenshot-add-data.mjs
  *
- * Captures a full-page screenshot of every feature page in a single browser
- * session, plus detailed Add Data wizard flows. Supports both mocked
- * Elasticsearch (default) and a live ES cluster via the Vite proxy (--live flag).
+ * Captures screenshots of every Add Data wizard flow — the landing page,
+ * each experience's technology list, Step 2 (setup) for every technology,
+ * and Step 3 (success) for one representative technology per guide type.
  *
  * Usage:
- *   node scripts/screenshot-all.mjs
- *   node scripts/screenshot-all.mjs --out-dir screenshots
- *   node scripts/screenshot-all.mjs --live                  # requires ES_URL + running Vite dev server
- *   node scripts/screenshot-all.mjs --live --es-proxy-url http://localhost:3000/_es
+ *   node scripts/screenshot-add-data.mjs
+ *   node scripts/screenshot-add-data.mjs --out-dir screenshots/add-data
+ *   node scripts/screenshot-add-data.mjs --live
  */
 
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
-import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
+import {
+  ADD_DATA_EXPERIENCE_LABELS,
+  ADD_DATA_PRIMARY_EXPERIENCES,
+  ADD_DATA_TECHNOLOGY_ENTRIES,
+} from "../src/services/addData/catalog.data.mjs";
 import { captureAddDataScreenshots } from "./screenshot-add-data-helpers.mjs";
 
 // ---------------------------------------------------------------------------
@@ -25,8 +28,8 @@ import { captureAddDataScreenshots } from "./screenshot-add-data-helpers.mjs";
 
 function parseArgs(argv) {
   const opts = {
-    url: process.env.SCREENSHOT_ALL_URL ?? "http://127.0.0.1:3000/ai-github-actions-playground/",
-    outDir: "screenshots",
+    url: process.env.SCREENSHOT_ADD_DATA_URL ?? "http://127.0.0.1:3000/ai-github-actions-playground/",
+    outDir: "screenshots/add-data",
     live: false,
     esProxyUrl: "http://localhost:3000/_es",
     timeoutMs: 30_000,
@@ -78,7 +81,6 @@ async function run() {
   try {
     const esUrl = opts.live ? opts.esProxyUrl : DEFAULT_ES_URL;
 
-    // Set up mocks if not in live mode
     if (!opts.live) {
       await registerElasticsearchMocks(page, {
         esUrl: DEFAULT_ES_URL,
@@ -86,40 +88,19 @@ async function run() {
       });
     }
 
-    // Load the app
+    // Load app and connect
     await page.goto(opts.url, { waitUntil: "networkidle", timeout: opts.timeoutMs });
-
-    // Connect to Elasticsearch
     await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
     await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(esUrl);
     await page.getByRole("button", { name: "Connect", exact: true }).click();
-
-    // Wait for sidebar (indicates successful connection)
     await page
       .getByRole("button", { name: "Metrics", exact: true })
       .waitFor({ timeout: opts.live ? 15_000 : opts.timeoutMs });
 
     const settleMs = opts.live ? 2000 : 1500;
+    const captured = await captureAddDataScreenshots(page, opts.outDir, settleMs);
 
-    console.log(`Capturing ${Object.keys(PAGE_NAV_BUTTONS).length} pages to ${opts.outDir}/...`);
-
-    // Screenshot each page
-    for (const [slug, navButton] of Object.entries(PAGE_NAV_BUTTONS)) {
-      await page.getByRole("button", { name: navButton, exact: true }).click();
-      await page.waitForTimeout(settleMs);
-
-      const screenshotPath = path.join(opts.outDir, `screenshot-${slug}.png`);
-      await page.screenshot({ path: screenshotPath, fullPage: true });
-      console.log(`  ${slug}`);
-    }
-
-    // -----------------------------------------------------------------------
-    // Add Data detailed flow screenshots
-    // -----------------------------------------------------------------------
-    const addDataDir = path.join(opts.outDir, "add-data");
-    console.log(`\nCapturing add-data flows to ${addDataDir}/...`);
-    const addDataCount = await captureAddDataScreenshots(page, addDataDir, settleMs);
-    console.log(`\nCaptured ${addDataCount} add-data screenshots.`);
+    console.log(`\nCaptured ${captured} screenshots to ${opts.outDir}/`);
   } catch (error) {
     pageErrors.push(String(error));
     console.error("Error during screenshot capture:", error);
@@ -135,10 +116,10 @@ async function run() {
     process.exit(1);
   }
 
-  console.log("\nAll screenshots captured successfully.");
+  console.log("All add-data screenshots captured successfully.");
 }
 
 run().catch((error) => {
-  console.error("screenshot-all crashed:", error);
+  console.error("screenshot-add-data crashed:", error);
   process.exit(1);
 });

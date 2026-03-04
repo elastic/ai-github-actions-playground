@@ -92,7 +92,7 @@ export default function AddDataStepTechnology({
       </Box>
 
       <TextField
-        placeholder="Search integrations..."
+        placeholder="Search technologies (e.g., PostgreSQL, Kubernetes...)"
         value={technologySearch}
         onChange={(e) => {
           onTechnologySearchChange(e.target.value);
@@ -120,7 +120,7 @@ export default function AddDataStepTechnology({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
+              gridTemplateColumns: { sm: "repeat(2, 1fr)", xs: "1fr" },
               gap: 1.5,
             }}
           >

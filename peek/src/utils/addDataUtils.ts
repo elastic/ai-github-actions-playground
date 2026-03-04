@@ -113,7 +113,7 @@ export async function detectTelemetrySignals(
 }
 
 export interface AddDataSuccessCta {
-  id: "signal" | "dashboard" | "alerting" | "additional_source";
+  id: string;
   label: string;
   path: string;
 }

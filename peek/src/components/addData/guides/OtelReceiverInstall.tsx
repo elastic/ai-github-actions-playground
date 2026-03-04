@@ -1,8 +1,12 @@
 import { useMemo, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import { copyToClipboard } from "../../../utils/copyToClipboard";
 import { useCopyFeedbackTimeout } from "../../../hooks/useCopyFeedbackTimeout";
@@ -19,14 +23,18 @@ export interface OtelReceiverInstallProps {
   apiKey: string;
 }
 
+const RUN_COMMAND = "./elastic-agent otel --config otel-collector-config.yaml";
+
 export default function OtelReceiverInstall({
   receiver,
   fieldValues,
   esUrl,
   apiKey,
 }: OtelReceiverInstallProps) {
-  const [copied, setCopied] = useState(false);
-  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
+  const [copiedConfig, setCopiedConfig] = useState(false);
+  const [copiedRun, setCopiedRun] = useState(false);
+  const scheduleCopyConfigReset = useCopyFeedbackTimeout(() => setCopiedConfig(false));
+  const scheduleCopyRunReset = useCopyFeedbackTimeout(() => setCopiedRun(false));
 
   const resolvedValues = useMemo(() => {
     const result: Record<string, string> = {};
@@ -52,45 +60,115 @@ export default function OtelReceiverInstall({
     [receiverBlock, receiver.receiverType, esUrl, apiKey, receiver.signals],
   );
 
-  const handleCopy = useCallback(async () => {
+  const handleCopyConfig = useCallback(async () => {
     const ok = await copyToClipboard(fullConfig);
     if (!ok) return;
-    setCopied(true);
-    scheduleCopyFeedbackReset();
-  }, [fullConfig, scheduleCopyFeedbackReset]);
+    setCopiedConfig(true);
+    scheduleCopyConfigReset();
+  }, [fullConfig, scheduleCopyConfigReset]);
+
+  const handleCopyRun = useCallback(async () => {
+    const ok = await copyToClipboard(RUN_COMMAND);
+    if (!ok) return;
+    setCopiedRun(true);
+    scheduleCopyRunReset();
+  }, [scheduleCopyRunReset]);
 
   return (
-    <>
+    <Stack spacing={1.5}>
       <Typography variant="body2" color="text.secondary">
-        Save this configuration as <code>otel-collector-config.yaml</code> and start the EDOT
-        Collector with <code>--config otel-collector-config.yaml</code>.
+        Configure and run the EDOT Collector with the {receiver.label} receiver.
       </Typography>
 
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Typography variant="body2" sx={{ flex: 1, fontWeight: 600 }}>
-          Generated OTel Collector configuration
+      {/* Step 1: Save config */}
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Chip label="1" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
+          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+            Save the collector configuration
+          </Typography>
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<ContentCopyIcon fontSize="small" />}
+            onClick={() => void handleCopyConfig()}
+          >
+            {copiedConfig ? "Copied!" : "Copy"}
+          </Button>
+        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+          Save this as <code>otel-collector-config.yaml</code>
         </Typography>
-        <Button size="small" variant="outlined" onClick={() => void handleCopy()}>
-          {copied ? "Copied!" : "Copy config"}
-        </Button>
-      </Stack>
+        <Box
+          component="pre"
+          sx={{
+            overflow: "auto",
+            m: 0,
+            p: 1.5,
+            borderRadius: 1,
+            bgcolor: "background.default",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+            fontSize: "0.8rem",
+            fontFamily: "monospace",
+          }}
+        >
+          {fullConfig}
+        </Box>
+      </Paper>
 
-      <Box
-        component="pre"
-        sx={{
-          overflow: "auto",
-          m: 0,
-          p: 1.5,
-          borderRadius: 1,
-          bgcolor: "background.default",
-          wordBreak: "break-all",
-          whiteSpace: "pre-wrap",
-          fontSize: "0.8rem",
-          fontFamily: "monospace",
-        }}
-      >
-        {fullConfig}
-      </Box>
-    </>
+      {/* Step 2: Run the collector */}
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Chip label="2" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
+          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+            Start the EDOT Collector
+          </Typography>
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<ContentCopyIcon fontSize="small" />}
+            onClick={() => void handleCopyRun()}
+          >
+            {copiedRun ? "Copied!" : "Copy"}
+          </Button>
+        </Stack>
+        <Box
+          component="pre"
+          sx={{
+            overflow: "auto",
+            m: 0,
+            p: 1.5,
+            borderRadius: 1,
+            bgcolor: "background.default",
+            whiteSpace: "pre-wrap",
+            fontSize: "0.8rem",
+            fontFamily: "monospace",
+          }}
+        >
+          {RUN_COMMAND}
+        </Box>
+      </Paper>
+
+      {/* Step 3: Docs link */}
+      <Paper variant="outlined" sx={{ p: 1.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Chip label="3" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
+          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+            Review the {receiver.label} receiver documentation
+          </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+            target="_blank"
+            rel="noopener noreferrer"
+            endIcon={<OpenInNewIcon fontSize="small" />}
+          >
+            Open docs
+          </Button>
+        </Stack>
+      </Paper>
+    </Stack>
   );
 }
