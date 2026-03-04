@@ -82,7 +82,11 @@ function toSafeRelativeTimeExpression(value: string): string {
   throw new Error(`Unsupported time expression: ${value}`);
 }
 
-function buildTimeWhereClauses(filters: K8sQueryFilters, fields: K8sFieldMapping): string[] {
+function buildTimeWhereClauses(
+  filters: K8sQueryFilters,
+  fields: K8sFieldMapping,
+  workloadKindHint?: WorkloadKind,
+): string[] {
   const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
   const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
   const clauses: string[] = [
@@ -97,8 +101,9 @@ function buildTimeWhereClauses(filters: K8sQueryFilters, fields: K8sFieldMapping
   }
   if (filters.workloadName) {
     const safeWorkloadName = escapeEsqlString(filters.workloadName);
-    if (filters.workloadKind) {
-      clauses.push(`${workloadField(filters.workloadKind, fields)} == "${safeWorkloadName}"`);
+    const effectiveWorkloadKind = filters.workloadKind ?? workloadKindHint;
+    if (effectiveWorkloadKind) {
+      clauses.push(`${workloadField(effectiveWorkloadKind, fields)} == "${safeWorkloadName}"`);
     } else {
       clauses.push(
         `(${WORKLOAD_KIND_FIELD_KEYS.map(({ fieldKey }) => `${fields[fieldKey]} == "${safeWorkloadName}"`).join(" OR ")})`,
@@ -201,7 +206,7 @@ export function buildWorkloadInventoryQuery(
   fields: K8sFieldMapping = DEFAULT_K8S_FIELD_MAPPING,
 ): string {
   const nameField = workloadField(kind, fields);
-  const whereClauses = buildTimeWhereClauses(filters, fields);
+  const whereClauses = buildTimeWhereClauses(filters, fields, kind);
   whereClauses.push(`${nameField} IS NOT NULL`);
 
   return buildPipeline([

@@ -132,11 +132,12 @@ function buildTracesQueryForEntity(params: UseK8sDashboardQueriesParams): string
 export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
   const { connection, entity, entityName } = params;
   const queryClient = useQueryClient();
+  const workloadKeyPart = entity === "workload" ? (toWorkloadKind(params.workloadKind) ?? "") : "";
 
   // --- Overview query state ---
   const overviewQueryKey = useMemo(
-    () => ["k8s-dashboard-overview", entity, entityName] as const,
-    [entity, entityName],
+    () => ["k8s-dashboard-overview", entity, workloadKeyPart, entityName] as const,
+    [entity, workloadKeyPart, entityName],
   );
   const { data: overviewResult = null } = useQuery<EsqlResponse | null>({
     queryKey: overviewQueryKey,
@@ -151,8 +152,8 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
 
   // --- Entity query state ---
   const entityQueryKey = useMemo(
-    () => ["k8s-dashboard-entity", entity, entityName] as const,
-    [entity, entityName],
+    () => ["k8s-dashboard-entity", entity, workloadKeyPart, entityName] as const,
+    [entity, workloadKeyPart, entityName],
   );
   const { data: entityResult = null } = useQuery<EsqlResponse | null>({
     queryKey: entityQueryKey,
@@ -167,8 +168,8 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
 
   // --- Logs query state ---
   const logsQueryKey = useMemo(
-    () => ["k8s-dashboard-logs", entity, entityName] as const,
-    [entity, entityName],
+    () => ["k8s-dashboard-logs", entity, workloadKeyPart, entityName] as const,
+    [entity, workloadKeyPart, entityName],
   );
   const { data: logsResult = null } = useQuery<EsqlResponse | null>({
     queryKey: logsQueryKey,
@@ -183,8 +184,8 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
 
   // --- Traces query state ---
   const tracesQueryKey = useMemo(
-    () => ["k8s-dashboard-traces", entity, entityName] as const,
-    [entity, entityName],
+    () => ["k8s-dashboard-traces", entity, workloadKeyPart, entityName] as const,
+    [entity, workloadKeyPart, entityName],
   );
   const { data: tracesResult = null } = useQuery<EsqlResponse | null>({
     queryKey: tracesQueryKey,
@@ -325,7 +326,6 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
   }, [params, runOverviewQuery, runEntityQuery, runLogsQuery, runTracesQuery]);
 
   const handleReset = useCallback(() => {
-    if (loading) return;
     clearLatestQueries();
     clearOverviewError();
     clearEntityError();
@@ -341,7 +341,6 @@ export function useK8sDashboardQueries(params: UseK8sDashboardQueriesParams) {
     clearEntityError,
     clearLogsError,
     clearTracesError,
-    loading,
     setOverviewResult,
     setEntityResult,
     setLogsResult,

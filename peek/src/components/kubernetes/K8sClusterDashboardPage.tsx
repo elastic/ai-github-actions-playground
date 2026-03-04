@@ -68,6 +68,8 @@ export default function K8sClusterDashboardPage() {
   }, [clusterRows]);
 
   const hasData = overviewResult || entityResult || logsResult || tracesResult;
+  const hasLogs = Boolean(logsResult?.values.length);
+  const hasTraces = Boolean(tracesResult?.values.length);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -142,15 +144,20 @@ export default function K8sClusterDashboardPage() {
         </Paper>
       )}
 
-      {!loading && hasData && namespaceRows.length === 0 && clusterRows.length === 0 && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-          <EmptyState
-            heading="No data found"
-            description={`No data found for cluster ${clusterName} in the selected time range.`}
-            addDataHref={PAGE_MANIFEST.addData.path}
-          />
-        </Paper>
-      )}
+      {!loading &&
+        hasData &&
+        namespaceRows.length === 0 &&
+        clusterRows.length === 0 &&
+        !hasLogs &&
+        !hasTraces && (
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
+            <EmptyState
+              heading="No data found"
+              description={`No data found for cluster ${clusterName} in the selected time range.`}
+              addDataHref={PAGE_MANIFEST.addData.path}
+            />
+          </Paper>
+        )}
     </Box>
   );
 }
