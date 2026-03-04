@@ -24,9 +24,15 @@ const WORKLOAD_RESPONSE = {
   ],
 };
 
+const WORKLOAD_DETAIL_RESPONSE = {
+  ...WORKLOAD_RESPONSE,
+  values: [[3, 0.15, 268435456, "deployment", "nginx-deployment"]],
+};
+
 const EMPTY_RESPONSE = { columns: [], values: [] };
 
 function responseForQuery(query: string) {
+  if (/k8s\.deployment\.name == "nginx-deployment"/.test(query)) return WORKLOAD_DETAIL_RESPONSE;
   if (/workload_name = COALESCE\(/.test(query)) return WORKLOAD_RESPONSE;
   return EMPTY_RESPONSE;
 }
@@ -82,7 +88,7 @@ describe("K8sWorkloadDashboardPage", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     expect(await screen.findByText("nginx-deployment")).toBeInTheDocument();
-    expect(screen.getByText("api-server")).toBeInTheDocument();
+    expect(screen.queryByText("api-server")).not.toBeInTheDocument();
   });
 
   it("shows back navigation button", () => {
@@ -95,7 +101,7 @@ describe("K8sWorkloadDashboardPage", () => {
     renderPage();
 
     await user.click(screen.getByRole("button", { name: "Search" }));
-    expect(await screen.findByText("api-server")).toBeInTheDocument();
+    expect(await screen.findByText("nginx-deployment")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Reset" }));
     expect(screen.getByText("No workload data loaded")).toBeInTheDocument();

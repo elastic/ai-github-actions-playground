@@ -12,6 +12,7 @@ import {
   buildK8sLogsQuery,
   buildK8sTracesQuery,
   buildAllWorkloadsInventoryQuery,
+  buildWorkloadInventoryQuery,
   type K8sQueryFilters,
   type WorkloadKind,
 } from "./k8sQueryBuilder";
@@ -53,10 +54,15 @@ function buildEntityQuery(params: UseK8sDashboardQueriesParams): string {
     case "namespace":
       filters.namespace = params.entityName;
       return buildPodInventoryQuery(filters);
-    case "workload":
+    case "workload": {
       filters.workloadName = params.entityName;
-      filters.workloadKind = toWorkloadKind(params.workloadKind);
+      const workloadKind = toWorkloadKind(params.workloadKind);
+      if (workloadKind) {
+        filters.workloadKind = workloadKind;
+        return buildWorkloadInventoryQuery(workloadKind, filters);
+      }
       return buildAllWorkloadsInventoryQuery(filters);
+    }
     case "pod":
       return buildPodDetailQuery(params.entityName, filters);
   }
@@ -74,10 +80,15 @@ function buildOverviewQuery(params: UseK8sDashboardQueriesParams): string {
     case "namespace":
       filters.namespace = params.entityName;
       return buildNamespaceInventoryQuery(filters);
-    case "workload":
+    case "workload": {
       filters.workloadName = params.entityName;
-      filters.workloadKind = toWorkloadKind(params.workloadKind);
+      const workloadKind = toWorkloadKind(params.workloadKind);
+      if (workloadKind) {
+        filters.workloadKind = workloadKind;
+        return buildWorkloadInventoryQuery(workloadKind, filters);
+      }
       return buildAllWorkloadsInventoryQuery(filters);
+    }
     case "pod":
       return buildPodDetailQuery(params.entityName, filters);
   }
