@@ -13,6 +13,7 @@ import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
 
 import { groupUnassignedReasons } from "./clusterHealthUtils";
 import InfoCard from "./InfoCard";
+import NodeShardTable from "./NodeShardTable";
 
 interface ShardDistributionViewProps {
   data: ClusterHealthData;
@@ -30,17 +31,28 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
   const replicaShards = shards.filter((s) => s.prirep === "r").length;
   const ratio = replicaShards > 0 ? (primaryShards / replicaShards).toFixed(2) : "n/a";
 
-  const shardSkew = useMemo(() => {
-    const perNode = new Map<string, number>();
+  const nodeDistribution = useMemo(() => {
+    const map = new Map<string, { primary: number; replica: number; total: number }>();
     for (const shard of shards) {
       if (shard.node) {
-        perNode.set(shard.node, (perNode.get(shard.node) ?? 0) + 1);
+        if (!map.has(shard.node)) map.set(shard.node, { primary: 0, replica: 0, total: 0 });
+        const entry = map.get(shard.node)!;
+        entry.total++;
+        if (shard.prirep === "p") {
+          entry.primary++;
+        } else if (shard.prirep === "r") {
+          entry.replica++;
+        }
       }
     }
-    const counts = Array.from(perNode.values());
+    return Array.from(map.entries()).map(([node, counts]) => ({ node, ...counts }));
+  }, [shards]);
+
+  const shardSkew = useMemo(() => {
+    const counts = nodeDistribution.map((n) => n.total);
     if (counts.length === 0) return 0;
     return Math.max(...counts) - Math.min(...counts);
-  }, [shards]);
+  }, [nodeDistribution]);
 
   const unassignedReasons = useMemo(() => groupUnassignedReasons(shards), [shards]);
 
@@ -155,6 +167,8 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
           </TableContainer>
         </>
       ) : null}
+
+      {nodeDistribution.length > 0 ? <NodeShardTable rows={nodeDistribution} /> : null}
 
       {unassignedReasons.size > 0 ? (
         <>
