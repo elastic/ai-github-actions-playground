@@ -15,7 +15,7 @@ Your selection drives the guide type, expected signals, and contextual guidance 
 
 ## Step 2 — Set up and verify
 
-This step consolidates environment configuration, install commands, credentials, and ingestion verification into a single page with collapsible accordion sections:
+This step consolidates environment configuration, install commands, credentials, and ingestion verification into a single page. Configure and Install are collapsible accordion sections; Verification is inline (not collapsible):
 
 ### Configure section (guide-specific)
 
@@ -36,7 +36,7 @@ The section label varies (e.g., "Install and configure", "Instrument your app", 
 - Progressive command step cards with per-step copy
 - Copy-all support
 - Official quickstart docs link
-- Collector credentials — API key generation (when permissions allow) or a permission-warning alert
+- Collector credentials — API key generation (when permissions allow) or manual credential provisioning when API key creation is unavailable
 
 The command template pre-fills available endpoint/version/API key values.
 
@@ -44,7 +44,7 @@ The command template pre-fills available endpoint/version/API key values.
 
 Inline (not collapsible) ingestion verification:
 
-- Automatic polling (auto-starts after API key generation)
+- Automatic polling (auto-starts after valid credentials are available)
 - **Check now** for manual trigger
 - Per-signal verification cards showing data stream and host/agent detection
 
