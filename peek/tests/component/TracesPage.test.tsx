@@ -427,7 +427,7 @@ describe("TracesPage slot insight integration", () => {
   it("renders InsightSlot indicators when slot insights are provided", async () => {
     // Mock usePageSlotInsights to return insights for the trace-search slot
     const mockModule = await import("../../src/hooks/usePageSlotInsights");
-    const spy = vi.spyOn(mockModule, "usePageSlotInsights").mockReturnValue({
+    vi.spyOn(mockModule, "usePageSlotInsights").mockReturnValue({
       summary: "Traces look healthy",
       insights: [
         { slotId: "trace-search", text: "Query is well-formed", severity: "info" },
@@ -443,13 +443,11 @@ describe("TracesPage slot insight integration", () => {
     // InsightSlot indicators should be rendered for slots with insights
     expect(screen.getByRole("button", { name: /view info insight/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /view warning insight/i })).toBeInTheDocument();
-
-    spy.mockRestore();
   });
 
   it("does not render InsightSlot indicators when loading", async () => {
     const mockModule = await import("../../src/hooks/usePageSlotInsights");
-    const spy = vi.spyOn(mockModule, "usePageSlotInsights").mockReturnValue({
+    vi.spyOn(mockModule, "usePageSlotInsights").mockReturnValue({
       summary: null,
       insights: [{ slotId: "trace-search", text: "Query is well-formed", severity: "info" }],
       loading: true,
@@ -461,7 +459,5 @@ describe("TracesPage slot insight integration", () => {
 
     // During loading, InsightSlot should not show indicators
     expect(screen.queryByRole("button", { name: /view info insight/i })).not.toBeInTheDocument();
-
-    spy.mockRestore();
   });
 });
