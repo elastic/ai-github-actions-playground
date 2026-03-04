@@ -285,8 +285,7 @@ test.describe("smoke – site navigation", () => {
       .click();
     // Wait for experience tiles to disappear, then click the Kubernetes technology card
     await expect(page.getByText("Cloud Providers")).toBeHidden();
-    // Technology cards have aria-pressed attribute; the back button does not
-    await main.locator('button[aria-pressed="false"]').first().click();
+    await main.getByRole("button", { name: /^Kubernetes Collect cluster/i }).click();
     await page.getByRole("button", { name: /^Continue$/ }).click();
     await expect(page.getByRole("heading", { name: "Set up and verify" })).toBeVisible();
 
