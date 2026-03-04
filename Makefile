@@ -36,7 +36,7 @@ help:
 	@echo "  test-e2e-preview - Run e2e tests against production build (catches bundle issues)"
 	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
 	@echo "  seed-es          - Seed Elasticsearch with non-OTLP test data (set ES_URL)"
-	@echo "  seed-k8s         - Seed Kubernetes synthetic OTEL data (metrics/logs/traces, set ES_URL)"
+	@echo "  seed-k8s         - Seed Kubernetes synthetic OTel data (metrics/logs/traces, set ES_URL)"
 	@echo "  screenshot-all   - Capture all page screenshots (mocked data)"
 	@echo "  screenshot-section - Capture screenshots for one section in light+dark (SECTION=metrics|logs|traces|...)"
 	@echo "  otel-capture     - Capture OTLP fixtures from live OTel stack"
