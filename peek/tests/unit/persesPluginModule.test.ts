@@ -319,16 +319,16 @@ describe("plugin module", () => {
 
   it("declares all three plugin kinds", () => {
     const pluginKinds = pluginModuleResource.spec.plugins.map((p) => p.kind);
-    expect(pluginKinds).toContain("Datasource");
-    expect(pluginKinds).toContain("TimeSeriesQuery");
-    expect(pluginKinds).toContain("Explore");
+    expect(pluginKinds).toHaveLength(3);
+    expect(new Set(pluginKinds)).toEqual(new Set(["Datasource", "TimeSeriesQuery", "Explore"]));
   });
 
   it("declares correct plugin names", () => {
     const pluginNames = pluginModuleResource.spec.plugins.map((p) => p.spec.name);
-    expect(pluginNames).toContain(ELASTICSEARCH_DATASOURCE_KIND);
-    expect(pluginNames).toContain(ESQL_TIME_SERIES_QUERY_KIND);
-    expect(pluginNames).toContain(ESQL_EXPLORE_KIND);
+    expect(pluginNames).toHaveLength(3);
+    expect(new Set(pluginNames)).toEqual(
+      new Set([ELASTICSEARCH_DATASOURCE_KIND, ESQL_TIME_SERIES_QUERY_KIND, ESQL_EXPLORE_KIND]),
+    );
   });
 
   it("resolves Datasource plugin via getPlugin", () => {
