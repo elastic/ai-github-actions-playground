@@ -1,0 +1,99 @@
+name: React Accessibility Audit
+on:
+  schedule:
+    - cron: "0 9 * * 3"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
+    with:
+      title-prefix: "[react-accessibility]"
+      additional-instructions: |
+        Focus your investigation on accessibility (a11y) bugs in React components
+        in this repository (Elastic Peek, a React + MUI v6 app).
+
+        The app has `@axe-core/playwright` in devDependencies and Playwright e2e
+        tests under `peek/tests/e2e/`. Components live in `peek/src/components/`.
+
+        The app is a developer observability tool — its users are engineers who
+        may use keyboard navigation, screen readers, or high-contrast modes.
+        Accessibility matters here.
+
+        ## Categories to investigate
+
+        ### 1. Missing or incorrect ARIA labels
+        - Interactive elements (buttons, links, icon buttons) with no accessible name.
+          Icon-only buttons MUST have `aria-label`.
+        - `aria-label` on non-interactive elements that should instead use a `<label>`
+          or `aria-labelledby` pointing to visible text.
+        - `aria-label` values that duplicate visible text — redundant, but not harmful;
+          only flag if the aria-label contradicts the visible label.
+        - Custom interactive elements (div/span with onClick) missing `role` and
+          `aria-label`.
+
+        ### 2. Keyboard navigation gaps
+        - Clickable elements that are not reachable via `Tab` key (missing `tabIndex`
+          or wrong `tabIndex=-1`).
+        - Custom widgets (drawers, dropdowns, modals) that don't trap focus when open.
+        - Focus not returned to the trigger element after a modal/drawer closes.
+        - `onKeyDown` handlers for Enter/Space missing on interactive non-button
+          elements (unless using MUI `ButtonBase` which handles this natively).
+
+        ### 3. Form and input labeling
+        - `<input>`, `<select>`, `<textarea>` elements not associated with a `<label>`
+          via `htmlFor`/`id` or `aria-label` / `aria-labelledby`.
+        - MUI `TextField` without a `label` prop or explicit `inputProps.aria-label`.
+        - Fieldsets without `<legend>` for grouped controls.
+
+        ### 4. Table accessibility
+        - Data tables missing `<caption>` or `aria-label` describing the table's content.
+        - Sortable column headers without `aria-sort` updated on click.
+        - Rows that are clickable (for drill-down) without `role="button"` or keyboard
+          activation support.
+
+        ### 5. Dynamic content announcements
+        - Loading states that appear/disappear without `aria-live` announcements,
+          leaving screen reader users uncertain whether data is loading.
+        - Error messages that appear but aren't focused or announced live.
+        - Toast/snackbar notifications that may not be announced (check Sonner config).
+
+        ### 6. Color contrast (structural, not design-opinion)
+        - Look for hardcoded color values (hex, rgb) in component files that don't use
+          the MUI theme palette. These may fail WCAG AA contrast in dark mode.
+        - Components that use `theme.palette.text.secondary` directly in low-contrast
+          situations (small text, inactive state labels).
+
+        ### 7. Image and icon accessibility
+        - Decorative icons rendered without `aria-hidden="true"` — will be read aloud
+          by screen readers as their SVG title or nothing meaningful.
+        - Informative icons (status indicators, severity icons) missing `aria-label`
+          or a visually hidden text alternative.
+
+        ## How to work
+
+        Pick 2–3 of the most impactful issues. For each:
+        1. Read the relevant component source file.
+        2. Explain why it's an accessibility barrier and which WCAG criterion it
+           violates (if applicable).
+        3. Show the problematic code and the correct fix.
+        4. If axe-core can detect it, show how to add a Playwright a11y test.
+
+        Install dependencies with `cd peek && npm ci` before running any tests.
+
+        ## Output rules
+        - Only report genuine accessibility barriers that affect real users.
+          Cosmetic or theoretical issues without user impact are not bugs.
+        - If everything you check looks correct, do **not** open an issue.
+        - When filing an issue, include: the WCAG criterion violated, the affected
+          component, why it matters, and the fix.
+        - Prefix issue titles with `[react-accessibility]`.
+      setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
