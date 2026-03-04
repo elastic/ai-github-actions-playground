@@ -111,8 +111,12 @@ async function bulkIndex(client, index, docs) {
   const operations = docs.flatMap((doc) => [{ create: { _index: index } }, doc]);
   const resp = await client.bulk({ operations, refresh: true });
   if (resp.errors) {
-    const firstError = resp.items.find((i) => i.create?.error)?.create?.error;
-    console.warn(`  Bulk errors in ${index}: ${JSON.stringify(firstError)}`);
+    const failed = resp.items.filter((i) => i.create?.error);
+    const firstError = failed[0]?.create?.error;
+    throw new Error(
+      `Bulk indexing failed for ${failed.length}/${docs.length} docs in ${index}: ` +
+        `${JSON.stringify(firstError)}`,
+    );
   }
   console.log(`  Indexed ${docs.length} docs into ${index}`);
 }
@@ -126,7 +130,7 @@ async function seedPodMetrics(client, pods) {
   const docs = [];
 
   for (const pod of pods) {
-    // One metric document per pod per minute for the last hour
+    // One metric document per pod every 5 minutes for the last hour
     for (let minutesAgo = 0; minutesAgo <= 60; minutesAgo += 5) {
       docs.push({
         "@timestamp": new Date(now - minutesAgo * 60_000).toISOString(),

@@ -17,8 +17,9 @@
  *     --out-dir screenshots
  *
  * Supported --section values:
- *   cluster-overview | data-management | fleet | logs | metrics | profiling |
- *   query-lab | security | services | traces | dashboards | add-data | all
+ *   cluster-overview | data-management | fleet | kubernetes | logs | metrics |
+ *   profiling | query-lab | security | services | traces | dashboards |
+ *   add-data | all
  *
  * Flags:
  *   --live           Connect to a real Elasticsearch at --es-url (default:
