@@ -5,6 +5,10 @@ import { EditorState, Prec } from "@codemirror/state";
 import { SQLDialect } from "@codemirror/lang-sql";
 
 import { useUIStore } from "../../store/useUIStore";
+import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
+import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
+import { InsightSlotProvider } from "../InsightSlotContext";
+import InsightSlot from "../InsightSlot";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 
 import TraceSearchPanel from "./TraceSearchPanel";
@@ -12,10 +16,39 @@ import TraceResultsView from "./TraceResultsView";
 import TraceErrorAlerts from "./TraceErrorAlerts";
 import SpanDetailDrawer from "./SpanDetailDrawer";
 import { useTracesOrchestrator } from "./useTracesOrchestrator";
+import { TRACES_INSIGHT_SLOTS } from "./tracesInsightSlots";
+
+const TRACES_SYSTEM_PROMPT =
+  "You are a distributed-tracing observability assistant." +
+  " Analyse the trace search context and produce per-slot insights." +
+  INSIGHT_GUARDRAIL;
 
 export default function TracesPage() {
   const themeMode = useUIStore((s) => s.themeMode);
   const orchestrator = useTracesOrchestrator();
+
+  const slotContext = useMemo(
+    () =>
+      JSON.stringify({
+        filters: orchestrator.filters,
+        resultCount: orchestrator.searchResult?.values.length ?? 0,
+        selectedTraceId: orchestrator.selectedTraceId,
+        viewMode: orchestrator.viewMode,
+      }),
+    [
+      orchestrator.filters,
+      orchestrator.searchResult?.values.length,
+      orchestrator.selectedTraceId,
+      orchestrator.viewMode,
+    ],
+  );
+
+  const slotInsights = usePageSlotInsights({
+    context: slotContext,
+    systemPrompt: TRACES_SYSTEM_PROMPT,
+    cacheKey: `traces-slots::${slotContext}`,
+    slots: TRACES_INSIGHT_SLOTS,
+  });
 
   const queryEditorExtensions = useMemo(
     () => [
@@ -43,106 +76,120 @@ export default function TracesPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
-      <TraceSearchPanel
-        filters={orchestrator.filters}
-        resetFilters={orchestrator.resetFilters}
-        applyFiltersAndRun={orchestrator.applyFiltersAndRun}
-        effectiveQuery={orchestrator.effectiveQuery}
-        onRawQueryChange={(val) => orchestrator.setRawQuery(val)}
-        onCreateEditor={(view) => orchestrator.setQueryContextView(view)}
-        queryEditorExtensions={queryEditorExtensions}
-        themeMode={themeMode}
-        searchLoading={orchestrator.searchLoading}
-        onSearch={orchestrator.handleSearch}
-        searchResultCount={
-          orchestrator.searchResult ? orchestrator.searchResult.values.length : null
-        }
-        collapsed={orchestrator.traceSearchCollapsed}
-        onToggleCollapsed={() =>
-          orchestrator.setTraceSearchCollapsed(!orchestrator.traceSearchCollapsed)
-        }
-      />
+    <InsightSlotProvider
+      summary={slotInsights.summary}
+      insights={slotInsights.insights}
+      loading={slotInsights.loading}
+      error={slotInsights.error}
+      refresh={slotInsights.refresh}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
+        <InsightSlot slotId="trace-search">
+          <TraceSearchPanel
+            filters={orchestrator.filters}
+            resetFilters={orchestrator.resetFilters}
+            applyFiltersAndRun={orchestrator.applyFiltersAndRun}
+            effectiveQuery={orchestrator.effectiveQuery}
+            onRawQueryChange={(val) => orchestrator.setRawQuery(val)}
+            onCreateEditor={(view) => orchestrator.setQueryContextView(view)}
+            queryEditorExtensions={queryEditorExtensions}
+            themeMode={themeMode}
+            searchLoading={orchestrator.searchLoading}
+            onSearch={orchestrator.handleSearch}
+            searchResultCount={
+              orchestrator.searchResult ? orchestrator.searchResult.values.length : null
+            }
+            collapsed={orchestrator.traceSearchCollapsed}
+            onToggleCollapsed={() =>
+              orchestrator.setTraceSearchCollapsed(!orchestrator.traceSearchCollapsed)
+            }
+          />
+        </InsightSlot>
 
-      <TraceErrorAlerts
-        errors={[
-          orchestrator.searchError,
-          orchestrator.detailError,
-          orchestrator.timeseriesError,
-          orchestrator.driftRadarError,
-          orchestrator.driftRadarBaselineError,
-        ]}
-      />
+        <TraceErrorAlerts
+          errors={[
+            orchestrator.searchError,
+            orchestrator.detailError,
+            orchestrator.timeseriesError,
+            orchestrator.driftRadarError,
+            orchestrator.driftRadarBaselineError,
+          ]}
+        />
 
-      {/* Content area */}
-      <Box
-        sx={{
-          position: "relative",
-          display: "flex",
-          flex: 1,
-          gap: 1,
-          minHeight: 0,
-        }}
-      >
-        {/* Results panel */}
+        {/* Content area */}
         <Box
           sx={{
+            position: "relative",
             display: "flex",
             flex: 1,
-            flexDirection: "column",
-            minWidth: 0,
+            gap: 1,
             minHeight: 0,
           }}
         >
-          <TraceResultsView
-            viewMode={orchestrator.viewMode}
-            onViewModeChange={orchestrator.setViewMode}
-            searchResult={orchestrator.searchResult}
-            searchLoading={orchestrator.searchLoading}
-            traceRows={orchestrator.traceRows}
-            selectedTraceId={orchestrator.selectedTraceId}
-            onSelectTrace={orchestrator.handleSelectTrace}
-            maxDuration={orchestrator.maxDuration}
-            rawQuery={orchestrator.rawQuery}
-            timeseriesLoading={orchestrator.timeseriesLoading}
-            timeseriesResult={orchestrator.timeseriesResult}
-            detailLoading={orchestrator.detailLoading}
-            selectedTraceSpans={orchestrator.selectedTraceSpans}
-            onServiceMapNodeClick={orchestrator.handleServiceMapNodeClick}
-            driftRadarLoading={orchestrator.driftRadarLoading}
-            driftRadarBaselineLoading={orchestrator.driftRadarBaselineLoading}
-            driftRadarSpans={orchestrator.driftRadarSpans}
-            driftRadarBaselineSpans={orchestrator.driftRadarBaselineSpans}
-            driftRadarBaselineEnabled={orchestrator.driftRadarBaselineEnabled}
-            onDriftRadarBaselineChange={orchestrator.handleDriftRadarBaselineChange}
-            filters={orchestrator.filters}
-            onSearch={orchestrator.handleSearch}
-            searchSpans={orchestrator.searchSpans}
-            selectedSpanId={orchestrator.selectedSpanId}
-            onSelectSpan={orchestrator.handleSelectSpan}
-            onClearTraceSelection={orchestrator.clearTraceSelection}
-            onOpenInQueryLab={
-              orchestrator.selectedTraceId
-                ? () =>
-                    orchestrator.handleOpenInDiscover(
-                      orchestrator.selectedTraceId!,
-                      orchestrator.selectedRootSpanId,
-                      orchestrator.selectedTraceTimestamp,
-                    )
-                : undefined
-            }
-          />
+          {/* Results panel */}
+          <Box
+            sx={{
+              display: "flex",
+              flex: 1,
+              flexDirection: "column",
+              minWidth: 0,
+              minHeight: 0,
+            }}
+          >
+            <InsightSlot slotId="trace-results">
+              <TraceResultsView
+                viewMode={orchestrator.viewMode}
+                onViewModeChange={orchestrator.setViewMode}
+                searchResult={orchestrator.searchResult}
+                searchLoading={orchestrator.searchLoading}
+                traceRows={orchestrator.traceRows}
+                selectedTraceId={orchestrator.selectedTraceId}
+                onSelectTrace={orchestrator.handleSelectTrace}
+                maxDuration={orchestrator.maxDuration}
+                rawQuery={orchestrator.rawQuery}
+                timeseriesLoading={orchestrator.timeseriesLoading}
+                timeseriesResult={orchestrator.timeseriesResult}
+                detailLoading={orchestrator.detailLoading}
+                selectedTraceSpans={orchestrator.selectedTraceSpans}
+                onServiceMapNodeClick={orchestrator.handleServiceMapNodeClick}
+                driftRadarLoading={orchestrator.driftRadarLoading}
+                driftRadarBaselineLoading={orchestrator.driftRadarBaselineLoading}
+                driftRadarSpans={orchestrator.driftRadarSpans}
+                driftRadarBaselineSpans={orchestrator.driftRadarBaselineSpans}
+                driftRadarBaselineEnabled={orchestrator.driftRadarBaselineEnabled}
+                onDriftRadarBaselineChange={orchestrator.handleDriftRadarBaselineChange}
+                filters={orchestrator.filters}
+                onSearch={orchestrator.handleSearch}
+                searchSpans={orchestrator.searchSpans}
+                selectedSpanId={orchestrator.selectedSpanId}
+                onSelectSpan={orchestrator.handleSelectSpan}
+                onClearTraceSelection={orchestrator.clearTraceSelection}
+                onOpenInQueryLab={
+                  orchestrator.selectedTraceId
+                    ? () =>
+                        orchestrator.handleOpenInDiscover(
+                          orchestrator.selectedTraceId!,
+                          orchestrator.selectedRootSpanId,
+                          orchestrator.selectedTraceTimestamp,
+                        )
+                    : undefined
+                }
+              />
+            </InsightSlot>
+          </Box>
         </Box>
-      </Box>
 
-      <SpanDetailDrawer
-        span={orchestrator.selectedSpan}
-        open={orchestrator.drawerOpen}
-        onClose={() => orchestrator.setDrawerOpen(false)}
-        onFilterBy={orchestrator.handleDrawerFilterBy}
-        onExclude={orchestrator.handleDrawerExclude}
-        onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}
-      />
-    </Box>
+        <InsightSlot slotId="trace-waterfall">
+          <SpanDetailDrawer
+            span={orchestrator.selectedSpan}
+            open={orchestrator.drawerOpen}
+            onClose={() => orchestrator.setDrawerOpen(false)}
+            onFilterBy={orchestrator.handleDrawerFilterBy}
+            onExclude={orchestrator.handleDrawerExclude}
+            onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}
+          />
+        </InsightSlot>
+      </Box>
+    </InsightSlotProvider>
   );
 }
