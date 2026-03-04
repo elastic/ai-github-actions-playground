@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import type {
-  K8sFieldMapping} from "../../src/components/kubernetes/k8sQueryBuilder";
+import type { K8sFieldMapping } from "../../src/components/kubernetes/k8sQueryBuilder";
 import {
   DEFAULT_K8S_FIELD_MAPPING,
   buildClusterInventoryQuery,
   buildNamespaceInventoryQuery,
   buildWorkloadInventoryQuery,
+  buildAllWorkloadsInventoryQuery,
   buildPodInventoryQuery,
   buildPodDetailQuery,
   buildK8sLogsQuery,
@@ -137,6 +137,21 @@ describe("k8sQueryBuilder", () => {
       const query = buildWorkloadInventoryQuery("replicaset", DEFAULT_FILTERS);
       expect(query).toContain("k8s.replicaset.name IS NOT NULL");
       expect(query).toContain("BY workload_name = k8s.replicaset.name");
+    });
+  });
+
+  describe("buildAllWorkloadsInventoryQuery", () => {
+    it("generates a query that includes all supported workload kinds", () => {
+      const query = buildAllWorkloadsInventoryQuery(DEFAULT_FILTERS);
+      expect(query).toContain("k8s.deployment.name IS NOT NULL");
+      expect(query).toContain("k8s.replicaset.name IS NOT NULL");
+      expect(query).toContain("k8s.statefulset.name IS NOT NULL");
+      expect(query).toContain("k8s.daemonset.name IS NOT NULL");
+      expect(query).toContain("k8s.job.name IS NOT NULL");
+      expect(query).toContain("k8s.cronjob.name IS NOT NULL");
+      expect(query).toContain(
+        "BY workload_name = COALESCE(k8s.deployment.name, k8s.replicaset.name, k8s.statefulset.name, k8s.daemonset.name, k8s.job.name, k8s.cronjob.name)",
+      );
     });
   });
 

@@ -187,6 +187,33 @@ export function buildWorkloadInventoryQuery(
   ]);
 }
 
+/**
+ * Aggregates per-workload metrics across all workload kinds within a namespace.
+ */
+export function buildAllWorkloadsInventoryQuery(
+  filters: K8sQueryFilters,
+  fields: K8sFieldMapping = DEFAULT_K8S_FIELD_MAPPING,
+): string {
+  const workloadFields = [
+    fields.deploymentName,
+    fields.replicaSetName,
+    fields.statefulSetName,
+    fields.daemonSetName,
+    fields.jobName,
+    fields.cronJobName,
+  ];
+  const whereClauses = buildTimeWhereClauses(filters, fields);
+  whereClauses.push(`(${workloadFields.map((field) => `${field} IS NOT NULL`).join(" OR ")})`);
+
+  return buildPipeline([
+    `FROM ${fields.metricsIndex}`,
+    buildWherePipe(whereClauses),
+    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY workload_name = COALESCE(${workloadFields.join(", ")})`,
+    `SORT pod_count DESC`,
+    `LIMIT 200`,
+  ]);
+}
+
 // ---------------------------------------------------------------------------
 // Pod inventory
 // ---------------------------------------------------------------------------

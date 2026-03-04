@@ -9,9 +9,9 @@ import type { KubernetesActiveTab } from "../../types/pageFilters";
 import type { EsqlResponse } from "../../types";
 
 import {
+  buildAllWorkloadsInventoryQuery,
   buildClusterInventoryQuery,
   buildNamespaceInventoryQuery,
-  buildWorkloadInventoryQuery,
   buildPodInventoryQuery,
   type K8sQueryFilters,
 } from "./k8sQueryBuilder";
@@ -35,7 +35,7 @@ function buildQueryForTab(tab: KubernetesActiveTab, filters: K8sQueryFilters): s
     case "namespaces":
       return buildNamespaceInventoryQuery(filters);
     case "workloads":
-      return buildWorkloadInventoryQuery("deployment", filters);
+      return buildAllWorkloadsInventoryQuery(filters);
     case "pods":
       return buildPodInventoryQuery(filters);
   }
