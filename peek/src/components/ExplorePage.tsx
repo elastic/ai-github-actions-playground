@@ -19,17 +19,25 @@ import type { EsqlResponse } from "../types";
 import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
+import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
+import { InsightSlotProvider } from "./InsightSlotContext";
+import InsightSlot from "./InsightSlot";
 import MetricsSearchPanel from "./explore/MetricsSearchPanel";
 import ExploreContentArea from "./explore/ExploreContentArea";
-import PageInsightBanner from "./PageInsightBanner";
 import { useExplorerUrlSync } from "./explore/useExplorerUrlSync";
 import {
   explorerSearchParsers,
   exploreSearchUrlKeys,
   metricNamespaceOf,
 } from "./explore/exploreUtils";
+import { EXPLORE_INSIGHT_SLOT_IDS, EXPLORE_INSIGHT_SLOTS } from "./explore/exploreInsightSlots";
+
+const EXPLORE_SYSTEM_PROMPT =
+  "You are a metrics observability assistant." +
+  " Analyse the current metric exploration context and produce per-slot insights." +
+  INSIGHT_GUARDRAIL;
 
 export default function ExplorePage() {
   const queryClient = useQueryClient();
@@ -270,109 +278,126 @@ export default function ExplorePage() {
     return queryResult.data as EsqlResponse;
   }, [queryResult]);
 
+  const slotContext = useMemo(
+    () =>
+      JSON.stringify({
+        indexPattern,
+        selectedMetric,
+        aggregation,
+        groupBy,
+        filterCount: filters.length,
+        rowCount: chartData?.values.length ?? 0,
+        columns: chartData?.columns.map((c) => c.name) ?? [],
+        sampleValues: chartData?.values.slice(0, 10) ?? [],
+      }),
+    [indexPattern, selectedMetric, aggregation, groupBy, filters.length, chartData],
+  );
+
+  const slotInsights = usePageSlotInsights({
+    context: slotContext,
+    systemPrompt: EXPLORE_SYSTEM_PROMPT,
+    cacheKey: `explore-slots::${slotContext}`,
+    slots: EXPLORE_INSIGHT_SLOTS,
+    enabled: Boolean(selectedMetric && chartData),
+  });
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
-      <MetricsSearchPanel
-        indexPattern={indexPattern}
-        fields={fields}
-        fieldsLoading={fieldsLoading}
-        selectedMetric={selectedMetric}
-        selectedNamespace={selectedNamespace}
-        metricType={metricType}
-        aggregation={aggregation}
-        filters={filters}
-        groupBy={groupBy}
-        rawQuery={rawQuery}
-        timeRange={dashboard.timeRange}
-        onIndexPatternChange={setIndexPattern}
-        onNamespaceChange={(namespace) => {
-          setSelectedNamespace(namespace);
-          if (
-            selectedMetric &&
-            namespace &&
-            !selectedMetric.startsWith(`${namespace}.`) &&
-            selectedMetric !== namespace
-          ) {
-            setSelectedMetric(null);
-          }
-        }}
-        onMetricSelect={handleMetricSelect}
-        onAggregationChange={setAggregation}
-        onRemoveFilter={removeFilter}
-        onClearFilters={clearFilters}
-        onGroupByDelete={() => setGroupBy(null)}
-        onRawQueryChange={setRawQuery}
-        onCreateEditor={setQueryContextView}
-        queryEditorExtensions={queryEditorExtensions}
-        themeMode={themeMode}
-        searchLoading={queryResult.status === "loading"}
-        onSearch={handleSearch}
-        searchResultCount={chartData ? chartData.values.length : null}
-        collapsed={metricsSearchCollapsed}
-        onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
-      />
+    <InsightSlotProvider
+      summary={slotInsights.summary}
+      insights={slotInsights.insights}
+      loading={slotInsights.loading}
+      error={slotInsights.error}
+      refresh={slotInsights.refresh}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
+        <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreSearch}>
+          <MetricsSearchPanel
+            indexPattern={indexPattern}
+            fields={fields}
+            fieldsLoading={fieldsLoading}
+            selectedMetric={selectedMetric}
+            selectedNamespace={selectedNamespace}
+            metricType={metricType}
+            aggregation={aggregation}
+            filters={filters}
+            groupBy={groupBy}
+            rawQuery={rawQuery}
+            timeRange={dashboard.timeRange}
+            onIndexPatternChange={setIndexPattern}
+            onNamespaceChange={(namespace) => {
+              setSelectedNamespace(namespace);
+              if (
+                selectedMetric &&
+                namespace &&
+                !selectedMetric.startsWith(`${namespace}.`) &&
+                selectedMetric !== namespace
+              ) {
+                setSelectedMetric(null);
+              }
+            }}
+            onMetricSelect={handleMetricSelect}
+            onAggregationChange={setAggregation}
+            onRemoveFilter={removeFilter}
+            onClearFilters={clearFilters}
+            onGroupByDelete={() => setGroupBy(null)}
+            onRawQueryChange={setRawQuery}
+            onCreateEditor={setQueryContextView}
+            queryEditorExtensions={queryEditorExtensions}
+            themeMode={themeMode}
+            searchLoading={queryResult.status === "loading"}
+            onSearch={handleSearch}
+            searchResultCount={chartData ? chartData.values.length : null}
+            collapsed={metricsSearchCollapsed}
+            onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+          />
+        </InsightSlot>
 
-      {/* AI anomaly insight */}
-      {selectedMetric && chartData && (
-        <PageInsightBanner
-          context={JSON.stringify({
-            indexPattern,
-            selectedMetric,
-            aggregation,
-            groupBy,
-            filterCount: filters.length,
-            rowCount: chartData.values.length,
-            columns: chartData.columns.map((c) => c.name),
-            sampleValues: chartData.values.slice(0, 10),
-          })}
-          systemPrompt={`You are a metrics anomaly detector for Elasticsearch. Analyze the current chart data and flag if latest values are significantly different from the mean (e.g. CPU > 90%, disk > 80%). Keep the response to one concise sentence.${INSIGHT_GUARDRAIL}`}
-          cacheKey={`explore::${selectedMetric}::${aggregation}::${groupBy ?? ""}::${filters.length}::${JSON.stringify(chartData.values.slice(0, 10))}`}
-        />
-      )}
+        {/* Error display */}
+        {queryResult.status === "error" &&
+          queryResult.error &&
+          queryResult.error !== dismissedError && (
+            <Alert
+              severity="error"
+              action={
+                <IconButton
+                  size="small"
+                  aria-label="Dismiss error"
+                  onClick={() => setDismissedError(queryResult.error ?? null)}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              }
+            >
+              {queryResult.error}
+            </Alert>
+          )}
 
-      {/* Error display */}
-      {queryResult.status === "error" &&
-        queryResult.error &&
-        queryResult.error !== dismissedError && (
-          <Alert
-            severity="error"
-            action={
-              <IconButton
-                size="small"
-                aria-label="Dismiss error"
-                onClick={() => setDismissedError(queryResult.error ?? null)}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            }
-          >
-            {queryResult.error}
-          </Alert>
-        )}
-
-      <ExploreContentArea
-        fields={fields}
-        client={client}
-        indexPattern={indexPattern}
-        selectedMetric={selectedMetric}
-        selectedMetricNamespace={selectedMetricNamespace}
-        metricType={metricType}
-        selectedNamespace={selectedNamespace}
-        groupBy={groupBy}
-        showOverview={showOverview}
-        showDimensionOverview={showDimensionOverview}
-        metricNotFound={metricNotFound}
-        chartData={chartData}
-        queryStatus={queryResult.status}
-        timeRange={dashboard.timeRange}
-        onMetricSelect={handleMetricSelect}
-        onDimensionSelect={handleDimensionSelect}
-        onBackToOverview={handleBackToOverview}
-        onBackToDimensionOverview={handleBackToDimensionOverview}
-        onViewUngrouped={handleViewUngrouped}
-        onAddFilter={handleAddFilter}
-        onSetGroupBy={setGroupBy}
-      />
-    </Box>
+        <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreContent}>
+          <ExploreContentArea
+            fields={fields}
+            client={client}
+            indexPattern={indexPattern}
+            selectedMetric={selectedMetric}
+            selectedMetricNamespace={selectedMetricNamespace}
+            metricType={metricType}
+            selectedNamespace={selectedNamespace}
+            groupBy={groupBy}
+            showOverview={showOverview}
+            showDimensionOverview={showDimensionOverview}
+            metricNotFound={metricNotFound}
+            chartData={chartData}
+            queryStatus={queryResult.status}
+            timeRange={dashboard.timeRange}
+            onMetricSelect={handleMetricSelect}
+            onDimensionSelect={handleDimensionSelect}
+            onBackToOverview={handleBackToOverview}
+            onBackToDimensionOverview={handleBackToDimensionOverview}
+            onViewUngrouped={handleViewUngrouped}
+            onAddFilter={handleAddFilter}
+            onSetGroupBy={setGroupBy}
+          />
+        </InsightSlot>
+      </Box>
+    </InsightSlotProvider>
   );
 }
