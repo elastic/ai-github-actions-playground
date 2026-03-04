@@ -167,6 +167,23 @@ export function buildTraceDetailQuery(
   return `FROM ${fields.index} | ${where} | LIMIT 10000`;
 }
 
+/**
+ * Generates an ES|QL query to fetch spans for a list of trace IDs.
+ */
+export function buildTraceSpansForTraceIdsQuery(
+  traceIds: string[],
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+  options: { limit?: number } = {},
+): string {
+  const validTraceIds = traceIds.filter((id) => id.trim().length > 0);
+  if (validTraceIds.length === 0) {
+    return `FROM ${fields.index} | LIMIT 0`;
+  }
+  const limit = options.limit ?? 20000;
+  const where = buildWherePipe([`${fields.traceId} IN (${buildValueList(validTraceIds)})`]);
+  return `FROM ${fields.index} | ${where} | SORT ${fields.timestamp} DESC | LIMIT ${limit}`;
+}
+
 export interface TraceQueryLabDraftContext {
   traceId: string;
   spanId?: string | null;

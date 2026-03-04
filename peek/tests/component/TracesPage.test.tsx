@@ -22,7 +22,9 @@ vi.mock("../../src/components/llmCompletionExtension", () => ({
   makeLLMCompletionExtension: () => [],
 }));
 
-// Collect onSuccess callbacks from each useEsqlQuery call; index 0 is the main search query
+// Collect onSuccess callbacks from each useEsqlQuery call.
+// Current order in useTracesOrchestrator:
+// 0 = search spans query, 1 = main search query, 2 = trace detail, ...
 let capturedCallbacks: Array<((data: EsqlResponse, query: string) => void) | undefined> = [];
 const mockRunQuery = vi.fn();
 let mockErrorsByHook: Array<string | null> = [];
@@ -191,7 +193,7 @@ describe("TracesPage empty states", () => {
     renderTracesPage();
 
     act(() => {
-      capturedCallbacks[0]?.({ columns: [], values: [] }, "FROM traces");
+      capturedCallbacks[1]?.({ columns: [], values: [] }, "FROM traces");
     });
 
     await waitFor(() => {
@@ -317,7 +319,7 @@ describe("TracesPage duration parsing", () => {
     renderTracesPage();
 
     act(() => {
-      capturedCallbacks[0]?.(
+      capturedCallbacks[1]?.(
         {
           columns: [
             { name: "trace.id", type: "keyword" },
@@ -332,6 +334,33 @@ describe("TracesPage duration parsing", () => {
             [
               "trace-1",
               "span-1",
+              "checkout",
+              "GET /checkout",
+              2_000_000,
+              "STATUS_CODE_OK",
+              "2026-02-23T10:00:00.000Z",
+            ],
+          ],
+        },
+        "FROM traces-*",
+      );
+      capturedCallbacks[0]?.(
+        {
+          columns: [
+            { name: "trace.id", type: "keyword" },
+            { name: "span.id", type: "keyword" },
+            { name: "parent.id", type: "keyword" },
+            { name: "service.name", type: "keyword" },
+            { name: "name", type: "keyword" },
+            { name: "duration", type: "long" },
+            { name: "status.code", type: "keyword" },
+            { name: "@timestamp", type: "date" },
+          ],
+          values: [
+            [
+              "trace-1",
+              "span-1",
+              null,
               "checkout",
               "GET /checkout",
               2_000_000,

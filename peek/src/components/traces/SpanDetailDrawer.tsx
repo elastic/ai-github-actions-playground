@@ -6,11 +6,25 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
 import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import EmptyState from "../EmptyState";
@@ -27,13 +41,23 @@ function formatEventTimestamp(ts: string): string {
   return Number.isNaN(parsedMs) ? ts : new Date(parsedMs).toISOString();
 }
 
+function shortId(id: string, head = 8, tail = 6): string {
+  if (!id) return "—";
+  if (id.length <= head + tail + 1) return id;
+  return `${id.slice(0, head)}...${id.slice(-tail)}`;
+}
+
 interface SpanDetailDrawerProps {
   span: Span | null;
   open: boolean;
   onClose: () => void;
+  onSelectSpan?: (spanId: string) => void;
   onFilterBy: (key: string, value: string) => void;
   onExclude: (key: string, value: string) => void;
   onOpenInQueryLab?: (span: Pick<Span, "traceId" | "spanId" | "timestamp">) => void;
+  selectedSpanId?: string | null;
+  traceSpans?: Span[];
+  searchSpans?: Span[];
 }
 
 function KeyValueRow({
@@ -49,6 +73,10 @@ function KeyValueRow({
   onExclude?: () => void;
   onCopy?: () => void;
 }) {
+  const [actionAnchorEl, setActionAnchorEl] = useState<HTMLElement | null>(null);
+  const actionsOpen = Boolean(actionAnchorEl);
+  const hasActions = Boolean(onFilterBy || onExclude || onCopy);
+
   return (
     <Box
       sx={{
@@ -57,7 +85,21 @@ function KeyValueRow({
         alignItems: "center",
         py: 0.5,
         px: 1,
+        "& .kv-actions-trigger": {
+          opacity: 0,
+          pointerEvents: "none",
+        },
         "&:hover": { bgcolor: "action.hover" },
+        "&:hover .kv-actions-trigger, &:focus-within .kv-actions-trigger": {
+          opacity: 1,
+          pointerEvents: "auto",
+        },
+        "@media (hover: none)": {
+          "& .kv-actions-trigger": {
+            opacity: 1,
+            pointerEvents: "auto",
+          },
+        },
       }}
     >
       <Typography
@@ -72,29 +114,69 @@ function KeyValueRow({
       >
         {value}
       </Typography>
-      <Box sx={{ display: "flex", flexShrink: 0, gap: 0.5 }}>
-        {onFilterBy && (
-          <Tooltip title="Filter by this value">
-            <IconButton size="small" aria-label="Filter by this value" onClick={onFilterBy}>
-              <FilterAltIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-        {onExclude && (
-          <Tooltip title="Exclude this value">
-            <IconButton size="small" aria-label="Exclude this value" onClick={onExclude}>
-              <FilterAltOffIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-        {onCopy && (
-          <Tooltip title="Copy value">
-            <IconButton size="small" aria-label="Copy value" onClick={onCopy}>
-              <ContentCopyIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
+      {hasActions ? (
+        <>
+          <Box sx={{ display: "flex", flexShrink: 0, justifyContent: "flex-end", width: 28 }}>
+            <Tooltip title="Row actions">
+              <IconButton
+                className="kv-actions-trigger"
+                size="small"
+                aria-label="Row actions"
+                onClick={(event) => setActionAnchorEl(event.currentTarget)}
+              >
+                <MoreHorizIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Menu
+            anchorEl={actionAnchorEl}
+            open={actionsOpen}
+            onClose={() => setActionAnchorEl(null)}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+          >
+            {onFilterBy && (
+              <MenuItem
+                onClick={() => {
+                  onFilterBy();
+                  setActionAnchorEl(null);
+                }}
+              >
+                <ListItemIcon>
+                  <FilterAltIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Filter by this value</ListItemText>
+              </MenuItem>
+            )}
+            {onExclude && (
+              <MenuItem
+                onClick={() => {
+                  onExclude();
+                  setActionAnchorEl(null);
+                }}
+              >
+                <ListItemIcon>
+                  <FilterAltOffIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Exclude this value</ListItemText>
+              </MenuItem>
+            )}
+            {onCopy && (
+              <MenuItem
+                onClick={() => {
+                  onCopy();
+                  setActionAnchorEl(null);
+                }}
+              >
+                <ListItemIcon>
+                  <ContentCopyIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Copy value</ListItemText>
+              </MenuItem>
+            )}
+          </Menu>
+        </>
+      ) : null}
     </Box>
   );
 }
@@ -103,9 +185,13 @@ export default function SpanDetailDrawer({
   span,
   open,
   onClose,
+  onSelectSpan,
   onFilterBy,
   onExclude,
   onOpenInQueryLab,
+  selectedSpanId,
+  traceSpans = [],
+  searchSpans = [],
 }: SpanDetailDrawerProps) {
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -136,8 +222,39 @@ export default function SpanDetailDrawer({
     return { resourceAttrs: resource, spanAttrs: regular };
   }, [attributes]);
 
+  const timelineSpans = useMemo(() => {
+    if (!span) return [];
+    const fromDetail = traceSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
+    const base =
+      fromDetail.length > 0
+        ? fromDetail
+        : searchSpans.filter((traceSpan) => traceSpan.traceId === span.traceId);
+    return [...base].sort((a, b) => a.startTimeUs - b.startTimeUs || a.durationUs - b.durationUs);
+  }, [traceSpans, searchSpans, span]);
   if (!span) return null;
   const tsDisplay = span.timestamp ? formatEventTimestamp(span.timestamp) : "—";
+  const selectedTimelineSpanId = selectedSpanId ?? span.spanId;
+  const selectedTimelineIndex = timelineSpans.findIndex(
+    (timelineSpan) => timelineSpan.spanId === selectedTimelineSpanId,
+  );
+  const canSelectTimelineSpan = Boolean(onSelectSpan);
+  const canSelectPrevTimelineSpan = canSelectTimelineSpan && selectedTimelineIndex > 0;
+  const canSelectNextTimelineSpan =
+    canSelectTimelineSpan &&
+    selectedTimelineIndex >= 0 &&
+    selectedTimelineIndex < timelineSpans.length - 1;
+  const traceStartUs = timelineSpans.reduce(
+    (min, traceSpan) => Math.min(min, traceSpan.startTimeUs),
+    Number.POSITIVE_INFINITY,
+  );
+  const traceEndUs = timelineSpans.reduce(
+    (max, traceSpan) => Math.max(max, traceSpan.startTimeUs + traceSpan.durationUs),
+    Number.NEGATIVE_INFINITY,
+  );
+  const traceDurationUs =
+    Number.isFinite(traceStartUs) && Number.isFinite(traceEndUs)
+      ? Math.max(traceEndUs - traceStartUs, 1)
+      : 1;
 
   return (
     <Drawer
@@ -191,7 +308,7 @@ export default function SpanDetailDrawer({
         >
           <Tab label="Overview" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
           <Tab label="Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-          <Tab label="Resource" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+          <Tab label="Resource Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
           <Tab label="Links" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
           <Tab label="Events" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
         </Tabs>
@@ -200,6 +317,149 @@ export default function SpanDetailDrawer({
         <Box sx={{ flex: 1, overflow: "auto" }}>
           {tabIndex === 0 && (
             <Box sx={{ p: 1 }}>
+              <Box sx={{ py: 0.5, px: 1 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mb: 1 }}
+                >
+                  Quick facts
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  <Tooltip title={span.traceId}>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      icon={<TimelineIcon />}
+                      label={`Trace ${shortId(span.traceId)}`}
+                      onClick={() => handleCopy(span.traceId)}
+                    />
+                  </Tooltip>
+                  <Tooltip title={span.spanId}>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      icon={<FingerprintIcon />}
+                      label={`Span ${shortId(span.spanId)}`}
+                      onClick={() => handleCopy(span.spanId)}
+                    />
+                  </Tooltip>
+                  {span.parentSpanId && (
+                    <Tooltip title={span.parentSpanId}>
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<AccountTreeIcon />}
+                        label={`Parent ${shortId(span.parentSpanId)}`}
+                        onClick={() => handleCopy(span.parentSpanId!)}
+                      />
+                    </Tooltip>
+                  )}
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    icon={<ScheduleIcon />}
+                    label={formatSpanDuration(span.durationUs)}
+                  />
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    icon={<CheckCircleOutlineIcon />}
+                    label={formatStatusLabel(span.status)}
+                  />
+                </Box>
+              </Box>
+              {timelineSpans.length > 0 && (
+                <Box sx={{ py: 0.5, px: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mb: 0.5 }}
+                  >
+                    Trace timeline
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                    <Tooltip title="Previous span">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Select previous span"
+                          disabled={!canSelectPrevTimelineSpan}
+                          onClick={() =>
+                            onSelectSpan?.(timelineSpans[selectedTimelineIndex - 1]!.spanId)
+                          }
+                          sx={{ p: 0.5 }}
+                        >
+                          <ChevronLeftIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Box
+                      sx={{
+                        position: "relative",
+                        flex: 1,
+                        height: COMPONENT_HEIGHTS.sidebarNavItem,
+                        overflow: "hidden",
+                        borderRadius: 1,
+                        bgcolor: "action.hover",
+                      }}
+                    >
+                      {timelineSpans.map((traceSpan) => {
+                        const leftPct =
+                          ((traceSpan.startTimeUs - traceStartUs) / traceDurationUs) * 100;
+                        const widthPct = Math.max(
+                          (traceSpan.durationUs / traceDurationUs) * 100,
+                          0.5,
+                        );
+                        const isSelected = traceSpan.spanId === selectedTimelineSpanId;
+                        return (
+                          <Tooltip
+                            key={traceSpan.spanId}
+                            title={`${traceSpan.serviceName} / ${traceSpan.name} • ${formatSpanDuration(traceSpan.durationUs)}`}
+                          >
+                            <ButtonBase
+                              component="button"
+                              disabled={!canSelectTimelineSpan}
+                              aria-label={`Select span ${traceSpan.name} from service ${traceSpan.serviceName}`}
+                              sx={{
+                                position: "absolute",
+                                top: isSelected ? 8 : 10,
+                                left: `${Math.min(Math.max(leftPct, 0), 100)}%`,
+                                width: `${Math.min(widthPct, 100)}%`,
+                                minWidth: 0,
+                                height: isSelected ? 16 : 12,
+                                p: 0,
+                                outline: isSelected ? "2px solid" : "none",
+                                outlineColor: "primary.main",
+                                borderRadius: 0.5,
+                                bgcolor: getServiceColor(traceSpan.serviceName),
+                                opacity: isSelected ? 0.95 : 0.65,
+                                cursor: canSelectTimelineSpan ? "pointer" : "default",
+                              }}
+                              onClick={() => onSelectSpan?.(traceSpan.spanId)}
+                            />
+                          </Tooltip>
+                        );
+                      })}
+                    </Box>
+                    <Tooltip title="Next span">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Select next span"
+                          disabled={!canSelectNextTimelineSpan}
+                          onClick={() =>
+                            onSelectSpan?.(timelineSpans[selectedTimelineIndex + 1]!.spanId)
+                          }
+                          sx={{ p: 0.5 }}
+                        >
+                          <ChevronRightIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              )}
               <KeyValueRow
                 label="Service"
                 value={span.serviceName}

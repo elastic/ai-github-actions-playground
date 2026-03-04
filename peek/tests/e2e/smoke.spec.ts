@@ -313,13 +313,18 @@ test.describe("smoke – site navigation", () => {
     // "1 trace found" — resultLabel() singularizes for count === 1
     await expect(page.getByText("1 trace found")).toBeVisible({ timeout: 10_000 });
     await page.getByText("GET /checkout").click();
-    await expect(page.getByText("2 spans")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Open in Query Lab" })).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Open in Query Lab" })).toBeHidden();
     await page.getByRole("button", { name: "Service Map" }).click();
     await expect(
       page.getByText("Select a trace in List or Scatter view to see its service map"),
     ).toBeHidden();
-    // Return to list view where Open in Query Lab is available in the span tree toolbar
+    // Return to list view, re-open span details, then pivot into Query Lab.
     await page.getByRole("button", { name: "List" }).click();
+    await page.getByText("GET /checkout").click();
     await page.getByRole("button", { name: "Open in Query Lab" }).click();
     await expect(page).toHaveURL(/\/discover$/);
   });

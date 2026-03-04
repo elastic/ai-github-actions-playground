@@ -7,6 +7,7 @@ import { SQLDialect } from "@codemirror/lang-sql";
 import { useUIStore } from "../../store/useUIStore";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
+import type { InsightSlotDefinition } from "../../types/insightSlots";
 import { InsightSlotProvider } from "../InsightSlotContext";
 import InsightSlot from "../InsightSlot";
 import { makeLLMCompletionExtension } from "../llmCompletionExtension";
@@ -15,8 +16,15 @@ import TraceSearchPanel from "./TraceSearchPanel";
 import TraceResultsView from "./TraceResultsView";
 import TraceErrorAlerts from "./TraceErrorAlerts";
 import SpanDetailDrawer from "./SpanDetailDrawer";
+import { buildSpanTree } from "./traceUtils";
+import { identifySiblingGroups } from "./span-tree-plugin/spanTreeGrouping";
 import { useTracesOrchestrator } from "./useTracesOrchestrator";
-import { TRACES_INSIGHT_SLOT_IDS, TRACES_INSIGHT_SLOTS } from "./tracesInsightSlots";
+import {
+  TRACES_INSIGHT_SLOT_IDS,
+  TRACES_INSIGHT_SLOTS,
+  traceGroupRowSlotId,
+  traceRowSlotId,
+} from "./tracesInsightSlots";
 
 const TRACES_SYSTEM_PROMPT =
   "You are a distributed-tracing observability assistant." +
@@ -27,6 +35,89 @@ export default function TracesPage() {
   const themeMode = useUIStore((s) => s.themeMode);
   const orchestrator = useTracesOrchestrator();
 
+  const rowInsightModel = useMemo(() => {
+    if (orchestrator.viewMode !== "list" || orchestrator.searchSpans.length === 0) {
+      return {
+        slots: [] as InsightSlotDefinition[],
+        spanSlotById: {} as Record<string, string>,
+        groupSlotByKey: {} as Record<string, string>,
+        rowContext: {
+          topSpanRows: [] as Array<{
+            slotId: string;
+            spanId: string;
+            traceId: string;
+            serviceName: string;
+            operationName: string;
+            status: string;
+            durationUs: number;
+          }>,
+          groupedRows: [] as Array<{
+            slotId: string;
+            groupKey: string;
+            serviceName: string;
+            operationName: string;
+            count: number;
+            errorCount: number;
+            totalDurationUs: number;
+          }>,
+        },
+      };
+    }
+
+    const roots = buildSpanTree(orchestrator.searchSpans);
+    const groupMap = identifySiblingGroups(roots, 3);
+    const spanRows = [...orchestrator.searchSpans]
+      .sort((a, b) => b.durationUs - a.durationUs)
+      .slice(0, 8)
+      .map((span) => ({
+        slotId: traceRowSlotId(span.spanId),
+        spanId: span.spanId,
+        traceId: span.traceId,
+        serviceName: span.serviceName,
+        operationName: span.name,
+        status: span.status,
+        durationUs: span.durationUs,
+      }));
+
+    const groupedRows = [...groupMap.values()]
+      .flat()
+      .sort(
+        (a, b) =>
+          b.stats.count - a.stats.count || b.stats.totalDurationUs - a.stats.totalDurationUs,
+      )
+      .slice(0, 8)
+      .map((run) => ({
+        slotId: traceGroupRowSlotId(run.key),
+        groupKey: run.key,
+        serviceName: run.stats.serviceName,
+        operationName: run.stats.operationName,
+        count: run.stats.count,
+        errorCount: run.stats.errorCount,
+        totalDurationUs: run.stats.totalDurationUs,
+      }));
+
+    const slots: InsightSlotDefinition[] = [
+      ...spanRows.map((row) => ({
+        slotId: row.slotId,
+        label: `Trace row: ${row.serviceName} / ${row.operationName} (${row.spanId})`,
+      })),
+      ...groupedRows.map((row) => ({
+        slotId: row.slotId,
+        label: `Grouped row: ${row.serviceName} / ${row.operationName} (x${row.count})`,
+      })),
+    ];
+
+    return {
+      slots,
+      spanSlotById: Object.fromEntries(spanRows.map((row) => [row.spanId, row.slotId])),
+      groupSlotByKey: Object.fromEntries(groupedRows.map((row) => [row.groupKey, row.slotId])),
+      rowContext: {
+        topSpanRows: spanRows,
+        groupedRows,
+      },
+    };
+  }, [orchestrator.viewMode, orchestrator.searchSpans]);
+
   const slotContext = useMemo(
     () =>
       JSON.stringify({
@@ -36,6 +127,7 @@ export default function TracesPage() {
         selectedTraceId: orchestrator.selectedTraceId,
         selectedSpanId: orchestrator.selectedSpanId,
         viewMode: orchestrator.viewMode,
+        rowFocus: rowInsightModel.rowContext,
       }),
     [
       orchestrator.effectiveQuery,
@@ -44,6 +136,7 @@ export default function TracesPage() {
       orchestrator.selectedTraceId,
       orchestrator.selectedSpanId,
       orchestrator.viewMode,
+      rowInsightModel.rowContext,
     ],
   );
 
@@ -51,7 +144,7 @@ export default function TracesPage() {
     context: slotContext,
     systemPrompt: TRACES_SYSTEM_PROMPT,
     cacheKey: `traces-slots::${slotContext}`,
-    slots: TRACES_INSIGHT_SLOTS,
+    slots: [...TRACES_INSIGHT_SLOTS, ...rowInsightModel.slots],
   });
 
   const queryEditorExtensions = useMemo(
@@ -113,6 +206,7 @@ export default function TracesPage() {
         <TraceErrorAlerts
           errors={[
             orchestrator.searchError,
+            orchestrator.searchSpansError,
             orchestrator.detailError,
             orchestrator.timeseriesError,
             orchestrator.driftRadarError,
@@ -146,10 +240,10 @@ export default function TracesPage() {
                 onViewModeChange={orchestrator.setViewMode}
                 searchResult={orchestrator.searchResult}
                 searchLoading={orchestrator.searchLoading}
+                searchSpansLoading={orchestrator.searchSpansLoading}
                 traceRows={orchestrator.traceRows}
                 selectedTraceId={orchestrator.selectedTraceId}
                 onSelectTrace={orchestrator.handleSelectTrace}
-                maxDuration={orchestrator.maxDuration}
                 rawQuery={orchestrator.rawQuery}
                 timeseriesLoading={orchestrator.timeseriesLoading}
                 timeseriesResult={orchestrator.timeseriesResult}
@@ -165,9 +259,10 @@ export default function TracesPage() {
                 filters={orchestrator.filters}
                 onSearch={orchestrator.handleSearch}
                 searchSpans={orchestrator.searchSpans}
+                spanInsightSlotIds={rowInsightModel.spanSlotById}
+                groupInsightSlotIds={rowInsightModel.groupSlotByKey}
                 selectedSpanId={orchestrator.selectedSpanId}
                 onSelectSpan={orchestrator.handleSelectSpan}
-                onClearTraceSelection={orchestrator.clearTraceSelection}
                 onOpenInQueryLab={
                   orchestrator.selectedTraceId
                     ? () =>
@@ -187,7 +282,11 @@ export default function TracesPage() {
           <SpanDetailDrawer
             span={orchestrator.selectedSpan}
             open={orchestrator.drawerOpen}
+            selectedSpanId={orchestrator.selectedSpanId}
+            traceSpans={orchestrator.selectedTraceSpans}
+            searchSpans={orchestrator.searchSpans}
             onClose={() => orchestrator.setDrawerOpen(false)}
+            onSelectSpan={orchestrator.handleSelectSpan}
             onFilterBy={orchestrator.handleDrawerFilterBy}
             onExclude={orchestrator.handleDrawerExclude}
             onOpenInQueryLab={orchestrator.handleDrawerOpenInQueryLab}
