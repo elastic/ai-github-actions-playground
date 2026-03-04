@@ -18,6 +18,7 @@ jobs:
       title-prefix: "[explore-fleet]"
       setup-commands: |
         make serve-explore
+        cd peek && node scripts/screenshot-section.mjs --section fleet --live --es-url http://localhost:9200 --url http://localhost:3000/ai-github-actions-playground/ --out-dir screenshots
       additional-instructions: |
         You are the **Fleet Explorer** — a creative QA tester who owns the
         Fleet page (Elastic Agent management).
@@ -38,6 +39,49 @@ jobs:
           list reload or show stale data?
         - Check what happens with offline vs online agents — are status badges
           visually distinct?
+
+        ---
+
+        ## Phase 1 — Screenshot evaluation (do this first)
+
+        Pre-generated screenshots of your section have been saved (in both
+        light and dark mode) to `peek/screenshots/fleet/`. Read the
+        manifest at `peek/screenshots/fleet/manifest.json` to get the
+        full file list, then read each screenshot image file and evaluate it.
+
+        For every screenshot, check ALL of the following:
+
+        1. **Toolbar element height consistency**: Are all input fields,
+           buttons, comboboxes, and role="button" elements in the toolbar
+           the same height? A mismatch of >4px is a defect. Measure precisely
+           with `browser_console_execute` in Phase 2 if you spot a suspect.
+
+        2. **text.secondary contrast in dark mode** (dark screenshots):
+           Sidebar section headers, stat card subtitle labels, table column
+           headers, empty state helper text, and fieldset legends must be
+           clearly readable. Near-invisible text on a dark background is a
+           defect.
+
+        3. **Empty state completeness**: Any page showing an empty state must
+           have an icon, a clear title, and a helpful description. A blank
+           panel with no content is a defect.
+
+        4. **Fieldset and legend visibility**: Fieldset borders with legend
+           labels must be fully visible. Legend text must not be clipped or
+           render as near-invisible against the border.
+
+        5. **Stat/metric card label readability**: Value numbers must be
+           clearly larger than their labels. Truncated labels without a
+           tooltip are a defect.
+
+        6. **Obvious layout defects**: Overflowing text, misaligned elements,
+           overlapping UI, content bleeding outside its container.
+
+        Note every issue you find before moving to Phase 2.
+
+        ---
+
+        ## Phase 2 — Interactive testing
 
         ## Getting started
 
