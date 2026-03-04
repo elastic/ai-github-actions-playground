@@ -442,15 +442,15 @@ test.describe("smoke – site navigation", () => {
       timeout: 15_000,
     });
 
-    // Expand the collapsed ES|QL editor to verify the generated query
+    // Click-to-filter: clicking a cell adds a filter chip and updates the query
+    await page.getByRole("cell", { name: "checkout-service" }).click();
+    await expect(page.getByText("service.name: checkout-service")).toBeVisible();
+
+    // Expand the collapsed ES|QL editor to verify the generated query text
     await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryEditor = page.getByLabel("Logs Explorer query editor");
     const queryInput = queryEditor.getByRole("textbox");
     await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
-
-    // Click-to-filter: clicking a cell adds a filter to the query
-    await page.getByRole("cell", { name: "checkout-service" }).click();
-    await expect(page.getByText("service.name: checkout-service")).toBeVisible();
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
