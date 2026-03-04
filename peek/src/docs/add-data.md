@@ -4,7 +4,7 @@ Use the Add Data wizard to onboard telemetry sources in a three-step flow with e
 
 ## Step 1 — What are you monitoring?
 
-Choose a technology through:
+Choose a technology using:
 
 - **Experience tiles** — four primary tiles (Cloud Providers, Kubernetes, Servers/Desktops/Laptops, SaaS & Databases) plus an Advanced accordion
 - **Search** — filter across all experiences by typing a technology name
