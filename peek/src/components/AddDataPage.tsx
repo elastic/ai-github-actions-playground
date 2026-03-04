@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
 
 import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -16,7 +13,6 @@ import { AWS_DEPLOY_TARGETS, type AwsDeployTarget } from "../services/addData/aw
 import { APM_LANGUAGE_BY_ID, type ApmLanguageDefinition } from "../services/addData/apmCatalog";
 import type { FluentBitOutputMode } from "../services/addData/fluentBitConfig";
 
-import PageHeader from "./PageHeader";
 import AddDataStepTechnology from "./addData/AddDataStepTechnology";
 import AddDataStepSetup from "./addData/AddDataStepSetup";
 import AddDataStepSuccess from "./addData/AddDataStepSuccess";
@@ -193,32 +189,6 @@ export default function AddDataPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Add Data"
-          description="Set up a new telemetry source"
-          actions={
-            <Stack direction="row" spacing={0.5}>
-              {(
-                [
-                  { step: 1 as const, label: "1. Select" },
-                  { step: 2 as const, label: "2. Set up" },
-                  { step: 3 as const, label: "3. Explore" },
-                ] satisfies { step: WizardStep; label: string }[]
-              ).map(({ step, label }) => (
-                <Chip
-                  key={step}
-                  label={label}
-                  size="small"
-                  color={wizardStep === step ? "primary" : "default"}
-                  variant={wizardStep >= step ? "filled" : "outlined"}
-                />
-              ))}
-            </Stack>
-          }
-        />
-      </Paper>
-
       {wizardStep === 1 && (
         <AddDataStepTechnology
           selectedTechnology={selectedTechnology}

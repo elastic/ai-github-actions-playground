@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
@@ -6,6 +7,8 @@ import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
+
+import { useUIStore } from "../store/useUIStore";
 
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
@@ -21,9 +24,39 @@ interface DiscoverPageProps {
 
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const o = useDiscoverOrchestrator(mode);
+  const setDiscoverSearchCollapsed = o.setDiscoverSearchCollapsed;
+
+  // Cmd/Ctrl+[ toggles the query panel collapse
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
+          target.getAttribute("role") === "textbox" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
+        e.preventDefault();
+        setDiscoverSearchCollapsed(!useUIStore.getState().discoverSearchCollapsed);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setDiscoverSearchCollapsed]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        height: { md: "100%", xs: "auto" },
+        minHeight: 0,
+      }}
+    >
       <DiscoverEditorPanel
         isLogsExplorer={o.isLogsExplorer}
         editorFocused={o.editorFocused}
@@ -44,6 +77,9 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         setProfileMode={o.setProfileMode}
         handleFormatQuery={o.handleFormatQuery}
         handleCreatePanel={o.handleCreatePanel}
+        hasPendingRunChanges={o.hasPendingRunChanges}
+        collapsed={o.discoverSearchCollapsed}
+        onToggleCollapsed={() => o.setDiscoverSearchCollapsed(!o.discoverSearchCollapsed)}
         queryHistory={o.queryHistory}
         historyAnchor={o.historyAnchor}
         setHistoryAnchor={o.setHistoryAnchor}
@@ -68,11 +104,11 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
       <Box
         sx={{
           display: "flex",
-          flex: 1,
+          flex: { md: 1, xs: "initial" },
           flexDirection: { md: "row", xs: "column" },
           gap: 1,
-          minHeight: 0,
-          overflow: "hidden",
+          minHeight: { md: 0, xs: "initial" },
+          overflow: { md: "hidden", xs: "visible" },
         }}
       >
         <FieldPickerSidebar
@@ -90,7 +126,15 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         />
 
         {/* Results table */}
-        <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            flex: 1,
+            minHeight: { md: 0, xs: 320 },
+            maxHeight: { md: "none", xs: "55vh" },
+            overflow: "auto",
+          }}
+        >
           {!o.result && !o.loading && (
             <EmptyState
               icon={<TableChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}

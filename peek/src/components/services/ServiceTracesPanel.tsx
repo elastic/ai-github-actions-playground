@@ -30,12 +30,12 @@ export default function ServiceTracesPanel({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          p: 1.5,
+          p: 1,
           borderBottom: 1,
           borderColor: "divider",
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Recent Traces
         </Typography>
         <Button size="small" variant="text" onClick={onViewAllTraces}>

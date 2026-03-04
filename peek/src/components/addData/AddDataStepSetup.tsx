@@ -106,6 +106,11 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
 
   const guideType = p.selectedTechnology.guideType;
   const guideDef = GUIDE_TYPE_DEFINITIONS[guideType];
+  const handleSelectApmLanguage = (lang: ApmLanguageDefinition) => {
+    p.onSelectApmLanguage(lang);
+    setConfigureExpanded(false);
+    setInstallExpanded(true);
+  };
 
   // ---------------------------------------------------------------------------
   // Configure section content (guide-specific)
@@ -151,7 +156,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       configureContent = (
         <ApmConfigure
           selectedLanguage={p.selectedApmLanguage}
-          onSelectLanguage={p.onSelectApmLanguage}
+          onSelectLanguage={handleSelectApmLanguage}
         />
       );
       break;
@@ -235,6 +240,10 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       installContent = _exhaustiveCheck;
     }
   }
+  const sectionSubtitle =
+    guideType === "aws_cloud_deploy" || guideType === "apm"
+      ? undefined
+      : p.selectedTechnology.technology;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -264,7 +273,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       {/* Section 1: Configure */}
       <CollapsibleSection
         title={guideDef.configureLabel}
-        subtitle={p.selectedTechnology.technology}
+        subtitle={sectionSubtitle}
         expanded={configureExpanded}
         onToggle={() => setConfigureExpanded((prev) => !prev)}
       >
@@ -290,7 +299,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       {/* Section 3: Install */}
       <CollapsibleSection
         title={guideDef.installLabel}
-        subtitle={p.selectedTechnology.technology}
+        subtitle={sectionSubtitle}
         expanded={installExpanded}
         onToggle={() => setInstallExpanded((prev) => !prev)}
       >

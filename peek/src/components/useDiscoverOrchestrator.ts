@@ -37,6 +37,8 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const discoverEditorHeight = useUIStore((s) => s.discoverEditorHeight);
   const setDiscoverEditorHeight = useUIStore((s) => s.setDiscoverEditorHeight);
+  const discoverSearchCollapsed = useUIStore((s) => s.discoverSearchCollapsed);
+  const setDiscoverSearchCollapsed = useUIStore((s) => s.setDiscoverSearchCollapsed);
   const [editorFocused, setEditorFocused] = useState(false);
   const queryClient = useQueryClient();
   const { data: result = null } = useQuery<EsqlResponse | null>({
@@ -83,6 +85,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const [historyAnchor, setHistoryAnchor] = useState<HTMLElement | null>(null);
   const [currentSort, setCurrentSort] = useState<SortState | null>(null);
   const [profileMode, setProfileMode] = useState(false);
+  const [lastExecutedQuery, setLastExecutedQuery] = useState(query);
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
   const [insightsCache, setInsightsCache] = useState<
     Record<string, { loading: boolean; error: string | null; data: EsqlResponse | null }>
@@ -116,6 +119,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
       if (executedStepIndex === null) {
         if (discoverQueryDraft) setDiscoverQueryDraft(null);
         setQuery(executedQuery);
+        setLastExecutedQuery(executedQuery);
       }
       // Select a focused default column set when there are many fields;
       // fall back to all fields when the result set is small.
@@ -336,6 +340,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
   }, [selectedFields, setSelectedFields, visibleColumns]);
+  const hasPendingRunChanges = effectiveQuery.trim() !== lastExecutedQuery.trim();
 
   return {
     // Mode
@@ -348,6 +353,8 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     editorFocused,
     discoverEditorHeight,
     setDiscoverEditorHeight,
+    discoverSearchCollapsed,
+    setDiscoverSearchCollapsed,
     effectiveQuery,
     handleQueryChange,
     handleCreateEditor,
@@ -383,6 +390,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     // Format & panel
     handleFormatQuery,
     handleCreatePanel,
+    hasPendingRunChanges,
 
     // Table
     currentSort,

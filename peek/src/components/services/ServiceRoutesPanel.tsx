@@ -27,8 +27,8 @@ export default function ServiceRoutesPanel({
 }: ServiceRoutesPanelProps) {
   return (
     <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto" }}>
-      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+      <Box sx={{ p: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Top Routes
         </Typography>
       </Box>

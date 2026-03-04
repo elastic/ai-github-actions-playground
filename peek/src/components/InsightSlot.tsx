@@ -84,7 +84,10 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
     <Box
       sx={{
         position: "relative",
-        display: "inline-flex",
+        display: "block",
+        width: "100%",
+        minWidth: 0,
+        maxWidth: "100%",
         boxShadow: severityGlow(severity),
         borderRadius: 1,
         transition: "box-shadow 0.3s ease",

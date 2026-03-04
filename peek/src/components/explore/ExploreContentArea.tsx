@@ -132,7 +132,14 @@ export default function ExploreContentArea({
       {!showOverview && !showDimensionOverview && !metricNotFound && (
         <Paper
           variant="outlined"
-          sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
+          sx={{
+            display: "flex",
+            flex: 1,
+            flexDirection: "column",
+            alignSelf: { md: "flex-start", xs: "stretch" },
+            minHeight: { md: 380, xs: 320 },
+            overflow: "auto",
+          }}
         >
           {/* Back button — goes to dimension overview */}
           {selectedMetric && selectedNamespace && (
@@ -170,7 +177,7 @@ export default function ExploreContentArea({
           )}
 
           {chartData && (
-            <Box sx={{ flex: 1, minHeight: 300 }}>
+            <Box sx={{ height: { md: 380, xs: 320 } }}>
               <TimeSeriesChart data={chartData} options={{ smooth: true, showArea: true }} />
             </Box>
           )}

@@ -85,10 +85,20 @@ function KeyValueRow({
         alignItems: "center",
         py: 0.5,
         px: 1,
+        "& .kv-actions-trigger": {
+          opacity: 0,
+          pointerEvents: "none",
+        },
         "&:hover": { bgcolor: "action.hover" },
         "&:hover .kv-actions-trigger, &:focus-within .kv-actions-trigger": {
           opacity: 1,
           pointerEvents: "auto",
+        },
+        "@media (hover: none)": {
+          "& .kv-actions-trigger": {
+            opacity: 1,
+            pointerEvents: "auto",
+          },
         },
       }}
     >
@@ -113,7 +123,6 @@ function KeyValueRow({
                 size="small"
                 aria-label="Row actions"
                 onClick={(event) => setActionAnchorEl(event.currentTarget)}
-                sx={{ opacity: 0, pointerEvents: "none" }}
               >
                 <MoreHorizIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -228,9 +237,12 @@ export default function SpanDetailDrawer({
   const selectedTimelineIndex = timelineSpans.findIndex(
     (timelineSpan) => timelineSpan.spanId === selectedTimelineSpanId,
   );
-  const canSelectPrevTimelineSpan = selectedTimelineIndex > 0;
+  const canSelectTimelineSpan = Boolean(onSelectSpan);
+  const canSelectPrevTimelineSpan = canSelectTimelineSpan && selectedTimelineIndex > 0;
   const canSelectNextTimelineSpan =
-    selectedTimelineIndex >= 0 && selectedTimelineIndex < timelineSpans.length - 1;
+    canSelectTimelineSpan &&
+    selectedTimelineIndex >= 0 &&
+    selectedTimelineIndex < timelineSpans.length - 1;
   const traceStartUs = timelineSpans.reduce(
     (min, traceSpan) => Math.min(min, traceSpan.startTimeUs),
     Number.POSITIVE_INFINITY,
@@ -407,6 +419,7 @@ export default function SpanDetailDrawer({
                           >
                             <ButtonBase
                               component="button"
+                              disabled={!canSelectTimelineSpan}
                               aria-label={`Select span ${traceSpan.name} from service ${traceSpan.serviceName}`}
                               sx={{
                                 position: "absolute",
@@ -421,7 +434,7 @@ export default function SpanDetailDrawer({
                                 borderRadius: 0.5,
                                 bgcolor: getServiceColor(traceSpan.serviceName),
                                 opacity: isSelected ? 0.95 : 0.65,
-                                cursor: "pointer",
+                                cursor: canSelectTimelineSpan ? "pointer" : "default",
                               }}
                               onClick={() => onSelectSpan?.(traceSpan.spanId)}
                             />

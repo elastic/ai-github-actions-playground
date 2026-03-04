@@ -21,6 +21,7 @@ import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
+import PageInsightBanner from "../PageInsightBanner";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
@@ -28,6 +29,7 @@ import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { usePageFiltersStore, type ProfilingViewMode } from "../../store/usePageFiltersStore";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
+import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import type { EsqlResponse } from "../../types";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
@@ -247,6 +249,21 @@ export default function ProfilingPage() {
     [effectiveQuery, openInDiscover],
   );
   const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
+  const timelineCountStats = useMemo(() => {
+    if (!timelineResult) return null;
+    const countIdx = timelineResult.columns.findIndex((c) => c.name === "count");
+    if (countIdx < 0) return null;
+    const counts = timelineResult.values
+      .map((row) => Number(row[countIdx] ?? 0))
+      .filter((value) => Number.isFinite(value));
+    if (counts.length === 0) return null;
+    return {
+      points: counts.length,
+      max: Math.max(...counts),
+      min: Math.min(...counts),
+      avg: counts.reduce((sum, value) => sum + value, 0) / counts.length,
+    };
+  }, [timelineResult]);
   const hasDataForCurrentView =
     viewMode === "topFunctions"
       ? topFunctionsRows.length > 0
@@ -256,6 +273,46 @@ export default function ProfilingPage() {
   const hasRunCurrentView = hasRunByMode[viewMode];
   const showIdleEmptyState = !loading && !error && !hasRunCurrentView && !hasDataForCurrentView;
   const showNoDataEmptyState = !loading && !error && hasRunCurrentView && !hasDataForCurrentView;
+  const canShowProfilingInsights = !loading && !error && hasRunCurrentView && hasDataForCurrentView;
+  const profilingInsightContext = useMemo(() => {
+    if (!canShowProfilingInsights) return "";
+    const topFunctions = topFunctionsRows.slice(0, 10).map((row) => ({
+      name: row.functionName,
+      total: row.totalCount ?? 0,
+      self: row.selfCount ?? 0,
+    }));
+    const topStacks = stacktraces
+      .slice()
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((row) => ({
+        id: row.stacktraceId,
+        count: row.count,
+        service: row.serviceName,
+        host: row.hostName,
+      }));
+    return JSON.stringify({
+      page: "profiling-advanced",
+      viewMode,
+      filters,
+      query: viewMode === "topFunctions" ? null : effectiveQuery,
+      datasets: {
+        topFunctions,
+        timeline: timelineCountStats,
+        stacktraces: topStacks,
+        flamegraphNodeCount: flamegraphTree.children.length,
+      },
+    });
+  }, [
+    canShowProfilingInsights,
+    effectiveQuery,
+    filters,
+    flamegraphTree.children.length,
+    stacktraces,
+    timelineCountStats,
+    topFunctionsRows,
+    viewMode,
+  ]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
@@ -384,6 +441,17 @@ export default function ProfilingPage() {
 
       {!(error && isMissingProfilingIndex(error)) && (
         <>
+          {canShowProfilingInsights && profilingInsightContext && (
+            <PageInsightBanner
+              context={profilingInsightContext}
+              systemPrompt={
+                "You are an advanced profiling analyst. Use the active profiling dataset to identify " +
+                "one concrete hotspot or bottleneck signal and one suggested next query/action." +
+                INSIGHT_GUARDRAIL
+              }
+              cacheKey={`profiling-advanced::${profilingInsightContext}`}
+            />
+          )}
           {showIdleEmptyState && (
             <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "hidden" }}>
               <Box sx={{ display: "flex", minHeight: 320 }}>

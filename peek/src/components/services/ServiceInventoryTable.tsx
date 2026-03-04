@@ -11,6 +11,8 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 
+import InsightSlot from "../InsightSlot";
+
 import {
   type ServiceRow,
   type ServiceSparklineData,
@@ -28,6 +30,7 @@ interface ServiceInventoryTableProps {
   handleSort: (field: SortField) => void;
   handleViewTraces: (serviceName: string) => void;
   sparklineData?: Record<string, ServiceSparklineData>;
+  rowInsightSlotIds?: Record<string, string>;
 }
 
 export default function ServiceInventoryTable({
@@ -37,9 +40,9 @@ export default function ServiceInventoryTable({
   handleSort,
   handleViewTraces,
   sparklineData,
+  rowInsightSlotIds,
 }: ServiceInventoryTableProps) {
   const theme = useTheme();
-  const hasSparklines = sparklineData && Object.keys(sparklineData).length > 0;
 
   return (
     <Table size="medium" aria-label="Service inventory">
@@ -63,7 +66,7 @@ export default function ServiceInventoryTable({
               Requests
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Requests trend</TableCell>}
+          <TableCell>Requests trend</TableCell>
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "avgLatencyMs"}
@@ -73,7 +76,7 @@ export default function ServiceInventoryTable({
               Avg Latency
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Latency trend</TableCell>}
+          <TableCell>Latency trend</TableCell>
           <TableCell align="right">
             <TableSortLabel
               active={sortField === "errorRate"}
@@ -83,7 +86,7 @@ export default function ServiceInventoryTable({
               Error Rate
             </TableSortLabel>
           </TableCell>
-          {hasSparklines && <TableCell>Error rate trend</TableCell>}
+          <TableCell>Error rate trend</TableCell>
           <TableCell>Language</TableCell>
           <TableCell>Environment</TableCell>
           <TableCell>Version</TableCell>
@@ -98,37 +101,41 @@ export default function ServiceInventoryTable({
       <TableBody>
         {serviceRows.map((row) => {
           const sparkline = sparklineData?.[row.serviceName];
+          const slotId = rowInsightSlotIds?.[row.serviceName];
+          const serviceLink = (
+            <Link
+              component={RouterLink}
+              to={`/services/${encodeURIComponent(row.serviceName)}`}
+              underline="hover"
+              sx={{ fontWeight: 500 }}
+            >
+              {row.serviceName}
+            </Link>
+          );
           return (
             <TableRow key={row.serviceName} hover>
               <TableCell>
-                <Link
-                  component={RouterLink}
-                  to={`/services/${encodeURIComponent(row.serviceName)}`}
-                  underline="hover"
-                  sx={{ fontWeight: 500 }}
-                >
-                  {row.serviceName}
-                </Link>
+                {slotId != null ? (
+                  <InsightSlot slotId={slotId}>{serviceLink}</InsightSlot>
+                ) : (
+                  serviceLink
+                )}
               </TableCell>
               <TableCell align="right">
                 <Typography variant="body2">{row.requestCount.toLocaleString()}</Typography>
               </TableCell>
-              {hasSparklines && (
-                <TableCell>
-                  <ServiceSparklineCell data={sparkline?.requests ?? []} />
-                </TableCell>
-              )}
+              <TableCell>
+                <ServiceSparklineCell data={sparkline?.requests ?? []} />
+              </TableCell>
               <TableCell align="right">
                 <Typography variant="body2">{formatLatency(row.avgLatencyMs)}</Typography>
               </TableCell>
-              {hasSparklines && (
-                <TableCell>
-                  <ServiceSparklineCell
-                    data={sparkline?.latency ?? []}
-                    color={theme.palette.warning.main}
-                  />
-                </TableCell>
-              )}
+              <TableCell>
+                <ServiceSparklineCell
+                  data={sparkline?.latency ?? []}
+                  color={theme.palette.warning.main}
+                />
+              </TableCell>
               <TableCell align="right">
                 <Chip
                   size="small"
@@ -138,14 +145,12 @@ export default function ServiceInventoryTable({
                   data-testid={row.errorRate > 0.05 ? "error-rate-chip" : undefined}
                 />
               </TableCell>
-              {hasSparklines && (
-                <TableCell>
-                  <ServiceSparklineCell
-                    data={sparkline?.errorRate ?? []}
-                    color={theme.palette.error.main}
-                  />
-                </TableCell>
-              )}
+              <TableCell>
+                <ServiceSparklineCell
+                  data={sparkline?.errorRate ?? []}
+                  color={theme.palette.error.main}
+                />
+              </TableCell>
               <TableCell>
                 <Typography variant="body2">{row.language}</Typography>
               </TableCell>

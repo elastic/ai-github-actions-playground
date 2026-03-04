@@ -83,7 +83,7 @@ export default function ServiceTracesTable({
                 <Typography
                   variant="body2"
                   sx={{
-                    maxWidth: 140,
+                    maxWidth: 220,
                     overflow: "hidden",
                     whiteSpace: "nowrap",
                     textOverflow: "ellipsis",

@@ -61,7 +61,6 @@ async function goToStep2(user: ReturnType<typeof userEvent.setup>) {
   const kubernetesCard = candidates.find((el) => /^Kubernetes/i.test(el.textContent ?? ""));
   expect(kubernetesCard).toBeDefined();
   await user.click(kubernetesCard!);
-  await user.click(screen.getByRole("button", { name: /^Continue$/i }));
 }
 
 const defaultCapabilities: UserCapabilities = {
@@ -88,7 +87,7 @@ describe("AddDataPage", () => {
 
   it("renders Step 1 with search and experience tiles", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: /What are you monitoring\?/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /What are we observing\?/i })).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
     ).toBeInTheDocument();
@@ -145,8 +144,8 @@ describe("AddDataPage", () => {
     // Configure section shows endpoint type controls
     expect(screen.getByRole("button", { name: "Elasticsearch" })).toBeInTheDocument();
     expect(screen.getByText("Managed OTLP")).toBeInTheDocument();
-    // Kubernetes technology shows Kubernetes tab (filtered by supportedEnvironments)
-    expect(screen.getByRole("tab", { name: "Kubernetes" })).toBeInTheDocument();
+    // Kubernetes has a single supported environment, so no redundant selector is shown.
+    expect(screen.queryByRole("tab", { name: "Kubernetes" })).not.toBeInTheDocument();
 
     // Credentials section appears as its own section (between Configure and Install)
     expect(screen.getByText("Collector credentials")).toBeInTheDocument();
@@ -157,6 +156,17 @@ describe("AddDataPage", () => {
 
     // Verify section shows check button
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
+  }, 30_000);
+
+  it("hides environment tabs when only one environment is supported", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /Servers, Desktops & Laptops/ }));
+    await user.click(screen.getByRole("button", { name: /^Windows Host/i }));
+
+    expect(screen.getByRole("heading", { name: /Set up Windows Host/i })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Windows" })).not.toBeInTheDocument();
   }, 30_000);
 
   it("shows contextual verification expectations in Step 2", async () => {
@@ -217,9 +227,7 @@ describe("AddDataPage", () => {
 
     // Should return to Step 1 with a clean slate
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: /What are you monitoring\?/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /What are we observing\?/i })).toBeInTheDocument();
     });
     expect(
       screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
