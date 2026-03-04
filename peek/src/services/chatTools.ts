@@ -246,7 +246,11 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
         query: z.string().min(1).describe("The ES|QL query to set in the Query Lab editor."),
       }),
       execute: async ({ query }) => {
-        openInDiscover(navigate, query);
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) {
+          throw new Error("Query must not be empty");
+        }
+        openInDiscover(navigate, trimmedQuery);
         return { set: true, navigatedTo: "discover" };
       },
     }),
