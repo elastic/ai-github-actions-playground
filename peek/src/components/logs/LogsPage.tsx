@@ -273,6 +273,7 @@ export default function LogsPage() {
 
   const queryEditorExtensions = useMemo(
     () => [
+      EditorView.contentAttributes.of({ "aria-label": "ES|QL query editor" }),
       EditorView.lineWrapping,
       ...createEsqlQueryEditorExtensions(() => handleRunQueryRef.current()),
     ],
@@ -604,7 +605,6 @@ export default function LogsPage() {
                   theme={themeMode}
                   height="120px"
                   basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
-                  aria-label="Logs Explorer query editor"
                 />
                 <QueryAnnotationOverlay
                   query={effectiveQuery}

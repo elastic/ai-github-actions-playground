@@ -187,7 +187,6 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                 theme={p.themeMode}
                 height={`${p.discoverEditorHeight}px`}
                 basicSetup={p.basicSetup}
-                aria-label="ES|QL query editor"
               />
               <QueryAnnotationOverlay
                 query={p.effectiveQuery}
