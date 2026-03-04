@@ -214,28 +214,49 @@ function randomHex(len) {
   return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 }
 
+const K8S_SERVICE_META = {
+  frontend: { language: "javascript", version: "2.4.1" },
+  "api-server": { language: "go", version: "1.8.0" },
+  worker: { language: "python", version: "1.2.0" },
+};
+const TRACE_WORKLOADS = new Set(Object.keys(K8S_SERVICE_META));
+
 async function seedK8sTraces(client, pods) {
   const now = Date.now();
   const docs = [];
-  const servicePods = pods.filter((p) => ["frontend", "api-server", "worker"].includes(p.workloadName));
+  const servicePods = pods.filter((p) => TRACE_WORKLOADS.has(p.workloadName));
 
   for (const pod of servicePods) {
+    const meta = K8S_SERVICE_META[pod.workloadName];
+    if (!meta) continue;
+    const env = pod.namespace === "app-prod" ? "production" : "staging";
+
     for (let i = 0; i < 15; i++) {
       const traceId = randomHex(32);
       const startMs = now - i * 4 * 60_000;
+      const isError = Math.random() < 0.05;
+      const durationNs = Math.floor(Math.random() * 200 + 5) * 1_000_000;
       docs.push({
         "@timestamp": new Date(startMs).toISOString(),
         "trace.id": traceId,
         "span.id": randomHex(16),
-        "span.name": `GET /api/${pod.workloadName}`,
-        "span.kind": "SERVER",
-        "span.duration": Math.floor(Math.random() * 200 + 5) * 1_000_000, // ns
+        name: `GET /api/${pod.workloadName}`,
+        kind: "SERVER",
+        duration: durationNs,
+        "attributes.span.duration.us": Math.floor(durationNs / 1000),
+        "parent.id": null,
+        "status.code": isError ? "Error" : "OK",
         "service.name": pod.workloadName,
+        "service.version": meta.version,
+        "service.language.name": meta.language,
+        "service.environment": env,
+        "deployment.environment": env,
+        "attributes.http.route": `/api/${pod.workloadName}`,
+        "http.status_code": isError ? 500 : 200,
         "k8s.cluster.name": CLUSTER,
         "k8s.namespace.name": pod.namespace,
         "k8s.pod.name": pod.podName,
         "k8s.node.name": pod.node,
-        "http.status_code": Math.random() < 0.05 ? 500 : 200,
         "data_stream.type": "traces",
         "data_stream.dataset": "generic.otel",
         "data_stream.namespace": "default",
