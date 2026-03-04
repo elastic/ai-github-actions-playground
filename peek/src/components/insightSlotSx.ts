@@ -1,4 +1,4 @@
-/** Severity-keyed glow colours (subtle, non-disruptive). */
+/** Severity-keyed glow colors (subtle, non-disruptive). */
 const glowColor: Record<string, string> = {
   info: "rgba(33,150,243,0.18)",
   warning: "rgba(255,152,0,0.22)",
