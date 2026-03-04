@@ -18,11 +18,11 @@ import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
-import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
+import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { useDiskUsage } from "../hooks/useDiskUsage";
 
 import EmptyState from "./EmptyState";
@@ -36,7 +36,7 @@ import { type IndexTab, healthColor, INDEX_TABS } from "./indicesUtils";
 // ---------------------------------------------------------------------------
 
 export default function IndicesPage() {
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const openInDiscover = useOpenInDiscover();
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
@@ -132,9 +132,8 @@ export default function IndicesPage() {
 
   const handleOpenInQueryLab = useCallback(() => {
     if (!selectedIndex) return;
-    setDiscoverQueryDraft(`FROM ${selectedIndex} | LIMIT 50`);
-    navigate(PAGE_MANIFEST.discover.path);
-  }, [selectedIndex, navigate, setDiscoverQueryDraft]);
+    openInDiscover(`FROM ${selectedIndex} | LIMIT 50`);
+  }, [selectedIndex, openInDiscover]);
 
   const handleInspectInConsole = useCallback(() => {
     if (!selectedIndex) return;

@@ -21,12 +21,12 @@ import { parseAsString, useQueryState } from "nuqs";
 
 import type { FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
-import { useQueryStore } from "../store/useQueryStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
+import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { COMPACT_CHIP_SX } from "../types/tokens";
 
@@ -53,7 +53,7 @@ const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "defa
 
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
+  const openInDiscover = useOpenInDiscover();
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
@@ -159,9 +159,8 @@ export default function DataStreamsPage() {
 
   const handleOpenInDiscover = useCallback(() => {
     if (!selectedName) return;
-    setDiscoverQueryDraft(`FROM ${selectedName} | SORT @timestamp DESC | LIMIT 50`);
-    navigate(PAGE_MANIFEST.discover.path);
-  }, [selectedName, navigate, setDiscoverQueryDraft]);
+    openInDiscover(`FROM ${selectedName} | SORT @timestamp DESC | LIMIT 50`);
+  }, [selectedName, openInDiscover]);
 
   const handleInspectInConsole = useCallback(() => {
     if (!selectedName) return;
@@ -171,10 +170,9 @@ export default function DataStreamsPage() {
 
   const handleFieldStatsQuery = useCallback(
     (query: string) => {
-      setDiscoverQueryDraft(query);
-      navigate(PAGE_MANIFEST.discover.path);
+      openInDiscover(query);
     },
-    [navigate, setDiscoverQueryDraft],
+    [openInDiscover],
   );
 
   return (
