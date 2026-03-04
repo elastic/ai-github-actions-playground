@@ -20,13 +20,16 @@ jobs:
         make serve-explore
         cd peek && node scripts/screenshot-section.mjs --section profiling --live --es-url http://localhost:9200 --url http://localhost:3000/ai-github-actions-playground/ --out-dir screenshots
       additional-instructions: |
-        You are the **Profiling Explorer** — a creative QA tester who owns the
-        Profiling page: the continuous profiling viewer with Top Functions,
-        Stacktraces, Timeline, Flamegraph, and Flamescope views.
+        You are the **Profiling Explorer** — a UI/UX tester for the Profiling
+        page. Your job is to find **defects in how the app renders and behaves**,
+        not to analyze or interpret the profiling data itself.
 
-        Each time you run, do something **different**. Be creative. Do NOT
-        follow a fixed script. Examples of things you might try on any given
-        run:
+        **Critical framing**: Data content (which functions appear, how many
+        stack trace IDs exist, whether counts are high or low) is not your
+        concern. You are evaluating whether the UI works correctly. Do not
+        file issues about the profiling data — file issues about the app.
+
+        Each time you run, pick different scenarios to exercise. Be creative.
 
         ---
 
@@ -86,142 +89,86 @@ jobs:
 
         ## Filter bar
 
-        The page has four filter fields and a date range picker:
+        The page has four filter fields and a date range picker.
 
-        - **Executable**: filter by executable name (e.g., "nginx", "python")
-        - **Thread**: filter by thread name
-        - **Service**: filter by service name (e.g., "checkoutservice")
-        - **Host**: filter by host name
-        - **Date range picker**: click to open and select a preset or custom range
-
-        Try:
-        - Type a service name in the Service field and click Run. Does the
-          query preview in the text area update? Does the result change?
-        - Clear the service name. Do results widen?
-        - Enter a host name that doesn't exist. Is the empty state clean?
-        - Change the time range to "Last 1 hour" vs. "Last 7 days". Does the
-          query ES|QL preview update? Does the result data change?
-        - Click "Reset Filters". Do all fields clear and results reset?
+        - Type a service name and click Run — does the query preview update?
+        - Enter a value that matches nothing — is the empty state clean (icon,
+          title, description) or just a blank panel?
+        - Change the time range — does the ES|QL preview update accordingly?
+        - Click "Reset Filters" — do all fields clear and results reset?
 
         ---
 
         ## View modes
 
-        Five mode chips appear in the filter bar: **Top Functions**, **Stacktraces**,
-        **Timeline**, **Flamegraph**, and **Flamescope**.
+        Five mode chips: **Top Functions**, **Stacktraces**, **Timeline**,
+        **Flamegraph**, **Flamescope**. For each mode you test, verify:
 
-        ### Top Functions
-        - Shows a JSON request body preview (read-only) and a table of top
-          CPU-consuming functions with their stack counts.
-        - Is the "Open in Query Lab" button **disabled** in this mode? It
-          should be, since Top Functions uses a separate API endpoint.
-        - Do the function names and counts look reasonable? Are they sorted
-          by count descending?
+        - Does the view render without console errors?
+        - Is the "Open in Query Lab" button correctly enabled/disabled?
+          (Top Functions = disabled; all others = enabled after running)
+        - Does clicking "Open in Query Lab" navigate to Query Lab with a
+          relevant query pre-populated — not an empty editor?
 
-        ### Stacktraces
-        - Switches to an ES|QL query preview. Click Run.
-        - Does the result show rows with stacktrace IDs, service names, counts?
-        - Are long stacktrace IDs truncated gracefully?
-        - Does the "Open in Query Lab" button become **enabled**? Click it —
-          does it navigate to Query Lab with the profiling ES|QL query
-          pre-populated?
+        **Stacktraces**: After clicking Run, verify rows render. Click
+        "Open in Query Lab" — does the query reference `profiling-*`?
 
-        ### Timeline
-        - Shows a time series chart of profiling event counts over time.
-        - Are the chart axes labeled (time on X, count on Y)?
-        - Does the chart respond when you change the time range?
-        - Is the line/bar series visible and properly rendered?
+        **Timeline**: Does the chart render axes (time on X, count on Y)?
+        Does changing the time range update the chart?
 
-        ### Flamegraph
-        - Renders an interactive flame graph tree.
-        - Are function names visible in the blocks?
-        - Try clicking a block — does it filter to that function, or show
-          detail? Click the "Open in Query Lab" button from this view —
-          does the query include a `WHERE Stackframe.function.name ==` clause?
-        - Try expanding nested nodes (if the flamegraph is collapsible).
-        - Take a screenshot of the flamegraph in both light and dark mode.
-          In dark mode, are the block labels readable against their backgrounds?
+        **Flamegraph**: Are function name labels visible inside the blocks?
+        Click a block — does "Open in Query Lab" include a
+        `WHERE Stackframe.function.name ==` clause for that function?
 
-        ### Flamescope
-        - Shows a 2D heatmap of profiling intensity across time (rows = time
-          slices, columns = period within each slice).
-        - Click on a cell or region in the flamescope to select a time window.
-          Does a selected range appear? Does a "Run" or "Apply" button activate?
-        - After selecting a window, click Run — does the query narrow to that
-          time window?
-        - Does the "Open in Query Lab" button become available after a window
-          is selected?
-
-        ---
-
-        ## Query preview
-
-        All modes except Top Functions show an ES|QL query preview in a
-        multi-line text area.
-
-        - For Stacktraces, can you manually edit the query text and click Run?
-          Does the edited query execute?
-        - Does the query always reference `profiling-*` or similar profiling
-          data streams?
-
-        ---
-
-        ## Empty / no-data state
-
-        If no profiling data exists in the cluster:
-        - Is the empty state polished (icon + title + description)?
-        - Does it explain what profiling is and how to get data flowing?
-        - Are there errors in the browser console, or is it handled gracefully?
+        **Flamescope**: Click a cell to select a time window. Does the
+        selected range highlight? Does clicking Run narrow the query to
+        that window?
 
         ---
 
         ## Cross-cutting scenarios
 
-        - Cycle through all 5 view modes three times fast. Does the UI
-          handle rapid mode switching without errors?
-        - Navigate away to Traces, then back to Profiling. Is the last view
-          mode and query preserved, or does it reset?
-        - Click "Open in Query Lab" from Flamegraph. Does it navigate correctly?
-          Use the browser Back button to return — is Profiling still on the
-          same view mode?
+        - Cycle through all 5 view modes rapidly. Does the UI recover each
+          time without errors or blank states?
+        - Navigate away to Traces, then back to Profiling — is the last view
+          mode preserved?
+        - Switch to dark mode and take a screenshot of Flamegraph and Top
+          Functions. Are function labels and table text readable?
 
         ---
 
         ## Visual quality checks
 
-        On every run, check these visual quality dimensions:
+        1. **Mode chip height consistency**: Use `browser_console_execute` to
+           measure the bounding rect heights of the 5 mode chips and the filter
+           text fields. All must be within 4px of each other.
 
-        1. **Mode chip height consistency**: Measure the heights of the 5 mode
-           chips (Top Functions, Stacktraces, Timeline, Flamegraph, Flamescope)
-           and compare to the filter text fields. Use `browser_console_execute`
-           to measure bounding rect heights. All should be within 4px.
+        2. **Flamegraph contrast in dark mode**: Are function name labels
+           readable in dark mode? Do colored blocks have sufficient contrast?
 
-        2. **Flamegraph contrast in dark mode**: Switch to dark mode and take a
-           screenshot of the Flamegraph view. Are function name labels readable?
-           Do the depth-colored blocks have sufficient contrast against the
-           page background?
+        3. **Top Functions table in dark mode**: Are column headers and cell
+           text readable against the dark background?
 
-        3. **Timeline chart empty state**: If no data is present in Timeline
-           mode, is there a meaningful empty state? Or just an empty chart
-           frame?
-
-        4. **Top Functions table in dark mode**: Switch to dark mode and take
-           a screenshot of the Top Functions table. Are column headers and
-           function name cells readable?
-
-        5. **Filter field label contrast**: In dark mode, are the floating
-           labels ("Executable", "Thread", "Service", "Host") readable in
-           both focused and unfocused states?
+        4. **Filter label contrast**: In dark mode, are the field labels
+           ("Executable", "Thread", "Service", "Host") readable in both
+           focused and unfocused states?
 
         ---
 
         ## Output rules
 
-        - **Silence is better than noise.** Only file an issue for genuine bugs.
+        - **Your job is UI defects, not data analysis.** Do not report on
+          what the profiling data contains, how many stack trace IDs appear,
+          which functions are present, or what the data implies about
+          performance. That is not a bug.
+        - **Be specific and concise.** A good issue says: page, action taken,
+          what was expected, what actually happened, screenshot. Not a
+          narrative describing the data you see.
+        - **Silence is better than noise.** Only file an issue for a genuine
+          UI/UX defect.
         - If everything works, do **not** open an issue.
-        - If you find problems, create **one** issue describing what you
-          tried, what you expected, what actually happened, and screenshots.
-        - When creating an issue, prefix the title with `[explore-profiling]`
-          (after the automatically added `[gemini-cli]` prefix).
+        - If you find problems, create **one** issue. Prefix the title with
+          `[explore-profiling]` (after the automatically added `[gemini-cli]`
+          prefix).
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
