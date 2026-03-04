@@ -126,6 +126,15 @@ export function importWorkspace(json: string): {
   }
 }
 
+/**
+ * Attempts to restore workspace state from persisted data.
+ *
+ * Tries four formats in order:
+ *   1. Nested Perses workspace (`{ workspace: { kind: "Workspace", … } }`)
+ *   2. Flat Perses workspace (`{ kind: "Workspace", … }`)
+ *   3. Legacy workspace snapshot
+ *   4. Legacy single dashboard
+ */
 export function hydrateWorkspaceFromPersistedState(
   persistedState: unknown,
 ): { dashboards: DashboardDefinition[]; activeDashboardId: string } | null {
