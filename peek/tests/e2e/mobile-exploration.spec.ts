@@ -3,6 +3,8 @@ import AxeBuilder from "@axe-core/playwright";
 
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "../../scripts/elasticsearch-mocks.mjs";
 
+const isCi = !["", "0", "false"].includes(process.env.CI ?? "");
+
 async function connectToMockCluster(page: Page) {
   await registerElasticsearchMocks(page, {
     esUrl: DEFAULT_ES_URL,
@@ -14,17 +16,27 @@ async function connectToMockCluster(page: Page) {
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 }
 
-const iPhone14 = devices["iPhone 14"];
-test.use({
-  viewport: iPhone14.viewport,
-  userAgent: iPhone14.userAgent,
-  deviceScaleFactor: iPhone14.deviceScaleFactor,
-  isMobile: iPhone14.isMobile,
-  hasTouch: iPhone14.hasTouch,
-});
+function skipDesktopChromiumInCi() {
+  test.skip(
+    isCi && test.info().project.name === "chromium",
+    "Mobile suite should run only on mobile projects in CI.",
+  );
+}
+
+if (!isCi) {
+  const iPhone14 = devices["iPhone 14"];
+  test.use({
+    viewport: iPhone14.viewport,
+    userAgent: iPhone14.userAgent,
+    deviceScaleFactor: iPhone14.deviceScaleFactor,
+    isMobile: iPhone14.isMobile,
+    hasTouch: iPhone14.hasTouch,
+  });
+}
 
 test.describe("Mobile Exploration @mobile", () => {
   test("should render correctly on mobile", async ({ page }) => {
+    skipDesktopChromiumInCi();
     await page.goto("");
 
     // Check if the logo is visible and not too large for the viewport
@@ -62,6 +74,7 @@ test.describe("Mobile Exploration @mobile", () => {
   });
 
   test("sidebar and header should be visible on mobile after connection", async ({ page }) => {
+    skipDesktopChromiumInCi();
     await connectToMockCluster(page);
 
     const sidebar = page.getByRole("navigation", { name: "Main navigation" });
