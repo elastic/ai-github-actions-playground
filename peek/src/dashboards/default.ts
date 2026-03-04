@@ -12,21 +12,24 @@ export function createDefaultDashboard(): DashboardDefinition {
       {
         id: crypto.randomUUID(),
         title: "Logs",
-        query: "FROM logs-* | STATS logs = COUNT(*)",
+        query:
+          "FROM logs-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS logs = COUNT(*)",
         visualization: "stat",
         layout: { x: 0, y: 0, w: 4, h: 2 },
       },
       {
         id: crypto.randomUUID(),
         title: "Metrics",
-        query: "FROM metrics-* | STATS metrics = COUNT(*)",
+        query:
+          "FROM metrics-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS metrics = COUNT(*)",
         visualization: "stat",
         layout: { x: 4, y: 0, w: 4, h: 2 },
       },
       {
         id: crypto.randomUUID(),
         title: "Traces",
-        query: "FROM traces-* | STATS traces = COUNT(*)",
+        query:
+          "FROM traces-* | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS traces = COUNT(*)",
         visualization: "stat",
         layout: { x: 8, y: 0, w: 4, h: 2 },
       },
@@ -44,7 +47,8 @@ export function createDefaultDashboard(): DashboardDefinition {
       {
         id: crypto.randomUUID(),
         title: "Volume by Type",
-        query: "FROM * | STATS doc_count = COUNT(*) BY `data_stream.type`",
+        query:
+          "FROM * | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS doc_count = COUNT(*) BY `data_stream.type`",
         visualization: "pie",
         layout: { x: 0, y: 7, w: 4, h: 5 },
       },
@@ -52,7 +56,7 @@ export function createDefaultDashboard(): DashboardDefinition {
         id: crypto.randomUUID(),
         title: "Top 10 Data Streams",
         query:
-          "FROM * | STATS doc_count = COUNT(*) BY `data_stream.dataset` | SORT doc_count DESC | LIMIT 10",
+          "FROM * | WHERE @timestamp >= ?_tstart AND @timestamp <= ?_tend | STATS doc_count = COUNT(*) BY `data_stream.dataset` | SORT doc_count DESC | LIMIT 10",
         visualization: "bar",
         layout: { x: 4, y: 7, w: 8, h: 5 },
       },
