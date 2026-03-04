@@ -59,6 +59,16 @@ const ProfilingGuidedPage = lazy(() => import("../components/profiling/Profiling
 const InvestigatePage = lazy(() => import("../components/InvestigatePage"));
 const UsersPage = lazy(() => import("../components/UsersPage"));
 const KubernetesPage = lazy(() => import("../components/kubernetes/KubernetesPage"));
+const K8sClusterDashboardPage = lazy(
+  () => import("../components/kubernetes/K8sClusterDashboardPage"),
+);
+const K8sNamespaceDashboardPage = lazy(
+  () => import("../components/kubernetes/K8sNamespaceDashboardPage"),
+);
+const K8sWorkloadDashboardPage = lazy(
+  () => import("../components/kubernetes/K8sWorkloadDashboardPage"),
+);
+const K8sPodDashboardPage = lazy(() => import("../components/kubernetes/K8sPodDashboardPage"));
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
@@ -223,7 +233,7 @@ export const PAGE_MANIFEST = {
   },
   kubernetesCluster: {
     path: "/kubernetes/cluster/:clusterName",
-    component: KubernetesPage,
+    component: K8sClusterDashboardPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "detail-panel",
@@ -237,7 +247,7 @@ export const PAGE_MANIFEST = {
   },
   kubernetesNamespace: {
     path: "/kubernetes/namespace/:namespace",
-    component: KubernetesPage,
+    component: K8sNamespaceDashboardPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "detail-panel",
@@ -251,7 +261,7 @@ export const PAGE_MANIFEST = {
   },
   kubernetesWorkload: {
     path: "/kubernetes/workload/:kind/:name",
-    component: KubernetesPage,
+    component: K8sWorkloadDashboardPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "detail-panel",
@@ -265,7 +275,7 @@ export const PAGE_MANIFEST = {
   },
   kubernetesPod: {
     path: "/kubernetes/pod/:podName",
-    component: KubernetesPage,
+    component: K8sPodDashboardPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "detail-panel",

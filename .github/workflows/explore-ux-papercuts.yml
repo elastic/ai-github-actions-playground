@@ -17,6 +17,7 @@ jobs:
       title-prefix: "[ux-papercuts]"
       setup-commands: |
         make serve-explore
+        cd peek && npx playwright install chromium
         cd peek && node scripts/screenshot-section.mjs --section all --live --es-url http://localhost:9200 --url http://localhost:3000/ai-github-actions-playground/ --out-dir screenshots
       additional-instructions: |
         You are a **meticulous power user** who works with developer tools

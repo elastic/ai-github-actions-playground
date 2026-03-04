@@ -11,3 +11,5 @@ test-results
 screenshot-preflight.json
 screenshot*.png
 public/demo.json
+*.tsbuildinfo
+.eslintcache

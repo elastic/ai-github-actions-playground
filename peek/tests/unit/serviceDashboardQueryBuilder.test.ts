@@ -5,6 +5,7 @@ import {
   buildServiceRecentTracesQuery,
   buildServiceDeploymentsQuery,
   buildServiceRouteSparklineQuery,
+  buildServiceK8sContextQuery,
 } from "../../src/components/services/serviceDashboardQueryBuilder";
 import { parseRouteSparklineData } from "../../src/components/services/serviceDashboardHelpers";
 
@@ -247,6 +248,44 @@ describe("serviceDashboardQueryBuilder", () => {
         values: [],
       });
       expect(result).toEqual({});
+    });
+  });
+
+  describe("buildServiceK8sContextQuery", () => {
+    it("generates a valid ES|QL query for K8s context", () => {
+      const query = buildServiceK8sContextQuery(defaultFilters);
+      expect(query).toContain("FROM traces-*");
+      expect(query).toContain('service.name == "my-service"');
+      expect(query).toContain("k8s.pod.name IS NOT NULL");
+      expect(query).toContain("COUNT(*)");
+      expect(query).toContain("BY k8s_namespace = k8s.namespace.name");
+      expect(query).toContain("k8s_node = k8s.node.name");
+      expect(query).toContain("k8s_pod = k8s.pod.name");
+      expect(query).toContain("SORT pod_count DESC");
+      expect(query).toContain("LIMIT 50");
+    });
+
+    it("escapes special characters in service name", () => {
+      const query = buildServiceK8sContextQuery({
+        ...defaultFilters,
+        serviceName: 'my "service"',
+      });
+      expect(query).toContain('service.name == "my \\"service\\""');
+    });
+
+    it("includes time range filters", () => {
+      const query = buildServiceK8sContextQuery(defaultFilters);
+      expect(query).toContain("@timestamp >= NOW() - 1 hour");
+      expect(query).toContain("@timestamp <= NOW()");
+    });
+
+    it("throws for unsupported time expressions", () => {
+      expect(() =>
+        buildServiceK8sContextQuery({
+          ...defaultFilters,
+          timeTo: "NOW(); DROP TABLE traces",
+        }),
+      ).toThrow("Unsupported time expression");
     });
   });
 });

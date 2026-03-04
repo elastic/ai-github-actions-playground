@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useShallow } from "zustand/react/shallow";
 
@@ -22,9 +23,11 @@ import {
   parseRouteRows,
   parseRecentTraces,
   parseDeploymentRows,
+  parseServiceK8sContext,
 } from "./serviceDashboardHelpers";
 import ServiceDashboardSummaryCards from "./ServiceDashboardSummaryCards";
 import ServiceDeploymentsPanel from "./ServiceDeploymentsPanel";
+import ServiceK8sInfoPanel from "./ServiceK8sInfoPanel";
 import ServiceRoutesPanel from "./ServiceRoutesPanel";
 import ServiceTracesPanel from "./ServiceTracesPanel";
 import {
@@ -54,6 +57,7 @@ export default function ServiceDashboardPage() {
     error,
     handleReset,
     handleSearch,
+    k8sContextResult,
     loading,
     routeSparklineData,
     routesResult,
@@ -135,6 +139,10 @@ export default function ServiceDashboardPage() {
     if (!deploymentsResult) return [];
     return parseDeploymentRows(deploymentsResult);
   }, [deploymentsResult]);
+  const k8sRows = useMemo(() => {
+    if (!k8sContextResult) return [];
+    return parseServiceK8sContext(k8sContextResult);
+  }, [k8sContextResult]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: "100%" }}>
@@ -164,7 +172,7 @@ export default function ServiceDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !routesResult && !tracesResult && !deploymentsResult && (
+      {!loading && !routesResult && !tracesResult && !deploymentsResult && !k8sContextResult && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             heading="No service data loaded"
@@ -177,6 +185,8 @@ export default function ServiceDashboardPage() {
 
       {summary && <ServiceDashboardSummaryCards summary={summary} />}
       {deployments.length > 0 && <ServiceDeploymentsPanel deployments={deployments} />}
+
+      {k8sRows.length > 0 && <ServiceK8sInfoPanel rows={k8sRows} />}
 
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1.5} sx={{ alignItems: "stretch" }}>
         {topRouteRows.length > 0 && (
@@ -209,7 +219,8 @@ export default function ServiceDashboardPage() {
         routesResult &&
         deployments.length === 0 &&
         routeRows.length === 0 &&
-        recentTraces.length === 0 && (
+        recentTraces.length === 0 &&
+        k8sRows.length === 0 && (
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
             <EmptyState
               heading="No data found"
