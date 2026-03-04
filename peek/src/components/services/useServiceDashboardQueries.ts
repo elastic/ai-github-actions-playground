@@ -152,7 +152,12 @@ export function useServiceDashboardQueries({
     ),
   });
 
-  const { runQuery: runSparklineQuery } = useEsqlQuery({
+  const {
+    runQuery: runSparklineQuery,
+    loading: sparklineLoading,
+    error: sparklineError,
+    clearError: clearSparklineError,
+  } = useEsqlQuery({
     connection,
     onSuccess: useCallback((data: EsqlResponse, executedQuery: string) => {
       if (executedQuery !== latestSparklineQueryRef.current) return;
@@ -164,8 +169,8 @@ export function useServiceDashboardQueries({
     }, []),
   });
 
-  const loading = routesLoading || tracesLoading || deploymentsLoading;
-  const error = routesError || tracesError || deploymentsError;
+  const loading = routesLoading || tracesLoading || deploymentsLoading || sparklineLoading;
+  const error = routesError || tracesError || deploymentsError || sparklineError;
 
   const clearLatestQueries = useCallback(() => {
     latestRoutesQueryRef.current = null;
@@ -205,6 +210,7 @@ export function useServiceDashboardQueries({
     clearRoutesError();
     clearTracesError();
     clearDeploymentsError();
+    clearSparklineError();
     setRoutesResult(null);
     setTracesResult(null);
     setDeploymentsResult(null);
@@ -214,6 +220,7 @@ export function useServiceDashboardQueries({
     clearRoutesError,
     clearTracesError,
     clearDeploymentsError,
+    clearSparklineError,
     loading,
     setRoutesResult,
     setTracesResult,

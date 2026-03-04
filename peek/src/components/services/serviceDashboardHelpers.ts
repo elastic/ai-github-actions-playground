@@ -91,7 +91,7 @@ export function parseRouteSparklineData(result: EsqlResponse): Record<string, Ro
   for (const row of result.values) {
     const route = String(get(row, "route_key") ?? "/");
     const tsRaw = get(row, "bucket");
-    const ts = tsRaw ? new Date(tsRaw as string).getTime() : null;
+    const ts = tsRaw == null ? null : new Date(tsRaw as string).getTime();
     if (ts === null || !Number.isFinite(ts)) continue;
     if (!map[route]) {
       map[route] = { requests: [], latency: [], errorRate: [] };

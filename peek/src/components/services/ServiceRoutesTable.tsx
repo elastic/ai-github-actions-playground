@@ -33,7 +33,20 @@ export default function ServiceRoutesTable({
   sparklineData,
 }: ServiceRoutesTableProps) {
   const theme = useTheme();
-  const hasSparklines = sparklineData && Object.keys(sparklineData).length > 0;
+  const hasSparklines = routeRows.some((row) => {
+    const sparkline = sparklineData?.[row.route];
+    return Boolean(
+      sparkline &&
+      (sparkline.requests.length > 0 ||
+        sparkline.latency.length > 0 ||
+        sparkline.errorRate.length > 0),
+    );
+  });
+  const renderSparklineCell = (data: RouteSparklineData["requests"], color?: string) => (
+    <TableCell>
+      <ServiceSparklineCell data={data} color={color} />
+    </TableCell>
+  );
 
   return (
     <Table size="small" aria-label="Top routes">
@@ -93,22 +106,12 @@ export default function ServiceRoutesTable({
               <TableCell align="right">
                 <Typography variant="body2">{row.requestCount.toLocaleString()}</Typography>
               </TableCell>
-              {hasSparklines && (
-                <TableCell>
-                  <ServiceSparklineCell data={sparkline?.requests ?? []} />
-                </TableCell>
-              )}
+              {hasSparklines && renderSparklineCell(sparkline?.requests ?? [])}
               <TableCell align="right">
                 <Typography variant="body2">{formatLatency(row.avgLatencyMs)}</Typography>
               </TableCell>
-              {hasSparklines && (
-                <TableCell>
-                  <ServiceSparklineCell
-                    data={sparkline?.latency ?? []}
-                    color={theme.palette.warning.main}
-                  />
-                </TableCell>
-              )}
+              {hasSparklines &&
+                renderSparklineCell(sparkline?.latency ?? [], theme.palette.warning.main)}
               <TableCell align="right">
                 <Chip
                   size="small"
@@ -117,14 +120,8 @@ export default function ServiceRoutesTable({
                   variant={row.errorRate > 0.05 ? "filled" : "outlined"}
                 />
               </TableCell>
-              {hasSparklines && (
-                <TableCell>
-                  <ServiceSparklineCell
-                    data={sparkline?.errorRate ?? []}
-                    color={theme.palette.error.main}
-                  />
-                </TableCell>
-              )}
+              {hasSparklines &&
+                renderSparklineCell(sparkline?.errorRate ?? [], theme.palette.error.main)}
             </TableRow>
           );
         })}
