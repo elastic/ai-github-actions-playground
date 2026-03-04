@@ -208,8 +208,10 @@ export function deriveAgentStatus(lastSeen: string | null): string {
       return "Unhealthy";
     case "critical":
       return "Offline";
-    default:
-      return "Inactive";
+    default: {
+      const exhaustiveCheck: never = severity;
+      return exhaustiveCheck;
+    }
   }
 }
 
