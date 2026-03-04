@@ -433,7 +433,7 @@ export default function ProfilingPage() {
               <TableBody>
                 {stacktraces.map((stacktrace) => {
                   const isExpanded = expandedStacktraceIds.has(stacktrace.stacktraceId);
-                  const detailsId = `stacktrace-details-${stacktrace.stacktraceId}`;
+                  const detailsId = `stacktrace-details-${encodeURIComponent(stacktrace.stacktraceId)}`;
                   return (
                     <Fragment key={stacktrace.stacktraceId}>
                       <TableRow
