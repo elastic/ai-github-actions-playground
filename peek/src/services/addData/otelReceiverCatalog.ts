@@ -119,6 +119,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         key: "endpoint",
         label: "Nginx stub_status endpoint",
         defaultValue: "http://localhost:8080/status",
+        placeholder: "http://localhost:8080/status",
         helpText: "URL of the nginx stub_status module endpoint.",
       },
     ],
@@ -136,12 +137,14 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         key: "endpoint",
         label: "PostgreSQL endpoint",
         defaultValue: "localhost:5432",
+        placeholder: "localhost:5432",
         helpText: "host:port of the PostgreSQL server.",
       },
       {
         key: "username",
         label: "Username",
         defaultValue: "postgres",
+        placeholder: "postgres",
       },
       {
         key: "password",
@@ -153,6 +156,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         key: "database",
         label: "Database name",
         defaultValue: "postgres",
+        placeholder: "postgres",
       },
     ],
     yamlTemplate: `  postgresql:
@@ -173,6 +177,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         key: "endpoint",
         label: "Redis endpoint",
         defaultValue: "localhost:6379",
+        placeholder: "localhost:6379",
         helpText: "host:port of the Redis server.",
       },
       {
@@ -197,12 +202,14 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         key: "endpoint",
         label: "MySQL endpoint",
         defaultValue: "localhost:3306",
+        placeholder: "localhost:3306",
         helpText: "host:port of the MySQL server.",
       },
       {
         key: "username",
         label: "Username",
         defaultValue: "root",
+        placeholder: "root",
       },
       {
         key: "password",
@@ -234,6 +241,7 @@ export const OTEL_RECEIVER_CATALOG: readonly OtelReceiverDefinition[] = [
         key: "endpoint",
         label: "MongoDB connection string",
         defaultValue: "mongodb://localhost:27017",
+        placeholder: "mongodb://localhost:27017",
         helpText: "Full MongoDB connection URI.",
       },
     ],

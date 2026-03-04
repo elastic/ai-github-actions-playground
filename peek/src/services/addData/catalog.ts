@@ -53,7 +53,7 @@ export const ADD_DATA_EXPERIENCE_LABELS: Readonly<Record<AddDataGuidedExperience
 };
 
 export const ADD_DATA_EXPERIENCE_DESCRIPTIONS: Readonly<Record<AddDataGuidedExperience, string>> = {
-  cloud_providers: "Monitor AWS, GCP, or Azure cloud workloads",
+  cloud_providers: "Monitor AWS cloud workloads and VPC flow logs",
   kubernetes: "Collect cluster, node, and workload telemetry",
   servers: "Monitor Linux, Windows, or macOS hosts and VMs",
   saas_databases: "Connect databases and services with OTel receivers",
