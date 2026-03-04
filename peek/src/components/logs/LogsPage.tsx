@@ -305,7 +305,7 @@ export default function LogsPage() {
         );
         if (!mounted) return;
         setFieldValues(Object.fromEntries(entries));
-      } catch (e) {
+      } catch (e: unknown) {
         if (!mounted) return;
         setFieldValuesError(String(e));
       } finally {

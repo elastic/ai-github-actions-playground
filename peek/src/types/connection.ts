@@ -1,6 +1,6 @@
 import type { ElasticsearchConnection } from "../services/es";
 
-export type { ElasticsearchConnection, EsqlColumn, EsqlResponse, EsqlError } from "../services/es";
+export type { ElasticsearchConnection, EsqlColumn, EsqlResponse } from "../services/es";
 
 export interface ConnectionProfile {
   id: string;

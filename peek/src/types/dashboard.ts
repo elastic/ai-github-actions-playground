@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
 import type { dashboardDefinitionSchema, panelDefinitionSchema } from "../schemas";
-import type { EsqlResponse, EsqlError } from "../services/es";
+import type { EsqlResponse, ElasticsearchError } from "../services/es";
 import type { ParameterType } from "../contracts/dashboard/literals";
 
 import type { VisualizationOptions } from "./visualization";
@@ -53,4 +53,4 @@ export type QueryResult =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "success"; data: EsqlResponse; executionTimeMs: number }
-  | { status: "error"; error: EsqlError };
+  | { status: "error"; error: ElasticsearchError };

@@ -146,7 +146,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
             updateMessageToolCalls(assistantId, assistantToolCalls);
           }
         }
-      } catch (e) {
+      } catch (e: unknown) {
         const errorMessage =
           e instanceof DOMException && e.name === "AbortError"
             ? "Request timed out. Please try again."

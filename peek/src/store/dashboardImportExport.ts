@@ -67,7 +67,7 @@ export function importDashboard(json: string): {
       importedDashboard = result.data;
     }
     return { success: true, dashboard: importedDashboard };
-  } catch (errorLike) {
+  } catch (errorLike: unknown) {
     const error = errorLike instanceof Error ? errorLike.message : String(errorLike);
     console.error("Import failed: invalid JSON", error);
     return { success: false, error };
@@ -119,13 +119,22 @@ export function importWorkspace(json: string): {
       return { success: false, error };
     }
     return { success: true, dashboards, activeDashboardId };
-  } catch (errorLike) {
+  } catch (errorLike: unknown) {
     const error = errorLike instanceof Error ? errorLike.message : String(errorLike);
     console.error("Workspace import failed: invalid JSON", error);
     return { success: false, error };
   }
 }
 
+/**
+ * Attempts to restore workspace state from persisted data.
+ *
+ * Tries four formats in order:
+ *   1. Nested Perses workspace (`{ workspace: { kind: "Workspace", … } }`)
+ *   2. Flat Perses workspace (`{ kind: "Workspace", … }`)
+ *   3. Legacy workspace snapshot
+ *   4. Legacy single dashboard
+ */
 export function hydrateWorkspaceFromPersistedState(
   persistedState: unknown,
 ): { dashboards: DashboardDefinition[]; activeDashboardId: string } | null {

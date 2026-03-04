@@ -13,7 +13,9 @@ import { devtools } from "zustand/middleware";
 
 import {
   DEFAULT_SERVICE_INVENTORY_FILTERS,
+  DEFAULT_KUBERNETES_FILTERS,
   EMPTY_PROFILING_FILTERS,
+  type KubernetesFilters,
   type ProfilingFilters,
   type ServiceInventoryFilters,
 } from "../types/pageFilters";
@@ -85,6 +87,11 @@ interface PageFiltersState {
   updateAgentFilter: (updates: Partial<AgentFilter>) => void;
   resetFleetAgentFilter: () => void;
   resetFleetFilters: () => void;
+
+  // --- Kubernetes -------------------------------------------------------
+  kubernetesFilters: KubernetesFilters;
+  updateKubernetesFilters: (updates: Partial<KubernetesFilters>) => void;
+  resetKubernetesFilters: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -145,6 +152,12 @@ export const usePageFiltersStore = create<PageFiltersState>()(
           ...DEFAULT_FLEET_FILTERS,
           agentFilter: { ...DEFAULT_AGENT_FILTER },
         }),
+
+      // --- Kubernetes -----------------------------------------------------
+      kubernetesFilters: { ...DEFAULT_KUBERNETES_FILTERS },
+      updateKubernetesFilters: (updates) =>
+        set((s) => ({ kubernetesFilters: { ...s.kubernetesFilters, ...updates } })),
+      resetKubernetesFilters: () => set({ kubernetesFilters: { ...DEFAULT_KUBERNETES_FILTERS } }),
     }),
     { name: "PageFiltersStore", enabled: import.meta.env.DEV },
   ),

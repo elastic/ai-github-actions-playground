@@ -10,7 +10,7 @@ export { fetchCapabilitiesForConnection } from "./connectionHandshake";
 // Core client types (connection, error shapes)
 // ---------------------------------------------------------------------------
 
-export type { ElasticsearchConnection, ElasticsearchError, EsqlError } from "./client";
+export type { ElasticsearchConnection, ElasticsearchError } from "./client";
 
 // ---------------------------------------------------------------------------
 // Domain-specific types — each module owns its own types so that new endpoint

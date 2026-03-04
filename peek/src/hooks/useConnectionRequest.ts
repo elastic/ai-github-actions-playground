@@ -25,7 +25,7 @@ export async function runConnectionRequest<T>({
   try {
     const client = new ElasticsearchClient(connection);
     return { data: await run(client), error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: isElasticsearchError(err) ? err.message : String(err) };
   }
 }

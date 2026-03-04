@@ -208,7 +208,7 @@ export default function ProfilingPage() {
       } else {
         await runStacktraces(client, controller.signal);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (controller.signal.aborted) return;
       setError(isElasticsearchError(err) ? err.message : String(err));
     } finally {

@@ -119,7 +119,7 @@ export function useExplorerUrlSync({
           }),
           setUrlFilters(encodeFilters(filters)),
         ]);
-      } catch (err) {
+      } catch (err: unknown) {
         if (!cancelled) console.error("URL sync failed:", err);
       }
     };
