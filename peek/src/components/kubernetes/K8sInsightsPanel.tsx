@@ -62,7 +62,7 @@ export default function K8sInsightsPanel({
   return (
     <PageInsightBanner
       context={insightContext}
-      systemPrompt={`You are a Kubernetes observability advisor analyzing cluster, namespace, workload, and pod metrics. Provide 2-3 concise, actionable insights about resource utilisation, pod restarts, or cluster health concerns. Focus on what an SRE should investigate first. Keep it brief.${INSIGHT_GUARDRAIL}`}
+      systemPrompt={`You are a Kubernetes observability advisor analyzing cluster, namespace, workload, and pod metrics. Provide 2-3 concise, actionable insights about resource utilization, pod restarts, or cluster health concerns. Focus on what an SRE should investigate first. Keep it brief.${INSIGHT_GUARDRAIL}`}
       cacheKey={insightContext}
     />
   );
