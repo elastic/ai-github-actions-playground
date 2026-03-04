@@ -132,7 +132,9 @@ ${pipelines}
  * pipelines into an existing OTel Collector YAML config.  If any section
  * already exists it is extended rather than replaced.
  *
- * Returns the merged YAML string or throws on parse failure.
+ * Returns the merged YAML string.  Throws on YAML parse failure, empty
+ * signals, shape-validation errors (non-mapping / non-string-array where
+ * expected), or when the receiver block does not define the target receiver.
  */
 export function mergeIntoExistingOtelConfig(
   existingYaml: string,
@@ -153,6 +155,11 @@ export function mergeIntoExistingOtelConfig(
   const existing = asMapping(parseYaml(existingYaml) ?? {}, "root");
   const receiverObj = asMapping(parseYaml(`receivers:\n${receiverBlock}`), "receiver block");
   const newReceivers = asMapping(receiverObj.receivers, "receiver block.receivers");
+  if (!(opts.receiverType in newReceivers)) {
+    throw new Error(
+      `Receiver block must define "receivers.${opts.receiverType}" before pipelines can reference it.`,
+    );
+  }
 
   // --- receivers ---
   const receivers = asMapping(existing.receivers, "receivers");

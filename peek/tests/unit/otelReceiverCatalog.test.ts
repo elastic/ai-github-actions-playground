@@ -178,6 +178,14 @@ service:
     expect(result).toContain("logs:");
   });
 
+  it("throws when receiver block does not define the target receiver", () => {
+    const wrongBlock = "  otlp/other:\n    protocols:\n      grpc:\n";
+
+    expect(() => mergeIntoExistingOtelConfig("", wrongBlock, baseOpts)).toThrow(
+      `Receiver block must define "receivers.${baseOpts.receiverType}"`,
+    );
+  });
+
   it("throws for structurally invalid but parseable YAML sections", () => {
     const existing = `receivers: []
 service:
