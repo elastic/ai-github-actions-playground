@@ -7,13 +7,16 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -51,6 +54,40 @@ const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "defa
   RED: "error",
 };
 
+// ---------------------------------------------------------------------------
+// Sorting helpers
+// ---------------------------------------------------------------------------
+
+type StreamSortField = "name" | "status" | "indices";
+type StreamSortDirection = "asc" | "desc";
+
+const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
+
+function compareStreams(
+  a: { name: string; status: string; indices: unknown[] },
+  b: { name: string; status: string; indices: unknown[] },
+  field: StreamSortField,
+  dir: StreamSortDirection,
+): number {
+  let cmp: number;
+  switch (field) {
+    case "name":
+      cmp = a.name.localeCompare(b.name);
+      break;
+    case "status":
+      cmp =
+        (STREAM_STATUS_ORDER[a.status.toUpperCase()] ?? 99) -
+        (STREAM_STATUS_ORDER[b.status.toUpperCase()] ?? 99);
+      break;
+    case "indices":
+      cmp = a.indices.length - b.indices.length;
+      break;
+    default:
+      cmp = 0;
+  }
+  return dir === "asc" ? cmp : -cmp;
+}
+
 export default function DataStreamsPage() {
   const connection = useConnectionStore((s) => s.connection);
   const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
@@ -65,6 +102,8 @@ export default function DataStreamsPage() {
   const deferredSearch = useDeferredValue(search);
   const deferredFieldSearch = useDeferredValue(fieldSearch);
   const [showSystemStreams, setShowSystemStreams] = useState(false);
+  const [streamSortField, setStreamSortField] = useState<StreamSortField>("name");
+  const [streamSortDirection, setStreamSortDirection] = useState<StreamSortDirection>("asc");
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<{ name: string; type: string } | null>(null);
 
@@ -126,12 +165,23 @@ export default function DataStreamsPage() {
 
   const filteredStreams = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
-    return dataStreams.filter((stream) => {
+    const filtered = dataStreams.filter((stream) => {
       if (!showSystemStreams && stream.name.startsWith(".")) return false;
       if (term && !stream.name.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [dataStreams, deferredSearch, showSystemStreams]);
+    return [...filtered].sort((a, b) => compareStreams(a, b, streamSortField, streamSortDirection));
+  }, [dataStreams, deferredSearch, showSystemStreams, streamSortField, streamSortDirection]);
+
+  const handleStreamSort = useCallback(
+    (field: StreamSortField) => {
+      setStreamSortDirection((prev) =>
+        streamSortField === field && prev === "asc" ? "desc" : "asc",
+      );
+      setStreamSortField(field);
+    },
+    [streamSortField],
+  );
 
   // When filtered results don't include the selected stream (e.g. search
   // excludes it), hide the detail panel while keeping the selection so it
@@ -237,7 +287,7 @@ export default function DataStreamsPage() {
       <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
         <Paper
           variant="outlined"
-          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 320, minHeight: 0 }}
+          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 480, minHeight: 0 }}
         >
           <Box sx={{ p: 1 }}>
             <TextField
@@ -266,55 +316,85 @@ export default function DataStreamsPage() {
             />
           </Box>
           <Divider />
-          <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-            {filteredStreams.map((stream) => (
-              <ListItem key={stream.name} disablePadding>
-                <ListItemButton
-                  selected={stream.name === selectedName}
-                  onClick={() => setSelectedName(stream.name)}
-                >
-                  <ListItemText
-                    primary={stream.name}
-                    primaryTypographyProps={{
-                      noWrap: true,
-                      title: stream.name,
-                      sx: { fontFamily: "monospace", fontSize: "0.85rem" },
-                    }}
-                    secondaryTypographyProps={{ component: "span" }}
-                    sx={{ minWidth: 0 }}
-                    secondary={
-                      <Box
-                        component="span"
-                        sx={{ display: "inline-flex", gap: 0.5, alignItems: "center", mt: 0.5 }}
+          <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+            <Table size="small" stickyHeader aria-label="Data stream list">
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <TableSortLabel
+                      active={streamSortField === "name"}
+                      direction={streamSortField === "name" ? streamSortDirection : "asc"}
+                      onClick={() => handleStreamSort("name")}
+                    >
+                      Name
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={streamSortField === "status"}
+                      direction={streamSortField === "status" ? streamSortDirection : "asc"}
+                      onClick={() => handleStreamSort("status")}
+                    >
+                      Status
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right">
+                    <TableSortLabel
+                      active={streamSortField === "indices"}
+                      direction={streamSortField === "indices" ? streamSortDirection : "asc"}
+                      onClick={() => handleStreamSort("indices")}
+                    >
+                      Indices
+                    </TableSortLabel>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredStreams.map((stream) => (
+                  <TableRow
+                    key={stream.name}
+                    hover
+                    selected={stream.name === selectedName}
+                    onClick={() => setSelectedName(stream.name)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        title={stream.name}
+                        sx={{ maxWidth: 240, fontSize: "0.85rem", fontFamily: "monospace" }}
                       >
-                        <Chip
-                          component="span"
-                          label={stream.status.toUpperCase()}
-                          color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
-                          size="small"
-                          sx={COMPACT_CHIP_SX}
-                        />
-                        <Chip
-                          component="span"
-                          label={`${stream.indices.length} ${stream.indices.length === 1 ? "Index" : "Indices"}`}
-                          size="small"
-                          variant="outlined"
-                          sx={COMPACT_CHIP_SX}
-                        />
-                      </Box>
-                    }
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {!loadingStreams && filteredStreams.length === 0 && (
-              <EmptyState
-                size="small"
-                heading="No data streams found"
-                description="Try adjusting your search or check that data streams exist in the cluster"
-              />
-            )}
-          </List>
+                        {stream.name}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={stream.status.toUpperCase()}
+                        color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
+                        size="small"
+                        sx={COMPACT_CHIP_SX}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2">{stream.indices.length}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!loadingStreams && filteredStreams.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} sx={{ border: 0 }}>
+                      <EmptyState
+                        size="small"
+                        heading="No data streams found"
+                        description="Try adjusting your search or check that data streams exist in the cluster"
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
 
         <Paper
