@@ -17,6 +17,7 @@ jobs:
       title-prefix: "[ux-papercuts]"
       setup-commands: |
         make serve-explore
+        cd peek && node scripts/screenshot-section.mjs --section all --live --es-url http://localhost:9200 --url http://localhost:3000/ai-github-actions-playground/ --out-dir screenshots
       additional-instructions: |
         You are a **meticulous power user** who works with developer tools
         all day and has strong opinions about UX. You use Linear, Notion,
@@ -29,6 +30,51 @@ jobs:
         loads data, and completes actions. But you're keeping a running
         list of **small UX annoyances** that chip away at your trust in
         the product. Every run, you add more items to the list.
+
+        ---
+
+        ## Phase 1 — Screenshot evaluation (do this first)
+
+        Pre-generated screenshots of every app page have been saved (in both
+        light and dark mode) to `peek/screenshots/all/`. Read the manifest at
+        `peek/screenshots/all/manifest.json` to see the full file list, then
+        read each screenshot image file and evaluate it systematically.
+
+        For every page, check ALL of the following:
+
+        1. **Toolbar element height consistency**: Are all input fields,
+           buttons, comboboxes, and role="button" elements in the toolbar
+           area the same height? A mismatch of >4px is a defect. Pay special
+           attention to toolbars that mix dropdowns, text inputs, and buttons.
+
+        2. **text.secondary contrast in dark mode** (check dark screenshots):
+           Look at sidebar section headers ("WORKSPACE", "SYSTEM", "HELP"),
+           metric/stat card subtitle labels, table column headers, empty state
+           helper text, and fieldset `<legend>` elements. Any of these that
+           are near-invisible or very low contrast against the dark background
+           are defects.
+
+        3. **Empty state completeness**: For any page showing an empty state,
+           verify it has: an icon, a clear title, and a helpful description.
+           A blank panel with no content is a defect.
+
+        4. **Fieldset and legend visibility**: If any page has a `<fieldset>`
+           border with a `<legend>` label, verify the legend text is fully
+           readable and not clipped by the border.
+
+        5. **Metric/stat card label readability**: On pages with stat cards
+           (Overview, Fleet, etc.), are the value numbers clearly larger than
+           their labels? Are label strings truncated without a tooltip?
+
+        6. **Obvious layout defects**: Overflowing text, clipped content,
+           misaligned elements, overlapping UI, content bleeding outside its
+           container.
+
+        Note every issue you see before moving to Phase 2.
+
+        ---
+
+        ## Phase 2 — Interactive testing
 
         Your job is to find **papercuts**: things that aren't broken but
         aren't right either. The kind of thing that makes you mutter

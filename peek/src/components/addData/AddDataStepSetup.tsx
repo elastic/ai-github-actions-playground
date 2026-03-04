@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 
 import type { AddDataTechnologyCatalogEntry } from "../../services/addData/catalog";
 import type { EndpointType, Platform, TelemetrySignal } from "../../utils/addDataUtils";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import type { OtelReceiverDefinition } from "../../services/addData/otelReceiverCatalog";
 import type { AwsDeployTarget } from "../../services/addData/awsDeployCatalog";
 import type { ApmLanguageDefinition } from "../../services/addData/apmCatalog";
@@ -13,6 +14,7 @@ import type { FluentBitOutputMode } from "../../services/addData/fluentBitConfig
 import type { UserCapabilities } from "../../services/es";
 import type { IngestionVerificationState } from "../../hooks/useRichIngestionVerification";
 
+import { TECHNOLOGY_ICONS } from "./addDataTechnologyConstants";
 import { GUIDE_TYPE_DEFINITIONS } from "./guideRegistry";
 import CollapsibleSection from "./CollapsibleSection";
 import IngestionVerificationPanel from "./IngestionVerificationPanel";
@@ -83,6 +85,7 @@ interface AddDataStepSetupProps
 
 export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   const [configureExpanded, setConfigureExpanded] = useState(true);
+  const [credentialsExpanded, setCredentialsExpanded] = useState(true);
   const [installExpanded, setInstallExpanded] = useState(true);
 
   if (!p.selectedTechnology) {
@@ -119,6 +122,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           ingestAvailable={p.ingestAvailable}
           platform={p.platform}
           onPlatformChange={p.onPlatformChange}
+          supportedEnvironments={p.selectedTechnology!.supportedEnvironments}
         />
       );
       break;
@@ -234,7 +238,25 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Typography variant="h6">Set up and verify</Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        {TECHNOLOGY_ICONS[p.selectedTechnology.id] && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: COMPONENT_HEIGHTS.sidebarNavItem,
+              height: COMPONENT_HEIGHTS.sidebarNavItem,
+              borderRadius: 1,
+              bgcolor: "action.selected",
+              color: "text.secondary",
+            }}
+          >
+            {TECHNOLOGY_ICONS[p.selectedTechnology.id]}
+          </Box>
+        )}
+        <Typography variant="h6">Set up {p.selectedTechnology.technology}</Typography>
+      </Stack>
       <Typography variant="body2" color="text.secondary">
         {`${p.selectedTechnology.technology} can emit ${p.signalExpectation}.`}
       </Typography>
@@ -242,28 +264,37 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       {/* Section 1: Configure */}
       <CollapsibleSection
         title={guideDef.configureLabel}
+        subtitle={p.selectedTechnology.technology}
         expanded={configureExpanded}
         onToggle={() => setConfigureExpanded((prev) => !prev)}
       >
         {configureContent}
       </CollapsibleSection>
 
-      {/* Section 2: Install + Credentials */}
+      {/* Section 2: Credentials */}
+      <CollapsibleSection
+        title="Collector credentials"
+        expanded={credentialsExpanded}
+        onToggle={() => setCredentialsExpanded((prev) => !prev)}
+        completed={Boolean(p.apiKeyValue)}
+      >
+        <CollectorCredentials
+          apiKeyValue={p.apiKeyValue}
+          apiKeyError={p.apiKeyError}
+          capabilities={p.capabilities}
+          creatingApiKey={p.creatingApiKey}
+          onCreateApiKey={p.onCreateApiKey}
+        />
+      </CollapsibleSection>
+
+      {/* Section 3: Install */}
       <CollapsibleSection
         title={guideDef.installLabel}
+        subtitle={p.selectedTechnology.technology}
         expanded={installExpanded}
         onToggle={() => setInstallExpanded((prev) => !prev)}
       >
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          {installContent}
-          <CollectorCredentials
-            apiKeyValue={p.apiKeyValue}
-            apiKeyError={p.apiKeyError}
-            capabilities={p.capabilities}
-            creatingApiKey={p.creatingApiKey}
-            onCreateApiKey={p.onCreateApiKey}
-          />
-        </Box>
+        {installContent}
       </CollapsibleSection>
 
       {/* Section 3: Verify (always visible, not collapsible) */}

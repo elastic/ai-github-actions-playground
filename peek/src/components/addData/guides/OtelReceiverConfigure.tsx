@@ -33,9 +33,9 @@ export default function OtelReceiverConfigure({
           <TextField
             key={field.key}
             label={field.label}
-            value={fieldValues[field.key] ?? field.defaultValue}
+            value={fieldValues[field.key] ?? ""}
             onChange={(e) => handleFieldChange(field.key, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={field.placeholder ?? (field.defaultValue || undefined)}
             helperText={field.helpText}
             size="small"
             fullWidth

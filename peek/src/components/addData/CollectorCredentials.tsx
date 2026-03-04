@@ -40,7 +40,6 @@ export default function CollectorCredentials({
 
   return (
     <>
-      <Typography variant="body2">Collector credentials</Typography>
       {apiKeyError && <Alert severity="error">{apiKeyError}</Alert>}
       {capabilities == null ? null : capabilities.canCreateApiKeys ? (
         <>

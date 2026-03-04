@@ -27,46 +27,66 @@ export default function AddDataStepSuccess({
 }: AddDataStepSuccessProps) {
   const navigate = useNavigate();
 
-  const outcomeSignals: TelemetrySignal[] =
-    foundSignals.size > 0
-      ? (Array.from(foundSignals).sort() as TelemetrySignal[])
-      : Array.from(selectedSignals);
-  const outcomeSignalsKey = outcomeSignals.join(",");
+  const hasVerifiedSignals = foundSignals.size > 0;
+  const outcomeSignals: TelemetrySignal[] = hasVerifiedSignals
+    ? (Array.from(foundSignals).sort() as TelemetrySignal[])
+    : Array.from(selectedSignals);
 
   const outcomeCtas = useMemo(() => {
     const ctas: AddDataSuccessCta[] = [];
-    for (const signal of outcomeSignals) {
-      ctas.push(...SIGNAL_NAV[signal].successCtas);
+
+    // Prefer technology-specific recommended next steps
+    if (
+      selectedTechnology?.recommendedNextSteps &&
+      selectedTechnology.recommendedNextSteps.length > 0
+    ) {
+      for (const step of selectedTechnology.recommendedNextSteps) {
+        ctas.push({ id: step.id, label: step.label, path: step.path });
+      }
+    } else {
+      // Fallback to generic signal-based CTAs
+      for (const signal of outcomeSignals) {
+        ctas.push(...SIGNAL_NAV[signal].successCtas);
+      }
     }
-    if (ctas.length === 0) {
-      ctas.push({ id: "additional_source", label: "Add another source", path: "/add-data" });
-    }
+
+    // Always include "Add another source" CTA
+    ctas.push({ id: "additional_source", label: "Add another source", path: "/add-data" });
+
+    // Deduplicate
     const unique = new Map<string, AddDataSuccessCta>();
     for (const cta of ctas) {
       unique.set(`${cta.id}:${cta.path}`, cta);
     }
     return Array.from(unique.values());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outcomeSignalsKey]);
+  }, [outcomeSignals.join(","), selectedTechnology]);
+
+  const techName = selectedTechnology?.technology ?? "Your source";
 
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
-      <Typography variant="h6">Explore your data + next steps</Typography>
+      <Typography variant="h6">
+        {hasVerifiedSignals ? "Explore your data + next steps" : "Next steps"}
+      </Typography>
       <Typography variant="body2" color="text.secondary">
-        {selectedTechnology?.technology ?? "Your source"} is configured. Choose a next action to
-        explore dashboards, set up alerting, or onboard another source.
+        {hasVerifiedSignals
+          ? `${techName} is configured. Choose a next action to explore dashboards, set up alerting, or onboard another source.`
+          : `${techName} setup is complete but data has not been verified yet. You can explore your data or go back to verify.`}
       </Typography>
       {outcomeSignals.length > 0 && (
-        <Alert severity="success">
-          Ready signals: {outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}.
+        <Alert severity={hasVerifiedSignals ? "success" : "info"}>
+          {hasVerifiedSignals
+            ? `Verified signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}.`
+            : `Expected signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}. Run the collector and check back to verify.`}
         </Alert>
       )}
-      <Stack direction="row" spacing={1} flexWrap="wrap">
-        {outcomeCtas.map((cta) => (
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        {outcomeCtas.map((cta, index) => (
           <Button
             key={`${cta.id}:${cta.path}`}
             size="small"
-            variant={cta.id === "signal" ? "contained" : "outlined"}
+            variant={index === 0 ? "contained" : "outlined"}
             onClick={() => {
               if (cta.id === "additional_source") {
                 onAddAnotherSource();

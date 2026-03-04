@@ -89,7 +89,9 @@ describe("AddDataPage", () => {
   it("renders Step 1 with search and experience tiles", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: /What are you monitoring\?/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Search integrations...")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Cloud Providers")).toBeInTheDocument();
     expect(screen.getByText("Kubernetes")).toBeInTheDocument();
     expect(screen.getByText("Servers, Desktops & Laptops")).toBeInTheDocument();
@@ -100,11 +102,16 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByPlaceholderText("Search integrations..."), "postgres");
+    await user.type(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+      "postgres",
+    );
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
     expect(screen.queryByText("Nginx")).not.toBeInTheDocument();
 
-    await user.clear(screen.getByPlaceholderText("Search integrations..."));
+    await user.clear(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+    );
     // Click the SaaS & Databases experience tile to filter to database technologies
     await user.click(screen.getByRole("button", { name: /SaaS & Databases/ }));
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
@@ -117,7 +124,7 @@ describe("AddDataPage", () => {
 
     // Step 1 → Step 2
     await goToStep2(user);
-    expect(screen.getByRole("heading", { name: /Set up and verify/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Set up Kubernetes/i })).toBeInTheDocument();
 
     // Step 2 shows collapsible configure and install sections
     expect(screen.getByText("Select your environment")).toBeInTheDocument();
@@ -125,9 +132,8 @@ describe("AddDataPage", () => {
 
     // Step 2 → Step 3
     await user.click(screen.getByRole("button", { name: /^Continue$/i }));
-    expect(
-      screen.getByRole("heading", { name: /Explore your data \+ next steps/i }),
-    ).toBeInTheDocument();
+    // Step 3 shows "Next steps" (or "Explore your data + next steps" when verified)
+    expect(screen.getByRole("heading", { name: /next steps/i })).toBeInTheDocument();
   }, 30_000);
 
   it("shows configure and install sections with credentials in merged Step 2", async () => {
@@ -138,12 +144,16 @@ describe("AddDataPage", () => {
 
     // Configure section shows endpoint type controls
     expect(screen.getByRole("button", { name: "Elasticsearch" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Managed OTLP" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Linux" })).toBeInTheDocument();
+    expect(screen.getByText("Managed OTLP")).toBeInTheDocument();
+    // Kubernetes technology shows Kubernetes tab (filtered by supportedEnvironments)
+    expect(screen.getByRole("tab", { name: "Kubernetes" })).toBeInTheDocument();
 
-    // Install section shows copy and credentials controls
-    expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
+    // Credentials section appears as its own section (between Configure and Install)
+    expect(screen.getByText("Collector credentials")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
+
+    // Install section shows copy controls
+    expect(screen.getByRole("button", { name: /Copy all/i })).toBeInTheDocument();
 
     // Verify section shows check button
     expect(screen.getByRole("button", { name: /Check now/i })).toBeInTheDocument();
@@ -185,8 +195,10 @@ describe("AddDataPage", () => {
     // Navigate to Step 3
     await user.click(screen.getByRole("button", { name: /^Continue$/i }));
 
-    expect(screen.getByRole("button", { name: "Open Dashboards" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Set up alerting" })).toBeInTheDocument();
+    // Technology-specific recommended next steps from Kubernetes catalog entry
+    expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Query Lab" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   }, 30_000);
 
@@ -209,7 +221,9 @@ describe("AddDataPage", () => {
         screen.getByRole("heading", { name: /What are you monitoring\?/i }),
       ).toBeInTheDocument();
     });
-    expect(screen.getByPlaceholderText("Search integrations...")).toHaveValue("");
+    expect(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+    ).toHaveValue("");
     expect(screen.getByRole("button", { name: /^Continue$/i })).toBeDisabled();
   }, 30_000);
 
@@ -225,8 +239,8 @@ describe("AddDataPage", () => {
 
     await goToStep2(user);
 
-    // Switch to Managed OTLP
-    await user.click(screen.getByRole("button", { name: "Managed OTLP" }));
+    // Switch to Managed OTLP (text is inside a Tooltip span)
+    await user.click(screen.getByText("Managed OTLP"));
 
     // The alert should appear even though no endpoint was derived
     await waitFor(() => {

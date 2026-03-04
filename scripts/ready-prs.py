@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Manage bot-authored PRs: mark drafts ready, approve blocked workflow runs,
-kick CI for bot commits, and report the state of every open PR.
+kick CI for bot commits, update stale branches, and report PR state.
 
 See scripts/pr-state-machine.md for the full state machine specification.
 """
@@ -379,8 +379,62 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
     return 0
 
 
+def phase_update_stale_branches(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
+    """Update bot PR branches that have no active CI and are not yet approved.
+
+    Calls the GitHub 'update branch' API (PUT /pulls/{n}/update-branch) to
+    merge the latest main into the branch so CI runs against fresh code.
+    Skips: WIP, draft, CONFLICTING/UNKNOWN mergeable, APPROVED, and any PR
+    where CI is currently queued, in_progress, or action_required.
+    """
+    print(f"{BOLD}Phase 4: Updating stale branches{RESET}\n")
+    candidates = [
+        p for p in prs
+        if p.is_bot and not p.is_wip and not p.is_draft
+        and p.mergeable not in ("CONFLICTING", "UNKNOWN")
+        and p.review_decision != "APPROVED"
+        and compute_ci_status(runs, p.head_sha)
+        not in (CIStatus.IN_PROGRESS, CIStatus.QUEUED, CIStatus.ACTION_REQUIRED)
+    ]
+    if not candidates:
+        print("  No branches need updating.\n")
+        return 0
+    updated = skipped = failed = 0
+    for pr in candidates:
+        print(f"  {_tag(ctx)}#{pr.number:<5} {pr.title[:50]:<50}", end="")
+        if ctx.dry_run:
+            print(f"{YELLOW}would update branch{RESET}")
+            updated += 1
+            continue
+        result = subprocess.run(
+            ["gh", "api", "-X", "PUT",
+             f"repos/{ctx.repo_slug}/pulls/{pr.number}/update-branch"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            print(f"{GREEN}✓ updated{RESET}")
+            updated += 1
+        else:
+            err = (result.stderr + result.stdout).lower()
+            if "already up to date" in err:
+                print(f"{DIM}already up to date{RESET}")
+                skipped += 1
+            else:
+                print(f"{RED}✗ failed{RESET}")
+                failed += 1
+    summary_parts = []
+    if updated:
+        summary_parts.append(f"Updated {updated} branch(es).")
+    if skipped:
+        summary_parts.append(f"{skipped} already up to date.")
+    if summary_parts:
+        print(f"\n  {' '.join(summary_parts)}")
+    print()
+    return failed
+
+
 def phase_report(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
-    print(f"{BOLD}Phase 4: PR Status Report{RESET}\n")
+    print(f"{BOLD}Phase 5: PR Status Report{RESET}\n")
     if not prs:
         print("  No open PRs.\n")
         return 0
@@ -447,7 +501,7 @@ def run_once(args: argparse.Namespace) -> int:
     if ctx.dry_run:
         print(f"{YELLOW}Dry-run mode — no changes will be made{RESET}")
     if args.status_only:
-        print(f"{DIM}Status-only — skipping phases 1-3{RESET}")
+        print(f"{DIM}Status-only — skipping phases 1-4{RESET}")
     print()
 
     prs = fetch_prs(ctx)
@@ -457,6 +511,7 @@ def run_once(args: argparse.Namespace) -> int:
         phase_mark_drafts(prs, ctx)
         phase_approve_runs(prs, runs, ctx)
         phase_kick_ci(prs, runs, ctx)
+        phase_update_stale_branches(prs, runs, ctx)
 
     attention = phase_report(prs, runs, ctx)
     phase_summary(attention)
@@ -470,7 +525,7 @@ def main() -> None:
     )
     parser.add_argument("--repo", help="Target repository (owner/repo)")
     parser.add_argument("--dry-run", action="store_true", help="Report without acting")
-    parser.add_argument("--status-only", action="store_true", help="Skip phases 1-3")
+    parser.add_argument("--status-only", action="store_true", help="Skip phases 1-4")
     parser.add_argument("--loop", nargs="?", const=300, type=int, metavar="SEC",
                         help="Re-run every N seconds (default: 300)")
     args = parser.parse_args()
