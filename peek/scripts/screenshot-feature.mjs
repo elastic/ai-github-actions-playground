@@ -25,6 +25,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
+import { isIgnorableConsoleError } from "./ignorable-console-errors.mjs";
 import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
 
 // ---------------------------------------------------------------------------
@@ -56,16 +57,6 @@ function parseArgs(argv) {
 // ---------------------------------------------------------------------------
 // Mock Elasticsearch responses
 // ---------------------------------------------------------------------------
-
-const IGNORABLE_CONSOLE_PATTERNS = [
-  /fonts\.googleapis\.com/,
-  /fonts\.gstatic\.com/,
-  /ERR_NAME_NOT_RESOLVED/,
-  /status of 40[04]/,
-];
-function isIgnorableConsoleError(text) {
-  return IGNORABLE_CONSOLE_PATTERNS.some((re) => re.test(text));
-}
 
 // ---------------------------------------------------------------------------
 // Main
