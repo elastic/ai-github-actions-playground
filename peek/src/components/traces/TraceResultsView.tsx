@@ -171,6 +171,7 @@ export default function TraceResultsView({
         )}
         {searchResult && viewMode === "list" && !searchSpansLoading && searchSpans.length === 0 && (
           <EmptyState
+            icon={<SearchIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
             heading="No traces matched the current filters."
             description="Adjust filters or widen the time range."
           />

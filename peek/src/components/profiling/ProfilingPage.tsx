@@ -474,7 +474,7 @@ export default function ProfilingPage() {
               </Box>
             </Paper>
           )}
-          {!showIdleEmptyState && !showNoDataEmptyState && (
+          {!showIdleEmptyState && !showNoDataEmptyState && !error && (
             <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
               {viewMode === "topFunctions" && topFunctionsRows.length > 0 && (
                 <Table size="small">
