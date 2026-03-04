@@ -208,7 +208,7 @@ export function buildAllWorkloadsInventoryQuery(
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY workload_name = COALESCE(${workloadFields.join(", ")})`,
+    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY cluster_name = ${fields.clusterName}, namespace_name = ${fields.namespace}, workload_name = COALESCE(${workloadFields.join(", ")})`,
     `SORT pod_count DESC`,
     `LIMIT 200`,
   ]);

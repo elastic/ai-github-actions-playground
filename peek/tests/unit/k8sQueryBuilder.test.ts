@@ -150,7 +150,7 @@ describe("k8sQueryBuilder", () => {
       expect(query).toContain("k8s.job.name IS NOT NULL");
       expect(query).toContain("k8s.cronjob.name IS NOT NULL");
       expect(query).toContain(
-        "BY workload_name = COALESCE(k8s.deployment.name, k8s.replicaset.name, k8s.statefulset.name, k8s.daemonset.name, k8s.job.name, k8s.cronjob.name)",
+        "BY cluster_name = k8s.cluster.name, namespace_name = k8s.namespace.name, workload_name = COALESCE(k8s.deployment.name, k8s.replicaset.name, k8s.statefulset.name, k8s.daemonset.name, k8s.job.name, k8s.cronjob.name)",
       );
     });
 

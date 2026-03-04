@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
   formatCpu,
   formatMemory,
@@ -12,7 +14,7 @@ export interface ColumnDef<T> {
   label: string;
   sortable: boolean;
   align?: "left" | "right";
-  render: (row: T) => React.ReactNode;
+  render: (row: T) => ReactNode;
 }
 
 export const CLUSTER_COLUMNS: ColumnDef<ClusterRow>[] = [
