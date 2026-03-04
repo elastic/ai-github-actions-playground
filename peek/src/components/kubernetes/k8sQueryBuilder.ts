@@ -204,11 +204,22 @@ export function buildAllWorkloadsInventoryQuery(
   ];
   const whereClauses = buildTimeWhereClauses(filters, fields);
   whereClauses.push(`(${workloadFields.map((field) => `${field} IS NOT NULL`).join(" OR ")})`);
+  const workloadKind = [
+    `CASE`,
+    `WHEN ${fields.deploymentName} IS NOT NULL THEN "deployment"`,
+    `WHEN ${fields.replicaSetName} IS NOT NULL THEN "replicaset"`,
+    `WHEN ${fields.statefulSetName} IS NOT NULL THEN "statefulset"`,
+    `WHEN ${fields.daemonSetName} IS NOT NULL THEN "daemonset"`,
+    `WHEN ${fields.jobName} IS NOT NULL THEN "job"`,
+    `WHEN ${fields.cronJobName} IS NOT NULL THEN "cronjob"`,
+    `ELSE "unknown"`,
+    `END`,
+  ].join(" ");
 
   return buildPipeline([
     `FROM ${fields.metricsIndex}`,
     buildWherePipe(whereClauses),
-    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY cluster_name = ${fields.clusterName}, namespace_name = ${fields.namespace}, workload_name = COALESCE(${workloadFields.join(", ")})`,
+    `STATS pod_count = COUNT_DISTINCT(${fields.podName}), avg_cpu = AVG(${fields.cpuUsage}), avg_memory = AVG(${fields.memoryUsage}) BY cluster_name = ${fields.clusterName}, namespace_name = ${fields.namespace}, workload_kind = ${workloadKind}, workload_name = COALESCE(${workloadFields.join(", ")})`,
     `SORT pod_count DESC`,
     `LIMIT 200`,
   ]);

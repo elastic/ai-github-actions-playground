@@ -10,7 +10,7 @@ import {
 } from "./k8sHelpers";
 
 export interface ColumnDef<T> {
-  key: string;
+  key: Extract<keyof T, string>;
   label: string;
   sortable: boolean;
   align?: "left" | "right";
