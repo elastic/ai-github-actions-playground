@@ -167,4 +167,33 @@ describe("InsightSlot", () => {
     renderWithProvider("idx", [insight]);
     expect(screen.getByRole("button", { name: /view info insight/i })).toBeInTheDocument();
   });
+
+  it("exposes aria-haspopup and aria-expanded on the indicator dot", async () => {
+    const user = userEvent.setup();
+    renderWithProvider("cpu-card", [SAMPLE_INSIGHT]);
+
+    const dot = screen.getByRole("button", { name: /view warning insight/i });
+    expect(dot).toHaveAttribute("aria-haspopup", "true");
+    expect(dot).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(dot);
+    await waitFor(() => {
+      expect(dot).toHaveAttribute("aria-expanded", "true");
+    });
+  });
+
+  it("shows accessible tooltip text on refresh and dismiss buttons", async () => {
+    const user = userEvent.setup();
+    renderWithProvider("cpu-card", [SAMPLE_INSIGHT]);
+
+    await user.click(screen.getByRole("button", { name: /view warning insight/i }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /refresh insight/i })).toBeInTheDocument();
+    });
+
+    const refreshBtn = screen.getByRole("button", { name: /refresh insight/i });
+    const dismissBtn = screen.getByRole("button", { name: /dismiss insight/i });
+    expect(refreshBtn).toHaveAttribute("aria-label", "Refresh insight");
+    expect(dismissBtn).toHaveAttribute("aria-label", "Dismiss insight");
+  });
 });

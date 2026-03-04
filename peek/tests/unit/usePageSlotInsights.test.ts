@@ -203,6 +203,73 @@ describe("usePageSlotInsights", () => {
     ]);
   });
 
+  it("does not fetch when enabled is false", () => {
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "ctx",
+          systemPrompt: "sys",
+          cacheKey: "disabled-key",
+          slots: SAMPLE_SLOTS,
+          enabled: false,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.summary).toBeNull();
+    expect(result.current.insights).toEqual([]);
+    expect(vi.mocked(generateObject)).not.toHaveBeenCalled();
+  });
+
+  it("does not fetch when context is empty or whitespace", () => {
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "   ",
+          systemPrompt: "sys",
+          cacheKey: "empty-ctx",
+          slots: SAMPLE_SLOTS,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.summary).toBeNull();
+    expect(result.current.insights).toEqual([]);
+    expect(vi.mocked(generateObject)).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates insights keeping the first per slot id", async () => {
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: {
+        summary: "Dedup test",
+        insights: [
+          { slotId: "health-card", text: "First health insight", severity: "info" },
+          { slotId: "health-card", text: "Duplicate health insight", severity: "warning" },
+          { slotId: "index-count", text: "42 indices" },
+        ],
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        usePageSlotInsights({
+          context: "ctx",
+          systemPrompt: "sys",
+          cacheKey: "dedup-test",
+          slots: SAMPLE_SLOTS,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.summary).toBe("Dedup test");
+    });
+
+    expect(result.current.insights).toHaveLength(2);
+    expect(result.current.insights[0]!.text).toBe("First health insight");
+    expect(result.current.insights[1]!.text).toBe("42 indices");
+  });
+
   it("uses openrouter base URL when provider is openrouter", async () => {
     useLLMStore.getState().setProvider("openrouter");
     vi.mocked(generateObject).mockResolvedValueOnce({
