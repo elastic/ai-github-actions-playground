@@ -93,7 +93,8 @@ export function buildServiceSparklineQuery(
     buildWherePipe(whereClauses),
     `EVAL duration_ms = ${durationExpr} / 1000.0, ` +
       `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`,
-    `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_rate = SUM(is_error) / COUNT(*) BY ${fields.serviceName}, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
+    `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY ${fields.serviceName}, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
+    `EVAL error_rate = error_count / request_count`,
     `SORT bucket`,
   ]);
 }
