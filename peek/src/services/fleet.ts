@@ -201,9 +201,14 @@ export function computeCheckinStaleness(lastSeen: string | null): {
 
 export function deriveAgentStatus(lastSeen: string): string {
   const { severity } = computeCheckinStaleness(lastSeen);
-  if (severity === "fresh") return "online";
-  if (severity === "stale") return "offline";
-  return "offline";
+  switch (severity) {
+    case "fresh":
+      return "online";
+    case "stale":
+      return "offline";
+    case "critical":
+      return "offline";
+  }
 }
 
 // ---------------------------------------------------------------------------
