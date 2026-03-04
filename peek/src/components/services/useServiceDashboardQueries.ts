@@ -6,6 +6,7 @@ import type { EsqlResponse, ElasticsearchConnection } from "../../types";
 
 import {
   buildServiceDeploymentsQuery,
+  buildServiceK8sContextQuery,
   buildServiceRecentTracesQuery,
   buildServiceRouteSparklineQuery,
   buildServiceRoutesQuery,
@@ -75,10 +76,27 @@ export function useServiceDashboardQueries({
     [queryClient, deploymentsQueryKey],
   );
 
+  const [k8sContextSession] = useState(0);
+  const k8sContextQueryKey = useMemo(
+    () => ["service-dashboard-k8s-context", serviceName, k8sContextSession] as const,
+    [serviceName, k8sContextSession],
+  );
+  const { data: k8sContextResult = null } = useQuery<EsqlResponse | null>({
+    queryKey: k8sContextQueryKey,
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+  });
+  const setK8sContextResult = useCallback(
+    (result: EsqlResponse | null) => queryClient.setQueryData(k8sContextQueryKey, result),
+    [queryClient, k8sContextQueryKey],
+  );
+
   const latestRoutesQueryRef = useRef<string | null>(null);
   const latestTracesQueryRef = useRef<string | null>(null);
   const latestDeploymentsQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
+  const latestK8sContextQueryRef = useRef<string | null>(null);
   const [routeSparklineData, setRouteSparklineData] = useState<Record<string, RouteSparklineData>>(
     {},
   );
@@ -169,14 +187,39 @@ export function useServiceDashboardQueries({
     }, []),
   });
 
-  const loading = routesLoading || tracesLoading || deploymentsLoading || sparklineLoading;
-  const error = routesError || tracesError || deploymentsError || sparklineError;
+  const {
+    runQuery: runK8sContextQuery,
+    loading: k8sContextLoading,
+    error: k8sContextError,
+    clearError: clearK8sContextError,
+  } = useEsqlQuery({
+    connection,
+    onSuccess: useCallback(
+      (data: EsqlResponse, executedQuery: string) => {
+        if (executedQuery !== latestK8sContextQueryRef.current) return;
+        setK8sContextResult(data);
+      },
+      [setK8sContextResult],
+    ),
+    onFailure: useCallback(
+      (failedQuery: string) => {
+        if (failedQuery !== latestK8sContextQueryRef.current) return;
+        setK8sContextResult(null);
+      },
+      [setK8sContextResult],
+    ),
+  });
+
+  const loading =
+    routesLoading || tracesLoading || deploymentsLoading || sparklineLoading || k8sContextLoading;
+  const error = routesError || tracesError || deploymentsError || sparklineError || k8sContextError;
 
   const clearLatestQueries = useCallback(() => {
     latestRoutesQueryRef.current = null;
     latestTracesQueryRef.current = null;
     latestDeploymentsQueryRef.current = null;
     latestSparklineQueryRef.current = null;
+    latestK8sContextQueryRef.current = null;
   }, []);
 
   const handleSearch = useCallback(() => {
@@ -194,11 +237,15 @@ export function useServiceDashboardQueries({
     latestSparklineQueryRef.current = sparklineQuery.trim();
     setRouteSparklineData({});
     runSparklineQuery(sparklineQuery);
+    const k8sContextQuery = buildServiceK8sContextQuery(filters);
+    latestK8sContextQueryRef.current = k8sContextQuery.trim();
+    runK8sContextQuery(k8sContextQuery);
   }, [
     runRoutesQuery,
     runTracesQuery,
     runDeploymentsQuery,
     runSparklineQuery,
+    runK8sContextQuery,
     serviceName,
     timeFrom,
     timeTo,
@@ -211,20 +258,24 @@ export function useServiceDashboardQueries({
     clearTracesError();
     clearDeploymentsError();
     clearSparklineError();
+    clearK8sContextError();
     setRoutesResult(null);
     setTracesResult(null);
     setDeploymentsResult(null);
     setRouteSparklineData({});
+    setK8sContextResult(null);
   }, [
     clearLatestQueries,
     clearRoutesError,
     clearTracesError,
     clearDeploymentsError,
     clearSparklineError,
+    clearK8sContextError,
     loading,
     setRoutesResult,
     setTracesResult,
     setDeploymentsResult,
+    setK8sContextResult,
   ]);
 
   return {
@@ -233,6 +284,7 @@ export function useServiceDashboardQueries({
     error,
     handleReset,
     handleSearch,
+    k8sContextResult,
     loading,
     routeSparklineData,
     routesResult,

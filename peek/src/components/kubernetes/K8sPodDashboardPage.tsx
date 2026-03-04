@@ -13,7 +13,8 @@ import PageHeader from "../PageHeader";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
-import { parsePodDetail, formatCpu, formatMemory } from "./k8sHelpers";
+import K8sServiceLinks from "./K8sServiceLinks";
+import { parsePodDetail, formatCpu, formatMemory, extractServiceNames } from "./k8sHelpers";
 import { useK8sDashboardQueries } from "./useK8sDashboardQueries";
 
 export default function K8sPodDashboardPage() {
@@ -66,6 +67,10 @@ export default function K8sPodDashboardPage() {
   const hasData = overviewResult || logsResult || tracesResult;
   const hasLogs = Boolean(logsResult?.values.length);
   const hasTraces = Boolean(tracesResult?.values.length);
+  const serviceNames = useMemo(
+    () => (tracesResult ? extractServiceNames(tracesResult) : []),
+    [tracesResult],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -166,6 +171,8 @@ export default function K8sPodDashboardPage() {
           </Box>
         </Paper>
       )}
+
+      {serviceNames.length > 0 && <K8sServiceLinks serviceNames={serviceNames} />}
 
       {logsResult && logsResult.values.length > 0 && (
         <Paper variant="outlined" sx={{ overflow: "auto" }}>

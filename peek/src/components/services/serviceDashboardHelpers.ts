@@ -1,6 +1,27 @@
 import type { EsqlResponse } from "../../types";
 import { buildColumnAccessor, toFiniteNumber } from "../../services/es/columnUtils";
 
+/** A Kubernetes resource associated with a service. */
+export interface ServiceK8sRow {
+  namespace: string;
+  node: string;
+  pod: string;
+  podCount: number;
+}
+
+export function parseServiceK8sContext(result: EsqlResponse): ServiceK8sRow[] {
+  const get = buildColumnAccessor(result.columns);
+
+  return result.values
+    .map((row) => ({
+      namespace: String(get(row, "k8s_namespace") ?? "").trim(),
+      node: String(get(row, "k8s_node") ?? "").trim(),
+      pod: String(get(row, "k8s_pod") ?? "").trim(),
+      podCount: toFiniteNumber(get(row, "pod_count")),
+    }))
+    .filter((row) => row.pod.length > 0);
+}
+
 export interface RouteRow {
   route: string;
   requestCount: number;

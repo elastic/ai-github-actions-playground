@@ -18,6 +18,7 @@ import {
   parseWorkloadInventory,
   parsePodInventory,
   parsePodDetail,
+  extractServiceNames,
 } from "../../src/components/kubernetes/k8sHelpers";
 
 const DEFAULT_FILTERS = { timeFrom: "NOW() - 1 hour", timeTo: "NOW()" };
@@ -411,6 +412,64 @@ describe("k8sHelpers", () => {
       expect(result[0]!.containerName).toBe("nginx");
       expect(result[1]!.containerName).toBe("sidecar");
       expect(result[1]!.restarts).toBe(1);
+    });
+  });
+
+  describe("extractServiceNames", () => {
+    it("extracts unique sorted service names from traces response", () => {
+      const result = extractServiceNames({
+        columns: [
+          { name: "@timestamp", type: "date" },
+          { name: "service.name", type: "keyword" },
+          { name: "k8s.pod.name", type: "keyword" },
+          { name: "k8s.namespace.name", type: "keyword" },
+          { name: "name", type: "keyword" },
+          { name: "trace.id", type: "keyword" },
+          { name: "span.id", type: "keyword" },
+        ],
+        values: [
+          ["2024-01-01T00:00:00Z", "frontend", "pod-1", "default", "GET /", "t1", "s1"],
+          ["2024-01-01T00:00:01Z", "backend", "pod-2", "default", "POST /api", "t2", "s2"],
+          ["2024-01-01T00:00:02Z", "frontend", "pod-1", "default", "GET /home", "t3", "s3"],
+        ],
+      });
+
+      expect(result).toEqual(["backend", "frontend"]);
+    });
+
+    it("returns empty array when service.name column is missing", () => {
+      const result = extractServiceNames({
+        columns: [
+          { name: "@timestamp", type: "date" },
+          { name: "name", type: "keyword" },
+        ],
+        values: [["2024-01-01T00:00:00Z", "GET /"]],
+      });
+      expect(result).toEqual([]);
+    });
+
+    it("skips null and empty service names", () => {
+      const result = extractServiceNames({
+        columns: [
+          { name: "service.name", type: "keyword" },
+          { name: "name", type: "keyword" },
+        ],
+        values: [
+          [null, "GET /"],
+          ["", "POST /api"],
+          ["  ", "DELETE /items"],
+          ["my-service", "PUT /items"],
+        ],
+      });
+      expect(result).toEqual(["my-service"]);
+    });
+
+    it("returns empty array for empty values", () => {
+      const result = extractServiceNames({
+        columns: [{ name: "service.name", type: "keyword" }],
+        values: [],
+      });
+      expect(result).toEqual([]);
     });
   });
 });

@@ -13,8 +13,9 @@ import PageHeader from "../PageHeader";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
+import K8sServiceLinks from "./K8sServiceLinks";
 import K8sWorkloadTable from "./K8sWorkloadTable";
-import { parseWorkloadInventory } from "./k8sHelpers";
+import { parseWorkloadInventory, extractServiceNames } from "./k8sHelpers";
 import { useK8sDashboardQueries } from "./useK8sDashboardQueries";
 
 export default function K8sWorkloadDashboardPage() {
@@ -72,6 +73,10 @@ export default function K8sWorkloadDashboardPage() {
   const hasData = overviewResult || entityResult || logsResult || tracesResult;
   const hasLogs = Boolean(logsResult?.values.length);
   const hasTraces = Boolean(tracesResult?.values.length);
+  const serviceNames = useMemo(
+    () => (tracesResult ? extractServiceNames(tracesResult) : []),
+    [tracesResult],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -119,6 +124,8 @@ export default function K8sWorkloadDashboardPage() {
       {summary && <K8sDashboardSummaryCards summary={summary} />}
 
       {workloadRows.length > 0 && <K8sWorkloadTable rows={workloadRows} />}
+
+      {serviceNames.length > 0 && <K8sServiceLinks serviceNames={serviceNames} />}
 
       {logsResult && logsResult.values.length > 0 && (
         <Paper variant="outlined" sx={{ overflow: "auto" }}>
