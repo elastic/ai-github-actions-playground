@@ -63,6 +63,22 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
         title={p.isLogsExplorer ? "Logs Explorer Query" : "Query Lab"}
+        leading={
+          <IconButton
+            size="small"
+            onClick={p.onToggleCollapsed}
+            aria-expanded={!p.collapsed}
+            aria-label={p.collapsed ? "Expand query panel" : "Collapse query panel"}
+          >
+            <ExpandMoreIcon
+              sx={{
+                transform: p.collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
+                fontSize: 20,
+              }}
+            />
+          </IconButton>
+        }
         titleAdornment={
           !p.isLogsExplorer ? (
             <Typography component="span" aria-hidden="true" sx={{ lineHeight: 1 }}>
@@ -72,20 +88,6 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         }
         actions={
           <>
-            <IconButton
-              size="small"
-              onClick={p.onToggleCollapsed}
-              aria-expanded={!p.collapsed}
-              aria-label={p.collapsed ? "Expand query panel" : "Collapse query panel"}
-            >
-              <ExpandMoreIcon
-                sx={{
-                  transform: p.collapsed ? "rotate(-90deg)" : "rotate(0deg)",
-                  transition: "transform 0.2s",
-                  fontSize: 20,
-                }}
-              />
-            </IconButton>
             <Tooltip
               title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
             >
@@ -195,7 +197,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                   position: "absolute",
                   zIndex: 4,
                   bottom: 2,
-                  left: 8,
+                  left: 36,
                   display: "flex",
                   gap: 0,
                 }}
