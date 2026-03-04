@@ -59,7 +59,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
   const [explainOpen, setExplainOpen] = useState(false);
   const explainPanelId = useId();
   const explanation = useQueryExplanation(p.effectiveQuery);
-  const collapsedSummary = explanation?.trim() ? explanation : "AI summary unavailable.";
+  const collapsedSummary = explanation?.trim() || "AI summary unavailable.";
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
