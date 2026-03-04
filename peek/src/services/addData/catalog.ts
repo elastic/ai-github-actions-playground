@@ -1,3 +1,8 @@
+import {
+  ADD_DATA_EXPERIENCE_LABELS as _LABELS,
+  ADD_DATA_EXPERIENCE_DESCRIPTIONS as _DESCRIPTIONS,
+} from "./catalog.data.mjs";
+
 export type AddDataGuideType =
   | "edot_collector"
   | "aws_cloud_deploy"
@@ -44,21 +49,14 @@ export interface AddDataTechnologyCatalogEntry {
   recommendedNextSteps: readonly AddDataRecommendedNextStep[];
 }
 
-export const ADD_DATA_EXPERIENCE_LABELS: Readonly<Record<AddDataGuidedExperience, string>> = {
-  cloud_providers: "Cloud Providers",
-  kubernetes: "Kubernetes",
-  servers: "Servers, Desktops & Laptops",
-  saas_databases: "SaaS & Databases",
-  advanced: "Advanced",
-};
+// Re-export from the shared .mjs data file (single source of truth for labels).
+export const ADD_DATA_EXPERIENCE_LABELS = _LABELS as Readonly<
+  Record<AddDataGuidedExperience, string>
+>;
 
-export const ADD_DATA_EXPERIENCE_DESCRIPTIONS: Readonly<Record<AddDataGuidedExperience, string>> = {
-  cloud_providers: "Monitor AWS cloud workloads and VPC flow logs",
-  kubernetes: "Collect cluster, node, and workload telemetry",
-  servers: "Monitor Linux, Windows, or macOS hosts and VMs",
-  saas_databases: "Connect databases and services with OTel receivers",
-  advanced: "Configure custom collectors, FluentBit, or APM agents",
-};
+export const ADD_DATA_EXPERIENCE_DESCRIPTIONS = _DESCRIPTIONS as Readonly<
+  Record<AddDataGuidedExperience, string>
+>;
 
 export const ADD_DATA_TECHNOLOGY_CATALOG = [
   {
