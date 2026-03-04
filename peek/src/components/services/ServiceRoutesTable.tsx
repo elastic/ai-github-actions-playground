@@ -46,7 +46,7 @@ export default function ServiceRoutesTable({
   ) => (
     <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end", alignItems: "center" }}>
       <Typography variant="body2">{value}</Typography>
-      <Box sx={{ width: 88, minWidth: 88 }}>
+      <Box sx={{ width: { sm: 88, xs: 64 }, minWidth: { sm: 88, xs: 64 } }}>
         <ServiceSparklineCell data={data} color={color} />
       </Box>
     </Box>
@@ -57,7 +57,7 @@ export default function ServiceRoutesTable({
       size="small"
       aria-label="Top routes"
       sx={{
-        minWidth: 520,
+        minWidth: { sm: 520, xs: "100%" },
         "& td, & th": { py: 1, px: 1.5 },
       }}
     >
@@ -142,7 +142,7 @@ export default function ServiceRoutesTable({
                     color={row.errorRate > 0.05 ? "error" : "default"}
                     variant={row.errorRate > 0.05 ? "filled" : "outlined"}
                   />
-                  <Box sx={{ width: 88, minWidth: 88 }}>
+                  <Box sx={{ width: { sm: 88, xs: 64 }, minWidth: { sm: 88, xs: 64 } }}>
                     <ServiceSparklineCell
                       data={sparkline?.errorRate ?? []}
                       color={theme.palette.error.main}

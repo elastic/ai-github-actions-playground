@@ -52,7 +52,8 @@ export function decodeServiceName(rawServiceName: string): string {
 }
 
 export function normalizeStatusLabel(statusCode: string): string {
-  if (!statusCode || statusCode === "STATUS_CODE_OK") return "OK";
+  if (statusCode === "STATUS_CODE_OK") return "OK";
+  if (!statusCode) return "Unknown";
   if (statusCode === "STATUS_CODE_ERROR") return "Error";
   return statusCode;
 }

@@ -172,7 +172,7 @@ export default function ServiceInventoryPage() {
       "Do not produce summary-style statements that only repeat totals or healthy-looking numbers. " +
       "If nothing is risky or unusual, explicitly say there is no strong signal and suggest what to monitor next. " +
       INSIGHT_SPECIFICITY_POLICY +
-      "Keep each slot insight under 2 sentences." +
+      " Keep each slot insight under 2 sentences." +
       INSIGHT_GUARDRAIL,
     cacheKey: `service-performance-slots::${insightCacheKey}`,
     slots: insightSlots,
