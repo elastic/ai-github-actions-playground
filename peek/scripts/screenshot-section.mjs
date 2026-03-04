@@ -43,6 +43,7 @@ export const SECTION_PAGES = {
   "cluster-overview": ["cluster-overview"],
   "data-management": ["data-streams", "indices", "ingest-pipelines"],
   fleet: ["fleet"],
+  kubernetes: ["kubernetes"],
   logs: ["logs"],
   metrics: ["metrics"],
   profiling: ["profiling"],
