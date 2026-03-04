@@ -4,8 +4,8 @@
  * Non-numeric or missing segments are treated as 0.
  */
 export function compareSemver(a: string, b: string): number {
-  const aParts = a.split(".").map(Number);
-  const bParts = b.split(".").map(Number);
+  const aParts = a.split(".").map((s) => parseInt(s, 10) || 0);
+  const bParts = b.split(".").map((s) => parseInt(s, 10) || 0);
   const len = Math.max(aParts.length, bParts.length);
   for (let i = 0; i < len; i++) {
     const diff = (aParts[i] || 0) - (bParts[i] || 0);

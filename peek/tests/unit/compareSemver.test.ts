@@ -31,4 +31,9 @@ describe("compareSemver", () => {
     const versions = ["8.10.0", "8.9.0", "7.17.0", "8.10.1", "8.2.0"];
     expect(versions.sort(compareSemver)).toEqual(["7.17.0", "8.2.0", "8.9.0", "8.10.0", "8.10.1"]);
   });
+
+  it("handles pre-release suffixes gracefully", () => {
+    expect(compareSemver("8.9.0-SNAPSHOT", "8.9.0")).toBe(0);
+    expect(compareSemver("8.10.0-alpha", "8.9.0")).toBeGreaterThan(0);
+  });
 });
