@@ -28,7 +28,6 @@ import { deriveOtlpEndpoint } from "../utils/addDataUtils";
 import type { ElasticsearchConnection } from "../types";
 
 import ConnectionProfilesList from "./ConnectionProfilesList";
-import OtlpConfigPanel from "./OtlpConfigPanel";
 
 type AuthType = "apiKey" | "userpass";
 
@@ -36,12 +35,13 @@ function deriveIngestUrlOrEmpty(url: string | undefined): string {
   return deriveOtlpEndpoint(url ?? "") ?? "";
 }
 
-function shouldShowTelemetryPanel(conn?: ElasticsearchConnection | null): boolean {
-  if (!conn) return false;
-  if (conn.otlpEnabled || Boolean(conn.otlpApiKey?.trim())) return true;
-  const endpoint = conn.otlpEndpoint?.trim();
-  if (!endpoint) return false;
-  return endpoint !== deriveDefaultOtlpEndpoint(conn.url);
+function isLikelyServerlessUrl(rawUrl: string): boolean {
+  try {
+    const hostname = new URL(rawUrl.trim()).hostname.toLowerCase();
+    return hostname.endsWith(".elastic.cloud") || hostname === "elastic.cloud";
+  } catch {
+    return false;
+  }
 }
 
 export default function ConnectionDialog() {
@@ -96,7 +96,6 @@ export default function ConnectionDialog() {
   const [ingestUrl, setIngestUrl] = useState(
     savedConn?.ingestUrl ?? deriveIngestUrlOrEmpty(savedConn?.url),
   );
-  const [showProxy, setShowProxy] = useState(Boolean(savedConn?.proxyUrl));
   const [showAdvanced, setShowAdvanced] = useState(Boolean(savedConn?.ingestUrl));
   const [otlpEnabled, setOtlpEnabled] = useState(savedConn?.otlpEnabled ?? false);
   const [otlpEndpoint, setOtlpEndpoint] = useState(
@@ -106,12 +105,12 @@ export default function ConnectionDialog() {
     savedConn?.otlpUseElasticAuth ?? Boolean(savedConn?.apiKey),
   );
   const [otlpApiKey, setOtlpApiKey] = useState(savedConn?.otlpApiKey ?? "");
-  const [showTelemetry, setShowTelemetry] = useState(shouldShowTelemetryPanel(savedConn));
   const [showSecret, setShowSecret] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [profileName, setProfileName] = useState("");
   const [savePin, setSavePin] = useState("");
+  const [savePromptOpen, setSavePromptOpen] = useState(false);
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
@@ -121,13 +120,11 @@ export default function ConnectionDialog() {
     setPassword(savedConn?.password ?? "");
     setProxyUrl(savedConn?.proxyUrl ?? "");
     setIngestUrl(savedConn?.ingestUrl ?? deriveIngestUrlOrEmpty(savedConn?.url));
-    setShowProxy(Boolean(savedConn?.proxyUrl));
     setShowAdvanced(Boolean(savedConn?.ingestUrl));
     setOtlpEnabled(savedConn?.otlpEnabled ?? false);
     setOtlpEndpoint(savedConn?.otlpEndpoint ?? deriveDefaultOtlpEndpoint(savedConn?.url ?? ""));
     setOtlpUseElasticAuth(savedConn?.otlpUseElasticAuth ?? Boolean(savedConn?.apiKey));
     setOtlpApiKey(savedConn?.otlpApiKey ?? "");
-    setShowTelemetry(shouldShowTelemetryPanel(savedConn));
   }, [savedConn]);
 
   useEffect(() => {
@@ -223,19 +220,44 @@ export default function ConnectionDialog() {
   const isDuplicateProfileName = profileName.trim()
     ? connectionProfiles.some((p) => p.name === profileName.trim())
     : false;
+  const likelyServerless = isLikelyServerlessUrl(url);
 
-  const handleSaveProfile = useCallback(async () => {
+  const handleConnectAndSave = useCallback(async () => {
     const trimmed = profileName.trim();
     if (!trimmed) return;
-    const id = saveConnectionProfile(trimmed, buildConnection());
-    if (id) {
-      if (savePin.trim()) {
+    const conn = buildConnection();
+    setTesting(true);
+    setResult(null);
+    try {
+      const caps = await fetchCapabilitiesForConnection(conn);
+      const id = saveConnectionProfile(trimmed, conn);
+      if (id && savePin.trim()) {
         await lockProfile(id, savePin.trim());
       }
+      setConnection(conn);
+      setConnected(true);
+      setCapabilities(caps);
       setProfileName("");
       setSavePin("");
+      setSavePromptOpen(false);
+      setOpen(false);
+    } catch (err: unknown) {
+      const message = isElasticsearchError(err) ? err.message : String(err);
+      setResult({ ok: false, message });
+    } finally {
+      setTesting(false);
     }
-  }, [profileName, savePin, saveConnectionProfile, buildConnection, lockProfile]);
+  }, [
+    profileName,
+    buildConnection,
+    saveConnectionProfile,
+    savePin,
+    lockProfile,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    setOpen,
+  ]);
 
   const handleLoadProfile = useCallback(
     (profileId: string) => {
@@ -249,13 +271,11 @@ export default function ConnectionDialog() {
       setPassword(conn.password ?? "");
       setProxyUrl(conn.proxyUrl ?? "");
       setIngestUrl(conn.ingestUrl ?? deriveIngestUrlOrEmpty(conn.url));
-      setShowProxy(Boolean(conn.proxyUrl));
       setShowAdvanced(Boolean(conn.ingestUrl));
       setOtlpEnabled(conn.otlpEnabled ?? false);
       setOtlpEndpoint(conn.otlpEndpoint ?? deriveDefaultOtlpEndpoint(conn.url));
       setOtlpUseElasticAuth(conn.otlpUseElasticAuth ?? Boolean(conn.apiKey));
       setOtlpApiKey(conn.otlpApiKey ?? "");
-      setShowTelemetry(shouldShowTelemetryPanel(conn));
       setActiveProfileId(profileId);
       setResult(null);
     },
@@ -274,15 +294,16 @@ export default function ConnectionDialog() {
       <DialogTitle>Elasticsearch Connection</DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Enter your Elasticsearch endpoint and credentials. By default, the connection is made
-            directly from your browser. If Proxy URL is configured, requests are sent through that
-            proxy. Ensure CORS is configured on your cluster.
+          <Typography variant="caption" color="text.secondary">
+            Enter your endpoint and credentials. Connections are direct from the browser unless a
+            proxy URL is configured.
           </Typography>
-          <Alert severity="warning" sx={{ py: 0 }}>
-            Elasticsearch Serverless is not supported — it does not allow the CORS configuration
-            required for direct browser connections.
-          </Alert>
+          {likelyServerless && (
+            <Alert severity="warning" sx={{ py: 0 }}>
+              This endpoint looks like Elasticsearch Serverless (`*.elastic.cloud`). Direct browser
+              access typically fails because required CORS settings are unavailable.
+            </Alert>
+          )}
 
           <ConnectionProfilesList
             connectionProfiles={connectionProfiles}
@@ -322,85 +343,6 @@ export default function ConnectionDialog() {
             }}
             helperText="The full URL including protocol and port"
           />
-          <Button
-            size="small"
-            onClick={() => setShowProxy(!showProxy)}
-            endIcon={showProxy ? <ExpandLess /> : <ExpandMore />}
-            sx={{ alignSelf: "flex-start" }}
-          >
-            Proxy Settings
-          </Button>
-          <Collapse in={showProxy} unmountOnExit>
-            <TextField
-              label="Proxy URL"
-              placeholder="http://localhost:3000/_es"
-              fullWidth
-              value={proxyUrl}
-              onChange={(e) => {
-                setProxyUrl(e.target.value);
-                setActiveProfileId(null);
-              }}
-              helperText="Requests are sent to this URL; the Elasticsearch URL is forwarded as a header"
-            />
-          </Collapse>
-          <Button
-            size="small"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            endIcon={showAdvanced ? <ExpandLess /> : <ExpandMore />}
-            sx={{ alignSelf: "flex-start" }}
-          >
-            Advanced Settings
-          </Button>
-          <Collapse in={showAdvanced} unmountOnExit>
-            <TextField
-              label="Ingest URL"
-              placeholder={
-                deriveIngestUrlOrEmpty(url) ||
-                "https://<id>.ingest.<region>.<provider>.elastic.cloud"
-              }
-              fullWidth
-              value={ingestUrl}
-              onChange={(e) => {
-                setIngestUrl(e.target.value);
-                setActiveProfileId(null);
-              }}
-              helperText="Auto-detected from the Elasticsearch URL for Elastic Cloud. Used as the OTLP ingest endpoint for collector setup."
-            />
-          </Collapse>
-          <Button
-            size="small"
-            onClick={() => setShowTelemetry(!showTelemetry)}
-            endIcon={showTelemetry ? <ExpandLess /> : <ExpandMore />}
-            sx={{ alignSelf: "flex-start" }}
-          >
-            Browser Tracing (Experimental)
-          </Button>
-          <Collapse in={showTelemetry} unmountOnExit>
-            <OtlpConfigPanel
-              otlpEnabled={otlpEnabled}
-              onOtlpEnabledChange={(enabled) => {
-                setOtlpEnabled(enabled);
-                setActiveProfileId(null);
-              }}
-              otlpEndpoint={otlpEndpoint}
-              onOtlpEndpointChange={(endpoint) => {
-                setOtlpEndpoint(endpoint);
-                setActiveProfileId(null);
-              }}
-              otlpUseElasticAuth={otlpUseElasticAuth}
-              onOtlpUseElasticAuthChange={(useElasticAuth) => {
-                setOtlpUseElasticAuth(useElasticAuth);
-                setActiveProfileId(null);
-              }}
-              otlpApiKey={otlpApiKey}
-              onOtlpApiKeyChange={(key) => {
-                setOtlpApiKey(key);
-                setActiveProfileId(null);
-              }}
-              authType={authType}
-              url={url}
-            />
-          </Collapse>
           <Tabs
             value={authType}
             onChange={(_, v: AuthType) => {
@@ -480,10 +422,47 @@ export default function ConnectionDialog() {
               />
             </>
           )}
+          <Button
+            size="small"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            endIcon={showAdvanced ? <ExpandLess /> : <ExpandMore />}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            Advanced Connection Settings
+          </Button>
+          <Collapse in={showAdvanced} unmountOnExit>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <TextField
+                label="Proxy URL"
+                placeholder="http://localhost:3000/_es"
+                fullWidth
+                value={proxyUrl}
+                onChange={(e) => {
+                  setProxyUrl(e.target.value);
+                  setActiveProfileId(null);
+                }}
+                helperText="Requests are sent to this URL; the Elasticsearch URL is forwarded as a header."
+              />
+              <TextField
+                label="Ingest URL"
+                placeholder={
+                  deriveIngestUrlOrEmpty(url) ||
+                  "https://<id>.ingest.<region>.<provider>.elastic.cloud"
+                }
+                fullWidth
+                value={ingestUrl}
+                onChange={(e) => {
+                  setIngestUrl(e.target.value);
+                  setActiveProfileId(null);
+                }}
+                helperText="Override OTLP ingest base URL (optional). Browser Tracing settings are now in Settings."
+              />
+            </Box>
+          </Collapse>
           {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
 
-          {(url || proxyUrl) && (
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <Collapse in={savePromptOpen} unmountOnExit>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               <TextField
                 size="small"
                 label="Profile name"
@@ -491,41 +470,52 @@ export default function ConnectionDialog() {
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void handleSaveProfile();
+                  if (e.key === "Enter") void handleConnectAndSave();
                 }}
                 error={isDuplicateProfileName}
                 helperText={
-                  isDuplicateProfileName ? "A profile with this name already exists" : undefined
+                  isDuplicateProfileName ? "A profile with this name already exists" : " "
                 }
-                sx={{ flex: 1 }}
               />
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => void handleSaveProfile()}
-                disabled={!profileName.trim() || !url || isDuplicateProfileName}
-              >
-                Save Profile
-              </Button>
               <TextField
                 size="small"
                 label="PIN (optional)"
                 type="password"
-                placeholder="Encrypt with PIN"
+                placeholder="Encrypt credentials with PIN"
                 value={savePin}
                 onChange={(e) => setSavePin(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void handleSaveProfile();
+                  if (e.key === "Enter") void handleConnectAndSave();
                 }}
                 helperText={
                   savePin.trim()
-                    ? "Credentials will be encrypted and stored locally"
-                    : "Leave blank to use session storage only"
+                    ? "Credentials will be encrypted and stored locally."
+                    : "Leave blank to keep credentials in session storage."
                 }
-                sx={{ flex: 1 }}
               />
+              <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setSavePromptOpen(false);
+                    setProfileName("");
+                    setSavePin("");
+                  }}
+                  disabled={testing}
+                >
+                  Cancel Save
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => void handleConnectAndSave()}
+                  disabled={testing || !url.trim() || !profileName.trim() || isDuplicateProfileName}
+                >
+                  {testing ? <CircularProgress size={18} /> : "Confirm Connect & Save"}
+                </Button>
+              </Box>
             </Box>
-          )}
+          </Collapse>
         </Box>
       </DialogContent>
       <DialogActions sx={{ pb: 2, px: 3 }}>
@@ -538,6 +528,13 @@ export default function ConnectionDialog() {
         <Button onClick={() => setOpen(false)}>Cancel</Button>
         <Button onClick={handleTest} disabled={testing || !url.trim()}>
           {testing ? <CircularProgress size={20} /> : "Test"}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => setSavePromptOpen((v) => !v)}
+          disabled={testing || !url.trim()}
+        >
+          Connect & Save
         </Button>
         <Button variant="contained" onClick={handleConnect} disabled={testing || !url.trim()}>
           {testing ? <CircularProgress size={20} /> : "Connect"}

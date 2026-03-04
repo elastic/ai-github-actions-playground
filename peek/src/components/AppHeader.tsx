@@ -30,7 +30,6 @@ import { createDefaultPanel } from "../dashboards/panel";
 import ConnectionProfileSwitcher from "./ConnectionProfileSwitcher";
 import DateRangePicker from "./DateRangePicker";
 import RefreshIntervalPicker from "./RefreshIntervalPicker";
-import TimeZonePicker from "./TimeZonePicker";
 
 const REFRESH_INTERVAL_PRESETS = [
   { label: "Off", seconds: 0 },
@@ -248,8 +247,8 @@ export default function AppHeader({
               value={dashboard.timeRange}
               onChange={setTimeRange}
               timeZone={dashboard.timeZone}
+              onTimeZoneChange={setTimeZone}
             />
-            <TimeZonePicker value={dashboard.timeZone} onChange={setTimeZone} />
             <RefreshIntervalPicker
               value={refreshInterval}
               options={REFRESH_INTERVAL_PRESETS}

@@ -9,10 +9,15 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
+import MenuItem from "@mui/material/MenuItem";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PublicIcon from "@mui/icons-material/Public";
 
 import { resolveDateTime } from "../services/datemath";
 import type { TimeRange } from "../types";
+import { DASHBOARD_TIMEZONE_OPTIONS } from "../schemas";
 
 import { DASHBOARD_TIME_PRESETS } from "./timePresets";
 import { getCustomRangeValidationError } from "./dateRangeValidation";
@@ -53,13 +58,19 @@ interface Props {
   value: TimeRange;
   onChange: (range: TimeRange) => void;
   timeZone?: string;
+  onTimeZoneChange?: (timeZone: string | undefined) => void;
 }
 
-export default function DateRangePicker({ value, onChange, timeZone }: Props) {
+export default function DateRangePicker({ value, onChange, timeZone, onTimeZoneChange }: Props) {
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const theme = useTheme();
+  const isNarrow = useMediaQuery(theme.breakpoints.down("sm"));
   const open = Boolean(anchor);
+  const currentTimeZoneLabel =
+    DASHBOARD_TIMEZONE_OPTIONS.find((o) => o.value === (timeZone ?? ""))?.label ??
+    (timeZone || "Browser local");
 
   const handleOpen = (e: React.MouseEvent<HTMLElement>) => {
     setCustomFrom(toDatetimeLocal(value.from));
@@ -90,7 +101,7 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
       <Button
         size="small"
         variant="outlined"
-        startIcon={<AccessTimeIcon fontSize="small" />}
+        startIcon={<AccessTimeIcon fontSize="small" sx={{ color: "inherit" }} />}
         onClick={handleOpen}
         aria-label={`Time range: ${formatRangeLabel(value, timeZone)}`}
         aria-haspopup="true"
@@ -105,10 +116,25 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
-        slotProps={{ paper: { sx: { display: "flex" } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              display: "flex",
+              flexDirection: { sm: "row", xs: "column" },
+              width: { sm: "auto", xs: "min(92vw, 360px)" },
+            },
+          },
+        }}
       >
         {/* Quick-select presets */}
-        <Box sx={{ minWidth: 140, borderRight: 1, borderColor: "divider" }}>
+        <Box
+          sx={{
+            minWidth: { sm: 140, xs: "100%" },
+            borderRight: { sm: 1, xs: 0 },
+            borderBottom: { sm: 0, xs: 1 },
+            borderColor: "divider",
+          }}
+        >
           <Typography
             variant="caption"
             sx={{
@@ -137,10 +163,10 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
           </List>
         </Box>
 
-        <Divider orientation="vertical" flexItem />
+        {!isNarrow && <Divider orientation="vertical" flexItem />}
 
         {/* Absolute custom range */}
-        <Box sx={{ minWidth: 220, p: 2 }}>
+        <Box sx={{ minWidth: { sm: 220, xs: "100%" }, p: 2 }}>
           <Typography
             variant="caption"
             sx={{
@@ -186,6 +212,52 @@ export default function DateRangePicker({ value, onChange, timeZone }: Props) {
             >
               Apply
             </Button>
+            {onTimeZoneChange && (
+              <>
+                <Divider />
+                <Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "flex",
+                      gap: 0.5,
+                      alignItems: "center",
+                      mb: 1,
+                      color: "text.secondary",
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <PublicIcon sx={{ fontSize: 14 }} />
+                    Timezone
+                  </Typography>
+                  <TextField
+                    select
+                    size="small"
+                    fullWidth
+                    value={timeZone ?? ""}
+                    onChange={(e) => onTimeZoneChange(e.target.value || undefined)}
+                    aria-label={`Timezone: ${currentTimeZoneLabel}`}
+                    slotProps={{
+                      select: {
+                        displayEmpty: true,
+                        renderValue: (selected) =>
+                          DASHBOARD_TIMEZONE_OPTIONS.find(
+                            (option) => option.value === String(selected),
+                          )?.label ?? "Browser local",
+                      },
+                    }}
+                  >
+                    {DASHBOARD_TIMEZONE_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              </>
+            )}
           </Stack>
         </Box>
       </Popover>

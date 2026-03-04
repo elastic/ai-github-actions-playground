@@ -28,12 +28,12 @@ interface ServiceDeploymentsPanelProps {
 export default function ServiceDeploymentsPanel({ deployments }: ServiceDeploymentsPanelProps) {
   return (
     <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto" }}>
-      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+      <Box sx={{ p: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Deployments
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Version changes detected from service.version in trace data
+          Version history from trace data
         </Typography>
       </Box>
       <Table size="small" aria-label="Service deployments">

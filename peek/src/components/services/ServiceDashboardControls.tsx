@@ -23,7 +23,7 @@ export default function ServiceDashboardControls({
   onTimeRangeChange,
 }: ServiceDashboardControlsProps) {
   return (
-    <Paper variant="outlined" sx={{ p: 1.5 }}>
+    <Paper variant="outlined" sx={{ p: 1 }}>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
         <DateRangePicker
           value={toDashboardTimeRange({ from: timeFrom, to: timeTo })}

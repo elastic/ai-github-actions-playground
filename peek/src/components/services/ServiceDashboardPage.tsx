@@ -3,10 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
+import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
@@ -37,9 +39,15 @@ export default function ServiceDashboardPage() {
   const { serviceName: rawServiceName = "" } = useParams<{ serviceName: string }>();
   const serviceName = decodeServiceName(rawServiceName);
   const connection = useConnectionStore((s) => s.connection);
+  const { serviceFilters, updateServiceFilters } = usePageFiltersStore(
+    useShallow((s) => ({
+      serviceFilters: s.serviceFilters,
+      updateServiceFilters: s.updateServiceFilters,
+    })),
+  );
 
-  const [timeFrom, setTimeFrom] = useState("NOW() - 1 hour");
-  const [timeTo, setTimeTo] = useState("NOW()");
+  const [timeFrom, setTimeFrom] = useState(serviceFilters.timeFrom);
+  const [timeTo, setTimeTo] = useState(serviceFilters.timeTo);
   const {
     clearLatestQueries,
     deploymentsResult,
@@ -129,22 +137,16 @@ export default function ServiceDashboardPage() {
   }, [deploymentsResult]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title={serviceName}
-          description="Service-specific performance dashboard with top routes and recent traces."
-          actions={
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(PAGE_MANIFEST.services.path)}
-            >
-              ← Services
-            </Button>
-          }
-        />
-      </Paper>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minHeight: "100%" }}>
+      <PageHeader
+        title={serviceName}
+        description="Routes, traces, and deployments for this service."
+        actions={
+          <Button size="small" variant="text" onClick={() => navigate(PAGE_MANIFEST.services.path)}>
+            ← Services
+          </Button>
+        }
+      />
 
       <ServiceDashboardControls
         loading={loading}
@@ -156,6 +158,7 @@ export default function ServiceDashboardPage() {
           clearLatestQueries();
           setTimeFrom(from);
           setTimeTo(to);
+          updateServiceFilters({ timeFrom: from, timeTo: to });
         }}
       />
 
@@ -166,35 +169,41 @@ export default function ServiceDashboardPage() {
           <EmptyState
             heading="No service data loaded"
             description={`Click Search to load performance data for ${serviceName}.`}
+            verticalAlign="start"
             addDataHref={PAGE_MANIFEST.addData.path}
           />
         </Paper>
       )}
 
       {summary && <ServiceDashboardSummaryCards summary={summary} />}
-
       {deployments.length > 0 && <ServiceDeploymentsPanel deployments={deployments} />}
 
-      {topRouteRows.length > 0 && (
-        <ServiceRoutesPanel
-          routeRows={topRouteRows}
-          sortField={routeSortField}
-          sortDirection={routeSortDirection}
-          onSort={handleRouteSort}
-          sparklineData={routeSparklineData}
-        />
-      )}
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={1.5} sx={{ alignItems: "stretch" }}>
+        {topRouteRows.length > 0 && (
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <ServiceRoutesPanel
+              routeRows={topRouteRows}
+              sortField={routeSortField}
+              sortDirection={routeSortDirection}
+              onSort={handleRouteSort}
+              sparklineData={routeSparklineData}
+            />
+          </Box>
+        )}
 
-      {recentTraces.length > 0 && (
-        <ServiceTracesPanel
-          traces={recentTraces}
-          sortField={traceSortField}
-          sortDirection={traceSortDirection}
-          onSort={handleTraceSort}
-          onViewTrace={handleViewTrace}
-          onViewAllTraces={handleViewAllTraces}
-        />
-      )}
+        {recentTraces.length > 0 && (
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <ServiceTracesPanel
+              traces={recentTraces}
+              sortField={traceSortField}
+              sortDirection={traceSortDirection}
+              onSort={handleTraceSort}
+              onViewTrace={handleViewTrace}
+              onViewAllTraces={handleViewAllTraces}
+            />
+          </Box>
+        )}
+      </Stack>
 
       {!loading &&
         routesResult &&
@@ -205,6 +214,7 @@ export default function ServiceDashboardPage() {
             <EmptyState
               heading="No data found"
               description={`No routes or traces found for ${serviceName} in the selected time range.`}
+              verticalAlign="start"
               addDataHref={PAGE_MANIFEST.addData.path}
             />
           </Paper>

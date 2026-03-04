@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import Alert from "@mui/material/Alert";
@@ -12,6 +12,8 @@ import { useConnectionStore } from "../../store/useConnectionStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
 import EmptyState from "../EmptyState";
+import PageInsightBanner from "../PageInsightBanner";
+import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 
 import { PROFILING_DIMENSION_LABELS, type ProfilingFocusDimension } from "./profilingQueryBuilder";
 import { isMissingProfilingIndex } from "./profilingUtils";
@@ -104,6 +106,78 @@ export default function ProfilingGuidedPage() {
   }, [resetResults, setUrlDimension, setUrlValue]);
 
   const displayDimension = isEverything ? null : dimension;
+  const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
+  const hasDataForCurrentView =
+    viewMode === "topFunctions"
+      ? topFunctionsRows.length > 0
+      : viewMode === "timeline"
+        ? timelineHasData
+        : stacktraces.length > 0;
+  const canShowProfilingInsights =
+    !loading && !error && showResults && hasRun && hasDataForCurrentView;
+  const timelineCountStats = useMemo(() => {
+    if (!timelineResult) return null;
+    const countIdx = timelineResult.columns.findIndex((c) => c.name === "count");
+    if (countIdx < 0) return null;
+    const counts = timelineResult.values
+      .map((row) => Number(row[countIdx] ?? 0))
+      .filter((value) => Number.isFinite(value));
+    if (counts.length === 0) return null;
+    return {
+      points: counts.length,
+      max: Math.max(...counts),
+      min: Math.min(...counts),
+      avg: counts.reduce((sum, value) => sum + value, 0) / counts.length,
+    };
+  }, [timelineResult]);
+
+  const profilingInsightContext = useMemo(() => {
+    if (!canShowProfilingInsights) return "";
+    const topFunctions = topFunctionsRows.slice(0, 10).map((row) => ({
+      name: row.functionName,
+      total: row.totalCount ?? 0,
+      self: row.selfCount ?? 0,
+    }));
+    const topStacks = stacktraces
+      .slice()
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((row) => ({
+        id: row.stacktraceId,
+        count: row.count,
+        service: row.serviceName,
+        host: row.hostName,
+      }));
+    return JSON.stringify({
+      page: "profiling-guided",
+      viewMode,
+      focus: {
+        dimension: displayDimension,
+        value,
+      },
+      timeRange: {
+        from: timeFrom,
+        to: timeTo,
+      },
+      datasets: {
+        topFunctions,
+        timeline: timelineCountStats,
+        stacktraces: topStacks,
+        flamegraphNodeCount: flamegraphTree.children.length,
+      },
+    });
+  }, [
+    canShowProfilingInsights,
+    displayDimension,
+    flamegraphTree.children.length,
+    stacktraces,
+    timeFrom,
+    timeTo,
+    timelineCountStats,
+    topFunctionsRows,
+    value,
+    viewMode,
+  ]);
 
   // ── Step 1: Focus picker ────────────────────────────────────────────────────
   if (urlDimension === null || (!isEverything && dimension === null)) {
@@ -118,6 +192,10 @@ export default function ProfilingGuidedPage() {
         connection={connection}
         timeFrom={timeFrom}
         timeTo={timeTo}
+        onTimeRangeChange={(from, to) => {
+          setTimeFrom(from);
+          setTimeTo(to);
+        }}
         onSelect={(val) => void handleSelectValue(val)}
         onBack={() => void handleChangeFocus()}
       />
@@ -160,20 +238,33 @@ export default function ProfilingGuidedPage() {
       )}
 
       {!(error && isMissingProfilingIndex(error)) && (
-        <ProfilingResults
-          loading={loading}
-          hasRun={hasRun}
-          error={error}
-          viewMode={viewMode}
-          topFunctionsRows={topFunctionsRows}
-          timelineResult={timelineResult}
-          stacktraces={stacktraces}
-          flamegraphTree={flamegraphTree}
-          onFlamescopeWindowChange={setFlamescopeWindow}
-          handleFrameClick={handleFrameClick}
-          expandedStacktraceIds={expandedStacktraceIds}
-          toggleExpandedStacktraceId={toggleExpandedStacktraceId}
-        />
+        <>
+          {canShowProfilingInsights && profilingInsightContext && (
+            <PageInsightBanner
+              context={profilingInsightContext}
+              systemPrompt={
+                "You are a profiling performance analyst. Summarize the active profiling dataset and " +
+                "highlight one non-obvious hotspot, skew, or next debugging step." +
+                INSIGHT_GUARDRAIL
+              }
+              cacheKey={`profiling-guided::${profilingInsightContext}`}
+            />
+          )}
+          <ProfilingResults
+            loading={loading}
+            hasRun={hasRun}
+            error={error}
+            viewMode={viewMode}
+            topFunctionsRows={topFunctionsRows}
+            timelineResult={timelineResult}
+            stacktraces={stacktraces}
+            flamegraphTree={flamegraphTree}
+            onFlamescopeWindowChange={setFlamescopeWindow}
+            handleFrameClick={handleFrameClick}
+            expandedStacktraceIds={expandedStacktraceIds}
+            toggleExpandedStacktraceId={toggleExpandedStacktraceId}
+          />
+        </>
       )}
     </Box>
   );

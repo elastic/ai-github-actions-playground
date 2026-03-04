@@ -3,8 +3,10 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import InsightSlot from "../InsightSlot";
 import { OverviewInfoCard } from "../OverviewInfoCard";
 
+import { SERVICE_INSIGHT_SLOT_IDS } from "./serviceInsightSlots";
 import { type ServiceRow, formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
 
 interface ServiceOverviewCardsProps {
@@ -41,36 +43,44 @@ export default function ServiceOverviewCards({ serviceRows }: ServiceOverviewCar
   return (
     <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
       <Box sx={{ flex: 1 }}>
-        <OverviewInfoCard title="Total Services">
-          <Typography variant="h5" component="p">
-            {summary.totalServices}
-          </Typography>
-        </OverviewInfoCard>
+        <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.totalServicesCard}>
+          <OverviewInfoCard title="Total Services">
+            <Typography variant="h5" component="p">
+              {summary.totalServices}
+            </Typography>
+          </OverviewInfoCard>
+        </InsightSlot>
       </Box>
       <Box sx={{ flex: 1 }}>
-        <OverviewInfoCard title="Total Requests">
-          <Typography variant="h5" component="p">
-            {summary.totalRequests.toLocaleString()}
-          </Typography>
-        </OverviewInfoCard>
+        <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.totalRequestsCard}>
+          <OverviewInfoCard title="Total Requests">
+            <Typography variant="h5" component="p">
+              {summary.totalRequests.toLocaleString()}
+            </Typography>
+          </OverviewInfoCard>
+        </InsightSlot>
       </Box>
       <Box sx={{ flex: 1 }}>
-        <OverviewInfoCard title="Avg Latency">
-          <Typography variant="h5" component="p">
-            {formatLatency(summary.avgLatencyMs)}
-          </Typography>
-        </OverviewInfoCard>
+        <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.avgLatencyCard}>
+          <OverviewInfoCard title="Avg Latency">
+            <Typography variant="h5" component="p">
+              {formatLatency(summary.avgLatencyMs)}
+            </Typography>
+          </OverviewInfoCard>
+        </InsightSlot>
       </Box>
       <Box sx={{ flex: 1 }}>
-        <OverviewInfoCard title="Error Rate">
-          <Typography
-            variant="h5"
-            component="p"
-            sx={{ color: summary.overallErrorRate > 0.05 ? "error.main" : "text.primary" }}
-          >
-            {formatErrorRate(summary.overallErrorRate)}
-          </Typography>
-        </OverviewInfoCard>
+        <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.errorRateCard}>
+          <OverviewInfoCard title="Error Rate">
+            <Typography
+              variant="h5"
+              component="p"
+              sx={{ color: summary.overallErrorRate > 0.05 ? "error.main" : "text.primary" }}
+            >
+              {formatErrorRate(summary.overallErrorRate)}
+            </Typography>
+          </OverviewInfoCard>
+        </InsightSlot>
       </Box>
     </Stack>
   );
